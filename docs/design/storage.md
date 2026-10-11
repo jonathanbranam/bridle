@@ -72,7 +72,7 @@ With tasks, the database also indexes the project's task records
 (`crates/bridle-daemon/src/store.rs`, `SCHEMA_V5`):
 
 ```
-tasks(id TEXT PK, title, kind, state, created_at, updated_at, created_by)  -- created_by: SCHEMA_V19
+tickets(id TEXT PK, title, kind, state, created_at, updated_at, created_by)  -- created_by: SCHEMA_V19
 ```
 
 deliberately narrow: it's the fast index (id, title, kind, state,
@@ -268,7 +268,8 @@ directory) — a real namespace collision the build ran into, not a style
 choice.
 
 ```
-tasks/tw-7fa2.md          one file per task: TOML frontmatter + markdown body + thread
+tracking/tw-7fa2.md       one file per task: TOML frontmatter + markdown body (+ inline thread)
+                          (`tasks/` before br-95t9: still read, see below)
 tickets/br-7fa2.md        a ticket's thread (br-72t9), for the task whose `ticket` is its own id
 edges.toml                the whole edge set, replaced wholesale on every add/remove
 claims.toml               the whole claim set, replaced wholesale on every claim/release
@@ -385,7 +386,7 @@ questions from this index (`GET /v1/questions`).
 `bridle rebuild` (`TaskManager::rebuild_from_state_branch`) reconstructs
 `tasks`, `edges`, `open_questions` and `claims` from the state branch alone:
 the migration path for a fresh clone with no `bridle.db` — clone the repo,
-start the daemon, `bridle rebuild`. It walks every `tasks/<id>.md` file for
+start the daemon, `bridle rebuild`. It walks every `tracking/<id>.md` (and old `tasks/<id>.md`) file for
 the task rows, `edges.toml` for the edge set, each task's own thread for its
 open question, if any (the most recent `question`/`answer` entry; an
 unanswered trailing `question` becomes an `open_questions` row), and
@@ -446,3 +447,16 @@ workspace, repo and URL
 ([[docs/design/agent-host/operating-model#Several projects at once|several projects]]).
 Views across projects (`bridle daemons`, and later `status --all`,
 `ready --all`) fan out over it.
+
+## Rename to tickets (br-95t9, 22ab step 9, slice 1)
+
+- **Table**: schema migration 26 runs `ALTER TABLE tasks RENAME TO tickets` (rows untouched; the
+  `tasks_state` index becomes `tickets_state`). The columns are unchanged. `tickets` as a table
+  name had no clash.
+- **Folder**: the per-item files live in `tracking/<id>.md`, not `tickets/`, because `tickets/<id>.md`
+  already holds a ticket's thread under the same file name. A state branch written before this
+  keeps its files in `tasks/`: a daemon reads `tracking/` first, then `tasks/` (hydration,
+  `bridle rebuild`), and writes only `tracking/`, deleting the item's old `tasks/` file in the same
+  commit. There is no bulk rewrite of any project's state branch; an item moves when it is touched.
+  The `tasks/` fallback is removed with the other old-name readers (22ab step 10).
+- Rust types and wire JSON are unchanged here (slices 2 and 3).

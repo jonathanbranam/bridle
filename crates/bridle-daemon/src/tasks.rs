@@ -2733,7 +2733,7 @@ mod tests {
         );
 
         // Old records (no watchers line) are backfilled with the creator and the claimer.
-        let file = state.dir().join("tasks").join(format!("{}.md", task.id));
+        let file = state.dir().join("tracking").join(format!("{}.md", task.id));
         let text = std::fs::read_to_string(&file).expect("read");
         let old: String = text
             .lines()

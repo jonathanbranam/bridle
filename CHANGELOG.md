@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+- Storage says ticket (br-95t9 slice 1, 22ab step 9): schema migration 26 renames the `tasks` table to `tickets`, and the state branch's per-item files move from `tasks/` to `tracking/` as each item is touched (`tickets/` already holds threads). `tasks/` is still read for one release; no bulk rewrite of any state branch. Rust types and wire JSON are unchanged.
 - Removed the unreachable "did you mean external:..." recipient hint (br-jstr): since br-3k7d, `advisor/<name>`, `aide` and `orchestrator` (with optional `@machine`) resolve as external recipients outright, so no hint is needed. No migration.
 - Comment IDs never repeat after a thread is deleted (br-gd43, bridle half of ui-vnuu): a document under review keeps `next_comment_id: c<n>` in its front matter (made if missing); new threads get the larger of it and the highest ID plus one, and it is raised when lower. A batch sent to the document's agent also names any thread ID used twice (and the daemon logs it). No migration.
 - The gateway serves tickets under ticket names (br-aejj, 22ab step 8, gateway slice): `GET /api/v1/projects/{project}/tickets?state=`, `.../tickets/{id}` and `POST .../tickets/{id}/{action}` run the same handlers as the `tasks` routes; the list is keyed `tickets` (the `tasks` list keeps its `tasks` key). The task routes stay unchanged for one release. No migration.

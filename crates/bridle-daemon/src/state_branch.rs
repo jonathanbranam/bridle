@@ -1,6 +1,6 @@
 //! The task record's other durable copy: the `bridle` state branch
 //! (docs/design/storage.md, "The state branch"). One markdown file per task
-//! under `tasks/<id>.md` (TOML frontmatter + body + thread) and an
+//! under `tracking/<id>.md` (`tasks/<id>.md` before br-95t9; TOML frontmatter + body + thread) and an
 //! append-only `events/<YYYY-MM>.jsonl`.
 //!
 //! Writes are batched, not committed one at a time: callers enqueue a
@@ -585,10 +585,16 @@ impl StateBranch {
             return Ok(false);
         }
 
-        let tasks_dir = self.dir.join("tasks");
+        let tasks_dir = self.dir.join(ITEMS_DIR);
         std::fs::create_dir_all(&tasks_dir)?;
         for (id, contents) in &files {
             std::fs::write(tasks_dir.join(format!("{id}.md")), contents)?;
+            // A touched item moves out of the old folder; untouched ones stay until touched.
+            match std::fs::remove_file(self.dir.join(LEGACY_ITEMS_DIR).join(format!("{id}.md"))) {
+                Ok(()) => {}
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+                Err(e) => return Err(e.into()),
+            }
         }
         if !threads.is_empty() {
             let dir = self.dir.join(THREADS_DIR);
@@ -701,11 +707,18 @@ impl StateBranch {
     /// file read, not part of the batched write path; used to hydrate the
     /// in-memory cache on daemon startup.
     pub fn read_task(&self, id: &str) -> Option<Task> {
-        let path = self.dir.join("tasks").join(format!("{id}.md"));
-        let text = std::fs::read_to_string(path).ok()?;
+        let text = self.read_item_file(id)?;
         let mut task = parse_task(&text).ok()?;
         self.overlay_thread(&mut task);
         Some(task)
+    }
+
+    /// An item's file text: from `tracking/`, else from the `tasks/` folder of a state branch
+    /// written before br-95t9 (read for one release; no bulk rewrite).
+    fn read_item_file(&self, id: &str) -> Option<String> {
+        [ITEMS_DIR, LEGACY_ITEMS_DIR]
+            .iter()
+            .find_map(|d| std::fs::read_to_string(self.dir.join(d).join(format!("{id}.md"))).ok())
     }
 
     /// A task that owns a ticket thread file takes its thread from there; the inline
@@ -725,8 +738,7 @@ impl StateBranch {
     /// Whether the task's file has a watchers record: false for one written before watchers
     /// existed, which `TaskManager::open` then backfills.
     pub fn task_records_watchers(&self, id: &str) -> bool {
-        let path = self.dir.join("tasks").join(format!("{id}.md"));
-        std::fs::read_to_string(path).is_ok_and(|text| {
+        self.read_item_file(id).is_some_and(|text| {
             text.strip_prefix("+++\n")
                 .and_then(|t| t.split_once("\n+++\n"))
                 .and_then(|(fm, _)| toml::from_str::<Frontmatter>(fm).ok())
@@ -742,26 +754,30 @@ impl StateBranch {
     /// branch alone, where a task file that exists but won't parse must
     /// surface as an error rather than silently vanish from the rebuilt set.
     pub fn list_tasks(&self) -> Result<Vec<Task>, StateBranchError> {
-        let tasks_dir = self.dir.join("tasks");
         let mut ids = Vec::new();
-        match std::fs::read_dir(&tasks_dir) {
-            Ok(entries) => {
-                for entry in entries {
-                    let path = entry?.path();
-                    if path.extension().and_then(|e| e.to_str()) == Some("md")
-                        && let Some(stem) = path.file_stem().and_then(|s| s.to_str())
-                    {
-                        ids.push(stem.to_string());
+        for d in [ITEMS_DIR, LEGACY_ITEMS_DIR] {
+            match std::fs::read_dir(self.dir.join(d)) {
+                Ok(entries) => {
+                    for entry in entries {
+                        let path = entry?.path();
+                        if path.extension().and_then(|e| e.to_str()) == Some("md")
+                            && let Some(stem) = path.file_stem().and_then(|s| s.to_str())
+                        {
+                            ids.push(stem.to_string());
+                        }
                     }
                 }
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+                Err(e) => return Err(e.into()),
             }
-            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
-            Err(e) => return Err(e.into()),
         }
         ids.sort();
+        ids.dedup();
         ids.into_iter()
             .map(|id| {
-                let text = std::fs::read_to_string(tasks_dir.join(format!("{id}.md")))?;
+                let text = self.read_item_file(&id).ok_or_else(|| {
+                    std::io::Error::new(std::io::ErrorKind::NotFound, format!("{id}.md vanished"))
+                })?;
                 let mut task = parse_task(&text)?;
                 self.overlay_thread(&mut task);
                 Ok(task)
@@ -1173,6 +1189,12 @@ fn render_task(task: &Task) -> Result<String, StateBranchError> {
 
 /// Where a ticket's thread lives on the state branch: `tickets/<id>.md` (22ab section 1).
 const THREADS_DIR: &str = "tickets";
+
+/// Where an item's tracking file lives (br-95t9). Not `tickets/`: that holds the thread under the
+/// same `<id>.md` name.
+const ITEMS_DIR: &str = "tracking";
+/// The folder before br-95t9: still read for one release, emptied as items are touched.
+const LEGACY_ITEMS_DIR: &str = "tasks";
 
 /// Whether the task's thread lives in `tickets/<id>.md`: the row of a ticket with its own id,
 /// which is every row `ticket new` made. A row with another ticket's id (an older task, or an
@@ -1671,7 +1693,7 @@ mod tests {
         sb.enqueue_event("tw-7fa2", "", "open", "human", Utc::now());
         sb.flush_now().await.expect("flush");
 
-        let path = dir.join("tasks/tw-7fa2.md");
+        let path = dir.join("tracking/tw-7fa2.md");
         assert!(path.is_file());
         let read_back = sb.read_task("tw-7fa2").expect("read back");
         assert_eq!(read_back.title, task.title);
@@ -1693,6 +1715,45 @@ mod tests {
             2,
             "one commit beyond the orphan's first"
         );
+    }
+
+    /// A state branch from before br-95t9 keeps its items in `tasks/`: they load, and an item
+    /// that is touched is written to `tracking/` and leaves the old folder.
+    #[tokio::test]
+    async fn items_in_the_old_tasks_folder_load_and_move_when_touched() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let repo = tmp.path().join("repo");
+        init_repo(&repo).await;
+        let dir = tmp.path().join("state");
+        let sb = StateBranch::open(&repo, &dir).await.expect("open");
+        sb.enqueue_task(&sample_task("tw-aaaa")).expect("enqueue");
+        sb.enqueue_task(&sample_task("tw-bbbb")).expect("enqueue");
+        sb.flush_now().await.expect("flush");
+        std::fs::create_dir_all(dir.join("tasks")).expect("mkdir");
+        for id in ["tw-aaaa", "tw-bbbb"] {
+            std::fs::rename(
+                dir.join(format!("tracking/{id}.md")),
+                dir.join(format!("tasks/{id}.md")),
+            )
+            .expect("move to the old folder");
+        }
+
+        assert!(sb.read_task("tw-aaaa").is_some());
+        assert!(sb.task_records_watchers("tw-aaaa"));
+        let ids: Vec<_> = sb
+            .list_tasks()
+            .expect("list")
+            .into_iter()
+            .map(|t| t.id)
+            .collect();
+        assert_eq!(ids, ["tw-aaaa", "tw-bbbb"]);
+
+        sb.enqueue_task(&sample_task("tw-aaaa")).expect("enqueue");
+        sb.flush_now().await.expect("flush");
+        assert!(dir.join("tracking/tw-aaaa.md").exists());
+        assert!(!dir.join("tasks/tw-aaaa.md").exists());
+        assert!(dir.join("tasks/tw-bbbb.md").exists(), "untouched stays");
+        assert_eq!(sb.list_tasks().expect("list").len(), 2);
     }
 
     #[tokio::test]
@@ -1723,12 +1784,12 @@ mod tests {
         sb.enqueue_task(&other).expect("enqueue");
         sb.flush_now().await.expect("flush");
 
-        let row = std::fs::read_to_string(dir.join("tasks/br-7fa2.md")).expect("row");
+        let row = std::fs::read_to_string(dir.join("tracking/br-7fa2.md")).expect("row");
         assert!(!row.contains("## Thread"), "{row}");
         let file = std::fs::read_to_string(dir.join("tickets/br-7fa2.md")).expect("thread file");
         assert!(file.contains("which?"), "{file}");
         assert!(!dir.join("tickets/br-9999.md").exists());
-        let inline = std::fs::read_to_string(dir.join("tasks/br-9999.md")).expect("row");
+        let inline = std::fs::read_to_string(dir.join("tracking/br-9999.md")).expect("row");
         assert!(inline.contains("## Thread"), "{inline}");
 
         let back = sb.read_task("br-7fa2").expect("read back");

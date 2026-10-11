@@ -817,7 +817,7 @@ impl Store {
         let (id, by) = (id.to_string(), by.to_string());
         self.with_conn(move |c| {
             c.execute(
-                "UPDATE tasks SET created_by = ?2 WHERE id = ?1 AND created_by IS NULL",
+                "UPDATE tickets SET created_by = ?2 WHERE id = ?1 AND created_by IS NULL",
                 rusqlite::params![id, by],
             )?;
             Ok(())
@@ -1508,13 +1508,21 @@ mod sync {
         ALTER TABLE outbox ADD COLUMN aide_notified_at TEXT;
     "#;
 
+    // Code rename, slice 1 (br-95t9, 22ab step 9): the `tasks` table is the tickets' tracking
+    // rows, so it is called `tickets`. SQLite rewrites references to it in the same step.
+    pub(super) const SCHEMA_V26: &str = r#"
+        ALTER TABLE tasks RENAME TO tickets;
+        DROP INDEX IF EXISTS tasks_state;
+        CREATE INDEX tickets_state ON tickets(state);
+    "#;
+
     pub(super) const RATE_LIMIT_HISTORY_DAYS: i64 = 90;
 
     pub(super) const MIGRATIONS: &[&str] = &[
         SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6, SCHEMA_V7, SCHEMA_V8,
         SCHEMA_V9, SCHEMA_V10, SCHEMA_V11, SCHEMA_V12, SCHEMA_V13, SCHEMA_V14, SCHEMA_V15,
         SCHEMA_V16, SCHEMA_V17, SCHEMA_V18, SCHEMA_V19, SCHEMA_V20, SCHEMA_V21, SCHEMA_V22,
-        SCHEMA_V23, SCHEMA_V24, SCHEMA_V25,
+        SCHEMA_V23, SCHEMA_V24, SCHEMA_V25, SCHEMA_V26,
     ];
 
     pub(super) fn open(path: &Path) -> Result<Connection, StoreError> {
@@ -1556,7 +1564,7 @@ mod sync {
         }
         for (task, actor) in creators {
             if let Err(e) = conn.execute(
-                "UPDATE tasks SET created_by = ?2 WHERE id = ?1 AND created_by IS NULL",
+                "UPDATE tickets SET created_by = ?2 WHERE id = ?1 AND created_by IS NULL",
                 params![task, actor],
             ) {
                 tracing::warn!(task, "backfilling created_by failed: {e}");
@@ -3048,7 +3056,7 @@ mod sync {
                 _ => new_task_id(prefix),
             };
             let result = conn.execute(
-                "INSERT INTO tasks(id, title, kind, state, created_at, updated_at, created_by)
+                "INSERT INTO tickets(id, title, kind, state, created_at, updated_at, created_by)
                  VALUES (?1, ?2, ?3, ?4, ?5, ?5, ?6)",
                 params![
                     id,
@@ -3082,7 +3090,7 @@ mod sync {
 
     pub(super) fn insert_task_row(conn: &Connection, row: &TaskRow) -> Result<(), StoreError> {
         let result = conn.execute(
-            "INSERT INTO tasks(id, title, kind, state, created_at, updated_at, created_by)
+            "INSERT INTO tickets(id, title, kind, state, created_at, updated_at, created_by)
              VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
             params![
                 row.id,
@@ -3107,7 +3115,7 @@ mod sync {
     pub(super) fn get_task(conn: &Connection, id: &str) -> Result<Option<TaskRow>, StoreError> {
         Ok(conn
             .query_row(
-                "SELECT id, title, kind, state, created_at, updated_at, created_by FROM tasks WHERE id = ?1",
+                "SELECT id, title, kind, state, created_at, updated_at, created_by FROM tickets WHERE id = ?1",
                 params![id],
                 row_to_task,
             )
@@ -3116,7 +3124,7 @@ mod sync {
 
     pub(super) fn list_tasks(conn: &Connection) -> Result<Vec<TaskRow>, StoreError> {
         let mut stmt = conn.prepare(
-            "SELECT id, title, kind, state, created_at, updated_at, created_by FROM tasks ORDER BY created_at ASC, rowid ASC",
+            "SELECT id, title, kind, state, created_at, updated_at, created_by FROM tickets ORDER BY created_at ASC, rowid ASC",
         )?;
         let rows = stmt.query_map([], row_to_task)?;
         rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
@@ -3128,7 +3136,7 @@ mod sync {
         title: &str,
     ) -> Result<(), StoreError> {
         let n = conn.execute(
-            "UPDATE tasks SET title = ?1, updated_at = ?2 WHERE id = ?3",
+            "UPDATE tickets SET title = ?1, updated_at = ?2 WHERE id = ?3",
             params![title, fmt_dt(Utc::now()), id],
         )?;
         if n == 0 {
@@ -3143,7 +3151,7 @@ mod sync {
         kind: TaskKind,
     ) -> Result<(), StoreError> {
         let n = conn.execute(
-            "UPDATE tasks SET kind = ?1, updated_at = ?2 WHERE id = ?3",
+            "UPDATE tickets SET kind = ?1, updated_at = ?2 WHERE id = ?3",
             params![kind.as_str(), fmt_dt(Utc::now()), id],
         )?;
         if n == 0 {
@@ -3158,7 +3166,7 @@ mod sync {
         state: TaskState,
     ) -> Result<(), StoreError> {
         let n = conn.execute(
-            "UPDATE tasks SET state = ?1, updated_at = ?2 WHERE id = ?3",
+            "UPDATE tickets SET state = ?1, updated_at = ?2 WHERE id = ?3",
             params![state.as_str(), fmt_dt(Utc::now()), id],
         )?;
         if n == 0 {
@@ -4099,6 +4107,34 @@ mod tests {
         // Idempotent: a second pass changes nothing.
         sync::backfill_task_creators(&conn).expect("again");
         assert_eq!(by("t-a").as_deref(), Some("agent-1"));
+    }
+
+    /// The `tasks` table becomes `tickets` (br-95t9) with every row intact.
+    #[test]
+    fn the_tasks_table_is_renamed_with_its_rows() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let path = tmp.path().join("bridle.db");
+        {
+            let conn = Connection::open(&path).expect("open");
+            for sql in &sync::MIGRATIONS[..25] {
+                conn.execute_batch(sql).expect("schema");
+            }
+            conn.pragma_update(None, "user_version", 25)
+                .expect("set version");
+            conn.execute_batch(
+                "INSERT INTO tasks(id, title, kind, state, created_at, updated_at) VALUES
+                    ('t-a', 'A', 'chore', 'open', '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z'),
+                    ('t-b', 'B', 'chore', 'open', '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z');",
+            )
+            .expect("old rows");
+        }
+        let conn = sync::open(&path).expect("migrates");
+        let n: i64 = conn
+            .query_row("SELECT count(*) FROM tickets", [], |r| r.get(0))
+            .expect("count");
+        assert_eq!(n, 2);
+        assert!(conn.prepare("SELECT 1 FROM tasks").is_err());
+        assert_eq!(sync::list_tasks(&conn).expect("list").len(), 2);
     }
 
     /// Reproduces the real `JoinError::Cancelled` that `Store::open` and
