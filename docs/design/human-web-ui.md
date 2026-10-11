@@ -144,6 +144,19 @@ tree is on a detached HEAD (403): the gateway commits on whatever branch is chec
 project's working tree, including `main`. This machine's
 projects only (the repo comes from the daemon's registry entry).
 
+**Bridle's own edits to a reviewed document are committed too (br-fd8e, ticket fd8e).** The
+daemon's review watcher rewrites a document under review: it gives hand-typed threads their `c<n>`
+IDs, marks threads `[sent]`, and turns `[sent]` into `[read]`. Each such write is noted, and once
+the file has been still for 10 seconds one commit `review: bridle updates comment marks on <path>`
+takes the burst, through the same `bridle_docs::documents::commit_file` the human's comments use
+(`--only`, so the human's staged files are untouched). Two guards: only the project's owner clone
+commits (the others edit and leave it), and a file that already had uncommitted changes when
+bridle first wrote to it is left uncommitted and logged once, since those changes are someone's
+work in progress. Clones already dirty from earlier rewrites are not auto-committed. The commits
+ride the owner clone's ordinary push of the integration branch (br-8ay6, rule
+`one-pusher-for-the-integration-branch`); nothing here pushes or needs new permission. Not covered
+yet: frontmatter that the `bridle ticket` commands write (they run in the caller's worktree).
+
 **Document search and auto-review (br-jrm2, ticket jrm2).** `GET /api/v1/projects/{project}/documents?q=`
 returns `DocumentMatches {project, paths}`: up to 30 `.md` paths under `docs/` containing `q`
 (case-insensitive), best first: a ticket whose ID is exactly `q` (a bare `x8jt` finds

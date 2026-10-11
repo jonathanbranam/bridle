@@ -316,15 +316,24 @@ pub fn write_document(
     }
     std::fs::write(&full, &req.content).map_err(|e| DocError::Internal(e.to_string()))?;
     let msg = format!("review: human comments on {rel}");
-    // `--only` commits just this file, whatever else is staged in the human's tree.
-    let committed = git(repo, &["add", "--", rel])
-        .and_then(|_| git(repo, &["commit", "-q", "-m", &msg, "--only", "--", rel]));
-    if let Err(e) = committed {
+    if let Err(e) = commit_file(repo, rel, &msg) {
         // Leave the file as it was read, not half-saved.
         std::fs::write(&full, &current).ok();
         return Err(e);
     }
     Ok(saved(git(repo, &["rev-parse", "HEAD"])?))
+}
+
+/// Commits just `rel` with `msg`, whatever else is staged in the human's tree (`--only`). The one
+/// commit path for the human's comments and for bridle's own edits to a reviewed document.
+pub fn commit_file(repo: &FsPath, rel: &str, msg: &str) -> Result<(), DocError> {
+    git(repo, &["add", "--", rel])?;
+    git(repo, &["commit", "-q", "-m", msg, "--only", "--", rel]).map(|_| ())
+}
+
+/// True when git sees no change to `rel` (tracked and equal to HEAD).
+pub fn is_clean(repo: &FsPath, rel: &str) -> bool {
+    git(repo, &["status", "--porcelain", "--", rel]).is_ok_and(|s| s.is_empty())
 }
 
 /// A bare ticket ID, or a task ID `<prefix>-<id>` whose `<id>` is a ticket ID (a ticket's first

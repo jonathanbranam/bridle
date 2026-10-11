@@ -474,6 +474,66 @@ fn prompt(repo: &Path, path: &str, batch: &str) -> String {
     )
 }
 
+/// How long a document stays still after bridle's last edit to it before the edits are committed,
+/// so a burst (ids, then `sent`, then `read`) is one commit.
+const COMMIT_QUIET: Duration = Duration::seconds(10);
+
+/// Commits the edits bridle itself makes to documents under review (fd8e), through the commit
+/// path the human's comments use. Only the owner clone commits, and only a file that was clean
+/// before bridle's first edit: anything else is someone's work in progress and is left alone.
+#[derive(Default)]
+struct EditCommits {
+    /// Files bridle has edited and not yet committed, with the time of its latest edit.
+    ours: HashMap<String, DateTime<Utc>>,
+    /// Files already reported as left alone, so the log says it once.
+    warned: std::collections::HashSet<String>,
+}
+
+impl EditCommits {
+    /// Call before bridle writes `path`: true when the write may be committed later.
+    fn before_write(&mut self, repo: &Path, owner: bool, path: &str) -> bool {
+        if !owner {
+            return false;
+        }
+        if self.ours.contains_key(path) || bridle_docs::documents::is_clean(repo, path) {
+            self.warned.remove(path);
+            return true;
+        }
+        if self.warned.insert(path.to_string()) {
+            tracing::warn!(
+                path,
+                "document has uncommitted edits by others; bridle's edit to it is left uncommitted"
+            );
+        }
+        false
+    }
+
+    /// Call after a write that `before_write` allowed.
+    fn wrote(&mut self, path: &str, now: DateTime<Utc>) {
+        self.ours.insert(path.to_string(), now);
+    }
+
+    /// Commits each file that has been still for `COMMIT_QUIET`.
+    fn flush(&mut self, repo: &Path, now: DateTime<Utc>) {
+        let due: Vec<String> = self
+            .ours
+            .iter()
+            .filter(|(_, at)| now - **at >= COMMIT_QUIET)
+            .map(|(p, _)| p.clone())
+            .collect();
+        for p in due {
+            self.ours.remove(&p);
+            if bridle_docs::documents::is_clean(repo, &p) {
+                continue;
+            }
+            let msg = format!("review: bridle updates comment marks on {p}");
+            if let Err(e) = bridle_docs::documents::commit_file(repo, &p, &msg) {
+                tracing::warn!(path = %p, error = %e, "could not commit bridle's edit to a document");
+            }
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct DocWatcher {
     store: Store,
@@ -484,6 +544,9 @@ pub struct DocWatcher {
     /// Held while a batch is read, delivered and marked, so a tick and a review-now never send
     /// the same thread twice.
     sending: std::sync::Arc<tokio::sync::Mutex<()>>,
+    /// False on a clone that is not the project's owner: it edits, but never commits.
+    owner: bool,
+    edits: std::sync::Arc<std::sync::Mutex<EditCommits>>,
 }
 
 /// What `review now` did.
@@ -503,7 +566,26 @@ impl DocWatcher {
             cfg,
             core: Default::default(),
             sending: Default::default(),
+            owner: true,
+            edits: Default::default(),
         }
+    }
+
+    /// Whether this clone is the project's owner, the only one that commits (fd8e).
+    pub fn with_owner(mut self, owner: bool) -> Self {
+        self.owner = owner;
+        self
+    }
+
+    /// Writes `text` to `path` (repo-relative), noting it for the debounced commit.
+    fn write_marked(&self, path: &str, text: &str, now: DateTime<Utc>) -> std::io::Result<()> {
+        let mut edits = self.edits.lock().expect("doc edits lock");
+        let track = edits.before_write(&self.repo, self.owner, path);
+        std::fs::write(self.repo.join(path), text)?;
+        if track {
+            edits.wrote(path, now);
+        }
+        Ok(())
     }
 
     pub async fn tick(&self) {
@@ -524,6 +606,10 @@ impl DocWatcher {
         }
 
         self.sweep_marks(&docs, now).await;
+        self.edits
+            .lock()
+            .expect("doc edits lock")
+            .flush(&self.repo, now);
 
         let due = {
             let mut core = self.core.lock().expect("doc watch lock");
@@ -583,7 +669,7 @@ impl DocWatcher {
                 text = m;
                 changed = true;
             }
-            if changed && let Err(e) = std::fs::write(&file, text) {
+            if changed && let Err(e) = self.write_marked(&p, &text, now) {
                 tracing::warn!(path = %p, error = %e, "could not update comment marks");
             }
         }
@@ -655,7 +741,8 @@ impl DocWatcher {
         // The agent sees the thread IDs, so they go in before the batch does.
         let with_ids = assign_ids(&text);
         if with_ids != text {
-            std::fs::write(&file, &with_ids).map_err(|e| format!("writing {path}: {e}"))?;
+            self.write_marked(path, &with_ids, now)
+                .map_err(|e| format!("writing {path}: {e}"))?;
         }
         let threads = pending_threads(&with_ids, resend);
         let batch = threads.join("\n\n");
@@ -671,7 +758,8 @@ impl DocWatcher {
         // Read again: the agent may already have edited the file.
         let latest = std::fs::read_to_string(&file).map_err(|e| format!("{path}: {e}"))?;
         let marked = mark_threads(&latest, &threads, "sent", &stamp(now));
-        std::fs::write(&file, marked).map_err(|e| format!("marking {path}: {e}"))?;
+        self.write_marked(path, &marked, now)
+            .map_err(|e| format!("marking {path}: {e}"))?;
         Ok(threads.len())
     }
 
@@ -971,5 +1059,83 @@ mod tests {
             .unwrap()
             .to_utc();
         assert_eq!(stamp(est), "2026-01-04 20:14 EST");
+    }
+
+    fn git(dir: &Path, args: &[&str]) -> String {
+        let out = std::process::Command::new("git")
+            .arg("-C")
+            .arg(dir)
+            .args(args)
+            .output()
+            .expect("git");
+        assert!(out.status.success(), "{args:?}: {out:?}");
+        String::from_utf8_lossy(&out.stdout).trim().to_string()
+    }
+
+    fn commits(dir: &Path) -> usize {
+        git(dir, &["rev-list", "--count", "HEAD"]).parse().unwrap()
+    }
+
+    fn edit_repo() -> tempfile::TempDir {
+        let dir = tempfile::tempdir().unwrap();
+        git(dir.path(), &["init", "-q", "-b", "main"]);
+        git(dir.path(), &["config", "user.name", "t"]);
+        git(dir.path(), &["config", "user.email", "t@t"]);
+        git(dir.path(), &["config", "commit.gpgsign", "false"]);
+        std::fs::write(dir.path().join("d.md"), "a [sent x]\n").unwrap();
+        git(dir.path(), &["add", "."]);
+        git(dir.path(), &["commit", "-q", "-m", "init"]);
+        dir
+    }
+
+    /// One tracked write, as `DocWatcher::write_marked` does it.
+    fn bridle_writes(e: &mut EditCommits, dir: &Path, owner: bool, text: &str, at: DateTime<Utc>) {
+        let track = e.before_write(dir, owner, "d.md");
+        std::fs::write(dir.join("d.md"), text).unwrap();
+        if track {
+            e.wrote("d.md", at);
+        }
+    }
+
+    #[test]
+    fn marker_rewrite_is_committed_once_after_a_burst() {
+        let d = edit_repo();
+        let mut e = EditCommits::default();
+        bridle_writes(&mut e, d.path(), true, "a [read x]\n", t(0));
+        bridle_writes(
+            &mut e,
+            d.path(),
+            true,
+            "a [read y]\n",
+            t(0) + Duration::seconds(3),
+        );
+        e.flush(d.path(), t(0) + Duration::seconds(5));
+        assert_eq!(commits(d.path()), 1, "still inside the quiet period");
+        e.flush(d.path(), t(0) + Duration::seconds(30));
+        assert_eq!(commits(d.path()), 2);
+        assert!(git(d.path(), &["log", "-1", "--format=%s"]).starts_with("review: "));
+        assert!(git(d.path(), &["status", "--porcelain"]).is_empty());
+        e.flush(d.path(), t(0) + Duration::seconds(60));
+        assert_eq!(commits(d.path()), 2);
+    }
+
+    #[test]
+    fn a_file_with_others_uncommitted_edits_is_left_alone() {
+        let d = edit_repo();
+        std::fs::write(d.path().join("d.md"), "someone's draft\n").unwrap();
+        let mut e = EditCommits::default();
+        bridle_writes(&mut e, d.path(), true, "someone's draft [read x]\n", t(0));
+        e.flush(d.path(), t(0) + Duration::seconds(60));
+        assert_eq!(commits(d.path()), 1);
+        assert!(!git(d.path(), &["status", "--porcelain"]).is_empty());
+    }
+
+    #[test]
+    fn a_non_owner_clone_makes_no_commit() {
+        let d = edit_repo();
+        let mut e = EditCommits::default();
+        bridle_writes(&mut e, d.path(), false, "a [read x]\n", t(0));
+        e.flush(d.path(), t(0) + Duration::seconds(60));
+        assert_eq!(commits(d.path()), 1);
     }
 }

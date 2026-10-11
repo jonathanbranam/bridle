@@ -780,6 +780,11 @@ pub struct Owner {
     pub since: String,
 }
 
+/// Whether the state worktree's `owner.toml` names `host`.
+pub fn owned_by(dir: &Path, host: &str) -> bool {
+    read_owner_file(dir).is_some_and(|o| o.host == host)
+}
+
 fn read_owner_file(dir: &Path) -> Option<Owner> {
     toml::from_str(&std::fs::read_to_string(dir.join(OWNER_FILE)).ok()?).ok()
 }

@@ -854,7 +854,9 @@ async fn start_inner(
         manager.clone(),
         ws.repo.clone(),
         config.review.clone(),
-    );
+    )
+    // A project that doesn't push has no owner file; its one clone is the owner.
+    .with_owner(!config.state_push || state_branch::owned_by(&ws.state_branch_dir(), &host));
     let state = server::AppState {
         store: store.clone(),
         manager: manager.clone(),
