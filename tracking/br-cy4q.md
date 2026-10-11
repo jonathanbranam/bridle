@@ -2,11 +2,14 @@
 id = "br-cy4q"
 title = "Human to-dos are normal tickets: ticket new --for-human, to-do commands and the gateway list under ticket (22ab step 7b)"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-11T13:35:46.520Z"
-updated_at = "2026-10-11T13:36:28.008894Z"
+updated_at = "2026-10-11T15:04:12.924897Z"
 created_by = "external:advisor/product-manager"
-watchers = ["external:advisor/product-manager"]
+watchers = [
+    "external:advisor/product-manager",
+    "agent:wcy4q",
+]
 ticket = "cy4q"
 +++
 
