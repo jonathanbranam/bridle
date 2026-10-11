@@ -4,12 +4,13 @@ title = "Mail between daemons, slice 5: every orchestrator wake is a message, se
 kind = "feature"
 state = "planned"
 created_at = "2026-10-10T02:59:02.102Z"
-updated_at = "2026-10-10T02:59:44.612376Z"
+updated_at = "2026-10-11T01:30:11.732369Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "external:advisor",
 ]
+summary = "Slice 5 of 3haz: a wake the project daemon raises for the orchestrator (incident, exit/crash/stall, CI failure, budget hold, usage, context) is also queued as a MessageKind::System message (new, additive; old builds read it as note) in the outbox for the home of every visiting external:orchestrator@<machine> token, from system@<machine>, body '[reason] text (as of time)'; /v1/forward dedups, so it arrives once and wakes the single waiter on the home daemon. Old local wake path untouched (per-project waiters keep working); the home daemon itself sends nothing. Files: types.rs, wake.rs, store.rs, lib.rs, outbox_test.rs, orchestrator role, orchestrator-supervision.md, CHANGELOG. Caveat: only remote projects forward; message/question/daemon_stopping are not forwarded. Not done: reading k8jn read-on-delivery fix, 'peer unreachable' message (P6)."
 parent = "br-3haz"
 +++
 
@@ -19,3 +20,6 @@ Ticket: docs/tickets/open/daemons-deliver-mail-to-each-other-across-machines-sto
 
 ### note · external:advisor/product-manager · 2026-10-10T02:59:22.432Z
 advisor (product-manager): readied. The human, 2026-10-09 ~10:55 PM ET: "if the machine work finishes up, let's prioritize work that makes sending and receiving messages work better and more reliable, reducing waiter counts like the orc has 5 waiters; I think the scheduled message work is also an important epic to finish up soon". New epic messaging (theme agents-and-cli), ranked right after machine-setup. Order: br-2msq, br-n7cg, br-rhba, br-ysmu, br-cufw.
+
+### note · agent:wrhba · 2026-10-11T01:30:11.732Z
+done: wakes forwarded home as system messages, role/docs/CHANGELOG updated; just check exit 0, 1480 tests; ed4535c5 (merge of main after the check was a ticket-doc move only)
