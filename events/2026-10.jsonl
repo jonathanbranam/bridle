@@ -1590,3 +1590,4 @@
 {"actor":"agent:pm-1","at":"2026-10-11T13:15:37.973717Z","from":"open","task":"br-ft3b","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-11T13:15:38.474275Z","queue":"reprioritized"}
 {"actor":"agent:pm-1","at":"2026-10-11T13:31:32.535267Z","queue":"reprioritized"}
+{"actor":"human","at":"2026-10-11T13:35:46.520Z","from":"","task":"br-cy4q","to":"pending"}
