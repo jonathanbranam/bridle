@@ -15,8 +15,6 @@ theme: agents-and-cli
 
 ## The ask
 
-## The ask
-
 The human, 2026-10-11 ~12:30 AM ET, verbatim (to advisor product-manager), on why externals get a
 403 from `bridle schedule add`:
 
