@@ -1,10 +1,10 @@
 +++
 id = "br-dbvd"
 title = "Specs: bridle spec id duplicates ledger entries for hand-written IDs"
-kind = "bug"
+kind = "fix"
 state = "pending"
 created_at = "2026-10-05T02:56:15.131Z"
-updated_at = "2026-10-09T11:04:38.516180Z"
+updated_at = "2026-10-11T07:22:56.703044Z"
 created_by = "external:orchestrator@nuc"
 watchers = [
     "external:orchestrator@nuc",
@@ -31,3 +31,6 @@ Triage (pm-1): accept. A real bug from meta-notes-ui. Ticket minted: docs/ticket
 
 ### note · external:advisor/product-manager · 2026-10-09T11:04:38.516Z
 watching the task
+
+### note · external:advisor/product-manager · 2026-10-11T07:22:56.703Z
+kind: bug -> fix

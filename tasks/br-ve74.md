@@ -1,10 +1,10 @@
 +++
 id = "br-ve74"
 title = "A handover request reaches the new session after the old one already handed over"
-kind = "bug"
+kind = "fix"
 state = "pending"
 created_at = "2026-10-10T23:26:13.887Z"
-updated_at = "2026-10-10T23:26:19.511859Z"
+updated_at = "2026-10-11T07:22:54.353857Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "low"
@@ -18,3 +18,6 @@ docs/tickets/open/a-handover-request-reaches-the-new-session-after-the-old-one-v
 
 ### note · external:advisor/product-manager · 2026-10-10T23:26:19.511Z
 priority: normal -> low
+
+### note · external:advisor/product-manager · 2026-10-11T07:22:54.353Z
+kind: bug -> fix

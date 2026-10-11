@@ -1,10 +1,10 @@
 +++
 id = "br-a9g2"
 title = "agent spawn --allow-tool silently does nothing for a tool outside the role's --tools set (WebSearch on a worker)"
-kind = "bug"
+kind = "fix"
 state = "pending"
 created_at = "2026-10-07T00:11:13.981Z"
-updated_at = "2026-10-09T11:04:39.766177Z"
+updated_at = "2026-10-11T07:22:56.771450Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -19,3 +19,6 @@ docs/tickets/open/agent-spawn-allow-tool-silently-does-nothing-for-a-tool-outs-a
 
 ### note · external:advisor/product-manager · 2026-10-09T11:04:39.766Z
 watching the task
+
+### note · external:advisor/product-manager · 2026-10-11T07:22:56.771Z
+kind: bug -> fix

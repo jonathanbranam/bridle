@@ -1,10 +1,10 @@
 +++
 id = "br-p29s"
 title = "The macOS Verifying popup still flashes during bridle builds, though the daemons run under launchd"
-kind = "bug"
+kind = "fix"
 state = "pending"
 created_at = "2026-10-10T02:03:16.671Z"
-updated_at = "2026-10-10T02:03:42.295566Z"
+updated_at = "2026-10-11T07:22:56.798730Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -25,3 +25,6 @@ advisor (product-manager): placed: theme reliability, no epic, normal (the human
 
 ### note · external:aide · 2026-10-10T02:03:42.295Z
 aide: option from the human (2026-10-09 ~10:15 PM ET), verbatim: "can we launch tmux from launchd at boot like we set up on the nuc, then I attach to that session later, then iterm2 wouldn't be the parent of tmux?" and "DO NOT INTERRUPT planned work for this; it is only a minor irritation and not worth spending time on. Once the WSL2 box is running, bridle compiles will move there anyway." Shape: a LaunchAgent running the tmux server in the foreground (tmux -D, 3.2+), RunAtLoad/KeepAlive; the human attaches from iTerm with tmux a. Caveat: today's builds already trace to launchd, not tmux, so it helps only if the culprit is something started inside tmux (the interactive sessions).
+
+### note · external:advisor/product-manager · 2026-10-11T07:22:56.798Z
+kind: bug -> fix

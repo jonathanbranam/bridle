@@ -1,10 +1,10 @@
 +++
 id = "br-6rz4"
 title = "ticket new: a body with its own '## The ask' gets a second, empty one, and ticket task refuses"
-kind = "bug"
+kind = "fix"
 state = "pending"
 created_at = "2026-10-11T06:05:26.191Z"
-updated_at = "2026-10-11T06:05:38.574963Z"
+updated_at = "2026-10-11T07:22:56.948297Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 priority = "low"
@@ -21,3 +21,6 @@ priority: normal -> low
 
 ### note · external:advisor/product-manager · 2026-10-11T06:05:38.574Z
 advisor (product-manager): kept pending at low; goes to the human in the morning to ready (small, Haiku).
+
+### note · external:advisor/product-manager · 2026-10-11T07:22:56.948Z
+kind: bug -> fix
