@@ -11,6 +11,7 @@ blocked_by: []
 related: [yfv5, cbbn]
 tasks: [br-3k7d]
 theme: agents-and-cli
+resolved: 2026-10-11T05:04:14Z
 ---
 
 ## The ask
