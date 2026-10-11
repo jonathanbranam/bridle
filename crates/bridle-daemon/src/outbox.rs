@@ -18,7 +18,8 @@ use bridle_api::client::ClientError;
 use bridle_api::discovery;
 use bridle_api::machines::MachineMap;
 use bridle_api::types::{
-    ForwardAck, ForwardRequest, HelloRequest, MessageKind, MessageState, OutboxEntry, When,
+    ForwardAck, ForwardRequest, HelloRequest, MessageKind, MessageState, OutboxEntry,
+    PeerWatchRequest, Task, When,
 };
 
 use crate::store::{OutboxRow, Store};
@@ -198,6 +199,29 @@ impl Outbox {
     fn peer_token(&self, project: &str) -> Result<Option<String>, String> {
         discovery::peer_token(&self.home.join("credentials.toml"), project)
             .map_err(|e| e.to_string())
+    }
+
+    /// This daemon's project: how a peer names it as a watcher's home.
+    pub fn project(&self) -> &str {
+        &self.project
+    }
+
+    /// Asks `project`'s daemon, with our peer token, to start or stop a watch for one of our
+    /// principals. Not queued: the caller needs the answer (no such task, no peer token), and
+    /// a watch is state, not mail.
+    pub async fn peer_watch(
+        &self,
+        project: &str,
+        req: &PeerWatchRequest,
+    ) -> Result<Task, ClientError> {
+        let other = ClientError::Unreachable;
+        self.check_destination(project).map_err(other)?;
+        let url = self.resolve(project).map_err(other)?;
+        let token = self.peer_token(project).map_err(other)?;
+        match tokio::time::timeout(ATTEMPT_TIMEOUT, Client::new(url, token).peer_watch(req)).await {
+            Ok(r) => r,
+            Err(_) => Err(other(format!("'{project}' did not answer in time"))),
+        }
     }
 
     /// Refuses a destination that can't be forwarded to: unknown, or with no peer token.

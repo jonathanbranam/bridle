@@ -163,7 +163,7 @@ token, like `task ready --project`; the outbox is for a project with no such tok
   It is printed once and pasted into the sender's `credentials.toml` under `[peer]`, keyed by the
   receiving project: `[peer]` / `beta = "..."`. One token per sending machine per receiving
   daemon, so the daemons of one machine share theirs. A peer token may call `/v1/forward` and
-  nothing else (403); nothing else may call `/v1/forward`.
+  nothing else but `/v1/hello` and `/v1/watch` (403); nothing else may call `/v1/forward`.
 - **The sender's label.** The forwarding daemon states who the sender was, qualified with its
   machine (`agent:w1@nuc`, `external:advisor/research@nuc`), and the receiver stores that as
   `from`. It is believed because the token is a peer's: a visitor's or other external token's
@@ -204,6 +204,20 @@ token, like `task ready --project`; the outbox is for a project with no such tok
   human: ..."), on top of the sender's 30 min note. `bridle recipients` (`GET /v1/recipients`)
   lists what can be addressed here (human, agents, external principals, visitors) and the other
   daemons known from the registry and machine config.
+- **Watching a task of another project (br-qac3, 3haz Q3).** `bridle task watch|unwatch --project
+  <p> <task>` (no direct token for `<p>` on this machine) goes to the caller's own daemon
+  (`POST /v1/watch/remote`, not for visitors), which asks `<p>`'s daemon with its peer token
+  (`POST /v1/watch` `{task, who, home, watch}`, peer token only) and answers with the task. The
+  task daemon records the watcher as `remote:<who>@<home project>` in the task's `watchers` (so
+  `task show` lists it); it refuses a watch whose home it has no peer token for, and an unknown
+  task (404). Its `task_update` messages are then queued in the task daemon's outbox for the
+  home daemon, labelled with the actor and this machine, and land in `<who>`'s ordinary inbox
+  there: same retry, order and dedup as other mail, so a home that is down receives them when it
+  returns. The watch call itself is not queued (it needs an answer), so it fails if the task
+  daemon is down; run it again. Chosen over carrying the watch in `/v1/forward`: a forward is
+  one-way mail acknowledged by origin id, with no way to say "no such task" or return the task,
+  and a watch is state to set and unset, not a message. No migration: watchers already live in
+  the task file, a local watcher keeps its plain id, and no project file changes.
 - **Not built yet:** `--task` and `@machine` addressing across daemons.
 
 Rule 2 means a Claude Code session (the human's orchestrator, or any agent)

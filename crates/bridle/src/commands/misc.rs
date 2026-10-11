@@ -199,7 +199,9 @@ pub(super) fn require_body(body: String) -> Result<String, CliError> {
 /// `--project`, or no own daemon to hand it to (then the old direct send applies). A daemon found
 /// by `$BRIDLE_URL` has no project in discovery, so it is asked; one that can't say is taken to be
 /// the requested project, so an agent's `$BRIDLE_PROJECT` never turns a local send into mail (x56y).
-async fn own_daemon_for_other_project(cli: &Cli) -> Result<Option<(Client, String)>, CliError> {
+pub(super) async fn own_daemon_for_other_project(
+    cli: &Cli,
+) -> Result<Option<(Client, String)>, CliError> {
     let Some(project) = cli.project.as_deref() else {
         return Ok(None);
     };

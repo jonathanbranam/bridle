@@ -18,17 +18,17 @@ use crate::types::{
     ImpactReport, Interaction, InteractionsQuery, InterruptRequest, InterruptResponse, LandRequest,
     LandResult, MaxWorkersRequest, Message, MessageQuery, NewEdgeRequest, NewTaskRequest,
     NoteTaskRequest, OpenQuestion, OrchestratorWakeQuery, OutboxEntry, OutboxSendRequest,
-    PeerTokenCreateRequest, PortAllocation, PrincipalWakeQuery, PrincipalWakeResponse,
-    ProbeRequest, ProbeResult, PushResult, Queue, Queued, RateLimitPoint, Recipient,
-    RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest, RestartRequest,
-    RestartResponse, ResumeRequest, ReviewAddRequest, ReviewAddResponse, ReviewNowRequest,
-    ReviewNowResponse, Schedule, ScheduleAddRequest, ScheduleListQuery, SendRequest, SessionEnd,
-    SessionInfo, SessionKeep, SessionRegister, SetImpactRequest, SetKindRequest,
-    SetPriorityRequest, SetQueueRequest, SetSummaryRequest, ShutdownResponse, SkipSettleRequest,
-    SpawnRequest, Status, StatusLineReport, StopRequest, StopWakeRequest, StopWakeResponse,
-    SubmitTaskRequest, Task, TaskQuery, TokenCreateRequest, TokenCreated, TokenInfo,
-    TranscriptLine, TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery, UsageHistoryQuery,
-    WakeResponse, WriteHandoverRequest,
+    PeerTokenCreateRequest, PeerWatchRequest, PortAllocation, PrincipalWakeQuery,
+    PrincipalWakeResponse, ProbeRequest, ProbeResult, PushResult, Queue, Queued, RateLimitPoint,
+    Recipient, RemoteWatchRequest, RemoveEdgeQuery, RemoveQuery, RenewRequest,
+    ResolveConflictRequest, RestartRequest, RestartResponse, ResumeRequest, ReviewAddRequest,
+    ReviewAddResponse, ReviewNowRequest, ReviewNowResponse, Schedule, ScheduleAddRequest,
+    ScheduleListQuery, SendRequest, SessionEnd, SessionInfo, SessionKeep, SessionRegister,
+    SetImpactRequest, SetKindRequest, SetPriorityRequest, SetQueueRequest, SetSummaryRequest,
+    ShutdownResponse, SkipSettleRequest, SpawnRequest, Status, StatusLineReport, StopRequest,
+    StopWakeRequest, StopWakeResponse, SubmitTaskRequest, Task, TaskQuery, TokenCreateRequest,
+    TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage, UsageBreakdown,
+    UsageBreakdownQuery, UsageHistoryQuery, WakeResponse, WriteHandoverRequest,
 };
 
 pub use bridle_docs::documents::{
@@ -326,6 +326,17 @@ impl Client {
     /// `POST /v1/forward`: hand one message to the daemon this client points at (peer token).
     pub async fn forward(&self, req: &ForwardRequest) -> Result<ForwardAck, ClientError> {
         self.post_json(&["v1", "forward"], req).await
+    }
+
+    /// `POST /v1/watch/remote`: watch (or stop watching) a task on another project's daemon,
+    /// through this daemon's peer token.
+    pub async fn remote_watch(&self, req: &RemoteWatchRequest) -> Result<Task, ClientError> {
+        self.post_json(&["v1", "watch", "remote"], req).await
+    }
+
+    /// `POST /v1/watch`: register a peer's principal as a watcher here (peer token).
+    pub async fn peer_watch(&self, req: &PeerWatchRequest) -> Result<Task, ClientError> {
+        self.post_json(&["v1", "watch"], req).await
     }
 
     /// `POST /v1/hello`: tell the daemon this client points at that we are back (peer token).

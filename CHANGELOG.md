@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- `bridle task watch|unwatch --project <p> <task>` works across projects and machines: your own daemon registers the watch on the task's daemon with its peer token (`POST /v1/watch/remote`, `POST /v1/watch`), and that daemon's task updates reach your inbox as messages through its outbox, queued and retried while yours is down (br-qac3, 3haz slice 6, Q3).
 ## [0.6.1] - 2026-10-11
 
 - The daemon commits its own edits to documents under review (`[sent]`/`[read]` marks, thread IDs) as one `review: bridle updates comment marks on <path>` commit after the file has been still for 10 seconds, so the clone is no longer left dirty; only on the owner clone, and never over a file with someone else's uncommitted changes (br-fd8e).

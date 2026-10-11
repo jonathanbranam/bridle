@@ -570,6 +570,10 @@ fn the_flag_wins_over_the_workspace() {
     // 3haz: `send --project y` is mail for y's daemon, so it is queued on the sender's own
     // daemon (x, the workspace's) and forwarded from there; the CLI never writes to y.
     assert_eq!(seen.remove("send").as_deref(), Some("x"));
+    // br-qac3: so is `task watch|unwatch --project y`, registered on y by x's peer token.
+    for leaf in ["task watch", "task unwatch"] {
+        assert_eq!(seen.remove(leaf).as_deref(), Some("x"), "{leaf}");
+    }
     assert_all(&seen, "y");
 }
 

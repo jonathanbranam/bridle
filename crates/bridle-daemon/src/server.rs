@@ -29,7 +29,8 @@ use bridle_api::types::{
     WakeResponse, When, WindowStatus, WriteHandoverRequest, event_kind,
 };
 use bridle_api::types::{
-    PrincipalId, Schedule, ScheduleAddRequest, ScheduleListQuery, ThreadEntryKind,
+    PeerWatchRequest, PrincipalId, RemoteWatchRequest, Schedule, ScheduleAddRequest,
+    ScheduleListQuery, ThreadEntryKind,
 };
 use chrono::{DateTime, Utc};
 use futures::Stream;
@@ -114,6 +115,8 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/schedules", get(list_schedules).post(add_schedule))
         .route("/v1/schedules/{id}", axum::routing::delete(remove_schedule))
         .route("/v1/hello", post(hello))
+        .route("/v1/watch", post(peer_watch))
+        .route("/v1/watch/remote", post(remote_watch))
         .route("/v1/forward", post(forward))
         .route("/v1/forward/{message_id}", get(forward_state))
         .route("/v1/outbox/{id}", get(outbox_entry))
@@ -341,9 +344,11 @@ async fn auth_middleware(
         Ok(Some(principal))
             if principal.kind == PrincipalKind::Peer
                 && !(req.uri().path().starts_with("/v1/forward")
-                    || req.uri().path() == "/v1/hello") =>
+                    || req.uri().path() == "/v1/hello"
+                    || req.uri().path() == "/v1/watch") =>
         {
-            ApiError::forbidden("a peer token may only forward mail").into_response()
+            ApiError::forbidden("a peer token may only forward mail and register watches")
+                .into_response()
         }
         Ok(Some(principal)) => {
             let principal = named_advisor(principal, req.headers());
@@ -1552,6 +1557,37 @@ async fn resolve_targets(state: &AppState, to_raw: &str) -> Result<Vec<ToTarget>
     })
 }
 
+/// Queues one message for `home`'s daemon in this daemon's outbox and starts a delivery try in
+/// the background; returns the outbox id.
+async fn enqueue_to_home(
+    state: &AppState,
+    home: &str,
+    from: &str,
+    to: &str,
+    msg: (MessageKind, &str, When, Option<String>),
+) -> Result<String, ApiError> {
+    let (kind, body, when, reply_to) = msg;
+    let oid = state
+        .store
+        .outbox_enqueue(crate::store::OutboxRow {
+            id: String::new(),
+            project: home.to_string(),
+            from: from.to_string(),
+            to: to.to_string(),
+            kind,
+            body: body.to_string(),
+            reply_to,
+            when,
+            attempts: 0,
+            last_error: None,
+        })
+        .await?;
+    let outbox = state.outbox.clone();
+    let home = home.to_string();
+    tokio::spawn(async move { outbox.flush(&home).await });
+    Ok(oid)
+}
+
 /// A visitor with a recorded home gets its mail forwarded there through the outbox (3haz P2),
 /// so its own waiter on its own daemon wakes for it. `None` means keep it here: not a visitor,
 /// a token with no home (minted before the field), or a home we can't forward to now.
@@ -1580,23 +1616,14 @@ async fn forward_to_home(
     } else {
         format!("{from}@{}", state.outbox.machine_name())
     };
-    let oid = state
-        .store
-        .outbox_enqueue(crate::store::OutboxRow {
-            id: String::new(),
-            project: home.clone(),
-            from: from.clone(),
-            to: to.to_string(),
-            kind: *kind,
-            body: body.to_string(),
-            reply_to: reply_to.clone(),
-            when,
-            attempts: 0,
-            last_error: None,
-        })
-        .await?;
-    let outbox = state.outbox.clone();
-    tokio::spawn(async move { outbox.flush(&home).await });
+    let oid = enqueue_to_home(
+        state,
+        &home,
+        &from,
+        to,
+        (*kind, body, when, reply_to.clone()),
+    )
+    .await?;
     Ok(Some(Message {
         id: oid.clone(),
         from,
@@ -1894,6 +1921,123 @@ async fn send_outbox(
         state: state_now,
         last_error,
     }))
+}
+
+/// `POST /v1/watch/remote`: the caller watches a task on another project's daemon. This daemon
+/// registers it there with its peer token (3haz Q3); the task's updates then come back as
+/// ordinary messages through the other daemon's outbox.
+async fn remote_watch(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Json(req): Json<RemoteWatchRequest>,
+) -> Result<Json<Task>, ApiError> {
+    require_not_visitor(&principal)?;
+    if principal.kind == PrincipalKind::Peer {
+        return Err(ApiError::forbidden("a peer token may not ask for a watch"));
+    }
+    if req.project == state.outbox.project() {
+        return Err(ApiError::bad_request(
+            "that task is on this daemon: watch it without --project",
+        ));
+    }
+    let peer_req = PeerWatchRequest {
+        task: req.task,
+        who: principal.id,
+        home: state.outbox.project().to_string(),
+        watch: req.watch,
+    };
+    match state.outbox.peer_watch(&req.project, &peer_req).await {
+        Ok(task) => Ok(Json(task)),
+        Err(bridle_api::client::ClientError::Api {
+            status,
+            code,
+            message,
+        }) => Err(ApiError::new(
+            StatusCode::from_u16(status).unwrap_or(StatusCode::BAD_GATEWAY),
+            if code == "not_found" {
+                "not_found"
+            } else {
+                "remote_error"
+            },
+            message,
+        )),
+        Err(e) => Err(ApiError::new(
+            StatusCode::BAD_GATEWAY,
+            "unreachable",
+            e.to_string(),
+        )),
+    }
+}
+
+/// `POST /v1/watch`: a peer daemon watches a task here for one of its principals. Recorded as
+/// a `remote:<who>@<home>` watcher; its `task_update`s are queued for `home` (see
+/// [`emit_task_change`]). Peer tokens only: that is also why `who` is believed.
+async fn peer_watch(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Json(req): Json<PeerWatchRequest>,
+) -> Result<Json<Task>, ApiError> {
+    if principal.kind != PrincipalKind::Peer {
+        return Err(ApiError::forbidden("this takes a peer token"));
+    }
+    if req.watch
+        && let Err(why) = state.outbox.check_destination(&req.home)
+    {
+        return Err(ApiError::bad_request(format!(
+            "can't send updates back to '{}': {why}",
+            req.home
+        )));
+    }
+    let watcher = format!("{REMOTE_WATCHER}{}@{}", req.who, req.home);
+    let (task, changed) = state
+        .tasks
+        .set_watching(&req.task, &watcher, req.watch)
+        .await?;
+    if changed {
+        let _ = state
+            .emitter
+            .emit(
+                event_kind::TASK_WATCHING,
+                watcher,
+                None,
+                serde_json::json!({"task": task.id, "watching": req.watch}),
+            )
+            .await;
+    }
+    Ok(Json(task))
+}
+
+/// Prefix of a watcher that lives on another daemon: `remote:<principal>@<home project>`.
+const REMOTE_WATCHER: &str = "remote:";
+
+/// Queues a `task_update` for a remote watcher in this daemon's outbox: delivery, retry, order
+/// and dedup are the outbox's. Returns whether `watcher` was one.
+async fn send_to_remote_watcher(
+    state: &AppState,
+    actor: &str,
+    watcher: &str,
+    line: &str,
+) -> Result<bool, ApiError> {
+    let Some(rest) = watcher.strip_prefix(REMOTE_WATCHER) else {
+        return Ok(false);
+    };
+    let Some((to, home)) = rest.rsplit_once('@') else {
+        return Ok(false);
+    };
+    let from = if actor.contains('@') {
+        actor.to_string()
+    } else {
+        format!("{actor}@{}", state.outbox.machine_name())
+    };
+    enqueue_to_home(
+        state,
+        home,
+        &from,
+        to,
+        (MessageKind::TaskUpdate, line, Default::default(), None),
+    )
+    .await?;
+    Ok(true)
 }
 
 /// `POST /v1/hello`: a peer daemon says it is back; its queue here is flushed at once. Only a
@@ -3624,6 +3768,14 @@ async fn emit_task_change(
         .into_iter()
         .filter(|w| *w != actor)
     {
+        match send_to_remote_watcher(state, &actor, &watcher, &line).await {
+            Ok(true) => continue,
+            Ok(false) => {}
+            Err(e) => {
+                tracing::warn!(task = %task.id, %watcher, "task update not queued: {}", e.message);
+                continue;
+            }
+        }
         match target_for_principal(state, &watcher).await {
             Ok(Some(target)) if told.contains(&target) => {}
             Ok(Some(target)) => {

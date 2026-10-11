@@ -921,6 +921,28 @@ pub struct HelloRequest {
     pub daemon: String,
 }
 
+/// `POST /v1/watch/remote`: the caller starts or stops watching a task that lives on another
+/// project's daemon. The caller's own daemon registers it there with its peer token (3haz Q3).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct RemoteWatchRequest {
+    /// The project whose daemon holds the task.
+    pub project: String,
+    pub task: String,
+    pub watch: bool,
+}
+
+/// `POST /v1/watch`: a peer daemon watches a task here on behalf of one of its principals. Its
+/// `task_update` messages go back through this daemon's outbox to `home`. Peer tokens only.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct PeerWatchRequest {
+    pub task: String,
+    /// The watcher as its own daemon knows it (`agent:w1`).
+    pub who: PrincipalId,
+    /// The watcher's home: the calling daemon's project, the key of this daemon's outbox queue.
+    pub home: String,
+    pub watch: bool,
+}
+
 /// `POST /v1/forward`: one message from another daemon's outbox. Peer tokens only.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ForwardRequest {

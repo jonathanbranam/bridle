@@ -7,7 +7,8 @@ use bridle_api::Client;
 use bridle_api::discovery::store_credential;
 use bridle_api::types::{
     ForwardRequest, HelloRequest, MessageKind, MessageQuery, NewTaskRequest, OutboxSendRequest,
-    PeerTokenCreateRequest, TaskKind, TokenCreateRequest, When,
+    PeerTokenCreateRequest, PeerWatchRequest, RemoteWatchRequest, TaskKind, TokenCreateRequest,
+    When,
 };
 use support::{TestDaemon, machine_home_dir, start_daemon_named, wait_for};
 
@@ -596,4 +597,178 @@ async fn the_sender_sees_a_message_queued_then_arrived_then_delivered() {
     // Someone else's message is not yours to look up.
     let other = p.a.external_client("other").await;
     assert!(other.outbox_entry(&q.id).await.is_err());
+}
+
+/// B can reach A as machine `m2` (A mints the peer token; B's config and credentials point at
+/// A). `Pair` already lets A reach B. Returns A's project.
+async fn point_b_at_a(p: &Pair) -> String {
+    let a_project = p.a.running.info.project.clone();
+    let a_peer =
+        p.a.client
+            .create_peer_token(&PeerTokenCreateRequest {
+                machine: "m2".to_string(),
+            })
+            .await
+            .expect("peer token")
+            .token;
+    let b_home = machine_home_dir(p._tmp_b.path());
+    std::fs::create_dir_all(&b_home).expect("home");
+    let a_port = p.a.running.url.rsplit(':').next().expect("port");
+    std::fs::write(
+        b_home.join("config.toml"),
+        format!(
+            "[machine]\nname = \"m2\"\n[machines]\nm1 = \"127.0.0.1\"\nm2 = \"127.0.0.1\"\n\
+             [projects]\n{a_project} = {{ machine = \"m1\", port = {a_port} }}\n"
+        ),
+    )
+    .expect("config");
+    store_credential(
+        &b_home.join("credentials.toml"),
+        "peer",
+        &a_project,
+        &a_peer,
+    )
+    .expect("credentials");
+    a_project
+}
+
+async fn task_updates(b: &TestDaemon, to: &str) -> Vec<String> {
+    b.client
+        .list_messages(&MessageQuery {
+            to: Some(to.to_string()),
+            ..Default::default()
+        })
+        .await
+        .expect("messages")
+        .into_iter()
+        .filter(|m| m.kind == MessageKind::TaskUpdate)
+        .map(|m| m.body)
+        .collect()
+}
+
+#[tokio::test]
+async fn a_principal_of_one_project_watches_a_task_of_another_through_the_peer_token() {
+    let p = pair().await;
+    let a_project = point_b_at_a(&p).await;
+    let advisor_b = p.b.external_client("advisor").await;
+    let task =
+        p.a.client
+            .new_task(&NewTaskRequest {
+                ticket: None,
+                parent: None,
+                for_human: false,
+                priority: None,
+                components: Vec::new(),
+                title: "cross watch".to_string(),
+                kind: TaskKind::Feature,
+                body: "b".to_string(),
+                size: None,
+            })
+            .await
+            .expect("task");
+    let watch = |watch: bool| RemoteWatchRequest {
+        project: a_project.clone(),
+        task: task.id.clone(),
+        watch,
+    };
+
+    let watched = advisor_b.remote_watch(&watch(true)).await.expect("watch");
+    assert!(
+        watched
+            .watchers
+            .iter()
+            .any(|w| w == &format!("remote:external:advisor@{}", p.b_project)),
+        "{:?}",
+        watched.watchers
+    );
+
+    // A change on A arrives in B's inbox once.
+    p.a.client.note_task(&task.id, "first").await.expect("note");
+    let got = wait_for("a task update on B", || async {
+        let u = task_updates(&p.b, "external:advisor").await;
+        (!u.is_empty()).then_some(u)
+    })
+    .await;
+    assert_eq!(got.len(), 1, "{got:?}");
+    assert!(got[0].contains("first"), "{got:?}");
+
+    // B unreachable (A holds a wrong token for it): the update waits in A's outbox, and a later
+    // one queues behind it; both arrive, in order, once B is reachable again.
+    p.point_a_at_b(&"0".repeat(64));
+    p.a.client
+        .note_task(&task.id, "second")
+        .await
+        .expect("note");
+    tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+    assert_eq!(task_updates(&p.b, "external:advisor").await.len(), 1);
+    p.point_a_at_b(&p.peer_token);
+    p.a.client.note_task(&task.id, "third").await.expect("note");
+    let got = wait_for("queued task updates on B", || async {
+        let u = task_updates(&p.b, "external:advisor").await;
+        (u.len() >= 3).then_some(u)
+    })
+    .await;
+    assert_eq!(got.len(), 3, "{got:?}");
+    assert!(
+        got[1].contains("second") && got[2].contains("third"),
+        "{got:?}"
+    );
+
+    // Unwatching stops them.
+    let unwatched = advisor_b
+        .remote_watch(&watch(false))
+        .await
+        .expect("unwatch");
+    assert!(unwatched.watchers.iter().all(|w| !w.starts_with("remote:")));
+    p.a.client
+        .note_task(&task.id, "fourth")
+        .await
+        .expect("note");
+    tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+    assert_eq!(task_updates(&p.b, "external:advisor").await.len(), 3);
+
+    // A task that does not exist is refused up front.
+    let missing = RemoteWatchRequest {
+        task: "br-nope".to_string(),
+        ..watch(true)
+    };
+    assert!(advisor_b.remote_watch(&missing).await.is_err());
+}
+
+#[tokio::test]
+async fn a_visitor_cannot_use_the_cross_project_watch() {
+    let p = pair().await;
+    let a_project = point_b_at_a(&p).await;
+    let visitor =
+        p.b.client
+            .create_token(&TokenCreateRequest {
+                name: "orchestrator".to_string(),
+                machine: Some("m1".to_string()),
+                home: Some(a_project.clone()),
+            })
+            .await
+            .expect("visitor");
+    let visitor = Client::new(p.b.running.url.clone(), Some(visitor.token));
+    let err = visitor
+        .remote_watch(&RemoteWatchRequest {
+            project: a_project.clone(),
+            task: "br-x".to_string(),
+            watch: true,
+        })
+        .await
+        .expect_err("a visitor may not");
+    assert!(err.to_string().contains("forbidden"), "{err}");
+
+    // Only a peer token registers a watch on someone's behalf.
+    let ordinary = p.a.external_client("someone").await;
+    let err = ordinary
+        .peer_watch(&PeerWatchRequest {
+            task: "br-x".to_string(),
+            who: "agent:w1".to_string(),
+            home: p.b_project.clone(),
+            watch: true,
+        })
+        .await
+        .expect_err("not a peer");
+    assert!(err.to_string().contains("forbidden"), "{err}");
 }

@@ -108,7 +108,7 @@ pub(super) fn task_size_arg_to_opt(arg: TaskSizeArg) -> Option<TaskSize> {
 }
 
 use bridle_api::settle_clock_text;
-use bridle_api::types::sort_by_priority;
+use bridle_api::types::{RemoteWatchRequest, sort_by_priority};
 
 pub fn print_task_row(t: &Task) {
     println!(
@@ -601,8 +601,22 @@ pub(super) async fn task_watch(
     args: &TaskWatchArgs,
     watch: bool,
 ) -> Result<(), CliError> {
-    let client = client_for(cli).await?;
-    let task = if watch {
+    // A task on another project's daemon (no direct token for it): our own daemon registers the
+    // watch there through its peer token, and the updates come back as messages.
+    let remote = super::misc::own_daemon_for_other_project(cli).await?;
+    let client = match &remote {
+        Some((own, _)) => own.clone(),
+        None => client_for(cli).await?,
+    };
+    let task = if let Some((_, project)) = remote {
+        client
+            .remote_watch(&RemoteWatchRequest {
+                project,
+                task: args.task.clone(),
+                watch,
+            })
+            .await?
+    } else if watch {
         client.watch_task(&args.task).await?
     } else {
         client.unwatch_task(&args.task).await?
