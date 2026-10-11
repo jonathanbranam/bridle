@@ -2,9 +2,9 @@
 id = "br-cbbn"
 title = "Scheduled nightly restart of an interactive session at a clock time (e.g. 3 AM)"
 kind = "feature"
-state = "pending"
+state = "planned"
 created_at = "2026-10-05T10:25:03.871Z"
-updated_at = "2026-10-09T11:04:38.716050Z"
+updated_at = "2026-10-11T03:36:36.242597Z"
 created_by = "external:orchestrator@nuc"
 watchers = [
     "external:orchestrator@nuc",
@@ -13,13 +13,21 @@ watchers = [
 ticket = "cbbn"
 +++
 
-docs/tickets/open/scheduled-nightly-restart-of-an-interactive-session-at-a-clo-cbbn.md
+Ticket: docs/tickets/open/scheduled-nightly-restart-of-an-interactive-session-at-a-clo-cbbn.md. Read its "Decided" section (the human, 2026-10-10); it supersedes the older text above it. No dependencies: 4s3z and gq9r have landed, ft3b is not needed.
 
-submitted by external:orchestrator@nuc
+Goal: opt-in nightly forced restart of an interactive session at a clock time. Config in ~/.bridle/config.toml, machine-wide, one entry per session:
+[[nightly_restart]]
+project = "notes"
+agent = "advisor"     (a role, or advisor/<name> for a named one)
+at_time = "4:00 am"   (accept "4:00 am" and "04:00"; machine local time)
 
-The human, 2026-10-05: 'Whatever agent I use to take all of my notes, I want it to just restart in the middle of the night. I think it feels a little risky to trust that system to work and the handover to work. ... maybe 3 am is better so that it's always restarted before the morning.' and 'I think the orchestrator on Dalek has a rule that it gets refreshed every 12 hours. I don't want to add that rule to other agents unnecessarily.'
+Behaviour: the daemon of that project acts on its own entries. At the time it does what `bridle session restart <role>` does with --handover (the default): asks the session for its handover note, waits up to the handover deadline, restarts the session in its pane; the new session opens with the note. Forced: no deferral when the human is active; if no note arrives by the deadline, restart anyway and say so in the daemon log and the morning list. Once per day; a daemon that was down at the time does not catch up. No entry means nothing happens. The orchestrator keeps its own max_uptime.
 
-Today: max_uptime (12h) applies to the orchestrator only; gq9r covers context-driven handover for sessions, not a clock time. Ask: per-session (or per-role, per-project) config such as restart_at = "03:00" (human's time zone): at that time the daemon asks the session for its handover (with the role's handover instructions, see the companion ticket), waits for it (with a deadline), restarts the session in its pane, and the new session opens with the note. Opt-in, so other agents are unaffected. First user: the notes project's advisor (the human may switch notes to an aide role). Should skip or defer if the human is mid-conversation at that moment (last_activity within N minutes).
+Files likely: crates/bridle-daemon/src/config.rs (new entry type, parse both time formats, validate), crates/bridle-daemon/src/sessions.rs (and crates/bridle/src/session.rs: find where the restart-with-handover logic lives; reuse it, move it into the daemon if it is CLI-only, do not duplicate), a small daemon ticker with an injectable clock, docs/design/agent-host/ (the config and sessions docs), CHANGELOG. Check how the daemon already wakes on time (schedules, br-9xze) and reuse that loop if it fits.
+
+Migration: new optional config key, no migration; say so in the done note.
+Acceptance: just check passes, plus a daemon test with a fake clock: fires once at the time, not again that day, restarts after the deadline when no note comes, does nothing with no entry, both time formats parse, bad time is a config error.
+Model: Sonnet. Out of scope: per-role handover instructions (ft3b), deferring when active, a scheduler restart action, catch-up after downtime.
 
 ## Thread
 
@@ -31,3 +39,6 @@ Triage (pm-1): accept (the human's own ask). Ticket minted (uncommitted; commit 
 
 ### note · external:advisor/product-manager · 2026-10-09T11:04:38.716Z
 watching the task
+
+### note · external:advisor/product-manager · 2026-10-11T03:36:21.718Z
+advisor (product-manager): readied. The human decided the design 2026-10-10 ~11:55 PM ET: see the 'Decided' section in ticket cbbn (machine-wide [[nightly_restart]] entries with project, agent, at_time; forced handover then restart; no ft3b dependency). The task body's older brief is superseded where they differ.
