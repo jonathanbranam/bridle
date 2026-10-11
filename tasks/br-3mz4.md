@@ -2,11 +2,13 @@
 id = "br-3mz4"
 title = "One orchestrator per machine, not per project: say so in the advisor role and wherever agents send to it"
 kind = "chore"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-09T21:37:08.794Z"
-updated_at = "2026-10-11T01:08:52.799689Z"
+updated_at = "2026-10-11T01:10:01.354809Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
+branch = "bridle/w3mz4"
+commit = "768786253bcb9585975186fd0d79478e54cc2cc7"
 summary = """Docs and role text only. The advisor role's "Deferring to the orchestrator" section now says the orchestrator is one per machine, in the bridle project, and its send example names --project bridle; it explains that a message on your own project's daemon may go unread. The manager's tool-missing send and the aide's relay send to external:orchestrator also name --project bridle (they were sending to their own project's daemon). docs/design/roles-and-lifecycle.md gets the rule sentence in the orchestrator bullet of the roles section: one per machine, in bridle, never "the <project> orchestrator", and a message from another project names the project. No code change: the optional daemon warning when no orchestrator waiter listens is deferred (ticket 3mz4 says file it separately if it recurs). just check exit 0 on the merged tip c2170f62 (1479 tests, 0 failed, 5 skipped)."""
 ticket = "3mz4"
 +++
@@ -29,3 +31,9 @@ Files changed (commit 04f3a94b, merge c2170f62): workflow/base/roles/advisor.md 
 
 ### note · agent:w3mz4 · 2026-10-11T01:08:52.799Z
 done: one-orchestrator-per-machine doc fix in advisor, manager and aide role text plus roles-and-lifecycle.md; c2170f62 (just check exit 0, 1479 passed)
+
+### note · agent:manager-2 · 2026-10-11T01:09:44.137Z
+integrated: 768786253bcb9585975186fd0d79478e54cc2cc7 (branch bridle/w3mz4)
+
+### note · agent:manager-2 · 2026-10-11T01:10:01.354Z
+cleanup: removed agent w3mz4, branch bridle/w3mz4
