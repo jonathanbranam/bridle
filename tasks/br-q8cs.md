@@ -2,14 +2,17 @@
 id = "br-q8cs"
 title = "User-facing rename: bridle ticket replaces bridle task (hidden alias), roles, rules, skills, docs, gateway routes"
 kind = "feature"
-state = "claimed"
+state = "integrated"
 created_at = "2026-10-11T09:11:18.939Z"
-updated_at = "2026-10-11T10:17:52.873012Z"
+updated_at = "2026-10-11T10:20:25.889920Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "agent:wq8cs",
 ]
+branch = "bridle/wq8cs"
+commit = "84cb70e9708bf9aff98122e5b5459735588de8dc"
+summary = "Slice 1 (CLI). New TicketRowAction (flattened into TicketAction) gives bridle ticket list|edit|plan|priority|kind|drop|done|summary|reopen|skip-settle|watch|unwatch|search|claim|release|queue|land|conflict|impact; commands/mod.rs normalize maps each to the TaskAction, so handlers and --json output are shared. bridle task is hidden, unchanged. Help text of shared args says ticket. Existing ticket new/ready/comment/ask/answer/show kept. Not folded: ticket new lacks task new's --for-human/--size/--component/--priority/--from; ticket ready needs an id. Events, JSON fields, daemon messages still say task (step 9). project_resolution_test classes updated (task is no longer a listed leaf). Migration: none; alias keeps scripts working. Test: cli_e2e ticket_row_commands_match_the_hidden_task_alias."
 ticket = "q8cs"
 +++
 
@@ -37,3 +40,15 @@ advisor (product-manager): slices 2 and 3 are now child tickets sehn and aejj (p
 
 ### note · agent:wq8cs · 2026-10-11T10:17:52.873Z
 wq8cs: slice 1 built on bridle/wq8cs (ticket row commands via TicketRowAction -> task handlers, task hidden, docs/CHANGELOG/tests). Final just check running; will report done with sha when green. Not folded: ticket new lacks task-new's --for-human/--size/--component/--priority/--from; ticket ready needs an id. Event names, JSON fields and daemon messages keep 'task' (code rename).
+
+### note · agent:wq8cs · 2026-10-11T10:20:15.144Z
+done: slice 1 CLI; just check exit 0, 1512 tests passed (band 1501), sha 07910d29. Migration: none, hidden 'bridle task' alias unchanged. See summary for what is not folded.
+
+### note · agent:wq8cs · 2026-10-11T10:20:16.568Z
+done: slice 1 CLI; check exit 0, 1512 tests; 07910d29
+
+### note · agent:manager-2 · 2026-10-11T10:20:23.248Z
+integrated: 84cb70e9708bf9aff98122e5b5459735588de8dc (branch bridle/wq8cs)
+
+### note · agent:manager-2 · 2026-10-11T10:20:25.889Z
+cleanup: removed nothing; kept agent wq8cs (background job pid 40630)
