@@ -15,11 +15,49 @@ fn bridle_bin() -> PathBuf {
     PathBuf::from(env!("CARGO_BIN_EXE_bridle"))
 }
 
+/// The fake claude, launched as one exec of the real interpreter. `#!/usr/bin/env python3`
+/// resolves through the pyenv shim (bash, bash, python: three execs per fake agent), so this
+/// asks the interpreter once for its own path and runs a copy of the script whose shebang names
+/// it. Falls back to the script itself when no interpreter answers (br-yw8b).
 fn fake_claude_path() -> PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../bridle-claude/tests/fake-claude.py")
-        .canonicalize()
-        .expect("fake-claude.py exists")
+    static PATH: std::sync::OnceLock<PathBuf> = std::sync::OnceLock::new();
+    PATH.get_or_init(|| {
+        let script = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../bridle-claude/tests/fake-claude.py")
+            .canonicalize()
+            .expect("fake-claude.py exists");
+        direct_launcher(&script).unwrap_or(script)
+    })
+    .clone()
+}
+
+fn direct_launcher(script: &Path) -> Option<PathBuf> {
+    use std::hash::{Hash, Hasher};
+    let out = std::process::Command::new("python3")
+        .args(["-c", "import sys; print(sys.executable)"])
+        .output()
+        .ok()?;
+    let interpreter = String::from_utf8(out.stdout).ok()?.trim().to_string();
+    if !out.status.success() || !Path::new(&interpreter).is_absolute() {
+        return None;
+    }
+    let body = std::fs::read_to_string(script).ok()?;
+    let rest = body.strip_prefix("#!")?.split_once('\n')?.1;
+    let content = format!("#!{interpreter}\n{rest}");
+    let mut hasher = std::collections::hash_map::DefaultHasher::new();
+    content.hash(&mut hasher);
+    let dir = std::env::temp_dir().join("bridle-fake-claude");
+    std::fs::create_dir_all(&dir).ok()?;
+    let target = dir.join(format!("fake-claude-{:016x}.py", hasher.finish()));
+    if !target.exists() {
+        // Write-then-rename so a parallel test binary never execs a half-written file.
+        let tmp = dir.join(format!(".tmp-{}", std::process::id()));
+        std::fs::write(&tmp, &content).ok()?;
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&tmp, std::fs::Permissions::from_mode(0o755)).ok()?;
+        std::fs::rename(&tmp, &target).ok()?;
+    }
+    Some(target)
 }
 
 fn init_repo(dir: &Path) {
