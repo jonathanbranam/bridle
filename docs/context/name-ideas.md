@@ -234,6 +234,11 @@ much background noise and it comes through as mirror or something else" (the hum
 Then `ariel` and `osiris` (2026-10-11, the system not noted): "Ariel" five times out of five,
 "Osiris" twice out of twice. **Both pass.** ("aide" alone came out "aid" again, as before.)
 
+More testing (the human, 2026-10-11): `osiris` "comes through correctly every time"; `ariel`
+sometimes comes out "ARIA L", and it sounds like Arial, the font (the human typed it that way
+too). Arrangement: `ariel` for the Windows host, which is rarely said, and `osiris` for WSL2,
+which bridle and the agents name all the time.
+
 ## Themes
 
 ### In: liked
