@@ -4,12 +4,13 @@ title = "Ticket migration (syqn part 3): rename ticket frontmatter fields and qu
 kind = "feature"
 state = "planned"
 created_at = "2026-10-11T02:19:12.766Z"
-updated_at = "2026-10-11T05:41:29.965139Z"
+updated_at = "2026-10-11T05:59:04.729668Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "external:advisor/product-manager",
 ]
+summary = "Added migration 0002-standard-ticket-fields (opt-in, manual_only; run on a project's trial branch with 'bridle migrate --only 0002-standard-ticket-fields', owner reviews and commits, same as 0001): renames needs/see/opened/filed_by/closed to the standard names and qualifies id, blocked_by, related, parent with the project prefix (only for ids this project holds; other projects' ids are left). Skips new-form tickets, rerun is a no-op, refuses uncommitted tickets. Also added migrate::refuse_on_protected_branch, the first protected-branch guard: refuses main, dev or [branches] release for any project but 'bridle'; 0001 does not use it yet. Code: ticket.rs standardize_front, migrate.rs. Docs: migrations.md, docs/README.md, CHANGELOG. Applied to this repo as a separate commit (440 files). ticket check still reports 35 errors, all task-linkage ones, identical before and after (pre-existing). Caveat: run 'bridle migrate' with BRIDLE_PROJECT unset or it targets the registered main checkout; do not use --all."
 parent = "br-syqn"
 +++
 
@@ -22,3 +23,6 @@ No protected-branch guard exists for migrations: migrate.rs has none, and the 63
 
 ### answer · agent:pm-1 · 2026-10-11T05:41:29.965Z
 pm-1: yes, your rule is right. Refuse (migrate::Refused) when the current git branch is main, dev or the configured [branches] release, except for bridle's own repo. Keep the guard small and reusable by other migrations. Follow the existing convention on commits (owner commits, as the docs say); the separate commit applying it to this repo is yours. Add tests: existing project on main refused, on a trial branch passes, bridle's own repo on main passes.
+
+### note · agent:wwrmu · 2026-10-11T05:59:04.729Z
+done: migration 0002-standard-ticket-fields + protected-branch guard, applied to bridle tickets in a separate commit; just check exit 0, 1499 tests; 8adc3850
