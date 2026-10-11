@@ -7,17 +7,64 @@ How to choose a name (short, survives dictation, a type is not a name) is in
 
 Status: ideas, nothing decided. No machine has been renamed.
 
+## Working idea (2026-10-11)
+
+Not decided. A theme per kind of machine, each with real-world and sci-fi names, from the human's
+three categories (2026-10-11: "windows and nuc don't move; their fixed in position ... and let's
+think of what the cloud servers would be. laptops we only have one right now, dalek, that is
+slightly off-theme").
+
+| Kind | Theme | Why |
+|---|---|---|
+| 1. Fixed, at home | Places that stay put: planets, moons, asteroids | The home system; a huge set. |
+| 2. Cloud | Stars and space stations | Far away, always up, and many of them. |
+| 3. Laptops | Spaceships and spacecraft | They travel. |
+
+The theme says what kind of machine it is, not where it sits, so a machine that moves keeps its
+name (the c2 tip against location names, [[naming]]).
+
+**1. Fixed, at home**
+
+- Real: `jupiter`, `saturn`, `mars`, `neptune`; moons `luna`, `europa`, `callisto`, `phobos`,
+  `rhea`, `miranda`, `charon`; asteroids `vesta`, `pallas`, `psyche`, `bennu`.
+- Sci-fi: `vulcan`, `bajor`, `hoth`, `endor`, `naboo`, `caprica`, `arrakis`, `caladan`,
+  `gallifrey`, `skaro`, `trantor`, `terminus`.
+- Picks: the Windows PC `jupiter` (the biggest planet, for the heavy lifting); the NUC `vesta` (an
+  asteroid named for the Roman goddess of hearth and home: small and always on). The other family
+  PC, if it joins: `saturn` or `skaro`.
+- Avoid: `ceres` (dictation hears "series"), `earth` (generic), `uranus`.
+
+**2. Cloud**
+
+- Real stars: `vega`, `altair`, `rigel`, `deneb`, `antares`, `procyon`; pairs `castor` and
+  `pollux`, `mizar` and `alcor`.
+- Real space stations: `mir`, `skylab`, `salyut`, `tiangong`.
+- Sci-fi stations and far worlds: `babylon` (Babylon 5), `citadel` (Mass Effect), `yorktown`
+  (Star Trek Beyond), `elysium`; Foundation's `aurora`, `solaria`, `gaia`.
+- Picks: the EC2 `vega` or `altair`; then `rigel`, `deneb`, `antares` as servers are added.
+- Avoid: `gateway` (bridle already has a gateway), `polaris` and `sirius` (sound like other words).
+
+**3. Laptops**
+
+- Real spacecraft: `apollo`, `voyager`, `pioneer`, `cassini`, `galileo`, `kepler`, `juno`,
+  `rosetta`, `atlantis`, `soyuz`.
+- Sci-fi ships: `nostromo`, `serenity`, `defiant`, `rocinante`, `leonov`, `normandy`, `moya`,
+  `falcon`, `orville`, `starbug`.
+- Picks: the next laptop from `nostromo`, `serenity`, `voyager`, `defiant`.
+- `dalek` stays: kept by the human ("it's been dalek for a long time"), the one exception to the
+  scheme.
+
 ## Machines that need names
 
 | Machine | Now | Leading idea | Notes |
 |---|---|---|---|
 | MacBook Pro (this one) | dalek | dalek | Keeping it: "it's been dalek for a long time" (the human). |
-| Intel NUC | nuc | sonic | "NUC" is a type, and dictation hears "Nook". |
-| Windows desktop, running WSL2 | (none) | tardis | Bigger on the inside: Linux inside Windows. See "WSL2 and its name" below. |
-| EC2 | (none) | terminus | Foundation's edge planet; the EC2 is the edge box (the NUC's tunnel fallback). |
-| Future cloud servers | | trantor, gaia, aurora, solaria | More Foundation worlds. |
-| Other MacBook Pros | | serenity, nostromo | Ships, because laptops travel. Only those that run bridle or join Tailscale. |
-| The other family PC | | skaro | Only if it joins Tailscale. |
+| Intel NUC | nuc | vesta | "NUC" is a type, and dictation hears "Nook". Was `sonic`; see "Working idea". |
+| Windows desktop, running WSL2 | EzekielsPC | jupiter | The human couldn't settle on `tardis` (2026-10-11). See "WSL2 and its name" below. |
+| EC2 | (none) | vega, altair | The edge box (the NUC's tunnel fallback). Was `terminus`. |
+| Future cloud servers | | rigel, deneb, antares | More stars. |
+| Other MacBook Pros | | nostromo, serenity, voyager, defiant | Ships, because laptops travel. Only those that run bridle or join Tailscale. |
+| The other family PC | | saturn, skaro | Only if it joins Tailscale. |
 
 Not needed: the family's Windows laptops, the PS5, PS4 and Switch.
 
