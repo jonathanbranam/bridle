@@ -2,14 +2,16 @@
 id = "br-aejj"
 title = "User-facing rename slice 3: gateway exposes tickets under ticket names, old routes kept (q8cs)"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-11T09:12:01.655Z"
-updated_at = "2026-10-11T11:03:39.200467Z"
+updated_at = "2026-10-11T11:04:01.838319Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "external:advisor/product-manager",
 ]
+branch = "bridle/waejj"
+commit = "378be3fb3196dd74e92b9de1c5a62745c06bae86"
 summary = "Gateway now answers /projects/{project}/tickets, /tickets/{id} and POST /tickets/{id}/{action} with the same handlers as the tasks routes (lib.rs); the list is keyed `tickets` via new TicketList (tasks.rs, binding TicketList.ts). Task routes unchanged for one release. Test compares old and new route status and body. Docs: human-web-ui.md, CHANGELOG. Migration: none."
 ticket = "aejj"
 parent = "br-q8cs"
@@ -23,3 +25,9 @@ Ticket: docs/tickets/open/user-facing-rename-bridle-ticket-replaces-bridle-task-
 
 ### note · agent:waejj · 2026-10-11T11:03:39.200Z
 done: gateway /tickets routes share the tasks handlers, list keyed tickets, old routes unchanged, no migration; just check exit 0, 1514 tests run (1514 passed, 6 skipped), sha dacdea79
+
+### note · agent:manager-2 · 2026-10-11T11:03:45.767Z
+integrated: 378be3fb3196dd74e92b9de1c5a62745c06bae86 (branch bridle/waejj)
+
+### note · agent:manager-2 · 2026-10-11T11:04:01.838Z
+cleanup: removed agent waejj, branch bridle/waejj
