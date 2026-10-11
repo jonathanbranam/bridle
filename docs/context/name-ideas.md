@@ -30,11 +30,11 @@ a ready-made host and guests:
 
 | Star | Its planets |
 |---|---|
-| cervantes | quijote, dulcinea, rocinante, sancho |
+| cervantes | quijote, dulcinea, rocinante, ~~sancho~~ |
 | copernicus | galileo, brahe, lipperhey, janssen, harriot |
 | lich (a pulsar) | draugr, poltergeist, phobetor |
 
-Other star ideas: sun gods (`helios`, `sol`, `sunna`, `surya`, `inti`, `ra`); Orion's belt
+Other star ideas: sun gods (`helios`, `sol`, ~~`sunna`~~, `surya`, ~~`inti`~~, `ra`); Orion's belt
 (`alnitak`, `alnilam`, `mintaka`); `bellatrix`, `shaula`, `nashira`, `fomalhaut`, `mira`,
 `proxima` (the nearest star); sci-fi suns `rao` (Krypton) and `canopus` (Arrakis's sun, Dune).
 
@@ -45,11 +45,25 @@ The four machines to name now. Say each into both dictation systems before choos
 | Machine | Suggestions | Why |
 |---|---|---|
 | 1. Windows host | `pluto`, `mars`, `cervantes`, `saturn` | A modest star or planet for the host, paired with the guest below. |
-| 2. WSL2 (inside it) | ~~`charon`~~, `phobos`, `sancho`, ~~`rhea`~~ | Tied to the host: Pluto and Charon are a double world that orbit each other, as Windows and Linux share one PC, and Charon is the ferryman who carries things across, but `charon` failed dictation (see "Dictation tests"); Phobos is a moon of Mars; Sancho, the loyal helper, a planet of Cervantes; Rhea a moon of Saturn. |
-| 3. NUC | `vega`, `sunna`, `inti`, `mira`, `vesta` | Small, always on, at home: short star and sun-god names; `vesta` is the asteroid named for the goddess of the hearth. |
+| 2. WSL2 (inside it) | ~~`charon`~~, `phobos`, ~~`sancho`~~, ~~`rhea`~~ | Tied to the host: Pluto and Charon are a double world that orbit each other, as Windows and Linux share one PC, and Charon is the ferryman who carries things across, but `charon` failed dictation (see "Dictation tests"); Phobos is a moon of Mars; Sancho, the loyal helper, a planet of Cervantes; Rhea a moon of Saturn. |
+| 3. NUC | `vega`, ~~`sunna`~~, ~~`inti`~~, `mira`, `vesta` | Small, always on, at home: short star and sun-god names; `vesta` is the asteroid named for the goddess of the hearth. |
 | 4. EC2 | `proxima`, `luna`, `terminus`, `mir`, `babylon` | The edge box, the NUC's way out: `proxima` is the nearest star (and sounds like proxy); `luna` the nearest wanderer; `terminus` Foundation's edge world; `mir` and `babylon` stations. |
 
-Advisor's pick: **`pluto`** (Windows) with a WSL2 name still open (`charon` failed dictation), **`vega`** (NUC), **`proxima`**
+Struck by the human (2026-10-11): `sancho` ("I don't like saying sancho"), `sunna` and `inti`
+("I don't know how to say those anyway").
+
+**Windows and WSL2: `mars` and `phobos` lead** (both pass dictation). Backup pairs, host first:
+
+| Windows | WSL2 | Why |
+|---|---|---|
+| mars | deimos | Mars's other moon. |
+| jupiter | callisto | A planet and its outermost big moon. |
+| saturn | titan | Saturn's biggest moon. |
+| neptune | triton | Neptune's biggest moon. |
+| copernicus | galileo | Officially a star and its planet (NameExoWorlds); copernicus is long. |
+| mir | soyuz | A station and the ship that docks with it: the guest docked in the host. |
+
+Advisor's pick: **`mars`** (Windows) and **`phobos`** (WSL2), **`vega`** (NUC), **`proxima`**
 (EC2). Each is eight letters or fewer, and none sounds like another.
 
 **Reserved:** `arrakis`, "saved for something special in the future"; `canopus` and `arrakis` are
@@ -74,7 +88,7 @@ Or let each son pick from the theme (a c2 tip: let the owner choose from the set
 |---|---|---|---|
 | MacBook Pro (this one) | dalek | dalek | Kept: "it's been dalek for a long time"; "too much work to change" (the human). |
 | Intel NUC | nuc | vega | "NUC" is a type, and dictation hears "Nook". Was `sonic`; see "Working idea". |
-| Windows desktop, running WSL2 | EzekielsPC | pluto (Windows); WSL2 open (charon failed dictation) | The human couldn't settle on `tardis` (2026-10-11). See "WSL2 and its name" below. |
+| Windows desktop, running WSL2 | EzekielsPC | mars (Windows), phobos (WSL2) | The human couldn't settle on `tardis` (2026-10-11). See "WSL2 and its name" below. |
 | EC2 | (none) | proxima, luna | The edge box (the NUC's tunnel fallback). Was `terminus`. |
 | Future cloud servers | | planets, moons, stations | The wanderers. |
 | Other MacBook Pros | | nostromo, serenity, voyager, defiant | Ships, because laptops travel. Only those that run bridle or join Tailscale. |
@@ -138,7 +152,7 @@ Windows address instead.)
   ([[run-bridle-s-heavy-work-on-the-windows-pc-under-wsl2-v7ug|v7ug]]). That makes WSL its own
   Tailscale node, named after its hostname: the WSL2 name is the one bridle and dalek will use.
 - **Windows gets its own name** (the human, 2026-10-11; see "Hosts and guests" above), for
-  example `pluto` for Windows and another name for WSL2. If Windows also runs Tailscale (e.g., for
+  example `mars` for Windows and `phobos` for WSL2. If Windows also runs Tailscale (e.g., for
   Remote Desktop), it's a second node under its own name, with no clash.
 - Earlier advice here was one name everywhere (`tardis`); the human chose separate names.
 
@@ -173,7 +187,9 @@ Then `phobos` and `mars` (2026-10-11, the system not noted): "Phobos" three time
 
 Then `vega` (2026-10-11): **passes in Claude and Wispr Flow** ("Vega" every time). **iOS
 dictation failed completely**: "test went the latest status of fuses" for "...the latest status of
-Vega". iOS dictation is a third system to test in, where the human uses it.
+Vega". iOS doesn't count: "iOS is so bad overall I don't really care" (the human).
+
+Then `proxima` (2026-10-11): "Proxima" both times. **Passes.**
 
 ## Themes
 
