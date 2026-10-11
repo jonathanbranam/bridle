@@ -4,7 +4,7 @@ title = "Per-role handover instructions in the workflow, with project overrides"
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-05T10:25:03.907Z"
-updated_at = "2026-10-11T14:26:18.523942Z"
+updated_at = "2026-10-11T14:26:43.657901Z"
 created_by = "external:orchestrator@nuc"
 watchers = [
     "external:orchestrator@nuc",
@@ -55,3 +55,6 @@ done: merged main, just check exit 0, 1523 tests; sha ce26adb7
 
 ### note · agent:manager-2 · 2026-10-11T14:26:18.523Z
 integrated: d7c800e72cb646c43e125586d7c2a2c04aa00d9a (branch bridle/wft3b)
+
+### note · agent:manager-2 · 2026-10-11T14:26:43.657Z
+cleanup: removed agent wft3b, branch bridle/wft3b
