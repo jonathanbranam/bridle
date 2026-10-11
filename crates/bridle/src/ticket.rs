@@ -312,11 +312,12 @@ fn task_source(text: &str) -> anyhow::Result<(String, TicketKind)> {
         .ok_or_else(|| anyhow!("ticket has no kind (bridle ticket set <id> kind <kind>)"))?
         .parse::<TicketKind>()
         .map_err(|_| anyhow!("ticket has an unknown kind"))?;
-    let ask = body
-        .split_once("## The ask")
-        .map(|(_, rest)| rest.split("\n## ").next().unwrap_or(""))
-        .unwrap_or("");
-    if ask.trim().is_empty() {
+    // The first non-empty section counts: an older file may have a leading empty heading.
+    let has_ask = body
+        .split("## The ask")
+        .skip(1)
+        .any(|rest| !rest.split("\n## ").next().unwrap_or("").trim().is_empty());
+    if !has_ask {
         bail!(
             "the ticket's \"The ask\" section is empty: write the ask, commit it, then mark it ready"
         );
@@ -646,7 +647,7 @@ pub fn create(
     };
     let qualified = f.prefix.map_or(id.clone(), |p| format!("{p}-{id}"));
     let text = format!(
-        "---\nid: {qualified}\ntitle: {}\nkind: {}\ncreated: {today}\n{}{}repos: {}\nchanges: []\nspecs: []\nblocked_by: {}\nrelated: {}\n---\n\n## The ask\n\n{}",
+        "---\nid: {qualified}\ntitle: {}\nkind: {}\ncreated: {today}\n{}{}repos: {}\nchanges: []\nspecs: []\nblocked_by: {}\nrelated: {}\n---\n\n{}{}",
         yaml_scalar(f.title),
         f.kind,
         f.created_by
@@ -656,6 +657,12 @@ pub fn create(
         list(f.repos),
         list(f.blocked_by),
         list(f.related),
+        // A body with its own heading is not put under a second, empty one.
+        if f.ask.lines().any(|l| l.trim_end() == "## The ask") {
+            ""
+        } else {
+            "## The ask\n\n"
+        },
         if f.ask.trim().is_empty() {
             String::new()
         } else {
@@ -1862,6 +1869,27 @@ mod tests {
         assert!(text.ends_with("## The ask\n\nDo the thing.\n"), "{text}");
         let (title, kind) = task_source(&text).unwrap();
         assert_eq!((title.as_str(), kind), ("Thing", TicketKind::Feature));
+    }
+
+    #[test]
+    fn a_body_with_its_own_ask_heading_gets_exactly_one() {
+        let dir = tempfile::tempdir().unwrap();
+        let repos = vec!["p".to_string()];
+        let mut f = fields("Thing", &repos);
+        f.ask = "## The ask\n\nDo the thing.\n";
+        let p = create(dir.path(), &f, "2026-10-03", &HashSet::new()).unwrap();
+        let text = std::fs::read_to_string(p).unwrap();
+        assert_eq!(text.matches("## The ask").count(), 1, "{text}");
+        assert!(task_source(&text).is_ok());
+    }
+
+    #[test]
+    fn ready_reads_the_first_non_empty_ask() {
+        let head = "---\nid: x\ntitle: T\nkind: feature\n---\n\n";
+        let ok = format!("{head}## The ask\n\n## The ask\n\nDo it.\n");
+        assert!(task_source(&ok).is_ok());
+        let empty = format!("{head}## The ask\n\n## The ask\n\n");
+        assert!(task_source(&empty).is_err());
     }
 
     #[test]
