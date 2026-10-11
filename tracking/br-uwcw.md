@@ -2,9 +2,9 @@
 id = "br-uwcw"
 title = "Flaky renew_test: resume_of_a_session_that_never_started_uses_a_fresh_session (macOS)"
 kind = "fix"
-state = "claimed"
+state = "integrated"
 created_at = "2026-10-11T06:05:26.116Z"
-updated_at = "2026-10-11T21:32:18.558161Z"
+updated_at = "2026-10-11T21:51:36.349317Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -12,6 +12,9 @@ watchers = [
 ]
 priority = "low"
 priority_at = "2026-10-11T06:05:38.502194Z"
+branch = "bridle/wuwcw"
+commit = "54d04340bfd2c13a0b0e9bacc73cff7c88b1f8b1"
+summary = "The race was only in the test, not the daemon: Idle is set when the process starts (supervisor.rs ~1341), before the first turn's system/init, where mark_session_started runs (~1472). The test's second wait_for_state(Idle) returned at once and stop --now could beat init, so the next resume rightly minted a fresh session (nothing to lose: no turn ever started). Test now polls agents.session_started in the DB; #[ignore] removed. 50 stress runs passed. No CHANGELOG (test-only)."
 ticket = "uwcw"
 +++
 
@@ -43,3 +46,15 @@ orchestrator: not moot. The #[ignore] was the stopgap under the flaky-test rule;
 
 ### note · external:orchestrator · 2026-10-11T21:32:11.314Z
 From orchestrator: br-uwcw is not moot, comment on the ticket. Please start a worker on it now (slots are free).
+
+### note · agent:wuwcw · 2026-10-11T21:51:15.894Z
+built: 39cb128c (branch bridle/wuwcw)
+
+### note · agent:wuwcw · 2026-10-11T21:51:17.730Z
+done: race was test-only (Idle precedes first turn init; daemon durable fact is fine); test waits on session_started, ignore removed; just check exit 0, 1547 tests passed, 50/50 stress runs; 39cb128c
+
+### note · agent:manager-2 · 2026-10-11T21:51:22.877Z
+integrated: 54d04340bfd2c13a0b0e9bacc73cff7c88b1f8b1 (branch bridle/wuwcw)
+
+### note · agent:manager-2 · 2026-10-11T21:51:36.349Z
+cleanup: removed agent wuwcw, branch bridle/wuwcw
