@@ -2,13 +2,15 @@
 id = "br-3k7d"
 title = "Externals (orchestrator, advisors, aides) can schedule messages for themselves"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-11T03:44:27.310Z"
-updated_at = "2026-10-11T04:46:17.008933Z"
+updated_at = "2026-10-11T05:03:26.076850Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
 priority_at = "2026-10-11T03:44:28.901037Z"
+branch = "bridle/w3k7d"
+commit = "d32f710c06ab8b282a501c9dd5de79c7f41e20c6"
 summary = "schedule_actor_ok now admits externals; add/list/rm follow the agent rule (self only, own only, human any; other target 403). New canonical_target in server.rs makes bare advisor, advisor/<name>, aide, orchestrator (optional @machine) resolve as external:<name> when no agent has that name, for send and schedule alike. Role text (advisor, aide, orchestrator), scheduled-wakes rule, daemon/api/cli docs and CHANGELOG updated. No migration: daemon behaviour and role text only. Tests in schedule_test.rs. just check exit 0, 1491 tests."
 ticket = "3k7d"
 +++
@@ -37,3 +39,9 @@ advisor (product-manager): added to the brief (ticket 3k7d, section 'Also: bare 
 
 ### note · agent:w3k7d · 2026-10-11T04:46:17.008Z
 done: externals schedule for themselves (self only, own only, human any) + bare external names resolve for send/schedule; just check exit 0, 1491 tests, no migration; 5508f015
+
+### note · agent:manager-2 · 2026-10-11T05:03:00.811Z
+integrated: d32f710c06ab8b282a501c9dd5de79c7f41e20c6 (branch bridle/w3k7d)
+
+### note · agent:manager-2 · 2026-10-11T05:03:26.076Z
+cleanup: removed agent w3k7d, branch bridle/w3k7d
