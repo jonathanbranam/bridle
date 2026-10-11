@@ -1584,3 +1584,4 @@
 {"actor":"human","at":"2026-10-11T11:39:53.720Z","from":"","task":"br-dd79","to":"pending"}
 {"actor":"agent:manager-2","at":"2026-10-11T11:52:07.555097Z","from":"planned","task":"br-gd43","to":"integrated"}
 {"actor":"agent:manager-2","at":"2026-10-11T11:58:35.983817Z","from":"planned","task":"br-jstr","to":"integrated"}
+{"actor":"agent:manager-2","at":"2026-10-11T12:22:49.485314Z","from":"planned","task":"br-95t9","to":"integrated"}
