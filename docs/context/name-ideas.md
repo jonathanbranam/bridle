@@ -239,6 +239,9 @@ sometimes comes out "ARIA L", and it sounds like Arial, the font (the human type
 too). Arrangement: `ariel` for the Windows host, which is rarely said, and `osiris` for WSL2,
 which bridle and the agents name all the time.
 
+Then `romulus` and `remus` (2026-10-11, the system not noted): "Remus" twice out of twice,
+"Romulus" once out of once. **Both pass.**
+
 ## Themes
 
 ### In: liked
