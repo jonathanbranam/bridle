@@ -75,6 +75,22 @@ host"):
 | voyager | flyer | Star Trek: Voyager | The ship and the Delta Flyer, the small craft its crew built. |
 | nostromo | narcissus | Alien | The ship and its lifeboat shuttle. Both long, and nostromo is pencilled in for the work laptop. |
 
+Broader sci-fi pairs, places rather than ships, just "two vaguely related things" (the human,
+2026-10-11; `romulus` and `remus` are the human's favourite so far, not yet tested):
+
+| Windows | WSL2 | From | Why |
+|---|---|---|---|
+| hoth | endor | Star Wars | The two big rebel battle worlds. Both short. |
+| naboo | kamino | Star Wars | Two worlds from the prequels; kamino may dictate badly. |
+| yavin | scarif | Star Wars | Where the Death Star plans went, and where they came from. |
+| caladan | giedi | Dune | The rival houses' homeworlds (Giedi Prime). |
+| kaitain | salusa | Dune | The Emperor's capital and his prison planet (Salusa Secundus). |
+| terminus | trantor | Foundation | Opposite ends of the galaxy; trantor is also an idea for the cloud. |
+| caprica | picon | Battlestar Galactica | Two of the Twelve Colonies. |
+| abydos | chulak | Stargate | The first two worlds through the gate. Abydos may dictate badly. |
+| ariel | osiris | Firefly | Two Core worlds. Ariel is also a name. |
+| vulcan | andoria | Star Trek | Neighbours and old rivals, founders of the Federation. |
+
 Advisor's pick: **`mars`** (Windows) and **`phobos`** (WSL2), **`vega`** (NUC), **`proxima`**
 (EC2). Each is eight letters or fewer, and none sounds like another.
 
