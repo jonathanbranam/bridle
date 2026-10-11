@@ -2,9 +2,9 @@
 id = "br-92za"
 title = "Code rename slice 2: wire types say ticket and accept both names for one release (95t9)"
 kind = "arch-revision"
-state = "pending"
+state = "planned"
 created_at = "2026-10-11T11:05:19.144Z"
-updated_at = "2026-10-11T11:06:07.515218Z"
+updated_at = "2026-10-11T11:06:38.772222Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",

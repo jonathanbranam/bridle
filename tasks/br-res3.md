@@ -2,9 +2,9 @@
 id = "br-res3"
 title = "Code rename slice 3: no type is called Task; internal identifiers sweep (95t9)"
 kind = "arch-revision"
-state = "pending"
+state = "planned"
 created_at = "2026-10-11T11:05:22.388Z"
-updated_at = "2026-10-11T11:06:15.096568Z"
+updated_at = "2026-10-11T11:06:44.256736Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
