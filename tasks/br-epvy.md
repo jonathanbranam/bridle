@@ -4,7 +4,7 @@ title = "Project-qualified ticket and task IDs (syqn part 2): br-k7tm in frontma
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-11T02:19:02.435Z"
-updated_at = "2026-10-11T05:40:41.688776Z"
+updated_at = "2026-10-11T05:40:55.393294Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -25,3 +25,6 @@ done: project-qualified ticket ids (syqn part 2); just check exit 0, 1495 tests 
 
 ### note · agent:manager-2 · 2026-10-11T05:40:41.688Z
 integrated: 0c7257ad9cb7d9ff6c1e33df3372bea440b76d5d (branch bridle/wepvy)
+
+### note · agent:manager-2 · 2026-10-11T05:40:55.393Z
+cleanup: removed agent wepvy, branch bridle/wepvy
