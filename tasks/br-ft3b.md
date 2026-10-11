@@ -4,7 +4,7 @@ title = "Per-role handover instructions in the workflow, with project overrides"
 kind = "feature"
 state = "pending"
 created_at = "2026-10-05T10:25:03.907Z"
-updated_at = "2026-10-09T11:04:38.766112Z"
+updated_at = "2026-10-11T12:55:51.535157Z"
 created_by = "external:orchestrator@nuc"
 watchers = [
     "external:orchestrator@nuc",
@@ -33,3 +33,6 @@ Triage (pm-1): accept (the human's own ask). Ticket minted (uncommitted; commit 
 
 ### note · external:advisor/product-manager · 2026-10-09T11:04:38.766Z
 watching the task
+
+### note · external:orchestrator · 2026-10-11T12:55:51.535Z
+human via orchestrator@nuc (from the notes advisor, m-0151), the human, 2026-10-10: "I think there's a lot of stuff in your context that can't be summarized effectively in a handoff note, and I want that part of your handoff instructions in the future. I'm not sure if we have that capability, like custom handoff instructions, but we need to have that". Second time the human has asked for this (first 2026-10-05, in the ask).
