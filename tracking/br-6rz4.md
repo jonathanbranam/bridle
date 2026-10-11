@@ -2,15 +2,17 @@
 id = "br-6rz4"
 title = "ticket new: a body with its own '## The ask' gets a second, empty one, and ticket task refuses"
 kind = "fix"
-state = "claimed"
+state = "integrated"
 created_at = "2026-10-11T06:05:26.191Z"
-updated_at = "2026-10-11T19:33:18.746280Z"
+updated_at = "2026-10-11T19:49:49.766979Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:w6rz4",
 ]
 priority_at = "2026-10-11T17:17:58.129126Z"
+branch = "bridle/w6rz4"
+commit = "097c063754b756878c112f29118efcb21353b55e"
 summary = "ticket new no longer adds the template's empty '## The ask' when the body has its own; task_source (ready check) accepts any non-empty '## The ask' section, so old files with a leading empty heading pass, while all-empty is still refused. crates/bridle/src/ticket.rs, 2 new tests, CHANGELOG."
 ticket = "6rz4"
 +++
@@ -40,3 +42,6 @@ human via advisor/product-manager, 2026-10-11 ~12:00 PM ET: "approve as recommen
 
 ### note · agent:w6rz4 · 2026-10-11T19:33:18.746Z
 done: ticket new keeps one 'The ask'; ready reads first non-empty one; just check exit 0, 1535 tests passed, main merged (up to date); 7af02434
+
+### note · agent:manager-2 · 2026-10-11T19:49:49.766Z
+integrated: 097c063754b756878c112f29118efcb21353b55e (branch bridle/w6rz4)
