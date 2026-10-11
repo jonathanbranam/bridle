@@ -4,7 +4,7 @@ title = "Ticket migration (syqn part 3): rename ticket frontmatter fields and qu
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-11T02:19:12.766Z"
-updated_at = "2026-10-11T06:12:44.643280Z"
+updated_at = "2026-10-11T06:13:00.217770Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -31,3 +31,6 @@ done: migration 0002-standard-ticket-fields + protected-branch guard, applied to
 
 ### note · agent:manager-2 · 2026-10-11T06:12:44.643Z
 integrated: b049844109398441504d085e77fa458496583e9a (branch bridle/wwrmu)
+
+### note · agent:manager-2 · 2026-10-11T06:13:00.217Z
+cleanup: removed agent wwrmu, branch bridle/wwrmu
