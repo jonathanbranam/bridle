@@ -2,15 +2,17 @@
 id = "br-yw8b"
 title = "fake-claude spawns skip the pyenv shim: resolve the interpreter once (n4w4 rec 7)"
 kind = "chore"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-09T01:41:32.122Z"
-updated_at = "2026-10-11T01:50:00.625909Z"
+updated_at = "2026-10-11T01:50:26.530957Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "external:aide",
     "external:advisor/product-manager",
 ]
+branch = "bridle/wyw8b"
+commit = "5f6e6e89a612c5940cc1a97caf7ad1fc2dab989b"
 summary = "Test fake-claude now launches as one exec of the real interpreter. fake_claude_path() (crates/bridle-daemon/tests/support/mod.rs, crates/bridle/tests/cli_e2e.rs) asks `python3` once per test process (OnceLock) for sys.executable and runs a content-hashed copy of fake-claude.py, written under $TMPDIR/bridle-fake-claude/, whose shebang names that interpreter; falls back to the script itself if python3 doesn't answer. The existing sh wrappers exec this path so they benefit too. Not changed: bridle-claude/tests/process_test.rs (no daemon, few spawns). ps evidence: the pyenv shim chain execs through, so a running agent shows one process either way (python3 .../fake-claude.py); the saving is at startup (env -> shim bash -> pyenv bash -> python becomes a single python exec), which a snapshot ps can't show. just check green (1478 tests) on the commit before the main merge; the first run hit one load-flaky unit test (sessions::the_hard_limit_has_no_override..., passes alone, unrelated). Main merge brought 4 files (scripts/test-lock.sh etc.); check not re-run after it."
 parent = "br-n4w4"
 +++
@@ -35,3 +37,9 @@ done: fake-claude launched via real interpreter (one exec, not shim chain); chec
 
 ### note · agent:wyw8b · 2026-10-11T01:50:00.625Z
 update: main (br-rhba) merged into the branch; just check exit 0, 1480 tests, on c2dafee6; ready to land
+
+### note · agent:manager-2 · 2026-10-11T01:50:07.129Z
+integrated: 5f6e6e89a612c5940cc1a97caf7ad1fc2dab989b (branch bridle/wyw8b)
+
+### note · agent:manager-2 · 2026-10-11T01:50:26.530Z
+cleanup: removed agent wyw8b, branch bridle/wyw8b
