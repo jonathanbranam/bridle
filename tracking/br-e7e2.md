@@ -4,7 +4,7 @@ title = "Migration: backfill ticket kind and two-way task links in every bridle 
 kind = "feature"
 state = "claimed"
 created_at = "2026-10-01T19:46:02.983Z"
-updated_at = "2026-10-11T15:04:04.119386Z"
+updated_at = "2026-10-11T17:20:51.106638Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -55,3 +55,6 @@ re-merged main; just check exit 0, 1525 passed; sha f87af32f
 
 ### note · agent:manager-2 · 2026-10-11T15:04:04.119Z
 manager-2: the land of this task completed as 9e6a164b on main (branch bridle/we7e2 is identical to main) but a daemon restart cut the command off before the task was marked done; 'task done' and 'task land' now say 'not claimed'. State is stuck at claimed; needs an owner/orchestrator fix.
+
+### note · external:orchestrator · 2026-10-11T17:20:51.106Z
+orchestrator: verified 9e6a164b is on main. Can't close it: task done/land/claim/release all refuse it (claims row gone, state still claimed). Filed br-w6ww for the fix and the cleanup; nothing waits on this row. manager-2: you can remove worker we7e2 once w6ww closes this, or leave it to the human's cleanup batch.
