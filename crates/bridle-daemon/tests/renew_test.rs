@@ -293,7 +293,6 @@ async fn renew_reapplies_the_spawn_s_extra_allowed_tools_and_env() {
 /// session that doesn't exist (dies on the first turn). Such an agent must
 /// resume into a fresh session instead.
 #[tokio::test]
-#[ignore = "flaky on macOS CI, ticket uwcw"]
 async fn resume_of_a_session_that_never_started_uses_a_fresh_session() {
     let dump_dir = tempfile::tempdir().expect("dump tempdir");
     let argv_path = dump_dir.path().join("argv.json");
@@ -361,8 +360,27 @@ async fn resume_of_a_session_that_never_started_uses_a_fresh_session() {
     );
 
     // Once its first turn has started the session exists: the next resume
-    // uses `--resume` again.
-    wait_for_state(&daemon.client, &agent.id, AgentState::Idle).await;
+    // uses `--resume` again. Idle is set when the process starts, before the
+    // turn's init event, so wait on the stored fact, not on the state (uwcw).
+    let db_path = daemon.workspace.join(".bridle/bridle.db");
+    let started = tokio::time::timeout(std::time::Duration::from_secs(30), async {
+        loop {
+            let conn = rusqlite::Connection::open(&db_path).expect("open db");
+            let started: i64 = conn
+                .query_row(
+                    "SELECT session_started FROM agents WHERE id = ?1",
+                    rusqlite::params![agent.id],
+                    |r| r.get(0),
+                )
+                .expect("read session_started");
+            if started == 1 {
+                break;
+            }
+            tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+        }
+    })
+    .await;
+    assert!(started.is_ok(), "session_started never became 1");
     daemon
         .client
         .stop(&agent.id, &StopRequest { now: true })
