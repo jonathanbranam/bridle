@@ -632,6 +632,14 @@ pub struct TicketNewArgs {
     /// Read the ask from a file (or `-` for stdin).
     #[arg(long)]
     pub body_file: Option<PathBuf>,
+    /// A to-do for the human: the row is created planned and claimed by them, with one inbox
+    /// message pointing at it. Put `[at restart]` or `[at next reboot]` in the title when it
+    /// must wait for one.
+    #[arg(long, conflicts_with = "from_task")]
+    pub for_human: bool,
+    /// How soon it's wanted; ranks the human's to-dos (default normal). With --for-human.
+    #[arg(long, value_enum, ignore_case = true, requires = "for_human")]
+    pub priority: Option<TicketPriorityArg>,
 }
 
 #[derive(Debug, Args)]

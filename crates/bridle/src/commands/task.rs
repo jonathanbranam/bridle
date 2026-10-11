@@ -125,7 +125,44 @@ pub fn print_task_row(t: &Ticket) {
     );
 }
 
+/// The one inbox note a human to-do sends (coordination.md, "Human to-dos").
+pub async fn notify_human_todo(cli: &Cli, task: &Ticket) -> Result<(), CliError> {
+    client_for(cli)
+        .await?
+        .send(&SendRequest {
+            to: Some("human".to_string()),
+            body: format!(
+                "To-do for you ({} priority): {}. Finish it with `bridle ticket done {}`.",
+                task.priority, task.title, task.id
+            ),
+            kind: MessageKind::Note,
+            when: bridle_api::When::Now,
+            reply_to: None,
+            task: Some(task.id.clone()),
+        })
+        .await?;
+    Ok(())
+}
+
 pub(super) async fn task_new(cli: &Cli, args: &RowNewArgs) -> Result<(), CliError> {
+    if args.for_human && args.from.is_none() {
+        // The hidden alias makes a ticket too, so no new ticketless to-do appears (cy4q).
+        let repo = crate::ticket::repo_root()?;
+        let ticket_args = crate::cli::TicketNewArgs {
+            title: Some(args.title.clone()),
+            from_task: None,
+            repos: Vec::new(),
+            blocked_by: Vec::new(),
+            related: Vec::new(),
+            theme: None,
+            kind: Some(args.kind),
+            body: args.body.clone(),
+            body_file: args.body_file.clone(),
+            for_human: true,
+            priority: args.priority,
+        };
+        return crate::ticket::new(cli, &repo, &ticket_args).await;
+    }
     let client = client_for(cli).await?;
     let body = if args.body.is_some() || args.body_file.is_some() {
         read_text(&args.body, &args.body_file, "body")?
@@ -145,19 +182,7 @@ pub(super) async fn task_new(cli: &Cli, args: &RowNewArgs) -> Result<(), CliErro
     };
     let task = client.new_task(&req).await?;
     if args.for_human {
-        client
-            .send(&SendRequest {
-                to: Some("human".to_string()),
-                body: format!(
-                    "To-do for you ({} priority): {}. Finish it with `bridle task done {}`.",
-                    task.priority, task.title, task.id
-                ),
-                kind: MessageKind::Note,
-                when: bridle_api::When::Now,
-                reply_to: None,
-                task: Some(task.id.clone()),
-            })
-            .await?;
+        notify_human_todo(cli, &task).await?;
     }
     if args.component.is_empty() && project_has_components() {
         eprintln!(
@@ -325,7 +350,7 @@ pub(super) async fn task_plan(cli: &Cli, args: &RowPlanArgs) -> Result<(), CliEr
     Ok(())
 }
 
-pub(super) fn task_priority_arg(arg: TicketPriorityArg) -> TicketPriority {
+pub fn task_priority_arg(arg: TicketPriorityArg) -> TicketPriority {
     match arg {
         TicketPriorityArg::Critical => TicketPriority::Critical,
         TicketPriorityArg::Urgent => TicketPriority::Urgent,

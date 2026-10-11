@@ -44,6 +44,9 @@ pub struct Todo {
     pub title: String,
     pub body: String,
     pub priority: Priority,
+    /// The ticket the to-do is (its id; the file is docs/tickets/open/<name>-<id>.md). A
+    /// to-do is a normal ticket (cy4q); none for one filed before that.
+    pub ticket: Option<String>,
     /// RFC 3339, UTC.
     pub created_at: String,
 }
@@ -177,6 +180,7 @@ async fn read_project(s: Source, timeout: Duration) -> Result<ProjectItems, Proj
             title: t.title.clone(),
             body: t.body.clone(),
             priority: t.priority.into(),
+            ticket: t.ticket.clone(),
             created_at: t.created_at.to_rfc3339(),
         })
         .collect();
@@ -263,10 +267,12 @@ mod tests {
 
     #[tokio::test]
     async fn lists_are_high_priority_first_then_oldest_and_claimed_only() {
+        let mut with_ticket = task("t-hi", "urgent", "claimed", "high", "2026-02-01T00:00:00Z");
+        with_ticket["ticket"] = json!("br-t-hi");
         let claimed = vec![
             task("t-old", "old", "claimed", "normal", "2026-01-01T00:00:00Z"),
             task("t-new", "new", "claimed", "normal", "2026-03-01T00:00:00Z"),
-            task("t-hi", "urgent", "claimed", "high", "2026-02-01T00:00:00Z"),
+            with_ticket,
             task(
                 "t-done",
                 "done",
@@ -311,6 +317,9 @@ mod tests {
         let p = &got.projects[0];
         let todos: Vec<_> = p.todos.iter().map(|t| t.task_id.as_str()).collect();
         assert_eq!(todos, ["t-hi", "t-old", "t-new"]);
+        // The to-do carries its ticket (cy4q); the order above is unchanged by it.
+        assert_eq!(p.todos[0].ticket.as_deref(), Some("br-t-hi"));
+        assert_eq!(p.todos[1].ticket, None);
         let decisions: Vec<_> = p.decisions.iter().map(|d| d.task_id.as_str()).collect();
         assert_eq!(decisions, ["q-hi", "q-old", "q-new", "q-lo"]);
         assert_eq!(p.decisions[0].title, "high one");

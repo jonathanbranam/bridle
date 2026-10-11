@@ -65,7 +65,7 @@ pub fn tickets_root(repo: &Path) -> PathBuf {
     repo.join("docs/tickets")
 }
 
-async fn new(cli: &Cli, repo: &Path, args: &TicketNewArgs) -> Result<(), CliError> {
+pub(crate) async fn new(cli: &Cli, repo: &Path, args: &TicketNewArgs) -> Result<(), CliError> {
     let repos = if args.repos.is_empty() {
         vec![project_name(cli, repo)?]
     } else {
@@ -150,9 +150,21 @@ async fn new(cli: &Cli, repo: &Path, args: &TicketNewArgs) -> Result<(), CliErro
         // Every ticket has a row, `pending` until `ticket ready` (22ab section 2). The daemon
         // gives it the ticket's id from the `ticket` field (br-9e15).
         let ticket_id = id_of(&path).ok_or_else(|| anyhow!("new ticket has no id"))?;
-        make_task(cli, &title, kind, &ticket_id, &rel)
-            .await
-            .map_err(|e| anyhow!("{rel} was written but its row was not filed: {e}"))?;
+        let priority = args.priority.map(crate::commands::task_priority_arg);
+        let task = make_task(
+            cli,
+            &title,
+            kind,
+            &ticket_id,
+            &rel,
+            args.for_human,
+            priority,
+        )
+        .await
+        .map_err(|e| anyhow!("{rel} was written but its row was not filed: {e}"))?;
+        if args.for_human {
+            crate::commands::notify_human_todo(cli, &task).await?;
+        }
     }
     println!("{rel}");
 
@@ -361,12 +373,14 @@ async fn make_task(
     kind: TicketKind,
     id: &str,
     rel: &str,
-) -> Result<String, CliError> {
+    for_human: bool,
+    priority: Option<bridle_api::TicketPriority>,
+) -> Result<bridle_api::Ticket, CliError> {
     let client = client_for(cli).await?;
     let task = client
         .new_task(&NewTicketRequest {
-            for_human: false,
-            priority: None,
+            for_human,
+            priority,
             title: title.to_string(),
             kind,
             body: rel.to_string(),
@@ -376,7 +390,7 @@ async fn make_task(
             parent: None,
         })
         .await?;
-    Ok(task.id)
+    Ok(task)
 }
 
 /// The id tails of every task (`br-k7tm` -> `k7tm`). Empty when the daemon isn't reachable

@@ -1466,19 +1466,21 @@ fn task_done_skips_warning_for_human_claimed_tasks() {
     let (ok, out, err) = run_cli(
         &repo,
         &home,
-        &[
-            "task",
-            "new",
-            "--kind",
-            "bug",
-            "--for-human",
-            "human-task",
-            "--json",
-        ],
+        &["task", "new", "--kind", "bug", "--for-human", "human-task"],
     );
     assert!(ok, "task new failed: {err}");
-    let task: serde_json::Value = serde_json::from_str(&out).expect("task json");
-    let task_id = task["id"].as_str().expect("task id").to_string();
+    assert!(
+        out.trim().ends_with(".md"),
+        "alias prints the ticket file: {out}"
+    );
+    let (ok, out, err) = run_cli(
+        &repo,
+        &home,
+        &["ticket", "list", "--claimed-by", "human", "--json"],
+    );
+    assert!(ok, "list failed: {err}");
+    let rows: serde_json::Value = serde_json::from_str(&out).expect("rows json");
+    let task_id = rows[0]["id"].as_str().expect("task id").to_string();
 
     // Done the human task and check that no warning is printed
     let (ok, _out, err) = run_cli(&repo, &home, &["task", "done", &task_id]);
@@ -1487,6 +1489,74 @@ fn task_done_skips_warning_for_human_claimed_tasks() {
         !err.contains("has no summary"),
         "human-claimed task should not warn about missing summary; stderr: {err}"
     );
+}
+
+/// cy4q: a human to-do is a normal ticket. `ticket new --for-human` and the hidden
+/// `task new --for-human` alias each write a ticket file and a row claimed by the human, with
+/// one inbox note.
+#[test]
+fn for_human_todos_are_tickets_with_a_row_claimed_by_the_human_and_an_inbox_note() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let repo = tmp.path().join("repo");
+    init_repo(&repo);
+    let home = tmp.path().join("home");
+
+    let mut serve_cmd = Command::new(bridle_bin());
+    serve_cmd
+        .arg("serve")
+        .arg("--repo")
+        .arg(&repo)
+        .arg("--listen")
+        .arg("127.0.0.1:0")
+        .env("BRIDLE_CLAUDE_BIN", fake_claude_path())
+        .env("BRIDLE_HOME", &home)
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::inherit());
+    strip_bridle_env(&mut serve_cmd);
+    let mut guard = DaemonGuard(serve_cmd.spawn().expect("spawn bridle serve"));
+    wait_for_daemon(&mut guard.0, &tmp.path().join(".bridle/daemon.json"));
+
+    let cases: [&[&str]; 2] = [
+        &[
+            "ticket",
+            "new",
+            "-k",
+            "chore",
+            "--for-human",
+            "via ticket",
+            "--priority",
+            "high",
+        ],
+        &["task", "new", "-k", "chore", "--for-human", "via alias"],
+    ];
+    for args in cases {
+        let (ok, out, err) = run_cli(&repo, &home, args);
+        assert!(ok, "{args:?} failed: {err}");
+        let rel = out.trim();
+        assert!(
+            repo.join(rel).is_file(),
+            "no ticket file for {args:?}: {out}"
+        );
+    }
+
+    let (ok, out, err) = run_cli(
+        &repo,
+        &home,
+        &["ticket", "list", "--claimed-by", "human", "--json"],
+    );
+    assert!(ok, "list failed: {err}");
+    let rows: serde_json::Value = serde_json::from_str(&out).expect("rows json");
+    let rows = rows.as_array().expect("array");
+    assert_eq!(rows.len(), 2, "{out}");
+    for r in rows {
+        assert_eq!(r["claimed_by"], "human", "{r}");
+        assert!(r["ticket"].is_string(), "row has no ticket: {r}");
+    }
+
+    let (ok, out, err) = run_cli(&repo, &home, &["inbox", "--json"]);
+    assert!(ok, "inbox failed: {err}");
+    assert_eq!(out.matches("bridle ticket done").count(), 2, "{out}");
 }
 
 #[test]

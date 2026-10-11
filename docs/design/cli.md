@@ -279,7 +279,7 @@ bridle workflow spec coverage [--root DIR] [--tests DIR ...] [--require-all] [--
                                              and the unbound list as 'file:line: s-id title'; exits 1
                                              with --require-all if any unbound (default exit 0); local
                                              only, no daemon call
-bridle ticket new "<title>" --kind <kind> [--repos a,b] [--blocked-by ids] [--related ids] [--theme slug] [--body t | --body-file f]   mints
+bridle ticket new "<title>" --kind <kind> [--repos a,b] [--blocked-by ids] [--related ids] [--theme slug] [--body t | --body-file f] [--for-human [--priority P]]   mints
                                              `docs/tickets/open/<slug>-<id>.md` (repo root found via git): a
                                              fresh 4-character ID unique across `open/` and `resolved/`,
                                              frontmatter id, title, kind (required, no default: the task kinds), created (UTC date), created_by (the calling principal, optional; omitted when no daemon answers), repos (default: the
@@ -489,10 +489,12 @@ bridle ticket comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain com
   lists stopped agents whose branch has already landed (at least one commit of its own reached
   `HEAD`; an empty branch is no work) so leftovers show up, leaving out agents stopped by a daemon
   shutdown, which are due a resume.
-- **Human to-dos.** `task new --for-human` creates the task `planned` and claimed by the
-  `human` principal in one step and sends the human one inbox message naming it. The human
-  finishes it with `task done <id>` (no `--commit`); `task list --claimed-by human` lists
-  the open ones. By convention the title starts `[at restart]` or `[at next reboot]` when it
+- **Human to-dos.** A to-do is a normal ticket (cy4q). `ticket new "<title>" -k KIND --for-human
+  [--priority P] [--body ...]` writes the ticket file, creates its row `planned` and claimed by
+  the `human` principal in one step, and sends the human one inbox message naming it; the caller
+  commits the file, as for any `ticket new`. The human finishes it with `ticket done <id>` (no
+  `--commit`); `ticket list --claimed-by human` lists the open ones. The hidden `task new
+  --for-human` alias makes a ticket too. Migration `0005` gives the older ticketless to-dos a stub. By convention the title starts `[at restart]` or `[at next reboot]` when it
   must wait for one; nothing parses it. See coordination.md, "Human to-dos".
 - **`task new --from <task>`** makes the new task a split of an existing one: it records the
   task as its `parent`, inherits the parent's watchers (you are still added), and the parent's

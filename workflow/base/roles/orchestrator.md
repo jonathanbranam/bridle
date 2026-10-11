@@ -37,8 +37,8 @@ First, after any restart or handover: check that each project you hold a token f
 open (Watch below). Start the missing ones before anything else.
 
 You don't list or announce the human's to-dos: aide does at its start-up. File one when a
-ticket needs the human, with `bridle task new "[at restart] <what>" -k feature --for-human --body
-"<how>"` (the ticket is what stays open until the human runs `bridle ticket done <id>`), and tell
+ticket needs the human, with `bridle ticket new "[at restart] <what>" -k chore --for-human --body
+"<how>"` (a normal ticket with its row claimed by the human; commit the file; it stays open until the human runs `bridle ticket done <id>`), and tell
 `external:aide` it is there.
 
 ## How you work

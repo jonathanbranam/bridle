@@ -117,12 +117,12 @@ manager answers, or forwards to human ─► answer lands on the task ─► tas
 
 ## Human to-dos
 
-A to-do for the human is a task claimed by the `human` principal (`bridle task new
---for-human`, which plans and claims it in one step and sends one inbox message pointing at
-it). Unlike an agent's claim it has no lease: the lease check measures an agent's activity,
-so a claim by `human` is never released. The human finishes it with `bridle task done <id>`,
+A to-do for the human is a normal ticket whose row is claimed by the `human` principal
+(`bridle ticket new --for-human`, which writes the file, plans and claims the row in one step and
+sends one inbox message pointing at it; `task new --for-human` is the hidden alias). Unlike an agent's claim it has no lease: the lease check measures an agent's activity,
+so a claim by `human` is never released. The human finishes it with `bridle ticket done <id>`,
 which needs no commit for a task the human claimed. The orchestrator lists
-`bridle task list --claimed-by human` at every start and tells the human first.
+`bridle ticket list --claimed-by human` at every start and tells the human first.
 
 A to-do has a priority (`high`, `normal` (default), `low`; `task new --priority`, changed with
 `bridle task priority`), and the list is sorted by it. Whoever asked can rescind it with

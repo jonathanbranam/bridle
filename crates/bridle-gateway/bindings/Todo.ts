@@ -6,6 +6,11 @@ import type { Priority } from "./Priority";
  */
 export type Todo = { task_id: string, title: string, body: string, priority: Priority, 
 /**
+ * The ticket the to-do is (its id; the file is docs/tickets/open/<name>-<id>.md). A
+ * to-do is a normal ticket (cy4q); none for one filed before that.
+ */
+ticket: string | null, 
+/**
  * RFC 3339, UTC.
  */
 created_at: string, };

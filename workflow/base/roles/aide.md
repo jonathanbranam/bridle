@@ -32,6 +32,9 @@ bridle status --json                   # the system, and incidents
 bridle inbox --json                    # messages to you
 ```
 
+To file a to-do for the human, make it a ticket: `bridle ticket new "<what>" -k chore --for-human
+--body "<how>"` (then commit the file). `task new --for-human` does the same, but is going away.
+
 The workforce's questions to the human are `GET /v1/messages?to=human`, which has no CLI. Read
 them as you, never with the human's token:
 
