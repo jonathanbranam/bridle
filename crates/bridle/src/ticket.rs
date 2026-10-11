@@ -162,6 +162,14 @@ pub(crate) async fn new(cli: &Cli, repo: &Path, args: &TicketNewArgs) -> Result<
         )
         .await
         .map_err(|e| anyhow!("{rel} was written but its row was not filed: {e}"))?;
+        // The file's prefix and the row's come from different places; refuse if they differ.
+        if task.id.rsplit_once('-').map(|(p, _)| p) != Some(prefix.as_str()) {
+            return Err(anyhow!(
+                "{rel} has prefix `{prefix}` but its row is {}; fix the file's id or the row",
+                task.id
+            )
+            .into());
+        }
         if args.for_human {
             crate::commands::notify_human_todo(cli, &task).await?;
         }
@@ -418,18 +426,47 @@ fn ticket_of(t: &bridle_api::Ticket) -> Option<String> {
     })
 }
 
-/// This project's id prefix: the running daemon's, else the one it would derive from the project
-/// name (the daemon's own default; a `[tasks] prefix` override is only known to the daemon).
+/// This project's id prefix: the running daemon's, else the project's own `[tasks] prefix` from
+/// its `.bridle/config.toml`. Never guessed from the project name: an older daemon reports no
+/// prefix, and a guess wrote `br-` ids into another project (ydyk).
 async fn own_prefix(cli: &Cli, repo: &Path) -> Result<String, CliError> {
-    if let Ok(c) = client_for(cli).await
-        && let Ok(s) = c.status().await
-        && let Some(p) = s.daemon.task_prefix
-    {
-        return Ok(p);
+    let client = client_for(cli).await;
+    let daemon = match &client {
+        Ok(c) => c.status().await.ok().and_then(|s| s.daemon.task_prefix),
+        Err(_) => None,
+    };
+    let config = bridle_daemon::config::Config::load(repo)
+        .map_err(|e| anyhow!("reading {}/.bridle/config.toml: {e}", repo.display()))?
+        .task_prefix;
+    if daemon.is_none() && config.is_none() {
+        // Outside a workspace with no --project, this is the error that names --project (s-f742).
+        client.map_err(|e| {
+            anyhow!(
+                "{e} (project {})",
+                project_name(cli, repo).unwrap_or_default()
+            )
+        })?;
     }
-    Ok(bridle_daemon::config::default_task_prefix(&project_name(
-        cli, repo,
-    )?))
+    Ok(pick_prefix(daemon, config, repo)?)
+}
+
+/// The daemon's prefix and the config's must agree when both are known; at least one is needed.
+fn pick_prefix(
+    daemon: Option<String>,
+    config: Option<String>,
+    repo: &Path,
+) -> anyhow::Result<String> {
+    match (daemon, config) {
+        (Some(d), Some(c)) if d != c => Err(anyhow!(
+            "the daemon's task prefix `{d}` differs from `[tasks] prefix = \"{c}\"` in {}/.bridle/config.toml; restart the daemon so they agree",
+            repo.display()
+        )),
+        (Some(p), _) | (None, Some(p)) => Ok(p),
+        (None, None) => Err(anyhow!(
+            "no task prefix: the daemon does not report one and {}/.bridle/config.toml has no `[tasks] prefix`; start a current daemon or set the prefix",
+            repo.display()
+        )),
+    }
 }
 
 async fn projects(cli: &Cli, repo: &Path) -> Result<Projects, CliError> {
@@ -1494,6 +1531,30 @@ mod tests {
             theme: None,
             prefix: None,
         }
+    }
+
+    #[test]
+    fn pick_prefix_uses_the_config_when_the_daemon_reports_none() {
+        let r = Path::new("/p");
+        assert_eq!(pick_prefix(None, Some("ui".into()), r).unwrap(), "ui");
+        assert_eq!(pick_prefix(Some("ui".into()), None, r).unwrap(), "ui");
+        assert_eq!(
+            pick_prefix(Some("ui".into()), Some("ui".into()), r).unwrap(),
+            "ui"
+        );
+    }
+
+    #[test]
+    fn pick_prefix_refuses_with_no_source_or_a_mismatch() {
+        let r = Path::new("/p");
+        assert!(
+            pick_prefix(None, None, r)
+                .unwrap_err()
+                .to_string()
+                .contains("no task prefix")
+        );
+        let e = pick_prefix(Some("br".into()), Some("ui".into()), r).unwrap_err();
+        assert!(e.to_string().contains("differs"));
     }
 
     #[test]

@@ -371,6 +371,13 @@ fn world() -> World {
     fs::create_dir_all(&inside).unwrap();
     // `ticket ready` reads its ticket from the cwd's repo before it asks a daemon.
     write_ticket(&inside);
+    // The fake daemon reports no prefix, so `ticket` commands read the project's own (ydyk).
+    fs::create_dir_all(inside.join(".bridle")).unwrap();
+    fs::write(
+        inside.join(".bridle/config.toml"),
+        "[tasks]\nprefix = \"br\"\n",
+    )
+    .unwrap();
     // `orchestrator prime` reads its role prompt from the cwd's repo before it asks a daemon.
     let role = inside.join("workflow/base/roles/orchestrator.md");
     fs::create_dir_all(role.parent().unwrap()).unwrap();
