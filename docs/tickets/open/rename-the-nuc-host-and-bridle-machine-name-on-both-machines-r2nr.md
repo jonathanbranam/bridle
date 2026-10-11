@@ -77,13 +77,15 @@ has the reasons).
 
    ```
    systemctl --user stop bridle-<p>.service
-   bridle --project <p> serve --take-over          # let it start, then Ctrl-C
+   bridle --project <p> serve --take-over          # runs the daemon; leave it running
+   bridle status --project <p>                     # in a second shell: wait for the state line to say pushed
+   # then Ctrl-C the serve, and:
    systemctl --user start bridle-<p>.service
    ```
 
-   (Unverified by the orchestrator: whether `serve --take-over` exits by itself after taking
-   over, or runs the daemon until stopped. If it keeps running, Ctrl-C it before starting the
-   unit.)
+   `serve --take-over` runs the daemon until stopped; the new `owner.toml` is written at its next
+   state flush, so stop it only once `bridle status` shows the state as pushed (orchestrator,
+   from docs/design/cli.md "Owner refusal exit code").
 
 5. **Config, both machines, in one go.** No daemon restart is needed for this (routing and the
    sender's machine label are read from config per send), except the NUC's gateway.
