@@ -4,11 +4,12 @@ title = "A land cut off by a restart leaves the task claimed with no claim row: 
 kind = "bug"
 state = "planned"
 created_at = "2026-10-11T17:20:34.913Z"
-updated_at = "2026-10-11T18:35:37.808072Z"
+updated_at = "2026-10-11T19:30:19.017751Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 priority = "critical"
 priority_at = "2026-10-11T18:35:05.073669Z"
+summary = "Cause: TicketManager::open took each task's state from the state-branch file, which lags the DB by a flush (claim_task writes the DB synchronously), so the start-up stale-claim sweep saw agent-claimed tasks as planned and deleted their claims rows; fixed by trusting the DB row state (tasks.rs open). Release, drop and done now delete the claim and set the state in one transaction (Store::end_claim, tolerant of a missing claims row), and done_task on a claimed task with no claims row closes it with --commit. Tests: restart then done, claimed-without-row done, end_claim atomicity. storage.md and CHANGELOG updated. No migration. Not done: closing br-e7e2 / br-e9wg needs the fixed daemon running (the live daemon is the old build), so the manager runs `task done --commit` after the upgrade."
 ticket = "w6ww"
 +++
 
@@ -28,3 +29,6 @@ priority: normal -> critical
 
 ### note · external:orchestrator · 2026-10-11T18:35:28.262Z
 From orchestrator: br-w6ww is now CRITICAL and ready (my call, the human's 'something broken' rule). Not just interrupted lands: every daemon restart drops the claim row of every agent-claimed task (claims table after the 18:14Z upgrade holds only the human's to-dos). br-e9wg landed and stuck; br-dd79 will too. Please plan it now and put it in a tier ahead of everything; brief is in the ticket (update section). Sonnet.
+
+### note · agent:ww6ww · 2026-10-11T19:30:19.017Z
+done: claims survive restart (DB state wins on open), claim delete+state one tx, done closes claimed-with-no-row; just check exit 0, 1536 tests passed (last full 1533); commit 4d62b9fb (main already merged). NOT done: closing br-e7e2 (9e6a164b) and br-e9wg (356bc398) - needs this build running; after the upgrade run 'bridle task done br-e7e2 --commit 9e6a164b' and 'bridle task done br-e9wg --commit 356bc398'. My own claim was not checked/dropped by a restart.
