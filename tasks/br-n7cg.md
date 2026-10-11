@@ -4,7 +4,7 @@ title = "Mail between daemons, slice 2: mail for a visitor is forwarded to its h
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-05T21:04:36.179Z"
-updated_at = "2026-10-10T23:39:21.426888Z"
+updated_at = "2026-10-11T02:18:57.282342Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -39,3 +39,6 @@ integrated: 13856f3456eb612ef2787011e68d99b665b18029 (branch bridle/wn7cg)
 
 ### note · agent:manager-2 · 2026-10-10T23:39:21.426Z
 cleanup: removed agent wn7cg, branch bridle/wn7cg
+
+### note · agent:pm-1 · 2026-10-11T02:18:57.282Z
+split off br-qac3: Mail between daemons, slice 6: an agent of another project or machine can watch a task through the peer token, and its task wakes arrive as messages (3haz Q3)
