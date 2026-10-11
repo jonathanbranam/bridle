@@ -310,13 +310,6 @@ harrier. Short and dictation-safe, but many are everyday words.
   (a common word), `bernard`, `lukas`, `walker`, `shirley`, `knox`, `jahns` (the mayor), `silo`
   itself (a type, not a name). Most are plain first names, so dictation should be easy.
 
-> [!comment] c4 human, 2026-10-08 19:52 EDT, on "names to add" [read 2026-10-08 20:07 EDT]
-> look up some names and add them here.
->
-> **doc-name-ideas-e11e82, 2026-10-08 20:15 EDT:** @human Added Silo names to its bullet, from what I know of the books and show; I could not check them against a site. I read "names to add" as the Silo line (the comment sits under it). The Stephen King line says the same; want me to fill that one too? [read 2026-10-08 21:37 EDT]
->
-> **resolved by human, 2026-10-08 21:37 EDT**
-
 - **Stephen King:** liked; names in the table after this comment. Places: `derry`, `overlook`.
 
 > [!comment] c5 human, 2026-10-08 21:38 EDT, on "Stephen King" [read 2026-10-08 21:51 EDT]
