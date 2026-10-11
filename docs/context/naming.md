@@ -205,7 +205,8 @@ Both come from the c2 wiki's [TipsForNamingComputers](https://wiki.c2.com/?TipsF
   hyphen; hostnames don't allow underscores).
 - **No numbers, and nothing that parses as one.** A host named `7100`, or even `xb` (hex), gets read
   as an IP address.
-- **Three to seven characters is about right** to type over and over.
+- **Eight letters or fewer**, to type over and over. c2 says three to seven; the human
+  (2026-10-11): "8 letters is a reasonable, but not hard, limit".
 - **Choose from a big set**, not a closed one ("the moons of Jupiter"), or the theme runs out.
 - **The name is the machine's; a role gets an alias.** Give the machine a lasting proper name and
   point role names at it (a DNS or Tailscale alias, or bridle's `[machines]` config), so moving the
