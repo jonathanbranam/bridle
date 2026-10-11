@@ -148,9 +148,9 @@ pub enum Command {
     /// Scheduled messages: add/list/rm. The daemon sends the message to the target at the time
     /// (once or on a cron). An agent schedules to itself; the human to anyone.
     Schedule(ScheduleArgs),
-    /// Task records: create/show/edit/list/drop/done/reopen/plan/summary.
-    /// Ready changes state `pending` -> `open`, plan `open` -> `planned`. See docs/design/storage.md
-    /// for state machine and docs/design/coordination.md for the task lifecycle.
+    /// Old name of `ticket` for the row commands (kept one release, hidden): same behaviour and
+    /// `--json` output, so scripts keep working.
+    #[command(hide = true)]
     Task(TaskArgs),
     /// A task's declared impact: the spec ids and files it will touch
     /// (docs/design/impact-and-conflicts.md).
@@ -259,8 +259,9 @@ pub enum Command {
     /// Goals (docs/design/goals-tier.md). Local — no daemon call.
     #[command(hide = true)]
     Goals(GoalsArgs),
-    /// Tickets under docs/tickets/ (docs/design/cli.md). Local files; `new` also makes the ticket's row
-    /// (needs the project's daemon).
+    /// Tickets: the files under docs/tickets/ and their rows (create/show/edit/list/plan/claim/
+    /// drop/done/reopen/summary/...). `ready` changes state `pending` -> `open`, `plan` `open` ->
+    /// `planned`. See docs/design/cli.md, docs/design/storage.md and docs/design/coordination.md.
     Ticket(TicketArgs),
     /// Architecture-tier elements (docs/design/architecture-tier.md). Local, no daemon call.
     #[command(hide = true)]
@@ -477,6 +478,79 @@ pub enum TicketAction {
     Answer(TicketAnswerArgs),
     /// Print the ticket file, then its thread (and the threads of older tasks made from it).
     Show(TicketShowArgs),
+    #[command(flatten)]
+    Row(TicketRowAction),
+}
+
+/// The ticket forms of the row commands `bridle task` also has. They share the task
+/// handlers (commands/mod.rs `normalize` turns each into its `TaskAction`), so the two can't drift.
+#[derive(Debug, Subcommand)]
+pub enum TicketRowAction {
+    /// Change a ticket's title or body (not its state).
+    Edit(TaskEditArgs),
+    /// List every ticket: id, title, kind, state.
+    List(TaskListArgs),
+    /// Mark a ticket ready to build: `open` -> `planned`.
+    Plan(TaskPlanArgs),
+    /// Change a ticket's priority (critical, urgent, high, normal, low); recorded in its thread and as an event.
+    Priority(TaskPriorityArgs),
+    /// Change a ticket's kind; only while it is `open`. Recorded in its thread and as an event.
+    Kind(TaskKindArgs),
+    /// Drop a ticket (requires a reason, recorded in its thread).
+    Drop(TaskDropArgs),
+    /// Mark a ticket integrated (merged), recording the merge commit in its thread.
+    Done(TaskDoneArgs),
+    /// Record how a ticket was implemented (replaces an earlier summary).
+    Summary(TaskSummaryArgs),
+    /// Bring a dropped or integrated ticket back.
+    Reopen(TaskReopenArgs),
+    /// Skip a ticket's settle period so it can start now (recorded in its thread).
+    SkipSettle(TaskSkipSettleArgs),
+    /// Start watching a ticket as the calling principal (recorded in its thread).
+    Watch(TaskWatchArgs),
+    /// Stop watching a ticket as the calling principal.
+    Unwatch(TaskWatchArgs),
+    /// Search for tickets by words in title, body, or summary.
+    Search(TaskSearchArgs),
+    /// Claim a ready ticket for the calling principal.
+    Claim(ClaimArgs),
+    /// Release the calling principal's own claim.
+    Release(ReleaseArgs),
+    /// The queue: claimed tickets, then the tiers in rank order.
+    Queue(QueueArgs),
+    /// Merge a ticket's branch into the integration branch after the check passes.
+    Land(LandArgs),
+    /// Conflicts opened by `impact check`: list and resolve.
+    Conflict(ConflictArgs),
+    /// A ticket's declared impact: the spec ids and files it will touch.
+    Impact(ImpactArgs),
+}
+
+impl From<TicketRowAction> for TaskAction {
+    fn from(a: TicketRowAction) -> Self {
+        use TicketRowAction as R;
+        match a {
+            R::Edit(a) => Self::Edit(a),
+            R::List(a) => Self::List(a),
+            R::Plan(a) => Self::Plan(a),
+            R::Priority(a) => Self::Priority(a),
+            R::Kind(a) => Self::Kind(a),
+            R::Drop(a) => Self::Drop(a),
+            R::Done(a) => Self::Done(a),
+            R::Summary(a) => Self::Summary(a),
+            R::Reopen(a) => Self::Reopen(a),
+            R::SkipSettle(a) => Self::SkipSettle(a),
+            R::Watch(a) => Self::Watch(a),
+            R::Unwatch(a) => Self::Unwatch(a),
+            R::Search(a) => Self::Search(a),
+            R::Claim(a) => Self::Claim(a),
+            R::Release(a) => Self::Release(a),
+            R::Queue(a) => Self::Queue(a),
+            R::Land(a) => Self::Land(a),
+            R::Conflict(a) => Self::Conflict(a),
+            R::Impact(a) => Self::Impact(a),
+        }
+    }
 }
 
 #[derive(Debug, Args)]
@@ -1660,58 +1734,58 @@ pub struct TaskArgs {
 
 #[derive(Debug, Subcommand)]
 pub enum TaskAction {
-    /// Create a task, `pending` until someone runs `task ready`, with title and kind.
+    /// Create a ticket, `pending` until someone runs `ticket ready`, with title and kind.
     New(TaskNewArgs),
-    /// Show one task in full, including its body and thread.
+    /// Show one ticket in full, including its body and thread.
     Show(TaskShowArgs),
-    /// Change a task's title or body (not its state).
+    /// Change a ticket's title or body (not its state).
     Edit(TaskEditArgs),
-    /// List every task: id, title, kind, state.
+    /// List every ticket: id, title, kind, state.
     List(TaskListArgs),
-    /// Mark a task ready to build: `open` -> `planned`.
+    /// Mark a ticket ready to build: `open` -> `planned`.
     Plan(TaskPlanArgs),
-    /// Change a task's priority (critical, urgent, high, normal, low); recorded in its thread and as an event.
+    /// Change a ticket's priority (critical, urgent, high, normal, low); recorded in its thread and as an event.
     Priority(TaskPriorityArgs),
-    /// Change a task's kind; only while it is `open`. Recorded in its thread and as an event.
+    /// Change a ticket's kind; only while it is `open`. Recorded in its thread and as an event.
     Kind(TaskKindArgs),
-    /// Drop a task (requires a reason, recorded in its thread).
+    /// Drop a ticket (requires a reason, recorded in its thread).
     Drop(TaskDropArgs),
-    /// Mark a task integrated (merged), recording the merge commit in its thread.
+    /// Mark a ticket integrated (merged), recording the merge commit in its thread.
     Done(TaskDoneArgs),
-    /// Record how a task was implemented (replaces an earlier summary).
+    /// Record how a ticket was implemented (replaces an earlier summary).
     Summary(TaskSummaryArgs),
-    /// Bring a dropped or integrated task back.
+    /// Bring a dropped or integrated ticket back.
     Reopen(TaskReopenArgs),
-    /// Skip a task's settle period so it can start now (recorded in its thread).
+    /// Skip a ticket's settle period so it can start now (recorded in its thread).
     SkipSettle(TaskSkipSettleArgs),
-    /// Start watching a task as the calling principal (recorded in its thread).
+    /// Start watching a ticket as the calling principal (recorded in its thread).
     Watch(TaskWatchArgs),
-    /// Stop watching a task as the calling principal.
+    /// Stop watching a ticket as the calling principal.
     Unwatch(TaskWatchArgs),
-    /// Add a comment to a task's thread (no question/answer semantics,
+    /// Add a comment to a ticket's thread (no question/answer semantics,
     /// doesn't affect readiness).
     #[command(alias = "note")]
     Comment(TaskCommentArgs),
-    /// Search for tasks by words in title, body, or summary.
+    /// Search for tickets by words in title, body, or summary.
     Search(TaskSearchArgs),
-    /// Claim a ready task for the calling principal.
+    /// Claim a ready ticket for the calling principal.
     Claim(ClaimArgs),
     /// Release the calling principal's own claim.
     Release(ReleaseArgs),
-    /// The highest queue tier with a startable task; with a task id, approve that `pending`
-    /// task for work instead (`pending` -> `open`; the PM plans only open tasks).
+    /// The highest queue tier with a startable ticket; with a ticket id, approve that `pending`
+    /// ticket for work instead (`pending` -> `open`; the PM plans only open tickets).
     Ready(ReadyArgs),
-    /// The queue: claimed tasks, then the tiers in rank order.
+    /// The queue: claimed tickets, then the tiers in rank order.
     Queue(QueueArgs),
-    /// Merge a task's branch into the integration branch after the check passes.
+    /// Merge a ticket's branch into the integration branch after the check passes.
     Land(LandArgs),
     /// Conflicts opened by `impact check`: list and resolve.
     Conflict(ConflictArgs),
-    /// A task's declared impact: the spec ids and files it will touch.
+    /// A ticket's declared impact: the spec ids and files it will touch.
     Impact(ImpactArgs),
-    /// Ask a question against a task: blocks it until answered.
+    /// Ask a question against a ticket: blocks it until answered.
     Ask(AskArgs),
-    /// Answer a task's open question.
+    /// Answer a ticket's open question.
     Answer(AnswerArgs),
 }
 
@@ -1723,13 +1797,13 @@ pub struct TaskNewArgs {
     pub kind: TaskKindArg,
     #[arg(long)]
     pub body: Option<String>,
-    /// Read the task body from a file (or `-` for stdin).
+    /// Read the ticket body from a file (or `-` for stdin).
     #[arg(long)]
     pub body_file: Option<PathBuf>,
-    /// Scope the task to this component (repeatable); none = repo-wide.
+    /// Scope the ticket to this component (repeatable); none = repo-wide.
     #[arg(long = "component", value_name = "ID")]
     pub component: Vec<String>,
-    /// Estimated size, so small tasks can be picked when budget is short.
+    /// Estimated size, so small tickets can be picked when budget is short.
     #[arg(long, value_enum, ignore_case = true)]
     pub size: Option<TaskSizeArg>,
     /// A to-do for the human: created planned and claimed by them, with one inbox
@@ -1740,22 +1814,22 @@ pub struct TaskNewArgs {
     /// How soon it's wanted; ranks the human's to-dos (default normal).
     #[arg(long, value_enum, ignore_case = true)]
     pub priority: Option<TaskPriorityArg>,
-    /// Split from this task: the new task records it as its parent, inherits its watchers
-    /// (you are still added), and the parent's thread names the new task.
+    /// Split from this ticket: the new ticket records it as its parent, inherits its watchers
+    /// (you are still added), and the parent's thread names the new ticket.
     #[arg(long, value_name = "TASK")]
     pub from: Option<String>,
 }
 
 #[derive(Debug, Args)]
 pub struct TaskListArgs {
-    /// Filter to tasks claimed by this principal: `me`, `human`, an agent
+    /// Filter to tickets claimed by this principal: `me`, `human`, an agent
     /// name, or a full principal id.
     #[arg(long)]
     pub claimed_by: Option<String>,
-    /// Only tasks naming this component or any descendant.
+    /// Only tickets naming this component or any descendant.
     #[arg(long, value_name = "ID")]
     pub component: Option<String>,
-    /// Only tasks of this kind (`incident` lists the open incidents).
+    /// Only tickets of this kind (`incident` lists the open incidents).
     #[arg(short = 'k', long, value_enum)]
     pub kind: Option<TaskKindArg>,
 }
@@ -1773,16 +1847,16 @@ pub struct TaskEditArgs {
     pub title: Option<String>,
     #[arg(long)]
     pub body: Option<String>,
-    /// Read the task body from a file (or `-` for stdin).
+    /// Read the ticket body from a file (or `-` for stdin).
     #[arg(long)]
     pub body_file: Option<PathBuf>,
-    /// Replace the task's components with these (repeatable).
+    /// Replace the ticket's components with these (repeatable).
     #[arg(long = "component", value_name = "ID")]
     pub component: Vec<String>,
-    /// Make the task repo-wide (clear its components).
+    /// Make the ticket repo-wide (clear its components).
     #[arg(long, conflicts_with = "component")]
     pub no_component: bool,
-    /// Set the task's estimated size.
+    /// Set the ticket's estimated size.
     #[arg(long, value_enum, ignore_case = true)]
     pub size: Option<TaskSizeArg>,
 }
@@ -1842,7 +1916,7 @@ pub struct LandArgs {
 
 #[derive(Debug, Args)]
 pub struct ProbeArgs {
-    /// A claimed task id or an agent name.
+    /// A claimed ticket id or an agent name.
     #[arg(conflicts_with = "branch", required_unless_present = "branch")]
     pub target: Option<String>,
     #[arg(long, value_name = "BRANCH")]
@@ -1857,11 +1931,11 @@ pub struct ImpactArgs {
 
 #[derive(Debug, Subcommand)]
 pub enum ImpactAction {
-    /// Declare the task's impact, replacing any earlier declaration.
+    /// Declare the ticket's impact, replacing any earlier declaration.
     Set(ImpactSetArgs),
-    /// Print the task's declared impact.
+    /// Print the ticket's declared impact.
     Show(ImpactShowArgs),
-    /// Report overlaps between in-flight tasks' declared impact; exits 1 on a conflict.
+    /// Report overlaps between in-flight tickets' declared impact; exits 1 on a conflict.
     Check(ImpactCheckArgs),
 }
 
@@ -1876,16 +1950,16 @@ pub struct ImpactCheckArgs {
 #[derive(Debug, Args)]
 pub struct ImpactSetArgs {
     pub task: String,
-    /// Scenario or requirement id the task changes (repeatable).
+    /// Scenario or requirement id the ticket changes (repeatable).
     #[arg(long, value_name = "ID")]
     pub modify: Vec<String>,
-    /// Requirement or capability id the task adds spec under (repeatable).
+    /// Requirement or capability id the ticket adds spec under (repeatable).
     #[arg(long, value_name = "ID")]
     pub add_under: Vec<String>,
-    /// Spec id the task removes (repeatable).
+    /// Spec id the ticket removes (repeatable).
     #[arg(long, value_name = "ID")]
     pub remove: Vec<String>,
-    /// File glob the task touches (one or more).
+    /// File glob the ticket touches (one or more).
     #[arg(long, value_name = "GLOB", num_args = 1..)]
     pub files: Vec<String>,
 }
@@ -1922,7 +1996,7 @@ pub struct TaskCommentArgs {
     /// Read the comment text from a file (or `-` for stdin).
     #[arg(long)]
     pub text_file: Option<PathBuf>,
-    /// Also send this agent a short message naming the task (same as
+    /// Also send this agent a short message naming the ticket (same as
     /// `bridle send <agent> --task <id>`).
     #[arg(long, value_name = "AGENT")]
     pub notify: Option<String>,
@@ -2125,7 +2199,7 @@ pub struct ConflictResolveArgs {
     /// `A,B`: adds a `blocks` edge, A blocks B.
     #[arg(long, value_name = "A,B", value_delimiter = ',', group = "how")]
     pub order: Option<Vec<String>>,
-    /// One task absorbs the other's change.
+    /// One ticket absorbs the other's change.
     #[arg(long, value_name = "TASK", group = "how")]
     pub merge_into: Option<String>,
 }
@@ -2198,13 +2272,13 @@ pub struct RulesDiffArgs {
 
 #[derive(Debug, Args)]
 pub struct ReadyArgs {
-    /// A `pending` task to open. Without it, list the highest startable queue tier.
+    /// A `pending` ticket to open. Without it, list the highest startable queue tier.
     pub task: Option<String>,
     /// Fan out across every daemon registered on this machine (`bridle
     /// daemons`), not just the one `--url`/`--project`/discovery resolves.
     #[arg(long)]
     pub all: bool,
-    /// Filter by role. A stub for now: tasks don't carry a role field yet
+    /// Filter by role. A stub for now: tickets don't carry a role field yet
     /// (P0-1 gap), so this has nothing to filter on and is accepted but
     /// ignored.
     #[arg(long)]

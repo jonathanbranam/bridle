@@ -20,7 +20,7 @@ use chrono::{Local, TimeZone, Utc};
 use clap::CommandFactory;
 use futures::StreamExt;
 
-use crate::cli::{AgentArgs, DaemonArgs, HookArgs, WorkflowAction};
+use crate::cli::{AgentArgs, DaemonArgs, HookArgs, TicketAction, TicketArgs, WorkflowAction};
 use crate::cli::{
     AgentsArgs, AnswerArgs, ArchProposeArgs, AskArgs, BudgetAction, BudgetArgs, BudgetHoldArgs,
     ClaimArgs, Cli, Command, CompletionsArgs, ConflictAction, ConflictArgs, CostAction, CostArgs,
@@ -105,6 +105,9 @@ fn normalize(cmd: Command) -> Command {
             UsageSub::Cost(a) => Command::Cost(a),
             UsageSub::Budget(a) => Command::Budget(a),
         },
+        Command::Ticket(TicketArgs {
+            action: TicketAction::Row(row),
+        }) => normalize(Command::Task(TaskArgs { action: row.into() })),
         Command::Task(TaskArgs { action }) => match action {
             TaskAction::Claim(a) => Command::Claim(a),
             TaskAction::Release(a) => Command::Release(a),

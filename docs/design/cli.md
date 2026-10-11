@@ -379,6 +379,12 @@ bridle orchestrator prime prototyper         the prototyper role file, then the 
 bridle orchestrator prime designer           the designer role file, then the project's .bridle/roles/designer.md
 bridle orchestrator prime document-reviewer  the document-reviewer role file, then the project's .bridle/roles/document-reviewer.md
 bridle orchestrator prime worker|planner [--component ID ...] [--task ID]   the role's rules, facts, guides, plus named components' scope; --task is worker only
+# q8cs (22ab step 7): every `bridle task <x>` below also runs as `bridle ticket <x>`, for the row
+# commands the ticket group did not already have (list, edit, plan, priority, kind, drop, done, summary,
+# reopen, skip-settle, watch, unwatch, search, claim, release, queue, land, conflict, impact), with the
+# same handler, flags and `--json` output. `bridle task` is a hidden alias kept one release (step 10
+# removes it). Where both groups have the name (new, ready, comment, ask, answer, show) the two stay
+# different: `ticket` works on the file, `task` on the row alone. JSON fields and event names say "task" until step 9.
 bridle task new    <title> -k/--kind KIND [--body TEXT | --body-file FILE] [--component ID ...] [--size S|M|L] [--for-human] [--priority critical|urgent|high|normal|low] [--from TASK]
 bridle task show   <id>
 bridle task plan   <id>                                                 open -> planned: ready to build, claimable once unblocked

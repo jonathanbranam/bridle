@@ -51,6 +51,7 @@ pub async fn run(cli: &Cli, args: &TicketArgs) -> Result<(), CliError> {
         TicketAction::Answer(a) => answer_cmd(cli, &repo, a).await,
         TicketAction::Show(a) => show_cmd(cli, &repo, a).await,
         TicketAction::Submit(_) => unreachable!("handled above"),
+        TicketAction::Row(_) => unreachable!("normalized to the task handlers"),
     }
 }
 

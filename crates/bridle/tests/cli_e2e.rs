@@ -1692,3 +1692,46 @@ fn messages_shows_own_bodies_and_headers_only_for_others() {
     let (ok, _, _) = run_cli(&repo, &home, &["messages", "--since", "soon"]);
     assert!(!ok);
 }
+
+/// q8cs: `bridle ticket <x>` is the same handler as the hidden `bridle task <x>`, so the
+/// `--json` output is identical and the state changes land the same.
+#[test]
+fn ticket_row_commands_match_the_hidden_task_alias() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let (_guard, repo, home) = start_daemon(tmp.path());
+
+    let (ok, out, err) = run_cli(&repo, &home, &["task", "new", "t", "-k", "chore", "--json"]);
+    assert!(ok, "task new failed: {err}");
+    let id = serde_json::from_str::<serde_json::Value>(&out).expect("task json")["id"]
+        .as_str()
+        .expect("id")
+        .to_string();
+
+    let (ok, via_task, err) = run_cli(&repo, &home, &["task", "list", "--json"]);
+    assert!(ok, "task list failed: {err}");
+    let (ok, via_ticket, err) = run_cli(&repo, &home, &["ticket", "list", "--json"]);
+    assert!(ok, "ticket list failed: {err}");
+    assert_eq!(via_task, via_ticket);
+    assert!(via_ticket.contains(&id));
+
+    let (ok, _, err) = run_cli(&repo, &home, &["task", "ready", &id]);
+    assert!(ok, "ready failed: {err}");
+    let (ok, _, err) = run_cli(&repo, &home, &["ticket", "plan", &id]);
+    assert!(ok, "ticket plan failed: {err}");
+    let (ok, shown, err) = run_cli(&repo, &home, &["task", "show", &id, "--json"]);
+    assert!(ok, "task show failed: {err}");
+    assert_eq!(
+        serde_json::from_str::<serde_json::Value>(&shown).expect("json")["state"],
+        "planned"
+    );
+    let (ok, found, err) = run_cli(&repo, &home, &["ticket", "search", "t", "--json"]);
+    assert!(ok, "ticket search failed: {err}");
+    let (_, found_task, _) = run_cli(&repo, &home, &["task", "search", "t", "--json"]);
+    assert_eq!(found, found_task);
+
+    // `task` is hidden from the top-level help; `ticket` shows the row commands.
+    let (_, help, _) = run_cli(&repo, &home, &["--help"]);
+    assert!(!help.lines().any(|l| l.trim_start().starts_with("task ")));
+    let (_, help, _) = run_cli(&repo, &home, &["ticket", "--help"]);
+    assert!(help.contains("claim") && help.contains("list") && help.contains("summary"));
+}

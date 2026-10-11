@@ -143,7 +143,7 @@ const CLASSES: &[(&str, Kind, &str)] = &[
         Skip,
         "pairs every project on the machines in config.toml; --project is not its input",
     ),
-    ("task", Daemon, ""),
+    ("ticket", Daemon, ""),
     ("probe", Daemon, ""),
     ("push", Daemon, ""),
     ("port", Daemon, ""),
@@ -211,9 +211,9 @@ fn leaves() -> &'static Vec<Vec<String>> {
 fn required_args(path: &[String]) -> Vec<String> {
     // Usage lines that clap prints with alternatives, or commands that insist on an optional one.
     const GIVEN: &[(&str, &[&str])] = &[
-        ("task conflict resolve", &["--compatible", "r", "1"]),
-        ("task summary", &["--text", "t", "1"]),
-        ("task search", &["word"]),
+        ("ticket conflict resolve", &["--compatible", "r", "1"]),
+        ("ticket summary", &["--text", "t", "1"]),
+        ("ticket search", &["word"]),
         ("probe", &["target"]),
         ("agent wake", &["external:advisor"]),
         ("send", &["human", "hi"]),
@@ -223,7 +223,6 @@ fn required_args(path: &[String]) -> Vec<String> {
             &["--at", "2099-01-01 09:00", "--message", "hi"],
         ),
         ("ticket new", &["-k", "chore", "a title"]),
-        ("task comment", &["1", "hi"]),
         ("ticket comment", &["1", "hi"]),
         ("ticket ready", &["abcd"]),
         ("usage budget max-workers", &["2"]),
@@ -574,8 +573,8 @@ fn the_flag_wins_over_the_workspace() {
     // 3haz: `send --project y` is mail for y's daemon, so it is queued on the sender's own
     // daemon (x, the workspace's) and forwarded from there; the CLI never writes to y.
     assert_eq!(seen.remove("send").as_deref(), Some("x"));
-    // br-qac3: so is `task watch|unwatch --project y`, registered on y by x's peer token.
-    for leaf in ["task watch", "task unwatch"] {
+    // br-qac3: so is `ticket watch|unwatch --project y`, registered on y by x's peer token.
+    for leaf in ["ticket watch", "ticket unwatch"] {
         assert_eq!(seen.remove(leaf).as_deref(), Some("x"), "{leaf}");
     }
     assert_all(&seen, "y");
