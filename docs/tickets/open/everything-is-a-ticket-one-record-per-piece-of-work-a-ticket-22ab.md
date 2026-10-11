@@ -417,6 +417,12 @@ row body stays until the UI (step 8) reads the ask from the ticket; threads move
 file on each row's next write, with no bulk rewrite. Other projects have not run migrations
 0002-0005 (their trial branches; the human's go).
 
+Update 2026-10-11 ~8:25 AM ET: step 7 landed (br-q8cs CLI, br-sehn roles and docs, br-aejj
+gateway; all resolved). Step 9 is split in three: br-95t9 slice 1 landed (storage: table
+`tasks` -> `tickets`, migration 26; state-branch items `tasks/` -> `tracking/`, old folder read
+for one release); br-92za (wire types) is being built; br-res3 (identifier sweep) is planned
+behind it. Steps 8 (bridle-ui) and 10 (drop the `task` alias, one release after 9) are not filed.
+
 **Risks.** The rename changes what every agent types daily; the hidden `task` alias (step 7)
 keeps old habits working until step 10. The PdM's own roadmap generator reads `bridle task list`
 and needs the same change.

@@ -10,6 +10,7 @@ specs: []
 blocked_by: []
 related: [br-22ab]
 parent: br-22ab
+resolved: 2026-10-11T12:23:39Z
 ---
 
 ## The ask
