@@ -2,11 +2,14 @@
 id = "br-8ay6"
 title = "Direct-to-main docs commits are pushed straight after, on the owner's clone"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-09T18:08:53.193Z"
-updated_at = "2026-10-09T18:10:09.406616Z"
+updated_at = "2026-10-11T09:12:49.660773Z"
 created_by = "external:advisor/product-manager"
-watchers = ["external:advisor/product-manager"]
+watchers = [
+    "external:advisor/product-manager",
+    "agent:w8ay6",
+]
 ticket = "8ay6"
 +++
 

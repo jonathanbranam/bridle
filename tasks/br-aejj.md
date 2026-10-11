@@ -2,9 +2,9 @@
 id = "br-aejj"
 title = "User-facing rename slice 3: gateway exposes tickets under ticket names, old routes kept (q8cs)"
 kind = "feature"
-state = "pending"
+state = "planned"
 created_at = "2026-10-11T09:12:01.655Z"
-updated_at = "2026-10-11T09:12:26.607742Z"
+updated_at = "2026-10-11T09:12:56.331058Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",

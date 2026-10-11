@@ -2,9 +2,9 @@
 id = "br-sehn"
 title = "User-facing rename slice 2: roles, rules, skills and docs say ticket, not task (q8cs)"
 kind = "feature"
-state = "pending"
+state = "planned"
 created_at = "2026-10-11T09:11:58.800Z"
-updated_at = "2026-10-11T09:12:24.228634Z"
+updated_at = "2026-10-11T09:12:55.027064Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
