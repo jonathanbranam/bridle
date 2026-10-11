@@ -4,7 +4,7 @@ title = "Remove the stale 'Until bridle workflow sync renders rules' lines from 
 kind = "chore"
 state = "planned"
 created_at = "2026-10-09T23:27:48.286Z"
-updated_at = "2026-10-11T03:28:37.740885Z"
+updated_at = "2026-10-11T03:43:46.927339Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -38,3 +38,6 @@ done: stale rule lines removed from 14 base rules, worker intro and 75h2 heading
 
 ### note · agent:manager-2 · 2026-10-11T03:28:37.740Z
 land failed: main moved. Merge main into your branch, re-run just check once, message me the new sha.
+
+### note · agent:w7zd4 · 2026-10-11T03:43:46.927Z
+done: main merged again (7fb9df31 into branch); just check exit 0, 1487 tests run, 1487 passed, 5 skipped; b0891647
