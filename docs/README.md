@@ -123,7 +123,10 @@ Pushing a `v*` tag runs `.github/workflows/release.yml`, which builds `bridle` a
 GitHub release for the tag (creating it if missing):
 
 - `bridle-<tag>-<target>.tar.gz` for `x86_64-unknown-linux-gnu` (built on ubuntu-22.04),
-  `aarch64-apple-darwin` and `x86_64-apple-darwin`; each holds just the `bridle` binary.
+  `aarch64-apple-darwin` and `x86_64-apple-darwin`; each holds the `bridle` binary and `ui/`, the built bridle-ui (t3dr).
+  A `ui` job builds the bridle-ui commit in `ui.pin` first (Node, only in this workflow) and fails
+  the release if its `api-version` differs from the gateway's `API_VERSION`. Bump `ui.pin` before
+  tagging.
 - `SHA256SUMS`, the `sha256sum` of every tarball.
 
 Running the workflow by hand (`workflow_dispatch`) builds the tarballs and uploads them as
@@ -131,7 +134,7 @@ workflow artifacts without publishing. `scripts/package-release.sh` does the pac
 
 `scripts/install-release.sh [tag]` is the first install on a machine with no clone: it downloads
 the tarball for this platform and `SHA256SUMS` (default the newest release), refuses on a checksum
-mismatch, and installs `bridle` in `~/.local/bin`. It takes the names from the scheme above.
+mismatch, and installs `bridle` in `~/.local/bin` and the UI in `~/.bridle/ui`. It takes the names from the scheme above.
 `just install-script-test` runs it against a local fixture release (part of `just check`). The
 steps after it are in `docs/context/add-a-machine.md`.
 

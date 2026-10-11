@@ -3,9 +3,10 @@
 #   install-release.sh [tag]
 # Downloads bridle-<tag>-<target>.tar.gz and SHA256SUMS (the names scripts/package-release.sh
 # makes and crates/bridle-daemon/src/release.rs expects), refuses on a checksum mismatch, and
-# puts `bridle` in ~/.local/bin. Default tag is the newest release.
+# puts `bridle` in ~/.local/bin and the tarball's `ui/` (if any) in ~/.bridle/ui. Default tag is the newest release.
 # Env: BRIDLE_RELEASE_REPO (owner/name, default jonathanbranam/bridle),
 #      BRIDLE_INSTALL_DIR (default ~/.local/bin),
+#      BRIDLE_UI_DIR (default ~/.bridle/ui),
 #      BRIDLE_RELEASE_BASE (download base URL; for tests, a file:// dir holding the assets).
 set -euo pipefail
 
@@ -60,6 +61,18 @@ cp "$work/x/bridle" "$dest/bridle.new"
 chmod 755 "$dest/bridle.new"
 mv -f "$dest/bridle.new" "$dest/bridle"
 echo "installed $dest/bridle"
+
+# Older tags carry no ui/: leave any existing folder alone. Same rename dance as the daemon.
+if [ -d "$work/x/ui" ]; then
+  ui=${BRIDLE_UI_DIR:-$HOME/.bridle/ui}
+  mkdir -p "$(dirname "$ui")"
+  rm -rf "$ui.tmp" "$ui.old"
+  cp -R "$work/x/ui" "$ui.tmp"
+  [ ! -e "$ui" ] || mv "$ui" "$ui.old"
+  mv "$ui.tmp" "$ui"
+  rm -rf "$ui.old"
+  echo "installed the UI at $ui"
+fi
 
 case ":$PATH:" in
   *":$dest:"*) ;;

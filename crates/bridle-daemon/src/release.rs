@@ -231,14 +231,64 @@ pub fn install(ws: &Workspace, new_bin: &Path, exe: &Path) -> Result<(), String>
     })
 }
 
-/// Downloads, verifies and installs `release` for `target` over `exe`. Nothing is touched until
-/// the checksum has passed.
+/// Replaces `ui_dir` with the tarball's `ui/` (t3dr): copied to `<ui_dir>.tmp`, then renamed in,
+/// so the gateway never serves a half-written folder. A tarball without `ui/` (a tag from before
+/// the UI shipped) leaves the current folder alone.
+fn install_ui(unpacked: &Path, ui_dir: &Path) -> Result<(), String> {
+    let src = unpacked.join("ui");
+    if !src.is_dir() {
+        return Ok(());
+    }
+    let sibling = |suffix: &str| {
+        let mut name = ui_dir.file_name().unwrap_or_default().to_os_string();
+        name.push(suffix);
+        ui_dir.with_file_name(name)
+    };
+    let (tmp, old) = (sibling(".tmp"), sibling(".old"));
+    let fail = |what: &str, e: std::io::Error| format!("{what} {}: {e}", ui_dir.display());
+    let _ = std::fs::remove_dir_all(&tmp);
+    let _ = std::fs::remove_dir_all(&old);
+    if let Some(parent) = ui_dir.parent() {
+        std::fs::create_dir_all(parent).map_err(|e| fail("creating the parent of", e))?;
+    }
+    let out = Command::new("cp")
+        .arg("-R")
+        .arg(&src)
+        .arg(&tmp)
+        .output()
+        .map_err(|e| format!("running cp: {e}"))?;
+    if !out.status.success() {
+        let _ = std::fs::remove_dir_all(&tmp);
+        return Err(format!(
+            "copying the UI: {}",
+            String::from_utf8_lossy(&out.stderr).trim()
+        ));
+    }
+    // A directory can't be renamed over a non-empty one, so the old folder steps aside first.
+    let had_old = ui_dir.exists();
+    if had_old {
+        std::fs::rename(ui_dir, &old).map_err(|e| fail("moving aside", e))?;
+    }
+    if let Err(e) = std::fs::rename(&tmp, ui_dir) {
+        if had_old {
+            let _ = std::fs::rename(&old, ui_dir);
+        }
+        return Err(fail("installing the UI at", e));
+    }
+    let _ = std::fs::remove_dir_all(&old);
+    Ok(())
+}
+
+/// Downloads, verifies and installs `release` for `target` over `exe`, and the tarball's `ui/`
+/// (if it has one) over `ui_dir`. Nothing is touched until the checksum has passed. A UI that
+/// fails to install doesn't undo the binary: it is logged and the old UI stays.
 pub fn fetch_and_install(
     src: &dyn ReleaseSource,
     ws: &Workspace,
     release: &Release,
     target: &str,
     exe: &Path,
+    ui_dir: &Path,
 ) -> Result<(), String> {
     let (tarball, sums) = select_assets(release, target)?;
     let sums_text = String::from_utf8(src.download(&sums.url)?)
@@ -248,6 +298,11 @@ pub fn fetch_and_install(
     let dir = ws.state_dir().join("upgrade-release");
     let _ = std::fs::remove_dir_all(&dir);
     let result = unpack(&bytes, &dir).and_then(|bin| install(ws, &bin, exe));
+    if result.is_ok()
+        && let Err(e) = install_ui(&dir, ui_dir)
+    {
+        tracing::warn!(error = %e, "self-upgrade: the UI was not updated");
+    }
     let _ = std::fs::remove_dir_all(&dir);
     result
 }
@@ -284,8 +339,19 @@ mod tests {
     }
 
     fn tarball(content: &str) -> Vec<u8> {
+        tarball_with_ui(content, None)
+    }
+
+    fn tarball_with_ui(content: &str, ui_marker: Option<&str>) -> Vec<u8> {
         let dir = tempfile::tempdir().expect("tempdir");
         std::fs::write(dir.path().join("bridle"), content).expect("write");
+        let mut members = vec!["bridle"];
+        if let Some(m) = ui_marker {
+            std::fs::create_dir_all(dir.path().join("ui/assets")).expect("ui dir");
+            std::fs::write(dir.path().join("ui/index.html"), m).expect("index");
+            std::fs::write(dir.path().join("ui/assets/a.js"), m).expect("asset");
+            members.push("ui");
+        }
         // A fixed mtime for reproducible entries.
         std::fs::File::options()
             .write(true)
@@ -298,7 +364,7 @@ mod tests {
             .arg(dir.path())
             .arg("-czf")
             .arg(&out)
-            .arg("bridle")
+            .args(&members)
             .status()
             .expect("tar");
         assert!(st.success());
@@ -308,7 +374,10 @@ mod tests {
     /// `sums_hash_of` is what SHA256SUMS vouches for; `None` means the tarball itself.
     /// (Building the tarball twice isn't safe: the gzip header carries a timestamp.)
     fn setup(sums_hash_of: Option<&[u8]>) -> (Stub, Release) {
-        let tar = tarball("new binary");
+        setup_with(tarball("new binary"), sums_hash_of)
+    }
+
+    fn setup_with(tar: Vec<u8>, sums_hash_of: Option<&[u8]>) -> (Stub, Release) {
         let sums_hash_of = sums_hash_of.unwrap_or(&tar);
         let name = "bridle-v9.9.9-aarch64-apple-darwin.tar.gz";
         let sums = format!("{}  {name}\n", hex::encode(Sha256::digest(sums_hash_of)));
@@ -389,8 +458,11 @@ mod tests {
         let exe = tmp.path().join("bridle");
         std::fs::write(&exe, "old binary").expect("write");
         let (stub, release) = setup(None);
-        fetch_and_install(&stub, &ws, &release, "aarch64-apple-darwin", &exe).expect("install");
+        let ui = tmp.path().join("ui");
+        fetch_and_install(&stub, &ws, &release, "aarch64-apple-darwin", &exe, &ui)
+            .expect("install");
         assert_eq!(std::fs::read_to_string(&exe).expect("read"), "new binary");
+        assert!(!ui.exists(), "no ui/ in the tarball, no folder made");
         let prev = std::fs::read_to_string(ws.state_dir().join("bridle.prev")).expect("prev");
         assert_eq!(prev, "old binary");
         assert!(!tmp.path().join("bridle.new").exists());
@@ -404,10 +476,64 @@ mod tests {
         let exe = tmp.path().join("bridle");
         std::fs::write(&exe, "old binary").expect("write");
         let (stub, release) = setup(Some(b"something else"));
-        let err = fetch_and_install(&stub, &ws, &release, "aarch64-apple-darwin", &exe)
+        let ui = tmp.path().join("ui");
+        let err = fetch_and_install(&stub, &ws, &release, "aarch64-apple-darwin", &exe, &ui)
             .expect_err("mismatch");
         assert!(err.contains("checksum mismatch"), "{err}");
         assert_eq!(std::fs::read_to_string(&exe).expect("read"), "old binary");
         assert!(!ws.state_dir().join("bridle.prev").exists());
+    }
+
+    fn upgrade_with_ui(tarball: Vec<u8>, tmp: &Path) -> PathBuf {
+        let ws = ws(tmp);
+        std::fs::create_dir_all(ws.state_dir()).expect("state dir");
+        let exe = tmp.join("bridle");
+        std::fs::write(&exe, "old binary").expect("write");
+        let ui = tmp.join("home/ui");
+        let (stub, release) = setup_with(tarball, None);
+        fetch_and_install(&stub, &ws, &release, "aarch64-apple-darwin", &exe, &ui)
+            .expect("install");
+        ui
+    }
+
+    #[test]
+    fn ui_from_the_tarball_replaces_the_old_folder() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let ui = tmp.path().join("home/ui");
+        std::fs::create_dir_all(&ui).expect("old ui");
+        std::fs::write(ui.join("stale.js"), "old").expect("stale");
+        let got = upgrade_with_ui(tarball_with_ui("new binary", Some("v2")), tmp.path());
+        assert_eq!(got, ui);
+        assert_eq!(
+            std::fs::read_to_string(ui.join("index.html")).expect("index"),
+            "v2"
+        );
+        assert_eq!(
+            std::fs::read_to_string(ui.join("assets/a.js")).expect("asset"),
+            "v2"
+        );
+        assert!(!ui.join("stale.js").exists());
+        assert!(!tmp.path().join("home/ui.tmp").exists());
+        assert!(!tmp.path().join("home/ui.old").exists());
+    }
+
+    #[test]
+    fn ui_is_made_when_there_was_none() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let ui = upgrade_with_ui(tarball_with_ui("new binary", Some("v1")), tmp.path());
+        assert!(ui.join("index.html").is_file());
+    }
+
+    #[test]
+    fn tarball_without_ui_leaves_the_folder_alone() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let ui = tmp.path().join("home/ui");
+        std::fs::create_dir_all(&ui).expect("old ui");
+        std::fs::write(ui.join("index.html"), "mine").expect("index");
+        upgrade_with_ui(tarball("new binary"), tmp.path());
+        assert_eq!(
+            std::fs::read_to_string(ui.join("index.html")).expect("index"),
+            "mine"
+        );
     }
 }

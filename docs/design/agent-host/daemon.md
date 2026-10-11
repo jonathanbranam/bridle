@@ -382,7 +382,11 @@ minutes (`release::POLL_EVERY`, counted even when the ask fails, so rate limits 
 newer than the running version (plain `X.Y.Z` compare, a prerelease or odd tag is never newer)
 starts a background upgrade: download `bridle-<tag>-<target>.tar.gz` and `SHA256SUMS` (names from
 the release workflow, `scripts/package-release.sh`), check the SHA256, unpack, keep the running
-binary as `bridle.prev`, write the new one beside the install path and rename it over, then the
+binary as `bridle.prev`, write the new one beside the install path and rename it over, and, if the
+tarball has a `ui/` folder (tags from before t3dr don't; then `~/.bridle/ui/` is left alone), copy
+it to `ui.tmp` beside `~/.bridle/ui/` and rename it in (the old folder steps aside to `ui.old`
+first). A UI that fails to install is logged and doesn't undo the binary. No other upgrade mode
+touches `~/.bridle/ui/`. Then the
 usual pre-flight (`serve --check`), refuse-spawns wait, restart with rollback armed. A failed
 download, checksum or unpack changes nothing and wakes `upgrade_failed` (the orchestrator; nothing
 goes to the human's inbox). That tag isn't retried until the daemon restarts. The recorded built

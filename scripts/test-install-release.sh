@@ -23,9 +23,26 @@ else
   (cd "$t/rel" && shasum -a 256 "$name" > SHA256SUMS)
 fi
 
-export BRIDLE_RELEASE_BASE="file://$t/rel" BRIDLE_INSTALL_DIR="$t/bin"
+export BRIDLE_RELEASE_BASE="file://$t/rel" BRIDLE_INSTALL_DIR="$t/bin" BRIDLE_UI_DIR="$t/home/ui"
 "$here/install-release.sh" v9.9.9 > /dev/null
 [ "$("$t/bin/bridle")" = fixture ] || { echo "FAIL: installed binary wrong"; exit 1; }
+[ ! -e "$t/home/ui" ] || { echo "FAIL: a ui folder from a tarball with none"; exit 1; }
+
+# With a (stub) ui dir the tarball carries ui/ and the installer puts it in place.
+mkdir -p "$t/stub-ui/assets" "$t/home/ui"
+echo "<html>" > "$t/stub-ui/index.html"
+echo 1 > "$t/stub-ui/api-version"
+echo stale > "$t/home/ui/stale.js"
+"$here/package-release.sh" v9.9.9 "$target" "$t/bridle" "$t/rel" "$t/stub-ui"
+tar -tzf "$t/rel/$name" | grep -q '^ui/index.html$' || { echo "FAIL: ui/ missing from the tarball"; exit 1; }
+if command -v sha256sum >/dev/null 2>&1; then
+  (cd "$t/rel" && sha256sum "$name" > SHA256SUMS)
+else
+  (cd "$t/rel" && shasum -a 256 "$name" > SHA256SUMS)
+fi
+"$here/install-release.sh" v9.9.9 > /dev/null
+[ "$(cat "$t/home/ui/api-version")" = 1 ] || { echo "FAIL: ui not installed"; exit 1; }
+[ ! -e "$t/home/ui/stale.js" ] || { echo "FAIL: old ui not replaced"; exit 1; }
 
 rm -rf "$t/bin"
 echo "0000000000000000000000000000000000000000000000000000000000000000  $name" > "$t/rel/SHA256SUMS"

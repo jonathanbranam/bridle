@@ -4635,8 +4635,9 @@ async fn release_upgrade_in_background(state: AppState, release: crate::release:
             let src = state.upgrader.releases();
             let ws = state.workspace.clone();
             let r = release.clone();
+            let ui_dir = bridle_api::discovery::bridle_home().join("ui");
             tokio::task::spawn_blocking(move || {
-                crate::release::fetch_and_install(src.as_ref(), &ws, &r, target, &exe)
+                crate::release::fetch_and_install(src.as_ref(), &ws, &r, target, &exe, &ui_dir)
             })
             .await
             .unwrap_or_else(|e| Err(e.to_string()))

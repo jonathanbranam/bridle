@@ -127,7 +127,13 @@ actions as writes and refuses the rest, so a stolen session can answer and check
   installed into a folder the gateway serves, **`~/.bridle/ui/`**, so page and API share an
   origin. The build records the API version it targets; the gateway warns or refuses on a
   mismatch (`ui_version_mismatch`, default warn). The UI files are served without a session, since
-  the page must load to show its login form; every API route stays guarded. Not compiled into the `bridle` binary (no Node in bridle's build). In development
+  the page must load to show its login form; every API route stays guarded. Not compiled into the `bridle` binary (no Node in bridle's build). It ships in the release
+  tarball instead (t3dr): `release.yml` builds the bridle-ui commit named in `ui.pin` (repo root),
+  fails the release if the built `api-version` differs from the gateway's `API_VERSION`, and
+  packages the result as `ui/` (with `ui/bridle-version`: tag and bridle-ui sha) in every
+  `bridle-<tag>-<target>.tar.gz`. `install-release.sh` and a `self_upgrade = "release"` daemon put
+  it in `~/.bridle/ui/`. Bumping `ui.pin` is part of cutting a release; the dev machine keeps its
+  own bridle-ui clone. In development
   the UI's dev server proxies API calls to the gateway.
 
 **Documents (br-5paw, ticket x8jt; a narrow piece of v8kn, built).** For the UI's document view

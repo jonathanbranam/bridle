@@ -7,7 +7,43 @@ on:
 permissions:
   contents: read
 jobs:
+  # The bridle-ui build, pinned by ui.pin (t3dr). Runs only here, never in just check or CI on
+  # main. bridle-ui is public, so the default token reads it.
+  ui:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read the pin
+        id: pin
+        run: echo "sha=$(tr -d '[:space:]' < ui.pin)" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          repository: jonathanbranam/bridle-ui
+          ref: ${{ steps.pin.outputs.sha }}
+          path: bridle-ui
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+          cache-dependency-path: bridle-ui/package-lock.json
+      - run: npm ci && npm run build
+        working-directory: bridle-ui
+      - name: Check the API version and record the build
+        run: |
+          want=$(sed -n 's/^pub const API_VERSION: u32 = \([0-9]*\);.*/\1/p' crates/bridle-gateway/src/lib.rs)
+          got=$(tr -d '[:space:]' < bridle-ui/dist/api-version)
+          [ -n "$want" ] && [ "$got" = "$want" ] \
+            || { echo "UI api-version '$got' != gateway API_VERSION '$want'" >&2; exit 1; }
+          tag="${GITHUB_REF_NAME}"
+          [ "$GITHUB_REF_TYPE" = tag ] || tag="dev-${GITHUB_SHA::7}"
+          echo "$tag bridle-ui ${{ steps.pin.outputs.sha }}" > bridle-ui/dist/bridle-version
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ui
+          path: bridle-ui/dist
+          if-no-files-found: error
   build:
+    needs: ui
     strategy:
       fail-fast: true
       matrix:
@@ -22,13 +58,17 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: ui
+          path: ui-dist
       - run: cargo build --release --locked -p bridle --target ${{ matrix.target }}
       - name: Package
         run: |
           tag="${GITHUB_REF_NAME}"
           [ "$GITHUB_REF_TYPE" = tag ] || tag="dev-${GITHUB_SHA::7}"
           scripts/package-release.sh "$tag" "${{ matrix.target }}" \
-            "target/${{ matrix.target }}/release/bridle" dist
+            "target/${{ matrix.target }}/release/bridle" dist ui-dist
       - uses: actions/upload-artifact@v4
         with:
           name: bridle-${{ matrix.target }}
