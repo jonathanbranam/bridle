@@ -118,7 +118,7 @@ dictation-tested.)
 | enterprise | Star Trek | The famous one; long, and a common word. |
 | voyager, defiant, reliant | Star Trek | Voyager is also the real probe. |
 | excelsior, stargazer, cerritos | Star Trek | Excelsior and stargazer are long. |
-| ~~titan~~, protostar | Star Trek | Titan struck: sounds like triton (the human, 2026-10-11). |
+| titan, protostar | Star Trek | Titan is also a moon and a god. |
 | discovery | Star Trek; 2001: A Space Odyssey | Both franchises. A common word, and long. |
 | orville | The Orville | |
 | falcon | Star Wars (the Millennium Falcon) | Also SpaceX's rocket. |
@@ -327,11 +327,11 @@ Moons:
 | phobos, deimos | Mars | A pair: fear and dread. |
 | io, europa, ganymede, callisto | Jupiter (the Galilean moons) | `io` is two letters and also "I/O"; ganymede is long. |
 | amalthea, himalia, metis, thebe | Jupiter | |
-| ~~titan~~, rhea, dione, tethys, mimas | Saturn | Titan struck: sounds like triton (the human, 2026-10-11). |
+| titan, rhea, dione, tethys, mimas | Saturn | Titan is also a Star Trek ship. |
 | enceladus, iapetus, hyperion, phoebe | Saturn | Enceladus and iapetus are hard to spell. |
 | janus, pandora, atlas, prometheus | Saturn | All gods too; atlas is a common product name. |
 | miranda, ariel, oberon, titania, puck, umbriel | Uranus (named from Shakespeare and Pope) | Miranda and ariel are personal names too. |
-| ~~triton~~, proteus, nereid, larissa | Neptune | Triton struck: sounds like titan (the human, 2026-10-11). |
+| triton, proteus, nereid, larissa | Neptune | |
 | charon, nix, hydra, styx, kerberos | Pluto | Short; the underworld set. Hydra is also a constellation. |
 
 Asteroids and other small bodies:
