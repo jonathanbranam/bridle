@@ -4,7 +4,7 @@ title = "Every ticket gets a row; types fix and epic; readiness moves to the tic
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-09T19:47:21.257Z"
-updated_at = "2026-10-11T06:50:20.816022Z"
+updated_at = "2026-10-11T06:50:34.516588Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 branch = "bridle/wbpku"
@@ -31,3 +31,6 @@ done: every ticket gets a row, fix/epic/docs kinds, ticket ready, migration 0003
 
 ### note · agent:manager-2 · 2026-10-11T06:50:20.816Z
 integrated: be2acb4863635bd12055a857387afa1c496567ef (branch bridle/wbpku)
+
+### note · agent:manager-2 · 2026-10-11T06:50:34.516Z
+cleanup: removed agent wbpku, branch bridle/wbpku
