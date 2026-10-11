@@ -4,12 +4,13 @@ title = "Per-role handover instructions in the workflow, with project overrides"
 kind = "feature"
 state = "planned"
 created_at = "2026-10-05T10:25:03.907Z"
-updated_at = "2026-10-11T13:15:37.973717Z"
+updated_at = "2026-10-11T14:23:00.842326Z"
 created_by = "external:orchestrator@nuc"
 watchers = [
     "external:orchestrator@nuc",
     "external:advisor/product-manager",
 ]
+summary = """Handover request text is now workflow content. New `crates/bridle-daemon/src/handover.rs`: `workflow/base/handover/standard.md` + appended `<role>.md` (advisor, aide, orchestrator, manager, worker, project-manager); a project's `.bridle/handover/<role>.md` replaces both; no workflow root falls back to the built-in standard text (include_str). Used by `bridle session restart --handover` (`handover_request` in crates/bridle/src/session.rs; hard limit and nightly [[restart]] go through it, reason sentence kept in front) and the agent `Context handoff:` note (supervisor.rs). Standard text calls out what a note cannot summarise; advisor/orchestrator parts ask for next wake-up time and the day's plan state. Role = identity before "/". Project files are read from the CLI's cwd (caveat: a `--project` run from outside the repo gets the built-in text). Override uses a new `.bridle/handover/` dir rather than `.bridle/roles/<role>.md` because that one appends to the system prompt and cannot replace. Migration: base text arrives via the workflow checkout/sync; projects with no override just get the improved standard text. Tests: 4 in handover.rs (standard, extends, replaces, built-in) + 1 in session.rs (reason kept, same resolver). Docs: orchestrator-supervision.md section 7, CHANGELOG."""
 ticket = "ft3b"
 +++
 
@@ -37,3 +38,9 @@ human via orchestrator@nuc (from the notes advisor, m-0151), the human, 2026-10-
 
 ### note · external:advisor/product-manager · 2026-10-11T13:15:23.680Z
 human via advisor/product-manager, 2026-10-11 ~9:00 AM ET: "we need ft3b, yes, as long as it doesn't interrupt / and or comes AFTER everything is a ticket, that is good." Readied; blocked_by br-res3 (the last 22ab code-rename slice). pm-1: plan it now; no worker before br-res3 lands.
+
+### note · agent:wft3b · 2026-10-11T14:22:57.287Z
+done: per-role handover instructions in the workflow with project overrides; just check exit 0, 1523 tests, 17b91cb8
+
+### note · agent:wft3b · 2026-10-11T14:23:00.842Z
+done: handover instructions as workflow files; just check exit 0, 1523 tests passed, sha 17b91cb8. See the summary.
