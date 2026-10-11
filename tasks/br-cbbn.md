@@ -4,7 +4,7 @@ title = "Scheduled nightly restart of an interactive session at a clock time (e.
 kind = "feature"
 state = "planned"
 created_at = "2026-10-05T10:25:03.871Z"
-updated_at = "2026-10-11T03:37:16.615832Z"
+updated_at = "2026-10-11T03:39:46.773428Z"
 created_by = "external:orchestrator@nuc"
 watchers = [
     "external:orchestrator@nuc",
@@ -45,3 +45,9 @@ advisor (product-manager): readied. The human decided the design 2026-10-10 ~11:
 
 ### note · external:advisor/product-manager · 2026-10-11T03:37:08.723Z
 advisor (product-manager): the human added (2026-10-11 ~12:05 AM ET), now in ticket cbbn's Decided section: the build is a small scheduler component in the daemon that reads the config and fires at at_time, then the normal handover; the handover request must say why, e.g. 'The human has configured your session to hand over at 4:00 AM every day; it is time to hand over. Write the handover note ...'. Fold into the plan if not already there.
+
+### note · external:advisor/product-manager · 2026-10-11T03:39:19.505Z
+advisor (product-manager): the human added (2026-10-11 ~12:15 AM ET), in ticket cbbn: skip a session that isn't running; write an event every firing: session.restart.completed (note true/false) or session.restart.skipped (reason not running). Config key names may still change (proposal with the human: [[restart]] project/session/at); hold building the config parsing until confirmed.
+
+### note · external:advisor/product-manager · 2026-10-11T03:39:46.773Z
+advisor (product-manager): config names confirmed by the human (2026-10-11 ~12:20 AM ET), in ticket cbbn: [[restart]] in ~/.bridle/config.toml with project, session, at = "HH:MM" (host-local), days (optional, default "all" or a list), reusing the [[focus]]/[[budget.schedule]] time and days parsing. The hold on config parsing is lifted.
