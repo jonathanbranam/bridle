@@ -2,15 +2,18 @@
 id = "br-ks55"
 title = "Only one full test run at a time per machine: just check takes a machine-wide lock (n4w4 rec 6)"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-09T01:41:27.525Z"
-updated_at = "2026-10-09T11:04:40.665895Z"
+updated_at = "2026-10-11T00:24:25.282586Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "external:aide",
     "external:advisor/product-manager",
 ]
+branch = "bridle/wks55"
+commit = "c58c07fd17723361fe35605236c664a327898e5f"
+summary = """Added scripts/test-lock.sh: a machine-wide lock (symlink ~/.bridle/test.lock whose target is "pid time worktree"; atomic ln -s, no flock) that the nextest recipes in the justfile (test, test-live, test-contract, check-affected's nextest call) run through, so concurrent runs queue. Waiters print "waiting for the test lock held by <worktree> since <time> (pid N)" and poll every 5 s; a dead holder pid is taken over; released by EXIT/INT/TERM trap; command exit status passes through; BRIDLE_TEST_NOLOCK=1 skips it. BRIDLE_TEST_LOCK / BRIDLE_TEST_LOCK_POLL override path/poll (used for the demo). Docs: CLAUDE.md line, CHANGELOG. Demo: A held the lock 8 s and exited 3; B started 1 s later, printed the waiting line, then ran after A ended (A rc=3, B rc=0). Stale: started a holder, kill -9 by its pid; the next run printed "held by dead pid 98020; taking it over", ran, and removed the lock. Caveat: killing the lock script with -9 orphans its child command, which keeps running without the lock. just check: first run failed on a timing test (resource_budget_test tracker_with_a_live_agent_stays_within_its_interval) under load average 60 from other agents; unrelated; second run green, 1478 passed."""
 parent = "br-n4w4"
 +++
 
@@ -28,3 +31,15 @@ Model: Sonnet. Migration: none (repo scripts only; reaches worktrees with a merg
 
 ### note · external:advisor/product-manager · 2026-10-09T11:04:40.665Z
 watching the task
+
+### note · agent:wks55 · 2026-10-11T00:24:09.946Z
+Added scripts/test-lock.sh: a machine-wide lock (symlink ~/.bridle/test.lock whose target is "pid time worktree"; atomic ln -s, no flock) that the nextest recipes in the justfile (test, test-live, test-contract, check-affected's nextest call) run through, so concurrent runs queue. Waiters print "waiting for the test lock held by <worktree> since <time> (pid N)" and poll every 5 s; a dead holder pid is taken over; released by EXIT/INT/TERM trap; command exit status passes through; BRIDLE_TEST_NOLOCK=1 skips it. BRIDLE_TEST_LOCK / BRIDLE_TEST_LOCK_POLL override path/poll (used for the demo). Docs: CLAUDE.md line, CHANGELOG. Demo: A held the lock 8 s and exited 3; B started 1 s later, printed the waiting line, then ran after A ended (A rc=3, B rc=0). Stale: started a holder, kill -9 by its pid; the next run printed "held by dead pid 98020; taking it over", ran, and removed the lock. Caveat: killing the lock script with -9 orphans its child command, which keeps running without the lock. just check: first run failed on a timing test (resource_budget_test tracker_with_a_live_agent_stays_within_its_interval) under load average 60 from other agents; unrelated; second run green, 1478 passed.
+
+### note · agent:wks55 · 2026-10-11T00:24:12.395Z
+done: machine-wide test lock via scripts/test-lock.sh, demo on thread; just check exit 0, 1478 tests; 0f3e9351
+
+### note · agent:manager-2 · 2026-10-11T00:24:19.303Z
+integrated: c58c07fd17723361fe35605236c664a327898e5f (branch bridle/wks55)
+
+### note · agent:manager-2 · 2026-10-11T00:24:25.282Z
+cleanup: removed nothing; kept agent wks55 (background job pid 19345)
