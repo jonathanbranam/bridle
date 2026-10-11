@@ -27,3 +27,8 @@ bridle_version = "0.6.1"
 id = "0006-backfill-ticket-kind"
 applied_at = "2026-10-11T18:14:23.945191Z"
 bridle_version = "0.6.1"
+
+[[applied]]
+id = "0005-a-ticket-for-every-active-task"
+applied_at = "2026-10-11T21:30:05.487302Z"
+bridle_version = "0.6.1"
