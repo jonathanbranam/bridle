@@ -3,7 +3,21 @@ default:
     @just --list
 
 # Format, lint, test: what CI runs.
-check: fmt-check lint specs-check bench-test install-script-test test
+check: fmt-check lint specs-check bench-test install-script-test test record-pass
+
+# Records the working tree's id in the git dir once the check is green, so a
+# worker's `bridle stop-check` hook accepts the commit of that tree without
+# running the check again. Untracked files count; ignored ones don't (they
+# aren't committed). Never committed itself.
+record-pass:
+    #!/usr/bin/env bash
+    set -eu
+    gd=$(git rev-parse --absolute-git-dir)
+    idx=$(mktemp)
+    trap 'rm -f "$idx"' EXIT
+    if [ -f "$gd/index" ]; then cp "$gd/index" "$idx"; fi
+    GIT_INDEX_FILE=$idx git add -A
+    GIT_INDEX_FILE=$idx git write-tree > "$gd/bridle-check-passed"
 
 fmt:
     cargo fmt --all

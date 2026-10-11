@@ -90,7 +90,10 @@ pub fn looks_finished(dir: &std::path::Path) -> bool {
 const OUTPUT_TAIL_LINES: usize = 40;
 
 /// The file (in the worktree's own git dir, so never committed) recording
-/// the HEAD sha the worker's check last passed at.
+/// the tree id the worker's check last passed on. A tree, not a HEAD sha: the
+/// worker's own green run happens before its commit, and the commit changes
+/// HEAD but not the tree. The justfile's `record-pass` writes it from the
+/// working tree; this hook writes it after its own passing run.
 fn pass_record(dir: &std::path::Path) -> Option<(std::path::PathBuf, String)> {
     let git = |arg: &str| {
         std::process::Command::new("git")
@@ -102,28 +105,35 @@ fn pass_record(dir: &std::path::Path) -> Option<(std::path::PathBuf, String)> {
             .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
     };
     let git_dir = std::path::PathBuf::from(git("--absolute-git-dir")?);
-    Some((git_dir.join("bridle-check-passed"), git("HEAD")?))
+    Some((git_dir.join("bridle-check-passed"), git("HEAD^{tree}")?))
 }
 
+/// Marker (in the git dir) present while this hook runs the check, so the
+/// daemon's stall detector doesn't count the silent wait as a stall.
+pub const RUNNING_MARKER: &str = "bridle-stop-check-running";
+
 /// The block reason if the project's `check_worker` `command` has not passed
-/// at the worktree's current HEAD; `None` (allow) when it has, when none is
+/// on the tree at the worktree's current HEAD; `None` (allow) when it has, when none is
 /// bound, or when git can't say what HEAD is. A missing pass record runs the
 /// check here and records HEAD on success, so a later stop at the same HEAD
 /// skips the rerun. Blocks with the tail of the output on failure.
 pub fn unchecked_head_reason(dir: &std::path::Path, command: Option<&str>) -> Option<String> {
     let command = command?;
-    let (record, head) = pass_record(dir)?;
-    if std::fs::read_to_string(&record).is_ok_and(|s| s.trim() == head) {
+    let (record, tree) = pass_record(dir)?;
+    if std::fs::read_to_string(&record).is_ok_and(|s| s.trim() == tree) {
         return None;
     }
+    let marker = record.with_file_name(RUNNING_MARKER);
+    let _ = std::fs::write(&marker, "");
     let output = std::process::Command::new("sh")
         .args(["-c", command])
         .current_dir(dir)
         .stdin(std::process::Stdio::null())
-        .output()
-        .ok()?;
+        .output();
+    let _ = std::fs::remove_file(&marker);
+    let output = output.ok()?;
     if output.status.success() {
-        let _ = std::fs::write(&record, &head);
+        let _ = std::fs::write(&record, &tree);
         return None;
     }
     let mut text = String::from_utf8_lossy(&output.stdout).into_owned();
@@ -131,9 +141,8 @@ pub fn unchecked_head_reason(dir: &std::path::Path, command: Option<&str>) -> Op
     let lines: Vec<&str> = text.lines().collect();
     let tail = lines[lines.len().saturating_sub(OUTPUT_TAIL_LINES)..].join("\n");
     Some(format!(
-        "`{command}` failed at HEAD {}. Fix it, commit, and run it green before stopping. \
-         Last output:\n{tail}",
-        &head[..head.len().min(12)]
+        "`{command}` failed on the tree at HEAD. Fix it, commit, and run it green before \
+         stopping. Last output:\n{tail}"
     ))
 }
 
@@ -355,6 +364,74 @@ mod tests {
         assert!(unchecked_head_reason(dir.path(), Some("true")).is_none());
         // Would fail if it ran again.
         assert!(unchecked_head_reason(dir.path(), Some("false")).is_none());
+    }
+
+    fn commit_file(dir: &std::path::Path, name: &str) {
+        std::fs::write(dir.join(name), name).expect("write");
+        for args in [
+            &["add", "-A"][..],
+            &[
+                "-c",
+                "user.name=t",
+                "-c",
+                "user.email=t@t",
+                "commit",
+                "-q",
+                "-m",
+                "y",
+            ],
+        ] {
+            let ok = std::process::Command::new("git")
+                .args(args)
+                .current_dir(dir)
+                .status()
+                .expect("git")
+                .success();
+            assert!(ok);
+        }
+    }
+
+    /// What the justfile's `record-pass` writes: the working tree's id.
+    fn record_working_tree(dir: &std::path::Path) {
+        let tmp = dir.join(".git/tmp-index");
+        std::fs::copy(dir.join(".git/index"), &tmp).expect("copy index");
+        let run = |args: &[&str]| {
+            std::process::Command::new("git")
+                .args(args)
+                .env("GIT_INDEX_FILE", &tmp)
+                .current_dir(dir)
+                .output()
+                .expect("git")
+        };
+        run(&["add", "-A"]);
+        let out = run(&["write-tree"]);
+        std::fs::write(dir.join(".git/bridle-check-passed"), out.stdout).expect("record");
+        let _ = std::fs::remove_file(&tmp);
+    }
+
+    #[test]
+    fn recorded_tree_skips_the_check_after_committing_it() {
+        let dir = repo();
+        std::fs::write(dir.path().join("f"), "f").expect("write");
+        record_working_tree(dir.path());
+        commit_file(dir.path(), "f");
+        assert!(unchecked_head_reason(dir.path(), Some("false")).is_none());
+    }
+
+    #[test]
+    fn tree_changed_after_the_green_run_runs_the_check() {
+        let dir = repo();
+        std::fs::write(dir.path().join("f"), "f").expect("write");
+        record_working_tree(dir.path());
+        commit_file(dir.path(), "g");
+        assert!(unchecked_head_reason(dir.path(), Some("false")).is_some());
+    }
+
+    #[test]
+    fn marker_is_gone_after_the_check_runs() {
+        let dir = repo();
+        let _ = unchecked_head_reason(dir.path(), Some("true"));
+        assert!(!dir.path().join(".git").join(RUNNING_MARKER).exists());
     }
 
     #[test]

@@ -924,10 +924,13 @@ bridle ticket comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain com
   and a claimed task has no summary or no thread entry from itself starting `done:`, telling
   the agent to *run* `bridle ticket summary` and `bridle send ... done:` (workers were printing
   them). Before that report check, a finished-looking tree also has to have passed the
-  project's `commands.check_worker` (falling back to `check`) at the current HEAD: the hook
-  runs it itself when `<git-dir>/bridle-check-passed` doesn't name HEAD, records HEAD there on
-  success (never committed; a later stop at the same HEAD skips the rerun), and otherwise blocks
-  with the tail of the output. The hook is registered with a 30-minute timeout for this. Any error of bridle's own (unparseable stdin, no daemon reachable, an API
+  project's `commands.check_worker` (falling back to `check`) on the tree at the current HEAD: the hook
+  runs it itself when `<git-dir>/bridle-check-passed` doesn't name HEAD's tree, records the tree there on
+  success (never committed), and otherwise blocks
+  with the tail of the output. bridle's own `just check` ends with `record-pass`, which records the working tree's id there, so
+  a worker's green run counts for the commit of that tree and the hook skips the rerun; a tree changed after the run
+  reruns. While the hook runs the check it keeps `<git-dir>/bridle-stop-check-running`, and the daemon's stall detector
+  skips an agent whose marker is under 30 minutes old. The hook is registered with a 30-minute timeout for this. Any error of bridle's own (unparseable stdin, no daemon reachable, an API
   error) allows rather than blocks: a bug in bridle's own tooling must never trap an
   agent from stopping.
 - **`prime orchestrator`** prints a fresh orchestrator session's opening context in one

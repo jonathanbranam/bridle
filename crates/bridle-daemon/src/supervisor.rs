@@ -650,6 +650,9 @@ impl AgentManager {
             if Utc::now() - last < stall_after {
                 continue;
             }
+            if stop_check_running(&a.cwd) {
+                continue;
+            }
             let Some(rt) = self.get_runtime(&a.id) else {
                 continue;
             };
@@ -3369,6 +3372,30 @@ fn renewal_lead_in(
     s
 }
 
+/// How long a `bridle-stop-check-running` marker is trusted: the Stop hook's
+/// own timeout, so a marker left by a killed hook can't hide a real stall.
+const STOP_CHECK_MARKER_MAX_AGE: std::time::Duration = std::time::Duration::from_secs(30 * 60);
+
+/// Whether the `bridle stop-check` hook is running its check in the worktree
+/// at `cwd` (it writes the marker in the worktree's git dir; see
+/// `bridle/src/stop_check.rs`). That wait is silent but not a stall.
+fn stop_check_running(cwd: &str) -> bool {
+    let dot_git = std::path::Path::new(cwd).join(".git");
+    let git_dir = match std::fs::read_to_string(&dot_git) {
+        // A linked worktree: `.git` is a file, `gitdir: <path>`.
+        Ok(s) => match s.trim().strip_prefix("gitdir:") {
+            Some(p) => std::path::PathBuf::from(p.trim()),
+            None => return false,
+        },
+        Err(_) => dot_git,
+    };
+    std::fs::metadata(git_dir.join("bridle-stop-check-running"))
+        .and_then(|m| m.modified())
+        .ok()
+        .and_then(|t| t.elapsed().ok())
+        .is_some_and(|age| age < STOP_CHECK_MARKER_MAX_AGE)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -3448,5 +3475,15 @@ mod tests {
                 assert_eq!(result, inherited);
             }
         }
+    }
+
+    #[test]
+    fn stop_check_marker_hides_a_stall_only_while_present() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        std::fs::create_dir(dir.path().join(".git")).expect("git dir");
+        let cwd = dir.path().to_str().expect("utf8");
+        assert!(!stop_check_running(cwd));
+        std::fs::write(dir.path().join(".git/bridle-stop-check-running"), "").expect("marker");
+        assert!(stop_check_running(cwd));
     }
 }
