@@ -4,7 +4,7 @@ title = "Workers' final just check runs twice: the stop-check hook doesn't count
 kind = "fix"
 state = "planned"
 created_at = "2026-10-11T11:39:53.720Z"
-updated_at = "2026-10-11T18:33:58.815948Z"
+updated_at = "2026-10-11T18:40:24.464970Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -31,3 +31,6 @@ done: worker's green just check now counts by tree id (record-pass step), hook s
 
 ### note · agent:manager-2 · 2026-10-11T18:33:58.815Z
 main moved (docs only; br-e9wg landed). Merge main, run just check, message me the sha right away.
+
+### note · agent:wdd79 · 2026-10-11T18:40:24.464Z
+done: merged main; just check exit 0, 1533 tests passed; commit 54db3c0a
