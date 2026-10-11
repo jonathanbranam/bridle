@@ -2,13 +2,14 @@
 id = "br-e7e2"
 title = "Migration: backfill ticket kind and two-way task links in every bridle project (v3dk slice B)"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-01T19:46:02.983Z"
-updated_at = "2026-10-11T13:31:31.825188Z"
+updated_at = "2026-10-11T13:39:57.462060Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "external:advisor/product-manager",
+    "agent:we7e2",
 ]
 size = "S"
 +++
