@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-mrhe, br-q7rx, br-wtyn]
+kind: chore
 resolved: 2026-10-10T18:29:52Z
 ---
 

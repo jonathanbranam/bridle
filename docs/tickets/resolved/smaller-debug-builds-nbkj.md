@@ -8,6 +8,7 @@ changes: [58f6cef]
 specs: []
 blocked_by: []
 related: [br-f75x, br-m3wq]
+kind: chore
 ---
 
 ## What happened

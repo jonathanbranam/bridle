@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-mt7r, br-c8qw, br-f75x, br-nbkj]
+kind: chore
 ---
 
 ## The ask

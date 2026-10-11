@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [shell-completions-for-bridle-6rh7]
+kind: chore
 ---
 
 ## The ask

@@ -8,6 +8,7 @@ changes: [1f7429d]
 specs: []
 blocked_by: []
 related: [br-8ups]
+kind: chore
 ---
 
 ## The ask

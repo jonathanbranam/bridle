@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: []
+kind: bug
 resolved: 2026-10-02T00:43:36.487917Z
 ---
 

@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: [nuc-recovery-on-boot-4r3k]
 related: [agents-and-nightly-auto-reboots-t39j]
+kind: feature
 ---
 
 ## The ask

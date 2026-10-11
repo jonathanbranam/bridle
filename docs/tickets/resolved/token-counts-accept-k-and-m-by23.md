@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [the-orchestrator-stays-running-fx7x]
+kind: feature
 resolved: 2026-10-09T23:11:04Z
 ---
 

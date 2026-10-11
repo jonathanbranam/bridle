@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [a-leaner-orchestrator-pdmd, incident-notices-that-retract-themselves-nc7r]
+kind: chore
 resolved: 2026-10-02T00:43:36.592312Z
 ---
 

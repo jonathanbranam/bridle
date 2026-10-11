@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [tui-panels-and-seeing-the-work-y496]
+kind: bug
 resolved: 2026-10-09T23:11:04Z
 ---
 

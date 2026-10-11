@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-7d62, br-chvf]
+kind: question
 ---
 
 ## The ask

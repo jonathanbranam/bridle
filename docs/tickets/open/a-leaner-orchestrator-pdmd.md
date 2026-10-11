@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [the-orchestrator-stays-running-fx7x, bridle-watches-ci-c8qw]
+kind: feature
 ---
 
 ## The ask

@@ -8,6 +8,7 @@ changes: [61ce8ed, 7ffae38, 0c84f5d]
 specs: []
 blocked_by: [br-rxe8]
 related: [br-rxe8, br-d9nu, br-ajqa, br-u8sm, br-8xhh]
+kind: chore
 ---
 
 ## The ask

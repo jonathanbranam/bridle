@@ -7,6 +7,7 @@ changes: []
 specs: [docs/design/agent-host/roles-and-config.md]
 blocked_by: []
 related: [br-93u2]
+kind: chore
 resolved: 2026-09-30T05:12:44Z
 ---
 

@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [push-the-state-branch-we2r, bridle-without-a-clone-of-its-repo-mrhe, project-machine-and-account-scope-9mxw]
+kind: chore
 ---
 
 ## The ask

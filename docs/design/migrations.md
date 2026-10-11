@@ -116,8 +116,15 @@ runs on a real project): start-up skips it, and it runs by `bridle migrate --onl
   move threads: a row whose `ticket` is its own id keeps its thread in `tickets/<id>.md` from its
   next write (storage.md), and `ticket show` finds the others by the row's `ticket`.
 
+- **`0006-backfill-ticket-kind`** (ticket v3dk, br-e7e2): every ticket under `docs/tickets/` with
+  frontmatter but no (or an empty) `kind:` gets one: the kind of the row with its id, else of a
+  row whose `ticket` names it, else `chore` (edit with `ticket set`). Rows are read from
+  `bridle/state` with git, so a stopped daemon changes nothing. Runs automatically; the guard and
+  the uncommitted-changes refusal apply; a rerun finds nothing. `ticket check` treats a missing
+  kind as an error from here on. Spikes are not ticket-checked and are left alone.
+
 **Protected-branch guard** (rule `existing-projects`; `migrate::refuse_on_protected_branch`, the
 first one): a migration that rewrites a project's files calls it first and is refused
 (`migrate::Refused`) while `main`, `dev` or the configured `[branches] release` is checked out,
 so it only lands on the trial or integration branch. Bridle's own repo (project `bridle`) is
-exempt. `0002` to `0005` use it; `0001` does not yet.
+exempt. `0002` to `0006` use it; `0001` does not yet.

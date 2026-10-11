@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [tickets-get-a-kind-kinds-are-editable-tickets-and-tasks-link-v3dk, where-the-knowledge-root-lives-and-migrating-to-it-ew97]
+kind: chore
 ---
 
 ## The ask

@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-sq4m, br-tr7k]
+kind: chore
 resolved: 2026-09-30T12:53:59Z
 ---
 

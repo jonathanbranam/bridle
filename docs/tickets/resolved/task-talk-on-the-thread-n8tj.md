@@ -8,6 +8,7 @@ changes: [6cae4af]
 specs: []
 blocked_by: []
 related: [br-tr7k, br-sq4m]
+kind: chore
 ---
 
 ## The ask

@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [maintenance-during-budget-holds-m7wn, reload-config-without-a-restart-9t54, do-workers-resume-after-a-daemon-restart-2fkk]
+kind: chore
 ---
 
 ## The ask

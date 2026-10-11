@@ -8,6 +8,7 @@ changes: [1980c84]
 specs: []
 blocked_by: []
 related: []
+kind: chore
 ---
 
 ## What happened

@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-5heh, br-b7cz]
+kind: question
 resolved: 2026-10-09T23:11:01Z
 ---
 

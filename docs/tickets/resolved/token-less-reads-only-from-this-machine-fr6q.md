@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [finding-remote-daemons-from-the-laptop-xqvg]
+kind: bug
 resolved: 2026-10-02T00:43:36.199360Z
 ---
 

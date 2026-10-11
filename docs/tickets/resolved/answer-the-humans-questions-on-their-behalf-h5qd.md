@@ -8,6 +8,7 @@ changes: [7257285]
 specs: []
 blocked_by: []
 related: [br-kp3f, br-a7h3]
+kind: chore
 ---
 
 ## What happened

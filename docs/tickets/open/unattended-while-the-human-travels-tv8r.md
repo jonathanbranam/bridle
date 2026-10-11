@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [bridle-restarts-itself-q7rx, agents-and-nightly-auto-reboots-t39j, a-clean-handover-of-a-project-between-machines-24mj]
+kind: chore
 ---
 
 ## The ask

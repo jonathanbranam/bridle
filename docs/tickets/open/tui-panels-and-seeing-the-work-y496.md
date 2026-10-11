@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-yurx, br-8ups, br-fgu6, br-j479]
+kind: chore
 ---
 
 ## The ask

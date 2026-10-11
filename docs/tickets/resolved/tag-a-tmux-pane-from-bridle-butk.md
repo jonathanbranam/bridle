@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [the-orchestrator-stays-running-fx7x, orchestrator-pane-full-of-escape-codes-csfe]
+kind: feature
 resolved: 2026-10-02T00:43:36.016411Z
 ---
 

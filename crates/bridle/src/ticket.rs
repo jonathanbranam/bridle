@@ -24,11 +24,6 @@ const ID_ALPHABET: &[u8] = b"abcdefghjkmnpqrstuvwxyz23456789";
 const ID_LEN: usize = 4;
 const MAX_SLUG: usize = 60;
 
-/// Whether a ticket with no `kind:` or a one-sided/missing ticket<->task link fails
-/// `ticket check` (true) or only warns (false). Off until the backfill migration
-/// (ticket v3dk, slice B) has run in every project; it flips this to true.
-const MISSING_KIND_OR_LINK_IS_ERROR: bool = false;
-
 /// First line of a task body made from a ticket before the `ticket` field (vk3y); still read
 /// from a daemon that hasn't migrated it yet.
 const TASK_ORIGIN_PREFIX: &str = "original id: ";
@@ -1096,6 +1091,17 @@ pub fn bug_to_fix(text: &str) -> Option<String> {
     set_line(text, "kind", "fix")
 }
 
+/// `text` with `kind:` set to `pick(id)` when it has frontmatter but no (or an empty) kind
+/// (migration 0006); `None` for any other ticket. `id` is the ticket's `id:` value, or empty.
+pub fn backfill_kind(text: &str, pick: impl Fn(&str) -> String) -> Option<String> {
+    let (pairs, _) = split_front(text)?;
+    let get = |k: &str| pairs.iter().find(|(n, _)| n == k).map(|(_, v)| v.as_str());
+    if get("kind").is_some_and(|k| !k.is_empty()) {
+        return None;
+    }
+    set_line(text, "kind", &pick(get("id").unwrap_or("")))
+}
+
 /// The frontmatter as (key, raw value) pairs and the body after it.
 fn split_front(text: &str) -> Option<(Vec<(String, String)>, String)> {
     let lines: Vec<String> = text.lines().map(str::to_string).collect();
@@ -1228,8 +1234,6 @@ pub fn check_in(root: &Path, docs: &Path, projects: &Projects) -> Report {
 
     for (resolved, path) in &files {
         let at = shown(path);
-        // `soft` gaps are ones the backfill migration will fill: warnings until
-        // MISSING_KIND_OR_LINK_IS_ERROR.
         let mut note = |error: bool, msg: String| {
             let line = format!("{at}: {msg}");
             if error {
@@ -1275,7 +1279,7 @@ pub fn check_in(root: &Path, docs: &Path, projects: &Projects) -> Report {
             }
         }
         match get("kind") {
-            None | Some("") => note(MISSING_KIND_OR_LINK_IS_ERROR, "missing kind".into()),
+            None | Some("") => note(true, "missing kind".into()),
             Some(k) if k.parse::<TicketKind>().is_err() => note(true, format!("unknown kind {k}")),
             Some(_) => {}
         }
@@ -1645,7 +1649,12 @@ mod tests {
     fn write(root: &Path, dir: &str, name: &str, id: &str, extra: &str, body: &str) {
         let d = root.join(dir);
         std::fs::create_dir_all(&d).unwrap();
-        let text = format!("---\nid: {id}\ntitle: T\n{FRONT}{extra}---\n{body}\n");
+        let kind = if extra.contains("kind:") {
+            ""
+        } else {
+            "kind: chore\n"
+        };
+        let text = format!("---\nid: {id}\ntitle: T\n{FRONT}{kind}{extra}---\n{body}\n");
         std::fs::write(d.join(name), text).unwrap();
     }
 
@@ -1727,7 +1736,13 @@ mod tests {
     fn check_warns_on_missing_kind_and_tasks_and_errors_on_unknown_kind() {
         let dir = tempfile::tempdir().unwrap();
         let t = dir.path().join("docs/tickets");
-        write(&t, "open", "a-aaaa.md", "aaaa", "", "");
+        // No kind: the helpers would add one.
+        std::fs::create_dir_all(t.join("open")).unwrap();
+        std::fs::write(
+            t.join("open/a-aaaa.md"),
+            format!("---\nid: aaaa\ntitle: T\n{FRONT}---\n\n"),
+        )
+        .unwrap();
         write(
             &t,
             "open",
@@ -1745,11 +1760,11 @@ mod tests {
             "",
         );
         let r = report(dir.path());
-        assert_eq!(r.errors.len(), 1, "{:?}", r.errors);
-        assert!(r.errors[0].contains("b-bbbb.md: unknown kind nonsense"));
-        let w = r.warnings.join("\n");
-        assert!(w.contains("a-aaaa.md: missing kind"), "{w}");
-        assert!(!w.contains("c-cccc"), "{w}");
+        let e = r.errors.join("\n");
+        assert_eq!(r.errors.len(), 2, "{e}");
+        assert!(e.contains("b-bbbb.md: unknown kind nonsense"), "{e}");
+        assert!(e.contains("a-aaaa.md: missing kind"), "{e}");
+        assert!(!e.contains("c-cccc"), "{e}");
     }
 
     #[test]
@@ -1877,7 +1892,12 @@ mod tests {
     fn write_raw(root: &Path, dir: &str, name: &str, front: &str) {
         let d = root.join(dir);
         std::fs::create_dir_all(&d).unwrap();
-        std::fs::write(d.join(name), format!("---\n{front}---\nbody\n")).unwrap();
+        let kind = if front.contains("kind:") {
+            ""
+        } else {
+            "kind: chore\n"
+        };
+        std::fs::write(d.join(name), format!("---\n{front}{kind}---\nbody\n")).unwrap();
     }
 
     #[test]

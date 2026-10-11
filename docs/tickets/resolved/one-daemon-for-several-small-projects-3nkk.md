@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [dotfiles-local-as-a-bridle-project-35mw, how-project-daemons-share-one-budget-xypj, one-orchestrator-and-advisor-or-one-per-project-ma8e]
+kind: question
 resolved: 2026-10-09T23:11:01Z
 ---
 

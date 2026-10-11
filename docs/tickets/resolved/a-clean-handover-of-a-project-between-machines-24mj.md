@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [one-machine-owns-a-project-hw6c, push-the-state-branch-we2r, finding-remote-daemons-from-the-laptop-xqvg]
+kind: feature
 resolved: 2026-10-02T00:43:35.883728Z
 ---
 

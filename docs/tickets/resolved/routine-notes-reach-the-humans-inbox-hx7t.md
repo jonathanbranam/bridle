@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-kp3f]
+kind: chore
 resolved: 2026-10-02T00:43:36.277998Z
 ---
 

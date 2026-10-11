@@ -8,6 +8,7 @@ changes: [89b560e]
 specs: []
 blocked_by: []
 related: [br-hj4g]
+kind: chore
 ---
 
 ## The question

@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [incident-notices-that-retract-themselves-nc7r, how-project-daemons-share-one-budget-xypj, one-orchestrator-and-advisor-or-one-per-project-ma8e, finding-remote-daemons-from-the-laptop-xqvg]
+kind: question
 ---
 
 ## The ask

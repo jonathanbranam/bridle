@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-3ehu]
+kind: question
 ---
 
 ## The ask

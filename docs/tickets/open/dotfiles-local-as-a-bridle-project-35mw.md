@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [nuc-recovery-on-boot-4r3k, one-daemon-for-several-small-projects-3nkk]
+kind: chore
 ---
 
 ## The ask

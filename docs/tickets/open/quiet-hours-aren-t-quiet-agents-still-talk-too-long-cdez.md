@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-cvaq]
+kind: question
 ---
 
 ## The ask

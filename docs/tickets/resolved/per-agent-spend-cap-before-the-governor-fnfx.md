@@ -7,6 +7,7 @@ changes: []
 specs: [docs/design/agent-host/agents.md]
 blocked_by: []
 related: [br-xypj]
+kind: chore
 resolved: 2026-09-30T05:12:44Z
 ---
 

@@ -7,6 +7,7 @@ changes: []
 specs: [docs/design/usage-and-budget.md, docs/design/agent-host/roles-and-config.md]
 blocked_by: []
 related: []
+kind: chore
 resolved: 2026-09-30T05:12:44Z
 ---
 

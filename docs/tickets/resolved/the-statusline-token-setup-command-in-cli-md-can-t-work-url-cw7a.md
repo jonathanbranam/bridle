@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-r7cs]
+kind: question
 resolved: 2026-10-09T23:11:04Z
 ---
 

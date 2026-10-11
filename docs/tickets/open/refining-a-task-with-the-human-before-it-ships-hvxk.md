@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [product-briefs-of-how-bridle-works-today-8awb, tickets-and-tasks-why-both-k7tm]
+kind: feature
 ---
 
 ## The ask

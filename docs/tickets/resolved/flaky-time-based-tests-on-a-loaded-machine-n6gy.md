@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-zk4p]
+kind: chore
 resolved: 2026-09-30T05:12:44Z
 ---
 

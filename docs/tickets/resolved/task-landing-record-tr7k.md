@@ -8,6 +8,7 @@ changes: [a602652]
 specs: []
 blocked_by: []
 related: [br-sq4m]
+kind: chore
 ---
 
 ## The ask

@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-d9nu, br-ajqa, br-u8sm, br-8xhh]
+kind: chore
 ---
 
 ## The ask

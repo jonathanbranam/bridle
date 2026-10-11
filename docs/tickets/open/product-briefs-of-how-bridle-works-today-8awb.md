@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [docs-kept-current-as-part-of-every-change-3ndf, which-docs-live-in-bridle-and-which-in-markdown-hv8e]
+kind: feature
 ---
 
 ## The ask

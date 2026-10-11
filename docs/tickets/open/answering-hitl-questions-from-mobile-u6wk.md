@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-k4wq, br-hj4g]
+kind: chore
 ---
 
 ## What happened

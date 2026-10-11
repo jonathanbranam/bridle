@@ -8,6 +8,7 @@ changes: [34e6268, d998a2a, 939b289]
 specs: []
 blocked_by: []
 related: [br-hj4g]
+kind: chore
 ---
 
 ## The question

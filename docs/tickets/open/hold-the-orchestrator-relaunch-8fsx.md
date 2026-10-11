@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [orchestrator-identity-and-recovery-7d62, nuc-recovery-on-boot-4r3k]
+kind: feature
 ---
 
 ## The ask

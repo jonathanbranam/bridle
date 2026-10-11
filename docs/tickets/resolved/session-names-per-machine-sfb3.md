@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [where-the-single-orchestrator-lives-hj4g]
+kind: chore
 resolved: 2026-10-02T00:43:36.513986Z
 ---
 

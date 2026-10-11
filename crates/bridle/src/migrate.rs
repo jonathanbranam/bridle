@@ -96,6 +96,14 @@ pub const MIGRATIONS: &[Migration] = &[
         manual_only: true,
         run: a_ticket_for_every_active_task,
     },
+    Migration {
+        id: "0006-backfill-ticket-kind",
+        description: "Give every ticket without a `kind:` the kind of its task row, else `chore` (ticket v3dk).",
+        // Automatic (the human approved it, br-e7e2); the protected-branch guard still keeps it
+        // off an existing project's main, and it skips files with uncommitted changes.
+        manual_only: false,
+        run: backfill_ticket_kind,
+    },
 ];
 
 const OLD_ROLE: &str = "product-manager";
@@ -305,6 +313,7 @@ struct Row {
     state: String,
     ticket: Option<String>,
     created_at: String,
+    kind: Option<String>,
 }
 
 /// The rows of `tasks/*.md` on the `bridle/state` branch, read with git (the daemon owns the
@@ -320,7 +329,11 @@ fn state_rows(repo: &Path) -> Vec<Row> {
             .filter(|o| o.status.success())
             .map(|o| String::from_utf8_lossy(&o.stdout).into_owned())
     };
-    let listing = git(&["ls-tree", "--name-only", "bridle/state", "tasks/"]).unwrap_or_default();
+    // `tasks/` is still read for one release (95t9); `tracking/` is where touched rows move.
+    let listing = ["tracking/", "tasks/"]
+        .iter()
+        .filter_map(|d| git(&["ls-tree", "--name-only", "bridle/state", d]))
+        .collect::<String>();
     listing
         .lines()
         .filter_map(|path| {
@@ -332,9 +345,76 @@ fn state_rows(repo: &Path) -> Vec<Row> {
                 state: get("state")?,
                 ticket: get("ticket"),
                 created_at: get("created_at").unwrap_or_default(),
+                kind: get("kind"),
             })
         })
         .collect()
+}
+
+/// The kind a ticket without one gets: that of its own row (same id), else of a row that names it
+/// in `ticket`, else `chore` (the human edits it with `ticket set`). Only a kind the CLI knows
+/// counts. Rows come from the state branch, so a stopped daemon changes nothing.
+fn kind_for(rows: &[Row], id: &str) -> String {
+    let bare = |s: &str| s.rsplit('-').next().unwrap_or(s).to_string();
+    let want = bare(id);
+    fn known(r: &Row) -> Option<&str> {
+        r.kind
+            .as_deref()
+            .filter(|k| k.parse::<bridle_api::TicketKind>().is_ok())
+    }
+    let own = rows.iter().filter(|r| bare(&r.id) == want).find_map(known);
+    let named = || {
+        rows.iter()
+            .filter(|r| r.ticket.as_deref().map(bare).as_deref() == Some(want.as_str()))
+            .find_map(known)
+    };
+    own.or_else(named).unwrap_or("chore").to_string()
+}
+
+/// Adds the missing `kind:` to every ticket (0006), so `ticket check` can require it. Tickets
+/// that have one are left alone, so a rerun finds nothing. Spikes under `docs/spikes` are not
+/// ticket-checked and are left for now.
+fn backfill_ticket_kind(ctx: &Ctx) -> anyhow::Result<Report> {
+    let project = project_of(ctx.repo);
+    refuse_on_protected_branch(ctx.repo, &project)?;
+    let rows = state_rows(ctx.repo);
+    let root = crate::ticket::tickets_root(ctx.repo);
+    let mut paths = vec![];
+    md_files(&root, &mut paths);
+    paths.sort();
+    let mut edits = vec![];
+    for p in paths {
+        let text =
+            std::fs::read_to_string(&p).with_context(|| format!("reading {}", p.display()))?;
+        if let Some(new) = crate::ticket::backfill_kind(&text, |id| kind_for(&rows, id)) {
+            edits.push((p, new));
+        }
+    }
+    let files: Vec<String> = edits
+        .iter()
+        .map(|(p, _)| {
+            p.strip_prefix(ctx.repo)
+                .unwrap_or(p)
+                .to_string_lossy()
+                .into_owned()
+        })
+        .collect();
+    if files.is_empty() {
+        return Ok(Report {
+            files,
+            summary: "every ticket already has a kind".into(),
+        });
+    }
+    refuse_if_uncommitted(ctx.repo, &files)?;
+    if !ctx.dry_run {
+        for (p, new) in &edits {
+            std::fs::write(p, new).with_context(|| format!("writing {}", p.display()))?;
+        }
+    }
+    Ok(Report {
+        summary: format!("gave {} tickets a kind", files.len()),
+        files,
+    })
 }
 
 fn a_ticket_for_every_active_task(ctx: &Ctx) -> anyhow::Result<Report> {
@@ -1325,6 +1405,7 @@ mod tests {
             state: state.into(),
             ticket: ticket.map(str::to_string),
             created_at: at.into(),
+            kind: None,
         };
         let rows = vec![
             // The ticket's own task keeps it, though an older-id extra exists.
@@ -1345,5 +1426,56 @@ mod tests {
                 ("br-dddd".to_string(), None),
             ]
         );
+    }
+
+    #[test]
+    fn backfill_kind_uses_the_row_else_chore_and_reruns_clean() {
+        let d = tempfile::tempdir().unwrap();
+        let open = d.path().join("docs/tickets/open");
+        std::fs::create_dir_all(&open).unwrap();
+        let t = |id: &str, extra: &str| format!("---\nid: br-{id}\ntitle: x\n{extra}---\nbody\n");
+        std::fs::write(open.join("a-aaaa.md"), t("aaaa", "")).unwrap();
+        std::fs::write(open.join("b-bbbb.md"), t("bbbb", "")).unwrap();
+        std::fs::write(open.join("c-cccc.md"), t("cccc", "kind: feature\n")).unwrap();
+        std::fs::write(open.join("d-dddd.md"), t("dddd", "kind:\n")).unwrap();
+        let ctx = |dry_run| Ctx {
+            repo: d.path(),
+            dry_run,
+        };
+        // No state branch here (daemon down, nothing to read): everything falls back to chore.
+        let r = backfill_ticket_kind(&ctx(true)).unwrap();
+        assert_eq!(r.files.len(), 3, "{r:?}");
+        assert!(
+            !std::fs::read_to_string(open.join("a-aaaa.md"))
+                .unwrap()
+                .contains("kind")
+        );
+        backfill_ticket_kind(&ctx(false)).unwrap();
+        let read = |n: &str| std::fs::read_to_string(open.join(n)).unwrap();
+        assert!(read("a-aaaa.md").contains("kind: chore\n"));
+        assert!(read("d-dddd.md").contains("kind: chore\n"));
+        assert!(read("c-cccc.md").contains("kind: feature\n"));
+        assert!(backfill_ticket_kind(&ctx(false)).unwrap().files.is_empty());
+    }
+
+    #[test]
+    fn kind_for_prefers_own_row_then_naming_row() {
+        let row = |id: &str, ticket: Option<&str>, kind: &str| Row {
+            id: id.into(),
+            state: "open".into(),
+            ticket: ticket.map(str::to_string),
+            created_at: String::new(),
+            kind: Some(kind.into()),
+        };
+        let rows = vec![
+            row("br-aaaa", Some("br-aaaa"), "fix"),
+            row("br-bbbb", Some("aaaa"), "docs"),
+            row("br-cccc", Some("dddd"), "feature"),
+            row("br-eeee", None, "nonsense"),
+        ];
+        assert_eq!(kind_for(&rows, "br-aaaa"), "fix");
+        assert_eq!(kind_for(&rows, "br-dddd"), "feature");
+        assert_eq!(kind_for(&rows, "br-eeee"), "chore");
+        assert_eq!(kind_for(&rows, "br-zzzz"), "chore");
     }
 }

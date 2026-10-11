@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-t6kq, br-hw6c]
+kind: chore
 ---
 
 The human, verbatim (2026-09-29): "a follow up general ability to consider is email and texting for both the life tracking app and for bridle. Actual email would be handy sometimes. I could send you work directly from my work laptop then. So, send and receive. That could go through my EC2 that runs track-web. Come up with some ideas and research. Email first"

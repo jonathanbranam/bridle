@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [group-the-cli-into-subcommands-a67t]
+kind: chore
 resolved: 2026-10-02T00:43:36.041801Z
 ---
 

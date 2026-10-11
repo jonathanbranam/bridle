@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-r3nh]
+kind: feature
 ---
 
 ## The ask

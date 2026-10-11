@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: [session-names-per-machine-sfb3]
 related: []
+kind: feature
 ---
 
 ## The ask

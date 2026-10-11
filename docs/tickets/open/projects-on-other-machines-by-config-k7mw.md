@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: [token-less-reads-only-from-this-machine-fr6q]
 related: [finding-remote-daemons-from-the-laptop-xqvg, one-machine-owns-a-project-hw6c, a-clean-handover-of-a-project-between-machines-24mj, where-the-single-orchestrator-lives-hj4g]
+kind: chore
 ---
 
 ## The ask

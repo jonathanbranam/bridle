@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: []
+kind: feature
 resolved: 2026-10-09T23:11:02Z
 ---
 

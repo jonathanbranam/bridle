@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [product-briefs-of-how-bridle-works-today-8awb]
+kind: feature
 resolved: 2026-10-09T23:11:03Z
 ---
 

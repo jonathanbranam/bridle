@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [one-daemon-for-several-small-projects-3nkk, small-projects-start-without-a-manager-w2hj, projects-on-other-machines-by-config-k7mw, nuc-recovery-on-boot-4r3k]
+kind: research
 ---
 
 ## The ask

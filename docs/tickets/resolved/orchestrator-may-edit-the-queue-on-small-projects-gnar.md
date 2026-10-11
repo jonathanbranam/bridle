@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-w2hj]
+kind: chore
 resolved: 2026-09-30T21:53:33Z
 ---
 

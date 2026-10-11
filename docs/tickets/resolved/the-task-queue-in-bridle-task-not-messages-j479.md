@@ -8,6 +8,7 @@ changes: [f401a7f]
 specs: []
 blocked_by: []
 related: [br-kp3f, br-a7h3, br-tx3f]
+kind: chore
 ---
 
 ## What happened

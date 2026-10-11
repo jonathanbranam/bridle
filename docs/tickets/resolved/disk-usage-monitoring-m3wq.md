@@ -8,6 +8,7 @@ changes: [5e55d8b]
 specs: []
 blocked_by: []
 related: [br-nbkj, br-f75x]
+kind: chore
 ---
 
 ## What happened

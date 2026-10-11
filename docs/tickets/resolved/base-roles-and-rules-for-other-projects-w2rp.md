@@ -8,6 +8,7 @@ changes: [baf1225]
 specs: []
 blocked_by: []
 related: [br-ajqa, br-63rv, br-rxe8]
+kind: chore
 ---
 
 ## What happened

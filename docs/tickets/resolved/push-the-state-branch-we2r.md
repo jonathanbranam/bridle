@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [project-machine-and-account-scope-9mxw]
+kind: bug
 resolved: 2026-10-02T00:43:36.645518Z
 ---
 

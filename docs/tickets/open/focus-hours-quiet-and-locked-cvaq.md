@@ -7,6 +7,7 @@ changes: []
 specs: [docs/design/cli.md, docs/design/agent-host/roles-and-config.md, workflow/base/roles/advisor.md, workflow/base/roles/orchestrator.md]
 blocked_by: []
 related: [higher-budget-thresholds-on-a-schedule-n9qh, email-and-texting-for-bridle-and-track-web-rs7p, accounting-bridle-work-vs-real-projects-kpgy]
+kind: feature
 ---
 
 ## The ask

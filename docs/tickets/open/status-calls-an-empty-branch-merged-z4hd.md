@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [do-workers-resume-after-a-daemon-restart-2fkk]
+kind: chore
 ---
 
 ## What happened

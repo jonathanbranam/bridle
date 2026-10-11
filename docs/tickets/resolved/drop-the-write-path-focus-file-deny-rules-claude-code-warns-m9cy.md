@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-cvaq]
+kind: question
 resolved: 2026-09-30T21:52:16Z
 ---
 

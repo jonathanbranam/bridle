@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [the-orchestrator-stays-running-fx7x, context-tokens-overcounts-multi-call-turns-kc4v]
+kind: chore
 resolved: 2026-10-02T00:43:36.120033Z
 ---
 

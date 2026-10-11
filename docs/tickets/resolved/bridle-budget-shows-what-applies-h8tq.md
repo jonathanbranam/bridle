@@ -8,6 +8,7 @@ changes: [ed9ea02]
 specs: []
 blocked_by: []
 related: [br-c424, br-kv7d, br-6t29]
+kind: chore
 ---
 
 ## The ask

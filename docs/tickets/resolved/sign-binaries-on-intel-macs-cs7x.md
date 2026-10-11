@@ -8,6 +8,7 @@ changes: [0f4b23a]
 specs: []
 blocked_by: []
 related: []
+kind: chore
 ---
 
 ## What happened

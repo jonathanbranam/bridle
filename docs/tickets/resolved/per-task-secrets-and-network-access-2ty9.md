@@ -8,6 +8,7 @@ changes: [9ee5f5d, f925ef2, 5d39325]
 specs: []
 blocked_by: []
 related: [per-task-tools-and-model-k8dw]
+kind: chore
 ---
 
 ## What happened

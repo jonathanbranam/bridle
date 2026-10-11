@@ -8,6 +8,7 @@ changes: [74603a5]
 specs: []
 blocked_by: []
 related: [sign-binaries-on-intel-macs-cs7x]
+kind: chore
 ---
 
 ## What the human said

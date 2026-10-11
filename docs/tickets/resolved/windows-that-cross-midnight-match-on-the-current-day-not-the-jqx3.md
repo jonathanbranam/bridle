@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-cvaq]
+kind: chore
 resolved: 2026-10-02T00:43:36.330002Z
 ---
 

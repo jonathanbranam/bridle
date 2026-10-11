@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: [projects-on-other-machines-by-config-k7mw, dotfiles-local-as-a-bridle-project-35mw]
 related: [orchestrator-identity-and-recovery-7d62, hold-the-orchestrator-relaunch-8fsx, pause-before-a-planned-reboot-3nyk, unattended-while-the-human-travels-tv8r]
+kind: feature
 ---
 
 ## The ask

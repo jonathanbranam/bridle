@@ -8,6 +8,7 @@ changes: [c70b971]
 specs: []
 blocked_by: []
 related: [br-y2eb, br-6t29]
+kind: chore
 ---
 
 ## What happened

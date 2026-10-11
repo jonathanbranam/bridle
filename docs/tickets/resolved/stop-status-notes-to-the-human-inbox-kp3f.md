@@ -8,6 +8,7 @@ changes: [3bd16dc]
 specs: []
 blocked_by: []
 related: [br-8ups, br-fgu6]
+kind: chore
 ---
 
 ## What happened

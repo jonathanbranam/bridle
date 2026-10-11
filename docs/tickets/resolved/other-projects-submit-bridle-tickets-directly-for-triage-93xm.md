@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-7gk7, br-phyy]
+kind: question
 resolved: 2026-10-09T23:11:01Z
 ---
 

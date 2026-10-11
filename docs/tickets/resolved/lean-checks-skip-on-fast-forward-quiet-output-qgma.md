@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [run-only-the-tests-a-change-can-affect-mt7r]
+kind: chore
 resolved: 2026-10-09T23:11:01Z
 ---
 

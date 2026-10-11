@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [bridle-restarts-itself-q7rx, unattended-while-the-human-travels-tv8r]
+kind: chore
 resolved: 2026-09-30T12:48:28Z
 ---
 

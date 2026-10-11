@@ -8,6 +8,7 @@ changes: [b1f4750]
 specs: []
 blocked_by: []
 related: []
+kind: chore
 ---
 
 ## Resolution

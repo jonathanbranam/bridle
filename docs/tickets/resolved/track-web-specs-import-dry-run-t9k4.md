@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-u8sm]
+kind: chore
 resolved: 2026-10-02T00:43:36.539963Z
 ---
 

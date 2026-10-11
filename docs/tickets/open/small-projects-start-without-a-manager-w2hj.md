@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [one-daemon-for-several-small-projects-3nkk, a-box-manager-for-many-projects-m6qs, br-6h65]
+kind: feature
 ---
 
 ## The ask

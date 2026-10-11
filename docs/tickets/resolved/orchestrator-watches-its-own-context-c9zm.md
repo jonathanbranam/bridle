@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-d4mz, br-s8kn]
+kind: chore
 resolved: 2026-10-02T00:43:36.067904Z
 ---
 

@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-rxe8, br-5heh]
+kind: chore
 resolved: 2026-09-30T05:12:44Z
 ---
 

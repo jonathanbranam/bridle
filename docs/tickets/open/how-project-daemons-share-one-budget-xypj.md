@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-xcpy, br-3nqf]
+kind: chore
 ---
 
 ## The question

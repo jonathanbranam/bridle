@@ -7,6 +7,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [a-new-name-for-the-project-geem]
+kind: chore
 ---
 
 ## What happened

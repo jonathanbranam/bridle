@@ -8,6 +8,7 @@ changes: [cb9ac71]
 specs: []
 blocked_by: []
 related: [br-tr7k, br-m2fq]
+kind: chore
 ---
 
 ## The ask
