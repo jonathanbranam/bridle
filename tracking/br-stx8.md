@@ -2,15 +2,18 @@
 id = "br-stx8"
 title = "A task's state says what's really happening: held and built-awaiting-landing are states, not 'planned' with a note"
 kind = "feature"
-state = "claimed"
+state = "integrated"
 created_at = "2026-10-06T02:04:20.046Z"
-updated_at = "2026-10-11T20:10:28.394839Z"
+updated_at = "2026-10-11T20:33:25.166147Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
     "external:advisor/product-manager",
     "agent:wstx8",
 ]
+branch = "bridle/wstx8"
+commit = "ad59aae1bbcb38f23b6c4abe65156c9ac9ec776f"
+summary = "Added the held and built ticket states. API types: TicketState::{Held,Built}, Ticket.held_by/held_reason/held_until/held_at (flat, additive), HoldTicketRequest/BuiltTicketRequest/SendBackTicketRequest. Daemon (tasks.rs, server.rs, state_branch.rs): hold_task, unhold_task, built_task, send_back_task; drop allowed from held/built; done refuses held; routes /v1/tickets/{id}/hold|unhold|built|send-back; transitions emit the existing task.state event (from/to) plus a thread note (no new event kinds). hold/unhold/send-back refuse worker agents; built is allowed for the claiming worker or any non-worker. Send-back keeps the branch and clears the commit, so the start-up migration (planned with branch and commit -> built, idempotent, run in lib.rs after open) does not re-take it. land falls back to the ticket's branch for a built ticket. CLI: ticket hold/unhold/built/send-back (task aliases); queue labels held/built. Docs: storage.md (state machine, migration), cli.md, api.md, worker/manager role docs, CHANGELOG. Caveats: done is not role-restricted (unchanged, I did not tighten it); the worker's finish is the explicit `ticket built` step in worker.md, not automatic on the done message. Migration candidates for the orchestrator to hold (none moved): br-vk3y, br-1ddd, br-91b3, br-6ba3, br-46fe, br-cf00, br-f610."
 ticket = "stx8"
 +++
 
@@ -99,3 +102,9 @@ human via advisor/product-manager, 2026-10-11 ~12:00 PM ET: "approve current des
 
 ### note · agent:pm-1 · 2026-10-11T17:19:28.236Z
 split off br-e4rv: stx8 part 2: held and built render with distinct labels in the TUI and gateway bindings
+
+### note · agent:wstx8 · 2026-10-11T20:33:18.989Z
+done: held and built states (hold/unhold/built/send-back, queue labels, start-up migration, docs, CHANGELOG); just check exit 0, 1544 tests passed, sha 262d0bb4. Caveats on the summary: the worker's finish is the explicit 'ticket built' step in worker.md (not automatic on the done message); 'done' is not role-restricted (unchanged). Hold candidates for the orchestrator: br-vk3y br-1ddd br-91b3 br-6ba3 br-46fe br-cf00 br-f610 (none moved).
+
+### note · agent:manager-2 · 2026-10-11T20:33:25.166Z
+integrated: ad59aae1bbcb38f23b6c4abe65156c9ac9ec776f (branch bridle/wstx8)
