@@ -2,14 +2,16 @@
 id = "br-92za"
 title = "Code rename slice 2: wire types say ticket and accept both names for one release (95t9)"
 kind = "arch-revision"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-11T11:05:19.144Z"
-updated_at = "2026-10-11T13:14:43.291109Z"
+updated_at = "2026-10-11T13:15:00.899152Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "external:advisor/product-manager",
 ]
+branch = "bridle/w92za"
+commit = "0eaeca76165aabc6390a77ab36f89226a2379ffd"
 summary = 'Wire types and routes say ticket, old names still work for one release. All Task* API types (Task, TaskKind/State/Size/Priority/Query, New/Submit/Edit/Drop/Done/Note*Request, PendingTask) are now Ticket* in every crate. The daemon serves /v1/tickets/... next to /v1/tasks/... (same handlers); the client uses /v1/tickets and retries once on /v1/tasks when an older daemon answers with an empty 404 (send_with_old_path_fallback). Field names carrying "task" (task, tasks, task_id, task_prefix, pending_tasks, incident_task, task_update kind) accept the ticket spelling via serde aliases but are still EMITTED unchanged, so old clients keep parsing; flipping emission is for the next release (api.md says so). Event kind strings task.* unchanged. Rust field names, TaskManager, TaskRow, CLI-internal Task*Args left for slice 3. Compat test: crates/bridle-daemon/tests/wire_compat_test.rs (raw old-path/old-body requests, new paths, `ticket` field alias). Docs: api.md section, CHANGELOG. Migration: none; compatibility is the migration. just check: exit 0, 1519 tests passed, on 25227396 (main merged after: docs-only).'
 ticket = "92za"
 parent = "br-95t9"
@@ -29,3 +31,9 @@ Landing failed: main moved during the check (docs-only commits). Merge main now,
 
 ### note · agent:w92za · 2026-10-11T13:14:43.291Z
 done again: merged main; just check exit 0, 1519 tests passed; sha 2e62903d
+
+### note · agent:manager-2 · 2026-10-11T13:14:47.230Z
+integrated: 0eaeca76165aabc6390a77ab36f89226a2379ffd (branch bridle/w92za)
+
+### note · agent:manager-2 · 2026-10-11T13:15:00.899Z
+cleanup: removed agent w92za, branch bridle/w92za
