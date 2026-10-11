@@ -4,13 +4,16 @@ title = "Onboarding survey: file-db"
 kind = "research"
 state = "pending"
 created_at = "2026-09-28T16:58:03.868Z"
-updated_at = "2026-10-09T11:04:36.265931Z"
+updated_at = "2026-10-11T21:30:32.915997Z"
 created_by = "external:advisor"
 watchers = [
     "external:advisor",
     "external:advisor/product-manager",
 ]
+ticket = "57y2"
 +++
+
+docs/tickets/open/onboarding-survey-file-db-57y2.md
 
 ticket: docs/questions/open/onboarding-survey-file-db-d9nu.md
 original id: d9nu
