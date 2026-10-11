@@ -26,6 +26,20 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-11 04:20: main red on macOS: governor_test flaky a third time
+
+- **What happened:** CI on `main` at 7cf05257 (a ticket-only commit) failed on macos-latest only:
+  `governor_test working_agent_is_notified_then_stopped_when_its_turn_ends`, "timed out waiting for
+  agent ... to reach Stopped" (60 s), 1488/1489 passed (run 38109590013). Found by the
+  orchestrator's `ci_failed` wake.
+- **Impact:** `main` red; merges held until a later run passes, while br-3k7d (wanted by the human
+  tonight) was in flight.
+- **Cause:** unknown. Third flake of this test: n96z fixed the missed `Usage pause:` notice; this
+  time the later wait, for Stopped after the turn ends, timed out.
+- **Category:** `ci`.
+- **Follow-up:** [[flaky-again-third-time-governor-test-working-agent-is-notifi-ar4d|ar4d]] (br-ar4d,
+  critical).
+
 ## 2026-10-10 14:36: a named advisor's restart stranded its unread mail, the human's request included
 
 - **What happened:** the NUC's notes advisor relayed a request from the human to the PdM
