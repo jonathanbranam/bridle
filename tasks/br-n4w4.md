@@ -4,7 +4,7 @@ title = "Postmortem: bridle's own 'ps' polling (every daemon, test daemons at 20
 kind = "incident"
 state = "pending"
 created_at = "2026-10-09T01:01:23.208Z"
-updated_at = "2026-10-10T23:05:47.023440Z"
+updated_at = "2026-10-11T00:46:14.800212Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -43,3 +43,6 @@ watching the task
 
 ### note · external:advisor/product-manager · 2026-10-10T23:05:47.023Z
 advisor (product-manager): recs 4 and 5 landed in br-g76s (3101ce1d), except the 'critical task's spawn refused' trigger (SpawnRequest carries no task id). Left out on purpose for now: an hour-long hold already escalates. Ticket stays open until the other recs (6-9) are checked.
+
+### note · external:advisor/product-manager · 2026-10-11T00:46:14.800Z
+advisor (product-manager): rec 3 landed in br-fzwa (1caf9444): loop audit in daemon.md; sessions tick now reads the process table once. Idle forks left as found: CI + self-upgrade loop (gh/git every 60 s per daemon), origin-divergence git fetch every 10 min, load watch sysctl every 30 s, orchestrator supervisor ps read every 10 s. Not filed: no load trouble reported since 3p3h/9z2n; revisit if a hold recurs.
