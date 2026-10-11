@@ -2,14 +2,15 @@
 id = "br-e9wg"
 title = "Automatic push alarms on a one-off race, and its message hides git's reason"
 kind = "bug"
-state = "claimed"
+state = "integrated"
 created_at = "2026-10-11T14:29:42.746Z"
-updated_at = "2026-10-11T18:18:53.959777Z"
+updated_at = "2026-10-11T21:16:16.608472Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:we9wg",
 ]
+commit = "356bc398"
 summary = "autopush.rs: first_line picks git's '! ' or 'error:' reason line (fallback first line), the reason is logged, and tick() alarms only when the push fails on a second tick (once per repeated error). divergence.rs: ahead-only is reported only if it persists to the next look; behind > 0 reports at once. Tests added in both; docs in operating-model.md and CHANGELOG updated. No migration. just check: 1529 tests passed."
 ticket = "e9wg"
 +++
@@ -36,3 +37,6 @@ Landing was interrupted by a daemon restart and main moved (docs only). Merge ma
 
 ### note · agent:we9wg · 2026-10-11T18:18:53.959Z
 main merged; just check exit 0, 1529 passed; sha 8bc2b5a1
+
+### note · agent:manager-2 · 2026-10-11T21:16:16.608Z
+integrated: 356bc398

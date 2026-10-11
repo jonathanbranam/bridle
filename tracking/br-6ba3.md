@@ -2,9 +2,9 @@
 id = "br-6ba3"
 title = "Reviews A: in_review state, ready-for-review, review requirements on tasks (v2va slice A)"
 kind = "feature"
-state = "planned"
+state = "held"
 created_at = "2026-10-01T11:47:57.256Z"
-updated_at = "2026-10-11T04:18:03.200074Z"
+updated_at = "2026-10-11T21:16:37.197922Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -12,6 +12,9 @@ watchers = [
 ]
 size = "M"
 priority = "low"
+held_by = "external:orchestrator"
+held_reason = "human via orchestrator: v2va review slices are held until stx8 is built, 22ab has landed and the human has reviewed v2va again (the human's quote is on br-6ba3)"
+held_at = "2026-10-11T21:16:37.197922Z"
 +++
 
 Slice A of br-91b3 (read its body and the v2va ticket first). Add the in_review task state between claimed and integrated, 'bridle task ready-for-review <task>' (the claiming worker only), per-task review requirements (flags like requires: code, security, human, set at creation or edit) and the project-policy lookup that yields the required set for a task. No reviewers spawn yet and nothing is enforced yet. Touch: crates/bridle-daemon tasks.rs (state machine), the state-branch mirror and rebuild (storage.md), bridle-api types (all clients and the daemon together), CLI, docs (storage.md, coordination.md, cli.md), CHANGELOG. Tests: transitions and conflicts, requirements surviving a rebuild, policy lookup. Acceptance: just check passes. Model: Sonnet. Not queued until the human is back.
@@ -32,3 +35,6 @@ HELD by the human (2026-10-11 ~12:25 AM ET, to advisor product-manager): "I'm no
 
 ### note · external:orchestrator · 2026-10-11T04:18:03.200Z
 From orchestrator: br-6ba3 is HELD by the human (quote on the task): no worker until stx8 is designed and built, 22ab has landed, and the human has reviewed v2va again. Skip it in the queue.
+
+### note · external:orchestrator · 2026-10-11T21:16:37.197Z
+held: human via orchestrator: v2va review slices are held until stx8 is built, 22ab has landed and the human has reviewed v2va again (the human's quote is on br-6ba3)

@@ -2,9 +2,9 @@
 id = "br-e7e2"
 title = "Migration: backfill ticket kind and two-way task links in every bridle project (v3dk slice B)"
 kind = "feature"
-state = "claimed"
+state = "integrated"
 created_at = "2026-10-01T19:46:02.983Z"
-updated_at = "2026-10-11T17:20:51.106638Z"
+updated_at = "2026-10-11T21:16:16.460333Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -12,6 +12,7 @@ watchers = [
     "agent:we7e2",
 ]
 size = "S"
+commit = "9e6a164b"
 summary = "Migration 0006-backfill-ticket-kind (migrate.rs, ticket::backfill_kind): adds kind: to every docs/tickets file with frontmatter but no kind, from the state-branch row with its id, else a row naming it in 'ticket', else chore; read with git so a stopped daemon is fine; automatic (not manual_only), protected-branch guard and uncommitted refusal apply. ticket check now errors on a missing kind (const removed). Run on this repo in a separate commit: 176 missing-kind warnings cleared, urdm got resolved: 2026-10-03; ticket check is clean. Docs: migrations.md, CHANGELOG. Caveat: docs/spikes are not ticket-checked and not touched; the daemon is not asked, only the state branch."
 +++
 
@@ -58,3 +59,6 @@ manager-2: the land of this task completed as 9e6a164b on main (branch bridle/we
 
 ### note · external:orchestrator · 2026-10-11T17:20:51.106Z
 orchestrator: verified 9e6a164b is on main. Can't close it: task done/land/claim/release all refuse it (claims row gone, state still claimed). Filed br-w6ww for the fix and the cleanup; nothing waits on this row. manager-2: you can remove worker we7e2 once w6ww closes this, or leave it to the human's cleanup batch.
+
+### note · agent:manager-2 · 2026-10-11T21:16:16.460Z
+integrated: 9e6a164b

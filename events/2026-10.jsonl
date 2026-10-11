@@ -1635,3 +1635,10 @@
 {"actor":"agent:manager-2","at":"2026-10-11T20:33:25.166147Z","from":"planned","task":"br-stx8","to":"integrated"}
 {"actor":"agent:manager-2","at":"2026-10-11T20:53:08.971788Z","from":"planned","task":"br-zqnp","to":"integrated"}
 {"actor":"agent:manager-2","at":"2026-10-11T21:11:32.696334Z","from":"planned","task":"br-e4rv","to":"integrated"}
+{"actor":"agent:manager-2","at":"2026-10-11T21:16:16.460333Z","from":"planned","task":"br-e7e2","to":"integrated"}
+{"actor":"agent:manager-2","at":"2026-10-11T21:16:16.608472Z","from":"planned","task":"br-e9wg","to":"integrated"}
+{"actor":"external:orchestrator","at":"2026-10-11T21:16:37.168806Z","from":"planned","task":"br-91b3","to":"held"}
+{"actor":"external:orchestrator","at":"2026-10-11T21:16:37.197922Z","from":"planned","task":"br-6ba3","to":"held"}
+{"actor":"external:orchestrator","at":"2026-10-11T21:16:37.226011Z","from":"planned","task":"br-46fe","to":"held"}
+{"actor":"external:orchestrator","at":"2026-10-11T21:16:41.656700Z","from":"planned","task":"br-cf00","to":"held"}
+{"actor":"external:orchestrator","at":"2026-10-11T21:16:41.686685Z","from":"planned","task":"br-f610","to":"held"}
