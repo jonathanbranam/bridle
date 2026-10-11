@@ -158,6 +158,95 @@ but right as "the aide at Sonic".
 | discovery | 2001 (also in the ships) |
 | rama | Rendezvous with Rama |
 
+**Dune** (a favourite; Frank Herbert's six novels only, not the later books by Brian Herbert and
+Kevin J. Anderson. Many won't work as names; listed anyway. Not dictation-tested.)
+
+Characters:
+
+| Name | Who | Book | Notes |
+|---|---|---|---|
+| paul | Paul Atreides, Muad'Dib, Usul | Dune | A common first name. |
+| leto | Duke Leto Atreides; his grandson Leto II, the God Emperor | Dune; Children; God Emperor | Short. |
+| jessica | Lady Jessica, Paul's mother, Bene Gesserit | Dune | |
+| alia | Paul's sister, "St. Alia of the Knife" | Dune; Messiah; Children | Short; may come out "Aaliyah". |
+| thufir | Thufir Hawat, the Atreides Mentat | Dune | Hard to spell. |
+| gurney | Gurney Halleck, warrior-troubadour | Dune; Children | |
+| duncan | Duncan Idaho, swordmaster, later ghola after ghola | all six | A common first name. |
+| yueh | Dr. Wellington Yueh, the Suk doctor who betrays the Atreides | Dune | Dictation will struggle. |
+| stilgar | Fremen naib of Sietch Tabr | Dune; Messiah; Children | |
+| chani | Paul's Fremen partner | Dune; Messiah | May come out "Chaney". |
+| kynes | Liet-Kynes, the planetologist | Dune | Sounds like "kinds". |
+| jamis | the Fremen Paul kills in his first duel | Dune | |
+| mapes | Shadout Mapes, the Fremen housekeeper | Dune | |
+| harkonnen | Baron Vladimir Harkonnen | Dune | Also the house. |
+| feyd | Feyd-Rautha, the Baron's heir | Dune | May come out "fade". |
+| rabban | Glossu Rabban, "the Beast" | Dune | |
+| piter | Piter de Vries, the Harkonnen Mentat | Dune | Sounds like "Peter". |
+| shaddam | Shaddam IV, the Padishah Emperor | Dune | |
+| irulan | Princess Irulan, whose writings open each chapter | Dune; Messiah | |
+| fenring | Count Hasimir Fenring; Lady Margot Fenring | Dune | |
+| mohiam | Gaius Helen Mohiam, the Reverend Mother | Dune; Messiah | |
+| scytale | the Tleilaxu Face Dancer | Messiah; Chapterhouse | Hard to spell. |
+| edric | the Guild Navigator | Messiah | Short and clear. |
+| hayt | the first Duncan Idaho ghola | Messiah | Sounds like "hate". |
+| bijaz | the Tleilaxu dwarf | Messiah | |
+| korba | Fremen priest of the Qizarate | Messiah | |
+| ghanima | Leto II's twin sister | Children | |
+| faradn | Farad'n Corrino, heir to the Corrinos | Children | The apostrophe goes. |
+| wensicia | Farad'n's mother | Children | Long. |
+| preacher | the blind Preacher | Children | A common word. |
+| moneo | Leto II's majordomo | God Emperor | |
+| siona | Moneo's daughter, the rebel | God Emperor | |
+| hwi | Hwi Noree, the Ixian ambassador | God Emperor | Dictation will struggle. |
+| nayla | a Fish Speaker | God Emperor | |
+| odrade | Darwi Odrade, Mother Superior | Heretics; Chapterhouse | |
+| taraza | Alma Mavis Taraza, Mother Superior | Heretics | |
+| teg | Miles Teg, the Bashar | Heretics | Short. |
+| sheeana | the girl who commands the worms | Heretics; Chapterhouse | |
+| lucilla | a Bene Gesserit Imprinter | Heretics | |
+| murbella | the Honored Matre who becomes Bene Gesserit | Heretics; Chapterhouse | |
+| waff | Tylwyth Waff, a Tleilaxu Master | Heretics | Sounds like "waft". |
+| burzmali | a Bashar, Teg's student | Heretics | |
+| bellonda | a Bene Gesserit Mentat | Chapterhouse | |
+| tamalane | a senior Bene Gesserit | Chapterhouse | |
+| dama | the Great Honored Matre | Chapterhouse | |
+
+Houses (the Great Houses and the Houses Minor):
+
+| Name | What | Notes |
+|---|---|---|
+| atreides | Paul's house, of Caladan | Hard to spell. |
+| harkonnen | the Baron's house, of Giedi Prime | |
+| corrino | the Imperial house, of Kaitain and Salusa Secundus | |
+| moritani | the house of Grumman, in a feud with Ginaz | |
+| ginaz | a house beaten by Grumman; later the swordmasters' school | |
+| landsraad | the assembly of the houses | |
+
+Races and powers:
+
+| Name | What | Notes |
+|---|---|---|
+| fremen | the desert people of Arrakis | |
+| sardaukar | the Emperor's soldier-fanatics, of Salusa Secundus | |
+| guild | the Spacing Guild and its Navigators | A common word. |
+| navigator | the Guild's spice-mutated pilots | A common word. |
+| bene gesserit | the sisterhood: breeding programme, the Voice, Reverend Mothers | Two words. |
+| tleilaxu | the Bene Tleilax: gene-masters, gholas, Face Dancers | Hard to spell and say. |
+| choam | the trading company every house holds shares in | Said "choam"; dictation will guess. |
+| mentat | the human computers | Clear; a fit for a build box. |
+| ixians | the machine makers of Ix | `ix` alone is two letters. |
+| richese | machine makers, Ix's rival | |
+| suk | the Suk School of doctors | Sounds like "suck". |
+| qizarate | Paul's priesthood | |
+| fish speakers | Leto II's all-woman army | Two words. |
+| honored matres | the women who return from the Scattering | Two words. |
+| futars | the hunters bred against the Honored Matres | |
+| shai-hulud | the sandworms, "Old Man of the Desert" | The hyphen goes. |
+
+Places (not asked for, but planets are machine names elsewhere in this file):
+`arrakis` (also Dune, later Rakis), `caladan`, `giedi` (Giedi Prime), `kaitain`, `salusa`, `ix`,
+`tleilax`, `ecaz`, `grumman`, `gammu`, `wallach` (Wallach IX), `chapterhouse`, `junction`.
+
 **Chinese zodiac** (twelve animals; short and dictation-safe, but common words)
 
 | Name | Notes |
