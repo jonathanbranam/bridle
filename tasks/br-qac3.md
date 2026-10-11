@@ -4,12 +4,13 @@ title = "Mail between daemons, slice 6: an agent of another project or machine c
 kind = "feature"
 state = "planned"
 created_at = "2026-10-11T02:18:57.281Z"
-updated_at = "2026-10-11T02:19:43.671601Z"
+updated_at = "2026-10-11T03:20:19.130676Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "external:advisor/product-manager",
 ]
+summary = """Task watch across projects/machines (3haz slice 6, Q3). `bridle task watch|unwatch --project <p> <task>` (when there is no direct token for <p>, same test as `send --project`) goes to the caller's own daemon (`POST /v1/watch/remote`, not for visitors), which calls <p>'s daemon with its peer token on a new peer-only endpoint `POST /v1/watch` {task, who, home, watch}. The task daemon records the watcher as `remote:<who>@<home project>` in the task's existing `watchers` list, and emit_task_change queues each task_update for such a watcher in its outbox for the home daemon (existing retry, order, dedup; offline home gets them on return). Wire types in bridle-api types.rs + client; daemon: server.rs, outbox.rs (peer_watch, project()); CLI: task.rs. Why the watch endpoint and not extending /v1/forward: a forward is one-way mail acked by origin id, with no way to answer "no such task" or return the task, and a watch is state to set and unset, not a message; the endpoint is ~40 lines and the peer allow-list gains one path. Caveat: the watch call is not queued (needs an answer), so it fails if the task daemon is down. Migration: none (watchers live in the task file; local watchers unchanged; no project files change). Visitors can do nothing new (remote_watch refuses them; /v1/watch is peer-only), tested. Tests: two in-process daemons in outbox_test.rs (watch, update arrives once, queued while unreachable then in order, unwatch stops, unknown task refused, visitor/non-peer refused); project_resolution_test expectation updated for watch/unwatch like send. Docs: principals.md, api.md, cli.md, CHANGELOG. Ticket 3haz can be resolved once this lands (all slices built). Only --project is accepted for a foreign task, not a br- prefix: task commands here have no prefix routing."""
 parent = "br-n7cg"
 +++
 
