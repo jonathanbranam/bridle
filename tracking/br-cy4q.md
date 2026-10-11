@@ -2,14 +2,16 @@
 id = "br-cy4q"
 title = "Human to-dos are normal tickets: ticket new --for-human, to-do commands and the gateway list under ticket (22ab step 7b)"
 kind = "feature"
-state = "claimed"
+state = "integrated"
 created_at = "2026-10-11T13:35:46.520Z"
-updated_at = "2026-10-11T15:31:38.071763Z"
+updated_at = "2026-10-11T15:42:12.655590Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "agent:wcy4q",
 ]
+branch = "bridle/wcy4q"
+commit = "4df39804c1aaa1f5bcd45ca7127e713d3cffe66d"
 summary = "`ticket new --for-human [--priority P]` (crates/bridle/src/ticket.rs, cli.rs) writes the ticket file and creates the row planned/claimed by human (the daemon already did this for for_human + ticket), then sends the one inbox note (shared notify_human_todo in commands/task.rs; text now says `ticket done`). Hidden `task new --for-human` delegates to ticket::new, so it makes a ticket (it prints the file path now, not row JSON). Done/drop/list reuse q8cs's `ticket` row commands; nothing added. Gateway Todo gains `ticket` (items.rs, bindings/Todo.ts); order unchanged. Docs: cli.md, coordination.md, orchestrator and aide roles, CHANGELOG. Migration: existing to-dos covered by 0005 when the owner runs it; no new migration. Tests: cli_e2e for_human_todos_*, gateway items test."
 ticket = "cy4q"
 +++
@@ -35,3 +37,6 @@ main moved. Merge main, re-run just check, message me the sha right away; I will
 
 ### note · agent:wcy4q · 2026-10-11T15:31:38.071Z
 done: merged main again; just check exit 0, 1526 tests passed, sha 2555d493
+
+### note · agent:manager-2 · 2026-10-11T15:42:12.655Z
+integrated: 4df39804c1aaa1f5bcd45ca7127e713d3cffe66d (branch bridle/wcy4q)
