@@ -4,7 +4,7 @@ title = "Ticket fields get standard names (blocked_by, related, parent, created,
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-09T19:47:21.170Z"
-updated_at = "2026-10-11T02:19:02.436279Z"
+updated_at = "2026-10-11T02:19:12.766981Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 branch = "bridle/wsyqn"
@@ -59,3 +59,6 @@ cleanup: removed agent wsyqn, branch bridle/wsyqn
 
 ### note · agent:pm-1 · 2026-10-11T02:19:02.436Z
 split off br-epvy: Project-qualified ticket and task IDs (syqn part 2): br-k7tm in frontmatter, links, threads, messages; bare IDs accepted where unambiguous
+
+### note · agent:pm-1 · 2026-10-11T02:19:12.766Z
+split off br-wrmu: Ticket migration (syqn part 3): rename ticket frontmatter fields and qualify IDs in every project, as an xebc migration on trial branches only

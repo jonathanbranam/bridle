@@ -1510,3 +1510,7 @@
 {"actor":"external:orchestrator","at":"2026-10-11T02:17:29.219500Z","from":"pending","task":"br-n4w4","to":"dropped"}
 {"actor":"human","at":"2026-10-11T02:18:57.281Z","from":"","task":"br-qac3","to":"pending"}
 {"actor":"human","at":"2026-10-11T02:19:02.435Z","from":"","task":"br-epvy","to":"pending"}
+{"actor":"human","at":"2026-10-11T02:19:12.766Z","from":"","task":"br-wrmu","to":"pending"}
+{"actor":"external:advisor/product-manager","at":"2026-10-11T02:19:34.703772Z","from":"pending","task":"br-qac3","to":"open"}
+{"actor":"external:advisor/product-manager","at":"2026-10-11T02:19:34.740598Z","from":"pending","task":"br-epvy","to":"open"}
+{"actor":"external:advisor/product-manager","at":"2026-10-11T02:19:34.773762Z","from":"pending","task":"br-wrmu","to":"open"}

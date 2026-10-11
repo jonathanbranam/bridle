@@ -2,9 +2,9 @@
 id = "br-epvy"
 title = "Project-qualified ticket and task IDs (syqn part 2): br-k7tm in frontmatter, links, threads, messages; bare IDs accepted where unambiguous"
 kind = "feature"
-state = "pending"
+state = "open"
 created_at = "2026-10-11T02:19:02.435Z"
-updated_at = "2026-10-11T02:19:02.436279Z"
+updated_at = "2026-10-11T02:19:34.740598Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
