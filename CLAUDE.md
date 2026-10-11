@@ -38,7 +38,8 @@ spikes/stream-json     spike 01 (standalone, excluded from the workspace; don't 
 ```
 just check        # fmt-check + clippy -D warnings + nextest: must pass before you're done
 just fmt
-just test         # cargo nextest run --workspace
+just test         # cargo nextest run --workspace (nextest recipes take a machine-wide lock:
+                  # concurrent runs queue; BRIDLE_TEST_NOLOCK=1 skips it)
 just check-affected [base]  # local-only fast path: nextest for changed crates + their
                   # reverse-dep closure (vs. base, default merge-base with main); falls
                   # back to the full suite whenever it can't be sure. Never replaces
