@@ -4,7 +4,7 @@ title = "Mail between daemons, slice 4: visible state: outbox status, message sh
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-05T21:04:43.237Z"
-updated_at = "2026-10-11T02:16:53.170366Z"
+updated_at = "2026-10-11T02:17:14.114257Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -36,3 +36,6 @@ done: slice 4 visible state (status outbox line, message show stages, aide repor
 
 ### note · agent:manager-2 · 2026-10-11T02:16:53.170Z
 integrated: ae64e497c741028a68547c9ef9d82ecf3cd8f1ac (branch bridle/wcufw)
+
+### note · agent:manager-2 · 2026-10-11T02:17:14.114Z
+cleanup: removed agent wcufw, branch bridle/wcufw

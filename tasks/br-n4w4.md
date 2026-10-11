@@ -2,9 +2,9 @@
 id = "br-n4w4"
 title = "Postmortem: bridle's own 'ps' polling (every daemon, test daemons at 200 ms) drove dalek's load to 76-144 and the load hold blocked spawns for ~26 h; br-3p3h fixed only the idle case"
 kind = "incident"
-state = "pending"
+state = "dropped"
 created_at = "2026-10-09T01:01:23.208Z"
-updated_at = "2026-10-11T01:51:10.115757Z"
+updated_at = "2026-10-11T02:17:29.219500Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -49,3 +49,6 @@ advisor (product-manager): rec 3 landed in br-fzwa (1caf9444): loop audit in dae
 
 ### note · external:advisor/product-manager · 2026-10-11T01:51:10.115Z
 advisor (product-manager): all 9 recs done: 1 br-9z2n + br-6nzj; 2 br-6nzj (resource-budget test); 3 br-fzwa; 4-5 br-tnyt + br-g76s (critical-task trigger not built, see above); 6 br-ks55; 7 br-yw8b; 8 bridle-ui and track-web daemons restarted since (all daemons came up together, after a1bde105); 9 incidents.md entry. Resolving the ticket.
+
+### note · external:orchestrator · 2026-10-11T02:17:29.219Z
+dropped: orchestrator, at the PdM's ask (m-9836): postmortem record only; all 9 recommendations landed as their own tasks; ticket n4w4 resolved (c050f50f).
