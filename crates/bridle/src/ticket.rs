@@ -12,8 +12,8 @@ use bridle_api::{EditTicketRequest, NewTicketRequest, SubmitTicketRequest, Ticke
 use clap::ValueEnum;
 
 use crate::cli::{
-    Cli, LinkKind, TaskKindArg, TicketAction, TicketAnswerArgs, TicketArgs, TicketAskArgs,
-    TicketCheckArgs, TicketCommentArgs, TicketLinkArgs, TicketNewArgs, TicketReadyArgs,
+    Cli, LinkKind, TicketAction, TicketAnswerArgs, TicketArgs, TicketAskArgs, TicketCheckArgs,
+    TicketCommentArgs, TicketKindArg, TicketLinkArgs, TicketNewArgs, TicketReadyArgs,
     TicketResolveArgs, TicketSetArgs, TicketShowArgs, TicketSubmitArgs,
 };
 use crate::commands::client_for;
@@ -228,7 +228,7 @@ async fn comment_cmd(cli: &Cli, repo: &Path, args: &TicketCommentArgs) -> Result
     let task = thread_row_id(cli, repo, &args.id).await?;
     crate::commands::task_comment(
         cli,
-        &crate::cli::TaskCommentArgs {
+        &crate::cli::RowCommentArgs {
             task,
             text: args.text.clone(),
             text_file: args.text_file.clone(),
@@ -354,7 +354,7 @@ async fn submit(cli: &Cli, args: &TicketSubmitArgs) -> Result<(), CliError> {
     Ok(())
 }
 
-fn kind_of(arg: TaskKindArg) -> TicketKind {
+fn kind_of(arg: TicketKindArg) -> TicketKind {
     let name = arg.to_possible_value().expect("no skipped kinds");
     name.get_name().parse().expect("CLI kinds are task kinds")
 }

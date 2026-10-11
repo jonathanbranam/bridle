@@ -59,11 +59,11 @@ Built states: `pending`, `open`, `planned`, `claimed`, `dropped`, `integrated`, 
 - **ready** is computed: planned, no open blockers, no unanswered questions.
   A blocker counts as open unless it's `dropped` or `integrated` (`accepted`
   doesn't exist yet; see coordination.md, Edges). `bridle task plan <id>` makes the `open ->
-  planned` transition (`TaskManager::plan_task`); `open` is the only state it
+  planned` transition (`TicketManager::plan_task`); `open` is the only state it
   accepts, so a task already planned, claimed, dropped or reopened is a
   conflict.
 - **Every task is created `pending`** (k7tm decisions 11-14). `bridle ticket ready <id>`
-  (`TaskManager::ready_task`; it refuses an empty ask or an uncommitted ticket) makes `pending -> open`, and the PM plans only `open` tasks.
+  (`TicketManager::ready_task`; it refuses an empty ask or an uncommitted ticket) makes `pending -> open`, and the PM plans only `open` tasks.
   The orchestrator, or an advisor with the human's approval, readies; a manager may ready its
   own small fix inside work already approved, never a new feature. Human to-dos
   (`--for-human`) skip the gate. The PM wakes when a task is readied, not when one is filed;
@@ -82,9 +82,9 @@ Built states: `pending`, `open`, `planned`, `claimed`, `dropped`, `integrated`, 
   `POST /v1/queue/tiers`). Durable on the state branch's `queue.toml`
   (storage.md, "The state branch"), since there's no SQLite table for it at
   all — the in-memory cache is hydrated straight from that file at
-  `TaskManager::open`/`rebuild_from_state_branch`.
+  `TicketManager::open`/`rebuild_from_state_branch`.
 - **The manager is mechanical** about the queue: it takes from the highest
-  tier with a startable task (`TaskManager::highest_startable_tier`:
+  tier with a startable task (`TicketManager::highest_startable_tier`:
   `ready`, and therefore unclaimed too, since `is_ready` already requires
   `planned`), picking within a tier by load/free worker slots. It never
   moves a task between tiers; if the top tier's only task is blocked on an

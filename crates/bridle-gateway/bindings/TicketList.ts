@@ -2,7 +2,7 @@
 import type { TaskSummary } from "./TaskSummary";
 
 /**
- * `TaskList` under its ticket name (22ab step 8): the same rows, keyed `tickets`.
+ * `TicketListByTasks` under its ticket name (22ab step 8): the same rows, keyed `tickets`.
  */
 export type TicketList = { project: string, 
 /**

@@ -16,13 +16,13 @@
 //! `claims.toml`, so `bridle rebuild` restores who's working what (storage.md,
 //! "claims"). The claiming agent's own activity (the same signal
 //! `supervisor.rs`'s stall check watches) still stands in for a lease
-//! renewal, so [`TaskManager::tick_claim_lease_check`] can release a stale
+//! renewal, so [`TicketManager::tick_claim_lease_check`] can release a stale
 //! claim without a separate heartbeat call.
 //!
 //! The queue (roles-and-lifecycle.md, "the queue") is a separate record this
 //! manager also owns: an ordered list of tiers of task ids, PM-written,
 //! durable on the state branch's `queue.toml` alone — there's no SQLite
-//! table for it, so [`TaskManager::open`] hydrates the in-memory cache
+//! table for it, so [`TicketManager::open`] hydrates the in-memory cache
 //! straight from that file, the same way `rebuild_from_state_branch`
 //! rebuilds the task/edge/open-question caches from their own files.
 
@@ -55,14 +55,14 @@ fn valid_spec_id(id: &str) -> bool {
 }
 
 use crate::state_branch::{ClaimRecord, StateBranch, StateBranchError};
-use crate::store::{NewMessage, RecipientKind, Store, StoreError, TaskRow};
+use crate::store::{NewMessage, RecipientKind, Store, StoreError, TicketRow};
 
 /// A claim's claimant and when it was made; the in-memory mirror of a
 /// `claims` row (`Store::list_claims`).
 type ClaimEntry = (PrincipalId, chrono::DateTime<Utc>);
 
 #[derive(Debug, thiserror::Error)]
-pub enum TaskError {
+pub enum TicketError {
     #[error("not found: {0}")]
     NotFound(String),
     #[error("conflict: {0}")]
@@ -73,30 +73,30 @@ pub enum TaskError {
     Internal(String),
 }
 
-impl From<StoreError> for TaskError {
+impl From<StoreError> for TicketError {
     fn from(e: StoreError) -> Self {
         match e {
-            StoreError::NotFound(m) => TaskError::NotFound(m),
-            StoreError::Conflict(m) => TaskError::Conflict(m),
-            other => TaskError::Internal(other.to_string()),
+            StoreError::NotFound(m) => TicketError::NotFound(m),
+            StoreError::Conflict(m) => TicketError::Conflict(m),
+            other => TicketError::Internal(other.to_string()),
         }
     }
 }
 
-impl From<StateBranchError> for TaskError {
+impl From<StateBranchError> for TicketError {
     fn from(e: StateBranchError) -> Self {
-        TaskError::Internal(e.to_string())
+        TicketError::Internal(e.to_string())
     }
 }
 
 #[derive(Clone)]
-pub struct TaskManager {
+pub struct TicketManager {
     store: Store,
     state: StateBranch,
     /// The id prefix new tasks get (storage.md: `<prefix>-<4 chars of the ticket alphabet>`).
     prefix: String,
     /// Full records, including body/thread, which the database doesn't
-    /// carry. Hydrated from the state branch at [`TaskManager::open`], kept
+    /// carry. Hydrated from the state branch at [`TicketManager::open`], kept
     /// current on every write.
     cache: Arc<Mutex<HashMap<String, Ticket>>>,
     /// Every edge. Unlike `cache`, the database row *is* the full record
@@ -116,16 +116,16 @@ pub struct TaskManager {
     /// `Ticket::claimed_by`/`claimed_at` on the cached task.
     claims: Arc<Mutex<HashMap<String, ClaimEntry>>>,
     /// How long a claim survives without the claiming agent's own activity
-    /// before [`TaskManager::tick_claim_lease_check`] releases it.
+    /// before [`TicketManager::tick_claim_lease_check`] releases it.
     claim_lease_after: chrono::Duration,
     /// The queue: an ordered list of tiers, each a list of task ids
     /// (roles-and-lifecycle.md, "the queue"). Loaded from `queue.toml` at
-    /// [`TaskManager::open`]; there's no SQLite table backing it, so this
-    /// cache — kept current on every [`TaskManager::set_queue`] — is the
+    /// [`TicketManager::open`]; there's no SQLite table backing it, so this
+    /// cache — kept current on every [`TicketManager::set_queue`] — is the
     /// only in-memory copy.
     queue: Arc<Mutex<Vec<Vec<String>>>>,
     /// The settle period (`[tasks] settle`, ny9u); zero turns it off. Set by
-    /// [`TaskManager::with_settle`]; `open` leaves it off.
+    /// [`TicketManager::with_settle`]; `open` leaves it off.
     settle: chrono::Duration,
 }
 
@@ -144,7 +144,7 @@ pub fn notified_of(task: &Ticket) -> Vec<PrincipalId> {
     task.watchers.clone()
 }
 
-impl TaskManager {
+impl TicketManager {
     /// The id prefix new tasks (and tickets) get.
     pub fn prefix(&self) -> &str {
         &self.prefix
@@ -167,7 +167,7 @@ impl TaskManager {
         state: StateBranch,
         prefix: String,
         claim_lease_after: std::time::Duration,
-    ) -> Result<Self, TaskError> {
+    ) -> Result<Self, TicketError> {
         let rows = store.list_tasks().await?;
         let mut cache = HashMap::with_capacity(rows.len());
         let mut unrecorded = Vec::new();
@@ -278,7 +278,7 @@ impl TaskManager {
             }
         }
         let queue = state.read_queue();
-        Ok(TaskManager {
+        Ok(TicketManager {
             store,
             state,
             prefix,
@@ -311,7 +311,7 @@ impl TaskManager {
     /// the column unfillable, this synthesizes a stand-in id from the task
     /// id; nothing downstream looks a message up by this id after a
     /// rebuild, since there's no message row behind it to find.
-    pub async fn rebuild_from_state_branch(&self) -> Result<(), TaskError> {
+    pub async fn rebuild_from_state_branch(&self) -> Result<(), TicketError> {
         // Handover notes aren't in the refusal check below (a note alone is no reason to
         // refuse); `restore_handover` skips any already there.
         for h in self.state.list_handovers()? {
@@ -322,7 +322,7 @@ impl TaskManager {
             || !self.store.list_open_questions().await?.is_empty()
             || !self.store.list_claims().await?.is_empty()
         {
-            return Err(TaskError::Conflict(
+            return Err(TicketError::Conflict(
                 "database already has tasks, edges, open questions or claims; refusing to rebuild over it"
                     .to_string(),
             ));
@@ -333,7 +333,7 @@ impl TaskManager {
         let mut open_questions = HashMap::new();
         for task in tasks {
             self.store
-                .insert_task_row(&TaskRow {
+                .insert_task_row(&TicketRow {
                     id: task.id.clone(),
                     title: task.title.clone(),
                     kind: task.kind,
@@ -396,13 +396,13 @@ impl TaskManager {
     }
 
     /// Queues a handover note for the state branch's next flush.
-    pub fn enqueue_handover(&self, h: &Handover) -> Result<(), TaskError> {
+    pub fn enqueue_handover(&self, h: &Handover) -> Result<(), TicketError> {
         Ok(self.state.enqueue_handover(h)?)
     }
 
     /// Writes every note in SQLite that the state branch doesn't have yet (notes from before
     /// this existed). Idempotent: a note already on the branch is skipped.
-    pub async fn backfill_handovers(&self) -> Result<(), TaskError> {
+    pub async fn backfill_handovers(&self) -> Result<(), TicketError> {
         for h in self.store.list_handovers().await? {
             if !self.state.has_handover(&h.id) {
                 self.state.enqueue_handover(&h)?;
@@ -463,15 +463,15 @@ impl TaskManager {
         id: &str,
         by: &PrincipalId,
         reason: &str,
-    ) -> Result<Ticket, TaskError> {
+    ) -> Result<Ticket, TicketError> {
         if reason.trim().is_empty() {
-            return Err(TaskError::BadRequest(
+            return Err(TicketError::BadRequest(
                 "skipping the settle period requires a reason".to_string(),
             ));
         }
         let mut task = self
             .get_task(id)
-            .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
+            .ok_or_else(|| TicketError::NotFound(format!("no such task: {id}")))?;
         let now = Utc::now();
         task.thread.push(ThreadEntry {
             kind: ThreadEntryKind::Note,
@@ -484,7 +484,7 @@ impl TaskManager {
         Ok(self.put(task))
     }
 
-    /// [`TaskManager::new_task_by`] with an unknown creator; for tests and callers that have no
+    /// [`TicketManager::new_task_by`] with an unknown creator; for tests and callers that have no
     /// principal.
     pub async fn new_task(
         &self,
@@ -493,7 +493,7 @@ impl TaskManager {
         body: String,
         components: Vec<String>,
         size: Option<TicketSize>,
-    ) -> Result<Ticket, TaskError> {
+    ) -> Result<Ticket, TicketError> {
         self.new_task_by(title, kind, body, components, size, UNKNOWN_CREATOR)
             .await
     }
@@ -506,12 +506,12 @@ impl TaskManager {
         components: Vec<String>,
         size: Option<TicketSize>,
         created_by: &str,
-    ) -> Result<Ticket, TaskError> {
+    ) -> Result<Ticket, TicketError> {
         self.new_task_for_ticket(title, kind, body, components, size, created_by, None)
             .await
     }
 
-    /// [`TaskManager::new_task_by`] for a task made from `ticket`; the task's id takes the
+    /// [`TicketManager::new_task_by`] for a task made from `ticket`; the task's id takes the
     /// ticket's id when free. An older client that sends the `original id:` first body line
     /// instead of `ticket` is read the same way (the line leaves the body).
     #[allow(clippy::too_many_arguments)]
@@ -524,9 +524,11 @@ impl TaskManager {
         size: Option<TicketSize>,
         created_by: &str,
         ticket: Option<String>,
-    ) -> Result<Ticket, TaskError> {
+    ) -> Result<Ticket, TicketError> {
         if title.trim().is_empty() {
-            return Err(TaskError::BadRequest("title must not be empty".to_string()));
+            return Err(TicketError::BadRequest(
+                "title must not be empty".to_string(),
+            ));
         }
         let (legacy, body) = split_legacy_origin(&body);
         let ticket = ticket
@@ -578,19 +580,19 @@ impl TaskManager {
     /// Makes `child` a task split from `parent` (`task new --from`): records the link on the
     /// child, gives it the parent's watchers (the creator, already a watcher, stays), and notes
     /// the child on the parent's thread. Fails `NotFound` for an unknown parent, before the
-    /// child is touched; call [`TaskManager::get_task`] on the parent first to fail early.
+    /// child is touched; call [`TicketManager::get_task`] on the parent first to fail early.
     pub async fn split_from(
         &self,
         child: &str,
         parent: &str,
         by: &PrincipalId,
-    ) -> Result<Ticket, TaskError> {
+    ) -> Result<Ticket, TicketError> {
         let mut parent_task = self
             .get_task(parent)
-            .ok_or_else(|| TaskError::NotFound(format!("no such task: {parent}")))?;
+            .ok_or_else(|| TicketError::NotFound(format!("no such task: {parent}")))?;
         let mut task = self
             .get_task(child)
-            .ok_or_else(|| TaskError::NotFound(format!("no such task: {child}")))?;
+            .ok_or_else(|| TicketError::NotFound(format!("no such task: {child}")))?;
         let now = Utc::now();
         for w in &parent_task.watchers {
             add_watcher(&mut task.watchers, w);
@@ -616,10 +618,10 @@ impl TaskManager {
         id: &str,
         priority: TicketPriority,
         actor: &PrincipalId,
-    ) -> Result<(Ticket, TicketPriority), TaskError> {
+    ) -> Result<(Ticket, TicketPriority), TicketError> {
         let mut task = self
             .get_task(id)
-            .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
+            .ok_or_else(|| TicketError::NotFound(format!("no such task: {id}")))?;
         let from = task.priority;
         if from == priority {
             return Ok((task, from));
@@ -644,12 +646,12 @@ impl TaskManager {
         id: &str,
         kind: TicketKind,
         actor: &PrincipalId,
-    ) -> Result<(Ticket, TicketKind), TaskError> {
+    ) -> Result<(Ticket, TicketKind), TicketError> {
         let mut task = self
             .get_task(id)
-            .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
+            .ok_or_else(|| TicketError::NotFound(format!("no such task: {id}")))?;
         if !matches!(task.state, TicketState::Pending | TicketState::Open) {
-            return Err(TaskError::Conflict(format!(
+            return Err(TicketError::Conflict(format!(
                 "{id} is {}; a task's kind can only change while it is pending or open",
                 task.state
             )));
@@ -677,10 +679,10 @@ impl TaskManager {
         id: &str,
         priority: TicketPriority,
         actor: &PrincipalId,
-    ) -> Result<Ticket, TaskError> {
+    ) -> Result<Ticket, TicketError> {
         let mut task = self
             .get_task(id)
-            .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
+            .ok_or_else(|| TicketError::NotFound(format!("no such task: {id}")))?;
         task.priority = priority;
         task.priority_at = Some(Utc::now());
         task.thread.push(ThreadEntry {
@@ -706,16 +708,16 @@ impl TaskManager {
     }
 
     /// Sets the task's ticket link; no thread note, it is metadata.
-    pub async fn set_ticket(&self, id: &str, ticket: &str) -> Result<Ticket, TaskError> {
+    pub async fn set_ticket(&self, id: &str, ticket: &str) -> Result<Ticket, TicketError> {
         let ticket = ticket.trim();
         if ticket.is_empty() {
-            return Err(TaskError::BadRequest(
+            return Err(TicketError::BadRequest(
                 "ticket must not be empty".to_string(),
             ));
         }
         let mut task = self
             .get_task(id)
-            .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
+            .ok_or_else(|| TicketError::NotFound(format!("no such task: {id}")))?;
         if task.ticket.as_deref() == Some(ticket) {
             return Ok(task);
         }
@@ -736,14 +738,16 @@ impl TaskManager {
         body: Option<String>,
         components: Option<Vec<String>>,
         size: Option<TicketSize>,
-    ) -> Result<Ticket, TaskError> {
+    ) -> Result<Ticket, TicketError> {
         let mut task = self
             .get_task(id)
-            .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
+            .ok_or_else(|| TicketError::NotFound(format!("no such task: {id}")))?;
         if let Some(title) = &title
             && title.trim().is_empty()
         {
-            return Err(TaskError::BadRequest("title must not be empty".to_string()));
+            return Err(TicketError::BadRequest(
+                "title must not be empty".to_string(),
+            ));
         }
         if title.is_none() && body.is_none() && components.is_none() && size.is_none() {
             return Ok(task);
@@ -780,12 +784,12 @@ impl TaskManager {
 
     /// `pending` -> `open`: someone with the authority (the human's approval, or the manager's
     /// own small fix) has said this task is ready for the PM. Every task is created `pending`.
-    pub async fn ready_task(&self, id: &str, actor: &PrincipalId) -> Result<Ticket, TaskError> {
+    pub async fn ready_task(&self, id: &str, actor: &PrincipalId) -> Result<Ticket, TicketError> {
         let mut task = self
             .get_task(id)
-            .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
+            .ok_or_else(|| TicketError::NotFound(format!("no such task: {id}")))?;
         if task.state != TicketState::Pending {
-            return Err(TaskError::Conflict(format!(
+            return Err(TicketError::Conflict(format!(
                 "task {id} is {}, not pending; only a pending task can be readied",
                 task.state
             )));
@@ -803,7 +807,7 @@ impl TaskManager {
         id: &str,
         actor: &PrincipalId,
         reason: &str,
-    ) -> Result<Option<Ticket>, TaskError> {
+    ) -> Result<Option<Ticket>, TicketError> {
         let Some(mut task) = self.get_task(id) else {
             return Ok(None);
         };
@@ -822,7 +826,7 @@ impl TaskManager {
         Ok(Some(self.put(task)))
     }
 
-    /// [`TaskManager::new_task`] then [`TaskManager::ready_task`], for tests that start from
+    /// [`TicketManager::new_task`] then [`TicketManager::ready_task`], for tests that start from
     /// an `open` task.
     pub async fn new_open_task(
         &self,
@@ -831,7 +835,7 @@ impl TaskManager {
         body: String,
         components: Vec<String>,
         size: Option<TicketSize>,
-    ) -> Result<Ticket, TaskError> {
+    ) -> Result<Ticket, TicketError> {
         let task = self.new_task(title, kind, body, components, size).await?;
         self.ready_task(&task.id, &UNKNOWN_CREATOR.to_string())
             .await
@@ -841,14 +845,14 @@ impl TaskManager {
     /// Fails with `Conflict` if the task isn't `open` (including a task
     /// that's already `planned`, `claimed`, or reachable only by `reopen`
     /// once dropped).
-    pub async fn plan_task(&self, id: &str, actor: &PrincipalId) -> Result<Ticket, TaskError> {
+    pub async fn plan_task(&self, id: &str, actor: &PrincipalId) -> Result<Ticket, TicketError> {
         let mut task = self
             .get_task(id)
-            .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
+            .ok_or_else(|| TicketError::NotFound(format!("no such task: {id}")))?;
         // A recurred incident goes active again from `reopened`.
         let recurred = task.kind == TicketKind::Incident && task.state == TicketState::Reopened;
         if task.state != TicketState::Open && !recurred {
-            return Err(TaskError::Conflict(format!(
+            return Err(TicketError::Conflict(format!(
                 "task {id} is {}, not open; only an open task can be planned",
                 task.state
             )));
@@ -865,17 +869,19 @@ impl TaskManager {
         id: &str,
         reason: &str,
         actor: &PrincipalId,
-    ) -> Result<Ticket, TaskError> {
+    ) -> Result<Ticket, TicketError> {
         if reason.trim().is_empty() {
-            return Err(TaskError::BadRequest(
+            return Err(TicketError::BadRequest(
                 "dropping a task requires a reason".to_string(),
             ));
         }
         let mut task = self
             .get_task(id)
-            .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
+            .ok_or_else(|| TicketError::NotFound(format!("no such task: {id}")))?;
         if task.state == TicketState::Dropped {
-            return Err(TaskError::Conflict(format!("task {id} is already dropped")));
+            return Err(TicketError::Conflict(format!(
+                "task {id} is already dropped"
+            )));
         }
         if task.state == TicketState::Claimed {
             self.clear_claim(id).await?;
@@ -903,22 +909,22 @@ impl TaskManager {
         commit: &str,
         branch: Option<&str>,
         actor: &PrincipalId,
-    ) -> Result<Ticket, TaskError> {
+    ) -> Result<Ticket, TicketError> {
         let mut task = self
             .get_task(id)
-            .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
+            .ok_or_else(|| TicketError::NotFound(format!("no such task: {id}")))?;
         // A human to-do has no code to land, so the human finishes it bare.
         let bare_ok = (task.state == TicketState::Claimed
             && task.claimed_by.as_deref() == Some("human"))
             || task.kind == TicketKind::Incident;
         if commit.trim().is_empty() && !bare_ok {
-            return Err(TaskError::BadRequest(
+            return Err(TicketError::BadRequest(
                 "marking a task done requires a commit".to_string(),
             ));
         }
         match task.state {
             TicketState::Dropped | TicketState::Integrated => {
-                return Err(TaskError::Conflict(format!(
+                return Err(TicketError::Conflict(format!(
                     "task {id} is already {}",
                     task.state
                 )));
@@ -949,15 +955,15 @@ impl TaskManager {
     /// Records how the task was implemented, replacing any earlier summary.
     /// Allowed in any state: a worker writes it before the manager marks
     /// the task done.
-    pub async fn set_summary(&self, id: &str, text: &str) -> Result<Ticket, TaskError> {
+    pub async fn set_summary(&self, id: &str, text: &str) -> Result<Ticket, TicketError> {
         if text.trim().is_empty() {
-            return Err(TaskError::BadRequest(
+            return Err(TicketError::BadRequest(
                 "summary must not be empty".to_string(),
             ));
         }
         let mut task = self
             .get_task(id)
-            .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
+            .ok_or_else(|| TicketError::NotFound(format!("no such task: {id}")))?;
         task.summary = Some(text.trim().to_string());
         task.updated_at = Utc::now();
         self.state.enqueue_task(&task)?;
@@ -966,15 +972,15 @@ impl TaskManager {
 
     /// Replaces the task's declared impact (impact-and-conflicts.md). Only
     /// while the task can still be worked: pending, open, planned or claimed.
-    pub async fn set_impact(&self, id: &str, impact: Impact) -> Result<Ticket, TaskError> {
+    pub async fn set_impact(&self, id: &str, impact: Impact) -> Result<Ticket, TicketError> {
         let mut task = self
             .get_task(id)
-            .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
+            .ok_or_else(|| TicketError::NotFound(format!("no such task: {id}")))?;
         if !matches!(
             task.state,
             TicketState::Pending | TicketState::Open | TicketState::Planned | TicketState::Claimed
         ) {
-            return Err(TaskError::Conflict(format!(
+            return Err(TicketError::Conflict(format!(
                 "task {id} is {}; impact can only be set on a pending, open, planned or claimed task",
                 task.state
             )));
@@ -986,13 +992,13 @@ impl TaskManager {
             .chain(&impact.remove)
         {
             if !valid_spec_id(id) {
-                return Err(TaskError::BadRequest(format!(
+                return Err(TicketError::BadRequest(format!(
                     "bad spec id {id:?}: expected r-, s-, g- or a- plus hex digits"
                 )));
             }
         }
         if impact.files.iter().any(|f| f.trim().is_empty()) {
-            return Err(TaskError::BadRequest(
+            return Err(TicketError::BadRequest(
                 "file globs must not be empty".to_string(),
             ));
         }
@@ -1003,12 +1009,12 @@ impl TaskManager {
     }
 
     /// `dropped` or `integrated` -> `reopened`. Any other starting state is a conflict.
-    pub async fn reopen_task(&self, id: &str, actor: &PrincipalId) -> Result<Ticket, TaskError> {
+    pub async fn reopen_task(&self, id: &str, actor: &PrincipalId) -> Result<Ticket, TicketError> {
         let mut task = self
             .get_task(id)
-            .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
+            .ok_or_else(|| TicketError::NotFound(format!("no such task: {id}")))?;
         if !matches!(task.state, TicketState::Dropped | TicketState::Integrated) {
-            return Err(TaskError::Conflict(format!(
+            return Err(TicketError::Conflict(format!(
                 "task {id} is {}; only a dropped or integrated task can be reopened",
                 task.state
             )));
@@ -1024,7 +1030,7 @@ impl TaskManager {
         task: &mut Ticket,
         to: TicketState,
         actor: &PrincipalId,
-    ) -> Result<(), TaskError> {
+    ) -> Result<(), TicketError> {
         let from = task.state;
         self.store.set_task_state(&task.id, to).await?;
         task.state = to;
@@ -1040,17 +1046,22 @@ impl TaskManager {
     /// can't connect a task to itself; the underlying unique constraint
     /// (coordination.md's table has no notion of a duplicate edge) turns a
     /// repeat of the same triple into a conflict.
-    pub async fn add_edge(&self, from: &str, to: &str, kind: EdgeKind) -> Result<Edge, TaskError> {
+    pub async fn add_edge(
+        &self,
+        from: &str,
+        to: &str,
+        kind: EdgeKind,
+    ) -> Result<Edge, TicketError> {
         if from == to {
-            return Err(TaskError::BadRequest(
+            return Err(TicketError::BadRequest(
                 "an edge cannot connect a task to itself".to_string(),
             ));
         }
         if self.get_task(from).is_none() {
-            return Err(TaskError::NotFound(format!("no such task: {from}")));
+            return Err(TicketError::NotFound(format!("no such task: {from}")));
         }
         if self.get_task(to).is_none() {
-            return Err(TaskError::NotFound(format!("no such task: {to}")));
+            return Err(TicketError::NotFound(format!("no such task: {to}")));
         }
         let edge = self.store.insert_edge(from, to, kind).await?;
         let edges = {
@@ -1064,7 +1075,12 @@ impl TaskManager {
 
     /// Removes the edge identified by the `(from, to, kind)` triple; not
     /// found if no such edge exists.
-    pub async fn remove_edge(&self, from: &str, to: &str, kind: EdgeKind) -> Result<(), TaskError> {
+    pub async fn remove_edge(
+        &self,
+        from: &str,
+        to: &str,
+        kind: EdgeKind,
+    ) -> Result<(), TicketError> {
         self.store.delete_edge(from, to, kind).await?;
         let edges = {
             let mut g = self.edges.lock().expect("edges lock");
@@ -1098,7 +1114,7 @@ impl TaskManager {
         self.is_ready_unsettled(task) && self.settle_until(task, Utc::now()).is_none()
     }
 
-    /// [`TaskManager::is_ready`] ignoring the settle period.
+    /// [`TicketManager::is_ready`] ignoring the settle period.
     pub(crate) fn is_ready_unsettled(&self, task: &Ticket) -> bool {
         // An incident is nobody's to build or claim (incidents.md).
         if task.state != TicketState::Planned || task.kind == TicketKind::Incident {
@@ -1134,21 +1150,21 @@ impl TaskManager {
         id: &str,
         from: &PrincipalId,
         body: &str,
-    ) -> Result<Ticket, TaskError> {
+    ) -> Result<Ticket, TicketError> {
         if body.trim().is_empty() {
-            return Err(TaskError::BadRequest(
+            return Err(TicketError::BadRequest(
                 "a question requires a body".to_string(),
             ));
         }
         let mut task = self
             .get_task(id)
-            .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
+            .ok_or_else(|| TicketError::NotFound(format!("no such task: {id}")))?;
         // Checked here too, not just left to the store's unique-constraint
         // conflict below: this cache is the source `is_ready` reads, so a
         // question already recorded here must not have its store insert
         // half-succeed while this half is skipped.
         if self.has_open_questions(&task) {
-            return Err(TaskError::Conflict(format!(
+            return Err(TicketError::Conflict(format!(
                 "task {id} already has an open question"
             )));
         }
@@ -1195,22 +1211,22 @@ impl TaskManager {
         id: &str,
         from: &PrincipalId,
         body: &str,
-    ) -> Result<Ticket, TaskError> {
+    ) -> Result<Ticket, TicketError> {
         if body.trim().is_empty() {
-            return Err(TaskError::BadRequest(
+            return Err(TicketError::BadRequest(
                 "an answer requires a body".to_string(),
             ));
         }
         let mut task = self
             .get_task(id)
-            .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
+            .ok_or_else(|| TicketError::NotFound(format!("no such task: {id}")))?;
         let question_message_id = self
             .open_questions
             .lock()
             .expect("open questions lock")
             .get(id)
             .cloned()
-            .ok_or_else(|| TaskError::Conflict(format!("task {id} has no open question")))?;
+            .ok_or_else(|| TicketError::Conflict(format!("task {id} has no open question")))?;
         let message = self
             .store
             .insert_message(NewMessage {
@@ -1249,18 +1265,20 @@ impl TaskManager {
         id: &str,
         from: &PrincipalId,
         body: &str,
-    ) -> Result<Ticket, TaskError> {
+    ) -> Result<Ticket, TicketError> {
         if body.trim().is_empty() {
-            return Err(TaskError::BadRequest("a note requires a body".to_string()));
+            return Err(TicketError::BadRequest(
+                "a note requires a body".to_string(),
+            ));
         }
         if body.starts_with(SETTLE_SKIP_PREFIX) {
-            return Err(TaskError::BadRequest(
+            return Err(TicketError::BadRequest(
                 "that note is reserved for `task skip-settle`".to_string(),
             ));
         }
         let mut task = self
             .get_task(id)
-            .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
+            .ok_or_else(|| TicketError::NotFound(format!("no such task: {id}")))?;
         let message = self
             .store
             .insert_message(NewMessage {
@@ -1295,10 +1313,10 @@ impl TaskManager {
         id: &str,
         who: &PrincipalId,
         watch: bool,
-    ) -> Result<(Ticket, bool), TaskError> {
+    ) -> Result<(Ticket, bool), TicketError> {
         let mut task = self
             .get_task(id)
-            .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
+            .ok_or_else(|| TicketError::NotFound(format!("no such task: {id}")))?;
         let changed = if watch {
             add_watcher(&mut task.watchers, who)
         } else {
@@ -1331,11 +1349,11 @@ impl TaskManager {
     // ---------- claims ----------
 
     /// Enqueues the full current claim set to the state branch's
-    /// `claims.toml`, mirroring [`TaskManager::claims`] the way
+    /// `claims.toml`, mirroring [`TicketManager::claims`] the way
     /// `add_edge`/`remove_edge` mirror the edge cache to `edges.toml`. Called
     /// with the claims lock already released, after every claim/release, so
     /// `bridle rebuild` can restore current claims (storage.md, "claims").
-    fn enqueue_claims_snapshot(&self) -> Result<(), TaskError> {
+    fn enqueue_claims_snapshot(&self) -> Result<(), TicketError> {
         let records: Vec<ClaimRecord> = self
             .claims
             .lock()
@@ -1356,17 +1374,17 @@ impl TaskManager {
     /// `is_ready` already requires). Writes synchronously to the database,
     /// like every other task state change, and enqueues the claim set's new
     /// state to the state branch for the next flush (storage.md, "claims").
-    pub async fn claim_task(&self, id: &str, by: &PrincipalId) -> Result<Ticket, TaskError> {
+    pub async fn claim_task(&self, id: &str, by: &PrincipalId) -> Result<Ticket, TicketError> {
         self.claim_inner(id, by, true).await
     }
 
-    /// [`TaskManager::claim_task`] without the settle check: for the human's
+    /// [`TicketManager::claim_task`] without the settle check: for the human's
     /// own to-dos, which are created already claimed.
     pub async fn claim_task_unsettled(
         &self,
         id: &str,
         by: &PrincipalId,
-    ) -> Result<Ticket, TaskError> {
+    ) -> Result<Ticket, TicketError> {
         self.claim_inner(id, by, false).await
     }
 
@@ -1375,17 +1393,17 @@ impl TaskManager {
         id: &str,
         by: &PrincipalId,
         must_be_settled: bool,
-    ) -> Result<Ticket, TaskError> {
+    ) -> Result<Ticket, TicketError> {
         let mut task = self
             .get_task(id)
-            .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
+            .ok_or_else(|| TicketError::NotFound(format!("no such task: {id}")))?;
         if !self.is_ready_unsettled(&task) {
-            return Err(TaskError::Conflict(format!(
+            return Err(TicketError::Conflict(format!(
                 "task {id} is not ready to claim"
             )));
         }
         if must_be_settled && let Some(until) = task.settle_until {
-            return Err(TaskError::Conflict(format!(
+            return Err(TicketError::Conflict(format!(
                 "task {id} is settling until {}",
                 settle_clock_text(until)
             )));
@@ -1410,18 +1428,18 @@ impl TaskManager {
     /// Releases `id`'s claim: `claimed` -> `planned`. Fails with `Conflict`
     /// if `by` isn't the current claimant (including if the task isn't
     /// claimed at all).
-    pub async fn release_task(&self, id: &str, by: &PrincipalId) -> Result<Ticket, TaskError> {
+    pub async fn release_task(&self, id: &str, by: &PrincipalId) -> Result<Ticket, TicketError> {
         {
             let claims = self.claims.lock().expect("claims lock");
             match claims.get(id) {
                 Some((claimant, _)) if claimant == by => {}
                 Some(_) => {
-                    return Err(TaskError::Conflict(format!(
+                    return Err(TicketError::Conflict(format!(
                         "task {id} is claimed by another agent"
                     )));
                 }
                 None => {
-                    return Err(TaskError::Conflict(format!("task {id} is not claimed")));
+                    return Err(TicketError::Conflict(format!("task {id} is not claimed")));
                 }
             }
         }
@@ -1430,7 +1448,7 @@ impl TaskManager {
 
     /// Removes `id`'s claim row, in-memory entry and state-branch record,
     /// leaving the task's state to the caller.
-    async fn clear_claim(&self, id: &str) -> Result<(), TaskError> {
+    async fn clear_claim(&self, id: &str) -> Result<(), TicketError> {
         self.store.delete_claim(id).await?;
         self.claims.lock().expect("claims lock").remove(id);
         self.enqueue_claims_snapshot()
@@ -1439,13 +1457,13 @@ impl TaskManager {
     /// The shared release path for an explicit `release_task` and automatic
     /// lease expiry: clears the claim and transitions the task back to
     /// `planned`, enqueuing the claim set's new state to the state branch
-    /// the same way [`TaskManager::claim_task`] does.
-    async fn release_claim(&self, id: &str) -> Result<Ticket, TaskError> {
+    /// the same way [`TicketManager::claim_task`] does.
+    async fn release_claim(&self, id: &str) -> Result<Ticket, TicketError> {
         let mut task = self
             .get_task(id)
-            .ok_or_else(|| TaskError::NotFound(format!("no such task: {id}")))?;
+            .ok_or_else(|| TicketError::NotFound(format!("no such task: {id}")))?;
         if task.state != TicketState::Claimed {
-            return Err(TaskError::Conflict(format!("task {id} is not claimed")));
+            return Err(TicketError::Conflict(format!("task {id} is not claimed")));
         }
         self.clear_claim(id).await?;
         self.store.set_task_state(id, TicketState::Planned).await?;
@@ -1523,7 +1541,7 @@ impl TaskManager {
         self.queue.lock().expect("queue lock").clone()
     }
 
-    /// [`TaskManager::queue_tiers`] without integrated tasks (and any tier
+    /// [`TicketManager::queue_tiers`] without integrated tasks (and any tier
     /// that leaves empty): merged work is done, not queued. The stored
     /// queue keeps them until the PM's next `set_queue`.
     pub fn live_queue_tiers(&self) -> Vec<Vec<String>> {
@@ -1544,25 +1562,25 @@ impl TaskManager {
     /// Validates `tiers` against the task cache: every id must name a task
     /// that exists, no id may repeat across tiers (a task holds one rank),
     /// and no tier may be empty (an empty tier isn't a rank, it's nothing).
-    fn validate_queue(&self, tiers: &[Vec<String>]) -> Result<(), TaskError> {
+    fn validate_queue(&self, tiers: &[Vec<String>]) -> Result<(), TicketError> {
         let mut seen = std::collections::HashSet::new();
         for tier in tiers {
             if tier.is_empty() {
-                return Err(TaskError::BadRequest(
+                return Err(TicketError::BadRequest(
                     "a tier must name at least one task".to_string(),
                 ));
             }
             for id in tier {
                 let Some(task) = self.get_task(id) else {
-                    return Err(TaskError::NotFound(format!("no such task: {id}")));
+                    return Err(TicketError::NotFound(format!("no such task: {id}")));
                 };
                 if task.kind == TicketKind::Incident {
-                    return Err(TaskError::BadRequest(format!(
+                    return Err(TicketError::BadRequest(format!(
                         "task {id} is an incident; incidents aren't queued"
                     )));
                 }
                 if !seen.insert(id) {
-                    return Err(TaskError::Conflict(format!(
+                    return Err(TicketError::Conflict(format!(
                         "task {id} appears more than once in the queue"
                     )));
                 }
@@ -1581,7 +1599,7 @@ impl TaskManager {
         &self,
         tiers: Vec<Vec<String>>,
         actor: &PrincipalId,
-    ) -> Result<Vec<Vec<String>>, TaskError> {
+    ) -> Result<Vec<Vec<String>>, TicketError> {
         self.validate_queue(&tiers)?;
         self.state.enqueue_queue(&tiers)?;
         self.state.enqueue_queue_event(actor, Utc::now());
@@ -1596,7 +1614,7 @@ impl TaskManager {
         &self,
         tasks: Vec<String>,
         actor: &PrincipalId,
-    ) -> Result<Vec<Vec<String>>, TaskError> {
+    ) -> Result<Vec<Vec<String>>, TicketError> {
         let mut tiers = self.queue_tiers();
         tiers.push(tasks);
         self.set_queue(tiers, actor).await
@@ -1657,7 +1675,7 @@ impl TaskManager {
     /// Flushes the state branch's pending writes. Exposed so the periodic
     /// tick and, later, an immediate-flush caller (e.g. on `accept`) share
     /// one code path (docs/design/storage.md, "The state branch").
-    pub async fn flush_now(&self) -> Result<(), TaskError> {
+    pub async fn flush_now(&self) -> Result<(), TicketError> {
         Ok(self.state.flush_now().await?)
     }
 
@@ -1724,7 +1742,7 @@ mod tests {
         "agent:w".to_string()
     }
 
-    async fn manager() -> (TaskManager, tempfile::TempDir) {
+    async fn manager() -> (TicketManager, tempfile::TempDir) {
         let tmp = tempfile::tempdir().expect("tempdir");
         let repo = tmp.path().join("repo");
         init_repo(&repo).await;
@@ -1734,7 +1752,7 @@ mod tests {
         let state = StateBranch::open(&repo, &tmp.path().join("state"))
             .await
             .expect("open state branch");
-        let tm = TaskManager::open(
+        let tm = TicketManager::open(
             store,
             state,
             "tw".to_string(),
@@ -1918,7 +1936,7 @@ mod tests {
             let state = StateBranch::open(&tmp.path().join("repo"), &tmp.path().join("state"))
                 .await
                 .expect("open state branch");
-            let tm = TaskManager::open(
+            let tm = TicketManager::open(
                 store,
                 state,
                 "tw".to_string(),
@@ -1962,7 +1980,7 @@ mod tests {
             )
             .await
             .expect_err("blank title");
-        assert!(matches!(err, TaskError::BadRequest(_)));
+        assert!(matches!(err, TicketError::BadRequest(_)));
     }
 
     #[tokio::test]
@@ -1999,13 +2017,13 @@ mod tests {
             .drop_task(&task.id, "", &"human".to_string())
             .await
             .expect_err("empty reason");
-        assert!(matches!(err, TaskError::BadRequest(_)));
+        assert!(matches!(err, TicketError::BadRequest(_)));
 
         let err = tm
             .reopen_task(&task.id, &"human".to_string())
             .await
             .expect_err("not dropped yet");
-        assert!(matches!(err, TaskError::Conflict(_)));
+        assert!(matches!(err, TicketError::Conflict(_)));
 
         let dropped = tm
             .drop_task(&task.id, "budget cut", &"human".to_string())
@@ -2019,7 +2037,7 @@ mod tests {
             .drop_task(&task.id, "again", &"human".to_string())
             .await
             .expect_err("already dropped");
-        assert!(matches!(err, TaskError::Conflict(_)));
+        assert!(matches!(err, TicketError::Conflict(_)));
 
         let reopened = tm
             .reopen_task(&task.id, &"human".to_string())
@@ -2031,7 +2049,7 @@ mod tests {
             .reopen_task(&task.id, &"human".to_string())
             .await
             .expect_err("not dropped any more");
-        assert!(matches!(err, TaskError::Conflict(_)));
+        assert!(matches!(err, TicketError::Conflict(_)));
     }
 
     #[tokio::test]
@@ -2054,7 +2072,7 @@ mod tests {
             .plan_task(&task.id, &"human".to_string())
             .await
             .expect_err("already planned");
-        assert!(matches!(err, TaskError::Conflict(_)));
+        assert!(matches!(err, TicketError::Conflict(_)));
 
         // Claimed: also not open.
         tm.claim_task(&task.id, &"agent:w1".to_string())
@@ -2064,7 +2082,7 @@ mod tests {
             .plan_task(&task.id, &"human".to_string())
             .await
             .expect_err("claimed, not open");
-        assert!(matches!(err, TaskError::Conflict(_)));
+        assert!(matches!(err, TicketError::Conflict(_)));
 
         // Dropped and reopened: also not open (reopened, per the lifecycle
         // diagram, not open).
@@ -2081,7 +2099,7 @@ mod tests {
             .plan_task(&task.id, &"human".to_string())
             .await
             .expect_err("reopened, not open");
-        assert!(matches!(err, TaskError::Conflict(_)));
+        assert!(matches!(err, TicketError::Conflict(_)));
     }
 
     #[tokio::test]
@@ -2091,7 +2109,7 @@ mod tests {
             .plan_task("tw-nope", &"human".to_string())
             .await
             .expect_err("no such task");
-        assert!(matches!(err, TaskError::NotFound(_)));
+        assert!(matches!(err, TicketError::NotFound(_)));
     }
 
     #[tokio::test]
@@ -2110,19 +2128,19 @@ mod tests {
             .add_edge(&a.id, &a.id, EdgeKind::Blocks)
             .await
             .expect_err("self loop");
-        assert!(matches!(err, TaskError::BadRequest(_)));
+        assert!(matches!(err, TicketError::BadRequest(_)));
 
         let err = tm
             .add_edge("tw-nope", &b.id, EdgeKind::Blocks)
             .await
             .expect_err("unknown from");
-        assert!(matches!(err, TaskError::NotFound(_)));
+        assert!(matches!(err, TicketError::NotFound(_)));
 
         let err = tm
             .add_edge(&a.id, "tw-nope", EdgeKind::Blocks)
             .await
             .expect_err("unknown to");
-        assert!(matches!(err, TaskError::NotFound(_)));
+        assert!(matches!(err, TicketError::NotFound(_)));
 
         let edge = tm
             .add_edge(&a.id, &b.id, EdgeKind::Blocks)
@@ -2136,7 +2154,7 @@ mod tests {
             .add_edge(&a.id, &b.id, EdgeKind::Blocks)
             .await
             .expect_err("duplicate edge");
-        assert!(matches!(err, TaskError::Conflict(_)));
+        assert!(matches!(err, TicketError::Conflict(_)));
     }
 
     #[tokio::test]
@@ -2163,7 +2181,7 @@ mod tests {
             .remove_edge(&a.id, &b.id, EdgeKind::Blocks)
             .await
             .expect_err("already removed");
-        assert!(matches!(err, TaskError::NotFound(_)));
+        assert!(matches!(err, TicketError::NotFound(_)));
     }
 
     /// A shortcut for tests that don't care about `plan_task` itself, just
@@ -2171,7 +2189,7 @@ mod tests {
     /// on top of it: reaches into the private cache directly rather than
     /// going through `plan_task`'s actor/event bookkeeping, which those
     /// tests have no use for.
-    fn force_planned(tm: &TaskManager, id: &str) {
+    fn force_planned(tm: &TicketManager, id: &str) {
         let mut cache = tm.cache.lock().expect("task cache lock");
         cache.get_mut(id).expect("task in cache").state = TicketState::Planned;
     }
@@ -2205,7 +2223,7 @@ mod tests {
             .done_task(&blocker.id, " ", None, &human)
             .await
             .expect_err("empty commit");
-        assert!(matches!(err, TaskError::BadRequest(_)));
+        assert!(matches!(err, TicketError::BadRequest(_)));
 
         let done = tm
             .done_task(&blocker.id, "abc123", None, &human)
@@ -2222,7 +2240,7 @@ mod tests {
             .done_task(&blocker.id, "def456", None, &human)
             .await
             .expect_err("already integrated");
-        assert!(matches!(err, TaskError::Conflict(_)));
+        assert!(matches!(err, TicketError::Conflict(_)));
 
         let reopened = tm.reopen_task(&blocker.id, &human).await.expect("reopen");
         assert_eq!(reopened.state, TicketState::Reopened);
@@ -2238,7 +2256,7 @@ mod tests {
             .await
             .expect("new");
         let err = tm.set_summary(&t.id, "  ").await.expect_err("empty");
-        assert!(matches!(err, TaskError::BadRequest(_)));
+        assert!(matches!(err, TicketError::BadRequest(_)));
         tm.set_summary(&t.id, "first").await.expect("summary");
         let s = tm.set_summary(&t.id, "second\n").await.expect("replace");
         assert_eq!(s.summary.as_deref(), Some("second"));
@@ -2318,7 +2336,7 @@ mod tests {
             .set_queue(vec![vec!["tw-nope".to_string()]], &"human".to_string())
             .await
             .expect_err("unknown task id");
-        assert!(matches!(err, TaskError::NotFound(_)));
+        assert!(matches!(err, TicketError::NotFound(_)));
 
         let err = tm
             .set_queue(
@@ -2327,13 +2345,13 @@ mod tests {
             )
             .await
             .expect_err("same task in two tiers");
-        assert!(matches!(err, TaskError::Conflict(_)));
+        assert!(matches!(err, TicketError::Conflict(_)));
 
         let err = tm
             .set_queue(vec![vec![]], &"human".to_string())
             .await
             .expect_err("empty tier");
-        assert!(matches!(err, TaskError::BadRequest(_)));
+        assert!(matches!(err, TicketError::BadRequest(_)));
 
         let tiers = tm
             .set_queue(vec![vec![a.id.clone(), b.id.clone()]], &"human".to_string())
@@ -2446,7 +2464,7 @@ mod tests {
         let state = StateBranch::open(&repo, &tmp.path().join("state"))
             .await
             .expect("open state branch");
-        let tm = TaskManager::open(
+        let tm = TicketManager::open(
             store.clone(),
             state.clone(),
             "tw".to_string(),
@@ -2471,7 +2489,7 @@ mod tests {
         .expect("set queue");
         tm.flush_now().await.expect("flush");
 
-        let tm2 = TaskManager::open(
+        let tm2 = TicketManager::open(
             store,
             state,
             "tw".to_string(),
@@ -2493,13 +2511,13 @@ mod tests {
             tm.edit_task("tw-nope", &agent(), Some("x".to_string()), None, None, None)
                 .await
                 .expect_err("no such task"),
-            TaskError::NotFound(_)
+            TicketError::NotFound(_)
         ));
         assert!(matches!(
             tm.drop_task("tw-nope", "why", &"human".to_string())
                 .await
                 .expect_err("no such task"),
-            TaskError::NotFound(_)
+            TicketError::NotFound(_)
         ));
     }
 
@@ -2514,7 +2532,7 @@ mod tests {
         let state = StateBranch::open(&repo, &tmp.path().join("state"))
             .await
             .expect("open state branch");
-        let tm = TaskManager::open(
+        let tm = TicketManager::open(
             store.clone(),
             state.clone(),
             "tw".to_string(),
@@ -2538,7 +2556,7 @@ mod tests {
         // A fresh manager over the same store and state branch, as a
         // restarted daemon would build, hydrates the full record (title
         // *and* body) from the flushed file, not just the database row.
-        let tm2 = TaskManager::open(
+        let tm2 = TicketManager::open(
             store,
             state,
             "tw".to_string(),
@@ -2551,8 +2569,8 @@ mod tests {
         assert_eq!(rehydrated.body, "a description");
     }
 
-    async fn reopen_manager(store: Store, state: StateBranch) -> TaskManager {
-        TaskManager::open(
+    async fn reopen_manager(store: Store, state: StateBranch) -> TicketManager {
+        TicketManager::open(
             store,
             state,
             "tw".to_string(),
@@ -2640,7 +2658,7 @@ mod tests {
         );
         assert!(matches!(
             tm2.split_from(&child.id, "nope", &orch).await,
-            Err(TaskError::NotFound(_))
+            Err(TicketError::NotFound(_))
         ));
     }
 
@@ -2800,7 +2818,7 @@ mod tests {
             .ask_question(&task.id, &"human".to_string(), "another one?")
             .await
             .expect_err("already has an open question");
-        assert!(matches!(err, TaskError::Conflict(_)));
+        assert!(matches!(err, TicketError::Conflict(_)));
 
         let answered = tm
             .answer_question(&task.id, &"human".to_string(), "the v1 endpoint")
@@ -2820,7 +2838,7 @@ mod tests {
             .answer_question(&task.id, &"human".to_string(), "still there?")
             .await
             .expect_err("no open question left");
-        assert!(matches!(err, TaskError::Conflict(_)));
+        assert!(matches!(err, TicketError::Conflict(_)));
     }
 
     #[tokio::test]
@@ -2835,7 +2853,7 @@ mod tests {
             .ask_question(&task.id, &"human".to_string(), "   ")
             .await
             .expect_err("blank question body");
-        assert!(matches!(err, TaskError::BadRequest(_)));
+        assert!(matches!(err, TicketError::BadRequest(_)));
 
         tm.ask_question(&task.id, &"human".to_string(), "real question")
             .await
@@ -2844,7 +2862,7 @@ mod tests {
             .answer_question(&task.id, &"human".to_string(), "")
             .await
             .expect_err("blank answer body");
-        assert!(matches!(err, TaskError::BadRequest(_)));
+        assert!(matches!(err, TicketError::BadRequest(_)));
     }
 
     #[tokio::test]
@@ -2890,7 +2908,7 @@ mod tests {
             .note_task(&task.id, &"human".to_string(), "   ")
             .await
             .expect_err("blank note body");
-        assert!(matches!(err, TaskError::BadRequest(_)));
+        assert!(matches!(err, TicketError::BadRequest(_)));
     }
 
     #[tokio::test]
@@ -2904,7 +2922,7 @@ mod tests {
         let state = StateBranch::open(&repo, &tmp.path().join("state"))
             .await
             .expect("open state branch");
-        let tm = TaskManager::open(
+        let tm = TicketManager::open(
             store.clone(),
             state.clone(),
             "tw".to_string(),
@@ -2927,7 +2945,7 @@ mod tests {
         // open-questions index from the database (not the state branch, which
         // has no separate index of its own) and the thread entry from the
         // flushed task file.
-        let tm2 = TaskManager::open(
+        let tm2 = TicketManager::open(
             store,
             state,
             "tw".to_string(),
@@ -2972,7 +2990,7 @@ mod tests {
             .claim_task(&task.id, &"agent:w2".to_string())
             .await
             .expect_err("already claimed");
-        assert!(matches!(err, TaskError::Conflict(_)));
+        assert!(matches!(err, TicketError::Conflict(_)));
 
         let released = tm
             .release_task(&task.id, &"agent:w1".to_string())
@@ -2991,7 +3009,7 @@ mod tests {
             .release_task(&task.id, &"agent:w1".to_string())
             .await
             .expect_err("no longer claimed");
-        assert!(matches!(err, TaskError::Conflict(_)));
+        assert!(matches!(err, TicketError::Conflict(_)));
     }
 
     /// A human to-do: the lease check never releases the human's claim, and
@@ -3039,7 +3057,7 @@ mod tests {
             .done_task(&t.id, "", None, &"human".to_string())
             .await
             .expect_err("needs a commit");
-        assert!(matches!(err, TaskError::BadRequest(_)));
+        assert!(matches!(err, TicketError::BadRequest(_)));
     }
 
     /// `server.rs::list_tasks` filters `?claimed_by=` by matching
@@ -3096,13 +3114,13 @@ mod tests {
             .release_task(&task.id, &"agent:w2".to_string())
             .await
             .expect_err("not the claimant");
-        assert!(matches!(err, TaskError::Conflict(_)));
+        assert!(matches!(err, TicketError::Conflict(_)));
 
         // Still claimed by w1, untouched by w2's rejected release.
         assert!(!tm.ready_tasks().iter().any(|t| t.id == task.id));
     }
 
-    async fn claimed_task(tm: &TaskManager, agent: &str) -> Ticket {
+    async fn claimed_task(tm: &TicketManager, agent: &str) -> Ticket {
         let task = tm
             .new_open_task("Add foo", TicketKind::Feature, String::new(), vec![], None)
             .await
@@ -3141,7 +3159,7 @@ mod tests {
             .state = TicketState::Dropped;
         assert!(matches!(
             tm.release_claim(&task.id).await,
-            Err(TaskError::Conflict(_))
+            Err(TicketError::Conflict(_))
         ));
         tm.tick_claim_lease_check(Utc::now() + chrono::Duration::days(1))
             .await;
@@ -3160,7 +3178,7 @@ mod tests {
             .await
             .expect("set state");
 
-        let tm2 = TaskManager::open(
+        let tm2 = TicketManager::open(
             tm.store.clone(),
             tm.state.clone(),
             "tw".to_string(),
@@ -3238,7 +3256,7 @@ mod tests {
         let state = StateBranch::open(&repo, &tmp.path().join("state"))
             .await
             .expect("open state branch");
-        let tm = TaskManager::open(
+        let tm = TicketManager::open(
             store,
             state.clone(),
             "tw".to_string(),
@@ -3275,7 +3293,7 @@ mod tests {
         let fresh_store = Store::open(tmp.path().join("bridle2.db"))
             .await
             .expect("open fresh store");
-        let tm2 = TaskManager::open(
+        let tm2 = TicketManager::open(
             fresh_store.clone(),
             state,
             "tw".to_string(),
@@ -3314,7 +3332,7 @@ mod tests {
         let state = StateBranch::open(&repo, &tmp.path().join("state"))
             .await
             .expect("open state branch");
-        let tm = TaskManager::open(
+        let tm = TicketManager::open(
             store,
             state.clone(),
             "tw".to_string(),
@@ -3340,7 +3358,7 @@ mod tests {
         };
         assert!(matches!(
             tm.set_impact(&task.id, bad).await,
-            Err(TaskError::BadRequest(_))
+            Err(TicketError::BadRequest(_))
         ));
         assert_eq!(tm.get_task(&task.id).expect("task").impact, impact);
 
@@ -3348,7 +3366,7 @@ mod tests {
         let fresh_store = Store::open(tmp.path().join("bridle2.db"))
             .await
             .expect("open fresh store");
-        let tm2 = TaskManager::open(
+        let tm2 = TicketManager::open(
             fresh_store,
             state,
             "tw".to_string(),
@@ -3364,7 +3382,7 @@ mod tests {
             .expect("drop");
         assert!(matches!(
             tm2.set_impact(&task.id, impact).await,
-            Err(TaskError::Conflict(_))
+            Err(TicketError::Conflict(_))
         ));
     }
 
@@ -3379,7 +3397,7 @@ mod tests {
         let state = StateBranch::open(&repo, &tmp.path().join("state"))
             .await
             .expect("open state branch");
-        let tm = TaskManager::open(
+        let tm = TicketManager::open(
             store,
             state.clone(),
             "tw".to_string(),
@@ -3425,7 +3443,7 @@ mod tests {
         let fresh_store = Store::open(tmp.path().join("bridle2.db"))
             .await
             .expect("open fresh store");
-        let tm2 = TaskManager::open(
+        let tm2 = TicketManager::open(
             fresh_store.clone(),
             state,
             "tw".to_string(),
@@ -3508,7 +3526,7 @@ mod tests {
         let state = StateBranch::open(&tmp.path().join("repo"), &tmp.path().join("state"))
             .await
             .expect("state");
-        let tm2 = TaskManager::open(
+        let tm2 = TicketManager::open(
             fresh.clone(),
             state,
             "tw".to_string(),
@@ -3557,7 +3575,7 @@ mod tests {
             .rebuild_from_state_branch()
             .await
             .expect_err("must refuse to rebuild over an already-populated database");
-        assert!(matches!(err, TaskError::Conflict(_)));
+        assert!(matches!(err, TicketError::Conflict(_)));
 
         // Untouched: still exactly the one task from before the refused
         // rebuild attempt.
@@ -3568,7 +3586,7 @@ mod tests {
 
     /// A manager with a 5 minute settle period and a planned task created
     /// `age` ago (the injected clock: shifting `created_at`/thread times back).
-    async fn settling(age_mins: i64) -> (TaskManager, Ticket, tempfile::TempDir) {
+    async fn settling(age_mins: i64) -> (TicketManager, Ticket, tempfile::TempDir) {
         let (tm, tmp) = manager().await;
         let tm = tm.with_settle(std::time::Duration::from_secs(300));
         let t = tm
@@ -3580,7 +3598,7 @@ mod tests {
         (tm, t, tmp)
     }
 
-    fn shift_back(tm: &TaskManager, id: &str, mins: i64) {
+    fn shift_back(tm: &TicketManager, id: &str, mins: i64) {
         let mut cache = tm.cache.lock().expect("task cache lock");
         let t = cache.get_mut(id).expect("task");
         let d = chrono::Duration::minutes(mins);
@@ -3590,7 +3608,7 @@ mod tests {
         }
     }
 
-    fn ready(tm: &TaskManager, id: &str) -> bool {
+    fn ready(tm: &TicketManager, id: &str) -> bool {
         tm.is_ready(&tm.get_task(id).expect("task"))
     }
 
@@ -3649,12 +3667,12 @@ mod tests {
         let by = "human".to_string();
         assert!(matches!(
             tm.skip_settle(&t.id, &by, " ").await,
-            Err(TaskError::BadRequest(_))
+            Err(TicketError::BadRequest(_))
         ));
         let forged = tm
             .note_task(&t.id, &agent(), "settle skipped by me: sure")
             .await;
-        assert!(matches!(forged, Err(TaskError::BadRequest(_))));
+        assert!(matches!(forged, Err(TicketError::BadRequest(_))));
         assert!(!ready(&tm, &t.id));
         let task = tm
             .skip_settle(&t.id, &by, "human asked")

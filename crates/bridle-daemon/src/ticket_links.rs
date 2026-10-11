@@ -10,7 +10,7 @@ use std::path::Path;
 
 use bridle_api::types::EdgeKind;
 
-use crate::tasks::TaskManager;
+use crate::tasks::TicketManager;
 
 /// One ticket's links, as written in its frontmatter.
 #[derive(Debug, Default, PartialEq, Eq)]
@@ -99,7 +99,7 @@ pub fn read_dir_links(tickets: &Path) -> Vec<TicketLinks> {
     out
 }
 
-impl TaskManager {
+impl TicketManager {
     /// Makes the edges of every ticket that has a row match its frontmatter. A link to an id
     /// with no row here (another project's ticket, a typo) makes no edge. Returns how many
     /// edges were added and removed.

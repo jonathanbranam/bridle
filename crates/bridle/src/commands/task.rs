@@ -48,41 +48,41 @@ pub(super) async fn release(cli: &Cli, args: &ReleaseArgs) -> Result<(), CliErro
     Ok(())
 }
 
-pub(super) fn task_kind_arg(k: TaskKindArg) -> TicketKind {
+pub(super) fn task_kind_arg(k: TicketKindArg) -> TicketKind {
     match k {
-        TaskKindArg::Feature => TicketKind::Feature,
-        TaskKindArg::Bug => TicketKind::Bug,
-        TaskKindArg::Fix => TicketKind::Fix,
-        TaskKindArg::Epic => TicketKind::Epic,
-        TaskKindArg::Docs => TicketKind::Docs,
-        TaskKindArg::Chore => TicketKind::Chore,
-        TaskKindArg::Question => TicketKind::Question,
-        TaskKindArg::Research => TicketKind::Research,
-        TaskKindArg::Explore => TicketKind::Explore,
-        TaskKindArg::ArchRevision => TicketKind::ArchRevision,
-        TaskKindArg::ReEvaluate => TicketKind::ReEvaluate,
-        TaskKindArg::Incident => TicketKind::Incident,
+        TicketKindArg::Feature => TicketKind::Feature,
+        TicketKindArg::Bug => TicketKind::Bug,
+        TicketKindArg::Fix => TicketKind::Fix,
+        TicketKindArg::Epic => TicketKind::Epic,
+        TicketKindArg::Docs => TicketKind::Docs,
+        TicketKindArg::Chore => TicketKind::Chore,
+        TicketKindArg::Question => TicketKind::Question,
+        TicketKindArg::Research => TicketKind::Research,
+        TicketKindArg::Explore => TicketKind::Explore,
+        TicketKindArg::ArchRevision => TicketKind::ArchRevision,
+        TicketKindArg::ReEvaluate => TicketKind::ReEvaluate,
+        TicketKindArg::Incident => TicketKind::Incident,
     }
 }
 
-pub(super) async fn task(cli: &Cli, args: &TaskArgs) -> Result<(), CliError> {
+pub(super) async fn task(cli: &Cli, args: &RowArgs) -> Result<(), CliError> {
     match &args.action {
-        TaskAction::New(a) => task_new(cli, a).await,
-        TaskAction::Show(a) => task_show(cli, a).await,
-        TaskAction::Edit(a) => task_edit(cli, a).await,
-        TaskAction::List(a) => task_list(cli, a).await,
-        TaskAction::Plan(a) => task_plan(cli, a).await,
-        TaskAction::Drop(a) => task_drop(cli, a).await,
-        TaskAction::Priority(a) => task_priority(cli, a).await,
-        TaskAction::Kind(a) => task_kind(cli, a).await,
-        TaskAction::Done(a) => task_done(cli, a).await,
-        TaskAction::Summary(a) => task_summary(cli, a).await,
-        TaskAction::Reopen(a) => task_reopen(cli, a).await,
-        TaskAction::SkipSettle(a) => task_skip_settle(cli, a).await,
-        TaskAction::Watch(a) => task_watch(cli, a, true).await,
-        TaskAction::Unwatch(a) => task_watch(cli, a, false).await,
-        TaskAction::Comment(a) => task_comment(cli, a).await,
-        TaskAction::Search(a) => task_search(cli, a).await,
+        RowAction::New(a) => task_new(cli, a).await,
+        RowAction::Show(a) => task_show(cli, a).await,
+        RowAction::Edit(a) => task_edit(cli, a).await,
+        RowAction::List(a) => task_list(cli, a).await,
+        RowAction::Plan(a) => task_plan(cli, a).await,
+        RowAction::Drop(a) => task_drop(cli, a).await,
+        RowAction::Priority(a) => task_priority(cli, a).await,
+        RowAction::Kind(a) => task_kind(cli, a).await,
+        RowAction::Done(a) => task_done(cli, a).await,
+        RowAction::Summary(a) => task_summary(cli, a).await,
+        RowAction::Reopen(a) => task_reopen(cli, a).await,
+        RowAction::SkipSettle(a) => task_skip_settle(cli, a).await,
+        RowAction::Watch(a) => task_watch(cli, a, true).await,
+        RowAction::Unwatch(a) => task_watch(cli, a, false).await,
+        RowAction::Comment(a) => task_comment(cli, a).await,
+        RowAction::Search(a) => task_search(cli, a).await,
         _ => unreachable!("normalize forwards the queue and coordination actions"),
     }
 }
@@ -101,12 +101,12 @@ pub(super) fn size_str(size: Option<TicketSize>) -> &'static str {
     size.map_or("-", TicketSize::as_str)
 }
 
-pub(super) fn task_size_arg_to_opt(arg: TaskSizeArg) -> Option<TicketSize> {
+pub(super) fn task_size_arg_to_opt(arg: TicketSizeArg) -> Option<TicketSize> {
     match arg {
-        TaskSizeArg::S => Some(TicketSize::S),
-        TaskSizeArg::M => Some(TicketSize::M),
-        TaskSizeArg::L => Some(TicketSize::L),
-        TaskSizeArg::None => Some(TicketSize::None),
+        TicketSizeArg::S => Some(TicketSize::S),
+        TicketSizeArg::M => Some(TicketSize::M),
+        TicketSizeArg::L => Some(TicketSize::L),
+        TicketSizeArg::None => Some(TicketSize::None),
     }
 }
 
@@ -125,7 +125,7 @@ pub fn print_task_row(t: &Ticket) {
     );
 }
 
-pub(super) async fn task_new(cli: &Cli, args: &TaskNewArgs) -> Result<(), CliError> {
+pub(super) async fn task_new(cli: &Cli, args: &RowNewArgs) -> Result<(), CliError> {
     let client = client_for(cli).await?;
     let body = if args.body.is_some() || args.body_file.is_some() {
         read_text(&args.body, &args.body_file, "body")?
@@ -172,7 +172,7 @@ pub(super) async fn task_new(cli: &Cli, args: &TaskNewArgs) -> Result<(), CliErr
     Ok(())
 }
 
-pub(super) async fn task_show(cli: &Cli, args: &TaskShowArgs) -> Result<(), CliError> {
+pub(super) async fn task_show(cli: &Cli, args: &RowShowArgs) -> Result<(), CliError> {
     let client = client_for_read(cli).await?;
     let task = client.get_task(&args.task).await?;
     if cli.json {
@@ -233,7 +233,7 @@ pub(super) async fn task_show(cli: &Cli, args: &TaskShowArgs) -> Result<(), CliE
     Ok(())
 }
 
-pub(super) async fn task_edit(cli: &Cli, args: &TaskEditArgs) -> Result<(), CliError> {
+pub(super) async fn task_edit(cli: &Cli, args: &RowEditArgs) -> Result<(), CliError> {
     let client = client_for(cli).await?;
     let body = if args.body.is_some() || args.body_file.is_some() {
         Some(read_text(&args.body, &args.body_file, "body")?)
@@ -262,7 +262,7 @@ pub(super) async fn task_edit(cli: &Cli, args: &TaskEditArgs) -> Result<(), CliE
     Ok(())
 }
 
-pub(super) async fn task_list(cli: &Cli, args: &TaskListArgs) -> Result<(), CliError> {
+pub(super) async fn task_list(cli: &Cli, args: &RowListArgs) -> Result<(), CliError> {
     let client = client_for_read(cli).await?;
     let mut tasks = match &args.claimed_by {
         Some(claimed_by) => client.list_tasks_claimed_by(claimed_by).await?,
@@ -314,7 +314,7 @@ async fn task_ready(cli: &Cli, id: &str) -> Result<(), CliError> {
     Ok(())
 }
 
-pub(super) async fn task_plan(cli: &Cli, args: &TaskPlanArgs) -> Result<(), CliError> {
+pub(super) async fn task_plan(cli: &Cli, args: &RowPlanArgs) -> Result<(), CliError> {
     let client = client_for(cli).await?;
     let task = client.plan_task(&args.task).await?;
     if cli.json {
@@ -325,17 +325,17 @@ pub(super) async fn task_plan(cli: &Cli, args: &TaskPlanArgs) -> Result<(), CliE
     Ok(())
 }
 
-pub(super) fn task_priority_arg(arg: TaskPriorityArg) -> TicketPriority {
+pub(super) fn task_priority_arg(arg: TicketPriorityArg) -> TicketPriority {
     match arg {
-        TaskPriorityArg::Critical => TicketPriority::Critical,
-        TaskPriorityArg::Urgent => TicketPriority::Urgent,
-        TaskPriorityArg::High => TicketPriority::High,
-        TaskPriorityArg::Normal => TicketPriority::Normal,
-        TaskPriorityArg::Low => TicketPriority::Low,
+        TicketPriorityArg::Critical => TicketPriority::Critical,
+        TicketPriorityArg::Urgent => TicketPriority::Urgent,
+        TicketPriorityArg::High => TicketPriority::High,
+        TicketPriorityArg::Normal => TicketPriority::Normal,
+        TicketPriorityArg::Low => TicketPriority::Low,
     }
 }
 
-pub(super) async fn task_priority(cli: &Cli, args: &TaskPriorityArgs) -> Result<(), CliError> {
+pub(super) async fn task_priority(cli: &Cli, args: &RowPriorityArgs) -> Result<(), CliError> {
     let client = client_for(cli).await?;
     let req = SetPriorityRequest {
         priority: task_priority_arg(args.priority),
@@ -349,7 +349,7 @@ pub(super) async fn task_priority(cli: &Cli, args: &TaskPriorityArgs) -> Result<
     Ok(())
 }
 
-pub(super) async fn task_kind(cli: &Cli, args: &TaskKindArgs) -> Result<(), CliError> {
+pub(super) async fn task_kind(cli: &Cli, args: &RowKindArgs) -> Result<(), CliError> {
     let client = client_for(cli).await?;
     let req = SetKindRequest {
         kind: task_kind_arg(args.kind),
@@ -363,7 +363,7 @@ pub(super) async fn task_kind(cli: &Cli, args: &TaskKindArgs) -> Result<(), CliE
     Ok(())
 }
 
-pub(super) async fn task_drop(cli: &Cli, args: &TaskDropArgs) -> Result<(), CliError> {
+pub(super) async fn task_drop(cli: &Cli, args: &RowDropArgs) -> Result<(), CliError> {
     let client = client_for(cli).await?;
     let req = DropTicketRequest {
         reason: args.reason.clone(),
@@ -411,7 +411,7 @@ pub(super) async fn push(cli: &Cli) -> Result<(), CliError> {
     Ok(())
 }
 
-pub(super) async fn task_done(cli: &Cli, args: &TaskDoneArgs) -> Result<(), CliError> {
+pub(super) async fn task_done(cli: &Cli, args: &RowDoneArgs) -> Result<(), CliError> {
     let client = client_for(cli).await?;
     let original_task = client.get_task(&args.task).await.ok();
     let was_human_claimed = original_task
@@ -572,7 +572,7 @@ pub(super) async fn impact_check(cli: &Cli, client: &Client, specs: &Path) -> Re
     Ok(())
 }
 
-pub(super) async fn task_summary(cli: &Cli, args: &TaskSummaryArgs) -> Result<(), CliError> {
+pub(super) async fn task_summary(cli: &Cli, args: &RowSummaryArgs) -> Result<(), CliError> {
     let client = client_for(cli).await?;
     let text = read_text(&args.text, &args.file, "summary")?;
     let task = client
@@ -586,7 +586,7 @@ pub(super) async fn task_summary(cli: &Cli, args: &TaskSummaryArgs) -> Result<()
     Ok(())
 }
 
-pub(super) async fn task_reopen(cli: &Cli, args: &TaskReopenArgs) -> Result<(), CliError> {
+pub(super) async fn task_reopen(cli: &Cli, args: &RowReopenArgs) -> Result<(), CliError> {
     let client = client_for(cli).await?;
     let task = client.reopen_task(&args.task).await?;
     if cli.json {
@@ -597,7 +597,7 @@ pub(super) async fn task_reopen(cli: &Cli, args: &TaskReopenArgs) -> Result<(), 
     Ok(())
 }
 
-pub(super) async fn task_skip_settle(cli: &Cli, args: &TaskSkipSettleArgs) -> Result<(), CliError> {
+pub(super) async fn task_skip_settle(cli: &Cli, args: &RowSkipSettleArgs) -> Result<(), CliError> {
     let client = client_for(cli).await?;
     let task = client.skip_settle(&args.task, &args.reason).await?;
     if cli.json {
@@ -610,7 +610,7 @@ pub(super) async fn task_skip_settle(cli: &Cli, args: &TaskSkipSettleArgs) -> Re
 
 pub(super) async fn task_watch(
     cli: &Cli,
-    args: &TaskWatchArgs,
+    args: &RowWatchArgs,
     watch: bool,
 ) -> Result<(), CliError> {
     // A task on another project's daemon (no direct token for it): our own daemon registers the
@@ -646,7 +646,7 @@ pub(super) async fn task_watch(
     Ok(())
 }
 
-pub(crate) async fn task_comment(cli: &Cli, args: &TaskCommentArgs) -> Result<(), CliError> {
+pub(crate) async fn task_comment(cli: &Cli, args: &RowCommentArgs) -> Result<(), CliError> {
     let client = client_for(cli).await?;
     let text = require_body(read_text(&args.text, &args.text_file, "text")?)?;
     if let Some(to) = &args.notify {
@@ -674,7 +674,7 @@ pub(crate) async fn task_comment(cli: &Cli, args: &TaskCommentArgs) -> Result<()
     Ok(())
 }
 
-pub(super) async fn task_search(cli: &Cli, args: &TaskSearchArgs) -> Result<(), CliError> {
+pub(super) async fn task_search(cli: &Cli, args: &RowSearchArgs) -> Result<(), CliError> {
     if args.words.is_empty() {
         return Err(CliError::from(anyhow::anyhow!(
             "at least one search word is required"
@@ -868,7 +868,7 @@ pub(super) async fn queue_add_tier(cli: &Cli, args: &QueueAddTierArgs) -> Result
 }
 
 #[derive(serde::Serialize)]
-pub(super) struct QueueTaskRow {
+pub(super) struct QueueRow {
     id: String,
     title: String,
     kind: TicketKind,
@@ -886,7 +886,7 @@ pub(super) struct QueueTaskRow {
 #[derive(serde::Serialize)]
 pub(super) struct QueueTierRow {
     rank: usize,
-    tasks: Vec<QueueTaskRow>,
+    tasks: Vec<QueueRow>,
 }
 
 #[derive(serde::Serialize)]
@@ -927,7 +927,7 @@ pub(super) async fn queue_show(cli: &Cli) -> Result<(), CliError> {
             tasks: tier
                 .iter()
                 .filter_map(|id| by_id.get(id.as_str()).copied())
-                .map(|t| QueueTaskRow {
+                .map(|t| QueueRow {
                     id: t.id.clone(),
                     title: t.title.clone(),
                     kind: t.kind,

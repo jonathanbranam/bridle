@@ -50,7 +50,8 @@ pub struct ClaimAgent {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
-pub struct TaskSummary {
+#[ts(rename = "TaskSummary")]
+pub struct TicketSummary {
     pub id: String,
     pub title: String,
     pub kind: String,
@@ -64,18 +65,19 @@ pub struct TaskSummary {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
-pub struct TaskList {
+#[ts(rename = "TaskList")]
+pub struct TicketListByTasks {
     pub project: String,
     /// Most recently updated first.
-    pub tasks: Vec<TaskSummary>,
+    pub tasks: Vec<TicketSummary>,
 }
 
-/// `TaskList` under its ticket name (22ab step 8): the same rows, keyed `tickets`.
+/// `TicketListByTasks` under its ticket name (22ab step 8): the same rows, keyed `tickets`.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
 pub struct TicketList {
     pub project: String,
     /// Most recently updated first.
-    pub tickets: Vec<TaskSummary>,
+    pub tickets: Vec<TicketSummary>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
@@ -88,10 +90,11 @@ pub struct ThreadItem {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
-pub struct TaskDetail {
+#[ts(rename = "TaskDetail")]
+pub struct TicketDetail {
     pub project: String,
     #[serde(flatten)]
-    pub summary: TaskSummary,
+    pub summary: TicketSummary,
     pub body: String,
     pub thread: Vec<ThreadItem>,
     pub watchers: Vec<String>,
@@ -126,8 +129,8 @@ async fn claim_agent(client: &Client, claimed_by: Option<&str>) -> Option<ClaimA
         })
 }
 
-fn summary(t: &Ticket, agent: Option<ClaimAgent>) -> TaskSummary {
-    TaskSummary {
+fn summary(t: &Ticket, agent: Option<ClaimAgent>) -> TicketSummary {
+    TicketSummary {
         id: t.id.clone(),
         title: t.title.clone(),
         kind: t.kind.as_str().to_string(),
@@ -143,7 +146,7 @@ pub(crate) async fn list(
     client: &Client,
     project: &str,
     filter: StateFilter,
-) -> Result<TaskList, ActionError> {
+) -> Result<TicketListByTasks, ActionError> {
     let mut tasks = client.list_tasks().await.map_err(api_error)?;
     tasks.retain(|t| filter.keeps(t.state));
     tasks.sort_by_key(|t| std::cmp::Reverse(t.updated_at));
@@ -164,7 +167,7 @@ pub(crate) async fn list(
             summary(t, agent)
         })
         .collect();
-    Ok(TaskList {
+    Ok(TicketListByTasks {
         project: project.to_string(),
         tasks,
     })
@@ -174,7 +177,7 @@ pub(crate) async fn detail(
     client: &Client,
     project: &str,
     id: &str,
-) -> Result<TaskDetail, ActionError> {
+) -> Result<TicketDetail, ActionError> {
     let t = client.get_task(id).await.map_err(api_error)?;
     let edges = client.list_edges().await.map_err(api_error)?;
     let agent = claim_agent(client, t.claimed_by.as_deref()).await;
@@ -189,7 +192,7 @@ pub(crate) async fn detail(
             })
             .collect::<Vec<_>>()
     };
-    Ok(TaskDetail {
+    Ok(TicketDetail {
         project: project.to_string(),
         summary: summary(&t, agent),
         body: t.body.clone(),
@@ -224,7 +227,7 @@ async fn client_for(project: &str) -> Result<Client, ActionError> {
 pub async fn list_route(
     Path(project): Path<String>,
     Query(q): Query<ListQuery>,
-) -> Result<Json<TaskList>, ActionError> {
+) -> Result<Json<TicketListByTasks>, ActionError> {
     let client = client_for(&project).await?;
     Ok(Json(list(&client, &project, q.state).await?))
 }
@@ -244,7 +247,7 @@ pub async fn ticket_list_route(
 /// `GET /api/v1/projects/{project}/tasks/{id}`: any state.
 pub async fn detail_route(
     Path((project, id)): Path<(String, String)>,
-) -> Result<Json<TaskDetail>, ActionError> {
+) -> Result<Json<TicketDetail>, ActionError> {
     let client = client_for(&project).await?;
     Ok(Json(detail(&client, &project, &id).await?))
 }
@@ -309,7 +312,7 @@ mod tests {
         Client::new_with_timeout(url, None, PROBE_TIMEOUT * 5)
     }
 
-    fn ids(l: &TaskList) -> Vec<&str> {
+    fn ids(l: &TicketListByTasks) -> Vec<&str> {
         l.tasks.iter().map(|t| t.id.as_str()).collect()
     }
 

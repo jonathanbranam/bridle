@@ -203,12 +203,12 @@ struct Inner {
     /// usage-and-budget.md, Max-workers override.
     max_workers_override: std::sync::Mutex<Option<u32>>,
     /// Tasks filed since the manager was last told; see `note_task_filed`.
-    task_wake: std::sync::Mutex<TaskWake>,
+    task_wake: std::sync::Mutex<TicketWake>,
     /// Per-agent "main moved" notices; see `note_main_moved`.
     main_moved: std::sync::Mutex<HashMap<String, MainMovedSlot>>,
     /// Set once at startup (the task manager is built before this one but
     /// shares no owner): where active incidents are read for notices.
-    tasks: std::sync::OnceLock<crate::tasks::TaskManager>,
+    tasks: std::sync::OnceLock<crate::tasks::TicketManager>,
 }
 
 /// Coalescing state for one agent's "main moved" message.
@@ -221,7 +221,7 @@ struct MainMovedSlot {
 
 /// Coalescing state for the "new task filed" message to the manager.
 #[derive(Default)]
-struct TaskWake {
+struct TicketWake {
     last_sent: Option<std::time::Instant>,
     pending: Vec<(String, String)>,
     open_count: usize,
@@ -290,13 +290,13 @@ impl AgentManager {
             draining: std::sync::atomic::AtomicBool::new(false),
             governor,
             max_workers_override: std::sync::Mutex::new(None),
-            task_wake: std::sync::Mutex::new(TaskWake::default()),
+            task_wake: std::sync::Mutex::new(TicketWake::default()),
             main_moved: std::sync::Mutex::new(HashMap::new()),
             tasks: std::sync::OnceLock::new(),
         }))
     }
 
-    pub fn set_tasks(&self, tasks: crate::tasks::TaskManager) {
+    pub fn set_tasks(&self, tasks: crate::tasks::TicketManager) {
         let _ = self.0.tasks.set(tasks);
     }
 

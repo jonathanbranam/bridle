@@ -172,7 +172,7 @@ async fn reopen_only_applies_to_a_dropped_task() {
 
 /// End to end through the HTTP surface `bridle ask`/`bridle answer`/`bridle
 /// inbox` are thin clients of: asking blocks the task (an open question in
-/// `GET /v1/questions`, which is exactly what `TaskManager::is_ready` checks
+/// `GET /v1/questions`, which is exactly what `TicketManager::is_ready` checks
 /// — see `tasks.rs`'s own
 /// `asking_a_question_blocks_ready_and_answering_unblocks_it` for readiness
 /// itself), then answering clears it. The full ready-tasks round trip
@@ -274,7 +274,7 @@ async fn note_appears_in_the_task_thread_from_human_and_agent() {
 /// conflict shape (a fresh task is `open`, not `planned`). The full
 /// claim -> ready-exclusion -> release -> ready-again round trip (plus a
 /// second claim being rejected) is covered where the state-machine details
-/// live: `TaskManager`'s own `claim_blocks_ready_and_release_unblocks_it` in
+/// live: `TicketManager`'s own `claim_blocks_ready_and_release_unblocks_it` in
 /// `tasks.rs`; `plan_then_claim_round_trips_through_the_http_surface` below
 /// covers plan -> claim end to end at this layer.
 #[tokio::test]
@@ -327,7 +327,7 @@ async fn a_task_created_before_restart_is_still_there_after() {
         .await
         .expect("new task");
     // A graceful shutdown flushes the state branch (lib.rs::start), so the
-    // restarted daemon's TaskManager can hydrate this task's body from its
+    // restarted daemon's TicketManager can hydrate this task's body from its
     // file rather than falling back to an empty one.
     daemon.running.shutdown();
     daemon.running.join().await.expect("join");
@@ -734,7 +734,7 @@ async fn only_pm_or_human_may_write_the_queue() {
 /// `bridle rebuild`'s HTTP surface: a no-op against an empty database
 /// succeeds, but refuses once the database has anything to lose
 /// (docs/design/storage.md, "Rebuild"). The reconstruction itself is
-/// covered at the `TaskManager` level (`tasks.rs`'s own tests); this is just
+/// covered at the `TicketManager` level (`tasks.rs`'s own tests); this is just
 /// the route/auth wiring on top.
 #[tokio::test]
 async fn rebuild_is_a_no_op_when_empty_and_refuses_once_populated() {

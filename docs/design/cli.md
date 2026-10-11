@@ -470,7 +470,7 @@ bridle ticket comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain com
   permission denials in Claude Code. Example: `cat long-body.txt | bridle task new "title" -k feature --body-file -`.
   `--body-file` is mutually exclusive with `--body`; `--text-file` is mutually exclusive with the positional `TEXT` argument.
 
-- **`rebuild`** is `TaskManager::rebuild_from_state_branch` (docs/design/storage.md,
+- **`rebuild`** is `TicketManager::rebuild_from_state_branch` (docs/design/storage.md,
   "Rebuild"): the migration path for a fresh clone with no `bridle.db` — clone the repo,
   start the daemon, `bridle daemon rebuild`. `--from-origin` first fetches `origin/bridle/state`
   (`POST /v1/rebuild?from_origin=true`; fast-forward only, never overwrites a local branch with
@@ -779,14 +779,14 @@ bridle ticket comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain com
     multiple ids; useful for marking specific messages read without listing/marking
     everything else. In JSON mode, returns the list of ids that were marked; plain text
     prints a line per id.
-- **`ask`/`answer`** are thin clients of `TaskManager::ask_question`/`answer_question`
+- **`ask`/`answer`** are thin clients of `TicketManager::ask_question`/`answer_question`
   (docs/design/coordination.md, "Questions do not stop work"): `ask` appends a `question`
   thread entry and blocks the task's readiness until answered (`Conflict` if one is
   already open); `answer` appends an `answer` entry and clears the block. `ask --to WHO`
   (an agent, `role:NAME`, `external:NAME` or `human`; default the caller's spawner, else the
   human) also sends WHO a pointer message of kind `question`; `answer` sends the asker one of
   kind `answer`.
-- **`claim`/`release`** are thin clients of `TaskManager::claim_task`/`release_task`
+- **`claim`/`release`** are thin clients of `TicketManager::claim_task`/`release_task`
   (docs/design/storage.md, "claims and leases"): `claim` moves a `planned`, unblocked
   task to `claimed` for the calling principal (`Conflict` if it isn't ready to claim —
   not planned, blocked, or already claimed); `release` moves it back to `planned`

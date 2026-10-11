@@ -123,7 +123,7 @@ pub struct Overrides {
     /// flush trigger yet (that arrives with `accept`), so this is the only
     /// thing that commits task records durably right now.
     pub task_flush_interval: Duration,
-    /// How often [`tasks::TaskManager::tick_claim_lease_check`] walks open
+    /// How often [`tasks::TicketManager::tick_claim_lease_check`] walks open
     /// claims for a stale lease.
     pub claim_lease_check_interval: Duration,
     /// How often [`ports::tick`] frees ports whose pid or owner agent is gone.
@@ -595,7 +595,7 @@ async fn start_inner(
         .task_prefix
         .clone()
         .unwrap_or_else(|| config::default_task_prefix(&project));
-    let tasks = tasks::TaskManager::open(
+    let tasks = tasks::TicketManager::open(
         store.clone(),
         state_branch,
         task_prefix.clone(),

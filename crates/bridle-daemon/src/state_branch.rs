@@ -736,7 +736,7 @@ impl StateBranch {
     }
 
     /// Whether the task's file has a watchers record: false for one written before watchers
-    /// existed, which `TaskManager::open` then backfills.
+    /// existed, which `TicketManager::open` then backfills.
     pub fn task_records_watchers(&self, id: &str) -> bool {
         self.read_item_file(id).is_some_and(|text| {
             text.strip_prefix("+++\n")
@@ -799,7 +799,7 @@ impl StateBranch {
 
     /// The current claim set from `claims.toml`, or empty if the file
     /// doesn't exist yet (a project with nothing claimed, or one predating
-    /// durable claims). Used both to hydrate `TaskManager::open`'s claims
+    /// durable claims). Used both to hydrate `TicketManager::open`'s claims
     /// cache and by `bridle rebuild`.
     pub fn list_claims(&self) -> Result<Vec<ClaimRecord>, StateBranchError> {
         match std::fs::read_to_string(self.dir.join("claims.toml")) {
@@ -1342,7 +1342,7 @@ fn parse_task(text: &str) -> Result<Ticket, StateBranchError> {
         // submitter's note, or whoever planned it.
         created_by,
         watchers: fm.watchers.unwrap_or_default(),
-        // Not this file's job: `TaskManager` layers the current claim (from
+        // Not this file's job: `TicketManager` layers the current claim (from
         // `claims.toml`/SQLite, storage.md) on top of what this parses.
         claimed_by: None,
         claimed_at: None,

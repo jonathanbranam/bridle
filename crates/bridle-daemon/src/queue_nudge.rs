@@ -10,7 +10,7 @@ use bridle_api::types::{MessageKind, When};
 
 use crate::store::Store;
 use crate::supervisor::{AgentManager, ToTarget};
-use crate::tasks::TaskManager;
+use crate::tasks::TicketManager;
 
 /// How long the queue must stay unchanged before the nudge goes out.
 pub const DEBOUNCE: Duration = Duration::from_secs(30);
@@ -93,12 +93,12 @@ impl QueueNudge {
 #[derive(Clone)]
 pub struct SettleWake {
     nudge: QueueNudge,
-    tasks: TaskManager,
+    tasks: TicketManager,
     settling: Arc<Mutex<HashSet<String>>>,
 }
 
 impl SettleWake {
-    pub fn new(nudge: QueueNudge, tasks: TaskManager) -> Self {
+    pub fn new(nudge: QueueNudge, tasks: TicketManager) -> Self {
         Self {
             nudge,
             tasks,

@@ -69,13 +69,13 @@ per matching agent (`POST /v1/messages` returns the list); sending to a role
 with no live agents is a 404. `bridle ask` also sends a pointer message (kind `question`) to its `--to`
 (default: the caller's spawner, else `human`), and `bridle answer` one back to the asker; the
 thread stays the record. Messages to a
-task: `TaskManager::ask_question`/`answer_question`
+task: `TicketManager::ask_question`/`answer_question`
 (`crates/bridle-daemon/src/tasks.rs`) insert a `question`/`answer` message
 addressed to the task (`to_kind = task`, [[docs/design/storage#The daemon's
 database|storage.md]]), append the matching thread entry, and keep an
 `open_questions` SQLite index so `is_ready` excludes a task with one open —
 without walking the state branch, per
-[[where-questions-live-on-the-state-branch-c5a8|decided]]. `TaskManager::note_task`
+[[where-questions-live-on-the-state-branch-c5a8|decided]]. `TicketManager::note_task`
 is the same shape without the open-question bookkeeping: it inserts a `note`
 message addressed to the task, appends a `note` thread entry, and has no
 effect on readiness (`bridle task comment`). `handoff`/`conflict`/`system`

@@ -151,7 +151,7 @@ pub enum Command {
     /// Old name of `ticket` for the row commands (kept one release, hidden): same behaviour and
     /// `--json` output, so scripts keep working.
     #[command(hide = true)]
-    Task(TaskArgs),
+    Task(RowArgs),
     /// A task's declared impact: the spec ids and files it will touch
     /// (docs/design/impact-and-conflicts.md).
     #[command(hide = true)]
@@ -483,35 +483,35 @@ pub enum TicketAction {
 }
 
 /// The ticket forms of the row commands `bridle task` also has. They share the task
-/// handlers (commands/mod.rs `normalize` turns each into its `TaskAction`), so the two can't drift.
+/// handlers (commands/mod.rs `normalize` turns each into its `RowAction`), so the two can't drift.
 #[derive(Debug, Subcommand)]
 pub enum TicketRowAction {
     /// Change a ticket's title or body (not its state).
-    Edit(TaskEditArgs),
+    Edit(RowEditArgs),
     /// List every ticket: id, title, kind, state.
-    List(TaskListArgs),
+    List(RowListArgs),
     /// Mark a ticket ready to build: `open` -> `planned`.
-    Plan(TaskPlanArgs),
+    Plan(RowPlanArgs),
     /// Change a ticket's priority (critical, urgent, high, normal, low); recorded in its thread and as an event.
-    Priority(TaskPriorityArgs),
+    Priority(RowPriorityArgs),
     /// Change a ticket's kind; only while it is `open`. Recorded in its thread and as an event.
-    Kind(TaskKindArgs),
+    Kind(RowKindArgs),
     /// Drop a ticket (requires a reason, recorded in its thread).
-    Drop(TaskDropArgs),
+    Drop(RowDropArgs),
     /// Mark a ticket integrated (merged), recording the merge commit in its thread.
-    Done(TaskDoneArgs),
+    Done(RowDoneArgs),
     /// Record how a ticket was implemented (replaces an earlier summary).
-    Summary(TaskSummaryArgs),
+    Summary(RowSummaryArgs),
     /// Bring a dropped or integrated ticket back.
-    Reopen(TaskReopenArgs),
+    Reopen(RowReopenArgs),
     /// Skip a ticket's settle period so it can start now (recorded in its thread).
-    SkipSettle(TaskSkipSettleArgs),
+    SkipSettle(RowSkipSettleArgs),
     /// Start watching a ticket as the calling principal (recorded in its thread).
-    Watch(TaskWatchArgs),
+    Watch(RowWatchArgs),
     /// Stop watching a ticket as the calling principal.
-    Unwatch(TaskWatchArgs),
+    Unwatch(RowWatchArgs),
     /// Search for tickets by words in title, body, or summary.
-    Search(TaskSearchArgs),
+    Search(RowSearchArgs),
     /// Claim a ready ticket for the calling principal.
     Claim(ClaimArgs),
     /// Release the calling principal's own claim.
@@ -526,7 +526,7 @@ pub enum TicketRowAction {
     Impact(ImpactArgs),
 }
 
-impl From<TicketRowAction> for TaskAction {
+impl From<TicketRowAction> for RowAction {
     fn from(a: TicketRowAction) -> Self {
         use TicketRowAction as R;
         match a {
@@ -593,7 +593,7 @@ pub struct TicketShowArgs {
 pub struct TicketSubmitArgs {
     pub title: String,
     #[arg(short = 'k', long, value_enum)]
-    pub kind: TaskKindArg,
+    pub kind: TicketKindArg,
     #[arg(long)]
     pub body: Option<String>,
     /// Read the body from a file (or `-` for stdin).
@@ -625,7 +625,7 @@ pub struct TicketNewArgs {
     pub theme: Option<String>,
     /// The ticket's kind, and its task's: there is no default.
     #[arg(short = 'k', long, value_enum, required_unless_present = "from_task")]
-    pub kind: Option<TaskKindArg>,
+    pub kind: Option<TicketKindArg>,
     /// Text for the ticket's "The ask" section.
     #[arg(long)]
     pub body: Option<String>,
@@ -1678,7 +1678,7 @@ pub enum TokenAction {
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
 #[value(rename_all = "kebab-case")]
-pub enum TaskKindArg {
+pub enum TicketKindArg {
     Feature,
     Bug,
     Fix,
@@ -1695,7 +1695,7 @@ pub enum TaskKindArg {
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
 #[value(rename_all = "lowercase")]
-pub enum TaskSizeArg {
+pub enum TicketSizeArg {
     S,
     M,
     L,
@@ -1704,7 +1704,7 @@ pub enum TaskSizeArg {
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
 #[value(rename_all = "lowercase")]
-pub enum TaskPriorityArg {
+pub enum TicketPriorityArg {
     Critical,
     Urgent,
     High,
@@ -1713,61 +1713,61 @@ pub enum TaskPriorityArg {
 }
 
 #[derive(Debug, Args)]
-pub struct TaskPriorityArgs {
+pub struct RowPriorityArgs {
     pub task: String,
     #[arg(value_enum, ignore_case = true)]
-    pub priority: TaskPriorityArg,
+    pub priority: TicketPriorityArg,
 }
 
 #[derive(Debug, Args)]
-pub struct TaskKindArgs {
+pub struct RowKindArgs {
     pub task: String,
     #[arg(value_enum, ignore_case = true)]
-    pub kind: TaskKindArg,
+    pub kind: TicketKindArg,
 }
 
 #[derive(Debug, Args)]
-pub struct TaskArgs {
+pub struct RowArgs {
     #[command(subcommand)]
-    pub action: TaskAction,
+    pub action: RowAction,
 }
 
 #[derive(Debug, Subcommand)]
-pub enum TaskAction {
+pub enum RowAction {
     /// Create a ticket, `pending` until someone runs `ticket ready`, with title and kind.
-    New(TaskNewArgs),
+    New(RowNewArgs),
     /// Show one ticket in full, including its body and thread.
-    Show(TaskShowArgs),
+    Show(RowShowArgs),
     /// Change a ticket's title or body (not its state).
-    Edit(TaskEditArgs),
+    Edit(RowEditArgs),
     /// List every ticket: id, title, kind, state.
-    List(TaskListArgs),
+    List(RowListArgs),
     /// Mark a ticket ready to build: `open` -> `planned`.
-    Plan(TaskPlanArgs),
+    Plan(RowPlanArgs),
     /// Change a ticket's priority (critical, urgent, high, normal, low); recorded in its thread and as an event.
-    Priority(TaskPriorityArgs),
+    Priority(RowPriorityArgs),
     /// Change a ticket's kind; only while it is `open`. Recorded in its thread and as an event.
-    Kind(TaskKindArgs),
+    Kind(RowKindArgs),
     /// Drop a ticket (requires a reason, recorded in its thread).
-    Drop(TaskDropArgs),
+    Drop(RowDropArgs),
     /// Mark a ticket integrated (merged), recording the merge commit in its thread.
-    Done(TaskDoneArgs),
+    Done(RowDoneArgs),
     /// Record how a ticket was implemented (replaces an earlier summary).
-    Summary(TaskSummaryArgs),
+    Summary(RowSummaryArgs),
     /// Bring a dropped or integrated ticket back.
-    Reopen(TaskReopenArgs),
+    Reopen(RowReopenArgs),
     /// Skip a ticket's settle period so it can start now (recorded in its thread).
-    SkipSettle(TaskSkipSettleArgs),
+    SkipSettle(RowSkipSettleArgs),
     /// Start watching a ticket as the calling principal (recorded in its thread).
-    Watch(TaskWatchArgs),
+    Watch(RowWatchArgs),
     /// Stop watching a ticket as the calling principal.
-    Unwatch(TaskWatchArgs),
+    Unwatch(RowWatchArgs),
     /// Add a comment to a ticket's thread (no question/answer semantics,
     /// doesn't affect readiness).
     #[command(alias = "note")]
-    Comment(TaskCommentArgs),
+    Comment(RowCommentArgs),
     /// Search for tickets by words in title, body, or summary.
-    Search(TaskSearchArgs),
+    Search(RowSearchArgs),
     /// Claim a ready ticket for the calling principal.
     Claim(ClaimArgs),
     /// Release the calling principal's own claim.
@@ -1791,10 +1791,10 @@ pub enum TaskAction {
 
 #[derive(Debug, Args)]
 #[command(group(ArgGroup::new("body_source").args(["body", "body_file"])))]
-pub struct TaskNewArgs {
+pub struct RowNewArgs {
     pub title: String,
     #[arg(short = 'k', long, value_enum)]
-    pub kind: TaskKindArg,
+    pub kind: TicketKindArg,
     #[arg(long)]
     pub body: Option<String>,
     /// Read the ticket body from a file (or `-` for stdin).
@@ -1805,7 +1805,7 @@ pub struct TaskNewArgs {
     pub component: Vec<String>,
     /// Estimated size, so small tickets can be picked when budget is short.
     #[arg(long, value_enum, ignore_case = true)]
-    pub size: Option<TaskSizeArg>,
+    pub size: Option<TicketSizeArg>,
     /// A to-do for the human: created planned and claimed by them, with one inbox
     /// message pointing at it. Put `[at restart]` or `[at next reboot]` in the title
     /// when it must wait for one.
@@ -1813,7 +1813,7 @@ pub struct TaskNewArgs {
     pub for_human: bool,
     /// How soon it's wanted; ranks the human's to-dos (default normal).
     #[arg(long, value_enum, ignore_case = true)]
-    pub priority: Option<TaskPriorityArg>,
+    pub priority: Option<TicketPriorityArg>,
     /// Split from this ticket: the new ticket records it as its parent, inherits its watchers
     /// (you are still added), and the parent's thread names the new ticket.
     #[arg(long, value_name = "TASK")]
@@ -1821,7 +1821,7 @@ pub struct TaskNewArgs {
 }
 
 #[derive(Debug, Args)]
-pub struct TaskListArgs {
+pub struct RowListArgs {
     /// Filter to tickets claimed by this principal: `me`, `human`, an agent
     /// name, or a full principal id.
     #[arg(long)]
@@ -1831,17 +1831,17 @@ pub struct TaskListArgs {
     pub component: Option<String>,
     /// Only tickets of this kind (`incident` lists the open incidents).
     #[arg(short = 'k', long, value_enum)]
-    pub kind: Option<TaskKindArg>,
+    pub kind: Option<TicketKindArg>,
 }
 
 #[derive(Debug, Args)]
-pub struct TaskShowArgs {
+pub struct RowShowArgs {
     pub task: String,
 }
 
 #[derive(Debug, Args)]
 #[command(group(ArgGroup::new("body_source").args(["body", "body_file"])))]
-pub struct TaskEditArgs {
+pub struct RowEditArgs {
     pub task: String,
     #[arg(long)]
     pub title: Option<String>,
@@ -1858,23 +1858,23 @@ pub struct TaskEditArgs {
     pub no_component: bool,
     /// Set the ticket's estimated size.
     #[arg(long, value_enum, ignore_case = true)]
-    pub size: Option<TaskSizeArg>,
+    pub size: Option<TicketSizeArg>,
 }
 
 #[derive(Debug, Args)]
-pub struct TaskPlanArgs {
+pub struct RowPlanArgs {
     pub task: String,
 }
 
 #[derive(Debug, Args)]
-pub struct TaskDropArgs {
+pub struct RowDropArgs {
     pub task: String,
     #[arg(long)]
     pub reason: String,
 }
 
 #[derive(Debug, Args)]
-pub struct TaskDoneArgs {
+pub struct RowDoneArgs {
     pub task: String,
     /// The merge commit. Optional only for a human to-do or an incident.
     #[arg(long, default_value = "")]
@@ -1889,7 +1889,7 @@ pub struct TaskDoneArgs {
 
 #[derive(Debug, Args)]
 #[command(group(ArgGroup::new("summary_source").required(true).args(["text", "file"])))]
-pub struct TaskSummaryArgs {
+pub struct RowSummaryArgs {
     pub task: String,
     /// The summary text.
     #[arg(long)]
@@ -1970,7 +1970,7 @@ pub struct ImpactShowArgs {
 }
 
 #[derive(Debug, Args)]
-pub struct TaskSkipSettleArgs {
+pub struct RowSkipSettleArgs {
     pub task: String,
     /// Why. The orchestrator and PM may skip only because the human asked or for an
     /// urgent downtime fix, and the reason must say which.
@@ -1979,18 +1979,18 @@ pub struct TaskSkipSettleArgs {
 }
 
 #[derive(Debug, Args)]
-pub struct TaskWatchArgs {
+pub struct RowWatchArgs {
     pub task: String,
 }
 
 #[derive(Debug, Args)]
-pub struct TaskReopenArgs {
+pub struct RowReopenArgs {
     pub task: String,
 }
 
 #[derive(Debug, Args)]
 #[command(group(ArgGroup::new("text_source").args(["text", "text_file"])))]
-pub struct TaskCommentArgs {
+pub struct RowCommentArgs {
     pub task: String,
     pub text: Option<String>,
     /// Read the comment text from a file (or `-` for stdin).
@@ -2003,7 +2003,7 @@ pub struct TaskCommentArgs {
 }
 
 #[derive(Debug, Args)]
-pub struct TaskSearchArgs {
+pub struct RowSearchArgs {
     /// Search words; matches against title, body, and summary (all words must match, case-insensitive).
     pub words: Vec<String>,
 }
@@ -2678,8 +2678,8 @@ mod tests {
             "body.txt",
         ])
         .unwrap();
-        let Command::Task(TaskArgs {
-            action: TaskAction::New(args),
+        let Command::Task(RowArgs {
+            action: RowAction::New(args),
             ..
         }) = cli.command
         else {
@@ -2713,8 +2713,8 @@ mod tests {
     #[test]
     fn task_new_body_file_accepts_dash_for_stdin() {
         let cli = parse(&["task", "new", "title", "-k", "feature", "--body-file", "-"]).unwrap();
-        let Command::Task(TaskArgs {
-            action: TaskAction::New(args),
+        let Command::Task(RowArgs {
+            action: RowAction::New(args),
             ..
         }) = cli.command
         else {
@@ -2726,8 +2726,8 @@ mod tests {
     #[test]
     fn task_edit_accepts_body_file() {
         let cli = parse(&["task", "edit", "task-id", "--body-file", "body.txt"]).unwrap();
-        let Command::Task(TaskArgs {
-            action: TaskAction::Edit(args),
+        let Command::Task(RowArgs {
+            action: RowAction::Edit(args),
             ..
         }) = cli.command
         else {
@@ -2780,8 +2780,8 @@ mod tests {
     #[test]
     fn task_comment_accepts_text_file() {
         let cli = parse(&["task", "comment", "task-id", "--text-file", "comment.txt"]).unwrap();
-        let Command::Task(TaskArgs {
-            action: TaskAction::Comment(args),
+        let Command::Task(RowArgs {
+            action: RowAction::Comment(args),
             ..
         }) = cli.command
         else {
@@ -2812,8 +2812,8 @@ mod tests {
     #[test]
     fn task_comment_text_file_accepts_dash_for_stdin() {
         let cli = parse(&["task", "comment", "task-id", "--text-file", "-"]).unwrap();
-        let Command::Task(TaskArgs {
-            action: TaskAction::Comment(args),
+        let Command::Task(RowArgs {
+            action: RowAction::Comment(args),
             ..
         }) = cli.command
         else {
@@ -2825,8 +2825,8 @@ mod tests {
     #[test]
     fn task_note_alias_still_works() {
         let cli = parse(&["task", "note", "task-id", "--text-file", "comment.txt"]).unwrap();
-        let Command::Task(TaskArgs {
-            action: TaskAction::Comment(args),
+        let Command::Task(RowArgs {
+            action: RowAction::Comment(args),
             ..
         }) = cli.command
         else {
@@ -2945,11 +2945,11 @@ mod tests {
         let Command::Task(args) = cli.command else {
             panic!("expected task")
         };
-        let TaskAction::New(a) = args.action else {
+        let RowAction::New(a) = args.action else {
             panic!("expected task new")
         };
         assert_eq!(a.title, "Add foo");
-        assert!(matches!(a.kind, TaskKindArg::Feature));
+        assert!(matches!(a.kind, TicketKindArg::Feature));
         assert_eq!(a.body.as_deref(), Some("desc"));
     }
 
@@ -2959,10 +2959,10 @@ mod tests {
         let Command::Task(args) = cli.command else {
             panic!("expected task")
         };
-        let TaskAction::New(a) = args.action else {
+        let RowAction::New(a) = args.action else {
             panic!("expected task new")
         };
-        assert!(matches!(a.kind, TaskKindArg::ArchRevision));
+        assert!(matches!(a.kind, TicketKindArg::ArchRevision));
     }
 
     #[test]
@@ -2978,14 +2978,14 @@ mod tests {
             panic!("not task")
         };
         assert!(
-            matches!(args.action, TaskAction::Summary(a) if a.text.as_deref() == Some("did it"))
+            matches!(args.action, RowAction::Summary(a) if a.text.as_deref() == Some("did it"))
         );
         assert!(parse(&["task", "summary", "tw-1234"]).is_err());
         let cli = parse(&["task", "done", "tw-1", "--commit", "a", "--branch", "b"]).unwrap();
         let Command::Task(args) = cli.command else {
             panic!("not task")
         };
-        assert!(matches!(args.action, TaskAction::Done(a) if a.branch.as_deref() == Some("b")));
+        assert!(matches!(args.action, RowAction::Done(a) if a.branch.as_deref() == Some("b")));
     }
 
     #[test]
@@ -2994,12 +2994,12 @@ mod tests {
         let Command::Task(args) = cli.command else {
             panic!("expected task")
         };
-        assert!(matches!(args.action, TaskAction::Done(a) if a.commit.is_empty()));
+        assert!(matches!(args.action, RowAction::Done(a) if a.commit.is_empty()));
         let cli = parse(&["task", "done", "tw-1234", "--commit", "abc123"]).unwrap();
         let Command::Task(args) = cli.command else {
             panic!("expected task")
         };
-        assert!(matches!(args.action, TaskAction::Done(a) if a.commit == "abc123"));
+        assert!(matches!(args.action, RowAction::Done(a) if a.commit == "abc123"));
     }
 
     #[test]
@@ -3011,7 +3011,7 @@ mod tests {
         let Command::Task(args) = cli.command else {
             panic!("expected task")
         };
-        let TaskAction::Drop(a) = args.action else {
+        let RowAction::Drop(a) = args.action else {
             panic!("expected task drop")
         };
         assert_eq!(a.task, "tw-1234");
@@ -3024,27 +3024,25 @@ mod tests {
         let Command::Task(args) = cli.command else {
             panic!("expected task")
         };
-        assert!(matches!(args.action, TaskAction::Reopen(a) if a.task == "tw-1234"));
+        assert!(matches!(args.action, RowAction::Reopen(a) if a.task == "tw-1234"));
 
         let cli = parse(&["task", "show", "tw-1234"]).unwrap();
         let Command::Task(args) = cli.command else {
             panic!("expected task")
         };
-        assert!(matches!(args.action, TaskAction::Show(a) if a.task == "tw-1234"));
+        assert!(matches!(args.action, RowAction::Show(a) if a.task == "tw-1234"));
 
         let cli = parse(&["task", "list"]).unwrap();
         let Command::Task(args) = cli.command else {
             panic!("expected task")
         };
-        assert!(matches!(args.action, TaskAction::List(a) if a.claimed_by.is_none()));
+        assert!(matches!(args.action, RowAction::List(a) if a.claimed_by.is_none()));
 
         let cli = parse(&["task", "list", "--claimed-by", "me"]).unwrap();
         let Command::Task(args) = cli.command else {
             panic!("expected task")
         };
-        assert!(
-            matches!(args.action, TaskAction::List(a) if a.claimed_by.as_deref() == Some("me"))
-        );
+        assert!(matches!(args.action, RowAction::List(a) if a.claimed_by.as_deref() == Some("me")));
     }
 
     #[test]
@@ -3053,7 +3051,7 @@ mod tests {
         let Command::Task(args) = cli.command else {
             panic!("expected task")
         };
-        let TaskAction::Edit(a) = args.action else {
+        let RowAction::Edit(a) = args.action else {
             panic!("expected task edit")
         };
         assert_eq!(a.task, "tw-1234");
@@ -3067,11 +3065,11 @@ mod tests {
         let Command::Task(args) = cli.command else {
             panic!("expected task")
         };
-        let TaskAction::Edit(a) = args.action else {
+        let RowAction::Edit(a) = args.action else {
             panic!("expected task edit")
         };
         assert_eq!(a.task, "tw-1234");
-        assert!(matches!(a.size, Some(TaskSizeArg::None)));
+        assert!(matches!(a.size, Some(TicketSizeArg::None)));
     }
 
     #[test]

@@ -41,7 +41,7 @@ use crate::events::Emitter;
 use crate::paths::Workspace;
 use crate::store::{Principal, Store, StoreError};
 use crate::supervisor::{AgentManager, SupervisorError, ToTarget};
-use crate::tasks::{TaskError, TaskManager};
+use crate::tasks::{TicketError, TicketManager};
 
 #[derive(Clone)]
 pub struct AppState {
@@ -75,7 +75,7 @@ pub struct AppState {
     pub waiters: std::sync::Arc<crate::wake::Waiters>,
     pub handover: std::sync::Arc<crate::orchestrator::Handover>,
     pub sessions: std::sync::Arc<crate::sessions::Sessions>,
-    pub tasks: TaskManager,
+    pub tasks: TicketManager,
     pub doc_watch: crate::doc_watch::DocWatcher,
     pub ports: crate::config::PortsConfig,
     /// `[daemon] stop_grace`; shutdown's cap on stopping agents is this + 5 s.
@@ -303,13 +303,13 @@ impl From<SupervisorError> for ApiError {
     }
 }
 
-impl From<TaskError> for ApiError {
-    fn from(e: TaskError) -> Self {
+impl From<TicketError> for ApiError {
+    fn from(e: TicketError) -> Self {
         match e {
-            TaskError::NotFound(m) => ApiError::not_found(m),
-            TaskError::Conflict(m) => ApiError::new(StatusCode::CONFLICT, "conflict", m),
-            TaskError::BadRequest(m) => ApiError::bad_request(m),
-            TaskError::Internal(m) => {
+            TicketError::NotFound(m) => ApiError::not_found(m),
+            TicketError::Conflict(m) => ApiError::new(StatusCode::CONFLICT, "conflict", m),
+            TicketError::BadRequest(m) => ApiError::bad_request(m),
+            TicketError::Internal(m) => {
                 ApiError::new(StatusCode::INTERNAL_SERVER_ERROR, "internal", m)
             }
         }
@@ -2584,7 +2584,7 @@ async fn new_task(
     if let Some(parent) = &req.parent
         && state.tasks.get_task(parent).is_none()
     {
-        return Err(TaskError::NotFound(format!("no such task: {parent}")).into());
+        return Err(TicketError::NotFound(format!("no such task: {parent}")).into());
     }
     let mut task = state
         .tasks
@@ -3210,7 +3210,7 @@ async fn done_task(
             .await
             .map_err(SupervisorError::from)?
         {
-            return Err(TaskError::Conflict(format!(
+            return Err(TicketError::Conflict(format!(
                 "commit {commit} is not on the integration branch; land it before marking the task done"
             ))
             .into());
@@ -4904,7 +4904,7 @@ mod tests {
     //! `resolve_claimed_by` alone, not `list_tasks`'s use of it: reaching a
     //! `claimed` task needs `planned` first, and there's no `plan` endpoint
     //! yet (same gap `tasks_test.rs` notes for claim/release), so the
-    //! end-to-end `?claimed_by=` filter is exercised at the `TaskManager`
+    //! end-to-end `?claimed_by=` filter is exercised at the `TicketManager`
     //! level instead (`tasks.rs`, `claim_blocks_ready_and_release_unblocks_it`).
     use super::*;
 

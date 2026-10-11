@@ -96,7 +96,7 @@ edges(from_task, to_task, kind, created_at, PRIMARY KEY(from_task, to_task, kind
 ```
 
 Unlike a task, the row *is* the whole record — there's no body/thread to
-carry, so `TaskManager`'s edge cache hydrates straight from this table at
+carry, so `TicketManager`'s edge cache hydrates straight from this table at
 `open`, without touching the state branch. The `(from_task, to_task, kind)`
 triple is the natural key: there's no separate edge id, and the edge removal
 identifies the row to delete by that same triple. The `blocks`, `parent` and `related` rows between
@@ -113,10 +113,10 @@ open_questions(task_id TEXT PK, message_id, asked_by, asked_at)
 ```
 
 `task_id` is the primary key: a task has at most one open question at a
-time, so `TaskManager::ask_question` on a task that already has one is a
+time, so `TicketManager::ask_question` on a task that already has one is a
 conflict, the same shape as `insert_edge`'s duplicate-triple conflict.
 `message_id` points at the `messages` row the question is (see below); the
-body isn't duplicated here since that row already carries it. `TaskManager`
+body isn't duplicated here since that row already carries it. `TicketManager`
 hydrates a `task_id -> message_id` cache from this table at `open`, the same
 way it hydrates the edge cache, so `is_ready` (a plain, synchronous function)
 can check "does this task have an open question" without a database round
@@ -157,27 +157,27 @@ state branch and not rebuilt.
 [[worktrees-and-ports]]).
 
 `task_id` is the primary key: a task has at most one claimant at a time, so
-`TaskManager::claim_task` on an already-claimed (or otherwise not-ready)
+`TicketManager::claim_task` on an already-claimed (or otherwise not-ready)
 task is a conflict, the same shape as `insert_edge`/`ask_question`'s
 conflicts. Claiming transitions the task `planned -> claimed` (dropping it
 out of `ready`, since that already requires `planned`); releasing —
 explicit, or the lease expiring — reverses it. There's no separate
-lease-renewal call: `TaskManager::tick_claim_lease_check` reads the claiming
+lease-renewal call: `TicketManager::tick_claim_lease_check` reads the claiming
 agent's own `last_event_at`/`turn_started_at` (the same signal
 `supervisor.rs`'s stall check watches) and releases the claim once that
 activity is older than `config.claim_lease_after`. Only a `claimed` task is ever
 moved by a release: dropping or integrating a claimed task clears its claim, and
-`TaskManager::open` deletes any `claims` row whose task isn't `claimed`. The ephemeral tables
+`TicketManager::open` deletes any `claims` row whose task isn't `claimed`. The ephemeral tables
 `waits`, `impact_cache` are not built.
 
 **Claims are durable now (j479):** unlike `tasks`/`edges`/`open_questions`,
 there's no per-claim file to key a targeted write on, so — the same
 wholesale approach `edges.toml` already uses — every claim/release enqueues
 the *entire* current claim set to overwrite the state branch's `claims.toml`
-at the next flush (`TaskManager::enqueue_claims_snapshot`,
+at the next flush (`TicketManager::enqueue_claims_snapshot`,
 `StateBranch::enqueue_claims`). Unlike `edges.toml`, this file does have a
 read path back (`StateBranch::list_claims`): `bridle rebuild`
-(`TaskManager::rebuild_from_state_branch`) restores `claims` from it, the
+(`TicketManager::rebuild_from_state_branch`) restores `claims` from it, the
 same way it restores `tasks`/`edges`/`open_questions` from their own files —
 inserting each row and setting the task's `state` back to `Claimed` (that
 part happens only in SQLite even in the live path, so rebuild mirrors it
@@ -187,7 +187,7 @@ explicitly rather than getting it from the task file, which never carries
 
 The current claim, if any, rides along on the wire `Task` as `claimed_by`/
 `claimed_at` (`bridle-api::types::Task`): null when unclaimed, populated from
-`claims` on `TaskManager::open` and again on every claim/release. `GET
+`claims` on `TicketManager::open` and again on every claim/release. `GET
 /v1/tasks?claimed_by=` filters on it; `me` resolves to the calling
 principal's own id (the same pattern `?to=me` uses for messages,
 `server.rs::resolve_to`), anything else is matched against `claimed_by`
@@ -210,7 +210,7 @@ read path because it's fast, and git is the recovery path.
 A separate record from `tasks`/`edges`: an ordered list of tiers, each tier
 a set of equally-ranked task ids — tier 1 (index 0) before tier 2. A task
 not listed in any tier is backlog. There's no SQLite table for it at all
-(unlike claims, it was never SQLite-only to begin with): `TaskManager` keeps
+(unlike claims, it was never SQLite-only to begin with): `TicketManager` keeps
 an in-memory `Vec<Vec<String>>` cache, hydrated straight from the state
 branch's `queue.toml` at `open`/`rebuild_from_state_branch`, since that file
 is the record's only durable copy.
@@ -218,7 +218,7 @@ is the record's only durable copy.
 `queue.toml` is an ordered array of tables, `[[tier]]`, each with a `tasks`
 array; array order *is* rank order, so there's no separate rank field to
 keep in sync with position (`state_branch.rs::render_queue`/`parse_queue`).
-Every write (`TaskManager::set_queue`, replacing the whole queue; the CLI's
+Every write (`TicketManager::set_queue`, replacing the whole queue; the CLI's
 `bridle queue add-tier` is sugar over it that appends one tier) re-renders
 the file wholesale, the same way `edges.toml`/`claims.toml` do, and enqueues
 an `events/<YYYY-MM>.jsonl` line recording the actor
@@ -234,7 +234,7 @@ agent-lifecycle endpoints. `bridle queue` is the read-only view: claimed
 tasks with their worker, then the tiers in rank order, each task marked
 startable (ready — planned, deps met, no open question, and therefore
 unclaimed too, since `is_ready` already requires `planned`) or blocked.
-`TaskManager::highest_startable_tier` (`GET /v1/tasks?top_tier=true`,
+`TicketManager::highest_startable_tier` (`GET /v1/tasks?top_tier=true`,
 `bridle ready` with no `--all`) returns just the highest tier with at least
 one startable task, skipping a tier stuck on a dependency rather than
 returning nothing — the manager takes from the next tier down instead of
@@ -282,7 +282,7 @@ events/2026-09.jsonl      append-only transitions, for history and rebuild
 - **Bridle commits it**, batching writes (at most one commit every 30 s,
   `Overrides::task_flush_interval`, plus a best-effort flush on graceful
   shutdown). There's no immediate-flush trigger yet — that arrives with
-  `accept` — but `TaskManager::flush_now` already exists as the one function
+  `accept` — but `TicketManager::flush_now` already exists as the one function
   both the periodic tick and that future caller will call, so adding it
   won't need a restructure. **Pushing is built, behind `[state] push`**
   (default `true`; set `push = false` to opt-out, per rule `existing-projects`
@@ -313,13 +313,13 @@ events/2026-09.jsonl      append-only transitions, for history and rebuild
   loads with none. Like `components`, a rebuild round-trips it.
 - **A task's `watchers`** (principals following it) are a `watchers = [...]` frontmatter line, in
   the task file only (no SQLite column), written even when empty. A file without the line predates
-  watchers: `TaskManager::open` gives it the creator (unless `unknown`) and the current claimer, and
+  watchers: `TicketManager::open` gives it the creator (unless `unknown`) and the current claimer, and
   enqueues the file, so it runs once. A failure logs and leaves the list as parsed; it never fails
   start-up. A rebuild round-trips the line; a claim also rewrites the file to add the claimer.
 - **A task's `created_by`** (the creating principal) is an optional `created_by = "..."` frontmatter
   line, omitted when unknown. The `tasks.created_by` column is nullable (NULL = unknown). At every
   daemon start, `Store::open` fills NULLs from the earliest `task.created` event's actor (one
-  pass, idempotent); `TaskManager::open` then fills any still NULL from the task file, whose
+  pass, idempotent); `TicketManager::open` then fills any still NULL from the task file, whose
   parse falls back to the first thread entry's author, else `unknown`. Every step is best
   effort: a failure logs and leaves that task unknown, never failing start-up. A task created
   by the daemon itself (re-evaluate) is `bridle`.
@@ -376,14 +376,14 @@ the thread of the task it blocks, the same file as the task itself. The
 daemon additionally indexes open questions in SQLite (`open_questions`,
 above) so `bridle inbox` can show them without walking the state branch
 ([[where-questions-live-on-the-state-branch-c5a8|decided]]). Built:
-`TaskManager::ask_question`/`answer_question` write both the thread entry
+`TicketManager::ask_question`/`answer_question` write both the thread entry
 and the SQLite index in the same call, and `is_ready` excludes a task with
 an open question. `bridle ticket ask`/`ticket answer` drive it, and `bridle inbox` lists open
 questions from this index (`GET /v1/questions`).
 
 ## Rebuild
 
-`bridle rebuild` (`TaskManager::rebuild_from_state_branch`) reconstructs
+`bridle rebuild` (`TicketManager::rebuild_from_state_branch`) reconstructs
 `tasks`, `edges`, `open_questions` and `claims` from the state branch alone:
 the migration path for a fresh clone with no `bridle.db` — clone the repo,
 start the daemon, `bridle rebuild`. It walks every `tracking/<id>.md` (and old `tasks/<id>.md`) file for
@@ -401,7 +401,7 @@ still says whatever state it was in before the claim (typically `planned`);
 rebuild mirrors `claim_task`'s own synchronous update explicitly rather than
 getting it from the task file, which never carries `claimed`.
 
-The queue is reloaded too (`TaskManager::queue` cache, from `queue.toml`),
+The queue is reloaded too (`TicketManager::queue` cache, from `queue.toml`),
 the same as any other startup — there was never a SQLite table for it to
 refuse a rebuild over.
 

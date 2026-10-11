@@ -109,10 +109,10 @@ pub struct RunningAgent {
 
 /// The fast-index row for a task: `id, title, kind, state, created_at,
 /// updated_at` (storage.md). The body and thread live only on the state
-/// branch; see `crate::tasks::TaskManager`, which combines this with a file
+/// branch; see `crate::tasks::TicketManager`, which combines this with a file
 /// read to answer `show`/`list`.
 #[derive(Debug, Clone, PartialEq)]
-pub struct TaskRow {
+pub struct TicketRow {
     pub id: String,
     pub title: String,
     pub kind: TicketKind,
@@ -764,7 +764,7 @@ impl Store {
         title: &str,
         kind: TicketKind,
         created_by: &str,
-    ) -> Result<TaskRow, StoreError> {
+    ) -> Result<TicketRow, StoreError> {
         self.insert_task_wanting(prefix, title, kind, created_by, None)
             .await
     }
@@ -779,7 +779,7 @@ impl Store {
         kind: TicketKind,
         created_by: &str,
         ticket: Option<&str>,
-    ) -> Result<TaskRow, StoreError> {
+    ) -> Result<TicketRow, StoreError> {
         let (prefix, title, created_by) = (
             prefix.to_string(),
             title.to_string(),
@@ -792,7 +792,7 @@ impl Store {
         .await
     }
 
-    pub async fn get_task(&self, id: &str) -> Result<Option<TaskRow>, StoreError> {
+    pub async fn get_task(&self, id: &str) -> Result<Option<TicketRow>, StoreError> {
         let id = id.to_string();
         self.with_conn(move |c| sync::get_task(c, &id)).await
     }
@@ -801,13 +801,13 @@ impl Store {
     /// `created_at` the way [`Store::insert_task`] does. Only for `bridle
     /// rebuild`, reconstructing this table's rows from the state branch's
     /// own ids and timestamps.
-    pub async fn insert_task_row(&self, row: &TaskRow) -> Result<(), StoreError> {
+    pub async fn insert_task_row(&self, row: &TicketRow) -> Result<(), StoreError> {
         let row = row.clone();
         self.with_conn(move |c| sync::insert_task_row(c, &row))
             .await
     }
 
-    pub async fn list_tasks(&self) -> Result<Vec<TaskRow>, StoreError> {
+    pub async fn list_tasks(&self) -> Result<Vec<TicketRow>, StoreError> {
         self.with_conn(sync::list_tasks).await
     }
 
@@ -3013,10 +3013,10 @@ mod sync {
 
     // ---------- tasks ----------
 
-    fn row_to_task(row: &Row<'_>) -> rusqlite::Result<TaskRow> {
+    fn row_to_task(row: &Row<'_>) -> rusqlite::Result<TicketRow> {
         let kind: String = row.get(2)?;
         let state: String = row.get(3)?;
-        Ok(TaskRow {
+        Ok(TicketRow {
             id: row.get(0)?,
             title: row.get(1)?,
             kind: kind.parse().map_err(|_| {
@@ -3043,7 +3043,7 @@ mod sync {
         kind: TicketKind,
         created_by: &str,
         wanted: Option<&str>,
-    ) -> Result<TaskRow, StoreError> {
+    ) -> Result<TicketRow, StoreError> {
         // Truncate to millisecond precision (matching fmt_dt's on-disk format) so the
         // returned in-memory value can't be strictly less than a later floor-truncated
         // read of the same row.
@@ -3069,7 +3069,7 @@ mod sync {
             );
             match result {
                 Ok(_) => {
-                    return Ok(TaskRow {
+                    return Ok(TicketRow {
                         id,
                         title: title.to_string(),
                         kind,
@@ -3088,7 +3088,7 @@ mod sync {
         )))
     }
 
-    pub(super) fn insert_task_row(conn: &Connection, row: &TaskRow) -> Result<(), StoreError> {
+    pub(super) fn insert_task_row(conn: &Connection, row: &TicketRow) -> Result<(), StoreError> {
         let result = conn.execute(
             "INSERT INTO tickets(id, title, kind, state, created_at, updated_at, created_by)
              VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
@@ -3112,7 +3112,7 @@ mod sync {
         }
     }
 
-    pub(super) fn get_task(conn: &Connection, id: &str) -> Result<Option<TaskRow>, StoreError> {
+    pub(super) fn get_task(conn: &Connection, id: &str) -> Result<Option<TicketRow>, StoreError> {
         Ok(conn
             .query_row(
                 "SELECT id, title, kind, state, created_at, updated_at, created_by FROM tickets WHERE id = ?1",
@@ -3122,7 +3122,7 @@ mod sync {
             .optional()?)
     }
 
-    pub(super) fn list_tasks(conn: &Connection) -> Result<Vec<TaskRow>, StoreError> {
+    pub(super) fn list_tasks(conn: &Connection) -> Result<Vec<TicketRow>, StoreError> {
         let mut stmt = conn.prepare(
             "SELECT id, title, kind, state, created_at, updated_at, created_by FROM tickets ORDER BY created_at ASC, rowid ASC",
         )?;
@@ -4232,7 +4232,7 @@ mod tests {
         // Ids descend, so neither an id sort nor an unspecified tie order passes.
         for id in ["t-c", "t-b", "t-a", "t-d"] {
             store
-                .insert_task_row(&TaskRow {
+                .insert_task_row(&TicketRow {
                     id: id.to_string(),
                     title: id.to_string(),
                     kind: TicketKind::Feature,

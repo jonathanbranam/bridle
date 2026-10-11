@@ -11,7 +11,7 @@ use bridle_api::types::{MessageKind, PrincipalId, TicketState, When, event_kind}
 use crate::events::Emitter;
 use crate::store::Store;
 use crate::supervisor::{AgentManager, ToTarget};
-use crate::tasks::TaskManager;
+use crate::tasks::TicketManager;
 
 /// How long readies must stop arriving before the message goes out (as queue_nudge).
 pub const DEBOUNCE: Duration = Duration::from_secs(30);
@@ -26,7 +26,7 @@ struct Pending {
 pub struct OpenWatch {
     store: Store,
     manager: AgentManager,
-    tasks: TaskManager,
+    tasks: TicketManager,
     emitter: Emitter,
     debounce: Duration,
     stale_after: Duration,
@@ -40,7 +40,7 @@ impl OpenWatch {
     pub fn new(
         store: Store,
         manager: AgentManager,
-        tasks: TaskManager,
+        tasks: TicketManager,
         emitter: Emitter,
         debounce: Duration,
         stale_after: Duration,
