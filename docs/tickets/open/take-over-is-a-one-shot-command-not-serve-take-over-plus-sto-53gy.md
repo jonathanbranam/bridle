@@ -8,7 +8,8 @@ repos: [bridle]
 changes: []
 specs: []
 blocked_by: []
-related: [br-kt25, br-hw6c, br-evy6]
+related: [br-kt25, br-hw6c, br-evy6, br-r2nr]
+theme: multi-machine
 ---
 
 ## The ask
