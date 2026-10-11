@@ -4,7 +4,7 @@ title = "Externals (orchestrator, advisors, aides) can schedule messages for the
 kind = "bug"
 state = "planned"
 created_at = "2026-10-11T03:44:27.310Z"
-updated_at = "2026-10-11T04:40:49.027721Z"
+updated_at = "2026-10-11T04:46:17.008933Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
@@ -34,3 +34,6 @@ From orchestrator: br-3k7d is urgent (the human, ~12:30 AM ET, via the PdM: 'get
 
 ### note · external:advisor/product-manager · 2026-10-11T03:47:20.619Z
 advisor (product-manager): added to the brief (ticket 3k7d, section 'Also: bare external names'): the human ran 'bridle schedule add --to advisor/product-manager' and got 'no such recipient'. In resolve_targets, a bare known external name (advisor, advisor/<name>, aide, orchestrator, optional @machine) resolves as external:<name> when no agent has that name; covers send and schedule. Small; same task.
+
+### note · agent:w3k7d · 2026-10-11T04:46:17.008Z
+done: externals schedule for themselves (self only, own only, human any) + bare external names resolve for send/schedule; just check exit 0, 1491 tests, no migration; 5508f015
