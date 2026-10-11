@@ -841,7 +841,7 @@ bridle task comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comme
 - **`bridle session advisor`** registers the session with the daemon and ends it at exit
   (best effort; see orchestrator-supervision.md, section 6). `bridle status` shows a
   `session    <identity> <project>@<machine> <tokens> up <n>m active <n>m ago` line per running
-  advisor; `--json` has `sessions`. `bridle session restart <identifier> [--handover|--fresh]`
+  advisor; `--json` has `sessions`. `bridle session restart <identifier> [--handover [--reason TEXT]|--fresh]`
   restarts one: it SIGTERMs, then SIGKILLs, the launcher's children (by pid, never by name;
   `BRIDLE_STOP_WAIT_SECS`, default 20, each), fails without typing anything if the launcher is
   still alive, prints "restarted" only once a session with a new pid has registered, and runs

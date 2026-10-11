@@ -2311,6 +2311,9 @@ pub enum SessionRole {
         /// Restart with no handover: a clean slate.
         #[arg(long)]
         fresh: bool,
+        /// Why, as the first sentence of the handover request (the scheduled `[[restart]]`).
+        #[arg(long, conflicts_with = "fresh")]
+        reason: Option<String>,
     },
     /// Carry on past a session's context warning: `bridle session keep advisor/alice` records the
     /// human's override of the planned handover (none at the hard limit) and tells the session.

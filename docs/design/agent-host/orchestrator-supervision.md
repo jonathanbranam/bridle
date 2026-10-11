@@ -231,6 +231,20 @@ with project, machine, uptime and last activity (the context file's mtime) and i
 `GET /v1/sessions`. `bridle session aide` registers the same way (identity `aide`). No
 wakes for advisors yet.
 
+**Scheduled restart (ticket cbbn).** `[[restart]]` entries in the machine `~/.bridle/config.toml`
+(`project`, `session` as `bridle session restart` takes it, `at = "HH:MM"` host-local, `days`
+`"all"` by default or a list; time and days parse as in `[[focus]]`) make the named project's
+daemon (`restart_at.rs`, ticked every 10 s) restart the session once on each listed day, within
+10 minutes after `at`: a daemon that was down at the time does not catch up, and one restarted
+inside that window may fire again. It runs `bridle session restart <session> --reason "The human
+has configured your session to hand over at 4:00 AM every day; it is time to hand over."` (the
+reason is the first sentence of the handover request), and if no note comes by the handover
+deadline, again with `--fresh`: forced, never deferred for a busy human. Each firing writes
+`session.restart.completed` (`project`, `session`, `at`, `note`) or, for a session not running,
+`session.restart.skipped` (`reason: not running`); a restart without a note also notes
+`external:aide` for the morning list. A bad `[[restart]]` entry is ignored with a log warning and
+reported by `bridle doctor`. No entry, nothing happens. The orchestrator keeps its own `max_uptime`.
+
 **Context steps for every interactive session (jttf).** Not the orchestrator's thresholds: the
 human's, `[sessions] warn = ["150k", "200k", "250k", "300k"]` (four increasing counts; per role
 in `[sessions.advisor]` and `[sessions.aide]`). Reaching a step sends a `system` note to the

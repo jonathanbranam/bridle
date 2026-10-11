@@ -1,6 +1,7 @@
 //! `bridle session orchestrator|advisor|aide`: starts the role's `claude` session (ticket mrhe).
 //! No `exec`: bridle stays as the parent so the pid file can be removed and the exit recorded.
 
+use bridle_daemon::sessions::session_identity;
 use std::io::Write as _;
 use std::os::unix::process::ExitStatusExt;
 use std::path::Path;
@@ -157,10 +158,13 @@ pub async fn run(cli: &Cli, role: &SessionRole) -> Result<(), CliError> {
         return Ok(());
     }
     if let SessionRole::Restart {
-        identifier, fresh, ..
+        identifier,
+        fresh,
+        reason,
+        ..
     } = role
     {
-        return restart(cli, identifier, *fresh).await;
+        return restart(cli, identifier, *fresh, reason.as_deref()).await;
     }
     // Never under a bridle agent (k6b3): a worker's test run once overwrote the live
     // orchestrator's pid/session files and used its Remote Control name.
@@ -489,16 +493,6 @@ async fn note(cli: &Cli) {
     register(cli, pid, &identity, Some(id)).await;
 }
 
-/// A session as the human names it: `alice` is `advisor/alice`; `advisor`, `aide` and anything
-/// with a `/` stand as they are.
-fn session_identity(identifier: &str) -> String {
-    if identifier.contains('/') || matches!(identifier, "advisor" | "aide") {
-        identifier.to_string()
-    } else {
-        format!("advisor/{identifier}")
-    }
-}
-
 fn advisor_identity(name: Option<&str>) -> String {
     match name {
         Some(n) => format!("advisor/{n}"),
@@ -566,7 +560,12 @@ fn relaunch_command(identity: &str, project: Option<&str>) -> String {
 /// `bridle session restart`: stop the session's claude and start the launcher again in its tmux
 /// pane. A handover asks the session to write a note first. Restarting with no handover is
 /// the human's choice: refused for a session or agent (BRIDLE_AS / BRIDLE_AGENT_ID).
-async fn restart(cli: &Cli, identifier: &str, fresh: bool) -> Result<(), CliError> {
+async fn restart(
+    cli: &Cli,
+    identifier: &str,
+    fresh: bool,
+    reason: Option<&str>,
+) -> Result<(), CliError> {
     let test = std::env::var_os("BRIDLE_LAUNCHER_TEST").is_some();
     // `bridle handover write` re-runs this for the session's own restart, after its note.
     let own = std::env::var_os(OWN_RESTART_ENV).is_some();
@@ -582,7 +581,7 @@ async fn restart(cli: &Cli, identifier: &str, fresh: bool) -> Result<(), CliErro
         )
         .into());
     }
-    restart_session(cli, identifier, fresh).await
+    restart_session(cli, identifier, fresh, reason).await
 }
 
 /// Set on the detached restart a session starts for itself after writing its handover note.
@@ -603,10 +602,15 @@ pub fn own_session_identity() -> Option<String> {
 /// `bridle handover write` by an interactive session: its note is recorded, so restart it with
 /// the same code `session restart --fresh` uses (detached, since this runs inside the session).
 pub async fn restart_own_session(cli: &Cli, identity: &str) -> Result<(), CliError> {
-    restart_session(cli, identity, true).await
+    restart_session(cli, identity, true, None).await
 }
 
-async fn restart_session(cli: &Cli, identifier: &str, fresh: bool) -> Result<(), CliError> {
+async fn restart_session(
+    cli: &Cli,
+    identifier: &str,
+    fresh: bool,
+    reason: Option<&str>,
+) -> Result<(), CliError> {
     let client = crate::commands::client_for(cli).await?;
     let sessions = client.sessions().await?;
     let wanted = session_identity(identifier);
@@ -626,11 +630,12 @@ async fn restart_session(cli: &Cli, identifier: &str, fresh: bool) -> Result<(),
         };
         let before = newest().await?;
         let to = format!("external:{}", info.identity);
-        let body =
-            "The human is restarting this session. Write a handover note (what you were doing, \
-             open threads, what the next session needs) with `bridle handover write --file -` \
-             and say nothing more; the restart follows when the note is recorded."
-                .to_string();
+        let body = format!(
+            "{} Write a handover note (what you were doing, open threads, what the next session \
+             needs) with `bridle handover write --file -` and say nothing more; the restart \
+             follows when the note is recorded.",
+            reason.unwrap_or("The human is restarting this session.")
+        );
         client
             .send(&bridle_api::SendRequest {
                 to: Some(to),

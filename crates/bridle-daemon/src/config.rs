@@ -2390,7 +2390,62 @@ pub fn machine_config_problems(home: &Path) -> Result<Vec<String>, ConfigError> 
             out.extend(overnight_problem(&p.name, s, e));
         }
     }
+    if let Err(e) = restart_entries(home) {
+        out.push(e.to_string());
+    }
     Ok(out)
+}
+
+/// One `[[restart]]` entry (ticket cbbn): hand the named session over and restart it at `at`,
+/// host-local, on `days`. Machine-wide; each project's daemon acts on its own entries.
+#[derive(Debug, Clone, PartialEq)]
+pub struct RestartEntry {
+    pub project: String,
+    /// As `bridle session restart` takes it: a role, or `advisor/<name>`.
+    pub session: String,
+    pub at: NaiveTime,
+    pub days: Vec<Weekday>,
+}
+
+#[derive(Debug, Deserialize)]
+struct RawRestart {
+    project: String,
+    session: String,
+    at: String,
+    /// Default `"all"`.
+    days: Option<RawDays>,
+}
+
+impl RawRestart {
+    fn into_entry(self) -> Result<RestartEntry, ConfigError> {
+        let name = format!("restart {}/{}", self.project, self.session);
+        Ok(RestartEntry {
+            at: parse_time_of_day(&self.at, &name)?,
+            days: weekdays(self.days.unwrap_or(RawDays::All("all".into())), &name)?,
+            project: self.project,
+            session: self.session,
+        })
+    }
+}
+
+/// The `[[restart]]` entries of `<home>/config.toml`; empty when the file or section is absent.
+pub fn restart_entries(home: &Path) -> Result<Vec<RestartEntry>, ConfigError> {
+    let path = home.join("config.toml");
+    let text = match std::fs::read_to_string(&path) {
+        Ok(t) => t,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
+        Err(source) => return Err(ConfigError::Read { path, source }),
+    };
+    let raw: RawConfig = bridle_api::config_warn::parse(&text, &path.display().to_string())
+        .map_err(|source| ConfigError::Parse {
+            path: path.clone(),
+            source: Box::new(source),
+        })?;
+    raw.restart
+        .unwrap_or_default()
+        .into_iter()
+        .map(RawRestart::into_entry)
+        .collect()
 }
 
 /// The settle period when `[tasks] settle` is unset or invalid.
@@ -2555,6 +2610,9 @@ struct RawConfig {
     /// Read by `bridle advisor start` from the machine config only (`advisor_pane`).
     #[serde(default)]
     tmux: Option<RawTmux>,
+    /// Machine scope: the `[[restart]]` entries (ticket cbbn).
+    #[serde(default)]
+    restart: Option<Vec<RawRestart>>,
     /// Machine scope: the `[[focus]]` periods (ticket cvaq).
     #[serde(default)]
     focus: Option<Vec<RawFocusPeriod>>,

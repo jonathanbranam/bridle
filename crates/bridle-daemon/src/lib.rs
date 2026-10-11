@@ -41,11 +41,12 @@ mod queue_nudge;
 pub mod reevaluate;
 mod release;
 mod restart;
+mod restart_at;
 pub mod rollback;
 pub mod rules;
 mod schedule;
 mod server;
-mod sessions;
+pub mod sessions;
 pub mod signing;
 pub mod state_branch;
 pub mod store;
@@ -1165,6 +1166,22 @@ async fn start_inner(
             async move { sessions.tick().await }
         }
     });
+    let restart_at = std::sync::Arc::new(restart_at::RestartAt::new(
+        overrides
+            .bridle_home
+            .clone()
+            .unwrap_or_else(discovery::bridle_home),
+        project.clone(),
+        sessions.clone(),
+        emitter.clone(),
+        store.clone(),
+    ));
+    let restart_at_task = spawn_loop(shutdown_rx.clone(), orchestrator::TICK_INTERVAL, {
+        move || {
+            let restart_at = restart_at.clone();
+            async move { restart_at.tick(chrono::Local::now()).await }
+        }
+    });
     let signal_task = signals.listen(shutdown_tx.clone());
 
     let waiters_for_stop = waiters.clone();
@@ -1245,6 +1262,7 @@ async fn start_inner(
         ports_task.abort();
         wake_task.abort();
         sessions_task.abort();
+        restart_at_task.abort();
     });
 
     Ok(RunningDaemon {

@@ -28,7 +28,7 @@ use crate::events::Emitter;
 use crate::store::{NewMessage, RecipientKind, Store};
 
 /// The principal the human's warnings go to.
-const AIDE: &str = "external:aide";
+pub(crate) const AIDE: &str = "external:aide";
 
 /// The shared advisor principal: where mail for a remote-machine named advisor goes.
 pub const ADVISOR: &str = "external:advisor";
@@ -430,31 +430,27 @@ impl Sessions {
         let (store, emitter) = (self.store.clone(), self.emitter.clone());
         let (identity, project) = (r.identity.clone(), r.project.clone());
         tokio::spawn(async move {
-            let mut out = String::new();
-            for fresh in [false, true] {
-                let mut cmd = tokio::process::Command::new(&rs.program);
-                if let Some(p) = &project {
-                    cmd.args(["--project", p]);
-                }
-                cmd.args(["session", "restart", &identity])
-                    .current_dir(&rs.cwd)
-                    .env_remove("BRIDLE_AGENT_ID")
-                    .env_remove("BRIDLE_AS");
-                if fresh {
-                    cmd.arg("--fresh");
-                }
-                match cmd.output().await {
-                    Ok(o) if o.status.success() => {
-                        out = String::from_utf8_lossy(&o.stdout).trim().to_string();
-                        break;
-                    }
-                    Ok(o) => out = String::from_utf8_lossy(&o.stderr).trim().to_string(),
-                    Err(e) => out = e.to_string(),
-                }
-            }
+            let (_, out) = run_restart(&rs, project.as_deref(), &identity, None).await;
             let body = format!("Hard-limit restart of {identity}: {out}");
             insert_note(&store, &emitter, AIDE, body).await;
         });
+    }
+
+    /// A `[[restart]]` entry fired: the same handover-then-restart as the hard limit, with the
+    /// reason in the request. `None` when the session is not running or there is no binary to
+    /// restart with; else whether a handover note came, and the command's output.
+    pub async fn scheduled_restart(&self, identity: &str, reason: &str) -> Option<(bool, String)> {
+        let rs = self.restarter.clone()?;
+        let project = self
+            .list()
+            .into_iter()
+            .find(|s| s.identity == identity)?
+            .project;
+        Some(run_restart(&rs, project.as_deref(), identity, Some(reason)).await)
+    }
+
+    pub fn has_restarter(&self) -> bool {
+        self.restarter.is_some()
     }
 
     async fn tell(&self, to: &str, body: String) {
@@ -474,8 +470,55 @@ impl Sessions {
     }
 }
 
+/// `bridle session restart <identity>` (a handover first, with `reason` in the request); if the
+/// note never comes, again with `--fresh`. Whether the note came, and the last output.
+async fn run_restart(
+    rs: &Restarter,
+    project: Option<&str>,
+    identity: &str,
+    reason: Option<&str>,
+) -> (bool, String) {
+    let mut out = String::new();
+    for fresh in [false, true] {
+        let mut cmd = tokio::process::Command::new(&rs.program);
+        if let Some(p) = project {
+            cmd.args(["--project", p]);
+        }
+        cmd.args(["session", "restart", identity])
+            .current_dir(&rs.cwd)
+            .env_remove("BRIDLE_AGENT_ID")
+            .env_remove("BRIDLE_AS");
+        if fresh {
+            cmd.arg("--fresh");
+        } else if let Some(r) = reason {
+            cmd.args(["--reason", r]);
+        }
+        match cmd.output().await {
+            Ok(o) if o.status.success() => {
+                return (
+                    !fresh,
+                    String::from_utf8_lossy(&o.stdout).trim().to_string(),
+                );
+            }
+            Ok(o) => out = String::from_utf8_lossy(&o.stderr).trim().to_string(),
+            Err(e) => out = e.to_string(),
+        }
+    }
+    (false, out)
+}
+
+/// The identity `bridle status` lists for what a user types: a role (`advisor`, `aide`), or
+/// `advisor/<name>` (a bare name is an advisor's).
+pub fn session_identity(identifier: &str) -> String {
+    if identifier.contains('/') || matches!(identifier, "advisor" | "aide") {
+        identifier.to_string()
+    } else {
+        format!("advisor/{identifier}")
+    }
+}
+
 /// A note from the system to an external principal, delivered at once.
-async fn insert_note(store: &Store, emitter: &Emitter, to: &str, body: String) {
+pub(crate) async fn insert_note(store: &Store, emitter: &Emitter, to: &str, body: String) {
     let m = store
         .insert_message(NewMessage {
             from: "system".into(),

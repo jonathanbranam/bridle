@@ -1128,6 +1128,12 @@ pub mod event_kind {
     pub const SESSION_OVERRIDE: &str = "session.override";
     /// data: {identity, pid}. A registered interactive session ended (or its pid is gone).
     pub const SESSION_ENDED: &str = "session.ended";
+    /// data: {project, session, at, note}. A `[[restart]]` entry fired: the session was handed
+    /// over and restarted; `note` is false when no handover note came by the deadline.
+    pub const SESSION_RESTART_COMPLETED: &str = "session.restart.completed";
+    /// data: {project, session, at, reason}. A `[[restart]]` entry fired and found nothing to
+    /// restart (reason `not running`).
+    pub const SESSION_RESTART_SKIPPED: &str = "session.restart.skipped";
     /// data: {task, branch}. `bridle land` began merging.
     pub const INTEGRATE_STARTED: &str = "integrate.started";
     /// data: {task, branch, ok, commit?, error?}
