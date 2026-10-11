@@ -10,6 +10,7 @@ specs: []
 blocked_by: [br-3k7d]
 related: [br-3k7d]
 theme: agents-and-cli
+resolved: 2026-10-11T11:59:03Z
 ---
 
 ## The ask
