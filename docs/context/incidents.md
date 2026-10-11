@@ -1714,3 +1714,13 @@ battery fell from 99% to 70% in 27 minutes (about 1.1% a minute) with two worker
   assumed the clause applied instead of running the command.
 - **Category:** `role`.
 - **Follow-up:** none (no bridle defect). The orchestrator runs `bridle link` for every ID it names.
+
+## 2026-10-11 14:55: a self-upgrade restart cut off br-e7e2's land and left the task stuck at `claimed`
+
+- **What happened:** manager-2's `bridle task land br-e7e2` merged and pushed (9e6a164b on main),
+  then the self-upgrade restart stopped it before the task was marked done. The claims row was
+  deleted but the state stayed `claimed`; `task done`, `land`, `claim` and `release` all refuse it.
+- **Impact:** a done task shows as claimed in the queue; nothing waits on it.
+- **Cause:** `clear_claim` and `set_task_state` are separate store writes, not one transaction.
+- **Category:** `daemon`.
+- **Follow-up:** br-w6ww (with the PdM).
