@@ -52,6 +52,16 @@ Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or los
 - **Follow-up:** [[flaky-renew-test-resume-of-a-session-that-never-started-uses-uwcw|uwcw]], for the
   PdM to schedule after features ship (the human's flaky-test rule, 2026-10-11).
 
+## 2026-10-11 13:55: main red on macOS again: the same renew_test flake
+
+- **What happened:** CI on `main` at 39e33fa0 (a ticket commit on top of br-res3 a8e606aa) failed on
+  macos-latest only, the same test and assertion as 05:54 (run 38144038514). manager-2 held all
+  landings because it can't read CI logs (`gh` is denied to it).
+- **Impact:** `main` red ~5 minutes; landings held until the orchestrator answered.
+- **Cause:** the flake in uwcw (still unknown underneath).
+- **Category:** `ci`.
+- **Follow-up:** test disabled with `#[ignore]` naming uwcw (9974ff89); uwcw stays the fix.
+
 ## 2026-10-11 04:20: main red on macOS: governor_test flaky a third time
 
 - **What happened:** CI on `main` at 7cf05257 (a ticket-only commit) failed on macos-latest only:
