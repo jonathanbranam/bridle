@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.6.1] - 2026-10-11
+
 - The daemon commits its own edits to documents under review (`[sent]`/`[read]` marks, thread IDs) as one `review: bridle updates comment marks on <path>` commit after the file has been still for 10 seconds, so the clone is no longer left dirty; only on the owner clone, and never over a file with someone else's uncommitted changes (br-fd8e).
 - Mail between daemons shows its state: `bridle status` has an `outbox` line per destination with mail waiting, `bridle message show <id>` says queued, arrived or delivered, mail undelivered over an hour (`[messages] undelivered_report_mins`) is reported once to the human through the aide, and `bridle recipients` lists who a session can message and which other daemons it can reach (br-cufw, 3haz slice 4, bp2v).
 - Every wake reason a project daemon raises for the orchestrator (incident, exit, crash, stall, failed CI, budget hold, usage, context) is also sent as a `system` message to the home daemon of a visiting `orchestrator@<machine>` token, so one waiter on the home daemon hears all projects; the old per-project wake path still works (br-rhba, 3haz slice 5).
