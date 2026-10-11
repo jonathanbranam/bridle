@@ -307,6 +307,57 @@ automated readers, and the IAU working group's
 | maia, electra, merope, alcyone | Sisters of the Pleiades: a family set. |
 | mira, izar, thuban, rana | Short and unusual. |
 
+**Planets, moons and asteroids** (the solar system: about 300 named moons and tens of thousands of
+named asteroids, so it won't run out. Many are also gods. None dictation-tested.)
+
+Planets and dwarf planets:
+
+| Name | Notes |
+|---|---|
+| mercury, venus, mars, jupiter, saturn, neptune | Mercury and mars are also a god and a candy; jupiter is long-ish. |
+| pluto, ceres, eris | Dwarf planets; short. Eris is also the goddess of strife. |
+| haumea, makemake, sedna, quaoar | Far-out dwarf planets; makemake and quaoar are hard to say and spell. |
+| uranus, earth | Leave out: one invites jokes, the other is too generic. |
+
+Moons:
+
+| Name | Moon of | Notes |
+|---|---|---|
+| luna | Earth | Also a common pet name. |
+| phobos, deimos | Mars | A pair: fear and dread. |
+| io, europa, ganymede, callisto | Jupiter (the Galilean moons) | `io` is two letters and also "I/O"; ganymede is long. |
+| amalthea, himalia, metis, thebe | Jupiter | |
+| titan, rhea, dione, tethys, mimas | Saturn | Titan is also a Star Trek ship. |
+| enceladus, iapetus, hyperion, phoebe | Saturn | Enceladus and iapetus are hard to spell. |
+| janus, pandora, atlas, prometheus | Saturn | All gods too; atlas is a common product name. |
+| miranda, ariel, oberon, titania, puck, umbriel | Uranus (named from Shakespeare and Pope) | Miranda and ariel are personal names too. |
+| triton, proteus, nereid, larissa | Neptune | |
+| charon, nix, hydra, styx, kerberos | Pluto | Short; the underworld set. Hydra is also a constellation. |
+
+Asteroids and other small bodies:
+
+| Name | Notes |
+|---|---|
+| vesta, pallas, juno, hygiea | The four big main-belt asteroids. |
+| psyche | The metal asteroid NASA's probe is visiting. |
+| eros, ida, gaspra, mathilde, lutetia | Visited by probes; ida has its own moon, dactyl. |
+| itokawa, ryugu, bennu | Sampled by probes, and the samples brought home. |
+| didymos, dimorphos | The pair DART hit. |
+| apophis | The near-Earth one; also the Egyptian serpent of chaos. |
+| arrokoth | The farthest body a probe has visited (New Horizons). |
+
+Fictional planets, from franchises already in this file:
+
+| Name | From | Notes |
+|---|---|---|
+| vulcan, bajor, risa | Star Trek | |
+| tatooine, hoth, endor, naboo, dagobah | Star Wars | Hoth and endor are short. |
+| coruscant, alderaan | Star Wars | Long. |
+| caprica | Battlestar Galactica | |
+| magrathea | The Hitchhiker's Guide to the Galaxy | Long. |
+| gallifrey, skaro | Doctor Who | Skaro is already a spare. |
+| arrakis, caladan, trantor, terminus | Dune; Foundation | Also under those themes. |
+
 **Gods: Greek, Norse and Roman** (big pantheons, so plenty of room; many are also product,
 planet or Marvel names)
 
