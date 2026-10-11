@@ -4,7 +4,7 @@ title = "Migration: backfill ticket kind and two-way task links in every bridle 
 kind = "feature"
 state = "claimed"
 created_at = "2026-10-01T19:46:02.983Z"
-updated_at = "2026-10-11T13:39:57.462060Z"
+updated_at = "2026-10-11T14:03:59.219952Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -12,6 +12,7 @@ watchers = [
     "agent:we7e2",
 ]
 size = "S"
+summary = "Migration 0006-backfill-ticket-kind (migrate.rs, ticket::backfill_kind): adds kind: to every docs/tickets file with frontmatter but no kind, from the state-branch row with its id, else a row naming it in 'ticket', else chore; read with git so a stopped daemon is fine; automatic (not manual_only), protected-branch guard and uncommitted refusal apply. ticket check now errors on a missing kind (const removed). Run on this repo in a separate commit: 176 missing-kind warnings cleared, urdm got resolved: 2026-10-03; ticket check is clean. Docs: migrations.md, CHANGELOG. Caveat: docs/spikes are not ticket-checked and not touched; the daemon is not asked, only the state branch."
 +++
 
 Ticket: docs/tickets/open/tickets-get-a-kind-kinds-are-editable-tickets-and-tasks-link-v3dk.md, section 'Migration'. REFRESHED 2026-10-11 against the everything-is-a-ticket epic (22ab), per the PdM thread: the human approved this task and the old parked terms are void. Starts only after br-res3 is integrated (both rewrite ticket files; avoid a merge conflict like 3v75's).
