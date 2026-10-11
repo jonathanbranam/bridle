@@ -91,10 +91,10 @@ Broader sci-fi pairs, places rather than ships, just "two vaguely related things
 | terminus | trantor | Foundation | Opposite ends of the galaxy; trantor is also an idea for the cloud. |
 | caprica | picon | Battlestar Galactica | Two of the Twelve Colonies. |
 | ~~abydos~~ | ~~chulak~~ | Stargate | The first two worlds through the gate. Struck: "can't pronounce". |
-| ariel | osiris | Firefly | Two Core worlds. Ariel is also a name. The human: good. Both pass dictation. |
+| ~~ariel~~ | osiris | Firefly | Two Core worlds. Ariel struck: casual sentences make it Arial, the font. Osiris kept for later. |
 | vulcan | andoria | Star Trek | Neighbours and old rivals, founders of the Federation. The human: might work, will consider. |
 
-Advisor's pick: **`mars`** (Windows) and **`phobos`** (WSL2), **`vega`** (NUC), **`proxima`**
+Leading: **`romulus`** (Windows) and **`remus`** (WSL2), both tested; **`vega`** (NUC), **`proxima`**
 (EC2). Each is eight letters or fewer, and none sounds like another.
 
 **Reserved:** `arrakis`, "saved for something special in the future"; `canopus` and `arrakis` are
@@ -119,7 +119,7 @@ Or let each son pick from the theme (a c2 tip: let the owner choose from the set
 |---|---|---|---|
 | MacBook Pro (this one) | dalek | dalek | Kept: "it's been dalek for a long time"; "too much work to change" (the human). |
 | Intel NUC | nuc | vega | "NUC" is a type, and dictation hears "Nook". Was `sonic`; see "Working idea". |
-| Windows desktop, running WSL2 | EzekielsPC | mars (Windows), phobos (WSL2) | The human couldn't settle on `tardis` (2026-10-11). See "WSL2 and its name" below. |
+| Windows desktop, running WSL2 | EzekielsPC | romulus (Windows), remus (WSL2) | The human couldn't settle on `tardis` (2026-10-11). See "WSL2 and its name" below. |
 | EC2 | (none) | proxima, luna | The edge box (the NUC's tunnel fallback). Was `terminus`. |
 | Future cloud servers | | planets, moons, stations | The wanderers. |
 | Other MacBook Pros | | nostromo, serenity, voyager, defiant | Ships, because laptops travel. Only those that run bridle or join Tailscale. |
@@ -241,6 +241,12 @@ which bridle and the agents name all the time.
 
 Then `romulus` and `remus` (2026-10-11, the system not noted): "Remus" twice out of twice,
 "Romulus" once out of once. **Both pass.**
+
+**`ariel` struck** (the human, 2026-10-11): where the sentence makes clear it's a computer or a
+person, dictation writes "Ariel"; in a casual sentence it writes "Arial", the font. `romulus` and
+`remus` "work great consistently every single time" and are easy to spell. `osiris` is kept for a
+future machine, alone or with a partner: `bennu` (NASA's OSIRIS-REx probe sampled the asteroid
+Bennu, and in Egyptian myth the Bennu bird belongs to Osiris), or `horus` (his son).
 
 ## Themes
 
