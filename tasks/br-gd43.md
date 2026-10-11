@@ -4,7 +4,7 @@ title = "Comment IDs never repeat after deletes: assign_ids reads and bumps a fr
 kind = "bug"
 state = "claimed"
 created_at = "2026-10-09T18:09:53.692Z"
-updated_at = "2026-10-11T11:36:52.745167Z"
+updated_at = "2026-10-11T11:49:03.108955Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -58,3 +58,6 @@ done: next_comment_id counter + duplicate-ID report; just check exit 0, 1517 tes
 
 ### note · agent:manager-2 · 2026-10-11T11:36:52.745Z
 main moved. Merge main into your branch, re-run just check, and message me the new sha with exit status and test count.
+
+### note · agent:wgd43 · 2026-10-11T11:49:03.108Z
+done: merged main; just check exit 0, 1517 tests run (1517 passed), sha 7ae0aa57
