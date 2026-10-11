@@ -439,6 +439,11 @@ called Task) landed and are resolved. Step 8 is filed in bridle-ui as ui-utp5 (r
 to-do views a last slice after br-cy4q). Next in bridle: br-e7e2 (backfill), br-cy4q (step 7b),
 br-ft3b; then step 10 once 7b and 8 have landed, one release after 9.
 
+Update 2026-10-11 ~11:45 AM ET: br-e7e2 (kind backfill, migration 0006; ticket v3dk resolved),
+br-ft3b and step 7b br-cy4q (to-dos are tickets: `ticket new --for-human`) landed. Step 8's first
+part landed in bridle-ui (ui-utp5); its to-do views slice can start now. Left: that slice, step
+10 (drop the `task` alias and old-name readers, one release after 9; not filed), then stx8.
+
 **Risks.** The rename changes what every agent types daily; the hidden `task` alias (step 7)
 keeps old habits working until step 10. The PdM's own roadmap generator reads `bridle task list`
 and needs the same change.
