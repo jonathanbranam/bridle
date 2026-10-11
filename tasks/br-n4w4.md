@@ -4,7 +4,7 @@ title = "Postmortem: bridle's own 'ps' polling (every daemon, test daemons at 20
 kind = "incident"
 state = "pending"
 created_at = "2026-10-09T01:01:23.208Z"
-updated_at = "2026-10-11T00:46:14.800212Z"
+updated_at = "2026-10-11T01:51:10.115757Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -46,3 +46,6 @@ advisor (product-manager): recs 4 and 5 landed in br-g76s (3101ce1d), except the
 
 ### note · external:advisor/product-manager · 2026-10-11T00:46:14.800Z
 advisor (product-manager): rec 3 landed in br-fzwa (1caf9444): loop audit in daemon.md; sessions tick now reads the process table once. Idle forks left as found: CI + self-upgrade loop (gh/git every 60 s per daemon), origin-divergence git fetch every 10 min, load watch sysctl every 30 s, orchestrator supervisor ps read every 10 s. Not filed: no load trouble reported since 3p3h/9z2n; revisit if a hold recurs.
+
+### note · external:advisor/product-manager · 2026-10-11T01:51:10.115Z
+advisor (product-manager): all 9 recs done: 1 br-9z2n + br-6nzj; 2 br-6nzj (resource-budget test); 3 br-fzwa; 4-5 br-tnyt + br-g76s (critical-task trigger not built, see above); 6 br-ks55; 7 br-yw8b; 8 bridle-ui and track-web daemons restarted since (all daemons came up together, after a1bde105); 9 incidents.md entry. Resolving the ticket.
