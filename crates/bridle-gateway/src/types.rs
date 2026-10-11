@@ -17,7 +17,7 @@ use crate::items::{Decision, Items, Priority, ProjectItems, Todo};
 use crate::messages::{MessageRequest, MessageSent, Recipients};
 use crate::specs::{ProjectSpecs, SpecDiagnostic, SpecFile, SpecRequirement, SpecScenario};
 use crate::system::{AgentList, SystemView};
-use crate::tasks::{ClaimAgent, TaskDetail, TaskList, TaskSummary, ThreadItem};
+use crate::tasks::{ClaimAgent, TaskDetail, TaskList, TaskSummary, ThreadItem, TicketList};
 use crate::ui::UiHealth;
 
 /// Writes every API type (and what it depends on) into `dir`.
@@ -48,6 +48,7 @@ pub fn export_all(dir: &Path) -> Result<(), ts_rs::ExportError> {
     ReviewRequest::export_all(&config)?;
     ReviewResult::export_all(&config)?;
     TaskList::export_all(&config)?;
+    TicketList::export_all(&config)?;
     TaskSummary::export_all(&config)?;
     TaskDetail::export_all(&config)?;
     ThreadItem::export_all(&config)?;

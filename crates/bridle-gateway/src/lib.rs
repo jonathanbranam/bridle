@@ -77,6 +77,13 @@ pub fn router(login: Option<Login>, ui: UiConfig, interactions: report::Interact
             "/projects/{project}/tasks/{id}/{action}",
             post(actions::act_route),
         )
+        // The ticket names (22ab step 8); the task routes above stay for one release.
+        .route("/projects/{project}/tickets", get(tasks::ticket_list_route))
+        .route("/projects/{project}/tickets/{id}", get(tasks::detail_route))
+        .route(
+            "/projects/{project}/tickets/{id}/{action}",
+            post(actions::act_route),
+        )
         .fallback(|| async { axum::http::StatusCode::NOT_FOUND })
         .layer(middleware::from_fn_with_state(
             auth.clone(),
@@ -527,6 +534,41 @@ mod tests {
                 .expect("str")
                 .contains("unknown action")
         );
+    }
+
+    #[tokio::test]
+    async fn ticket_routes_answer_like_the_task_routes() {
+        let base = start(Some(login())).await;
+        let cookie = cookie_pair(&post_login(&base, "jo", "right").await);
+        let call = |post: bool, path: String| {
+            let c = reqwest::Client::new();
+            let req = if post { c.post(path) } else { c.get(path) };
+            req.header(reqwest::header::COOKIE, &cookie).send()
+        };
+        let p = "no-such-project-aejj";
+        for (post, tail) in [
+            (false, ""),
+            (false, "/t-1"),
+            (true, "/t-1/land"),
+            (true, "/t-1/done"),
+        ] {
+            let old = call(post, format!("{base}/projects/{p}/tasks{tail}"))
+                .await
+                .expect("old");
+            let new = call(post, format!("{base}/projects/{p}/tickets{tail}"))
+                .await
+                .expect("new");
+            assert_eq!(old.status(), new.status(), "{tail}");
+            assert_eq!(
+                old.text().await.expect("text"),
+                new.text().await.expect("text"),
+                "{tail}"
+            );
+        }
+        let anon = reqwest::get(format!("{base}/projects/p/tickets"))
+            .await
+            .expect("get");
+        assert_eq!(anon.status(), 401);
     }
 
     #[tokio::test]

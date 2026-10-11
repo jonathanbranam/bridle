@@ -214,7 +214,10 @@ task not integrated or dropped, `closed` is integrated or dropped. Each `TaskSum
 `agent:<name>` and the daemon knows it, else null) and `updated`. `GET .../tasks/{id}` returns
 `TaskDetail` for a task in any state (so closed tasks open from links): the summary plus `body`,
 `thread`, `watchers`, `branch`, and its `blocks` and `blocked_by` task ids (from `/v1/edges`; other
-edge kinds aren't shown). An unknown project is 404, an unknown task the daemon's 404. Not built:
+edge kinds aren't shown). The same routes also answer under ticket names (br-aejj, 22ab step 8):
+`.../tickets`, `.../tickets/{id}` and `POST .../tickets/{id}/{action}` run the same handlers; the
+only JSON difference is the list, `TicketList {project, tickets}`. The `tasks` routes stay unchanged
+for one release (bridle-ui moves over in its own change). An unknown project is 404, an unknown task the daemon's 404. Not built:
 live updates (events; static first) and tickets (until their IDs settle, j28f).
 
 **System and agents, read-only (br-7sd9, ticket 7sd9; `system.rs`).** For the UI's System page.

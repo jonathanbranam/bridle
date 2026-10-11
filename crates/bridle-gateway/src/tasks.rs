@@ -70,6 +70,14 @@ pub struct TaskList {
     pub tasks: Vec<TaskSummary>,
 }
 
+/// `TaskList` under its ticket name (22ab step 8): the same rows, keyed `tickets`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
+pub struct TicketList {
+    pub project: String,
+    /// Most recently updated first.
+    pub tickets: Vec<TaskSummary>,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
 pub struct ThreadItem {
     pub kind: String,
@@ -221,6 +229,18 @@ pub async fn list_route(
     Ok(Json(list(&client, &project, q.state).await?))
 }
 
+/// `GET /api/v1/projects/{project}/tickets?state=...`: `list_route` with the list keyed `tickets`.
+pub async fn ticket_list_route(
+    project: Path<String>,
+    q: Query<ListQuery>,
+) -> Result<Json<TicketList>, ActionError> {
+    let Json(l) = list_route(project, q).await?;
+    Ok(Json(TicketList {
+        project: l.project,
+        tickets: l.tasks,
+    }))
+}
+
 /// `GET /api/v1/projects/{project}/tasks/{id}`: any state.
 pub async fn detail_route(
     Path((project, id)): Path<(String, String)>,
@@ -301,6 +321,18 @@ mod tests {
         let agent = l.tasks[1].agent.as_ref().expect("agent");
         assert_eq!((agent.name.as_str(), agent.role.as_str()), ("w1", "worker"));
         assert_eq!(l.tasks[0].agent, None);
+    }
+
+    #[test]
+    fn ticket_list_is_the_task_list_keyed_tickets() {
+        let l = TicketList {
+            project: "p".into(),
+            tickets: vec![],
+        };
+        assert_eq!(
+            serde_json::to_value(&l).expect("json"),
+            json!({"project": "p", "tickets": []})
+        );
     }
 
     #[tokio::test]

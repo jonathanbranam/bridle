@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+- The gateway serves tickets under ticket names (br-aejj, 22ab step 8, gateway slice): `GET /api/v1/projects/{project}/tickets?state=`, `.../tickets/{id}` and `POST .../tickets/{id}/{action}` run the same handlers as the `tasks` routes; the list is keyed `tickets` (the `tasks` list keeps its `tasks` key). The task routes stay unchanged for one release. No migration.
 - Roles, rules, skills and docs say ticket, not task (br-sehn, 22ab step 8, slice 2): `workflow/base/` and the design docs use the `bridle ticket` commands; `bridle task new --for-human/--from` and `bridle task ready` remain where `ticket` has no form yet. Reaches projects through the normal workflow sync.
 
 - `bridle ticket` takes over the row commands (br-q8cs, 22ab step 7, CLI slice): `ticket list|edit|plan|priority|kind|drop|done|summary|reopen|skip-settle|watch|unwatch|search|claim|release|queue|land|conflict|impact` run the same handlers as `bridle task`, with the same `--json` output and help text saying "ticket". `bridle task` stays as a hidden alias for one release, unchanged, so scripts keep working. The `new`, `ready`, `comment`, `ask`, `answer` and `show` ticket forms are unchanged; JSON field names, event names and the daemon's messages keep "task" until the code rename. No migration.
