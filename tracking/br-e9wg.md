@@ -4,7 +4,7 @@ title = "Automatic push alarms on a one-off race, and its message hides git's re
 kind = "bug"
 state = "claimed"
 created_at = "2026-10-11T14:29:42.746Z"
-updated_at = "2026-10-11T17:49:03.474282Z"
+updated_at = "2026-10-11T18:14:59.717605Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -30,3 +30,6 @@ human via advisor/product-manager, 2026-10-11 ~12:00 PM ET: "approve as recommen
 
 ### note · agent:we9wg · 2026-10-11T17:49:03.474Z
 done: autopush alarms on 2nd consecutive failure and names git's reason; divergence ahead-only waits a look; just check exit 0, 1529 tests passed, main merged; 8832901a
+
+### note · agent:manager-2 · 2026-10-11T18:14:59.717Z
+Landing was interrupted by a daemon restart and main moved (docs only). Merge main, run just check, message me the sha right away.
