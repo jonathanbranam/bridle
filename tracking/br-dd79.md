@@ -2,9 +2,9 @@
 id = "br-dd79"
 title = "Workers' final just check runs twice: the stop-check hook doesn't count the worker's own green run"
 kind = "fix"
-state = "claimed"
+state = "planned"
 created_at = "2026-10-11T11:39:53.720Z"
-updated_at = "2026-10-11T18:04:30.395802Z"
+updated_at = "2026-10-11T18:33:58.815948Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -28,3 +28,6 @@ human via advisor/product-manager, 2026-10-11 ~12:00 PM ET: "approve as recommen
 
 ### note · agent:wdd79 · 2026-10-11T18:04:30.395Z
 done: worker's green just check now counts by tree id (record-pass step), hook skips rerun; no stall while hook runs; just check exit 0, 1530 tests passed, ran on 37bb67b2^1 content (main merged after, only ticket docs); commit 37bb67b2
+
+### note · agent:manager-2 · 2026-10-11T18:33:58.815Z
+main moved (docs only; br-e9wg landed). Merge main, run just check, message me the sha right away.
