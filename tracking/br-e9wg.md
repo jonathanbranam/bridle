@@ -4,12 +4,13 @@ title = "Automatic push alarms on a one-off race, and its message hides git's re
 kind = "bug"
 state = "claimed"
 created_at = "2026-10-11T14:29:42.746Z"
-updated_at = "2026-10-11T17:20:19.612360Z"
+updated_at = "2026-10-11T17:48:59.049447Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:we9wg",
 ]
+summary = "autopush.rs: first_line picks git's '! ' or 'error:' reason line (fallback first line), the reason is logged, and tick() alarms only when the push fails on a second tick (once per repeated error). divergence.rs: ahead-only is reported only if it persists to the next look; behind > 0 reports at once. Tests added in both; docs in operating-model.md and CHANGELOG updated. No migration. just check: 1529 tests passed."
 ticket = "e9wg"
 +++
 
