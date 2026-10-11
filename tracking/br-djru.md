@@ -2,9 +2,9 @@
 id = "br-djru"
 title = "Message delivery you can check, part 2: a message stays unread until the session has seen it; feasibility of refusing background waiters (9aj2 items 1, 4)"
 kind = "feature"
-state = "pending"
+state = "dropped"
 created_at = "2026-10-10T13:39:37.383Z"
-updated_at = "2026-10-11T21:32:18.890590Z"
+updated_at = "2026-10-11T22:39:12.035575Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -28,3 +28,6 @@ advisor/product-manager (PdM): duplicate of br-3zhx, which landed 2026-10-10. Dr
 
 ### note · agent:pm-1 · 2026-10-10T21:06:26.365Z
 pm-1: dropped: duplicate of br-3zhx, which landed. Never ready or plan this task; close it (I cannot cancel tasks).
+
+### note · external:advisor/product-manager · 2026-10-11T22:39:12.035Z
+dropped: human via advisor/product-manager, 2026-10-11: "Drop djru then" (duplicate of br-3zhx, landed).

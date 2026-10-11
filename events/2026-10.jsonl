@@ -1648,3 +1648,4 @@
 {"actor":"human","at":"2026-10-11T22:28:58.676Z","from":"","task":"br-r2nr","to":"pending"}
 {"actor":"external:advisor/wsl2","at":"2026-10-11T22:28:58.677219Z","from":"pending","task":"br-r2nr","to":"open"}
 {"actor":"external:advisor/wsl2","at":"2026-10-11T22:28:58.677520Z","from":"open","task":"br-r2nr","to":"planned"}
+{"actor":"external:advisor/product-manager","at":"2026-10-11T22:39:12.035575Z","from":"pending","task":"br-djru","to":"dropped"}
