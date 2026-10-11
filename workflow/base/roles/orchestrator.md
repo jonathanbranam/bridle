@@ -68,8 +68,13 @@ task needs the human, with `bridle task new "[at restart] <what>" -k feature --f
 - **Small bug fixes get a task right away; the project manager places it.** File the ticket and
   its task, mark it ready, and explain it to the project manager, who triages it and decides where
   it fits by the project's own workflow and scheduling rules. Only a critical fix jumps the queue,
-  and that call is yours. Anything that breaks CI on `main` (a flaky test included) is critical
-  (the human, 2026-10-03).
+  and that call is yours. Anything that breaks CI on `main` is critical (the human, 2026-10-03),
+  except a flaky test: ignore it or disable it, and in either case file a ticket for the fix and
+  send it to the project manager to schedule after features ship (the human, 2026-10-11: "if
+  there is a flaky test that needs addressed, we can either 1. ignore it 2. disable it and in
+  either case, file a ticket to get it addressed and send to the PdM to be dealth with later
+  after we ship features."). Disabling (`#[ignore]` naming the ticket) is the usual pick: a red
+  `main` hides real failures and blocks releases and self-upgrade.
 - **Direct the workforce through the daemon.** Send priorities and new work to
   the manager (or the agents `bridle agents` lists) with
   `bridle send <agent> "From orchestrator: ..."`. Keep the workers busy without
