@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 - Externals (orchestrator, advisors, aides) can use `bridle schedule add|list|rm` for themselves, and a bare external name (`advisor/<name>`, `aide`, `orchestrator`) now resolves as a recipient for `send` and `schedule` when no agent has that name (br-3k7d).
+- Ticket ids are project-qualified (`id: br-k7tm`, and in `blocked_by`, `related`, `parent`): `ticket new`/`set` write the qualified form and expand a bare id (this project first, else exactly one other registered project; ambiguous or unknown is refused with the candidates), `ticket check` accepts both forms and matches the file-name tail to the id without its prefix, `parent` may name a ticket in another project, and a daemon refuses to register a task prefix another project already uses (br-epvy, syqn part 2; no migration, existing tickets are not rewritten).
 - `bridle task watch|unwatch --project <p> <task>` works across projects and machines: your own daemon registers the watch on the task's daemon with its peer token (`POST /v1/watch/remote`, `POST /v1/watch`), and that daemon's task updates reach your inbox as messages through its outbox, queued and retried while yours is down (br-qac3, 3haz slice 6, Q3).
 ## [0.6.1] - 2026-10-11
 

@@ -19,6 +19,14 @@ pub enum DiscoveryError {
     /// A resolution failure with an actionable, user-facing message.
     #[error("{0}")]
     Message(String),
+    #[error(
+        "task prefix {prefix:?} of project {project} is already used by project {other}; set a different `prefix` in [tasks] of its .bridle/config.toml"
+    )]
+    DuplicatePrefix {
+        prefix: String,
+        project: String,
+        other: String,
+    },
     #[error("{path}: {source}")]
     Io { path: PathBuf, source: io::Error },
     #[error("{path}: {source}")]
@@ -169,6 +177,18 @@ pub fn write_registry(info: &DaemonInfo) -> Result<(), DiscoveryError> {
 
 fn write_registry_in(dir: &Path, info: &DaemonInfo) -> Result<(), DiscoveryError> {
     fs::create_dir_all(dir).map_err(|e| DiscoveryError::io(dir, e))?;
+    // Qualified ids (`br-k7tm`) only name a project if prefixes are unique across projects.
+    if let Some(prefix) = &info.task_prefix
+        && let Some(other) = list_registry_in(dir)
+            .into_iter()
+            .find(|d| d.project != info.project && d.task_prefix.as_ref() == Some(prefix))
+    {
+        return Err(DiscoveryError::DuplicatePrefix {
+            prefix: prefix.clone(),
+            project: info.project.clone(),
+            other: other.project,
+        });
+    }
     atomic_write_json(&dir.join(format!("{}.json", info.project)), info)
 }
 
@@ -624,6 +644,7 @@ mod tests {
             pid,
             started_at: Utc::now(),
             version: "0.1.0".to_string(),
+            task_prefix: None,
         }
     }
 
@@ -691,6 +712,22 @@ mod tests {
         assert_eq!(listed[0].project, "alive-project");
         assert!(!dir.path().join("dead-project.json").exists());
         assert!(dir.path().join("alive-project.json").exists());
+    }
+
+    #[test]
+    fn registry_refuses_a_duplicate_task_prefix() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut a = sample_daemon_info("alpha", dir.path(), std::process::id() as i32);
+        a.task_prefix = Some("al".into());
+        write_registry_in(dir.path(), &a).unwrap();
+        let mut b = sample_daemon_info("alps", dir.path(), std::process::id() as i32);
+        b.task_prefix = Some("al".into());
+        let err = write_registry_in(dir.path(), &b).unwrap_err().to_string();
+        assert!(err.contains("alpha"), "{err}");
+        // Re-registering the same project, or a different prefix, is fine.
+        write_registry_in(dir.path(), &a).unwrap();
+        b.task_prefix = Some("ap".into());
+        write_registry_in(dir.path(), &b).unwrap();
     }
 
     #[test]

@@ -237,6 +237,7 @@ mod tests {
                 pid: 1,
                 started_at: chrono::Utc::now(),
                 version: String::new(),
+                task_prefix: None,
             },
         )
         .unwrap();

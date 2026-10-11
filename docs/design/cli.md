@@ -304,7 +304,7 @@ bridle ticket resolve <id>                   stamps `resolved: <UTC date-time>` 
                                              touch the task. Both are local file work, no daemon start-up
 bridle ticket set <id> <field> <value>       edits one frontmatter field of an open or resolved ticket: `title`,
                                              `kind` (any time; independent of its tasks' kinds), `theme` (a slug), `parent` (one id, bare or `<prefix>-<id>`), or a list field (`repos`, `changes`, `specs`, `blocked_by`, `related`, `tasks`) given
-                                             comma-separated (empty clears it); the old names (`needs`, `see`) map to the new; refuses `id`, `created`, `resolved`
+                                             comma-separated (empty clears it); `blocked_by`, `related` and `parent` references are written project-qualified (`br-k7tm`; a bare id is expanded, ambiguous or unknown ones are refused listing candidates); a `<id>` argument may be bare or qualified, but one qualified with another project's prefix is refused; the old names (`needs`, `see`) map to the new; refuses `id`, `created`, `resolved`
                                              (and their old names `opened`, `closed`) and unknown fields. Local file work
 bridle ticket check [--quiet]                checks every ticket in `docs/tickets/{open,resolved}`: all of id,
                                              title, created, repos, changes, specs, blocked_by, related present; `resolved`

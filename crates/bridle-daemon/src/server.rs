@@ -1041,6 +1041,7 @@ async fn status(
             url: state.url.clone(),
             pid: state.pid,
             started_at: state.started_at,
+            task_prefix: Some(state.tasks.prefix().to_string()),
             version: state.version.clone(),
         },
         principal: principal.id,

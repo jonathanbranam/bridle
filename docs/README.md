@@ -56,6 +56,7 @@ design moves on; the design docs cite them.
 - `bridle ticket set <id> <field> <value>` edits the frontmatter and `bridle ticket check`
   verifies frontmatter, IDs, `blocked_by`/`related` and links; shipped to every project as the `tickets`
   rule (`workflow/base/rules/tickets.md`).
+- Ids are project-qualified (syqn part 2): `id: br-k7tm`, and every reference (`blocked_by`, `related`, `parent`, `tasks`) uses the same form; file names stay bare (`<slug>-k7tm.md`) and `ticket check` matches the tail to the `id:` without its prefix. Writers (`ticket new`, `set`) write the qualified form and expand a bare `k7tm` (this project first, else exactly one other registered project; ambiguous or unknown is refused with the candidates); readers accept both, so existing tickets keep working until the rename migration. Prefixes are unique across registered projects (a daemon whose prefix is taken refuses to register).
 - The same frontmatter: `id`, `title`, `kind` (a task kind; editable with `ticket set`),
   `created`, `created_by` (optional: the principal that created it, e.g. `external:aide`, taken from the
   caller's identity by `ticket new`; older tickets have none and `ticket check` accepts that), `repos`, `changes`, `specs`, `blocked_by`, `related`, `parent` (optional: one ticket id, bare or `<prefix>-<id>`; the epic this belongs to), `theme` (optional: a slug of lowercase letters, digits and hyphens, e.g. `human-ui`; any well-formed slug, no registry yet), `tasks` (every task made from the

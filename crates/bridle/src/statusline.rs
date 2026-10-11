@@ -399,6 +399,7 @@ mod tests {
                 pid: 1,
                 started_at: Utc::now(),
                 version: "0.1.0".to_string(),
+                task_prefix: None,
             },
             principal: "external:statusline".to_string(),
             agents_by_state: agents_by_state

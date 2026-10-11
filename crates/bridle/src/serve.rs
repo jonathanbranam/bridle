@@ -479,6 +479,7 @@ mod tests {
                 pid: child.id() as i32,
                 started_at: chrono::Utc::now(),
                 version: "t".into(),
+                task_prefix: None,
             },
         )
         .unwrap();

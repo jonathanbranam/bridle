@@ -91,6 +91,9 @@ pub struct DaemonInfo {
     pub pid: i32,
     pub started_at: DateTime<Utc>,
     pub version: String,
+    /// The project's task and ticket id prefix (`br`). Older daemons don't write it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub task_prefix: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

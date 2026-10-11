@@ -10,6 +10,8 @@ Tickets live in `docs/tickets/open/` and `docs/tickets/resolved/`, one file each
   stamps `resolved:` and moves it to `resolved/`; `bridle ticket set <id> <field> <value>` edits
   `title`, `kind`, `repos`, `changes`, `specs`, `blocked_by`, `related`, `parent`, `theme` or `tasks` (the old `needs`/`see` still work). Don't create, rename, move or hand-edit
   the frontmatter of a ticket yourself.
+- IDs are project-qualified (`br-k7tm`) in `id:` and every reference; file names stay bare. A bare id
+  you type is accepted and expanded when unambiguous; old bare ids in existing tickets still read.
 - Write the body freely.
 - After a ticket changes, run `bridle ticket check`; fix what it reports about your own tickets.
 

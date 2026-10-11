@@ -595,7 +595,7 @@ async fn start_inner(
     let tasks = tasks::TaskManager::open(
         store.clone(),
         state_branch,
-        task_prefix,
+        task_prefix.clone(),
         config.claim_lease_after,
     )
     .await
@@ -668,6 +668,7 @@ async fn start_inner(
         pid: std::process::id() as i32,
         started_at: Utc::now(),
         version: env!("CARGO_PKG_VERSION").to_string(),
+        task_prefix: Some(task_prefix),
     };
     discovery::write_daemon_json(&ws.workspace, &info).context("writing daemon.json")?;
     // Serving: an upgrade that brought us here stands.

@@ -41,8 +41,8 @@ pub async fn run(cli: &Cli, args: &TicketArgs) -> Result<(), CliError> {
     match &args.action {
         TicketAction::New(a) => new(cli, &repo, a).await,
         TicketAction::Task(a) => task_cmd(cli, &repo, a).await,
-        TicketAction::Resolve(a) => resolve_cmd(&repo, a),
-        TicketAction::Set(a) => set_cmd(&repo, a),
+        TicketAction::Resolve(a) => resolve_cmd(cli, &repo, a).await,
+        TicketAction::Set(a) => set_cmd(cli, &repo, a).await,
         TicketAction::Check(a) => check_cmd(cli, &repo, a).await,
         TicketAction::Submit(_) => unreachable!("handled above"),
     }
@@ -96,16 +96,23 @@ async fn new(cli: &Cli, repo: &Path, args: &TicketNewArgs) -> Result<(), CliErro
         Ok(c) => c.status().await.ok().map(|s| s.principal),
         Err(_) => None,
     };
+    let prefix = own_prefix(cli, repo).await?;
+    let projects = Projects::from_registry(&prefix);
+    let qualify = |v: &[String]| -> anyhow::Result<Vec<String>> {
+        v.iter().map(|i| projects.qualify(&root, i)).collect()
+    };
+    let (blocked_by, related) = (qualify(&args.blocked_by)?, qualify(&args.related)?);
     let fields = Fields {
         title: &title,
         id: id.as_deref(),
         ask: &ask,
         kind,
         repos: &repos,
-        blocked_by: &args.blocked_by,
-        related: &args.related,
+        blocked_by: &blocked_by,
+        related: &related,
         created_by: created_by.as_deref(),
         theme: args.theme.as_deref(),
+        prefix: Some(&prefix),
     };
     if let Some(t) = fields.theme {
         check_theme(t)?;
@@ -149,7 +156,8 @@ async fn new(cli: &Cli, repo: &Path, args: &TicketNewArgs) -> Result<(), CliErro
 /// task is filed only now so it can never reach an agent before its brief is in git (k7tm).
 async fn task_cmd(cli: &Cli, repo: &Path, args: &TicketTaskArgs) -> Result<(), CliError> {
     let root = tickets_root(repo);
-    let path = find_by_id(&root.join("open"), &args.id)?;
+    let id = projects(cli, repo).await?.local(&args.id)?.to_string();
+    let path = find_by_id(&root.join("open"), &id)?;
     let text =
         std::fs::read_to_string(&path).with_context(|| format!("reading {}", path.display()))?;
     let (title, kind) = task_source(&text)?;
@@ -157,8 +165,8 @@ async fn task_cmd(cli: &Cli, repo: &Path, args: &TicketTaskArgs) -> Result<(), C
     ensure_committed(repo, &rel)?;
     let rel = rel.display().to_string();
     // The daemon gives the task the ticket's id from the `ticket` field (br-9e15).
-    let task_id = make_task(cli, &title, kind, &args.id, &rel).await?;
-    set(&root, &args.id, "tasks", &task_id)?;
+    let task_id = make_task(cli, &title, kind, &id, &rel).await?;
+    set(&root, &id, "tasks", &task_id)?;
     println!("{task_id}");
     Ok(())
 }
@@ -291,15 +299,36 @@ fn ticket_of(t: &bridle_api::Task) -> Option<String> {
     })
 }
 
-fn resolve_cmd(repo: &Path, args: &TicketResolveArgs) -> Result<(), CliError> {
+/// This project's id prefix: the running daemon's, else the one it would derive from the project
+/// name (the daemon's own default; a `[tasks] prefix` override is only known to the daemon).
+async fn own_prefix(cli: &Cli, repo: &Path) -> Result<String, CliError> {
+    if let Ok(c) = client_for(cli).await
+        && let Ok(s) = c.status().await
+        && let Some(p) = s.daemon.task_prefix
+    {
+        return Ok(p);
+    }
+    Ok(bridle_daemon::config::default_task_prefix(&project_name(
+        cli, repo,
+    )?))
+}
+
+async fn projects(cli: &Cli, repo: &Path) -> Result<Projects, CliError> {
+    Ok(Projects::from_registry(&own_prefix(cli, repo).await?))
+}
+
+async fn resolve_cmd(cli: &Cli, repo: &Path, args: &TicketResolveArgs) -> Result<(), CliError> {
     let now = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
-    let dest = resolve(&tickets_root(repo), &args.id, &now)?;
+    let id = projects(cli, repo).await?.local(&args.id)?.to_string();
+    let dest = resolve(&tickets_root(repo), &id, &now)?;
     println!("{}", dest.strip_prefix(repo).unwrap_or(&dest).display());
     Ok(())
 }
 
-fn set_cmd(repo: &Path, args: &TicketSetArgs) -> Result<(), CliError> {
-    let path = set(&tickets_root(repo), &args.id, &args.field, &args.value)?;
+async fn set_cmd(cli: &Cli, repo: &Path, args: &TicketSetArgs) -> Result<(), CliError> {
+    let projects = projects(cli, repo).await?;
+    let id = projects.local(&args.id)?;
+    let path = set_in(&tickets_root(repo), id, &args.field, &args.value, &projects)?;
     println!("{}", path.strip_prefix(repo).unwrap_or(&path).display());
     Ok(())
 }
@@ -307,7 +336,8 @@ fn set_cmd(repo: &Path, args: &TicketSetArgs) -> Result<(), CliError> {
 async fn check_cmd(cli: &Cli, repo: &Path, args: &TicketCheckArgs) -> Result<(), CliError> {
     let root = tickets_root(repo);
     let links = task_links(cli).await;
-    let report = check(&root, &repo.join("docs"), links.as_ref());
+    let projects = projects(cli, repo).await?;
+    let report = check_in(&root, &repo.join("docs"), links.as_ref(), &projects);
     for w in &report.warnings {
         eprintln!("warning: {w}");
     }
@@ -337,6 +367,9 @@ pub struct Fields<'a> {
     pub created_by: Option<&'a str>,
     /// A lasting area, as a slug (`reliability`); optional.
     pub theme: Option<&'a str>,
+    /// The project's id prefix: the new ticket's `id:` is then written `<prefix>-<id>` (syqn).
+    /// File names stay bare.
+    pub prefix: Option<&'a str>,
 }
 
 /// Write a new ticket into `<root>/open/`, creating the folders; returns its path.
@@ -366,8 +399,9 @@ pub fn create(
     } else {
         format!("{slug}-{id}.md")
     };
+    let qualified = f.prefix.map_or(id.clone(), |p| format!("{p}-{id}"));
     let text = format!(
-        "---\nid: {id}\ntitle: {}\nkind: {}\ncreated: {today}\n{}{}repos: {}\nchanges: []\nspecs: []\nblocked_by: {}\nrelated: {}\ntasks: []\n---\n\n## The ask\n\n{}",
+        "---\nid: {qualified}\ntitle: {}\nkind: {}\ncreated: {today}\n{}{}repos: {}\nchanges: []\nspecs: []\nblocked_by: {}\nrelated: {}\ntasks: []\n---\n\n## The ask\n\n{}",
         yaml_scalar(f.title),
         f.kind,
         f.created_by
@@ -409,6 +443,8 @@ pub fn resolve(root: &Path, id: &str, resolved: &str) -> anyhow::Result<PathBuf>
 
 /// The one `*-<id>.md` file in `dir`; errors on none or several.
 pub fn find_by_id(dir: &Path, id: &str) -> anyhow::Result<PathBuf> {
+    // File names are bare, so a qualified `br-k7tm` finds `*-k7tm.md`.
+    let id = split_id(id).1;
     let suffix = format!("-{id}.md");
     let mut hits: Vec<PathBuf> = match std::fs::read_dir(dir) {
         Ok(rd) => rd
@@ -441,6 +477,96 @@ pub fn id_of(path: &Path) -> Option<String> {
     let stem = path.file_stem()?.to_string_lossy();
     let id = stem.rsplit('-').next()?;
     (id.len() == ID_LEN && id.bytes().all(|b| ID_ALPHABET.contains(&b))).then(|| id.to_string())
+}
+
+/// Split `br-k7tm` into (`Some("br")`, `k7tm`); a bare `k7tm` (or anything not of that shape,
+/// such as a file stem) is (`None`, itself).
+pub fn split_id(id: &str) -> (Option<&str>, &str) {
+    match id.split_once('-') {
+        Some((p, t))
+            if !p.is_empty()
+                && p.bytes().all(|b| b.is_ascii_alphanumeric())
+                && t.len() == ID_LEN
+                && t.bytes().all(|b| b.is_ascii_alphanumeric()) =>
+        {
+            (Some(p), t)
+        }
+        _ => (None, id),
+    }
+}
+
+fn is_bare_id(s: &str) -> bool {
+    s.len() == ID_LEN && s.bytes().all(|b| ID_ALPHABET.contains(&b))
+}
+
+/// The projects an id can name: this one (`own`, its tickets under the `root` passed to each
+/// call) and the other registered ones (prefix, tickets root), for qualifying a bare id.
+#[derive(Debug, Default, Clone)]
+pub struct Projects {
+    pub own: Option<String>,
+    pub others: Vec<(String, PathBuf)>,
+}
+
+impl Projects {
+    /// Other registered projects (from the machine registry), minus this one.
+    pub fn from_registry(own: &str) -> Projects {
+        let others = bridle_api::discovery::list_registry()
+            .into_iter()
+            .filter_map(|d| {
+                let prefix = d.task_prefix?;
+                (prefix != own).then(|| (prefix, tickets_root(Path::new(&d.repo))))
+            })
+            .collect();
+        Projects {
+            own: Some(own.to_string()),
+            others,
+        }
+    }
+
+    /// The bare id of a ticket in this project; refuses one qualified with another project's
+    /// prefix.
+    pub fn local<'a>(&self, id: &'a str) -> anyhow::Result<&'a str> {
+        let (p, tail) = split_id(id);
+        match (p, &self.own) {
+            (Some(p), Some(own)) if p != own => {
+                bail!("{id} belongs to project {p}, not {own}; run this in {p}'s checkout")
+            }
+            _ => Ok(tail),
+        }
+    }
+
+    /// `item` as a reference written to a ticket: a bare ticket id becomes `<prefix>-<id>`,
+    /// found in this project first, else in exactly one other registered project; an id found
+    /// in several (or none) is refused with the candidates. Qualified ids and non-ids (file
+    /// stems) pass through unchanged. With no `own` prefix known nothing is rewritten.
+    fn qualify(&self, root: &Path, item: &str) -> anyhow::Result<String> {
+        let Some(own) = &self.own else {
+            return Ok(item.to_string());
+        };
+        if !is_bare_id(item) {
+            return Ok(item.to_string());
+        }
+        if has_ticket(root, item) {
+            return Ok(format!("{own}-{item}"));
+        }
+        let hits: Vec<String> = self
+            .others
+            .iter()
+            .filter(|(_, r)| has_ticket(r, item))
+            .map(|(p, _)| format!("{p}-{item}"))
+            .collect();
+        match hits.len() {
+            1 => Ok(hits.into_iter().next().expect("one hit")),
+            0 => bail!("no ticket {item} in {own} or any registered project"),
+            _ => bail!("{item} is ambiguous: {}", hits.join(", ")),
+        }
+    }
+}
+
+fn has_ticket(root: &Path, tail: &str) -> bool {
+    ["open", "resolved"]
+        .iter()
+        .any(|d| find_by_id(&root.join(d), tail).is_ok())
 }
 
 const LIST_FIELDS: [&str; 6] = [
@@ -501,7 +627,8 @@ fn check_theme(t: &str) -> anyhow::Result<()> {
 }
 
 /// A ticket id as `parent` may hold it: letters and digits, with an optional `<prefix>-`.
-/// Not resolved across projects yet (qualified ids are syqn part 2).
+/// A parent in another project is only checked for form; `set` and `check` look it up through
+/// the registry when its project is registered here.
 fn check_parent(v: &str) -> anyhow::Result<()> {
     let word = |w: &str| !w.is_empty() && w.bytes().all(|b| b.is_ascii_alphanumeric());
     let ok = match v.split_once('-') {
@@ -516,6 +643,17 @@ fn check_parent(v: &str) -> anyhow::Result<()> {
 
 /// Set frontmatter `field` of ticket `id` (open or resolved) to `value`; returns the path.
 pub fn set(root: &Path, id: &str, field: &str, value: &str) -> anyhow::Result<PathBuf> {
+    set_in(root, id, field, value, &Projects::default())
+}
+
+/// [`set`], writing `blocked_by`, `related` and `parent` references in the qualified form.
+pub fn set_in(
+    root: &Path,
+    id: &str,
+    field: &str,
+    value: &str,
+    projects: &Projects,
+) -> anyhow::Result<PathBuf> {
     let field = canon(field);
     if matches!(field, "id" | "created" | "resolved") {
         bail!("{field} is not editable (resolve stamps resolved; id and created never change)");
@@ -540,13 +678,22 @@ pub fn set(root: &Path, id: &str, field: &str, value: &str) -> anyhow::Result<Pa
         .map_err(|_| anyhow!("no ticket with id {id} in open/ or resolved/"))?;
     let text =
         std::fs::read_to_string(&path).with_context(|| format!("reading {}", path.display()))?;
+    let refs = matches!(field, "blocked_by" | "related");
     let rendered = if is_list {
-        let items: Vec<String> = value
+        let mut items: Vec<String> = value
             .split(',')
             .map(|v| v.trim().to_string())
             .filter(|v| !v.is_empty())
             .collect();
+        if refs {
+            items = items
+                .iter()
+                .map(|i| projects.qualify(root, i))
+                .collect::<anyhow::Result<_>>()?;
+        }
         list(&items)
+    } else if field == "parent" {
+        yaml_scalar(&projects.qualify(root, value)?)
     } else {
         yaml_scalar(value)
     };
@@ -711,7 +858,19 @@ pub struct Report {
 /// Every problem in the tickets under `root/{open,resolved}`; `docs` is where `[[links]]` may
 /// point (by file stem, anywhere beneath it). `task_links` maps task id -> the ticket id it was
 /// made from; `None` skips the task side of the two-way link.
+#[cfg(test)]
 pub fn check(root: &Path, docs: &Path, task_links: Option<&HashMap<String, String>>) -> Report {
+    check_in(root, docs, task_links, &Projects::default())
+}
+
+/// [`check`], knowing this project's prefix (a ticket's `id:` must carry it, if qualified) and
+/// the other registered projects (a reference qualified with one of theirs is looked up there).
+pub fn check_in(
+    root: &Path,
+    docs: &Path,
+    task_links: Option<&HashMap<String, String>>,
+    projects: &Projects,
+) -> Report {
     let mut problems = Vec::new();
     let mut warnings = Vec::new();
     let mut files: Vec<(bool, PathBuf)> = Vec::new();
@@ -802,7 +961,7 @@ pub fn check(root: &Path, docs: &Path, task_links: Option<&HashMap<String, Strin
                 "missing tasks (the tasks made from this ticket)".into(),
             );
         }
-        if let (Some(links), Some(me)) = (task_links, get("id")) {
+        if let (Some(links), Some(me)) = (task_links, get("id").map(|i| split_id(i).1)) {
             for t in tasks.iter().flatten() {
                 match links.get(t) {
                     None => note(
@@ -812,7 +971,7 @@ pub fn check(root: &Path, docs: &Path, task_links: Option<&HashMap<String, Strin
                              (or its task has no `ticket` field)"
                         ),
                     ),
-                    Some(o) if o != me => {
+                    Some(o) if split_id(o).1 != me => {
                         note(true, format!("tasks names {t}, which names ticket {o}"))
                     }
                     Some(_) => {}
@@ -820,7 +979,7 @@ pub fn check(root: &Path, docs: &Path, task_links: Option<&HashMap<String, Strin
             }
             let mut mine: Vec<&String> = links
                 .iter()
-                .filter(|(_, o)| *o == me)
+                .filter(|(_, o)| split_id(o).1 == me)
                 .map(|(t, _)| t)
                 .collect();
             mine.sort();
@@ -847,16 +1006,31 @@ pub fn check(root: &Path, docs: &Path, task_links: Option<&HashMap<String, Strin
         {
             note(true, e.to_string());
         }
-        if let Some(p) = get("parent")
-            && let Err(e) = check_parent(p)
-        {
-            note(true, e.to_string());
+        if let Some(p) = get("parent") {
+            if let Err(e) = check_parent(p) {
+                note(true, e.to_string());
+            } else if let (Some(pre), tail) = split_id(p)
+                && let Some((_, r)) = projects.others.iter().find(|(o, _)| o == pre)
+                && !has_ticket(r, tail)
+            {
+                note(true, format!("parent {p} is not a ticket in project {pre}"));
+            }
         }
         if let Some(id) = get("id") {
-            if file_id.as_deref().is_some_and(|f| f != id) {
+            // The file name carries the bare id; the `id:` may be qualified (br-k7tm) or not.
+            let (prefix, tail) = split_id(id);
+            if file_id.as_deref().is_some_and(|f| f != tail) {
                 note(true, format!("id {id} doesn't match the file name"));
             }
-            if let Some(other) = seen.insert(id.to_string(), path.clone()) {
+            if let (Some(p), Some(own)) = (prefix, &projects.own)
+                && p != own
+            {
+                note(
+                    true,
+                    format!("id {id} has prefix {p}, but this project's is {own}"),
+                );
+            }
+            if let Some(other) = seen.insert(tail.to_string(), path.clone()) {
                 note(true, format!("id {id} is also used by {}", shown(&other)));
             }
         }
@@ -868,7 +1042,21 @@ pub fn check(root: &Path, docs: &Path, task_links: Option<&HashMap<String, Strin
             };
             if k == "blocked_by" || k == "related" {
                 for it in items {
-                    if !ids.contains(&it) && !stems.contains(&it) {
+                    let (prefix, tail) = split_id(&it);
+                    let foreign = match (prefix, &projects.own) {
+                        (Some(p), Some(own)) if p != own => Some(p),
+                        _ => None,
+                    };
+                    let found = match foreign {
+                        // Another project: looked up if registered here, else only well-formed.
+                        Some(p) => projects
+                            .others
+                            .iter()
+                            .find(|(o, _)| o == p)
+                            .is_none_or(|(_, r)| has_ticket(r, tail)),
+                        None => ids.contains(tail) || stems.contains(&it),
+                    };
+                    if !found {
                         note(true, format!("{k} names {it}, which is not a ticket"));
                     }
                 }
@@ -994,6 +1182,7 @@ mod tests {
             related: &[],
             created_by: None,
             theme: None,
+            prefix: None,
         }
     }
 
@@ -1574,5 +1763,125 @@ mod tests {
         for old in ["opened:", "needs:", "see:", "filed_by:", "closed:"] {
             assert!(!text.contains(old), "{old} in {text}");
         }
+    }
+
+    fn projects(own: &str, others: &[(&str, &Path)]) -> Projects {
+        Projects {
+            own: Some(own.to_string()),
+            others: others
+                .iter()
+                .map(|(p, r)| (p.to_string(), r.to_path_buf()))
+                .collect(),
+        }
+    }
+
+    #[test]
+    fn split_id_reads_qualified_and_bare() {
+        assert_eq!(split_id("br-k7tm"), (Some("br"), "k7tm"));
+        assert_eq!(split_id("k7tm"), (None, "k7tm"));
+        assert_eq!(split_id("a-thing-k7tm"), (None, "a-thing-k7tm"));
+    }
+
+    #[test]
+    fn new_with_a_prefix_writes_a_qualified_id_and_a_bare_file_name() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path().join("docs/tickets");
+        let repos = vec!["p".to_string()];
+        let mut f = fields("Qualified", &repos);
+        f.prefix = Some("br");
+        let p = create(&root, &f, "2026-10-10", &HashSet::new()).unwrap();
+        let id = id_of(&p).unwrap();
+        assert!(p.to_string_lossy().ends_with(&format!("qualified-{id}.md")));
+        let text = std::fs::read_to_string(&p).unwrap();
+        assert!(text.starts_with(&format!("---\nid: br-{id}\n")), "{text}");
+        // File-name tail matches the id without its prefix; both forms find it.
+        let ctx = projects("br", &[]);
+        assert_eq!(problems_in(dir.path(), &ctx), "");
+        assert!(find_by_id(&root.join("open"), &format!("br-{id}")).is_ok());
+        assert!(find_by_id(&root.join("open"), &id).is_ok());
+    }
+
+    fn problems_in(root: &Path, ctx: &Projects) -> String {
+        check_in(&root.join("docs/tickets"), &root.join("docs"), None, ctx)
+            .errors
+            .join("\n")
+    }
+
+    #[test]
+    fn check_reads_old_bare_and_new_qualified_ids_and_refs() {
+        let dir = tempfile::tempdir().unwrap();
+        let t = dir.path().join("docs/tickets");
+        write(&t, "open", "old-one-aaaa.md", "aaaa", "", "");
+        write(&t, "open", "new-one-bbbb.md", "br-bbbb", "", "");
+        write(
+            &t,
+            "open",
+            "refs-cccc.md",
+            "br-cccc",
+            "blocked_by: [br-aaaa, bbbb]\nrelated: [other-9999]\n",
+            "",
+        );
+        let ctx = projects("br", &[]);
+        // `other-9999` is a foreign-looking ref with no registered project: well-formed only.
+        assert_eq!(problems_in(dir.path(), &ctx), "");
+        // A wrong prefix on the id and a mismatched tail are both caught.
+        write(&t, "open", "bad-dddd.md", "zz-dddd", "", "");
+        write(&t, "open", "bad2-eeee.md", "br-ffff", "", "");
+        let p = problems_in(dir.path(), &ctx);
+        assert!(p.contains("has prefix zz"), "{p}");
+        assert!(p.contains("id br-ffff doesn't match the file name"), "{p}");
+    }
+
+    #[test]
+    fn set_expands_bare_refs_and_refuses_ambiguous_or_unknown() {
+        let dir = tempfile::tempdir().unwrap();
+        let (a, b, c) = (
+            dir.path().join("a/docs/tickets"),
+            dir.path().join("b/docs/tickets"),
+            dir.path().join("c/docs/tickets"),
+        );
+        write(&a, "open", "mine-aaaa.md", "br-aaaa", "", "");
+        write(&a, "open", "src-eeee.md", "br-eeee", "", "");
+        write(&b, "open", "theirs-bbbb.md", "tw-bbbb", "", "");
+        write(&b, "open", "both-cccc.md", "tw-cccc", "", "");
+        write(&c, "open", "both2-cccc.md", "hx-cccc", "", "");
+        let ctx = projects("br", &[("tw", &b), ("hx", &c)]);
+        // Bare in this project -> qualified with its prefix; qualified stays.
+        set_in(&a, "eeee", "blocked_by", "aaaa, tw-bbbb", &ctx).unwrap();
+        // Found in exactly one other project -> that project's prefix.
+        set_in(&a, "br-eeee", "related", "bbbb", &ctx).unwrap();
+        let text = std::fs::read_to_string(a.join("open/src-eeee.md")).unwrap();
+        assert!(text.contains("blocked_by: [br-aaaa, tw-bbbb]"), "{text}");
+        assert!(text.contains("related: [tw-bbbb]"), "{text}");
+        // Ambiguous across projects: refused with the candidates.
+        let e = set_in(&a, "eeee", "related", "cccc", &ctx)
+            .unwrap_err()
+            .to_string();
+        assert!(e.contains("tw-cccc") && e.contains("hx-cccc"), "{e}");
+        // Unknown everywhere: refused.
+        assert!(set_in(&a, "eeee", "related", "9999", &ctx).is_err());
+        // Parent takes another project's qualified id as is, and expands a bare one.
+        set_in(&a, "eeee", "parent", "tw-bbbb", &ctx).unwrap();
+        set_in(&a, "eeee", "parent", "aaaa", &ctx).unwrap();
+        let text = std::fs::read_to_string(a.join("open/src-eeee.md")).unwrap();
+        assert!(text.contains("parent: br-aaaa"), "{text}");
+        // check looks a registered project's reference up there.
+        set_in(&a, "eeee", "parent", "tw-zzzz", &Projects::default()).unwrap();
+        let p = check_in(&a, &dir.path().join("a/docs"), None, &ctx)
+            .errors
+            .join("\n");
+        assert!(
+            p.contains("parent tw-zzzz is not a ticket in project tw"),
+            "{p}"
+        );
+    }
+
+    #[test]
+    fn local_refuses_another_projects_id() {
+        let ctx = projects("br", &[]);
+        assert_eq!(ctx.local("br-k7tm").unwrap(), "k7tm");
+        assert_eq!(ctx.local("k7tm").unwrap(), "k7tm");
+        let e = ctx.local("tw-k7tm").unwrap_err().to_string();
+        assert!(e.contains("belongs to project tw"), "{e}");
     }
 }

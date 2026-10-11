@@ -145,6 +145,11 @@ pub fn notified_of(task: &Task) -> Vec<PrincipalId> {
 }
 
 impl TaskManager {
+    /// The id prefix new tasks (and tickets) get.
+    pub fn prefix(&self) -> &str {
+        &self.prefix
+    }
+
     /// Sets the settle period. Not in `open`'s arguments so every existing
     /// caller keeps today's behaviour until it opts in.
     pub fn with_settle(mut self, settle: std::time::Duration) -> Self {
