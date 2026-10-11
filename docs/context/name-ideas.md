@@ -63,6 +63,18 @@ Struck by the human (2026-10-11): `sancho` ("I don't like saying sancho"), `sunn
 | copernicus | galileo | Officially a star and its planet (NameExoWorlds); copernicus is long. |
 | mir | soyuz | A station and the ship that docks with it: the guest docked in the host. |
 
+Sci-fi pairs, host first (a carrier and the craft it holds is another way to say "guest inside a
+host"):
+
+| Windows | WSL2 | From | Why |
+|---|---|---|---|
+| romulus | remus | Star Trek | Twin worlds; Remus is the one where the hard labour is done. |
+| galactica | viper | Battlestar Galactica | The carrier and the fighter it launches. Galactica is long. |
+| galactica | raptor | Battlestar Galactica | The carrier and its small utility craft. |
+| enterprise | galileo | Star Trek | The ship and its shuttlecraft. Enterprise is long. |
+| voyager | flyer | Star Trek: Voyager | The ship and the Delta Flyer, the small craft its crew built. |
+| nostromo | narcissus | Alien | The ship and its lifeboat shuttle. Both long, and nostromo is pencilled in for the work laptop. |
+
 Advisor's pick: **`mars`** (Windows) and **`phobos`** (WSL2), **`vega`** (NUC), **`proxima`**
 (EC2). Each is eight letters or fewer, and none sounds like another.
 
