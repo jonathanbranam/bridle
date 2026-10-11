@@ -406,6 +406,17 @@ is a `feature` or `epic` ticket tagged to a theme and not yet approved.
 syqn, step 2 bpku (blocked by syqn), step 3 3v75 (blocked by bpku), step 4 72t9 (blocked by
 3v75). Later steps are filed when their gates clear.
 
+**Progress (advisor product-manager, 2026-10-11 ~5:20 AM ET).** Steps 1-4 landed overnight:
+step 1 br-syqn, br-epvy (qualified IDs), br-wrmu (migration 0002); step 2 br-bpku (migration
+0003); step 3 br-3v75 (migration 0004); step 4 br-72t9 as a first slice (migration 0005 opt-in).
+Tickets syqn, bpku, 3v75 resolved. Step 7 filed as
+[[user-facing-rename-bridle-ticket-replaces-bridle-task-hidden-q8cs|q8cs]] and readied (its gate,
+"after 1-4", cleared). Open for the human from 72t9: migration 0005 (about 40 ticket stubs for
+active tasks with no ticket file) is not run on bridle, and the owner reviews and commits it; the
+row body stays until the UI (step 8) reads the ask from the ticket; threads move to the ticket
+file on each row's next write, with no bulk rewrite. Other projects have not run migrations
+0002-0005 (their trial branches; the human's go).
+
 **Risks.** The rename changes what every agent types daily; the hidden `task` alias (step 7)
 keeps old habits working until step 10. The PdM's own roadmap generator reads `bridle task list`
 and needs the same change.
