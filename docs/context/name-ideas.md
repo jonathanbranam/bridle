@@ -312,21 +312,6 @@ harrier. Short and dictation-safe, but many are everyday words.
 
 - **Stephen King:** liked; names in the table after this comment. Places: `derry`, `overlook`.
 
-> [!comment] c5 human, 2026-10-08 21:38 EDT, on "Stephen King" [read 2026-10-08 21:51 EDT]
-> Fill out this section with major characters from:
-> - The Shining
-> - The Stand
-> - Carrie
-> - Cujo
-> - Thinner
-> - Shawshank Redemption 
-> - all of the four seasons
-> - The Gunslinger series
->
-> **doc-name-ideas-e11e82, 2026-10-08 22:00 EDT:** @human Filled in a "Stephen King" table just below, one group per work, from memory. Names shared between books (tommy, billy, chris) are listed once, under the first. I cut the bullet down to point at it. [read 2026-10-08 22:04 EDT]
->
-> **resolved by human, 2026-10-09 05:41 EDT**
-
 | Work | Names |
 |---|---|
 | The Shining | jack, wendy, danny, hallorann, grady, tony |
