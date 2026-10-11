@@ -174,3 +174,13 @@ From the human's session with advisor wsl2, 2026-10-10 (times US Eastern).
   networking, Windows and WSL share one network stack, so two Tailscale clients share it; no source
   found either way. After installing it, check from dalek that both remus and romulus answer;
   if remus breaks, disconnect Windows' Tailscale or leave mirrored mode. Next: guide step 4.
+- Step 4a done, from an admin PowerShell instead of the Task Scheduler window: task `bridle WSL
+  start` (wsl.exe `-d Ubuntu --exec sleep infinity`, at startup, runs as Windows user `micro`
+  with password, highest privileges) with `-ExecutionTimeLimit (New-TimeSpan)`. The GUI's default
+  72-hour limit would kill the task, and WSL with it, after three days; the guide should say so.
+  Checked over SSH: Ready, ExecutionTimeLimit PT0S. `loginctl enable-linger jbranam`: Linger=yes.
+  Not yet checked: that WSL really comes up after a reboot with no one logged in.
+- Green and red buttons (4b/4c): skipped for now ("we can do the buttons later").
+- Step 5a: `powercfg /change standby-timeout-ac 0`, `hibernate-timeout-ac 0`, `/h off`; `powercfg
+  /a` shows hibernation off. Next: Windows Update active hours (the only step left that needs the
+  Windows screen), then the rest over `ssh jbranam@remus` from dalek.
