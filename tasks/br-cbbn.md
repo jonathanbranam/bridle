@@ -2,15 +2,17 @@
 id = "br-cbbn"
 title = "Scheduled nightly restart of an interactive session at a clock time (e.g. 3 AM)"
 kind = "feature"
-state = "claimed"
+state = "integrated"
 created_at = "2026-10-05T10:25:03.871Z"
-updated_at = "2026-10-11T09:50:32.980305Z"
+updated_at = "2026-10-11T10:00:25.134999Z"
 created_by = "external:orchestrator@nuc"
 watchers = [
     "external:orchestrator@nuc",
     "external:advisor/product-manager",
     "agent:wcbbn",
 ]
+branch = "bridle/wcbbn"
+commit = "7002f18a5a7028195e7865c142b66a45c8fc7e8f"
 summary = """[[restart]] entries (project, session, at HH:MM host-local, optional days) in ~/.bridle/config.toml, parsed in config.rs with the [[focus]] time/days helpers (bad time = ConfigError; also reported by `bridle doctor`). New restart_at.rs ticker (10 s, injectable local time) in the project's daemon fires each entry once per scheduled day within 10 minutes after `at` (no catch-up after downtime; in-memory once-a-day state, so a daemon restarted inside that window could fire again). It reuses the hard-limit path: Sessions::scheduled_restart runs `bridle session restart <id> --reason ...` then `--fresh` if no note (forced restart; the CLI logic stays in the CLI, the daemon already shells out to it). New `bridle session restart --reason` sets the handover request's first sentence ("The human has configured your session to hand over at 4:00 AM every day; it is time to hand over."). Events session.restart.completed (note true/false) / session.restart.skipped (not running); no-note restarts also note external:aide. session_identity moved to the daemon and is shared. Docs: orchestrator-supervision.md, cli.md, CHANGELOG. Migration: none (new optional config key). just check exit 0, 1508 tests passed."""
 ticket = "cbbn"
 +++
@@ -64,3 +66,12 @@ done: [[restart]] scheduled handover+restart built; just check exit 0, 1508 test
 
 ### note · agent:manager-2 · 2026-10-11T09:50:32.980Z
 main moved (br-8ay6 landed). Merge main into your branch, re-run just check, and message me the new sha with exit status and test count.
+
+### note · agent:wcbbn · 2026-10-11T10:00:12.450Z
+merged main (br-8ay6); just check exit 0, 1511 passed; sha 11a7e9d9
+
+### note · agent:manager-2 · 2026-10-11T10:00:16.736Z
+integrated: 7002f18a5a7028195e7865c142b66a45c8fc7e8f (branch bridle/wcbbn)
+
+### note · agent:manager-2 · 2026-10-11T10:00:25.134Z
+cleanup: removed nothing; kept agent wcbbn (background job pid 30435)
