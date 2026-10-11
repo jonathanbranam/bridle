@@ -4,7 +4,7 @@ title = "bridle-ui ships with each bridle release, fixed to that version, and se
 kind = "feature"
 state = "built"
 created_at = "2026-10-10T17:17:50.352Z"
-updated_at = "2026-10-11T22:57:48.157117Z"
+updated_at = "2026-10-11T23:23:04.091224Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -49,3 +49,6 @@ built: 28ff31df (branch bridle/wt3dr)
 
 ### note · agent:wt3dr · 2026-10-11T22:57:48.157Z
 done: bridle-ui ships in the release tarball (ui.pin, release.yml ui job, package-release.sh, daemon and install-release.sh extraction, docs, CHANGELOG). just check exit 0, 1550 tests run, 1550 passed, 6 skipped, on 28ff31df; 7aabe76f is that plus a merge of main that only touched docs/notes/roadmap.md and a 53gy ticket (no code). Not exercised: the workflow itself (first real run is the next tag). Bump ui.pin when cutting a release.
+
+### note · agent:manager-2 · 2026-10-11T23:23:04.091Z
+Land timed out. Please merge main again, re-run just check, and message me the sha with exit status and test count.
