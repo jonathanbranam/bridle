@@ -35,7 +35,8 @@ name (the c2 tip against location names, [[naming]]).
   `pollux`, `mizar` and `alcor`.
 - Sci-fi: `canopus` (a real star; Arrakis's sun in Dune), `rao` (Krypton's red sun), `tatoo`
   (Tatooine's suns). Few, but home needs few.
-- Picks: the Windows PC `rigel` or `antares` (big, bright stars for the heavy lifting); the NUC
+- Picks: the Windows PC `canopus` (its WSL2 guest `arrakis`, see "Hosts and guests"), or `rigel`
+  or `antares` (big, bright stars for the heavy lifting); the NUC
   `vega` (short, clear, one of the brightest in the sky). The other family PC, if it joins:
   `altair` or `deneb`.
 - Avoid: `polaris` and `sirius` (sound like other words), `sol` (the Sun; too short and generic).
@@ -65,6 +66,18 @@ name (the c2 tip against location names, [[naming]]).
 - `dalek` stays: kept by the human ("it's been dalek for a long time"), the one exception to the
   scheme.
 
+**Hosts and guests: different names.** The human (2026-10-11): "I do want a different name for
+the windows host and the WSL2 inside of it; I will also have different names if I run hypervisors
+or vms". Idea: a guest (WSL2, a VM) takes a planet of its host's star. The host keeps its star
+name; the guest is a wanderer, like the cloud, because it is virtual too; and the pair says which
+guest lives on which host.
+
+- The Windows PC: host `canopus`, WSL2 `arrakis`. In Dune, Arrakis is the third planet of
+  Canopus, and it's where the heavy work happens. Both under eight letters.
+- Other real-star and sci-fi pairs: `rao` and `krypton` (Superman), `tatoo` and `tatooine`
+  (Star Wars), `eridani` and `vulcan` (Star Trek: Vulcan circles 40 Eridani A).
+- With no named planet to borrow, a guest takes any wanderer.
+
 **Galaxies: not placed yet.** A galaxy holds many stars and planets, so one idea is a galaxy name
 for a group rather than a machine: the tailnet, all of bridle's machines, or a project's machines.
 The list is under "Galaxies and nebulae" in Themes.
@@ -75,7 +88,7 @@ The list is under "Galaxies and nebulae" in Themes.
 |---|---|---|---|
 | MacBook Pro (this one) | dalek | dalek | Keeping it: "it's been dalek for a long time" (the human). |
 | Intel NUC | nuc | vega | "NUC" is a type, and dictation hears "Nook". Was `sonic`; see "Working idea". |
-| Windows desktop, running WSL2 | EzekielsPC | rigel, antares | The human couldn't settle on `tardis` (2026-10-11). See "WSL2 and its name" below. |
+| Windows desktop, running WSL2 | EzekielsPC | canopus (Windows), arrakis (WSL2) | The human couldn't settle on `tardis` (2026-10-11). See "WSL2 and its name" below. |
 | EC2 | (none) | luna | The edge box (the NUC's tunnel fallback). Was `terminus`. |
 | Future cloud servers | | planets and moons | The wanderers. |
 | Other MacBook Pros | | nostromo, serenity, voyager, defiant | Ships, because laptops travel. Only those that run bridle or join Tailscale. |
@@ -130,17 +143,16 @@ By default a WSL2 distro takes the Windows computer's name as its hostname, but 
 is a separate machine: a small VM behind NAT with its own address. (Mirrored networking shares the
 Windows address instead.)
 
-- **Set it by hand** in `/etc/wsl.conf` (`[network]`, `hostname = tardis`); restart WSL with
+- **Set it by hand** in `/etc/wsl.conf` (`[network]`, `hostname = <name>`); restart WSL with
   `wsl --shutdown` to apply.
 - **Tailscale is where it counts.** The WSL2 ticket puts Tailscale inside the Linux distro,
   because bridle reads `tailscale ip -4` there
   ([[run-bridle-s-heavy-work-on-the-windows-pc-under-wsl2-v7ug|v7ug]]). That makes WSL its own
-  Tailscale node, named after its hostname, and `tardis` is the name bridle and dalek will use.
-- **If Windows also runs Tailscale** (e.g., for Remote Desktop), it's a second node. Two nodes
-  with one name make Tailscale rename one (`tardis-1`), so give the Windows side its own name or
-  keep Tailscale off it.
-- **Simplest:** name the Windows computer `tardis` too, and run Tailscale only inside WSL. One
-  name everywhere.
+  Tailscale node, named after its hostname: the WSL2 name is the one bridle and dalek will use.
+- **Windows gets its own name** (the human, 2026-10-11; see "Hosts and guests" above), for
+  example `canopus` for Windows and `arrakis` for WSL2. If Windows also runs Tailscale (e.g., for
+  Remote Desktop), it's a second node under its own name, with no clash.
+- Earlier advice here was one name everywhere (`tardis`); the human chose separate names.
 
 ## Dictation tests
 
