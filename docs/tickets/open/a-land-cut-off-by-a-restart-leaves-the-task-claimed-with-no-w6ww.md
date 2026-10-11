@@ -13,8 +13,6 @@ related: []
 
 ## The ask
 
-## The ask
-
 br-e7e2 landed as 9e6a164b (on main; branch bridle/we7e2 identical to main), but a daemon restart (self-upgrade, 2026-10-11 ~14:55Z) cut `bridle task land` off partway. The task row still says `claimed`, but its claims row is gone. Now every way out refuses it:
 
 - `task done br-e7e2 --commit 9e6a164b` and `task land`: "task br-e7e2 is not claimed" (store.rs delete_claim: no claims row)

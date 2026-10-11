@@ -13,8 +13,6 @@ related: [br-w6ww]
 
 ## The ask
 
-## The ask
-
 The self-upgrade's drain waits for agent turns to end (daemon.md, 'Automatic upgrade': "A turn is never cut off"). But `bridle task land` runs its own `just check` in the background when main has moved, after the manager's turn has ended. The drain doesn't see that check, so the restart kills it.
 
 Seen twice on 2026-10-11:
