@@ -14,8 +14,6 @@ tasks: []
 
 ## The ask
 
-## The ask
-
 Filed by the orchestrator, 2026-10-11 ~12:25 AM ET. Critical: it turned main red (the human, 2026-10-03: a flaky test that breaks CI on main is critical).
 
 CI run https://github.com/jonathanbranam/bridle/actions/runs/38109590013 on 7cf05257 (a ticket-only commit), check (macos-latest): 1488/1489 passed, the only failure
