@@ -1,12 +1,12 @@
 ---
-id: ervd
+id: br-ervd
 title: The orchestrator spins a discussion off to a fresh (or existing) advisor
-opened: 2026-09-29
+created: 2026-09-29
 repos: [bridle]
 changes: []
 specs: []
-needs: [session-names-per-machine-sfb3]
-see: []
+blocked_by: [session-names-per-machine-sfb3]
+related: []
 ---
 
 ## The ask

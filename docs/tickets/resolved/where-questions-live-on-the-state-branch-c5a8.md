@@ -1,13 +1,13 @@
 ---
-id: c5a8
+id: br-c5a8
 title: Do questions get their own folder on the state branch, or live in the task thread?
-opened: 2026-09-27
+created: 2026-09-27
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [c7eb]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-c7eb]
+resolved: 2026-09-30T05:12:44Z
 ---
 
 ## The question

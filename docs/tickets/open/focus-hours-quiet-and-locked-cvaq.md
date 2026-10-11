@@ -1,12 +1,12 @@
 ---
-id: cvaq
+id: br-cvaq
 title: "Focus hours: quiet and locked periods that keep the human on their real work"
-opened: 2026-09-30
+created: 2026-09-30
 repos: [bridle]
 changes: []
 specs: [docs/design/cli.md, docs/design/agent-host/roles-and-config.md, workflow/base/roles/advisor.md, workflow/base/roles/orchestrator.md]
-needs: []
-see: [higher-budget-thresholds-on-a-schedule-n9qh, email-and-texting-for-bridle-and-track-web-rs7p, accounting-bridle-work-vs-real-projects-kpgy]
+blocked_by: []
+related: [higher-budget-thresholds-on-a-schedule-n9qh, email-and-texting-for-bridle-and-track-web-rs7p, accounting-bridle-work-vs-real-projects-kpgy]
 ---
 
 ## The ask

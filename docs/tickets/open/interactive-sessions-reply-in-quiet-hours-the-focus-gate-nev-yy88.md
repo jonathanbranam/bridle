@@ -1,13 +1,13 @@
 ---
-id: yy88
+id: br-yy88
 title: "Interactive sessions reply in quiet hours: the focus gate never reaches background wakes"
 kind: incident
-opened: 2026-10-05
+created: 2026-10-05
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [cvaq, v3b7, 9s8u, mvtz]
+blocked_by: []
+related: [br-cvaq, br-v3b7, br-9s8u, br-mvtz]
 tasks: [br-yy88]
 ---
 

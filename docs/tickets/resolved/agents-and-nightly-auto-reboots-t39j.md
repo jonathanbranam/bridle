@@ -1,13 +1,13 @@
 ---
-id: t39j
+id: br-t39j
 title: Agents and nightly automatic reboots
-opened: 2026-09-27
+created: 2026-09-27
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: []
+resolved: 2026-09-30T05:12:44Z
 ---
 
 ## The question

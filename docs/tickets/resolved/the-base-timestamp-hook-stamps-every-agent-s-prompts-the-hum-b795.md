@@ -1,15 +1,15 @@
 ---
-id: b795
+id: br-b795
 title: The base timestamp hook stamps every agent's prompts; the human wanted it only for the notes advisor
 kind: bug
-opened: 2026-10-04
+created: 2026-10-04
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 tasks: [br-b795]
-closed: 2026-10-09T23:11:03Z
+resolved: 2026-10-09T23:11:03Z
 ---
 
 ## The ask

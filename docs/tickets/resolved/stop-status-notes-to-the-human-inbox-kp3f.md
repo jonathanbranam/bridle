@@ -1,14 +1,13 @@
 ---
-id: kp3f
+id: br-kp3f
 title: Stop status notes piling up in the human's inbox
-opened: 2026-09-28
+created: 2026-09-28
 resolved: 2026-09-29
 repos: [bridle]
 changes: [3bd16dc]
 specs: []
-needs: []
-see: [8ups, fgu6]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-8ups, br-fgu6]
 ---
 
 ## What happened

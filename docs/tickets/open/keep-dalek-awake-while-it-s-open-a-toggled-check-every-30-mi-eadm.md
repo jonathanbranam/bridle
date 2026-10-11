@@ -1,14 +1,14 @@
 ---
-id: eadm
+id: br-eadm
 title: "Keep dalek awake while it's open: a toggled check every ~30 min that tells the orchestrator when nothing is preventing sleep"
 kind: feature
-opened: 2026-10-10
-filed_by: external:aide
+created: 2026-10-10
+created_by: external:aide
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [zcqv, tv8r]
+blocked_by: []
+related: [br-zcqv, br-tv8r]
 tasks: [br-eadm]
 ---
 

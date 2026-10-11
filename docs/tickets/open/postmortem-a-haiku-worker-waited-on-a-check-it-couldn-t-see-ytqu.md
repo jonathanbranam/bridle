@@ -1,13 +1,13 @@
 ---
-id: ytqu
+id: br-ytqu
 title: "Postmortem: a haiku worker waited on a check it couldn't see, reported done early, and took another task after renewal (qdw8)"
 kind: research
-opened: 2026-10-05
+created: 2026-10-05
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [qdw8, g49c, h3ar, cr7t]
+blocked_by: []
+related: [br-qdw8, br-g49c, br-h3ar, br-cr7t]
 tasks: [br-ytqu]
 ---
 

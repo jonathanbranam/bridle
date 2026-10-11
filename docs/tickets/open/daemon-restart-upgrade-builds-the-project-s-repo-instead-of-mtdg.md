@@ -1,13 +1,13 @@
 ---
-id: mtdg
+id: br-mtdg
 title: daemon restart --upgrade builds the project's repo instead of bridle's
 kind: bug
-opened: 2026-10-06
+created: 2026-10-06
 repos: [meta-notes]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 tasks: []
 ---
 

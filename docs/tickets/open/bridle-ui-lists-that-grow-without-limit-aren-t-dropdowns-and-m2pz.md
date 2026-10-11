@@ -1,13 +1,13 @@
 ---
-id: m2pz
+id: br-m2pz
 title: "bridle-ui: lists that grow without limit aren't dropdowns, and UI design principles from a couple of books"
 kind: feature
-opened: 2026-10-06
+created: 2026-10-06
 repos: [bridle-ui]
 changes: []
 specs: []
-needs: []
-see: [g49c, ukpm]
+blocked_by: []
+related: [br-g49c, br-ukpm]
 tasks: [ui-m2pz]
 ---
 

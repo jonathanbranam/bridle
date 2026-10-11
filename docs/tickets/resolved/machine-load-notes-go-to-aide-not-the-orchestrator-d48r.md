@@ -1,16 +1,16 @@
 ---
-id: d48r
+id: br-d48r
 title: Machine load notes go to aide, not the orchestrator
 kind: feature
-opened: 2026-10-09
-filed_by: external:orchestrator
+created: 2026-10-09
+created_by: external:orchestrator
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 tasks: [br-d48r]
-closed: 2026-10-09T22:03:07Z
+resolved: 2026-10-09T22:03:07Z
 ---
 
 ## The ask

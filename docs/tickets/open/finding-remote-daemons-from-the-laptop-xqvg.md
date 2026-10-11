@@ -1,12 +1,12 @@
 ---
-id: xqvg
+id: br-xqvg
 title: Finding remote daemons from the laptop
-opened: 2026-09-27
+created: 2026-09-27
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [hj4g]
+blocked_by: []
+related: [br-hj4g]
 ---
 
 ## The question

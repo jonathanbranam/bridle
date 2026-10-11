@@ -1,13 +1,13 @@
 ---
-id: ntca
+id: br-ntca
 title: "docs/design: much of 'not built' is built but unwired, and CLAUDE.md says otherwise"
 kind: question
-opened: 2026-10-03
+created: 2026-10-03
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [34bw]
+blocked_by: []
+related: [br-34bw]
 tasks: [br-7e32]
 ---
 

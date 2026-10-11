@@ -1,14 +1,13 @@
 ---
-id: 2ty9
+id: br-2ty9
 title: Give an authorised worker a secret and network access other agents don't get
-opened: 2026-09-28
+created: 2026-09-28
 resolved: 2026-09-29
 repos: [bridle]
 changes: [9ee5f5d, f925ef2, 5d39325]
 specs: []
-needs: []
-see: [per-task-tools-and-model-k8dw]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [per-task-tools-and-model-k8dw]
 ---
 
 ## What happened

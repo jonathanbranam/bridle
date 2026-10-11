@@ -1,14 +1,13 @@
 ---
-id: tx3f
+id: br-tx3f
 title: Split the manager into a product manager and a development manager
-opened: 2026-09-27
+created: 2026-09-27
 resolved: 2026-09-29
 repos: [bridle]
 changes: [89b560e]
 specs: []
-needs: []
-see: [hj4g]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-hj4g]
 ---
 
 ## The question

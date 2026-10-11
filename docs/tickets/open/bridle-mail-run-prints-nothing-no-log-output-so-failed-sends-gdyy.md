@@ -1,14 +1,14 @@
 ---
-id: gdyy
+id: br-gdyy
 title: "bridle mail run prints nothing: no log output, so failed sends are silent"
 kind: bug
-opened: 2026-10-08
-filed_by: external:aide
+created: 2026-10-08
+created_by: external:aide
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [rs7p, 843g]
+blocked_by: []
+related: [br-rs7p, br-843g]
 tasks: [br-gdyy, br-zpc7]
 ---
 

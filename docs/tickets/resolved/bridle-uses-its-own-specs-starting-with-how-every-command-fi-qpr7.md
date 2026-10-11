@@ -1,15 +1,15 @@
 ---
-id: qpr7
+id: br-qpr7
 title: bridle uses its own specs, starting with how every command finds its project
 kind: feature
-opened: 2026-10-04
+created: 2026-10-04
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [3397]
+blocked_by: []
+related: [br-3397]
 tasks: [br-qpr7]
-closed: 2026-10-09T23:11:07Z
+resolved: 2026-10-09T23:11:07Z
 ---
 
 ## The ask

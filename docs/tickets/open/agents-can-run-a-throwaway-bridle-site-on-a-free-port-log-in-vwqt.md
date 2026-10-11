@@ -1,13 +1,13 @@
 ---
-id: vwqt
+id: br-vwqt
 title: Agents can run a throwaway bridle site on a free port, log in and click around to verify UI work
 kind: feature
-opened: 2026-10-06
+created: 2026-10-06
 repos: [bridle, bridle-ui]
 changes: []
 specs: []
-needs: []
-see: [nnj2]
+blocked_by: []
+related: [br-nnj2]
 tasks: []
 ---
 

@@ -1,13 +1,13 @@
 ---
-id: s4ve
+id: br-s4ve
 title: "vitest-bridle: a step can't skip a scenario at runtime"
 kind: feature
-opened: 2026-10-05
+created: 2026-10-05
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 tasks: [br-s4ve]
 ---
 

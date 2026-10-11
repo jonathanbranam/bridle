@@ -765,6 +765,83 @@ fn front_end(lines: &[String]) -> Option<usize> {
     lines.iter().skip(1).position(|l| l == "---").map(|p| p + 1)
 }
 
+/// A bare id, including old ones with a `0` or `1` that new ids no longer use.
+fn loose_id(s: &str) -> bool {
+    s.len() == ID_LEN
+        && s.bytes()
+            .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit())
+}
+
+/// `text` with its frontmatter in the standard form (syqn): old field names renamed (the new
+/// name wins when both are there), a bare `id:` and bare ticket ids in `blocked_by`, `related`
+/// and `parent` qualified with `prefix`. A bare reference is qualified only when `root` holds a
+/// ticket with that id (a ticket of another project is left for its owner to qualify). `None`
+/// when there is no frontmatter or nothing changes, so a rerun is a no-op.
+pub fn standardize_front(text: &str, prefix: &str, root: &Path) -> Option<String> {
+    let mut lines: Vec<String> = text.lines().map(str::to_string).collect();
+    let end = front_end(&lines)?;
+    let keys: Vec<String> = lines[1..end]
+        .iter()
+        .filter_map(|l| l.split_once(':').map(|(k, _)| k.trim().to_string()))
+        .collect();
+    let qualify = |item: &str| {
+        if loose_id(item) && has_ticket(root, item) {
+            format!("{prefix}-{item}")
+        } else {
+            item.to_string()
+        }
+    };
+    let mut changed = false;
+    let mut out: Vec<String> = vec![lines[0].clone()];
+    for line in lines.drain(1..end).collect::<Vec<_>>() {
+        let Some((key, value)) = line.split_once(':') else {
+            out.push(line);
+            continue;
+        };
+        let (key, value) = (key.trim(), value.trim());
+        let new_key = canon(key);
+        if new_key != key {
+            changed = true;
+            if keys.iter().any(|k| k == new_key) {
+                continue;
+            }
+        }
+        let new_value = match new_key {
+            "id" if loose_id(value.trim_matches('"')) => {
+                format!("{prefix}-{}", value.trim_matches('"'))
+            }
+            "parent" => qualify(value.trim_matches('"')),
+            "blocked_by" | "related" => match list_items(value) {
+                Some(items) => {
+                    let q: Vec<String> = items.iter().map(|i| qualify(i)).collect();
+                    if q == items {
+                        value.to_string()
+                    } else {
+                        format!("[{}]", q.join(", "))
+                    }
+                }
+                None => value.to_string(),
+            },
+            _ => value.to_string(),
+        };
+        if new_key == key && new_value == value {
+            out.push(line);
+        } else {
+            changed = true;
+            out.push(format!("{new_key}: {new_value}"));
+        }
+    }
+    if !changed {
+        return None;
+    }
+    out.extend(lines.drain(1..));
+    let mut s = out.join("\n");
+    if text.ends_with('\n') {
+        s.push('\n');
+    }
+    Some(s)
+}
+
 /// The frontmatter as (key, raw value) pairs and the body after it.
 fn split_front(text: &str) -> Option<(Vec<(String, String)>, String)> {
     let lines: Vec<String> = text.lines().map(str::to_string).collect();

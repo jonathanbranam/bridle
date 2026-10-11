@@ -1,16 +1,16 @@
 ---
-id: 57nt
+id: br-57nt
 title: bridle gateway restart takes a launchd-managed gateway out of launchd and inherits the caller's Claude env
 kind: bug
-opened: 2026-10-09
-filed_by: external:aide
+created: 2026-10-09
+created_by: external:aide
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [76td, bek3, ppa6]
+blocked_by: []
+related: [br-76td, br-bek3, br-ppa6]
 tasks: [br-57nt]
-closed: 2026-10-09T21:36:10Z
+resolved: 2026-10-09T21:36:10Z
 ---
 
 ## The ask

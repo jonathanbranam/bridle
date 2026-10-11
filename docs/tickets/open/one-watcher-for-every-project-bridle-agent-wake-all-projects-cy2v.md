@@ -1,13 +1,13 @@
 ---
-id: cy2v
+id: br-cy2v
 title: "One watcher for every project: 'bridle agent wake --all-projects'"
 kind: feature
-opened: 2026-10-02
+created: 2026-10-02
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [interactive-sessions-context-for-all-daemon-decided-wakes-re-jttf, a-life-assistant-agent-on-the-notes-repo-phyy, daemons-deliver-mail-to-each-other-across-machines-store-and-3haz]
+blocked_by: []
+related: [interactive-sessions-context-for-all-daemon-decided-wakes-re-jttf, a-life-assistant-agent-on-the-notes-repo-phyy, daemons-deliver-mail-to-each-other-across-machines-store-and-3haz]
 tasks: [br-1ddd]
 ---
 

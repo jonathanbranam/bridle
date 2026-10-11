@@ -1,13 +1,13 @@
 ---
-id: 368g
+id: br-368g
 title: Decide how to count the human's own interactive sessions in usage
 kind: question
-opened: 2026-10-06
+created: 2026-10-06
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [gztq]
+blocked_by: []
+related: [br-gztq]
 tasks: []
 ---
 

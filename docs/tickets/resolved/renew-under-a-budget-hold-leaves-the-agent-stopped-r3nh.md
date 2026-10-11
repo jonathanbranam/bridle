@@ -1,13 +1,13 @@
 ---
-id: r3nh
+id: br-r3nh
 title: Renew under a budget hold leaves the agent stopped
-opened: 2026-09-28
+created: 2026-09-28
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: []
+resolved: 2026-09-30T05:12:44Z
 ---
 
 ## What happened

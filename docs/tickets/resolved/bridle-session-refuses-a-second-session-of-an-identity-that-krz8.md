@@ -1,15 +1,15 @@
 ---
-id: krz8
+id: br-krz8
 title: bridle session refuses a second session of an identity that's already running
 kind: bug
-opened: 2026-10-04
+created: 2026-10-04
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [3397]
+blocked_by: []
+related: [br-3397]
 tasks: [br-krz8]
-closed: 2026-10-09T23:11:06Z
+resolved: 2026-10-09T23:11:06Z
 ---
 
 ## The ask

@@ -1,14 +1,13 @@
 ---
-id: q7fx
+id: br-q7fx
 title: "cli_e2e.rs leaked BRIDLE_* env into child bridle processes (fixed)"
-opened: 2026-09-27
+created: 2026-09-27
 resolved: 2026-09-29
 repos: [bridle]
 changes: [1980c84]
 specs: []
-needs: []
-see: []
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: []
 ---
 
 ## What happened

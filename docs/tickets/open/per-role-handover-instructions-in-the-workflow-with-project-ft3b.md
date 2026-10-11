@@ -1,13 +1,13 @@
 ---
-id: ft3b
+id: br-ft3b
 title: Per-role handover instructions in the workflow, with project overrides
 kind: feature
-opened: 2026-10-05
+created: 2026-10-05
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 tasks: [br-ft3b]
 ---
 

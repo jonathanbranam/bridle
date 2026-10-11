@@ -1,13 +1,13 @@
 ---
-id: 24mj
+id: br-24mj
 title: A clean handover of a project between machines
-opened: 2026-09-30
+created: 2026-09-30
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [one-machine-owns-a-project-hw6c, push-the-state-branch-we2r, finding-remote-daemons-from-the-laptop-xqvg]
-closed: 2026-10-02T00:43:35.883728Z
+blocked_by: []
+related: [one-machine-owns-a-project-hw6c, push-the-state-branch-we2r, finding-remote-daemons-from-the-laptop-xqvg]
+resolved: 2026-10-02T00:43:35.883728Z
 ---
 
 ## The ask

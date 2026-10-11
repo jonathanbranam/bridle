@@ -1,14 +1,13 @@
 ---
-id: cu5m
+id: br-cu5m
 title: Read one message in full from the CLI
-opened: 2026-09-28
+created: 2026-09-28
 resolved: 2026-09-29
 repos: [bridle]
 changes: [1db6dfe]
 specs: []
-needs: []
-see: [fgu6]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-fgu6]
 ---
 
 ## The ask

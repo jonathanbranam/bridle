@@ -1,16 +1,16 @@
 ---
-id: 37r9
+id: br-37r9
 title: Landing a task removes its worker even when the worker holds another task's uncommitted work
 kind: bug
-opened: 2026-10-10
-filed_by: external:orchestrator
+created: 2026-10-10
+created_by: external:orchestrator
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 tasks: [br-37r9]
-closed: 2026-10-10T13:44:38Z
+resolved: 2026-10-10T13:44:38Z
 ---
 
 ## What happened

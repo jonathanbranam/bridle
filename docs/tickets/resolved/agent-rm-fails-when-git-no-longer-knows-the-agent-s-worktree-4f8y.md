@@ -1,15 +1,15 @@
 ---
-id: 4f8y
+id: br-4f8y
 title: agent rm fails when git no longer knows the agent's worktree (pruned record, directory left)
 kind: bug
-opened: 2026-10-04
+created: 2026-10-04
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 tasks: [br-4f8y]
-closed: 2026-10-09T23:11:05Z
+resolved: 2026-10-09T23:11:05Z
 ---
 
 ## The ask

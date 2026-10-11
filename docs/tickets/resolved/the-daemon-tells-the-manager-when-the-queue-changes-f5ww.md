@@ -1,13 +1,13 @@
 ---
-id: f5ww
+id: br-f5ww
 title: The daemon tells the manager when the queue changes
-opened: 2026-09-30
+created: 2026-09-30
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [gnar, w2hj]
-closed: 2026-09-30T21:56:27Z
+blocked_by: []
+related: [br-gnar, br-w2hj]
+resolved: 2026-09-30T21:56:27Z
 ---
 
 ## The ask

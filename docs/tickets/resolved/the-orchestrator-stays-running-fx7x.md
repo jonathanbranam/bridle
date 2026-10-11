@@ -1,15 +1,15 @@
 ---
-id: fx7x
+id: br-fx7x
 title: The orchestrator stays running (a watcher for the watchman)
-opened: 2026-09-29
+created: 2026-09-29
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [the-humans-to-do-list-and-restart-checklist-ex9q, where-the-single-orchestrator-lives-hj4g]
+blocked_by: []
+related: [the-humans-to-do-list-and-restart-checklist-ex9q, where-the-single-orchestrator-lives-hj4g]
 tasks: [br-4d5a]
 kind: feature
-closed: 2026-10-06T00:48:35Z
+resolved: 2026-10-06T00:48:35Z
 ---
 
 ## The ask

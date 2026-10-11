@@ -1,14 +1,14 @@
 ---
-id: bcw6
+id: br-bcw6
 title: cli_e2e sigint and events_stream shutdown tests flake under load
 kind: bug
-opened: 2026-10-10
-filed_by: external:advisor/product-manager
+created: 2026-10-10
+created_by: external:advisor/product-manager
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 tasks: [br-bcw6]
 ---
 

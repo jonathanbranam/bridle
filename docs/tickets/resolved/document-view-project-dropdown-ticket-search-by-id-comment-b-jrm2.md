@@ -1,15 +1,15 @@
 ---
-id: jrm2
+id: br-jrm2
 title: "Document view: project dropdown, ticket search by ID, comment box at the highlight, full width"
 kind: feature
-opened: 2026-10-04
+created: 2026-10-04
 repos: [bridle, bridle-ui]
 changes: []
 specs: []
-needs: []
-see: [x8jt, v8kn, essy]
+blocked_by: []
+related: [br-x8jt, br-v8kn, br-essy]
 tasks: [br-jrm2]
-closed: 2026-10-09T23:11:07Z
+resolved: 2026-10-09T23:11:07Z
 ---
 
 ## The ask

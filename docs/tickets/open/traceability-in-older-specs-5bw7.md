@@ -1,12 +1,12 @@
 ---
-id: 5bw7
+id: br-5bw7
 title: Traceability in older specs
-opened: 2026-09-27
+created: 2026-09-27
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 ---
 
 ## The question

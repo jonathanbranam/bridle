@@ -1,16 +1,16 @@
 ---
-id: 8z7j
+id: br-8z7j
 title: "Only the owner's clone can push the integration branch: enforced, not a rule"
 kind: feature
-opened: 2026-10-09
-filed_by: external:advisor/product-manager
+created: 2026-10-09
+created_by: external:advisor/product-manager
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [j7r4, kt25, xrkh, k6jd, 8ay6, xccp]
+blocked_by: []
+related: [br-j7r4, br-kt25, br-xrkh, br-k6jd, br-8ay6, br-xccp]
 tasks: [br-8z7j, br-hdbj]
-closed: 2026-10-10T14:16:41Z
+resolved: 2026-10-10T14:16:41Z
 ---
 
 ## The ask

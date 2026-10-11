@@ -1,14 +1,13 @@
 ---
-id: rxe8
+id: br-rxe8
 title: Branch rules per project
-opened: 2026-09-28
+created: 2026-09-28
 resolved: 2026-09-29
 repos: [bridle]
 changes: [0fa0fb8, 0c84f5d]
 specs: []
-needs: []
-see: [u8sm, m2fq, 63rv]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-u8sm, br-m2fq, br-63rv]
 ---
 
 ## The ask

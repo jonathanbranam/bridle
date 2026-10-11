@@ -1,13 +1,13 @@
 ---
-id: u6w9
+id: br-u6w9
 title: Track the human's time and attention spent talking to agents
 kind: feature
-opened: 2026-10-01
+created: 2026-10-01
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [cvaq]
+blocked_by: []
+related: [br-cvaq]
 tasks: [br-d772, br-u6w9]
 ---
 

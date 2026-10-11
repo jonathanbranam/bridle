@@ -1,13 +1,13 @@
 ---
-id: mvtz
+id: br-mvtz
 title: "Postmortem: sessions killed each other's wake waiters with pkill -f (h3ar)"
 kind: research
-opened: 2026-10-04
+created: 2026-10-04
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [h3ar, fx7x, m7mp, 98xt, j28f, kuw2, cr7t, 75h2]
+blocked_by: []
+related: [br-h3ar, br-fx7x, br-m7mp, br-98xt, br-j28f, br-kuw2, br-cr7t, br-75h2]
 tasks: [br-mvtz]
 ---
 

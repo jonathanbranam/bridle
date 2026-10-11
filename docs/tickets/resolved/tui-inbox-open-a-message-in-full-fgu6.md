@@ -1,14 +1,13 @@
 ---
-id: fgu6
+id: br-fgu6
 title: TUI inbox: open a message to read it in full
-opened: 2026-09-28
+created: 2026-09-28
 resolved: 2026-09-29
 repos: [bridle]
 changes: [1f7429d]
 specs: []
-needs: []
-see: [8ups]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-8ups]
 ---
 
 ## The ask

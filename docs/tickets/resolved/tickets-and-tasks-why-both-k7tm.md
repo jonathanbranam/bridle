@@ -1,15 +1,15 @@
 ---
-id: k7tm
+id: br-k7tm
 title: Tickets and tasks, why both, and is that the long-term plan
 kind: question
-opened: 2026-09-29
+created: 2026-09-29
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [ticket-state-without-moving-files-p2ys, which-docs-live-in-bridle-and-which-in-markdown-hv8e, refining-a-task-with-the-human-before-it-ships-hvxk, ticket-frontmatter-fields-have-unclear-names-rename-them-wit-zkbb]
+blocked_by: []
+related: [ticket-state-without-moving-files-p2ys, which-docs-live-in-bridle-and-which-in-markdown-hv8e, refining-a-task-with-the-human-before-it-ships-hvxk, ticket-frontmatter-fields-have-unclear-names-rename-them-wit-zkbb]
 tasks: [br-3724, br-9e15]
-closed: 2026-10-04T13:13:48Z
+resolved: 2026-10-04T13:13:48Z
 ---
 
 ## The ask

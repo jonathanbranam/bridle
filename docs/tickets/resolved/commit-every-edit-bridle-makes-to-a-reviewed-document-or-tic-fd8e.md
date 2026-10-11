@@ -1,14 +1,14 @@
 ---
-id: fd8e
+id: br-fd8e
 title: Commit every edit bridle makes to a reviewed document or ticket (status markers, thread IDs, frontmatter), so the clone is never left dirty
 kind: bug
-opened: 2026-10-10
-filed_by: external:aide
+created: 2026-10-10
+created_by: external:aide
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [4cgx, p896, x8jt, m3wg, v8kn]
+blocked_by: []
+related: [br-4cgx, br-p896, br-x8jt, br-m3wg, br-v8kn]
 tasks: [br-fd8e]
 resolved: 2026-10-11T03:09:43Z
 ---

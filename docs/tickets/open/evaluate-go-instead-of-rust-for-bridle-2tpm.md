@@ -1,13 +1,13 @@
 ---
-id: 2tpm
+id: br-2tpm
 title: Evaluate Go instead of Rust for bridle
 kind: research
-opened: 2026-10-03
+created: 2026-10-03
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 tasks: [br-fd74]
 ---
 

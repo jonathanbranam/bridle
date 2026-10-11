@@ -1,14 +1,14 @@
 ---
-id: py93
+id: br-py93
 title: "Idea: bridle as a tool (MCP) for interactive sessions instead of the CLI, so waiting and message receipt are consistent"
 kind: explore
-opened: 2026-10-10
-filed_by: external:aide
+created: 2026-10-10
+created_by: external:aide
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [9aj2, z485, k4wq]
+blocked_by: []
+related: [br-9aj2, br-z485, br-k4wq]
 tasks: [br-py93]
 ---
 

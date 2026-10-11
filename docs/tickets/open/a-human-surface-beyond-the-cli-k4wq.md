@@ -1,12 +1,12 @@
 ---
-id: k4wq
+id: br-k4wq
 title: A human surface beyond the CLI?
-opened: 2026-09-27
+created: 2026-09-27
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [u6wk]
+blocked_by: []
+related: [br-u6wk]
 ---
 
 ## The question

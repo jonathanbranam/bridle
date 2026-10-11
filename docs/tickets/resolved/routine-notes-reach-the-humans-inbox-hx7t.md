@@ -1,13 +1,13 @@
 ---
-id: hx7t
+id: br-hx7t
 title: Routine notes still reach the human's inbox
-opened: 2026-09-29
+created: 2026-09-29
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [kp3f]
-closed: 2026-10-02T00:43:36.277998Z
+blocked_by: []
+related: [br-kp3f]
+resolved: 2026-10-02T00:43:36.277998Z
 ---
 
 ## What happened

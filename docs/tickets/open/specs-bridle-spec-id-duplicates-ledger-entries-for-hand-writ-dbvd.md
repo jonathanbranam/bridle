@@ -1,13 +1,13 @@
 ---
-id: dbvd
+id: br-dbvd
 title: "Specs: bridle spec id duplicates ledger entries for hand-written IDs"
 kind: bug
-opened: 2026-10-05
+created: 2026-10-05
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 tasks: [br-dbvd]
 ---
 

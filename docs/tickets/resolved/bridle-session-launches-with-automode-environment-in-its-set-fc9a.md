@@ -1,15 +1,15 @@
 ---
-id: fc9a
+id: br-fc9a
 title: bridle session launches with autoMode.environment in its --settings (ufrw, conservative variant)
 kind: feature
-opened: 2026-10-04
+created: 2026-10-04
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [ufrw]
+blocked_by: []
+related: [br-ufrw]
 tasks: [br-fc9a]
-closed: 2026-10-09T23:11:06Z
+resolved: 2026-10-09T23:11:06Z
 ---
 
 ## The ask

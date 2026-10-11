@@ -1,14 +1,13 @@
 ---
-id: 63rv
+id: br-63rv
 title: Trial adoption on a bridle branch
-opened: 2026-09-28
+created: 2026-09-28
 resolved: 2026-09-29
 repos: [bridle]
 changes: [61ce8ed, 7ffae38, 0c84f5d]
 specs: []
-needs: [rxe8]
-see: [rxe8, d9nu, ajqa, u8sm, 8xhh]
-closed: 2026-09-30T05:12:44Z
+blocked_by: [br-rxe8]
+related: [br-rxe8, br-d9nu, br-ajqa, br-u8sm, br-8xhh]
 ---
 
 ## The ask

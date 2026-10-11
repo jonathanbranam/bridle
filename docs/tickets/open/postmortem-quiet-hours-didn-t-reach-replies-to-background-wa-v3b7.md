@@ -1,13 +1,13 @@
 ---
-id: v3b7
+id: br-v3b7
 title: "Postmortem: quiet hours didn't reach replies to background wakes"
 kind: research
-opened: 2026-10-05
+created: 2026-10-05
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [yy88, 9s8u, cvaq, u6w9, cr7t, mvtz]
+blocked_by: []
+related: [br-yy88, br-9s8u, br-cvaq, br-u6w9, br-cr7t, br-mvtz]
 tasks: [br-v3b7]
 ---
 

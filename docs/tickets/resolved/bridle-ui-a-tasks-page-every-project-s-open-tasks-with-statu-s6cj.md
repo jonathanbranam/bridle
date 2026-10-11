@@ -1,15 +1,15 @@
 ---
-id: s6cj
+id: br-s6cj
 title: "bridle-ui: a Tasks page, every project's open tasks with status and who's working them, mobile-first"
 kind: feature
-opened: 2026-10-04
+created: 2026-10-04
 repos: [bridle-ui, bridle]
 changes: []
 specs: []
-needs: []
-see: [7sd9, a3yd, bnhn, j28f, essy]
+blocked_by: []
+related: [br-7sd9, br-a3yd, br-bnhn, br-j28f, br-essy]
 tasks: [br-s6cj]
-closed: 2026-10-09T23:11:06Z
+resolved: 2026-10-09T23:11:06Z
 ---
 
 ## The ask

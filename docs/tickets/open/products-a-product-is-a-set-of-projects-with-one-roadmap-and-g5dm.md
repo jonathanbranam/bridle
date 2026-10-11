@@ -1,14 +1,14 @@
 ---
-id: g5dm
+id: br-g5dm
 title: "Products: a product is a set of projects with one roadmap and one product manager; several product managers"
 kind: feature
-opened: 2026-10-09
-filed_by: external:advisor/product-manager
+created: 2026-10-09
+created_by: external:advisor/product-manager
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [6h65, d9wq, 22ab, syqn]
+blocked_by: []
+related: [br-6h65, br-d9wq, br-22ab, br-syqn]
 tasks: [br-g5dm]
 ---
 

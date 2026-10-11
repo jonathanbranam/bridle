@@ -1,13 +1,13 @@
 ---
-id: dgef
+id: br-dgef
 title: bridle-ui dev server takes a port and API target, and checks the fixture site
 kind: feature
-opened: 2026-10-06
+created: 2026-10-06
 repos: [bridle-ui]
 changes: []
 specs: []
-needs: []
-see: [vwqt]
+blocked_by: []
+related: [br-vwqt]
 tasks: []
 ---
 

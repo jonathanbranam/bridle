@@ -1,13 +1,13 @@
 ---
-id: q23k
+id: br-q23k
 title: stop-daemon says what it's doing, and when it's done
-opened: 2026-09-29
+created: 2026-09-29
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
-closed: 2026-10-02T00:43:36.487917Z
+blocked_by: []
+related: []
+resolved: 2026-10-02T00:43:36.487917Z
 ---
 
 ## The ask

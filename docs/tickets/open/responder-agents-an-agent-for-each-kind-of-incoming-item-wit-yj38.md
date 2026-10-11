@@ -1,13 +1,13 @@
 ---
-id: yj38
+id: br-yj38
 title: "Responder agents: an agent for each kind of incoming item, with guidelines fit to who sent it"
 kind: question
-opened: 2026-10-02
+created: 2026-10-02
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [x8jt, pdmd, 93xm, 2bzw]
+blocked_by: []
+related: [br-x8jt, br-pdmd, br-93xm, br-2bzw]
 tasks: [br-021e]
 ---
 

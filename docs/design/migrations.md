@@ -81,3 +81,21 @@ the daemon: the run is wrapped against errors and panics.
 
 `0001` is flagged `manual_only` (it edits a project's files, and the human reviews it before it
 runs on a real project): start-up skips it, and it runs by `bridle migrate --only 0001-rename-product-manager`.
+
+- **`0002-standard-ticket-fields`** (ticket syqn, part 3): in every `docs/tickets/**.md` it renames
+  `needs`, `see`, `opened`, `filed_by`, `closed` to `blocked_by`, `related`, `created`,
+  `created_by`, `resolved` (the new name wins when both are there), and qualifies a bare `id:`
+  and the bare ids in `blocked_by`, `related` and `parent` with the project's task prefix
+  (`[tasks] prefix`, else the default from the project name). A reference is qualified only when
+  this project holds that ticket; an id of another project is left for its owner. A ticket already
+  in the new form is skipped, so a rerun finds nothing. It refuses, naming the files, on
+  uncommitted changes in a ticket it would edit. Readers keep accepting the old names until every
+  project has run it. Like `0001` it is `manual_only`; the owner runs it on the project's trial
+  branch with `bridle migrate --only 0002-standard-ticket-fields`, reviews the diff and commits it
+  (the migration leaves the commit to the owner, as `0001` does).
+
+**Protected-branch guard** (rule `existing-projects`; `migrate::refuse_on_protected_branch`, the
+first one): a migration that rewrites a project's files calls it first and is refused
+(`migrate::Refused`) while `main`, `dev` or the configured `[branches] release` is checked out,
+so it only lands on the trial or integration branch. Bridle's own repo (project `bridle`) is
+exempt. `0002` uses it; `0001` does not yet.

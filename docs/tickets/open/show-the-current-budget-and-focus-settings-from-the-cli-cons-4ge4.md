@@ -1,14 +1,14 @@
 ---
-id: 4ge4
+id: br-4ge4
 title: Show the current budget and focus settings from the CLI, consistently
 kind: feature
-opened: 2026-10-08
-filed_by: external:aide
+created: 2026-10-08
+created_by: external:aide
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [cvaq]
+blocked_by: []
+related: [br-cvaq]
 tasks: [br-4ge4]
 ---
 

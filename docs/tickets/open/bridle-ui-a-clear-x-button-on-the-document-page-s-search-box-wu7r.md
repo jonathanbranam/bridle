@@ -1,13 +1,13 @@
 ---
-id: wu7r
+id: br-wu7r
 title: "bridle-ui: a clear (X) button on the Document page's search box"
 kind: feature
-opened: 2026-10-05
+created: 2026-10-05
 repos: [bridle-ui]
 changes: []
 specs: []
-needs: []
-see: [jrm2, c2xn, g49c]
+blocked_by: []
+related: [br-jrm2, br-c2xn, br-g49c]
 tasks: []
 ---
 

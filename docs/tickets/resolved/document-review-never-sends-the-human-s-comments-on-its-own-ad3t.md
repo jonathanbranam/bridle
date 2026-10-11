@@ -1,15 +1,15 @@
 ---
-id: ad3t
+id: br-ad3t
 title: "Document review never sends the human's comments on its own: the watcher doesn't make a still document due"
 kind: bug
-opened: 2026-10-07
+created: 2026-10-07
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 tasks: [br-tqtp]
-closed: 2026-10-09T23:11:07Z
+resolved: 2026-10-09T23:11:07Z
 ---
 
 ## The ask

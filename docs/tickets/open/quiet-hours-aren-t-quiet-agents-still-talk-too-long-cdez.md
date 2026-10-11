@@ -1,12 +1,12 @@
 ---
-id: cdez
+id: br-cdez
 title: "Quiet hours aren't quiet: agents still talk too long"
-opened: 2026-10-01
+created: 2026-10-01
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [cvaq]
+blocked_by: []
+related: [br-cvaq]
 ---
 
 ## The ask

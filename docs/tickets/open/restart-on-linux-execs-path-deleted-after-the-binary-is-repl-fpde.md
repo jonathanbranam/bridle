@@ -1,12 +1,12 @@
 ---
-id: fpde
+id: br-fpde
 title: Restart on Linux execs '<path> (deleted)' after the binary is replaced
-opened: 2026-10-01
+created: 2026-10-01
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 kind: bug
 tasks: [br-fpde]
 ---

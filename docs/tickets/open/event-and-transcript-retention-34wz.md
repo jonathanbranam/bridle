@@ -1,12 +1,12 @@
 ---
-id: 34wz
+id: br-34wz
 title: Event and transcript retention
-opened: 2026-09-27
+created: 2026-09-27
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 ---
 
 ## The question

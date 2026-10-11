@@ -1,12 +1,12 @@
 ---
-id: mfgb
+id: br-mfgb
 title: "Per-project focus hours: a project's own schedule or opt-out"
-opened: 2026-10-01
+created: 2026-10-01
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [cvaq, phyy]
+blocked_by: []
+related: [br-cvaq, br-phyy]
 ---
 
 ## The ask

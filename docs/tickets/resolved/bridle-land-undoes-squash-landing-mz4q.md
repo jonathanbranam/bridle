@@ -1,13 +1,13 @@
 ---
-id: mz4q
+id: br-mz4q
 title: bridle land merges with --no-ff, undoing squash landing
-opened: 2026-09-29
+created: 2026-09-29
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [sq4m, tr7k]
-closed: 2026-09-30T12:53:59Z
+blocked_by: []
+related: [br-sq4m, br-tr7k]
+resolved: 2026-09-30T12:53:59Z
 ---
 
 ## What happened

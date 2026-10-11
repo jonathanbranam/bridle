@@ -1,12 +1,12 @@
 ---
-id: k7mw
+id: br-k7mw
 title: Projects on other machines, by machine config
-opened: 2026-09-30
+created: 2026-09-30
 repos: [bridle]
 changes: []
 specs: []
-needs: [token-less-reads-only-from-this-machine-fr6q]
-see: [finding-remote-daemons-from-the-laptop-xqvg, one-machine-owns-a-project-hw6c, a-clean-handover-of-a-project-between-machines-24mj, where-the-single-orchestrator-lives-hj4g]
+blocked_by: [token-less-reads-only-from-this-machine-fr6q]
+related: [finding-remote-daemons-from-the-laptop-xqvg, one-machine-owns-a-project-hw6c, a-clean-handover-of-a-project-between-machines-24mj, where-the-single-orchestrator-lives-hj4g]
 ---
 
 ## The ask

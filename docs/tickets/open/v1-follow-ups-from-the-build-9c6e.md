@@ -1,12 +1,12 @@
 ---
-id: 9c6e
+id: br-9c6e
 title: Small v1 follow-ups found during the build
-opened: 2026-09-27
+created: 2026-09-27
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [k4wq]
+blocked_by: []
+related: [br-k4wq]
 ---
 
 ## The question

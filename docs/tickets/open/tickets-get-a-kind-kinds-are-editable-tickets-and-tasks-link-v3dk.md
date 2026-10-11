@@ -1,12 +1,12 @@
 ---
-id: v3dk
+id: br-v3dk
 title: Tickets get a kind; kinds are editable; tickets and tasks link both ways
-opened: 2026-10-01
+created: 2026-10-01
 repos: [bridle]
 changes: []
 specs: []
-needs: [project-migrations-one-command-applies-pending-bridle-upgrad-xebc]
-see: [focus-override-accept-local-time-in-until-like-the-focus-con-hesj, questions-become-tickets-and-a-docs-folder-plan-xe5c]
+blocked_by: [project-migrations-one-command-applies-pending-bridle-upgrad-xebc]
+related: [focus-override-accept-local-time-in-until-like-the-focus-con-hesj, questions-become-tickets-and-a-docs-folder-plan-xe5c]
 ---
 
 ## The ask

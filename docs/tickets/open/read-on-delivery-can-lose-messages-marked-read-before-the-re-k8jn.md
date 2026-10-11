@@ -1,13 +1,13 @@
 ---
-id: k8jn
+id: br-k8jn
 title: "Read on delivery can lose messages: marked read before the reply arrives, across machines and with the all-projects wait"
 kind: bug
-opened: 2026-10-03
+created: 2026-10-03
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [rmpq, cy2v, fbfy, r8kv]
+blocked_by: []
+related: [br-rmpq, br-cy2v, br-fbfy, br-r8kv]
 tasks: []
 ---
 

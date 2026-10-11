@@ -1,14 +1,14 @@
 ---
-id: 22n2
+id: br-22n2
 title: "Web/mobile pack rule: non-prose inputs turn off autocapitalize, autocorrect and spellcheck"
 kind: feature
-opened: 2026-10-09
-filed_by: external:aide
+created: 2026-10-09
+created_by: external:aide
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [9xbk, g49c]
+blocked_by: []
+related: [br-9xbk, br-g49c]
 tasks: [br-22n2]
 ---
 

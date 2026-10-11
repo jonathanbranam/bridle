@@ -1,13 +1,13 @@
 ---
-id: xe5c
+id: br-xe5c
 title: "questions/" becomes "tickets/", and a planning session on the docs folders
-opened: 2026-09-30
+created: 2026-09-30
 repos: [bridle, meta-notes]
 changes: []
 specs: []
-needs: []
-see: [hv8e, p2ys, k7tm]
-closed: 2026-10-02T00:43:36.697552Z
+blocked_by: []
+related: [br-hv8e, br-p2ys, br-k7tm]
+resolved: 2026-10-02T00:43:36.697552Z
 ---
 
 ## The ask

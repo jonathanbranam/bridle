@@ -1,15 +1,15 @@
 ---
-id: p88z
+id: br-p88z
 title: Sign bridle with a stable local certificate on Macs, so the firewall's Allow survives every rebuild
 kind: feature
-opened: 2026-10-04
+created: 2026-10-04
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [sign-binaries-on-intel-macs-cs7x, jmpf]
+blocked_by: []
+related: [sign-binaries-on-intel-macs-cs7x, br-jmpf]
 tasks: [br-p88z]
-closed: 2026-10-09T23:11:03Z
+resolved: 2026-10-09T23:11:03Z
 ---
 
 ## The ask

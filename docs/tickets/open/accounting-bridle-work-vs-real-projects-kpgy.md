@@ -1,12 +1,12 @@
 ---
-id: kpgy
+id: br-kpgy
 title: "Accounting across projects: how much goes to building bridle vs real projects"
-opened: 2026-09-28
+created: 2026-09-28
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [xypj, y3sd, ksn2]
+blocked_by: []
+related: [br-xypj, br-y3sd, br-ksn2]
 ---
 
 ## The ask

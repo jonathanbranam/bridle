@@ -1,12 +1,12 @@
 ---
-id: 7gk7
+id: br-7gk7
 title: Tickets are created, edited, checked and resolved through the bridle binary, in every project
-opened: 2026-09-30
+created: 2026-09-30
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [p2ys, k7tm, xe5c]
+blocked_by: []
+related: [br-p2ys, br-k7tm, br-xe5c]
 ---
 
 ## The ask

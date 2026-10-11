@@ -1,15 +1,15 @@
 ---
-id: a3yd
+id: br-a3yd
 title: "bridle-ui: render front matter, and auto-link URLs, file paths and ticket and task IDs everywhere"
 kind: feature
-opened: 2026-10-04
+created: 2026-10-04
 repos: [bridle-ui, bridle]
 changes: []
 specs: []
-needs: []
-see: [bnhn, j28f]
+blocked_by: []
+related: [br-bnhn, br-j28f]
 tasks: [br-a3yd]
-closed: 2026-10-09T23:11:06Z
+resolved: 2026-10-09T23:11:06Z
 ---
 
 ## The ask

@@ -1,13 +1,13 @@
 ---
-id: xfb3
+id: br-xfb3
 title: Language packs were prioritised as onboarding prerequisites on a delivery path that never ran
 kind: question
-opened: 2026-10-03
+created: 2026-10-03
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [34bw, 5u9d, u8sm, 7r2c, sk52]
+blocked_by: []
+related: [br-34bw, br-5u9d, br-u8sm, br-7r2c, br-sk52]
 tasks: [br-e839]
 ---
 

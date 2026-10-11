@@ -1,15 +1,15 @@
 ---
-id: aqtg
+id: br-aqtg
 title: Should the orchestrator wake when every agent is idle? A health check needn't wake a model
 kind: question
-opened: 2026-10-03
+created: 2026-10-03
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [pdmd, f5ww, 789x, r9vh]
+blocked_by: []
+related: [br-pdmd, br-f5ww, br-789x, br-r9vh]
 tasks: [br-fef3]
-closed: 2026-10-09T23:11:02Z
+resolved: 2026-10-09T23:11:02Z
 ---
 
 ## The ask

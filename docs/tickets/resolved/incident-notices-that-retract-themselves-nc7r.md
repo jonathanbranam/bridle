@@ -1,13 +1,13 @@
 ---
-id: nc7r
+id: br-nc7r
 title: Incident notices that go to every agent and disappear when it's over
-opened: 2026-09-29
+created: 2026-09-29
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [kp3f, ex9q]
-closed: 2026-10-02T00:43:36.382765Z
+blocked_by: []
+related: [br-kp3f, br-ex9q]
+resolved: 2026-10-02T00:43:36.382765Z
 ---
 
 ## The ask

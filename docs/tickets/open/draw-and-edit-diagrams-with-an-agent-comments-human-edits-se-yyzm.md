@@ -1,13 +1,13 @@
 ---
-id: yyzm
+id: br-yyzm
 title: "Draw and edit diagrams with an agent: comments, human edits sent back as a diff"
 kind: feature
-opened: 2026-10-02
+created: 2026-10-02
 repos: [bridle, bridle-ui]
 changes: []
 specs: []
-needs: []
-see: [x8jt, essy]
+blocked_by: []
+related: [br-x8jt, br-essy]
 tasks: [br-19b4]
 ---
 

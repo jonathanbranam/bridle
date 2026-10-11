@@ -1,13 +1,13 @@
 ---
-id: r9vh
+id: br-r9vh
 title: Put background agents to sleep and wake them on demand, with a cap on how many are awake
 kind: question
-opened: 2026-10-02
+created: 2026-10-02
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [x8jt, yj38, pdmd]
+blocked_by: []
+related: [br-x8jt, br-yj38, br-pdmd]
 tasks: [br-7973]
 ---
 

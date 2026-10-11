@@ -1,15 +1,15 @@
 ---
-id: bek3
+id: br-bek3
 title: The gateway runs detached and keeps itself current, like the daemon, on dalek and on client machines
 kind: feature
-opened: 2026-10-04
+created: 2026-10-04
 repos: [bridle-ui]
 changes: []
 specs: []
-needs: []
-see: [tc7t, chvf, jmpf, essy]
+blocked_by: []
+related: [br-tc7t, br-chvf, br-jmpf, br-essy]
 tasks: [br-bek3]
-closed: 2026-10-09T23:11:03Z
+resolved: 2026-10-09T23:11:03Z
 ---
 
 ## The ask

@@ -1,13 +1,13 @@
 ---
-id: 9c63
+id: br-9c63
 title: Read-only bridle access for any local session, without a token
-opened: 2026-09-28
+created: 2026-09-28
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: []
+resolved: 2026-09-30T05:12:44Z
 ---
 
 ## What happened

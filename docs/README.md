@@ -65,7 +65,7 @@ design moves on; the design docs cite them.
   takes its id (`br-<id>`), and whoever runs `ticket task` is the task's creator and so its watcher, told when it lands; `bridle ticket new --from-task <task-id>` goes the other way, making
   a ticket from a task with the task's id (a fresh, linked id when an old hex task id has `0` or `1`).
   Tickets hold design decisions (the why and the what), tasks the work and its status; a build that
-  comes out of a discussion ticket gets its own feature ticket, linked, and its task is made from that. A missing `kind`/`tasks` is a warning until the backfill migration. `blocked_by:` orders them. Readers still accept the old names (`needs`, `see`, `opened`, `filed_by`, `closed`; the new name wins and `ticket check` warns on both); writers use only the new ones, and a migration renames existing tickets later (syqn).
+  comes out of a discussion ticket gets its own feature ticket, linked, and its task is made from that. A missing `kind`/`tasks` is a warning until the backfill migration. `blocked_by:` orders them. Readers still accept the old names (`needs`, `see`, `opened`, `filed_by`, `closed`; the new name wins and `ticket check` warns on both); writers use only the new ones, and the manual migration `0002-standard-ticket-fields` renames existing tickets and qualifies their ids (syqn; [[docs/design/migrations]]).
 - The checker takes one ticket root, so `blocked_by:` and `related:` only name tickets
   in the same tree (`questions/` or `spikes/open/`). A dependency across the
   two goes in the body as a `**Needs**` line with the ID and a link.

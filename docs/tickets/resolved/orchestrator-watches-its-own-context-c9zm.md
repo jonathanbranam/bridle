@@ -1,13 +1,13 @@
 ---
-id: c9zm
+id: br-c9zm
 title: The watcher tells the orchestrator when its own context is getting large
-opened: 2026-09-29
+created: 2026-09-29
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [d4mz, s8kn]
-closed: 2026-10-02T00:43:36.067904Z
+blocked_by: []
+related: [br-d4mz, br-s8kn]
+resolved: 2026-10-02T00:43:36.067904Z
 ---
 
 ## What happened

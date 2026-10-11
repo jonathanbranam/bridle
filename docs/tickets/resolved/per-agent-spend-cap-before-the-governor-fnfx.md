@@ -1,13 +1,13 @@
 ---
-id: fnfx
+id: br-fnfx
 title: A per-agent spend cap before the budget governor?
-opened: 2026-09-27
+created: 2026-09-27
 repos: [bridle]
 changes: []
 specs: [docs/design/agent-host/agents.md]
-needs: []
-see: [xypj]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-xypj]
+resolved: 2026-09-30T05:12:44Z
 ---
 
 ## The question

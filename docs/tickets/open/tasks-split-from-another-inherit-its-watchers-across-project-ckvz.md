@@ -1,13 +1,13 @@
 ---
-id: ckvz
+id: br-ckvz
 title: Tasks split from another inherit its watchers, across projects too
 kind: feature
-opened: 2026-10-04
+created: 2026-10-04
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [xxxq, cy2v, 3haz, jrm2, ehv6]
+blocked_by: []
+related: [br-xxxq, br-cy2v, br-3haz, br-jrm2, br-ehv6]
 tasks: [br-ckvz]
 ---
 

@@ -1,13 +1,13 @@
 ---
-id: 3haz
+id: br-3haz
 title: "Daemons deliver mail to each other across machines: store and forward, retry until the other daemon is back"
 kind: feature
-opened: 2026-10-04
+created: 2026-10-04
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [k7mw, cy2v, bp2v, fbfy, 3ehu, gtzx, k8jn]
+blocked_by: []
+related: [br-k7mw, br-cy2v, br-bp2v, br-fbfy, br-3ehu, br-gtzx, br-k8jn]
 tasks: [br-3haz, br-n7cg, br-fvkq, br-cufw, br-rhba]
 resolved: 2026-10-11T03:33:31Z
 ---

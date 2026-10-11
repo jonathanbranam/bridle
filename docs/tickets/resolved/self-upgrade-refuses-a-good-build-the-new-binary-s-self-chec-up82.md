@@ -1,15 +1,15 @@
 ---
-id: up82
+id: br-up82
 title: "Self-upgrade refuses a good build: the new binary's self-check timed out (60 s) on the Intel Mac under load"
 kind: bug
-opened: 2026-10-05
+created: 2026-10-05
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 tasks: [br-up82]
-closed: 2026-10-09T23:11:02Z
+resolved: 2026-10-09T23:11:02Z
 ---
 
 ## The ask

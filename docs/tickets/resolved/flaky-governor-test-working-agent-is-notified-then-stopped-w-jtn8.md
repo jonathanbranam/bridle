@@ -1,16 +1,16 @@
 ---
-id: jtn8
+id: br-jtn8
 title: Flaky governor_test working_agent_is_notified_then_stopped_when_its_turn_ends times out under machine load
 kind: bug
-opened: 2026-10-10
-filed_by: external:orchestrator
+created: 2026-10-10
+created_by: external:orchestrator
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [n96z]
+blocked_by: []
+related: [br-n96z]
 tasks: []
-closed: 2026-10-10T04:43:53Z
+resolved: 2026-10-10T04:43:53Z
 ---
 
 ## The ask

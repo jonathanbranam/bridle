@@ -1,13 +1,13 @@
 ---
-id: d4mz
+id: br-d4mz
 title: One-command orchestrator handover
-opened: 2026-09-28
+created: 2026-09-28
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [htp6, hj4g]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-htp6, br-hj4g]
+resolved: 2026-09-30T05:12:44Z
 ---
 
 ## The question

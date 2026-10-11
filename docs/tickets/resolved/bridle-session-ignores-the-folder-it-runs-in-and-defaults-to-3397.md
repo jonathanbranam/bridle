@@ -1,15 +1,15 @@
 ---
-id: 3397
+id: br-3397
 title: Every bridle command finds its project from the folder it runs in (bridle session defaults to bridle), enforced by a spec
 kind: bug
-opened: 2026-10-04
+created: 2026-10-04
 repos: [bridle]
 changes: []
 specs: [docs/design/cli.md]
-needs: []
-see: []
+blocked_by: []
+related: []
 tasks: [br-3397]
-closed: 2026-10-09T23:11:06Z
+resolved: 2026-10-09T23:11:06Z
 ---
 
 ## The ask

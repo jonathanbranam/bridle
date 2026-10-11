@@ -1,14 +1,14 @@
 ---
-id: 3mz4
+id: br-3mz4
 title: "One orchestrator per machine, not per project: say so in the advisor role and wherever agents send to it"
 kind: chore
-opened: 2026-10-09
-filed_by: external:advisor/product-manager
+created: 2026-10-09
+created_by: external:advisor/product-manager
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [bp2v]
+blocked_by: []
+related: [br-bp2v]
 tasks: [br-3mz4]
 resolved: 2026-10-11T01:10:17Z
 ---

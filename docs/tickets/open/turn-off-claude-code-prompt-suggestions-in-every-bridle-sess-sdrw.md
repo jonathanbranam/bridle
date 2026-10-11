@@ -1,13 +1,13 @@
 ---
-id: sdrw
+id: br-sdrw
 title: Turn off Claude Code prompt suggestions in every bridle session
 kind: chore
-opened: 2026-10-07
+created: 2026-10-07
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 tasks: [br-sdrw]
 ---
 

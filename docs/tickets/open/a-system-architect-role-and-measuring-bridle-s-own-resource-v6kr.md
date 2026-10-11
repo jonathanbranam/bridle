@@ -1,14 +1,14 @@
 ---
-id: v6kr
+id: br-v6kr
 title: A system architect role, and measuring bridle's own resource cost against a baseline
 kind: feature
-opened: 2026-10-09
-filed_by: external:aide
+created: 2026-10-09
+created_by: external:aide
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [n4w4, 67qw, 3w9t, ukpm, 6h65, w2hj]
+blocked_by: []
+related: [br-n4w4, br-67qw, br-3w9t, br-ukpm, br-6h65, br-w2hj]
 tasks: [br-v6kr, br-re57, br-57ec, br-g9xe]
 ---
 

@@ -1,13 +1,13 @@
 ---
-id: dv9u
+id: br-dv9u
 title: How does `bridle budget hold` identify itself to other projects' daemons?
-opened: 2026-09-27
+created: 2026-09-27
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [xypj]
-closed: 2026-10-02T00:43:36.146315Z
+blocked_by: []
+related: [br-xypj]
+resolved: 2026-10-02T00:43:36.146315Z
 ---
 
 ## The question

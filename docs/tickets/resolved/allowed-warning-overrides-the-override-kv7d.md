@@ -1,14 +1,13 @@
 ---
-id: kv7d
+id: br-kv7d
 title: allowed_warning forces wind-down even under a raised override
-opened: 2026-09-28
+created: 2026-09-28
 resolved: 2026-09-29
 repos: [bridle]
 changes: [8d7a9e5]
 specs: []
-needs: []
-see: [6t29, y2eb]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-6t29, br-y2eb]
 ---
 
 ## What happened

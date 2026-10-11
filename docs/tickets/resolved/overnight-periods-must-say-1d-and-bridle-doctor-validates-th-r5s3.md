@@ -1,15 +1,15 @@
 ---
-id: r5s3
+id: br-r5s3
 title: Overnight periods must say +1d, and bridle doctor validates the machine config
 kind: feature
-opened: 2026-10-02
+created: 2026-10-02
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [focus-hours-an-overnight-period-belongs-to-the-day-it-starts-3xr4, focus-hours-quiet-and-locked-cvaq, project-migrations-one-command-applies-pending-bridle-upgrad-xebc]
+blocked_by: []
+related: [focus-hours-an-overnight-period-belongs-to-the-day-it-starts-3xr4, focus-hours-quiet-and-locked-cvaq, project-migrations-one-command-applies-pending-bridle-upgrad-xebc]
 tasks: [br-1c2a]
-closed: 2026-10-02T12:04:32Z
+resolved: 2026-10-02T12:04:32Z
 ---
 
 ## The ask

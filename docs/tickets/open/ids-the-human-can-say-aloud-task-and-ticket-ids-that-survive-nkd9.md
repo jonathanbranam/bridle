@@ -1,13 +1,13 @@
 ---
-id: nkd9
+id: br-nkd9
 title: "IDs the human can say aloud: task and ticket IDs that survive dictation"
 kind: feature
-opened: 2026-10-03
+created: 2026-10-03
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [k7tm]
+blocked_by: []
+related: [br-k7tm]
 tasks: []
 ---
 

@@ -1,13 +1,13 @@
 ---
-id: 9nrt
+id: br-9nrt
 title: What it means for the human to watch a task
 kind: question
-opened: 2026-10-03
+created: 2026-10-03
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [essy, xxxq]
+blocked_by: []
+related: [br-essy, br-xxxq]
 tasks: [br-66f5]
 ---
 

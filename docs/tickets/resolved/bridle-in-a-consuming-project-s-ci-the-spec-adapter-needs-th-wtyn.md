@@ -1,13 +1,13 @@
 ---
-id: wtyn
+id: br-wtyn
 title: Bridle in a consuming project's CI (the spec adapter needs the binary)
-opened: 2026-09-30
+created: 2026-09-30
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [yghs]
-closed: 2026-10-02T00:43:36.671415Z
+blocked_by: []
+related: [br-yghs]
+resolved: 2026-10-02T00:43:36.671415Z
 ---
 
 ## The ask

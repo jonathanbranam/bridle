@@ -1,12 +1,12 @@
 ---
-id: y496
+id: br-y496
 title: "TUI: optional panels, and seeing the work in progress and coming up"
-opened: 2026-09-28
+created: 2026-09-28
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [yurx, 8ups, fgu6, j479]
+blocked_by: []
+related: [br-yurx, br-8ups, br-fgu6, br-j479]
 ---
 
 ## The ask

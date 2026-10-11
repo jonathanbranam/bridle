@@ -1,15 +1,15 @@
 ---
-id: 5u9d
+id: br-5u9d
 title: "External review of the workflow system: what it does today and what's missing"
 kind: research
-opened: 2026-10-03
+created: 2026-10-03
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [mrhe, 34bw, vp9e]
+blocked_by: []
+related: [br-mrhe, br-34bw, br-vp9e]
 tasks: [br-d207]
-closed: 2026-10-09T23:11:08Z
+resolved: 2026-10-09T23:11:08Z
 ---
 
 ## The ask

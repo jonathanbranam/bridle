@@ -1,14 +1,14 @@
 ---
-id: 6h65
+id: br-6h65
 title: "A product manager that relates every ticket to open and planned work: links, merges, and folds ideas into changes already planned"
 kind: feature
-opened: 2026-10-09
-filed_by: external:aide
+created: 2026-10-09
+created_by: external:aide
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [pa8h, ukpm, yj38, w2hj]
+blocked_by: []
+related: [br-pa8h, br-ukpm, br-yj38, br-w2hj]
 tasks: [br-6h65]
 ---
 

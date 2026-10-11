@@ -1,15 +1,15 @@
 ---
-id: jmpf
+id: br-jmpf
 title: A [gateway] section in ~/.bridle/config.toml stops every daemon from starting (unknown field)
 kind: bug
-opened: 2026-10-04
+created: 2026-10-04
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [anmx, essy]
+blocked_by: []
+related: [br-anmx, br-essy]
 tasks: [br-jmpf]
-closed: 2026-10-09T23:11:04Z
+resolved: 2026-10-09T23:11:04Z
 ---
 
 ## The ask

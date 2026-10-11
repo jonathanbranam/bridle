@@ -1,12 +1,12 @@
 ---
-id: yghs
+id: br-yghs
 title: Cross-project specs
-opened: 2026-09-27
+created: 2026-09-27
 repos: [bridle, track-web, harness]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 ---
 
 ## The question

@@ -1,13 +1,13 @@
 ---
-id: c7mn
+id: br-c7mn
 title: Rename `bridle task note` to `bridle task comment`
-opened: 2026-10-01
+created: 2026-10-01
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [group-the-cli-into-subcommands-a67t]
-closed: 2026-10-02T00:43:36.041801Z
+blocked_by: []
+related: [group-the-cli-into-subcommands-a67t]
+resolved: 2026-10-02T00:43:36.041801Z
 ---
 
 ## The ask

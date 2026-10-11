@@ -1,12 +1,12 @@
 ---
-id: v2va
+id: br-v2va
 title: Independent code and security review before a worker reports done
-opened: 2026-10-01
+created: 2026-10-01
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [hvxk, 2bzw]
+blocked_by: []
+related: [br-hvxk, br-2bzw]
 ---
 
 ## The ask

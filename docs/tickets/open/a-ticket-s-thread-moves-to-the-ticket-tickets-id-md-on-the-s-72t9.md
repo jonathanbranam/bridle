@@ -1,14 +1,14 @@
 ---
-id: 72t9
+id: br-72t9
 title: A ticket's thread moves to the ticket (tickets/<id>.md on the state branch); ticket comment/ask/answer/show; thread migration
 kind: feature
-opened: 2026-10-09
-filed_by: external:advisor/product-manager
+created: 2026-10-09
+created_by: external:advisor/product-manager
 repos: [bridle]
 changes: []
 specs: []
-needs: [3v75]
-see: [22ab]
+blocked_by: [br-3v75]
+related: [br-22ab]
 tasks: [br-72t9]
 ---
 

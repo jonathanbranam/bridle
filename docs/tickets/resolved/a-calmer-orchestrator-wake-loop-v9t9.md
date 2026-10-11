@@ -1,13 +1,13 @@
 ---
-id: v9t9
+id: br-v9t9
 title: A calmer orchestrator wake loop: restart the waiter first, 25-minute poll, 15-minute alert
-opened: 2026-09-29
+created: 2026-09-29
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [a-leaner-orchestrator-pdmd, incident-notices-that-retract-themselves-nc7r]
-closed: 2026-10-02T00:43:36.592312Z
+blocked_by: []
+related: [a-leaner-orchestrator-pdmd, incident-notices-that-retract-themselves-nc7r]
+resolved: 2026-10-02T00:43:36.592312Z
 ---
 
 ## The ask

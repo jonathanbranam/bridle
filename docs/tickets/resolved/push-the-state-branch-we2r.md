@@ -1,13 +1,13 @@
 ---
-id: we2r
+id: br-we2r
 title: Push the state branch: task records exist only on the daemon's machine
-opened: 2026-09-29
+created: 2026-09-29
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [project-machine-and-account-scope-9mxw]
-closed: 2026-10-02T00:43:36.645518Z
+blocked_by: []
+related: [project-machine-and-account-scope-9mxw]
+resolved: 2026-10-02T00:43:36.645518Z
 ---
 
 ## The ask

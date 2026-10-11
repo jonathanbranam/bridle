@@ -1,13 +1,13 @@
 ---
-id: 7d4y
+id: br-7d4y
 title: Message delivery tells the agent how to handle and reply
 kind: feature
-opened: 2026-10-06
+created: 2026-10-06
 repos: [meta-notes]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 tasks: []
 ---
 

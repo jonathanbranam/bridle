@@ -1,12 +1,12 @@
 ---
-id: m6qs
+id: br-m6qs
 title: A box manager for many projects (research, not to be done yet)
-opened: 2026-09-30
+created: 2026-09-30
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [one-daemon-for-several-small-projects-3nkk, small-projects-start-without-a-manager-w2hj, projects-on-other-machines-by-config-k7mw, nuc-recovery-on-boot-4r3k]
+blocked_by: []
+related: [one-daemon-for-several-small-projects-3nkk, small-projects-start-without-a-manager-w2hj, projects-on-other-machines-by-config-k7mw, nuc-recovery-on-boot-4r3k]
 ---
 
 ## The ask

@@ -1,13 +1,13 @@
 ---
-id: m2fq
+id: br-m2fq
 title: Merging main into a worker branch fails under merge.ff=only
-opened: 2026-09-28
+created: 2026-09-28
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: []
+resolved: 2026-09-30T05:12:44Z
 ---
 
 ## The problem

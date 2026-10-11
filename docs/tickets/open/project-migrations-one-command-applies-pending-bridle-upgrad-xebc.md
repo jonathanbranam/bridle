@@ -1,12 +1,12 @@
 ---
-id: xebc
+id: br-xebc
 title: "Project migrations: one command applies pending bridle upgrades to a project, tracked and logged"
-opened: 2026-10-01
+created: 2026-10-01
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [tickets-get-a-kind-kinds-are-editable-tickets-and-tasks-link-v3dk, where-the-knowledge-root-lives-and-migrating-to-it-ew97]
+blocked_by: []
+related: [tickets-get-a-kind-kinds-are-editable-tickets-and-tasks-link-v3dk, where-the-knowledge-root-lives-and-migrating-to-it-ew97]
 ---
 
 ## The ask

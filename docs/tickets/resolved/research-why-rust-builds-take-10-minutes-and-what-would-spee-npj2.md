@@ -1,16 +1,16 @@
 ---
-id: npj2
+id: br-npj2
 title: "Research: why Rust builds take ~10 minutes and what would speed them up"
 kind: research
-opened: 2026-10-07
-filed_by: external:orchestrator
+created: 2026-10-07
+created_by: external:orchestrator
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [b7cz, z7y5]
+blocked_by: []
+related: [br-b7cz, br-z7y5]
 tasks: [br-npj2]
-closed: 2026-10-09T23:11:02Z
+resolved: 2026-10-09T23:11:02Z
 ---
 
 ## The ask

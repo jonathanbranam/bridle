@@ -1,13 +1,13 @@
 ---
-id: essy
+id: br-essy
 title: "A web UI for the human: my to-dos and decisions, to run through and check off"
 kind: feature
-opened: 2026-10-02
+created: 2026-10-02
 repos: [bridle]
 changes: []
 specs: []
-needs: [a-prototyper-role-in-the-base-workflow-build-only-from-the-p-6yb4]
-see: [a-human-surface-beyond-the-cli-k4wq, answering-hitl-questions-from-mobile-u6wk, the-humans-to-do-list-and-restart-checklist-ex9q, tui-panels-and-seeing-the-work-y496]
+blocked_by: [a-prototyper-role-in-the-base-workflow-build-only-from-the-p-6yb4]
+related: [a-human-surface-beyond-the-cli-k4wq, answering-hitl-questions-from-mobile-u6wk, the-humans-to-do-list-and-restart-checklist-ex9q, tui-panels-and-seeing-the-work-y496]
 tasks: [br-1665]
 ---
 

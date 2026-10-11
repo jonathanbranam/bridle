@@ -1,13 +1,13 @@
 ---
-id: t9k4
+id: br-t9k4
 title: track-web specs import dry run and vitest adapter fit
-opened: 2026-09-29
+created: 2026-09-29
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [u8sm]
-closed: 2026-10-02T00:43:36.539963Z
+blocked_by: []
+related: [br-u8sm]
+resolved: 2026-10-02T00:43:36.539963Z
 ---
 
 ## The question

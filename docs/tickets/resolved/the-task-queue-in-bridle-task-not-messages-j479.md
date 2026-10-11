@@ -1,14 +1,13 @@
 ---
-id: j479
+id: br-j479
 title: The task queue lives in bridle task, not in messages
-opened: 2026-09-28
+created: 2026-09-28
 resolved: 2026-09-29
 repos: [bridle]
 changes: [f401a7f]
 specs: []
-needs: []
-see: [kp3f, a7h3, tx3f]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-kp3f, br-a7h3, br-tx3f]
 ---
 
 ## What happened

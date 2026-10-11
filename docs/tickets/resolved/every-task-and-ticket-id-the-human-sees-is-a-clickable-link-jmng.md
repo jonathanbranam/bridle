@@ -1,15 +1,15 @@
 ---
-id: jmng
+id: br-jmng
 title: Every task and ticket ID the human sees is a clickable link, without relying on agents to remember
 kind: feature
-opened: 2026-10-06
+created: 2026-10-06
 repos: [bridle, bridle-ui]
 changes: []
 specs: []
-needs: []
-see: [yfjc, vk3y]
+blocked_by: []
+related: [br-yfjc, br-vk3y]
 tasks: [br-jmng]
-closed: 2026-10-06T00:53:58Z
+resolved: 2026-10-06T00:53:58Z
 ---
 
 ## The ask

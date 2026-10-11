@@ -1,12 +1,12 @@
 ---
-id: ew97
+id: br-ew97
 title: Where the knowledge root lives, and migrating to it
-opened: 2026-09-27
+created: 2026-09-27
 repos: [bridle, track-web, harness, data-contracts]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 ---
 
 ## The question

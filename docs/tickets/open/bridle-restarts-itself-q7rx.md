@@ -1,12 +1,12 @@
 ---
-id: q7rx
+id: br-q7rx
 title: Bridle upgrades and restarts itself; the human no longer restarts the daemon
-opened: 2026-09-30
+created: 2026-09-30
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [maintenance-during-budget-holds-m7wn, reload-config-without-a-restart-9t54, do-workers-resume-after-a-daemon-restart-2fkk]
+blocked_by: []
+related: [maintenance-during-budget-holds-m7wn, reload-config-without-a-restart-9t54, do-workers-resume-after-a-daemon-restart-2fkk]
 ---
 
 ## The ask

@@ -1,14 +1,13 @@
 ---
-id: tk3m
+id: br-tk3m
 title: How should a bridle send/spawn body avoid the permission layer's backtick check?
-opened: 2026-09-27
+created: 2026-09-27
 resolved: 2026-09-28
 repos: [bridle]
 changes: [b1f4750]
 specs: []
-needs: []
-see: []
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: []
 ---
 
 ## Resolution

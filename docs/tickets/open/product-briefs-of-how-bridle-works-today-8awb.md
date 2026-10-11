@@ -1,12 +1,12 @@
 ---
-id: 8awb
+id: br-8awb
 title: Short product briefs of how each part of bridle works today
-opened: 2026-09-29
+created: 2026-09-29
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [docs-kept-current-as-part-of-every-change-3ndf, which-docs-live-in-bridle-and-which-in-markdown-hv8e]
+blocked_by: []
+related: [docs-kept-current-as-part-of-every-change-3ndf, which-docs-live-in-bridle-and-which-in-markdown-hv8e]
 ---
 
 ## The ask

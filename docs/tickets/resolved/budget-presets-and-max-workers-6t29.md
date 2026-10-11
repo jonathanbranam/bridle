@@ -1,14 +1,13 @@
 ---
-id: 6t29
+id: br-6t29
 title: Budget presets with no schedule, and max_workers per period
-opened: 2026-09-28
+created: 2026-09-28
 resolved: 2026-09-29
 repos: [bridle]
 changes: [d03ba39]
 specs: []
-needs: [y2eb]
-see: [n9qh, c424, nbkj, mt7r]
-closed: 2026-09-30T05:12:44Z
+blocked_by: [br-y2eb]
+related: [br-n9qh, br-c424, br-nbkj, br-mt7r]
 ---
 
 ## The ask

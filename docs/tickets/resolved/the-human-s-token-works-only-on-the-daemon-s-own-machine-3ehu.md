@@ -1,13 +1,13 @@
 ---
-id: 3ehu
+id: br-3ehu
 title: The human's token works only on the daemon's own machine
-opened: 2026-10-01
+created: 2026-10-01
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [k7mw, cw7a]
-closed: 2026-10-09T23:11:03Z
+blocked_by: []
+related: [br-k7mw, br-cw7a]
+resolved: 2026-10-09T23:11:03Z
 ---
 
 ## The ask

@@ -1,15 +1,15 @@
 ---
-id: tr22
+id: br-tr22
 title: "Flaky on Linux CI: queue_nudge_test a_burst_is_one_message_after_it_settles sends 2 nudges, not 1"
 kind: bug
-opened: 2026-10-05
+created: 2026-10-05
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 tasks: [br-tr22]
-closed: 2026-10-09T23:11:08Z
+resolved: 2026-10-09T23:11:08Z
 ---
 
 ## What happened

@@ -1,13 +1,13 @@
 ---
-id: g6v4
+id: br-g6v4
 title: How agents send the human status updates versus things to act on (the human's running ideas)
 kind: question
-opened: 2026-10-05
+created: 2026-10-05
 repos: [bridle, bridle-ui]
 changes: []
 specs: []
-needs: []
-see: [re79, xxxq, 9nrt, rk7k, n2q9, u6wk, rrqe]
+blocked_by: []
+related: [br-re79, br-xxxq, br-9nrt, br-rk7k, br-n2q9, br-u6wk, br-rrqe]
 tasks: []
 ---
 

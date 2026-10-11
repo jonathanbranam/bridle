@@ -1,13 +1,13 @@
 ---
-id: 67qw
+id: br-67qw
 title: Improve the architecture of the base system
 kind: explore
-opened: 2026-10-03
+created: 2026-10-03
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 tasks: [br-4eaf]
 ---
 

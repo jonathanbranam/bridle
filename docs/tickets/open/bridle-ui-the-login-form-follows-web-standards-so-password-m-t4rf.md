@@ -1,13 +1,13 @@
 ---
-id: t4rf
+id: br-t4rf
 title: "bridle-ui: the login form follows web standards so password managers fill and save it"
 kind: bug
-opened: 2026-10-04
+created: 2026-10-04
 repos: [bridle-ui]
 changes: []
 specs: []
-needs: []
-see: [essy]
+blocked_by: []
+related: [br-essy]
 tasks: []
 ---
 

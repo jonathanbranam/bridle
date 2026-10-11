@@ -1,13 +1,13 @@
 ---
-id: stx8
+id: br-stx8
 title: "A task's state says what's really happening: held and built-awaiting-landing are states, not 'planned' with a note"
 kind: feature
-opened: 2026-10-06
+created: 2026-10-06
 repos: [bridle, bridle-ui]
 changes: []
 specs: []
-needs: []
-see: [kzw2]
+blocked_by: []
+related: [br-kzw2]
 tasks: [br-stx8]
 ---
 

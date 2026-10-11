@@ -1,15 +1,15 @@
 ---
-id: nrbf
+id: br-nrbf
 title: A daemon whose claude isn't logged in runs agents that silently do nothing
 kind: bug
-opened: 2026-10-03
+created: 2026-10-03
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [ex9q]
+blocked_by: []
+related: [br-ex9q]
 tasks: [br-5b39]
-closed: 2026-10-09T23:11:04Z
+resolved: 2026-10-09T23:11:04Z
 ---
 
 ## The ask

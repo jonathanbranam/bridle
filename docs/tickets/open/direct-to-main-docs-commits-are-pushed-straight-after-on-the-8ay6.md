@@ -1,14 +1,14 @@
 ---
-id: 8ay6
+id: br-8ay6
 title: Direct-to-main docs commits are pushed straight after, on the owner's clone
 kind: feature
-opened: 2026-10-09
-filed_by: external:advisor/product-manager
+created: 2026-10-09
+created_by: external:advisor/product-manager
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [j7r4, 8z7j, 8umh]
+blocked_by: []
+related: [br-j7r4, br-8z7j, br-8umh]
 tasks: [br-8ay6]
 ---
 

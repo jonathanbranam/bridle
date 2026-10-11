@@ -1,12 +1,12 @@
 ---
-id: w2hj
+id: br-w2hj
 title: Small projects start without a manager; the orchestrator starts one when there's work
-opened: 2026-09-30
+created: 2026-09-30
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [one-daemon-for-several-small-projects-3nkk, a-box-manager-for-many-projects-m6qs, 6h65]
+blocked_by: []
+related: [one-daemon-for-several-small-projects-3nkk, a-box-manager-for-many-projects-m6qs, br-6h65]
 ---
 
 ## The ask

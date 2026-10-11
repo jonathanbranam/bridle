@@ -1,13 +1,13 @@
 ---
-id: re79
+id: br-re79
 title: A document's reviewer front matter names the agent its comments go to (so the human's comments go back to the asker)
 kind: feature
-opened: 2026-10-05
+created: 2026-10-05
 repos: [bridle, bridle-ui]
 changes: []
 specs: []
-needs: []
-see: [g6v4, x8jt, wjhp, ehv6, 4cgx]
+blocked_by: []
+related: [br-g6v4, br-x8jt, br-wjhp, br-ehv6, br-4cgx]
 tasks: [br-re79]
 ---
 

@@ -1,13 +1,13 @@
 ---
-id: xcpy
+id: br-xcpy
 title: How big is the human's reserve?
-opened: 2026-09-27
+created: 2026-09-27
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [3nqf, xypj]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-3nqf, br-xypj]
+resolved: 2026-09-30T05:12:44Z
 ---
 
 ## The question

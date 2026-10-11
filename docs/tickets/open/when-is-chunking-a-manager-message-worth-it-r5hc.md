@@ -1,12 +1,12 @@
 ---
-id: r5hc
+id: br-r5hc
 title: When is chunking a message to a manager worth its overhead?
-opened: 2026-09-27
+created: 2026-09-27
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 ---
 
 ## The question

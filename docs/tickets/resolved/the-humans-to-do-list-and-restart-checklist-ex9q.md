@@ -1,13 +1,13 @@
 ---
-id: ex9q
+id: br-ex9q
 title: The human's to-do list, and what to do at the next restart
-opened: 2026-09-29
+created: 2026-09-29
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [product-briefs-of-how-bridle-works-today-8awb]
-closed: 2026-10-09T23:11:03Z
+blocked_by: []
+related: [product-briefs-of-how-bridle-works-today-8awb]
+resolved: 2026-10-09T23:11:03Z
 ---
 
 ## The ask

@@ -1,13 +1,13 @@
 ---
-id: 6vcd
+id: br-6vcd
 title: Incidents are systemic failures; bugs are bugs
 kind: chore
-opened: 2026-10-06
+created: 2026-10-06
 repos: [meta-notes]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 tasks: []
 ---
 

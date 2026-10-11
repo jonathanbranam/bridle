@@ -1,14 +1,14 @@
 ---
-id: t3dr
+id: br-t3dr
 title: bridle-ui ships with each bridle release, fixed to that version, and self-upgrade moves both
 kind: feature
-opened: 2026-10-10
-filed_by: external:advisor/product-manager
+created: 2026-10-10
+created_by: external:advisor/product-manager
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [fv86, tc7t, chvf]
+blocked_by: []
+related: [br-fv86, br-tc7t, br-chvf]
 tasks: [br-t3dr, br-k3jk]
 ---
 

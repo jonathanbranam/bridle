@@ -1,13 +1,13 @@
 ---
-id: 6q8s
+id: br-6q8s
 title: Replay echo matching by text
-opened: 2026-09-27
+created: 2026-09-27
 repos: [bridle]
 changes: []
 specs: [docs/design/agent-host/messages.md]
-needs: []
-see: []
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: []
+resolved: 2026-09-30T05:12:44Z
 ---
 
 ## The question

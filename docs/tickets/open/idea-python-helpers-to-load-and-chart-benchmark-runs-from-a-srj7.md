@@ -1,14 +1,14 @@
 ---
-id: srj7
+id: br-srj7
 title: "Idea: Python helpers to load and chart benchmark runs from a Jupyter notebook"
 kind: feature
-opened: 2026-10-10
-filed_by: external:aide
+created: 2026-10-10
+created_by: external:aide
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [v6kr]
+blocked_by: []
+related: [br-v6kr]
 tasks: [br-srj7]
 ---
 

@@ -1,16 +1,16 @@
 ---
-id: ezpj
+id: br-ezpj
 title: "Run the mail bridge as a service: 'bridle mail install' for launchd (macOS) and systemd (Linux)"
 kind: feature
-opened: 2026-10-08
-filed_by: external:aide
+created: 2026-10-08
+created_by: external:aide
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [rs7p, gdyy, 843g]
+blocked_by: []
+related: [br-rs7p, br-gdyy, br-843g]
 tasks: [br-ezpj]
-closed: 2026-10-09T23:11:02Z
+resolved: 2026-10-09T23:11:02Z
 ---
 
 ## The ask

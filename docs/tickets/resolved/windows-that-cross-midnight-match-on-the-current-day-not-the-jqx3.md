@@ -1,13 +1,13 @@
 ---
-id: jqx3
+id: br-jqx3
 title: Windows that cross midnight match on the current day, not the day they started
-opened: 2026-09-30
+created: 2026-09-30
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [cvaq]
-closed: 2026-10-02T00:43:36.330002Z
+blocked_by: []
+related: [br-cvaq]
+resolved: 2026-10-02T00:43:36.330002Z
 ---
 
 ## The ask

@@ -1,12 +1,12 @@
 ---
-id: 8fsx
+id: br-8fsx
 title: Hold the orchestrator relaunch without restarting the daemon
-opened: 2026-09-30
+created: 2026-09-30
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [orchestrator-identity-and-recovery-7d62, nuc-recovery-on-boot-4r3k]
+blocked_by: []
+related: [orchestrator-identity-and-recovery-7d62, nuc-recovery-on-boot-4r3k]
 ---
 
 ## The ask

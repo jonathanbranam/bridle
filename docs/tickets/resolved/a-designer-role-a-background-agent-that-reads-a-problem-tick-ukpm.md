@@ -1,15 +1,15 @@
 ---
-id: ukpm
+id: br-ukpm
 title: "A designer role: a background agent that reads a problem ticket, analyses the system and writes design options into the ticket"
 kind: feature
-opened: 2026-10-06
+created: 2026-10-06
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [fne2, m9sd, 67qw, 6yb4, vp9e]
+blocked_by: []
+related: [br-fne2, br-m9sd, br-67qw, br-6yb4, br-vp9e]
 tasks: [br-ukpm]
-closed: 2026-10-09T23:11:04Z
+resolved: 2026-10-09T23:11:04Z
 ---
 
 ## The ask

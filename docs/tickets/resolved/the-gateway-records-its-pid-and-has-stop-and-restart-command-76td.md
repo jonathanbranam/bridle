@@ -1,15 +1,15 @@
 ---
-id: 76td
+id: br-76td
 title: The gateway records its pid and has stop and restart commands
 kind: feature
-opened: 2026-10-07
+created: 2026-10-07
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [bek3, tc7t]
+blocked_by: []
+related: [br-bek3, br-tc7t]
 tasks: [br-76td]
-closed: 2026-10-09T23:11:03Z
+resolved: 2026-10-09T23:11:03Z
 ---
 
 ## The ask

@@ -1,13 +1,13 @@
 ---
-id: rk7k
+id: br-rk7k
 title: "bridle-ui: a 'Send to an agent' button on a task: pick the agent, type a message, send"
 kind: feature
-opened: 2026-10-05
+created: 2026-10-05
 repos: [bridle-ui, bridle]
 changes: []
 specs: []
-needs: []
-see: [n2q9, s6cj, 7sd9, ma8e, essy]
+blocked_by: []
+related: [br-n2q9, br-s6cj, br-7sd9, br-ma8e, br-essy]
 tasks: [br-rk7k, ui-jafg]
 ---
 

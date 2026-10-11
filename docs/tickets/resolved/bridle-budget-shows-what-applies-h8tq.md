@@ -1,14 +1,13 @@
 ---
-id: h8tq
+id: br-h8tq
 title: bridle budget should show what the governor actually applies
-opened: 2026-09-28
+created: 2026-09-28
 resolved: 2026-09-29
 repos: [bridle]
 changes: [ed9ea02]
 specs: []
-needs: []
-see: [c424, kv7d, 6t29]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-c424, br-kv7d, br-6t29]
 ---
 
 ## The ask

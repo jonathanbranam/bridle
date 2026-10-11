@@ -1,12 +1,12 @@
 ---
-id: 8xhh
+id: br-8xhh
 title: Onboarding survey: otters (otter-life and otters-back)
-opened: 2026-09-28
+created: 2026-09-28
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [d9nu, ajqa, u8sm, a8fk]
+blocked_by: []
+related: [br-d9nu, br-ajqa, br-u8sm, br-a8fk]
 ---
 
 ## The ask

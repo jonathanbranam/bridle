@@ -1,16 +1,16 @@
 ---
-id: h7gt
+id: br-h7gt
 title: "Flaky on Linux CI: upgrade_test self_upgrade_restarts_only_after_the_mid_turn_agent_finishes times out"
 kind: bug
-opened: 2026-10-09
-filed_by: external:orchestrator
+created: 2026-10-09
+created_by: external:orchestrator
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [f4xu]
+blocked_by: []
+related: [br-f4xu]
 tasks: [br-h7gt]
-closed: 2026-10-09T23:11:08Z
+resolved: 2026-10-09T23:11:08Z
 ---
 
 ## The ask

@@ -1,15 +1,15 @@
 ---
-id: jttf
+id: br-jttf
 title: "Interactive sessions: context for all, daemon-decided wakes, restart with handover, one tagged pane each"
 kind: feature
-opened: 2026-10-01
+created: 2026-10-01
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [a-life-assistant-agent-on-the-notes-repo-phyy, hold-the-orchestrator-relaunch-8fsx, tag-a-tmux-pane-from-bridle-butk, orchestrator-spins-off-an-advisor-ervd, orchestrator-identity-and-recovery-7d62, orchestrator-watches-its-own-context-c9zm]
+blocked_by: []
+related: [a-life-assistant-agent-on-the-notes-repo-phyy, hold-the-orchestrator-relaunch-8fsx, tag-a-tmux-pane-from-bridle-butk, orchestrator-spins-off-an-advisor-ervd, orchestrator-identity-and-recovery-7d62, orchestrator-watches-its-own-context-c9zm]
 tasks: [br-b4ac, br-ba9e, br-afda, br-a4a6, br-88d9, br-c877, br-7e5a, br-2672, br-jttf]
-closed: 2026-10-09T23:11:00Z
+resolved: 2026-10-09T23:11:00Z
 ---
 
 ## The ask

@@ -1,13 +1,13 @@
 ---
-id: abnq
+id: br-abnq
 title: One command for any agent's status and context
 kind: feature
-opened: 2026-10-05
+created: 2026-10-05
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 tasks: [br-abnq]
 ---
 

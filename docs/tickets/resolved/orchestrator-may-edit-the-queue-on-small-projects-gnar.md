@@ -1,13 +1,13 @@
 ---
-id: gnar
+id: br-gnar
 title: The orchestrator may edit the queue on a small project with no product manager
-opened: 2026-09-30
+created: 2026-09-30
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [w2hj]
-closed: 2026-09-30T21:53:33Z
+blocked_by: []
+related: [br-w2hj]
+resolved: 2026-09-30T21:53:33Z
 ---
 
 ## Decided (2026-09-30)

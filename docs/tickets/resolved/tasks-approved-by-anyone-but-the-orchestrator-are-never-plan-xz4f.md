@@ -1,15 +1,15 @@
 ---
-id: xz4f
+id: br-xz4f
 title: "Tasks approved by anyone but the orchestrator are never planned: nothing tells the PM a task is open (br-p88z sat 9 hours)"
 kind: bug
-opened: 2026-10-04
+created: 2026-10-04
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 tasks: [br-xz4f]
-closed: 2026-10-09T23:11:03Z
+resolved: 2026-10-09T23:11:03Z
 ---
 
 ## The ask

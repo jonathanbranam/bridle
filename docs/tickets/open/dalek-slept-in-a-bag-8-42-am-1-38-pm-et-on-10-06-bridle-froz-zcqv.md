@@ -1,13 +1,13 @@
 ---
-id: zcqv
+id: br-zcqv
 title: "dalek slept in a bag 8:42 AM-1:38 PM ET on 10-06: bridle froze, but the workforce had already been idle since 11:21 PM"
 kind: incident
-opened: 2026-10-06
+created: 2026-10-06
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [4r3k, stx8]
+blocked_by: []
+related: [br-4r3k, br-stx8]
 tasks: [br-zcqv]
 ---
 

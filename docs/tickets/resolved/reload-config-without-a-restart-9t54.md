@@ -1,13 +1,13 @@
 ---
-id: 9t54
+id: br-9t54
 title: Reload config without restarting the daemon
-opened: 2026-09-29
+created: 2026-09-29
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [project-machine-and-account-scope-9mxw]
-closed: 2026-10-02T00:43:35.989404Z
+blocked_by: []
+related: [project-machine-and-account-scope-9mxw]
+resolved: 2026-10-02T00:43:35.989404Z
 ---
 
 ## The ask

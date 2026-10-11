@@ -1,14 +1,13 @@
 ---
-id: t6kq
+id: br-t6kq
 title: One credentials file for external principals, picked by project automatically
-opened: 2026-09-29
+created: 2026-09-29
 resolved: 2026-09-29
 repos: [bridle]
 changes: [76bee0a]
 specs: []
-needs: []
-see: [9c63, a7h3]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-9c63, br-a7h3]
 ---
 
 ## The ask

@@ -1,12 +1,12 @@
 ---
-id: 7d62
+id: br-7d62
 title: Orchestrator identity and disaster recovery (the pid file, several orchestrators)
-opened: 2026-09-30
+created: 2026-09-30
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [nuc-recovery-on-boot-4r3k, one-orchestrator-and-advisor-or-one-per-project-ma8e, hold-the-orchestrator-relaunch-8fsx]
+blocked_by: []
+related: [nuc-recovery-on-boot-4r3k, one-orchestrator-and-advisor-or-one-per-project-ma8e, hold-the-orchestrator-relaunch-8fsx]
 ---
 
 ## The ask

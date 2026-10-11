@@ -1,13 +1,13 @@
 ---
-id: 78sp
+id: br-78sp
 title: Agents can use Claude Code's own SendMessage and other built-ins that bypass bridle
-opened: 2026-09-27
+created: 2026-09-27
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [v4nk]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-v4nk]
+resolved: 2026-09-30T05:12:44Z
 ---
 
 ## The question

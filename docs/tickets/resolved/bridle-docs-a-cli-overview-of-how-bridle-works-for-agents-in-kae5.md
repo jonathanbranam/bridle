@@ -1,15 +1,15 @@
 ---
-id: kae5
+id: br-kae5
 title: "bridle docs: a CLI overview of how bridle works, for agents in any project"
 kind: feature
-opened: 2026-10-04
+created: 2026-10-04
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 tasks: [br-kae5]
-closed: 2026-10-09T23:11:05Z
+resolved: 2026-10-09T23:11:05Z
 ---
 
 ## The ask

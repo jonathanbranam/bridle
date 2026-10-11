@@ -1,15 +1,15 @@
 ---
-id: rmpq
+id: br-rmpq
 title: "A message an agent receives is read: no separate mark-read step, no unread for agents"
 kind: feature
-opened: 2026-10-03
+created: 2026-10-03
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [xxxq, r8kv, fbfy]
+blocked_by: []
+related: [br-xxxq, br-r8kv, br-fbfy]
 tasks: [br-ee78]
-closed: 2026-10-09T23:11:04Z
+resolved: 2026-10-09T23:11:04Z
 ---
 
 ## The ask

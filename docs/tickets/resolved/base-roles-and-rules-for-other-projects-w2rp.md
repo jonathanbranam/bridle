@@ -1,14 +1,13 @@
 ---
-id: w2rp
+id: br-w2rp
 title: Base roles, skills and rules don't fit a second project yet
-opened: 2026-09-28
+created: 2026-09-28
 resolved: 2026-09-29
 repos: [bridle]
 changes: [baf1225]
 specs: []
-needs: []
-see: [ajqa, 63rv, rxe8]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-ajqa, br-63rv, br-rxe8]
 ---
 
 ## What happened

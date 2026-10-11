@@ -1,13 +1,13 @@
 ---
-id: v8kn
+id: br-v8kn
 title: "Everything readable and editable through the daemons: file-backed records over the API"
 kind: feature
-opened: 2026-10-02
+created: 2026-10-02
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [a-web-ui-for-the-human-my-to-dos-and-decisions-to-run-throug-essy, other-projects-submit-bridle-tickets-directly-for-triage-93xm, overnight-periods-must-say-1d-and-bridle-doctor-validates-th-r5s3]
+blocked_by: []
+related: [a-web-ui-for-the-human-my-to-dos-and-decisions-to-run-throug-essy, other-projects-submit-bridle-tickets-directly-for-triage-93xm, overnight-periods-must-say-1d-and-bridle-doctor-validates-th-r5s3]
 tasks: [br-aca1]
 ---
 

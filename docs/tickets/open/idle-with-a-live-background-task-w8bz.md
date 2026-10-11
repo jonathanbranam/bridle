@@ -1,12 +1,12 @@
 ---
-id: w8bz
+id: br-w8bz
 title: Should idle-with-a-live-background-task be a distinct agent state?
-opened: 2026-09-27
+created: 2026-09-27
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 ---
 
 ## The question

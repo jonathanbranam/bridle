@@ -1,15 +1,15 @@
 ---
-id: sk7p
+id: br-sk7p
 title: "`bridle token pair`: set up role and peer tokens between machines over SSH, like ssh-copy-id"
-opened: 2026-10-01
+created: 2026-10-01
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [3ehu, k7mw, 9mxw, n63z, gdf3]
+blocked_by: []
+related: [br-3ehu, br-k7mw, br-9mxw, br-n63z, br-gdf3]
 kind: feature
 tasks: [br-8c25, br-jw9e]
-closed: 2026-10-09T23:00:17Z
+resolved: 2026-10-09T23:00:17Z
 ---
 
 ## The ask

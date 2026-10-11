@@ -1,13 +1,13 @@
 ---
-id: q7mv
+id: br-q7mv
 title: "Postmortem: the self-upgrade refused three good builds overnight because the new binary's self-check timed out, and the fix couldn't install itself (aqa7)"
 kind: research
-opened: 2026-10-05
+created: 2026-10-05
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [up82, ksz7, p88z, bek3, cs7x]
+blocked_by: []
+related: [br-up82, br-ksz7, br-p88z, br-bek3, br-cs7x]
 tasks: []
 ---
 

@@ -1,14 +1,13 @@
 ---
-id: y2eb
+id: br-y2eb
 title: Enforce max_workers, and let the human scale it down live
-opened: 2026-09-28
+created: 2026-09-28
 resolved: 2026-09-29
 repos: [bridle]
 changes: [c70b971]
 specs: []
-needs: []
-see: [6t29, nbkj, mt7r]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-6t29, br-nbkj, br-mt7r]
 ---
 
 ## The ask

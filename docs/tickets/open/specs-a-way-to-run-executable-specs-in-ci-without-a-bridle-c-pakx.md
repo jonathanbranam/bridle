@@ -1,13 +1,13 @@
 ---
-id: pakx
+id: br-pakx
 title: "Specs: a way to run executable specs in CI without a bridle checkout"
 kind: feature
-opened: 2026-10-05
+created: 2026-10-05
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [75zr]
+blocked_by: []
+related: [br-75zr]
 tasks: [br-pakx]
 ---
 

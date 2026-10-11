@@ -1,15 +1,15 @@
 ---
-id: k22s
+id: br-k22s
 title: "statusline_test: no-rate-limits test races the startup get_usage poll (red main, macOS)"
 kind: bug
-opened: 2026-10-04
+created: 2026-10-04
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [n6gy]
+blocked_by: []
+related: [br-n6gy]
 tasks: [br-k22s]
-closed: 2026-10-09T23:11:03Z
+resolved: 2026-10-09T23:11:03Z
 ---
 
 ## The ask

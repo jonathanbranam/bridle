@@ -1,15 +1,15 @@
 ---
-id: gztq
+id: br-gztq
 title: "Evaluate the UI: can the human see which projects and which agents consume tokens?"
 kind: research
-opened: 2026-10-05
+created: 2026-10-05
 repos: [bridle, bridle-ui]
 changes: []
 specs: []
-needs: []
-see: [xypj, qhsa, n4p9, 368g]
+blocked_by: []
+related: [br-xypj, br-qhsa, br-n4p9, br-368g]
 tasks: [br-gztq]
-closed: 2026-10-09T23:11:07Z
+resolved: 2026-10-09T23:11:07Z
 ---
 
 ## The ask

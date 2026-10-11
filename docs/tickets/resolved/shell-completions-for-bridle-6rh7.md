@@ -1,13 +1,13 @@
 ---
-id: 6rh7
+id: br-6rh7
 title: Shell completions for the bridle command (zsh and bash)
-opened: 2026-09-29
+created: 2026-09-29
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
-closed: 2026-10-09T23:11:02Z
+blocked_by: []
+related: []
+resolved: 2026-10-09T23:11:02Z
 ---
 
 ## The ask

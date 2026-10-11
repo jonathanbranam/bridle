@@ -1,13 +1,13 @@
 ---
-id: b5br
+id: br-b5br
 title: Dropping a claimed task leaves its claim behind
-opened: 2026-09-29
+created: 2026-09-29
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: []
+resolved: 2026-09-30T05:12:44Z
 ---
 
 ## What happened

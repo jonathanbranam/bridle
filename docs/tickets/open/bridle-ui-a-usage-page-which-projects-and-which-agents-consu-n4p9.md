@@ -1,13 +1,13 @@
 ---
-id: n4p9
+id: br-n4p9
 title: "bridle-ui: a Usage page, which projects and which agents consume tokens, over a period"
 kind: feature
-opened: 2026-10-06
+created: 2026-10-06
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [gztq]
+blocked_by: []
+related: [br-gztq]
 tasks: []
 ---
 

@@ -1,15 +1,15 @@
 ---
-id: anmx
+id: br-anmx
 title: "'bridle gateway hash-password' echoes the password as it's typed: read it hidden when stdin is a terminal"
 kind: bug
-opened: 2026-10-04
+created: 2026-10-04
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [essy]
+blocked_by: []
+related: [br-essy]
 tasks: [br-anmx]
-closed: 2026-10-09T23:11:05Z
+resolved: 2026-10-09T23:11:05Z
 ---
 
 ## The ask

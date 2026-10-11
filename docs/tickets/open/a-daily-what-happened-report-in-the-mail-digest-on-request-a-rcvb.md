@@ -1,14 +1,14 @@
 ---
-id: rcvb
+id: br-rcvb
 title: "A daily 'what happened' report: in the mail digest, on request, and logged in docs/"
 kind: feature
-opened: 2026-10-08
-filed_by: external:aide
+created: 2026-10-08
+created_by: external:aide
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [rs7p, gdyy]
+blocked_by: []
+related: [br-rs7p, br-gdyy]
 tasks: [br-rcvb, br-kaez]
 ---
 

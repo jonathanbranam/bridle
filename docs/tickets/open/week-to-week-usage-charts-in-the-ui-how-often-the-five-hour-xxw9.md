@@ -1,13 +1,13 @@
 ---
-id: xxw9
+id: br-xxw9
 title: "Week-to-week usage charts in the UI: how often the five-hour and seven-day limits are reached"
 kind: feature
-opened: 2026-10-05
+created: 2026-10-05
 repos: [bridle, bridle-ui]
 changes: []
 specs: []
-needs: []
-see: [xypj, puaf]
+blocked_by: []
+related: [br-xypj, br-puaf]
 tasks: [br-xxw9, br-yydm]
 ---
 

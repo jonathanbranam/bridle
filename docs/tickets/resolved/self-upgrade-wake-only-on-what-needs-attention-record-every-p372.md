@@ -1,15 +1,15 @@
 ---
-id: p372
+id: br-p372
 title: "Self-upgrade: wake only on what needs attention, record every step as an event"
 kind: feature
-opened: 2026-10-03
+created: 2026-10-03
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [d3wq, q7rx, chvf]
+blocked_by: []
+related: [br-d3wq, br-q7rx, br-chvf]
 tasks: [br-e5f1]
-closed: 2026-10-09T23:11:02Z
+resolved: 2026-10-09T23:11:02Z
 ---
 
 ## The ask

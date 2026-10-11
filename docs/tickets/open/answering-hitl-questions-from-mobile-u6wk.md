@@ -1,12 +1,12 @@
 ---
-id: u6wk
+id: br-u6wk
 title: Answering HITL questions from mobile
-opened: 2026-09-27
+created: 2026-09-27
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [k4wq, hj4g]
+blocked_by: []
+related: [br-k4wq, br-hj4g]
 ---
 
 ## What happened

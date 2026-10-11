@@ -1,15 +1,15 @@
 ---
-id: 75zr
+id: br-75zr
 title: "bridle-ui: view each project's specs as organised in design/specs, and link specs from tasks"
 kind: feature
-opened: 2026-10-05
+created: 2026-10-05
 repos: [bridle-ui, bridle]
 changes: []
 specs: []
-needs: []
-see: [9p3v, a3yd]
+blocked_by: []
+related: [br-9p3v, br-a3yd]
 tasks: [br-75zr]
-closed: 2026-10-09T23:11:07Z
+resolved: 2026-10-09T23:11:07Z
 ---
 
 ## The ask

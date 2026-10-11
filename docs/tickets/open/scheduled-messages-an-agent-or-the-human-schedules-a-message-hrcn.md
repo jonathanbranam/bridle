@@ -1,13 +1,13 @@
 ---
-id: hrcn
+id: br-hrcn
 title: "Scheduled messages: an agent or the human schedules a message to an agent, once or recurring (cron)"
 kind: feature
-opened: 2026-10-03
+created: 2026-10-03
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [fx7x, cvaq, phyy, cy2v, jttf]
+blocked_by: []
+related: [br-fx7x, br-cvaq, br-phyy, br-cy2v, br-jttf]
 tasks: []
 ---
 

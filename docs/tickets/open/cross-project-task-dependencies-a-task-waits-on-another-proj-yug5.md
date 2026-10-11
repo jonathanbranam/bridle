@@ -1,13 +1,13 @@
 ---
-id: yug5
+id: br-yug5
 title: "Cross-project task dependencies: a task waits on another project's task, and its watchers hear when that one lands"
 kind: feature
-opened: 2026-10-05
+created: 2026-10-05
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [ztss, xxxq, ckvz, cy2v, yghs, 2mtr]
+blocked_by: []
+related: [br-ztss, br-xxxq, br-ckvz, br-cy2v, br-yghs, br-2mtr]
 tasks: []
 ---
 

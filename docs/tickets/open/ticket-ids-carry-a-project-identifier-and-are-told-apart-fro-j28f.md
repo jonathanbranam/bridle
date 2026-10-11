@@ -1,13 +1,13 @@
 ---
-id: j28f
+id: br-j28f
 title: Ticket IDs carry a project identifier and are told apart from task IDs, so links work across projects
 kind: question
-opened: 2026-10-04
+created: 2026-10-04
 repos: [bridle-ui]
 changes: []
 specs: []
-needs: [xebc]
-see: [a3yd, bnhn, xqvg, xebc]
+blocked_by: [br-xebc]
+related: [br-a3yd, br-bnhn, br-xqvg, br-xebc]
 tasks: []
 ---
 

@@ -1,12 +1,12 @@
 ---
-id: mt7r
+id: br-mt7r
 title: Run only the tests a change can affect, by strict modularity
-opened: 2026-09-28
+created: 2026-09-28
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 ---
 
 ## The question

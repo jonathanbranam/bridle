@@ -1,13 +1,13 @@
 ---
-id: 8ups
+id: br-8ups
 title: The TUI inbox doesn't scroll
-opened: 2026-09-28
+created: 2026-09-28
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [fgu6]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-fgu6]
+resolved: 2026-09-30T05:12:44Z
 ---
 
 ## What happened

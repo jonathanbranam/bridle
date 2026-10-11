@@ -1,13 +1,13 @@
 ---
-id: s5ah
+id: br-s5ah
 title: A daemon without an aide leaves its orchestrator no route to the human
 kind: bug
-opened: 2026-10-06
+created: 2026-10-06
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [m7mp, e9yu]
+blocked_by: []
+related: [br-m7mp, br-e9yu]
 tasks: [br-s5ah]
 ---
 

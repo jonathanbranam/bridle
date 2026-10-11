@@ -1,13 +1,13 @@
 ---
-id: wz42
+id: br-wz42
 title: "A big red button: pause bridle on a machine, in levels, by hand or when a game starts"
 kind: feature
-opened: 2026-10-03
+created: 2026-10-03
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [3nyk, ur9v, b7cz, m7wn]
+blocked_by: []
+related: [br-3nyk, br-ur9v, br-b7cz, br-m7wn]
 tasks: []
 ---
 

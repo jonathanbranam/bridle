@@ -1,15 +1,15 @@
 ---
-id: bdrc
+id: br-bdrc
 title: "Traceability: tickets record who filed them, and whoever relays an ask watches the tasks made from it"
 kind: feature
-opened: 2026-10-04
+created: 2026-10-04
 repos: [bridle-ui]
 changes: []
 specs: []
-needs: []
-see: [xxxq, 9nrt, gtzx]
+blocked_by: []
+related: [br-xxxq, br-9nrt, br-gtzx]
 tasks: [br-bdrc]
-closed: 2026-10-09T23:11:04Z
+resolved: 2026-10-09T23:11:04Z
 ---
 
 ## The ask

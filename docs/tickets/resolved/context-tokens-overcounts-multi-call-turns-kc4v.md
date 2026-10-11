@@ -1,13 +1,13 @@
 ---
-id: kc4v
+id: br-kc4v
 title: context_tokens overcounts turns with more than one API call
-opened: 2026-09-28
+created: 2026-09-28
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [htp6]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-htp6]
+resolved: 2026-09-30T05:12:44Z
 ---
 
 ## The question

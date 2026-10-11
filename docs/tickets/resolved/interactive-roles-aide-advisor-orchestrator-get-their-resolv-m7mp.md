@@ -1,15 +1,15 @@
 ---
-id: m7mp
+id: br-m7mp
 title: Interactive roles (aide, advisor, orchestrator) get their resolved rules, project rules included, at startup
 kind: feature
-opened: 2026-10-04
+created: 2026-10-04
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [98xt]
+blocked_by: []
+related: [br-98xt]
 tasks: [br-m7mp]
-closed: 2026-10-09T23:11:00Z
+resolved: 2026-10-09T23:11:00Z
 ---
 
 ## The ask

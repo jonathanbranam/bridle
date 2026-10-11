@@ -1,15 +1,15 @@
 ---
-id: 7r2c
+id: br-7r2c
 title: The product-manager role is really a project manager; who helps the human decide what to build
 kind: question
-opened: 2026-10-03
+created: 2026-10-03
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [sk52]
+blocked_by: []
+related: [br-sk52]
 tasks: [br-8b6c]
-closed: 2026-10-09T23:11:04Z
+resolved: 2026-10-09T23:11:04Z
 ---
 
 ## The ask

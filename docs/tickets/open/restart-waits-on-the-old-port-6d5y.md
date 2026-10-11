@@ -1,12 +1,12 @@
 ---
-id: 6d5y
+id: br-6d5y
 title: bridle restart waits on the old URL, so it reports failure when the port changes
-opened: 2026-09-30
+created: 2026-09-30
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [k7mw]
+blocked_by: []
+related: [br-k7mw]
 ---
 
 ## What happened

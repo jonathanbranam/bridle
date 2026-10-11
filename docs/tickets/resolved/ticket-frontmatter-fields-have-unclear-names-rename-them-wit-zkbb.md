@@ -1,15 +1,15 @@
 ---
-id: zkbb
+id: br-zkbb
 title: "Ticket frontmatter fields have unclear names: rename them, with a migration"
 kind: question
-opened: 2026-10-03
+created: 2026-10-03
 repos: [bridle]
 changes: []
 specs: []
-needs: [project-migrations-one-command-applies-pending-bridle-upgrad-xebc]
-see: [tickets-and-tasks-why-both-k7tm]
+blocked_by: [project-migrations-one-command-applies-pending-bridle-upgrad-xebc]
+related: [tickets-and-tasks-why-both-k7tm]
 tasks: []
-closed: 2026-10-09T19:01:05Z
+resolved: 2026-10-09T19:01:05Z
 ---
 
 ## The ask

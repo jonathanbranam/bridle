@@ -1,14 +1,13 @@
 ---
-id: tr7k
+id: br-tr7k
 title: A task records its branch, merge commit and an implementation summary
-opened: 2026-09-29
+created: 2026-09-29
 resolved: 2026-09-29
 repos: [bridle]
 changes: [a602652]
 specs: []
-needs: []
-see: [sq4m]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-sq4m]
 ---
 
 ## The ask

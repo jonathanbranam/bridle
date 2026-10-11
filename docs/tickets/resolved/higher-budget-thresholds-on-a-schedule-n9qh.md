@@ -1,13 +1,13 @@
 ---
-id: n9qh
+id: br-n9qh
 title: Higher budget thresholds on a schedule, while the human isn't using the account
-opened: 2026-09-28
+created: 2026-09-28
 repos: [bridle]
 changes: []
 specs: [docs/design/usage-and-budget.md, docs/design/agent-host/roles-and-config.md]
-needs: []
-see: []
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: []
+resolved: 2026-09-30T05:12:44Z
 ---
 
 ## The ask

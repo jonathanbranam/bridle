@@ -1,13 +1,13 @@
 ---
-id: z7y5
+id: br-z7y5
 title: "Incident: syspolicyd and Spotlight pegged, builds and app launches stalled: each spawn clones a 564K-file integration target/"
 kind: incident
-opened: 2026-10-06
+created: 2026-10-06
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [b7cz, y455]
+blocked_by: []
+related: [br-b7cz, br-y455]
 tasks: [br-z7y5]
 ---
 

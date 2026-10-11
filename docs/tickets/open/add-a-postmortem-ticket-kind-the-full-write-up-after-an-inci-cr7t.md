@@ -1,13 +1,13 @@
 ---
-id: cr7t
+id: br-cr7t
 title: "Add a postmortem ticket kind: the full write-up after an incident"
 kind: feature
-opened: 2026-10-04
+created: 2026-10-04
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [h3ar, mvtz]
+blocked_by: []
+related: [br-h3ar, br-mvtz]
 tasks: [br-cr7t]
 ---
 

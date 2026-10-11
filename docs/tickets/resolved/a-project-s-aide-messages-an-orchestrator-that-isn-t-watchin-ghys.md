@@ -1,16 +1,16 @@
 ---
-id: ghys
+id: br-ghys
 title: A project's aide messages an orchestrator that isn't watching that project's daemon; the roles don't say the orchestrator is per machine
 kind: bug
-opened: 2026-10-08
-filed_by: external:aide
+created: 2026-10-08
+created_by: external:aide
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [ma8e, hj4g, s5ah, kuw2, r8kv]
+blocked_by: []
+related: [br-ma8e, br-hj4g, br-s5ah, br-kuw2, br-r8kv]
 tasks: [br-ghys]
-closed: 2026-10-09T23:11:05Z
+resolved: 2026-10-09T23:11:05Z
 ---
 
 ## The ask

@@ -1,13 +1,13 @@
 ---
-id: 93xm
+id: br-93xm
 title: Other projects submit bridle tickets directly, for triage
-opened: 2026-10-01
+created: 2026-10-01
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [7gk7, phyy]
-closed: 2026-10-09T23:11:01Z
+blocked_by: []
+related: [br-7gk7, br-phyy]
+resolved: 2026-10-09T23:11:01Z
 ---
 
 ## The ask

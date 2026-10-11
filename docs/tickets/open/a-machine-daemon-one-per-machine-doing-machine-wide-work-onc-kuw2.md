@@ -1,13 +1,13 @@
 ---
-id: kuw2
+id: br-kuw2
 title: "A machine daemon: one per machine, doing machine-wide work once, starting, stopping and moving projects"
 kind: feature
-opened: 2026-10-04
+created: 2026-10-04
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [puaf, 9mxw, xypj, wz42, hw6c, k7mw, 3haz]
+blocked_by: []
+related: [br-puaf, br-9mxw, br-xypj, br-wz42, br-hw6c, br-k7mw, br-3haz]
 tasks: []
 ---
 

@@ -1,13 +1,13 @@
 ---
-id: k562
+id: br-k562
 title: "parses_fast fails under load: a wall-clock bound in a unit test"
-opened: 2026-09-30
+created: 2026-09-30
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [5heh, b7cz]
-closed: 2026-10-09T23:11:01Z
+blocked_by: []
+related: [br-5heh, br-b7cz]
+resolved: 2026-10-09T23:11:01Z
 ---
 
 ## The ask

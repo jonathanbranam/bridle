@@ -1,13 +1,13 @@
 ---
-id: kzw2
+id: br-kzw2
 title: "Task data the system acts on is structured fields, not text: the field list (for review)"
 kind: feature
-opened: 2026-10-06
+created: 2026-10-06
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [vk3y, v3dk]
+blocked_by: []
+related: [br-vk3y, br-v3dk]
 tasks: []
 ---
 

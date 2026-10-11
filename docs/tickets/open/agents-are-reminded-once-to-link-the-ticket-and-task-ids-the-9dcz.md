@@ -1,14 +1,14 @@
 ---
-id: 9dcz
+id: br-9dcz
 title: Agents are reminded once to link the ticket and task IDs they show the human (a hook, never a block)
 kind: feature
-opened: 2026-10-10
-filed_by: external:advisor/product-manager
+created: 2026-10-10
+created_by: external:advisor/product-manager
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [jmng, yfjc, 22ab]
+blocked_by: []
+related: [br-jmng, br-yfjc, br-22ab]
 tasks: [br-9dcz, br-g8pe]
 ---
 

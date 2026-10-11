@@ -1,15 +1,15 @@
 ---
-id: 4s3z
+id: br-4s3z
 title: bridle session restart says it restarted a session that's still running, and types the relaunch into it
 kind: bug
-opened: 2026-10-05
+created: 2026-10-05
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [h3ar, krz8]
+blocked_by: []
+related: [br-h3ar, br-krz8]
 tasks: [br-4s3z]
-closed: 2026-10-09T23:11:06Z
+resolved: 2026-10-09T23:11:06Z
 ---
 
 ## The ask

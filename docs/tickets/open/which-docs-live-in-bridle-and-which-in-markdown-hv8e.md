@@ -1,12 +1,12 @@
 ---
-id: hv8e
+id: br-hv8e
 title: Which docs live in bridle's records and which in markdown files
-opened: 2026-09-28
+created: 2026-09-28
 repos: [bridle, data-contracts]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 ---
 
 ## The ask

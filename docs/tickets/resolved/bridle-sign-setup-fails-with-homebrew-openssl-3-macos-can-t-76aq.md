@@ -1,15 +1,15 @@
 ---
-id: 76aq
+id: br-76aq
 title: "bridle sign setup fails with Homebrew OpenSSL 3+: macOS can't import the p12 ('MAC verification failed ... wrong password?')"
 kind: bug
-opened: 2026-10-06
+created: 2026-10-06
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [p88z]
+blocked_by: []
+related: [br-p88z]
 tasks: [br-76aq]
-closed: 2026-10-09T23:11:06Z
+resolved: 2026-10-09T23:11:06Z
 ---
 
 ## The ask

@@ -1,13 +1,13 @@
 ---
-id: fne2
+id: br-fne2
 title: "bridle session advisor and bridle advisor start: near-identical commands that do different things"
 kind: arch-revision
-opened: 2026-10-06
+created: 2026-10-06
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [9z2d, ervd, a67t, ukpm]
+blocked_by: []
+related: [br-9z2d, br-ervd, br-a67t, br-ukpm]
 tasks: [br-fne2]
 ---
 

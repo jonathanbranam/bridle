@@ -1,13 +1,13 @@
 ---
-id: sfb3
+id: br-sfb3
 title: Orchestrator and advisor session names say which machine they're on
-opened: 2026-09-29
+created: 2026-09-29
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [where-the-single-orchestrator-lives-hj4g]
-closed: 2026-10-02T00:43:36.513986Z
+blocked_by: []
+related: [where-the-single-orchestrator-lives-hj4g]
+resolved: 2026-10-02T00:43:36.513986Z
 ---
 
 ## The ask

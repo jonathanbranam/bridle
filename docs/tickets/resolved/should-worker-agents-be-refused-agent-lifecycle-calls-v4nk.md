@@ -1,13 +1,13 @@
 ---
-id: v4nk
+id: br-v4nk
 title: Should worker-role agents be refused agent lifecycle API calls?
-opened: 2026-09-27
+created: 2026-09-27
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: []
+resolved: 2026-09-30T05:12:44Z
 ---
 
 ## The question

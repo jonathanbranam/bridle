@@ -1,16 +1,16 @@
 ---
-id: 843g
+id: br-843g
 title: Email goes to the project's aide, not the advisor
 kind: feature
-opened: 2026-10-08
-filed_by: external:aide
+created: 2026-10-08
+created_by: external:aide
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [rs7p]
+blocked_by: []
+related: [br-rs7p]
 tasks: [br-843g]
-closed: 2026-10-09T23:11:07Z
+resolved: 2026-10-09T23:11:07Z
 ---
 
 ## The ask

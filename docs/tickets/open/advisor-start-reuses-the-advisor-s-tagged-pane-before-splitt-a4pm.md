@@ -1,13 +1,13 @@
 ---
-id: a4pm
+id: br-a4pm
 title: advisor start reuses the advisor's tagged pane before splitting
 kind: feature
-opened: 2026-10-06
+created: 2026-10-06
 repos: [meta-notes]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 tasks: []
 ---
 

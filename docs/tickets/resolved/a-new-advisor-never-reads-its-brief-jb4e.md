@@ -1,15 +1,15 @@
 ---
-id: jb4e
+id: br-jb4e
 title: A new advisor never reads its brief
 kind: bug
-opened: 2026-10-01
+created: 2026-10-01
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 tasks: [br-6d49]
-closed: 2026-10-02T00:43:36.303638Z
+resolved: 2026-10-02T00:43:36.303638Z
 ---
 
 ## The ask

@@ -1,14 +1,13 @@
 ---
-id: cs7x
+id: br-cs7x
 title: Ad-hoc sign bridle's binaries on Intel Macs (syspolicyd crashes on unsigned ones)
-opened: 2026-09-29
+created: 2026-09-29
 resolved: 2026-09-29
 repos: [bridle]
 changes: [0f4b23a]
 specs: []
-needs: []
-see: []
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: []
 ---
 
 ## What happened

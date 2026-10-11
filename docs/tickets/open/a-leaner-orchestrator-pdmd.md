@@ -1,12 +1,12 @@
 ---
-id: pdmd
+id: br-pdmd
 title: A leaner orchestrator: fewer wakes, less conversation, cheaper restarts
-opened: 2026-09-29
+created: 2026-09-29
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [the-orchestrator-stays-running-fx7x, bridle-watches-ci-c8qw]
+blocked_by: []
+related: [the-orchestrator-stays-running-fx7x, bridle-watches-ci-c8qw]
 ---
 
 ## The ask

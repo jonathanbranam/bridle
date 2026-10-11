@@ -1,13 +1,13 @@
 ---
-id: c7eb
+id: br-c7eb
 title: Task records on a state branch or in-tree?
-opened: 2026-09-27
+created: 2026-09-27
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [c5a8]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-c5a8]
+resolved: 2026-09-30T05:12:44Z
 ---
 
 ## The question

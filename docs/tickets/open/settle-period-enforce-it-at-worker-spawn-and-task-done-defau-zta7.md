@@ -1,13 +1,13 @@
 ---
-id: zta7
+id: br-zta7
 title: "Settle period: enforce it at worker spawn and task done, default 10m"
 kind: bug
-opened: 2026-10-06
+created: 2026-10-06
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 tasks: []
 ---
 

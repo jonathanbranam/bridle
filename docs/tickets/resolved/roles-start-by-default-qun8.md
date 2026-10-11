@@ -1,13 +1,13 @@
 ---
-id: qun8
+id: br-qun8
 title: The roles a project needs start with the daemon by default
-opened: 2026-09-28
+created: 2026-09-28
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: []
+resolved: 2026-09-30T05:12:44Z
 ---
 
 ## The ask

@@ -1,13 +1,13 @@
 ---
-id: n6gy
+id: br-n6gy
 title: Do time-based test assertions need wider margins on a loaded machine?
-opened: 2026-09-27
+created: 2026-09-27
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [zk4p]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-zk4p]
+resolved: 2026-09-30T05:12:44Z
 ---
 
 ## The question

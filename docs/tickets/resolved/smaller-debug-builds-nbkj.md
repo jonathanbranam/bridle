@@ -1,14 +1,13 @@
 ---
-id: nbkj
+id: br-nbkj
 title: Smaller debug builds
-opened: 2026-09-28
+created: 2026-09-28
 resolved: 2026-09-29
 repos: [bridle]
 changes: [58f6cef]
 specs: []
-needs: []
-see: [f75x, m3wq]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-f75x, br-m3wq]
 ---
 
 ## What happened

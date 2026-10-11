@@ -1,13 +1,13 @@
 ---
-id: x8jt
+id: br-x8jt
 title: "Review a document with an agent: highlight, comment, and the agent replies or revises"
 kind: feature
-opened: 2026-10-02
+created: 2026-10-02
 repos: [bridle, bridle-ui]
 changes: []
 specs: []
-needs: []
-see: [essy, v8kn, hvxk, 6yb4, k4wq, yyzm, yj38, r9vh]
+blocked_by: []
+related: [br-essy, br-v8kn, br-hvxk, br-6yb4, br-k4wq, br-yyzm, br-yj38, br-r9vh]
 tasks: [br-rp53, br-aj9d, br-5paw, br-pwtw, ui-acf0, br-qttb, ui-c39e]
 ---
 

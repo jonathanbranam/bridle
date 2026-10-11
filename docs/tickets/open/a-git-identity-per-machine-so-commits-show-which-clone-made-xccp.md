@@ -1,14 +1,14 @@
 ---
-id: xccp
+id: br-xccp
 title: A git identity per machine, so commits show which clone made them
 kind: chore
-opened: 2026-10-09
-filed_by: external:advisor/product-manager
+created: 2026-10-09
+created_by: external:advisor/product-manager
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [j7r4, 8z7j]
+blocked_by: []
+related: [br-j7r4, br-8z7j]
 tasks: [br-xccp]
 ---
 

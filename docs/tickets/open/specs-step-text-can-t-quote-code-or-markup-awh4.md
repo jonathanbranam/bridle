@@ -1,13 +1,13 @@
 ---
-id: awh4
+id: br-awh4
 title: "Specs: step text can't quote code or markup"
 kind: feature
-opened: 2026-10-05
+created: 2026-10-05
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 tasks: [br-awh4]
 ---
 

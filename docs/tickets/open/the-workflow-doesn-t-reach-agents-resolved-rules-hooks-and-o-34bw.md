@@ -1,13 +1,13 @@
 ---
-id: 34bw
+id: br-34bw
 title: "The workflow doesn't reach agents: resolved rules, hooks and overrides stop at the CLI"
 kind: question
-opened: 2026-10-03
+created: 2026-10-03
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [5u9d, mrhe, chvf, vp9e]
+blocked_by: []
+related: [br-5u9d, br-mrhe, br-chvf, br-vp9e]
 tasks: [br-86c6]
 ---
 

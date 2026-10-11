@@ -1,15 +1,15 @@
 ---
-id: 3xr4
+id: br-3xr4
 title: "Focus hours: an overnight period belongs to the day it starts, so one block covers the night"
 kind: bug
-opened: 2026-10-02
+created: 2026-10-02
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [focus-hours-quiet-and-locked-cvaq, per-project-focus-hours-a-project-s-own-schedule-or-opt-out-mfgb]
+blocked_by: []
+related: [focus-hours-quiet-and-locked-cvaq, per-project-focus-hours-a-project-s-own-schedule-or-opt-out-mfgb]
 tasks: [br-14d6]
-closed: 2026-10-09T23:11:08Z
+resolved: 2026-10-09T23:11:08Z
 ---
 
 ## The ask

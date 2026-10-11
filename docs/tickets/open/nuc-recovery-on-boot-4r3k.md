@@ -1,12 +1,12 @@
 ---
-id: 4r3k
+id: br-4r3k
 title: The NUC recovers everything on boot
-opened: 2026-09-30
+created: 2026-09-30
 repos: [bridle]
 changes: []
 specs: []
-needs: [projects-on-other-machines-by-config-k7mw, dotfiles-local-as-a-bridle-project-35mw]
-see: [orchestrator-identity-and-recovery-7d62, hold-the-orchestrator-relaunch-8fsx, pause-before-a-planned-reboot-3nyk, unattended-while-the-human-travels-tv8r]
+blocked_by: [projects-on-other-machines-by-config-k7mw, dotfiles-local-as-a-bridle-project-35mw]
+related: [orchestrator-identity-and-recovery-7d62, hold-the-orchestrator-relaunch-8fsx, pause-before-a-planned-reboot-3nyk, unattended-while-the-human-travels-tv8r]
 ---
 
 ## The ask

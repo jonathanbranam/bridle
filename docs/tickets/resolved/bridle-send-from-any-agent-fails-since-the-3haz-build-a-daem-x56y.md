@@ -1,15 +1,15 @@
 ---
-id: x56y
+id: br-x56y
 title: "bridle send from any agent fails since the 3haz build: a daemon found by BRIDLE_URL has no project, so BRIDLE_PROJECT reads as another project"
 kind: bug
-opened: 2026-10-06
+created: 2026-10-06
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [3haz, 2ax5]
+blocked_by: []
+related: [br-3haz, br-2ax5]
 tasks: [br-x56y]
-closed: 2026-10-09T23:11:06Z
+resolved: 2026-10-09T23:11:06Z
 ---
 
 ## The ask

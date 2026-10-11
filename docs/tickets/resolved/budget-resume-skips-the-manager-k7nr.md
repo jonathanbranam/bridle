@@ -1,14 +1,13 @@
 ---
-id: k7nr
+id: br-k7nr
 title: After a budget pause, the governor may never resume the manager
-opened: 2026-09-28
+created: 2026-09-28
 resolved: 2026-09-29
 repos: [bridle]
 changes: [c70b971]
 specs: []
-needs: []
-see: [y2eb, 6t29]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-y2eb, br-6t29]
 ---
 
 ## What happened

@@ -1,13 +1,13 @@
 ---
-id: urdm
+id: br-urdm
 title: "Base rule: the shell is zsh, which doesn't word-split unquoted variables"
 kind: chore
-opened: 2026-10-03
+created: 2026-10-03
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 tasks: []
 ---
 

@@ -1,13 +1,13 @@
 ---
-id: 44ms
+id: br-44ms
 title: Start an unplanned focus period now, through an agent (for example quiet for sleep)
 kind: feature
-opened: 2026-10-04
+created: 2026-10-04
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [cvaq, hesj, mfgb]
+blocked_by: []
+related: [br-cvaq, br-hesj, br-mfgb]
 tasks: [br-44ms]
 ---
 

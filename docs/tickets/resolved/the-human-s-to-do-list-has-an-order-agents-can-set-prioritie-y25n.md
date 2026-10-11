@@ -1,15 +1,15 @@
 ---
-id: y25n
+id: br-y25n
 title: "The human's to-do list has an order agents can set: priorities with enough levels to put things at the top"
 kind: feature
-opened: 2026-10-05
+created: 2026-10-05
 repos: [bridle, bridle-ui]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 tasks: [br-y25n]
-closed: 2026-10-09T23:11:03Z
+resolved: 2026-10-09T23:11:03Z
 ---
 
 ## The ask

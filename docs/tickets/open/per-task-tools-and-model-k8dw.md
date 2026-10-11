@@ -1,12 +1,12 @@
 ---
-id: k8dw
+id: br-k8dw
 title: Let a task say which tools and model its worker needs
-opened: 2026-09-28
+created: 2026-09-28
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [a-new-name-for-the-project-geem]
+blocked_by: []
+related: [a-new-name-for-the-project-geem]
 ---
 
 ## What happened

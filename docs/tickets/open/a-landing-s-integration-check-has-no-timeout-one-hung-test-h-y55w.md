@@ -1,13 +1,13 @@
 ---
-id: y55w
+id: br-y55w
 title: "A landing's integration check has no timeout: one hung test holds the landing queue indefinitely"
 kind: bug
-opened: 2026-10-07
+created: 2026-10-07
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 tasks: []
 ---
 

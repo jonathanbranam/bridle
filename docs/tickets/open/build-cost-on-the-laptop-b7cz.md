@@ -1,12 +1,12 @@
 ---
-id: b7cz
+id: br-b7cz
 title: The cost of builds: every worktree compiles the whole workspace from scratch
-opened: 2026-09-28
+created: 2026-09-28
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [mt7r, c8qw, f75x, nbkj]
+blocked_by: []
+related: [br-mt7r, br-c8qw, br-f75x, br-nbkj]
 ---
 
 ## The ask

@@ -1,13 +1,13 @@
 ---
-id: ct8m
+id: br-ct8m
 title: Lean starting context for every agent, the orchestrator included
-opened: 2026-09-29
+created: 2026-09-29
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [the-orchestrator-stays-running-fx7x, context-tokens-overcounts-multi-call-turns-kc4v]
-closed: 2026-10-02T00:43:36.120033Z
+blocked_by: []
+related: [the-orchestrator-stays-running-fx7x, context-tokens-overcounts-multi-call-turns-kc4v]
+resolved: 2026-10-02T00:43:36.120033Z
 ---
 
 ## The ask

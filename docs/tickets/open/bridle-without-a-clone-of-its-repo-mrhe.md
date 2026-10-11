@@ -1,12 +1,12 @@
 ---
-id: mrhe
+id: br-mrhe
 title: Run bridle on a project without a local clone of the bridle repo
-opened: 2026-09-29
+created: 2026-09-29
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [where-the-knowledge-root-lives-and-migrating-to-it-ew97]
+blocked_by: []
+related: [where-the-knowledge-root-lives-and-migrating-to-it-ew97]
 ---
 
 ## The ask

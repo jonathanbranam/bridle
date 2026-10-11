@@ -1,14 +1,14 @@
 ---
-id: ts6b
+id: br-ts6b
 title: "One command tree for interactive sessions: bridle session <verb> <seat>, retiring bridle advisor and the session-flavoured parts of bridle orchestrator"
 kind: feature
-opened: 2026-10-09
-filed_by: external:orchestrator
+created: 2026-10-09
+created_by: external:orchestrator
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [seats-named-interactive-roles-splitting-the-advisor-retiring-r8kv, seats-every-role-is-a-named-tracked-seat-that-outlives-its-s-gtzx, orchestrator-spins-off-an-advisor-ervd]
+blocked_by: []
+related: [seats-named-interactive-roles-splitting-the-advisor-retiring-r8kv, seats-every-role-is-a-named-tracked-seat-that-outlives-its-s-gtzx, orchestrator-spins-off-an-advisor-ervd]
 tasks: [br-ts6b]
 ---
 

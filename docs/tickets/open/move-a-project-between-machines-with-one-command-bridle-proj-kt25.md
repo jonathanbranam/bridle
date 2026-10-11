@@ -1,14 +1,14 @@
 ---
-id: kt25
+id: br-kt25
 title: Move a project between machines with one command (bridle project move)
 kind: feature
-opened: 2026-10-09
-filed_by: external:advisor/product-manager
+created: 2026-10-09
+created_by: external:advisor/product-manager
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [24mj, kuw2, hw6c, rjd5, sk7p, n63z, 3haz]
+blocked_by: []
+related: [br-24mj, br-kuw2, br-hw6c, br-rjd5, br-sk7p, br-n63z, br-3haz]
 tasks: [br-kt25]
 ---
 

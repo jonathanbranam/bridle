@@ -1,15 +1,15 @@
 ---
-id: yfjc
+id: br-yfjc
 title: Every agent talking to the human links each ticket and task it names to the bridle UI, from a configured base URL
 kind: feature
-opened: 2026-10-05
+created: 2026-10-05
 repos: [bridle, bridle-ui]
 changes: []
 specs: []
-needs: []
-see: [5wdu, j28f, g6v4, jmpf]
+blocked_by: []
+related: [br-5wdu, br-j28f, br-g6v4, br-jmpf]
 tasks: [br-yfjc]
-closed: 2026-10-09T23:11:07Z
+resolved: 2026-10-09T23:11:07Z
 ---
 
 ## The ask

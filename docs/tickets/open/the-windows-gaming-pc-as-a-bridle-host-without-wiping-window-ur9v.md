@@ -1,13 +1,13 @@
 ---
-id: ur9v
+id: br-ur9v
 title: "The Windows gaming PC as a bridle host without wiping Windows: WSL2 or dual boot"
 kind: research
-opened: 2026-10-03
+created: 2026-10-03
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [chvf, tv8r]
+blocked_by: []
+related: [br-chvf, br-tv8r]
 tasks: []
 ---
 

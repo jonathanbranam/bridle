@@ -1,14 +1,14 @@
 ---
-id: 9aj2
+id: br-9aj2
 title: "Message delivery you can check: a message stays unread until the session has seen it, a recent-messages command for any principal, and a full delivery audit trail in the event log"
 kind: feature
-opened: 2026-10-10
-filed_by: external:aide
+created: 2026-10-10
+created_by: external:aide
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [75h2, xxxq, 3haz]
+blocked_by: []
+related: [br-75h2, br-xxxq, br-3haz]
 tasks: [br-9aj2, br-3zhx]
 ---
 

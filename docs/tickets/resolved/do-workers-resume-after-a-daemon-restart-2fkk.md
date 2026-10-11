@@ -1,13 +1,13 @@
 ---
-id: 2fkk
+id: br-2fkk
 title: Do workers resume after a daemon restart?
-opened: 2026-09-27
+created: 2026-09-27
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [t39j]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-t39j]
+resolved: 2026-09-30T05:12:44Z
 ---
 
 ## The question

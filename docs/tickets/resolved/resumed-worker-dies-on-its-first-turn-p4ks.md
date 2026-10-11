@@ -1,13 +1,13 @@
 ---
-id: p4ks
+id: br-p4ks
 title: A worker resumed after a restart dies on its first turn
-opened: 2026-09-28
+created: 2026-09-28
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [r3nh]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-r3nh]
+resolved: 2026-09-30T05:12:44Z
 ---
 
 ## What happened

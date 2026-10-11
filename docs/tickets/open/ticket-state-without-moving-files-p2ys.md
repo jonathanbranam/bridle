@@ -1,12 +1,12 @@
 ---
-id: p2ys
+id: br-p2ys
 title: Can ticket state live without moving files, and still be read and edited as markdown?
-opened: 2026-09-27
+created: 2026-09-27
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [c7eb, c5a8, k4wq]
+blocked_by: []
+related: [br-c7eb, br-c5a8, br-k4wq]
 ---
 
 ## The question

@@ -1,13 +1,13 @@
 ---
-id: m9cy
+id: br-m9cy
 title: "Drop the Write(path) focus-file deny rules: Claude Code warns on every session start"
-opened: 2026-09-30
+created: 2026-09-30
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [cvaq]
-closed: 2026-09-30T21:52:16Z
+blocked_by: []
+related: [br-cvaq]
+resolved: 2026-09-30T21:52:16Z
 ---
 
 ## The ask

@@ -1,15 +1,15 @@
 ---
-id: bnhn
+id: br-bnhn
 title: "bridle-ui: render markdown, turn wiki links and file paths into links that open in the UI"
 kind: feature
-opened: 2026-10-04
+created: 2026-10-04
 repos: [bridle-ui, bridle]
 changes: []
 specs: []
-needs: []
-see: [jrm2, ehv6, x8jt, k3qx]
+blocked_by: []
+related: [br-jrm2, br-ehv6, br-x8jt, br-k3qx]
 tasks: [br-bnhn]
-closed: 2026-10-09T23:11:06Z
+resolved: 2026-10-09T23:11:06Z
 ---
 
 ## The ask

@@ -1,16 +1,16 @@
 ---
-id: rztb
+id: br-rztb
 title: "Incident: something keeps restarting dalek's gateway outside launchd from a Claude session (pid 88281 since 10-08 9:39 PM); recurring"
 kind: incident
-opened: 2026-10-09
-filed_by: external:aide
+created: 2026-10-09
+created_by: external:aide
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [57nt, bek3, 76td, ppa6]
+blocked_by: []
+related: [br-57nt, br-bek3, br-76td, br-ppa6]
 tasks: [br-rztb]
-closed: 2026-10-09T23:11:08Z
+resolved: 2026-10-09T23:11:08Z
 ---
 
 ## The ask

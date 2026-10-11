@@ -1,13 +1,13 @@
 ---
-id: 5wdu
+id: br-5wdu
 title: "bridle-ui: stable URLs that open any ticket or task by ID, wherever its file lives"
 kind: feature
-opened: 2026-10-05
+created: 2026-10-05
 repos: [bridle-ui, bridle]
 changes: []
 specs: []
-needs: []
-see: [yfjc, a3yd, j28f, s6cj, k3qx]
+blocked_by: []
+related: [br-yfjc, br-a3yd, br-j28f, br-s6cj, br-k3qx]
 tasks: []
 ---
 

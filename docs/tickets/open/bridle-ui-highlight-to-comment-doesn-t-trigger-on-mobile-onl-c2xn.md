@@ -1,13 +1,13 @@
 ---
-id: c2xn
+id: br-c2xn
 title: "bridle-ui: highlight-to-comment doesn't trigger on mobile (only mouseup is listened for)"
 kind: bug
-opened: 2026-10-04
+created: 2026-10-04
 repos: [bridle-ui]
 changes: []
 specs: []
-needs: []
-see: [jrm2, x8jt, a3yd, g49c]
+blocked_by: []
+related: [br-jrm2, br-x8jt, br-a3yd, br-g49c]
 tasks: []
 ---
 

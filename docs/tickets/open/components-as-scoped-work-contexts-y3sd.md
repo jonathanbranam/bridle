@@ -1,12 +1,12 @@
 ---
-id: y3sd
+id: br-y3sd
 title: Components as scoped work contexts (track-web clients and games)
-opened: 2026-09-28
+created: 2026-09-28
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [u8sm, 63rv, rxe8, hv8e]
+blocked_by: []
+related: [br-u8sm, br-63rv, br-rxe8, br-hv8e]
 ---
 
 ## The ask

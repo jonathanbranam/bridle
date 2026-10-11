@@ -1,16 +1,16 @@
 ---
-id: 36dp
+id: br-36dp
 title: "Machine-wide self_upgrade: let ~/.bridle/config.toml set [daemon] self_upgrade for every daemon on the machine"
 kind: feature
-opened: 2026-10-10
-filed_by: external:orchestrator
+created: 2026-10-10
+created_by: external:orchestrator
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 tasks: [br-36dp]
-closed: 2026-10-10T20:26:42Z
+resolved: 2026-10-10T20:26:42Z
 ---
 
 ## The ask

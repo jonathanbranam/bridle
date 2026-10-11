@@ -1,13 +1,13 @@
 ---
-id: butk
+id: br-butk
 title: Tag a tmux pane from bridle (bridle pane tag / untag)
-opened: 2026-09-30
+created: 2026-09-30
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [the-orchestrator-stays-running-fx7x, orchestrator-pane-full-of-escape-codes-csfe]
-closed: 2026-10-02T00:43:36.016411Z
+blocked_by: []
+related: [the-orchestrator-stays-running-fx7x, orchestrator-pane-full-of-escape-codes-csfe]
+resolved: 2026-10-02T00:43:36.016411Z
 ---
 
 ## The ask

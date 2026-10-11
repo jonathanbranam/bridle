@@ -1,15 +1,15 @@
 ---
-id: ufrw
+id: br-ufrw
 title: "Auto mode's classifier context per machine for bridle projects: who writes autoMode.environment, and how it stays current"
 kind: question
-opened: 2026-10-04
+created: 2026-10-04
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 tasks: [br-ufrw]
-closed: 2026-10-09T23:11:05Z
+resolved: 2026-10-09T23:11:05Z
 ---
 
 ## The ask

@@ -1,15 +1,15 @@
 ---
-id: w3pk
+id: br-w3pk
 title: "Retire scripts/claude-orchestrator and claude-advisor: the orchestrator supervisor still relaunches through the wrapper"
 kind: chore
-opened: 2026-10-06
+created: 2026-10-06
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [mrhe]
+blocked_by: []
+related: [br-mrhe]
 tasks: [br-w3pk]
-closed: 2026-10-09T23:11:02Z
+resolved: 2026-10-09T23:11:02Z
 ---
 
 ## The ask

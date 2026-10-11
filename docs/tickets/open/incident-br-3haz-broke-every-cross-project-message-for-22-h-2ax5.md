@@ -1,13 +1,13 @@
 ---
-id: 2ax5
+id: br-2ax5
 title: "Incident: br-3haz broke every cross-project message for ~22 h: the CLI needed an outbox no running daemon had, and peer tokens nobody had made"
 kind: incident
-opened: 2026-10-06
+created: 2026-10-06
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [3haz, t3vq, n63z, 95mu]
+blocked_by: []
+related: [br-3haz, br-t3vq, br-n63z, br-95mu]
 tasks: [br-2ax5]
 ---
 

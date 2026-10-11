@@ -1,13 +1,13 @@
 ---
-id: enz3
+id: br-enz3
 title: How does bridle pin and check the Claude Code version?
-opened: 2026-09-27
+created: 2026-09-27
 repos: [bridle]
 changes: []
 specs: [docs/design/agent-host/agents.md]
-needs: []
-see: []
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: []
+resolved: 2026-09-30T05:12:44Z
 ---
 
 ## The question

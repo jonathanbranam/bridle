@@ -1,14 +1,14 @@
 ---
-id: ae9f
+id: br-ae9f
 title: Move interactive agents to the background, so the daemon controls their message delivery
 kind: feature
-opened: 2026-10-10
-filed_by: external:advisor/product-manager
+created: 2026-10-10
+created_by: external:advisor/product-manager
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [z485, r8kv, gtzx, 9aj2, kuw2, pdmd, ts6b, py93]
+blocked_by: []
+related: [br-z485, br-r8kv, br-gtzx, br-9aj2, br-kuw2, br-pdmd, br-ts6b, br-py93]
 tasks: [br-ae9f]
 ---
 

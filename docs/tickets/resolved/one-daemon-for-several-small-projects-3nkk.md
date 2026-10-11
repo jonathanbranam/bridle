@@ -1,13 +1,13 @@
 ---
-id: 3nkk
+id: br-3nkk
 title: One daemon for several small projects?
-opened: 2026-09-30
+created: 2026-09-30
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [dotfiles-local-as-a-bridle-project-35mw, how-project-daemons-share-one-budget-xypj, one-orchestrator-and-advisor-or-one-per-project-ma8e]
-closed: 2026-10-09T23:11:01Z
+blocked_by: []
+related: [dotfiles-local-as-a-bridle-project-35mw, how-project-daemons-share-one-budget-xypj, one-orchestrator-and-advisor-or-one-per-project-ma8e]
+resolved: 2026-10-09T23:11:01Z
 ---
 
 ## The question

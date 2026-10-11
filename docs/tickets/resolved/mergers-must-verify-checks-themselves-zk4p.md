@@ -1,13 +1,13 @@
 ---
-id: zk4p
+id: br-zk4p
 title: Should merging a worker's branch require the merger's own passing test run?
-opened: 2026-09-27
+created: 2026-09-27
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [n6gy]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-n6gy]
+resolved: 2026-09-30T05:12:44Z
 ---
 
 ## The question

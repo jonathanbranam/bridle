@@ -1,13 +1,13 @@
 ---
-id: m9sd
+id: br-m9sd
 title: "Agents don't know how to use the bridle CLI correctly: help, skills, shorter primes or guardrails?"
 kind: research
-opened: 2026-10-06
+created: 2026-10-06
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [9z2d, kae5, a67t, m7mp]
+blocked_by: []
+related: [br-9z2d, br-kae5, br-a67t, br-m7mp]
 tasks: [br-m9sd]
 ---
 

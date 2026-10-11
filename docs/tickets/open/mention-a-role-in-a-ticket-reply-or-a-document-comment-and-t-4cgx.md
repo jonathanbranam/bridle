@@ -1,14 +1,14 @@
 ---
-id: 4cgx
+id: br-4cgx
 title: "@-mention a role in a ticket reply or a document comment and that role gets a message"
 kind: feature
-opened: 2026-10-09
-filed_by: external:advisor/product-manager
+created: 2026-10-09
+created_by: external:advisor/product-manager
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [bp2v, 22ab, 72t9]
+blocked_by: []
+related: [br-bp2v, br-22ab, br-72t9]
 tasks: [br-4cgx]
 next_comment_id: c8
 ---

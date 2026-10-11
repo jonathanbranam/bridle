@@ -1,13 +1,13 @@
 ---
-id: n94h
+id: br-n94h
 title: TUI inbox: q closes an open message; opening a message no longer marks it read
-opened: 2026-09-29
+created: 2026-09-29
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [tui-panels-and-seeing-the-work-y496]
-closed: 2026-10-09T23:11:04Z
+blocked_by: []
+related: [tui-panels-and-seeing-the-work-y496]
+resolved: 2026-10-09T23:11:04Z
 ---
 
 ## The ask

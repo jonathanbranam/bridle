@@ -1,13 +1,13 @@
 ---
-id: fr6q
+id: br-fr6q
 title: Token-less reads only from this machine
-opened: 2026-09-30
+created: 2026-09-30
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [finding-remote-daemons-from-the-laptop-xqvg]
-closed: 2026-10-02T00:43:36.199360Z
+blocked_by: []
+related: [finding-remote-daemons-from-the-laptop-xqvg]
+resolved: 2026-10-02T00:43:36.199360Z
 ---
 
 ## The ask

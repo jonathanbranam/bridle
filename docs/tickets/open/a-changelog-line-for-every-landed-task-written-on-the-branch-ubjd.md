@@ -1,14 +1,14 @@
 ---
-id: ubjd
+id: br-ubjd
 title: A CHANGELOG line for every landed task, written on the branch, and one section per kind under Unreleased
 kind: chore
-opened: 2026-10-09
-filed_by: external:aide
+created: 2026-10-09
+created_by: external:aide
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [rcvb, 3ndf]
+blocked_by: []
+related: [br-rcvb, br-3ndf]
 tasks: [br-ubjd]
 ---
 

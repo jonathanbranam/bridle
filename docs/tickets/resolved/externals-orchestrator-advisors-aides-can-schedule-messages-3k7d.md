@@ -1,5 +1,5 @@
 ---
-id: 3k7d
+id: br-3k7d
 title: Externals (orchestrator, advisors, aides) can schedule messages for themselves
 kind: bug
 created: 2026-10-11
@@ -8,7 +8,7 @@ repos: [bridle]
 changes: []
 specs: []
 blocked_by: []
-related: [yfv5, cbbn]
+related: [br-yfv5, br-cbbn]
 tasks: [br-3k7d]
 theme: agents-and-cli
 resolved: 2026-10-11T05:04:14Z

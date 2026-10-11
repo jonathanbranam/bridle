@@ -1,13 +1,13 @@
 ---
-id: zm95
+id: br-zm95
 title: Shutdown hangs while a client holds the event stream open (bridle tui)
-opened: 2026-09-28
+created: 2026-09-28
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [sed3]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-sed3]
+resolved: 2026-09-30T05:12:44Z
 ---
 
 ## What happened

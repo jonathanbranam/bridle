@@ -1,14 +1,13 @@
 ---
-id: c424
+id: br-c424
 title: bridle budget: local times, the applied budget and the schedule
-opened: 2026-09-28
+created: 2026-09-28
 resolved: 2026-09-29
 repos: [bridle]
 changes: [ed9ea02]
 specs: []
-needs: []
-see: []
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: []
 ---
 
 ## The ask

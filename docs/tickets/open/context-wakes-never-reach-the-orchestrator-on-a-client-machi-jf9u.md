@@ -1,12 +1,12 @@
 ---
-id: jf9u
+id: br-jf9u
 title: Context wakes never reach the orchestrator on a client machine (NUC)
-opened: 2026-09-30
+created: 2026-09-30
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [7d62, chvf]
+blocked_by: []
+related: [br-7d62, br-chvf]
 ---
 
 ## The ask

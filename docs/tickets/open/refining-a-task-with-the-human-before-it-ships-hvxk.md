@@ -1,12 +1,12 @@
 ---
-id: hvxk
+id: br-hvxk
 title: Refining a task with the human before it ships, as much as the task needs
-opened: 2026-09-29
+created: 2026-09-29
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [product-briefs-of-how-bridle-works-today-8awb, tickets-and-tasks-why-both-k7tm]
+blocked_by: []
+related: [product-briefs-of-how-bridle-works-today-8awb, tickets-and-tasks-why-both-k7tm]
 ---
 
 ## The ask

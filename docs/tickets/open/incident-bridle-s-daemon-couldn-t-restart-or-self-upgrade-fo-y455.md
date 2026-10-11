@@ -1,13 +1,13 @@
 ---
-id: y455
+id: br-y455
 title: "Incident: bridle's daemon couldn't restart or self-upgrade for ~23 h: a stuck 'spawning' flag meant no quiet point ever came"
 kind: incident
-opened: 2026-10-06
+created: 2026-10-06
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [2ax5, q7mv]
+blocked_by: []
+related: [br-2ax5, br-q7mv]
 tasks: [br-y455, br-qect]
 ---
 

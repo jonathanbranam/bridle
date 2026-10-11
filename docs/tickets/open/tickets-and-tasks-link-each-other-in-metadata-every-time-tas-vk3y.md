@@ -1,13 +1,13 @@
 ---
-id: vk3y
+id: br-vk3y
 title: "Tickets and tasks link each other in metadata, every time: task new requires --ticket (or no-ticket), a rule for every creator"
 kind: feature
-opened: 2026-10-06
+created: 2026-10-06
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [fx7x, nnj2]
+blocked_by: []
+related: [br-fx7x, br-nnj2]
 tasks: [br-vk3y, br-avu7]
 ---
 

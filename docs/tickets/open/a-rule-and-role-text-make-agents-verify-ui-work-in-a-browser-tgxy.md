@@ -1,13 +1,13 @@
 ---
-id: tgxy
+id: br-tgxy
 title: A rule and role text make agents verify UI work in a browser on a throwaway site
 kind: feature
-opened: 2026-10-06
+created: 2026-10-06
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [vwqt]
+blocked_by: []
+related: [br-vwqt]
 tasks: []
 ---
 

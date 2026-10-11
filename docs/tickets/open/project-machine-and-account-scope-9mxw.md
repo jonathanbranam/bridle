@@ -1,12 +1,12 @@
 ---
-id: 9mxw
+id: br-9mxw
 title: What's per project, per machine, and per account
-opened: 2026-09-29
+created: 2026-09-29
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [incident-notices-that-retract-themselves-nc7r, how-project-daemons-share-one-budget-xypj, one-orchestrator-and-advisor-or-one-per-project-ma8e, finding-remote-daemons-from-the-laptop-xqvg]
+blocked_by: []
+related: [incident-notices-that-retract-themselves-nc7r, how-project-daemons-share-one-budget-xypj, one-orchestrator-and-advisor-or-one-per-project-ma8e, finding-remote-daemons-from-the-laptop-xqvg]
 ---
 
 ## The ask

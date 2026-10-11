@@ -1,14 +1,14 @@
 ---
-id: 2msq
+id: br-2msq
 title: bridle send --project to a local daemon needs a peer token, and --url can't be combined with --project
 kind: bug
-opened: 2026-10-10
-filed_by: external:orchestrator
+created: 2026-10-10
+created_by: external:orchestrator
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 tasks: [br-2msq]
 ---
 

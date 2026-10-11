@@ -1,13 +1,13 @@
 ---
-id: bp2v
+id: br-bp2v
 title: A session can't tell who it can message, or how to reach another machine
 kind: feature
-opened: 2026-10-03
+created: 2026-10-03
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [cy2v, r8kv, sk7p]
+blocked_by: []
+related: [br-cy2v, br-r8kv, br-sk7p]
 tasks: []
 ---
 

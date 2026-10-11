@@ -1,15 +1,15 @@
 ---
-id: 9j2h
+id: br-9j2h
 title: Rename the product-manager role to project-manager (proj-mgr), with a reviewed migration for existing projects
 kind: feature
-opened: 2026-10-04
+created: 2026-10-04
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [7r2c, xebc]
+blocked_by: []
+related: [br-7r2c, br-xebc]
 tasks: [br-9j2h]
-closed: 2026-10-09T23:11:01Z
+resolved: 2026-10-09T23:11:01Z
 ---
 
 ## The ask

@@ -1,13 +1,13 @@
 ---
-id: 3nqf
+id: br-3nqf
 title: Is the driver Opus by default?
-opened: 2026-09-27
+created: 2026-09-27
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [xcpy, xypj]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-xcpy, br-xypj]
+resolved: 2026-09-30T05:12:44Z
 ---
 
 ## The question

@@ -1,12 +1,12 @@
 ---
-id: a67t
+id: br-a67t
 title: Group bridle's 54 top-level commands into subcommands; split the CLI's big modules
-opened: 2026-09-29
+created: 2026-09-29
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [shell-completions-for-bridle-6rh7]
+blocked_by: []
+related: [shell-completions-for-bridle-6rh7]
 ---
 
 ## The ask

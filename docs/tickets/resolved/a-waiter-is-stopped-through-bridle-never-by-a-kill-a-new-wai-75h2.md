@@ -1,15 +1,15 @@
 ---
-id: 75h2
+id: br-75h2
 title: "A waiter is stopped through bridle, never by a kill: a new wait replaces the old, bridle agent wake --stop, and pattern kills are denied"
 kind: feature
-opened: 2026-10-04
+created: 2026-10-04
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [h3ar, mvtz, fx7x, m7mp, j28f, kuw2]
+blocked_by: []
+related: [br-h3ar, br-mvtz, br-fx7x, br-m7mp, br-j28f, br-kuw2]
 tasks: [br-75h2]
-closed: 2026-10-09T23:11:06Z
+resolved: 2026-10-09T23:11:06Z
 ---
 
 ## The ask

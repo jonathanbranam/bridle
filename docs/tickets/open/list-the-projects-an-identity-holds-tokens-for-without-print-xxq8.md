@@ -1,14 +1,14 @@
 ---
-id: xxq8
+id: br-xxq8
 title: List the projects an identity holds tokens for, without printing the tokens
 kind: feature
-opened: 2026-10-10
-filed_by: external:orchestrator
+created: 2026-10-10
+created_by: external:orchestrator
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 tasks: [br-xxq8]
 ---
 

@@ -1,13 +1,13 @@
 ---
-id: x7gp
+id: br-x7gp
 title: bridle logs and events show the oldest 500 lines, so `tail` shows stale output
-opened: 2026-09-28
+created: 2026-09-28
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: []
+resolved: 2026-09-30T05:12:44Z
 ---
 
 ## The problem

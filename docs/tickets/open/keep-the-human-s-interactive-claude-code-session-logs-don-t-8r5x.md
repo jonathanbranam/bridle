@@ -1,13 +1,13 @@
 ---
-id: 8r5x
+id: br-8r5x
 title: Keep the human's interactive Claude Code session logs; don't let them be purged
 kind: feature
-opened: 2026-10-03
+created: 2026-10-03
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [34wz, jttf]
+blocked_by: []
+related: [br-34wz, br-jttf]
 tasks: [br-2b0b]
 ---
 

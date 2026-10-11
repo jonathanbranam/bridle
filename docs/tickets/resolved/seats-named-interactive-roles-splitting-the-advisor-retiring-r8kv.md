@@ -1,15 +1,15 @@
 ---
-id: r8kv
+id: br-r8kv
 title: "Seats: named interactive roles, splitting the advisor, retiring a session, and where its memory goes"
 kind: question
-opened: 2026-10-03
+created: 2026-10-03
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [jttf, ma8e, xxxq, r9vh, pdmd]
+blocked_by: []
+related: [br-jttf, br-ma8e, br-xxxq, br-r9vh, br-pdmd]
 tasks: [br-7810, br-r8kv, br-feyk]
-closed: 2026-10-09T23:11:02Z
+resolved: 2026-10-09T23:11:02Z
 ---
 
 ## The ask

@@ -1,14 +1,14 @@
 ---
-id: v8uu
+id: br-v8uu
 title: "Seeing what background agents do: their stream, the messages between them, steering and status updates"
 kind: research
-opened: 2026-10-07
-filed_by: external:aide
+created: 2026-10-07
+created_by: external:aide
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [gcvj, g6v4, hrcn, y496, 34wz]
+blocked_by: []
+related: [br-gcvj, br-g6v4, br-hrcn, br-y496, br-34wz]
 tasks: []
 ---
 

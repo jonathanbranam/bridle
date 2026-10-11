@@ -1,13 +1,13 @@
 ---
-id: 95mu
+id: br-95mu
 title: "A change spec (proposal and design) reviewed for risk and impact before any worker builds: a real gate, not a convention"
 kind: arch-revision
-opened: 2026-10-06
+created: 2026-10-06
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [2ax5, stx8, fne2, ukpm, m9sd]
+blocked_by: []
+related: [br-2ax5, br-stx8, br-fne2, br-ukpm, br-m9sd]
 tasks: [br-95mu]
 ---
 

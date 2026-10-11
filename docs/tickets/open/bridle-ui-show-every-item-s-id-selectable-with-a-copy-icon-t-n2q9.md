@@ -1,13 +1,13 @@
 ---
-id: n2q9
+id: br-n2q9
 title: "bridle-ui: show every item's ID, selectable, with a copy icon (to-dos first)"
 kind: feature
-opened: 2026-10-05
+created: 2026-10-05
 repos: [bridle-ui]
 changes: []
 specs: []
-needs: []
-see: [rk7k, j28f, a3yd, s6cj]
+blocked_by: []
+related: [br-rk7k, br-j28f, br-a3yd, br-s6cj]
 tasks: []
 ---
 

@@ -1,12 +1,12 @@
 ---
-id: 3nyk
+id: br-3nyk
 title: Pause work before a planned reboot, resume after
-opened: 2026-09-30
+created: 2026-09-30
 repos: [bridle]
 changes: []
 specs: []
-needs: [nuc-recovery-on-boot-4r3k]
-see: [agents-and-nightly-auto-reboots-t39j]
+blocked_by: [nuc-recovery-on-boot-4r3k]
+related: [agents-and-nightly-auto-reboots-t39j]
 ---
 
 ## The ask

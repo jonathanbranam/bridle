@@ -1,13 +1,13 @@
 ---
-id: gcvj
+id: br-gcvj
 title: Replace Remote Control with bridle's own way to reach agents, so every agent can run in the background
 kind: research
-opened: 2026-10-03
+created: 2026-10-03
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [jttf, z485, r8kv, hrcn]
+blocked_by: []
+related: [br-jttf, br-z485, br-r8kv, br-hrcn]
 tasks: []
 ---
 

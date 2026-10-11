@@ -1,12 +1,12 @@
 ---
-id: j2vq
+id: br-j2vq
 title: Should an autonomous orchestrator be granted bridle stop/rm permission?
-opened: 2026-09-27
+created: 2026-09-27
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 ---
 
 ## The question

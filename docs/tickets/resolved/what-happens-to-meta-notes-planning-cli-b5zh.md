@@ -1,13 +1,13 @@
 ---
-id: b5zh
+id: br-b5zh
 title: What happens to meta-notes' own planning CLI?
-opened: 2026-09-27
+created: 2026-09-27
 repos: [bridle, meta-notes]
 changes: []
 specs: []
-needs: []
-see: [ajqa]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-ajqa]
+resolved: 2026-09-30T05:12:44Z
 ---
 
 ## The question

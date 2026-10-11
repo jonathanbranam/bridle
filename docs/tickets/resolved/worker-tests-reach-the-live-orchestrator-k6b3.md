@@ -1,13 +1,13 @@
 ---
-id: k6b3
+id: br-k6b3
 title: A worker's test ran the live orchestrator's launcher
-opened: 2026-09-30
+created: 2026-09-30
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [the-orchestrator-stays-running-fx7x, orchestrator-pane-full-of-escape-codes-csfe]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [the-orchestrator-stays-running-fx7x, orchestrator-pane-full-of-escape-codes-csfe]
+resolved: 2026-09-30T05:12:44Z
 ---
 
 ## What happened

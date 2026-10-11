@@ -1,12 +1,12 @@
 ---
-id: m7wn
+id: br-m7wn
 title: Maintenance during budget holds
-opened: 2026-09-28
+created: 2026-09-28
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [r3nh]
+blocked_by: []
+related: [br-r3nh]
 ---
 
 ## The ask

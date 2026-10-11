@@ -1,15 +1,15 @@
 ---
-id: puaf
+id: br-puaf
 title: Usage readings go stale while agents work, and a stale reading at low usage holds the workforce
 kind: bug
-opened: 2026-10-04
+created: 2026-10-04
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [xypj, kuw2]
+blocked_by: []
+related: [br-xypj, br-kuw2]
 tasks: [br-puaf]
-closed: 2026-10-09T23:11:04Z
+resolved: 2026-10-09T23:11:04Z
 ---
 
 ## The ask

@@ -1,15 +1,15 @@
 ---
-id: k3qx
+id: br-k3qx
 title: "bridle-ui: route the top-level tabs and the open document in the URL"
 kind: feature
-opened: 2026-10-04
+created: 2026-10-04
 repos: [bridle-ui]
 changes: []
 specs: []
-needs: []
-see: [x8jt, jrm2, essy]
+blocked_by: []
+related: [br-x8jt, br-jrm2, br-essy]
 tasks: [ui-n6cu]
-closed: 2026-10-04T21:21:51Z
+resolved: 2026-10-04T21:21:51Z
 ---
 
 ## The ask

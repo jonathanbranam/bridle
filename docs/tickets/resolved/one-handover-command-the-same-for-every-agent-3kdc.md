@@ -1,16 +1,16 @@
 ---
-id: 3kdc
+id: br-3kdc
 title: One handover command, the same for every agent
 kind: feature
-opened: 2026-10-07
-filed_by: external:orchestrator
+created: 2026-10-07
+created_by: external:orchestrator
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [ft3b, gq9r, jttf, gtzx]
+blocked_by: []
+related: [br-ft3b, br-gq9r, br-jttf, br-gtzx]
 tasks: [br-3kdc]
-closed: 2026-10-07T14:00:08Z
+resolved: 2026-10-07T14:00:08Z
 ---
 
 ## The ask

@@ -1,13 +1,13 @@
 ---
-id: nnj2
+id: br-nnj2
 title: "bridle-ui: front matter see/needs/tasks entries (ticket stems and IDs) aren't links"
 kind: bug
-opened: 2026-10-06
+created: 2026-10-06
 repos: [bridle-ui]
 changes: []
 specs: []
-needs: []
-see: [fx7x, a3yd]
+blocked_by: []
+related: [br-fx7x, br-a3yd]
 tasks: []
 ---
 

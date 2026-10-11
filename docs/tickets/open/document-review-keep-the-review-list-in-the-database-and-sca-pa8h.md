@@ -1,14 +1,14 @@
 ---
-id: pa8h
+id: br-pa8h
 title: "Document review: keep the review list in the database, and scan for unresolved comments so none are missed"
 kind: feature
-opened: 2026-10-08
-filed_by: external:aide
+created: 2026-10-08
+created_by: external:aide
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [x8jt, ehv6, ppa6, yj38, wjhp]
+blocked_by: []
+related: [br-x8jt, br-ehv6, br-ppa6, br-yj38, br-wjhp]
 tasks: [br-pa8h]
 ---
 

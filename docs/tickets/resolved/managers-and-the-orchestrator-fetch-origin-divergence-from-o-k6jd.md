@@ -1,16 +1,16 @@
 ---
-id: k6jd
+id: br-k6jd
 title: Managers and the orchestrator fetch origin; divergence from origin is warned (N ahead, M behind)
 kind: feature
-opened: 2026-10-09
-filed_by: external:advisor/product-manager
+created: 2026-10-09
+created_by: external:advisor/product-manager
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [j7r4, 2mtr, 8z7j]
+blocked_by: []
+related: [br-j7r4, br-2mtr, br-8z7j]
 tasks: [br-k6jd]
-closed: 2026-10-09T23:11:01Z
+resolved: 2026-10-09T23:11:01Z
 ---
 
 ## The ask

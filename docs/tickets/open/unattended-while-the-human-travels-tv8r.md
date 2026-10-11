@@ -1,12 +1,12 @@
 ---
-id: tv8r
+id: br-tv8r
 title: Unattended while the human travels (Thu 2026-10-01 to Fri 2026-10-02)
-opened: 2026-09-30
+created: 2026-09-30
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [bridle-restarts-itself-q7rx, agents-and-nightly-auto-reboots-t39j, a-clean-handover-of-a-project-between-machines-24mj]
+blocked_by: []
+related: [bridle-restarts-itself-q7rx, agents-and-nightly-auto-reboots-t39j, a-clean-handover-of-a-project-between-machines-24mj]
 ---
 
 ## The ask

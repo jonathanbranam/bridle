@@ -1,16 +1,16 @@
 ---
-id: hua2
+id: br-hua2
 title: "Add a machine: one setup guide from bare OS to on the network (config, tokens, services, moving a project)"
 kind: chore
-opened: 2026-10-09
-filed_by: external:advisor/product-manager
+created: 2026-10-09
+created_by: external:advisor/product-manager
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [v7ug, sk7p, gdf3, rjd5, j7r4]
+blocked_by: []
+related: [br-v7ug, br-sk7p, br-gdf3, br-rjd5, br-j7r4]
 tasks: [br-hua2]
-closed: 2026-10-09T23:11:05Z
+resolved: 2026-10-09T23:11:05Z
 ---
 
 ## The ask

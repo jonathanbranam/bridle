@@ -1,13 +1,13 @@
 ---
-id: z485
+id: br-z485
 title: Make the orchestrator non-interactive (headless)
 kind: question
-opened: 2026-10-03
+created: 2026-10-03
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [r8kv, jttf]
+blocked_by: []
+related: [br-r8kv, br-jttf]
 tasks: [br-ab3a]
 ---
 

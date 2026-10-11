@@ -1,14 +1,14 @@
 ---
-id: jxwr
+id: br-jxwr
 title: Track and report how long a task takes from pickup to merge, split into agent work, builds, waits and holds (with reasons)
 kind: feature
-opened: 2026-10-09
-filed_by: external:aide
+created: 2026-10-09
+created_by: external:aide
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [rcvb, v6kr]
+blocked_by: []
+related: [br-rcvb, br-v6kr]
 tasks: [br-jxwr]
 ---
 

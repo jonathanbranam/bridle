@@ -1,14 +1,14 @@
 ---
-id: 22ab
+id: br-22ab
 title: "Everything is a ticket: one record per piece of work, a ticket is at most one change, and the task becomes only its tracking row"
 kind: arch-revision
-opened: 2026-10-09
-filed_by: external:advisor/tickets
+created: 2026-10-09
+created_by: external:advisor/tickets
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [k7tm, zkbb, 95mu, stx8, p2ys, hvxk, nkd9, v3dk, kzw2]
+blocked_by: []
+related: [br-k7tm, br-zkbb, br-95mu, br-stx8, br-p2ys, br-hvxk, br-nkd9, br-v3dk, br-kzw2]
 tasks: []
 ---
 

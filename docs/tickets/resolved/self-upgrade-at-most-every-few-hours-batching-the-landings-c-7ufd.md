@@ -1,16 +1,16 @@
 ---
-id: 7ufd
+id: br-7ufd
 title: Self-upgrade at most every few hours, batching the landings; critical fixes go through at once
 kind: feature
-opened: 2026-10-09
-filed_by: external:aide
+created: 2026-10-09
+created_by: external:aide
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [yfv5, 3nyk, e35h, y455]
+blocked_by: []
+related: [br-yfv5, br-3nyk, br-e35h, br-y455]
 tasks: [br-7ufd]
-closed: 2026-10-10T01:32:31Z
+resolved: 2026-10-10T01:32:31Z
 ---
 
 ## The ask

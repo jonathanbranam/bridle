@@ -1,15 +1,15 @@
 ---
-id: gdf3
+id: br-gdf3
 title: "Peer-token setup guidance: a token per receiving project per sending machine, minted on the receiver"
 kind: bug
-opened: 2026-10-06
+created: 2026-10-06
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [n63z, 3haz]
+blocked_by: []
+related: [br-n63z, br-3haz]
 tasks: [br-gdf3]
-closed: 2026-10-09T23:11:01Z
+resolved: 2026-10-09T23:11:01Z
 ---
 
 ## The ask

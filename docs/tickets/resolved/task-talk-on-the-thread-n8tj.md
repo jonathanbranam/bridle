@@ -1,14 +1,13 @@
 ---
-id: n8tj
+id: br-n8tj
 title: Talk about a task on its thread; messages only notify
-opened: 2026-09-29
+created: 2026-09-29
 resolved: 2026-09-29
 repos: [bridle]
 changes: [6cae4af]
 specs: []
-needs: []
-see: [tr7k, sq4m]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-tr7k, br-sq4m]
 ---
 
 ## The ask

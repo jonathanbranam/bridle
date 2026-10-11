@@ -1,13 +1,13 @@
 ---
-id: fbfy
+id: br-fbfy
 title: Build our own message and event delivery, or use an existing system?
 kind: question
-opened: 2026-10-03
+created: 2026-10-03
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [xxxq, rmpq]
+blocked_by: []
+related: [br-xxxq, br-rmpq]
 tasks: [br-7c7c]
 ---
 

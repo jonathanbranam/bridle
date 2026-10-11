@@ -1,14 +1,14 @@
 ---
-id: ve74
+id: br-ve74
 title: A handover request reaches the new session after the old one already handed over
 kind: bug
-opened: 2026-10-10
-filed_by: external:aide
+created: 2026-10-10
+created_by: external:aide
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [5j35, cbbn, gtzx]
+blocked_by: []
+related: [br-5j35, br-cbbn, br-gtzx]
 tasks: [br-ve74]
 ---
 

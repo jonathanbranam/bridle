@@ -1,13 +1,13 @@
 ---
-id: xxxq
+id: br-xxxq
 title: "Task watchers: a creator field, a watchers list, and wakes that say what changed and are never lost"
 kind: feature
-opened: 2026-10-03
+created: 2026-10-03
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [jttf, aqtg, 9nrt]
+blocked_by: []
+related: [br-jttf, br-aqtg, br-9nrt]
 tasks: [br-519b]
 ---
 

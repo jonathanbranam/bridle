@@ -1,14 +1,13 @@
 ---
-id: qr8z
+id: br-qr8z
 title: Gatekeeper's "Verifying…" window flashes and steals keystrokes while bridle builds
-opened: 2026-09-28
+created: 2026-09-28
 resolved: 2026-09-29
 repos: [bridle]
 changes: [74603a5]
 specs: []
-needs: []
-see: [sign-binaries-on-intel-macs-cs7x]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [sign-binaries-on-intel-macs-cs7x]
 ---
 
 ## What the human said

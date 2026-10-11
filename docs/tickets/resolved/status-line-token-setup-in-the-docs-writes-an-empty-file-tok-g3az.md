@@ -1,16 +1,16 @@
 ---
-id: g3az
+id: br-g3az
 title: "Status line token setup in the docs writes an empty file: token create needs --print now"
 kind: chore
-opened: 2026-10-09
-filed_by: external:aide
+created: 2026-10-09
+created_by: external:aide
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [r7cs]
+blocked_by: []
+related: [br-r7cs]
 tasks: [br-g3az]
-closed: 2026-10-09T23:11:03Z
+resolved: 2026-10-09T23:11:03Z
 ---
 
 ## The ask

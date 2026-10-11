@@ -1,15 +1,15 @@
 ---
-id: g49c
+id: br-g49c
 title: "Rule packs for the web and for mobile: standard forms and ARIA, and no zoom on mobile (track-web's fix, written down once)"
 kind: feature
-opened: 2026-10-04
+created: 2026-10-04
 repos: [bridle, bridle-ui, track-web]
 changes: []
 specs: []
-needs: []
-see: [t4rf]
+blocked_by: []
+related: [br-t4rf]
 tasks: [br-g49c, ui-g49c]
-closed: 2026-10-09T23:11:02Z
+resolved: 2026-10-09T23:11:02Z
 ---
 
 ## The ask

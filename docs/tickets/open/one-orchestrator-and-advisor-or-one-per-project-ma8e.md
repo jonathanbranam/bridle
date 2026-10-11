@@ -1,12 +1,12 @@
 ---
-id: ma8e
+id: br-ma8e
 title: One orchestrator and advisor across projects, or one per project?
-opened: 2026-09-28
+created: 2026-09-28
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [hj4g, qun8]
+blocked_by: []
+related: [br-hj4g, br-qun8]
 ---
 
 ## The question

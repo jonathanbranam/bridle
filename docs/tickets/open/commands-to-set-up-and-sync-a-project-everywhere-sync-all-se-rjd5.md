@@ -1,14 +1,14 @@
 ---
-id: rjd5
+id: br-rjd5
 title: One idempotent command to set up a project on a machine, and track which projects are set up where
 kind: feature
-opened: 2026-10-09
-filed_by: external:aide
+created: 2026-10-09
+created_by: external:aide
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [sk7p, gdf3]
+blocked_by: []
+related: [br-sk7p, br-gdf3]
 tasks: [br-rjd5]
 ---
 

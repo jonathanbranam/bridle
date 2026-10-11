@@ -1,15 +1,15 @@
 ---
-id: 789x
+id: br-789x
 title: Advisor wake waits about 90 minutes, not 5
 kind: chore
-opened: 2026-10-03
+created: 2026-10-03
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [jttf]
+blocked_by: []
+related: [br-jttf]
 tasks: [br-c4f4]
-closed: 2026-10-09T23:11:05Z
+resolved: 2026-10-09T23:11:05Z
 ---
 
 ## The ask

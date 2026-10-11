@@ -1,12 +1,12 @@
 ---
-id: 2vja
+id: br-2vja
 title: Reserve role names, by prefix, for agent names
-opened: 2026-10-01
+created: 2026-10-01
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [3ehu]
+blocked_by: []
+related: [br-3ehu]
 ---
 
 ## The ask

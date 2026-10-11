@@ -1,15 +1,15 @@
 ---
-id: 6hx4
+id: br-6hx4
 title: Binaries accept unknown config sections and keys with a warning; doctor warns, and fails with a strictness flag
 kind: feature
-opened: 2026-10-06
+created: 2026-10-06
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [jmpf, 2ax5, 95mu]
+blocked_by: []
+related: [br-jmpf, br-2ax5, br-95mu]
 tasks: [br-6hx4]
-closed: 2026-10-09T23:11:05Z
+resolved: 2026-10-09T23:11:05Z
 ---
 
 ## The ask

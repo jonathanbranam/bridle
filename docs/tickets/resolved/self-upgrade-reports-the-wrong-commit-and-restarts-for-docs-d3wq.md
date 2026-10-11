@@ -1,13 +1,13 @@
 ---
-id: d3wq
+id: br-d3wq
 title: Self-upgrade reports the wrong commit, and restarts for docs-only commits
-opened: 2026-09-30
+created: 2026-09-30
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [bridle-restarts-itself-q7rx, unattended-while-the-human-travels-tv8r]
-closed: 2026-09-30T12:48:28Z
+blocked_by: []
+related: [bridle-restarts-itself-q7rx, unattended-while-the-human-travels-tv8r]
+resolved: 2026-09-30T12:48:28Z
 ---
 
 ## What happened (2026-09-30, orchestrator)

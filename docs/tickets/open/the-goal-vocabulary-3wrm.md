@@ -1,12 +1,12 @@
 ---
-id: 3wrm
+id: br-3wrm
 title: The goal vocabulary
-opened: 2026-09-27
+created: 2026-09-27
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 ---
 
 ## The question

@@ -1,15 +1,15 @@
 ---
-id: 7sd9
+id: br-7sd9
 title: "bridle-ui: a System page, each project's daemon, agents and (later) running servers"
 kind: feature
-opened: 2026-10-04
+created: 2026-10-04
 repos: [bridle-ui, bridle]
 changes: []
 specs: []
-needs: []
-see: [s6cj, essy]
+blocked_by: []
+related: [br-s6cj, br-essy]
 tasks: [br-7sd9]
-closed: 2026-10-09T23:11:06Z
+resolved: 2026-10-09T23:11:06Z
 ---
 
 ## The ask

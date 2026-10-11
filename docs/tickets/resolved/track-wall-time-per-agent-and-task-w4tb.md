@@ -1,13 +1,13 @@
 ---
-id: w4tb
+id: br-w4tb
 title: Track wall time per agent and task, not only tokens and cost
-opened: 2026-09-28
+created: 2026-09-28
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [mt7r]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-mt7r]
+resolved: 2026-09-30T05:12:44Z
 ---
 
 ## The question

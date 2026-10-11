@@ -1,13 +1,13 @@
 ---
-id: qdw8
+id: br-qdw8
 title: A haiku worker reported done before its check finished, then lost its task on renewal and adopted br-gtzx
 kind: incident
-opened: 2026-10-05
+created: 2026-10-05
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [g49c, h3ar, ytqu]
+blocked_by: []
+related: [br-g49c, br-h3ar, br-ytqu]
 tasks: [br-qdw8]
 ---
 

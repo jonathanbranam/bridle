@@ -1,15 +1,15 @@
 ---
-id: 58c9
+id: br-58c9
 title: The orchestrator watches the machine's load and reacts to it
 kind: feature
-opened: 2026-10-04
+created: 2026-10-04
 repos: [bridle-ui]
 changes: []
 specs: []
-needs: []
-see: [xypj, ma8e, b7cz]
+blocked_by: []
+related: [br-xypj, br-ma8e, br-b7cz]
 tasks: [br-58c9]
-closed: 2026-10-09T23:11:03Z
+resolved: 2026-10-09T23:11:03Z
 ---
 
 ## The ask

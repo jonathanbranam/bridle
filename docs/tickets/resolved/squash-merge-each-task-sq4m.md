@@ -1,14 +1,13 @@
 ---
-id: sq4m
+id: br-sq4m
 title: Land each task as one squash commit carrying the task's info
-opened: 2026-09-29
+created: 2026-09-29
 resolved: 2026-09-29
 repos: [bridle]
 changes: [cb9ac71]
 specs: []
-needs: []
-see: [tr7k, m2fq]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-tr7k, br-m2fq]
 ---
 
 ## The ask

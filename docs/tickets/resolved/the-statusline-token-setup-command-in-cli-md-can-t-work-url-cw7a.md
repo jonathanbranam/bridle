@@ -1,13 +1,13 @@
 ---
-id: cw7a
+id: br-cw7a
 title: "The statusline token setup command in cli.md can't work: --url drops the workspace"
-opened: 2026-09-30
+created: 2026-09-30
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [r7cs]
-closed: 2026-10-09T23:11:04Z
+blocked_by: []
+related: [br-r7cs]
+resolved: 2026-10-09T23:11:04Z
 ---
 
 ## The ask

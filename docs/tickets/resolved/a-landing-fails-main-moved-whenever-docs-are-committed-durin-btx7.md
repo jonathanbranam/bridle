@@ -1,15 +1,15 @@
 ---
-id: btx7
+id: br-btx7
 title: A landing fails 'main moved' whenever docs are committed during its check
 kind: bug
-opened: 2026-10-05
+created: 2026-10-05
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 tasks: [br-btx7]
-closed: 2026-10-09T23:11:04Z
+resolved: 2026-10-09T23:11:04Z
 ---
 
 ## The ask

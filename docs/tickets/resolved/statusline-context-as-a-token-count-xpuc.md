@@ -1,14 +1,13 @@
 ---
-id: xpuc
+id: br-xpuc
 title: Statusline context as a token count, not just a percent
-opened: 2026-09-28
+created: 2026-09-28
 resolved: 2026-09-29
 repos: [bridle]
 changes: [f3b3e47]
 specs: []
-needs: []
-see: []
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: []
 ---
 
 ## The ask

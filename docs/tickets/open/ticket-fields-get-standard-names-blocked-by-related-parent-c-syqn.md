@@ -1,14 +1,14 @@
 ---
-id: syqn
+id: br-syqn
 title: Ticket fields get standard names (blocked_by, related, parent, created, resolved), a theme field and project-qualified IDs
 kind: feature
-opened: 2026-10-09
-filed_by: external:advisor/product-manager
+created: 2026-10-09
+created_by: external:advisor/product-manager
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [22ab, zkbb]
+blocked_by: []
+related: [br-22ab, br-zkbb]
 tasks: [br-syqn]
 ---
 

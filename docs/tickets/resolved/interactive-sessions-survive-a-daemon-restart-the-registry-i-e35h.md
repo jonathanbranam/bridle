@@ -1,15 +1,15 @@
 ---
-id: e35h
+id: br-e35h
 title: Interactive sessions survive a daemon restart (the registry is lost on every self-upgrade)
 kind: bug
-opened: 2026-10-04
+created: 2026-10-04
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [gtzx, jttf]
+blocked_by: []
+related: [br-gtzx, br-jttf]
 tasks: [br-e35h]
-closed: 2026-10-09T23:11:01Z
+resolved: 2026-10-09T23:11:01Z
 ---
 
 ## The ask

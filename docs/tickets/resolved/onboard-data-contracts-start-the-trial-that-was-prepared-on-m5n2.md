@@ -1,16 +1,16 @@
 ---
-id: m5n2
+id: br-m5n2
 title: "Onboard data-contracts: start the trial that was prepared on 2026-09-28"
 kind: chore
-opened: 2026-10-10
-filed_by: external:advisor/product-manager
+created: 2026-10-10
+created_by: external:advisor/product-manager
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [63rv, rxe8, xfb3]
+blocked_by: []
+related: [br-63rv, br-rxe8, br-xfb3]
 tasks: [br-m5n2]
-closed: 2026-10-10T02:44:58Z
+resolved: 2026-10-10T02:44:58Z
 ---
 
 ## The ask

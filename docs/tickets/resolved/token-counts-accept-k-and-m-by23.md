@@ -1,13 +1,13 @@
 ---
-id: by23
+id: br-by23
 title: Token counts in config accept k and M (150k, 1.5M)
-opened: 2026-09-29
+created: 2026-09-29
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [the-orchestrator-stays-running-fx7x]
-closed: 2026-10-09T23:11:04Z
+blocked_by: []
+related: [the-orchestrator-stays-running-fx7x]
+resolved: 2026-10-09T23:11:04Z
 ---
 
 ## The ask

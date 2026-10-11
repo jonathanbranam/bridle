@@ -1,13 +1,13 @@
 ---
-id: yhe7
+id: br-yhe7
 title: Self-upgrade checks a new binary against the clone's newer config, so a config key landing during a build fails the upgrade
 kind: bug
-opened: 2026-10-03
+created: 2026-10-03
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 tasks: []
 ---
 

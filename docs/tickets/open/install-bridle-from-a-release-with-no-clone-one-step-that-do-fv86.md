@@ -1,14 +1,14 @@
 ---
-id: fv86
+id: br-fv86
 title: "Install bridle from a release with no clone: one step that downloads, verifies and installs the binary"
 kind: feature
-opened: 2026-10-10
-filed_by: external:advisor/product-manager
+created: 2026-10-10
+created_by: external:advisor/product-manager
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [mrhe, chvf, v7ug]
+blocked_by: []
+related: [br-mrhe, br-chvf, br-v7ug]
 tasks: [br-fv86]
 ---
 

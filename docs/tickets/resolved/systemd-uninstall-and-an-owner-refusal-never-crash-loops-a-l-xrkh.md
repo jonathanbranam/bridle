@@ -1,16 +1,16 @@
 ---
-id: xrkh
+id: br-xrkh
 title: systemd uninstall, and an owner refusal never crash-loops a launchd or systemd unit after a project moves
 kind: bug
-opened: 2026-10-09
-filed_by: external:advisor/product-manager
+created: 2026-10-09
+created_by: external:advisor/product-manager
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [hw6c, 24mj, v7ug]
+blocked_by: []
+related: [br-hw6c, br-24mj, br-v7ug]
 tasks: [br-xrkh]
-closed: 2026-10-09T23:11:03Z
+resolved: 2026-10-09T23:11:03Z
 ---
 
 ## The ask

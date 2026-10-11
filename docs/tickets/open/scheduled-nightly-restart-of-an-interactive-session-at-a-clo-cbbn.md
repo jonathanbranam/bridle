@@ -1,13 +1,13 @@
 ---
-id: cbbn
+id: br-cbbn
 title: Scheduled nightly restart of an interactive session at a clock time (e.g. 3 AM)
 kind: feature
-opened: 2026-10-05
+created: 2026-10-05
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 tasks: [br-cbbn]
 ---
 

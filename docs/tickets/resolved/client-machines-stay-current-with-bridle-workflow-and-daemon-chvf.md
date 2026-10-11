@@ -1,13 +1,13 @@
 ---
-id: chvf
+id: br-chvf
 title: "Client machines stay current with bridle: workflow and daemon move together, by release"
-opened: 2026-09-30
+created: 2026-09-30
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [mrhe, q7rx, wtyn]
-closed: 2026-10-10T18:29:52Z
+blocked_by: []
+related: [br-mrhe, br-q7rx, br-wtyn]
+resolved: 2026-10-10T18:29:52Z
 ---
 
 ## The ask

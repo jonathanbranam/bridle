@@ -1,13 +1,13 @@
 ---
-id: qhsa
+id: br-qhsa
 title: "gateway: serve each project's usage and usage breakdown, with a period"
 kind: feature
-opened: 2026-10-06
+created: 2026-10-06
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [gztq]
+blocked_by: []
+related: [br-gztq]
 tasks: []
 ---
 

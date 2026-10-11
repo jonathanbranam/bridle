@@ -1,15 +1,15 @@
 ---
-id: cc45
+id: br-cc45
 title: Quiet hours stop the orchestrator restarting its watchers, so wakes pile up all night
 kind: bug
-opened: 2026-10-03
+created: 2026-10-03
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 tasks: [br-cc45]
-closed: 2026-10-09T23:11:01Z
+resolved: 2026-10-09T23:11:01Z
 ---
 
 ## The ask

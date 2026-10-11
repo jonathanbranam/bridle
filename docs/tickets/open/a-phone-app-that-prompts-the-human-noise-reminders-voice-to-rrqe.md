@@ -1,13 +1,13 @@
 ---
-id: rrqe
+id: br-rrqe
 title: "A phone app that prompts the human: noise, reminders, voice-to-text replies"
 kind: explore
-opened: 2026-10-03
+created: 2026-10-03
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 tasks: []
 ---
 

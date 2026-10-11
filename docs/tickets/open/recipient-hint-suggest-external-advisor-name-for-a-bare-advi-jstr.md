@@ -1,5 +1,5 @@
 ---
-id: jstr
+id: br-jstr
 title: "Recipient hint: suggest external:advisor/<name> for a bare advisor/<name>"
 kind: bug
 created: 2026-10-11
@@ -8,7 +8,7 @@ repos: [bridle]
 changes: []
 specs: []
 blocked_by: []
-related: [3k7d]
+related: [br-3k7d]
 tasks: [br-jstr]
 theme: agents-and-cli
 ---

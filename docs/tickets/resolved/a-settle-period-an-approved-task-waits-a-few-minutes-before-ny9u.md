@@ -1,15 +1,15 @@
 ---
-id: ny9u
+id: br-ny9u
 title: "A settle period: an approved task waits a few minutes before work starts"
 kind: feature
-opened: 2026-10-02
+created: 2026-10-02
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [refining-a-task-with-the-human-before-it-ships-hvxk]
+blocked_by: []
+related: [refining-a-task-with-the-human-before-it-ships-hvxk]
 tasks: [br-3c71]
-closed: 2026-10-09T23:11:05Z
+resolved: 2026-10-09T23:11:05Z
 ---
 
 ## The ask

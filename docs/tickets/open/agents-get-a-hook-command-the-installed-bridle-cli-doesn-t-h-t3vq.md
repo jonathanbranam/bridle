@@ -1,13 +1,13 @@
 ---
-id: t3vq
+id: br-t3vq
 title: Agents get a hook command the installed bridle CLI doesn't have
 kind: bug
-opened: 2026-10-06
+created: 2026-10-06
 repos: [meta-notes]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 tasks: []
 ---
 

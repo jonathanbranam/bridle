@@ -1,13 +1,13 @@
 ---
-id: p4xd
+id: br-p4xd
 title: "`task done` warns about a missing summary on the human's to-dos"
-opened: 2026-10-01
+created: 2026-10-01
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
-closed: 2026-10-02T00:43:36.408935Z
+blocked_by: []
+related: []
+resolved: 2026-10-02T00:43:36.408935Z
 ---
 
 ## The ask

@@ -1,14 +1,14 @@
 ---
-id: p896
+id: br-p896
 title: "Agent evaluations: run agents with a clean, specified context, capture everything, and later judge the results"
 kind: feature
-opened: 2026-10-10
-filed_by: external:advisor/product-manager
+created: 2026-10-10
+created_by: external:advisor/product-manager
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 tasks: [br-p896]
 ---
 

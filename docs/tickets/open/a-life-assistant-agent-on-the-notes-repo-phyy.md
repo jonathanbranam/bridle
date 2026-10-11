@@ -1,12 +1,12 @@
 ---
-id: phyy
+id: br-phyy
 title: A life assistant: an agent that runs the human's notes repo through the meta-notes CLI
-opened: 2026-09-30
+created: 2026-09-30
 repos: [bridle, meta-notes, notes]
 changes: []
 specs: []
-needs: []
-see: [rs7p, u6wk, k4wq, ajqa]
+blocked_by: []
+related: [br-rs7p, br-u6wk, br-k4wq, br-ajqa]
 ---
 
 ## The ask

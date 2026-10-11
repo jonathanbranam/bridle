@@ -1,15 +1,15 @@
 ---
-id: hesj
+id: br-hesj
 title: "Focus override: accept local time in until, like the [[focus]] config"
-opened: 2026-10-01
+created: 2026-10-01
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [focus-hours-quiet-and-locked-cvaq]
+blocked_by: []
+related: [focus-hours-quiet-and-locked-cvaq]
 kind: feature
 tasks: [br-hesj]
-closed: 2026-10-09T23:11:08Z
+resolved: 2026-10-09T23:11:08Z
 ---
 
 ## The ask

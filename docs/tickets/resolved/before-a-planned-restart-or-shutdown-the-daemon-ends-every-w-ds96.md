@@ -1,15 +1,15 @@
 ---
-id: ds96
+id: br-ds96
 title: Before a planned restart or shutdown, the daemon ends every waiter with the reason (shutting down, upgrading, restarting by request) and records it in events
 kind: feature
-opened: 2026-10-05
+created: 2026-10-05
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [75h2, q7rx, e35h, h3ar]
+blocked_by: []
+related: [br-75h2, br-q7rx, br-e35h, br-h3ar]
 tasks: [br-ds96]
-closed: 2026-10-09T23:11:05Z
+resolved: 2026-10-09T23:11:05Z
 ---
 
 ## The ask

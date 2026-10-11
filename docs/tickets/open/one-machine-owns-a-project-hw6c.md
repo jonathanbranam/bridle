@@ -1,12 +1,12 @@
 ---
-id: hw6c
+id: br-hw6c
 title: One machine owns a project; a clone that's only there to run bridle can't write to it
-opened: 2026-09-30
+created: 2026-09-30
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [push-the-state-branch-we2r, bridle-without-a-clone-of-its-repo-mrhe, project-machine-and-account-scope-9mxw]
+blocked_by: []
+related: [push-the-state-branch-we2r, bridle-without-a-clone-of-its-repo-mrhe, project-machine-and-account-scope-9mxw]
 ---
 
 ## The ask

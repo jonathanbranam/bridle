@@ -1,13 +1,13 @@
 ---
-id: n4vk
+id: br-n4vk
 title: The TUI doesn't show agents spawned after it starts
-opened: 2026-09-29
+created: 2026-09-29
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [y496]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-y496]
+resolved: 2026-09-30T05:12:44Z
 ---
 
 ## What happened

@@ -1,13 +1,13 @@
 ---
-id: ma2x
+id: br-ma2x
 title: build-order.md marked phases built that nothing uses; the roadmap the PM ranks from didn't match reality
 kind: question
-opened: 2026-10-03
+created: 2026-10-03
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [34bw, 7r2c, 8awb]
+blocked_by: []
+related: [br-34bw, br-7r2c, br-8awb]
 tasks: [br-dcf2]
 ---
 

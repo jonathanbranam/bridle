@@ -1,12 +1,12 @@
 ---
-id: hj4g
+id: br-hj4g
 title: Where does the single orchestrator live?
-opened: 2026-09-27
+created: 2026-09-27
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [u6wk, xqvg]
+blocked_by: []
+related: [br-u6wk, br-xqvg]
 ---
 
 ## What happened

@@ -1,13 +1,13 @@
 ---
-id: bgtk
+id: br-bgtk
 title: Does the manager run in the main checkout or its own worktree?
-opened: 2026-09-27
+created: 2026-09-27
 repos: [bridle]
 changes: []
 specs: [docs/design/agent-host/roles-and-config.md]
-needs: []
-see: [93u2]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-93u2]
+resolved: 2026-09-30T05:12:44Z
 ---
 
 ## The question

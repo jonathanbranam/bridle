@@ -1,13 +1,13 @@
 ---
-id: 98xt
+id: br-98xt
 title: Role and rule files misstate how rules reach agents; orchestrator and advisor get none
 kind: question
-opened: 2026-10-03
+created: 2026-10-03
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [34bw, ntca]
+blocked_by: []
+related: [br-34bw, br-ntca]
 tasks: [br-0473, br-7zd4]
 ---
 

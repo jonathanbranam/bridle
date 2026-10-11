@@ -1,14 +1,14 @@
 ---
-id: 3v75
+id: br-3v75
 title: "Ticket links live in the frontmatter: the daemon indexes blocked_by, parent and related; ticket link replaces task dep"
 kind: feature
-opened: 2026-10-09
-filed_by: external:advisor/product-manager
+created: 2026-10-09
+created_by: external:advisor/product-manager
 repos: [bridle]
 changes: []
 specs: []
-needs: [bpku]
-see: [22ab]
+blocked_by: [br-bpku]
+related: [br-22ab]
 tasks: [br-3v75]
 ---
 

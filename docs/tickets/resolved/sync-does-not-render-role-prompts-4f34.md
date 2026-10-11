@@ -1,13 +1,13 @@
 ---
-id: 4f34
+id: br-4f34
 title: bridle sync does not render role prompts from layers
-opened: 2026-09-28
+created: 2026-09-28
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: []
+resolved: 2026-09-30T05:12:44Z
 ---
 
 ## What happened

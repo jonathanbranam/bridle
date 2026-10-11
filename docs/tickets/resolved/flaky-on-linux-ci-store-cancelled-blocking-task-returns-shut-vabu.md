@@ -1,16 +1,16 @@
 ---
-id: vabu
+id: br-vabu
 title: "Flaky on Linux CI: store cancelled_blocking_task_returns_shutting_down_not_a_panic"
 kind: bug
-opened: 2026-10-09
-filed_by: external:orchestrator
+created: 2026-10-09
+created_by: external:orchestrator
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 tasks: [br-vabu]
-closed: 2026-10-09T23:11:08Z
+resolved: 2026-10-09T23:11:08Z
 ---
 
 ## The ask

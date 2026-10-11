@@ -1,15 +1,15 @@
 ---
-id: gq9r
+id: br-gq9r
 title: Interactive sessions hand themselves over and restart at 200k instead of only being told to
 kind: feature
-opened: 2026-10-05
+created: 2026-10-05
 repos: [bridle]
 changes: []
 specs: []
-needs: [4s3z]
-see: [jttf, e9yu]
+blocked_by: [br-4s3z]
+related: [br-jttf, br-e9yu]
 tasks: [br-gq9r]
-closed: 2026-10-09T23:11:00Z
+resolved: 2026-10-09T23:11:00Z
 ---
 
 ## The ask

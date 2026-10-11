@@ -1,12 +1,12 @@
 ---
-id: geem
+id: br-geem
 title: A new name for the project, and which harness names are taken
-opened: 2026-09-28
+created: 2026-09-28
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 ---
 
 ## What happened

@@ -1,13 +1,13 @@
 ---
-id: csfe
+id: br-csfe
 title: The orchestrator's pane filled with escape codes after a restart
-opened: 2026-09-30
+created: 2026-09-30
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [fx7x]
-closed: 2026-10-02T00:43:36.093579Z
+blocked_by: []
+related: [br-fx7x]
+resolved: 2026-10-02T00:43:36.093579Z
 ---
 
 ## The ask

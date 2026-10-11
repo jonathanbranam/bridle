@@ -1,15 +1,15 @@
 ---
-id: qbbk
+id: br-qbbk
 title: "Browser tab titles name what you're viewing: a web pack rule, and bridle-ui follows it on every page"
 kind: feature
-opened: 2026-10-06
+created: 2026-10-06
 repos: [bridle, bridle-ui]
 changes: []
 specs: []
-needs: []
-see: [g49c, m2pz]
+blocked_by: []
+related: [br-g49c, br-m2pz]
 tasks: [br-qbbk, ui-qbbk]
-closed: 2026-10-09T23:11:07Z
+resolved: 2026-10-09T23:11:07Z
 ---
 
 ## The ask

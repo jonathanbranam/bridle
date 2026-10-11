@@ -1,12 +1,12 @@
 ---
-id: z4hd
+id: br-z4hd
 title: "`bridle status` calls a stopped worker's empty branch merged, and suggests deleting it"
-opened: 2026-09-30
+created: 2026-09-30
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [do-workers-resume-after-a-daemon-restart-2fkk]
+blocked_by: []
+related: [do-workers-resume-after-a-daemon-restart-2fkk]
 ---
 
 ## What happened

@@ -1,14 +1,14 @@
 ---
-id: bpku
+id: br-bpku
 title: Every ticket gets a row; types fix and epic; readiness moves to the ticket (ticket ready)
 kind: feature
-opened: 2026-10-09
-filed_by: external:advisor/product-manager
+created: 2026-10-09
+created_by: external:advisor/product-manager
 repos: [bridle]
 changes: []
 specs: []
-needs: [syqn]
-see: [22ab]
+blocked_by: [br-syqn]
+related: [br-22ab]
 tasks: [br-bpku]
 ---
 

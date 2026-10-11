@@ -1,13 +1,13 @@
 ---
-id: 9z2d
+id: br-9z2d
 title: "Incident: the orchestrator didn't use bridle advisor start or per-advisor addresses, and misled the human twice"
 kind: incident
-opened: 2026-10-06
+created: 2026-10-06
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [ervd, kae5, fne2, m9sd]
+blocked_by: []
+related: [br-ervd, br-kae5, br-fne2, br-m9sd]
 tasks: [br-9z2d]
 ---
 

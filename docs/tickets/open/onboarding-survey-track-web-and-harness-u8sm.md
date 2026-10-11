@@ -1,12 +1,12 @@
 ---
-id: u8sm
+id: br-u8sm
 title: Onboarding survey: track-web and harness (pi)
-opened: 2026-09-28
+created: 2026-09-28
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [d9nu, ajqa, 8xhh, a8fk, rxe8]
+blocked_by: []
+related: [br-d9nu, br-ajqa, br-8xhh, br-a8fk, br-rxe8]
 ---
 
 ## The ask

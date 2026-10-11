@@ -1,12 +1,12 @@
 ---
-id: ajqa
+id: br-ajqa
 title: Onboarding survey: meta-notes
-opened: 2026-09-28
+created: 2026-09-28
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [d9nu, u8sm, 8xhh, a8fk, b5zh]
+blocked_by: []
+related: [br-d9nu, br-u8sm, br-8xhh, br-a8fk, br-b5zh]
 ---
 
 ## The ask

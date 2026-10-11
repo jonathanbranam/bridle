@@ -1,14 +1,13 @@
 ---
-id: k3wp
+id: br-k3wp
 title: Bridle removes an agent and its worktree when its work lands, not the manager by hand
-opened: 2026-09-29
+created: 2026-09-29
 resolved: 2026-09-29
 repos: [bridle]
 changes: [b0b9ab6, 61c52ff, ab158f6, e26c54d]
 specs: []
-needs: []
-see: [tr7k, sq4m]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-tr7k, br-sq4m]
 ---
 
 ## What happened

@@ -1,13 +1,13 @@
 ---
-id: tkav
+id: br-tkav
 title: Tickets and docs in bridle's repo, or a separate repo or submodule
 kind: question
-opened: 2026-10-03
+created: 2026-10-03
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [hv8e, k7tm, d3wq]
+blocked_by: []
+related: [br-hv8e, br-k7tm, br-d3wq]
 tasks: []
 ---
 

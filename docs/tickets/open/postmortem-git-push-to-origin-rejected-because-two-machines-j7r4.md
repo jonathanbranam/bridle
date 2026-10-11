@@ -1,13 +1,13 @@
 ---
-id: j7r4
+id: br-j7r4
 title: "Postmortem: git push to origin rejected because two machines wrote to main and nothing fetched (br-2y3m)"
 kind: incident
-opened: 2026-10-06
+created: 2026-10-06
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [q7mv, 8z7j, k6jd, 8ay6, 8umh, xccp, 2ax5]
+blocked_by: []
+related: [br-q7mv, br-8z7j, br-k6jd, br-8ay6, br-8umh, br-xccp, br-2ax5]
 tasks: []
 ---
 

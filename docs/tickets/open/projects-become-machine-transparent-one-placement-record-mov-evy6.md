@@ -1,14 +1,14 @@
 ---
-id: evy6
+id: br-evy6
 title: "Projects become machine-transparent: one placement record, move on command, later workers on several machines"
 kind: feature
-opened: 2026-10-10
-filed_by: external:advisor/product-manager
+created: 2026-10-10
+created_by: external:advisor/product-manager
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [kt25, rjd5, kuw2, 3haz, 8z7j]
+blocked_by: []
+related: [br-kt25, br-rjd5, br-kuw2, br-3haz, br-8z7j]
 tasks: [br-evy6]
 ---
 

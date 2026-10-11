@@ -1,14 +1,14 @@
 ---
-id: 3w9t
+id: br-3w9t
 title: An 'outside look' role that approves and schedules system-maintenance tasks (tool installs etc.)
 kind: question
-opened: 2026-10-07
-filed_by: external:aide
+created: 2026-10-07
+created_by: external:aide
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [r8kv, gtzx]
+blocked_by: []
+related: [br-r8kv, br-gtzx]
 tasks: []
 ---
 

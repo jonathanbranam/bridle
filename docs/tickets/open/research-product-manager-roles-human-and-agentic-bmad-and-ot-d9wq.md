@@ -1,14 +1,14 @@
 ---
-id: d9wq
+id: br-d9wq
 title: "Research: product manager roles, human and agentic (BMAD and others), and what to call roadmap groupings"
 kind: research
-opened: 2026-10-09
-filed_by: external:advisor/product-manager
+created: 2026-10-09
+created_by: external:advisor/product-manager
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [6h65, 95mu, 7r2c, ukpm]
+blocked_by: []
+related: [br-6h65, br-95mu, br-7r2c, br-ukpm]
 tasks: [br-d9wq]
 ---
 

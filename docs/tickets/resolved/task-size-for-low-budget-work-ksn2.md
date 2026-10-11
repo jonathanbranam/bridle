@@ -1,14 +1,13 @@
 ---
-id: ksn2
+id: br-ksn2
 title: An estimated size on tasks, to pick small ones when budget runs short
-opened: 2026-09-28
+created: 2026-09-28
 resolved: 2026-09-29
 repos: [bridle]
 changes: [144d8af]
 specs: []
-needs: []
-see: [yurx, 8ups, m7wn, 6t29, j479]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-yurx, br-8ups, br-m7wn, br-6t29, br-j479]
 ---
 
 ## The ask

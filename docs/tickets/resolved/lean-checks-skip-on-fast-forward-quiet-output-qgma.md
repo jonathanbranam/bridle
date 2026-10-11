@@ -1,13 +1,13 @@
 ---
-id: qgma
+id: br-qgma
 title: Lean checks: land skips the check when the tree is already checked; check output goes to a file
-opened: 2026-09-29
+created: 2026-09-29
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [run-only-the-tests-a-change-can-affect-mt7r]
-closed: 2026-10-09T23:11:01Z
+blocked_by: []
+related: [run-only-the-tests-a-change-can-affect-mt7r]
+resolved: 2026-10-09T23:11:01Z
 ---
 
 ## The ask

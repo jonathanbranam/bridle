@@ -1,13 +1,13 @@
 ---
-id: 9s8u
+id: br-9s8u
 title: "Background wakes carry the session's prompt context: quiet hours, and every hook that should apply to them"
 kind: feature
-opened: 2026-10-05
+created: 2026-10-05
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [yy88, v3b7, cvaq, u6w9, 75h2]
+blocked_by: []
+related: [br-yy88, br-v3b7, br-cvaq, br-u6w9, br-75h2]
 tasks: [br-9s8u]
 ---
 

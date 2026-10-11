@@ -1,13 +1,13 @@
 ---
-id: r7cs
+id: br-r7cs
 title: Bridle counts in the status line, with a dedicated token
-opened: 2026-09-28
+created: 2026-09-28
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [s8kn]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-s8kn]
+resolved: 2026-09-30T05:12:44Z
 ---
 
 ## The question

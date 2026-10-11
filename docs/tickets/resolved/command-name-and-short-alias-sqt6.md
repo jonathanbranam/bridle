@@ -1,13 +1,13 @@
 ---
-id: sqt6
+id: br-sqt6
 title: Command name and short alias
-opened: 2026-09-27
+created: 2026-09-27
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [geem]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-geem]
+resolved: 2026-09-30T05:12:44Z
 ---
 
 ## The question

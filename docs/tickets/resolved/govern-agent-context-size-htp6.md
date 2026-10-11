@@ -1,13 +1,13 @@
 ---
-id: htp6
+id: br-htp6
 title: Govern agent context size, and renew agents in place
-opened: 2026-09-27
+created: 2026-09-27
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [tx3f]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-tx3f]
+resolved: 2026-09-30T05:12:44Z
 ---
 
 ## The question

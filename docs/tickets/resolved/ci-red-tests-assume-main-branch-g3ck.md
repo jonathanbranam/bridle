@@ -1,13 +1,13 @@
 ---
-id: g3ck
+id: br-g3ck
 title: CI red since br-29f9: tests' repos start on master, spawn wants main
-opened: 2026-09-28
+created: 2026-09-28
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [rxe8, 5heh]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-rxe8, br-5heh]
+resolved: 2026-09-30T05:12:44Z
 ---
 
 ## What happens

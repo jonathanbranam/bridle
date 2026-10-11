@@ -1,13 +1,13 @@
 ---
-id: vp9e
+id: br-vp9e
 title: Are roles and rules the same thing? One layered kind of prompt text
 kind: question
-opened: 2026-10-03
+created: 2026-10-03
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [34bw, 5u9d, xebc, sk52]
+blocked_by: []
+related: [br-34bw, br-5u9d, br-xebc, br-sk52]
 tasks: [br-9889]
 ---
 

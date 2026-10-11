@@ -1,13 +1,13 @@
 ---
-id: h3ar
+id: br-h3ar
 title: Interactive sessions kill each other's wake waiters with pkill -f (exit 144)
 kind: incident
-opened: 2026-10-04
+created: 2026-10-04
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [m7mp, j28f, kuw2]
+blocked_by: []
+related: [br-m7mp, br-j28f, br-kuw2]
 tasks: [br-h3ar]
 ---
 

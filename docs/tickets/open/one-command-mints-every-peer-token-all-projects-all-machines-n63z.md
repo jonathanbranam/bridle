@@ -1,13 +1,13 @@
 ---
-id: n63z
+id: br-n63z
 title: "One command mints every peer token: all projects, all machines, at project creation"
 kind: feature
-opened: 2026-10-06
+created: 2026-10-06
 repos: [meta-notes]
 changes: []
 specs: []
-needs: []
-see: [sk7p, 3haz]
+blocked_by: []
+related: [br-sk7p, br-3haz]
 tasks: []
 ---
 

@@ -1,15 +1,15 @@
 ---
-id: e9yu
+id: br-e9yu
 title: Per-project sessions (aide) share one handover file and one identity across projects; key them by project
 kind: bug
-opened: 2026-10-05
+created: 2026-10-05
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [gtzx, ma8e]
+blocked_by: []
+related: [br-gtzx, br-ma8e]
 tasks: [br-e9yu]
-closed: 2026-10-09T23:11:01Z
+resolved: 2026-10-09T23:11:01Z
 ---
 
 ## The ask

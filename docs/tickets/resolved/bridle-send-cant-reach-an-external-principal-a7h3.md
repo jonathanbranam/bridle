@@ -1,14 +1,13 @@
 ---
-id: a7h3
+id: br-a7h3
 title: bridle send can't reach an external principal
-opened: 2026-09-27
+created: 2026-09-27
 resolved: 2026-09-29
 repos: [bridle]
 changes: [34e6268, d998a2a, 939b289]
 specs: []
-needs: []
-see: [hj4g]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-hj4g]
 ---
 
 ## The question

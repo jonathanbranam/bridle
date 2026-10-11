@@ -1,13 +1,13 @@
 ---
-id: sk52
+id: br-sk52
 title: "When instructions reach an agent: at start, or at each step (OpenSpec-style phases)"
 kind: question
-opened: 2026-10-03
+created: 2026-10-03
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [vp9e, 34bw, 7r2c]
+blocked_by: []
+related: [br-vp9e, br-34bw, br-7r2c]
 tasks: [br-b8ff]
 ---
 

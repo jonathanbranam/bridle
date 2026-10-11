@@ -1,13 +1,13 @@
 ---
-id: ysmu
+id: br-ysmu
 title: CI watch missed 13 red runs on main; first ci_failed wake came 40 minutes late
 kind: bug
-opened: 2026-10-05
+created: 2026-10-05
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
+blocked_by: []
+related: []
 tasks: [br-ysmu]
 ---
 

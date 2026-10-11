@@ -1,13 +1,13 @@
 ---
-id: vdu8
+id: br-vdu8
 title: A bridle dev site command starts a throwaway daemon, gateway and UI on free ports
 kind: feature
-opened: 2026-10-06
+created: 2026-10-06
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [vwqt]
+blocked_by: []
+related: [br-vwqt]
 tasks: []
 ---
 

@@ -1,12 +1,12 @@
 ---
-id: xypj
+id: br-xypj
 title: How do separate project daemons share one budget?
-opened: 2026-09-27
+created: 2026-09-27
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [xcpy, 3nqf]
+blocked_by: []
+related: [br-xcpy, br-3nqf]
 ---
 
 ## The question

@@ -1,14 +1,13 @@
 ---
-id: f75x
+id: br-f75x
 title: Clean stale build output
-opened: 2026-09-28
+created: 2026-09-28
 resolved: 2026-09-29
 repos: [bridle]
 changes: [5b68552]
 specs: []
-needs: []
-see: [nbkj, m3wq]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-nbkj, br-m3wq]
 ---
 
 ## What happened

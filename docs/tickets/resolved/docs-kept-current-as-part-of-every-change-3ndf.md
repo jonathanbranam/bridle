@@ -1,13 +1,13 @@
 ---
-id: 3ndf
+id: br-3ndf
 title: Docs kept current as part of every change
-opened: 2026-09-29
+created: 2026-09-29
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [product-briefs-of-how-bridle-works-today-8awb]
-closed: 2026-10-09T23:11:07Z
+blocked_by: []
+related: [product-briefs-of-how-bridle-works-today-8awb]
+resolved: 2026-10-09T23:11:07Z
 ---
 
 ## The ask

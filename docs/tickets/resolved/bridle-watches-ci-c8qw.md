@@ -1,14 +1,13 @@
 ---
-id: c8qw
+id: br-c8qw
 title: Bridle watches the remote CI and reports failures
-opened: 2026-09-28
+created: 2026-09-28
 resolved: 2026-09-29
 repos: [bridle]
 changes: [3abb0af, b51d9b4]
 specs: []
-needs: []
-see: [g3ck, mt7r, n6gy]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-g3ck, br-mt7r, br-n6gy]
 ---
 
 ## The ask

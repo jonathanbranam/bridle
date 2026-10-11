@@ -1,14 +1,13 @@
 ---
-id: m3wq
+id: br-m3wq
 title: Disk usage monitoring
-opened: 2026-09-28
+created: 2026-09-28
 resolved: 2026-09-29
 repos: [bridle]
 changes: [5e55d8b]
 specs: []
-needs: []
-see: [nbkj, f75x]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-nbkj, br-f75x]
 ---
 
 ## What happened

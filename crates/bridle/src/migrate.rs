@@ -68,6 +68,13 @@ pub const MIGRATIONS: &[Migration] = &[
         manual_only: true,
         run: rename_product_manager,
     },
+    Migration {
+        id: "0002-standard-ticket-fields",
+        description: "Rename ticket frontmatter fields to the standard names and qualify ticket ids with the project prefix (ticket syqn).",
+        // Rewrites many files of the human's project: they review it first, on a trial branch.
+        manual_only: true,
+        run: standard_ticket_fields,
+    },
 ];
 
 const OLD_ROLE: &str = "product-manager";
@@ -124,6 +131,109 @@ fn rename_product_manager(ctx: &Ctx) -> anyhow::Result<Report> {
         files,
         summary: format!("renamed {OLD_ROLE} to {NEW_ROLE}"),
     })
+}
+
+/// Rewrites every ticket under `docs/tickets/` to the standard frontmatter (syqn): `needs`,
+/// `see`, `opened`, `filed_by`, `closed` become `blocked_by`, `related`, `created`,
+/// `created_by`, `resolved`, and bare ids become `<prefix>-<id>`. Tickets already in the new
+/// form are left alone, so a rerun finds nothing. The old forms stay readable until every
+/// project has run this.
+fn standard_ticket_fields(ctx: &Ctx) -> anyhow::Result<Report> {
+    let project = project_of(ctx.repo);
+    refuse_on_protected_branch(ctx.repo, &project)?;
+    let prefix = match bridle_daemon::config::Config::load(ctx.repo) {
+        Ok(c) => c.task_prefix,
+        Err(_) => None,
+    }
+    .unwrap_or_else(|| bridle_daemon::config::default_task_prefix(&project));
+    let root = crate::ticket::tickets_root(ctx.repo);
+    let mut paths = vec![];
+    md_files(&root, &mut paths);
+    paths.sort();
+    let mut edits = vec![];
+    for p in paths {
+        let text =
+            std::fs::read_to_string(&p).with_context(|| format!("reading {}", p.display()))?;
+        if let Some(new) = crate::ticket::standardize_front(&text, &prefix, &root) {
+            edits.push((p, new));
+        }
+    }
+    let files: Vec<String> = edits
+        .iter()
+        .map(|(p, _)| {
+            p.strip_prefix(ctx.repo)
+                .unwrap_or(p)
+                .to_string_lossy()
+                .into_owned()
+        })
+        .collect();
+    if files.is_empty() {
+        return Ok(Report {
+            files,
+            summary: "every ticket already has the standard fields".into(),
+        });
+    }
+    refuse_if_uncommitted(ctx.repo, &files)?;
+    if !ctx.dry_run {
+        for (p, new) in &edits {
+            std::fs::write(p, new).with_context(|| format!("writing {}", p.display()))?;
+        }
+    }
+    Ok(Report {
+        summary: format!("standardized {} tickets (prefix {prefix})", files.len()),
+        files,
+    })
+}
+
+fn md_files(dir: &Path, out: &mut Vec<PathBuf>) {
+    let Ok(rd) = std::fs::read_dir(dir) else {
+        return;
+    };
+    for e in rd.filter_map(Result::ok) {
+        let p = e.path();
+        if p.is_dir() {
+            md_files(&p, out);
+        } else if p.extension().is_some_and(|x| x == "md") {
+            out.push(p);
+        }
+    }
+}
+
+/// The project's name, as the CLI resolves it: the running workspace's, else the directory name.
+fn project_of(repo: &Path) -> String {
+    crate::project::from_cwd(repo)
+        .or_else(|| repo.file_name().map(|n| n.to_string_lossy().into_owned()))
+        .unwrap_or_default()
+}
+
+/// The first protected-branch guard (rule existing-projects): a migration that rewrites a
+/// project's files refuses while `main`, `dev` or the configured `[branches] release` is checked
+/// out, so it only ever lands on a trial or integration branch. Bridle's own repo is not an
+/// existing project in that sense, and a repo without git has no branch to protect.
+fn refuse_on_protected_branch(repo: &Path, project: &str) -> anyhow::Result<()> {
+    if project == "bridle" {
+        return Ok(());
+    }
+    let out = std::process::Command::new("git")
+        .arg("-C")
+        .arg(repo)
+        .args(["branch", "--show-current"])
+        .output();
+    let Ok(out) = out else { return Ok(()) };
+    if !out.status.success() {
+        return Ok(());
+    }
+    let branch = String::from_utf8_lossy(&out.stdout).trim().to_string();
+    let release = bridle_daemon::config::Config::load(repo)
+        .ok()
+        .and_then(|c| c.branches.release);
+    if branch == "main" || branch == "dev" || release.as_deref() == Some(branch.as_str()) {
+        return Err(Refused(format!(
+            "{branch} is a protected branch of {project}; check out the project's trial branch (e.g. bridle-adopt) and rerun"
+        ))
+        .into());
+    }
+    Ok(())
 }
 
 /// Refuses when git reports uncommitted changes in any of `files`, so a migration's edit is
@@ -641,6 +751,102 @@ mod tests {
             dry_run: false,
         };
         assert!(rename_product_manager(&ctx).unwrap().files.is_empty());
+    }
+
+    fn git(p: &Path, args: &[&str]) {
+        let ok = std::process::Command::new("git")
+            .arg("-C")
+            .arg(p)
+            .args(["-c", "user.name=t", "-c", "user.email=t@t"])
+            .args(args)
+            .output()
+            .unwrap()
+            .status
+            .success();
+        assert!(ok, "git {args:?}");
+    }
+
+    const OLD_TICKET: &str = "---\nid: abk2\ntitle: \"Old\"\nopened: 2026-01-01\nrepos: [x]\nchanges: []\nspecs: []\nneeds: [cdk4, zzzz]\nsee: []\nparent: cdk4\n---\nbody\n";
+    fn other_ticket(pre: &str) -> String {
+        format!(
+            "---\nid: {pre}-cdk4\ntitle: \"New\"\ncreated: 2026-01-01\nrepos: [x]\nchanges: []\nspecs: []\nblocked_by: []\nrelated: []\n---\n"
+        )
+    }
+
+    /// A git project on branch `branch` holding two tickets, one old-form and one new-form.
+    fn ticket_project(branch: &str) -> tempfile::TempDir {
+        let p = git_project("", false);
+        let open = p.path().join("docs/tickets/open");
+        std::fs::create_dir_all(&open).unwrap();
+        std::fs::write(open.join("old-abk2.md"), OLD_TICKET).unwrap();
+        let pre = bridle_daemon::config::default_task_prefix(&project_of(p.path()));
+        std::fs::write(open.join("new-cdk4.md"), other_ticket(&pre)).unwrap();
+        git(p.path(), &["checkout", "-q", "-B", branch]);
+        git(p.path(), &["add", "."]);
+        git(p.path(), &["commit", "-q", "-m", "tickets"]);
+        p
+    }
+
+    #[test]
+    fn ticket_migration_standardizes_old_tickets_and_skips_new_ones_and_rerun_is_a_noop() {
+        let p = ticket_project("bridle-adopt");
+        let ctx = Ctx {
+            repo: p.path(),
+            dry_run: false,
+        };
+        let r = standard_ticket_fields(&ctx).unwrap();
+        assert_eq!(r.files, vec!["docs/tickets/open/old-abk2.md".to_string()]);
+        let pre = bridle_daemon::config::default_task_prefix(&project_of(p.path()));
+        let got = std::fs::read_to_string(p.path().join("docs/tickets/open/old-abk2.md")).unwrap();
+        assert_eq!(
+            got,
+            format!(
+                "---\nid: {pre}-abk2\ntitle: \"Old\"\ncreated: 2026-01-01\nrepos: [x]\nchanges: []\nspecs: []\nblocked_by: [{pre}-cdk4, zzzz]\nrelated: []\nparent: {pre}-cdk4\n---\nbody\n"
+            )
+        );
+        // Committed, the same tree has nothing left to do.
+        git(p.path(), &["commit", "-qam", "migrated"]);
+        assert!(standard_ticket_fields(&ctx).unwrap().files.is_empty());
+    }
+
+    #[test]
+    fn ticket_migration_refuses_uncommitted_tickets_and_dry_run_writes_nothing() {
+        let p = ticket_project("bridle-adopt");
+        let path = p.path().join("docs/tickets/open/old-abk2.md");
+        let dry = Ctx {
+            repo: p.path(),
+            dry_run: true,
+        };
+        assert_eq!(standard_ticket_fields(&dry).unwrap().files.len(), 1);
+        assert_eq!(std::fs::read_to_string(&path).unwrap(), OLD_TICKET);
+        std::fs::write(&path, format!("{OLD_TICKET}more\n")).unwrap();
+        let ctx = Ctx {
+            repo: p.path(),
+            dry_run: false,
+        };
+        assert!(is_refusal(&standard_ticket_fields(&ctx).unwrap_err()));
+    }
+
+    #[test]
+    fn protected_branches_are_refused_for_existing_projects_but_not_bridle() {
+        let p = ticket_project("main");
+        let ctx = Ctx {
+            repo: p.path(),
+            dry_run: false,
+        };
+        assert!(is_refusal(&standard_ticket_fields(&ctx).unwrap_err()));
+        assert!(refuse_on_protected_branch(p.path(), "other").is_err());
+        // Bridle's own repo on main passes.
+        assert!(refuse_on_protected_branch(p.path(), "bridle").is_ok());
+        git(p.path(), &["checkout", "-q", "-b", "bridle-adopt"]);
+        assert!(refuse_on_protected_branch(p.path(), "other").is_ok());
+        // A configured release branch is protected too.
+        std::fs::write(
+            p.path().join(".bridle/config.toml"),
+            "[branches]\nintegration = \"bridle-adopt\"\nrelease = \"bridle-adopt\"\n",
+        )
+        .unwrap();
+        assert!(refuse_on_protected_branch(p.path(), "other").is_err());
     }
 
     #[test]

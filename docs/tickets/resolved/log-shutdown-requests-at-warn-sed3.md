@@ -1,13 +1,13 @@
 ---
-id: sed3
+id: br-sed3
 title: Log shutdown requests at WARN
-opened: 2026-09-28
+created: 2026-09-28
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: []
+resolved: 2026-09-30T05:12:44Z
 ---
 
 ## The ask

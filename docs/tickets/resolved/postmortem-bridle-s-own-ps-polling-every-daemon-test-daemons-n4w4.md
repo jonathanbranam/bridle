@@ -1,14 +1,14 @@
 ---
-id: n4w4
+id: br-n4w4
 title: "Postmortem: bridle's own 'ps' polling (every daemon, test daemons at 200 ms) drove dalek's load to 76-144 and the load hold blocked spawns for ~26 h; br-3p3h fixed only the idle case"
 kind: incident
-opened: 2026-10-09
-filed_by: external:aide
+created: 2026-10-09
+created_by: external:aide
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [xypj, 58c9, z7y5, npj2, b7cz, y55w]
+blocked_by: []
+related: [br-xypj, br-58c9, br-z7y5, br-npj2, br-b7cz, br-y55w]
 tasks: [br-n4w4]
 resolved: 2026-10-11T01:51:10Z
 ---

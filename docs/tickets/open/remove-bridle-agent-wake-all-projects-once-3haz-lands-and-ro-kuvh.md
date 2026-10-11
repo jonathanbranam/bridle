@@ -1,13 +1,13 @@
 ---
-id: kuvh
+id: br-kuvh
 title: "Remove 'bridle agent wake --all-projects' once 3haz lands and rolls out: warn first, then delete"
 kind: chore
-opened: 2026-10-04
+created: 2026-10-04
 repos: [bridle]
 changes: []
 specs: []
-needs: [3haz]
-see: [cy2v]
+blocked_by: [br-3haz]
+related: [br-cy2v]
 tasks: [br-kuvh]
 ---
 

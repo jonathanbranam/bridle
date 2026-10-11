@@ -1,13 +1,13 @@
 ---
-id: m3wg
+id: br-m3wg
 title: Isolation between interactive sessions that commit to the shared working copy
 kind: question
-opened: 2026-10-03
+created: 2026-10-03
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [hv8e, k7tm]
+blocked_by: []
+related: [br-hv8e, br-k7tm]
 tasks: []
 ---
 

@@ -1,14 +1,14 @@
 ---
-id: v7ug
+id: br-v7ug
 title: Run bridle's heavy work on the Windows PC under WSL2
 kind: feature
-opened: 2026-10-07
-filed_by: external:orchestrator
+created: 2026-10-07
+created_by: external:orchestrator
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [ur9v, b7cz, npj2]
+blocked_by: []
+related: [br-ur9v, br-b7cz, br-npj2]
 tasks: [br-v7ug]
 ---
 

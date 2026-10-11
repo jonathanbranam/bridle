@@ -1,12 +1,12 @@
 ---
-id: ged2
+id: br-ged2
 title: tools-only-install should chain to an existing git hook, not refuse
-opened: 2026-09-30
+created: 2026-09-30
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [hw6c]
+blocked_by: []
+related: [br-hw6c]
 ---
 
 ## The ask

@@ -1,15 +1,15 @@
 ---
-id: ehv6
+id: br-ehv6
 title: "Comment threads: explicit ASCII status and time zone on every entry, thread IDs, resolve, 'human via <agent>'"
 kind: feature
-opened: 2026-10-04
+created: 2026-10-04
 repos: [bridle, bridle-ui]
 changes: []
 specs: []
-needs: []
-see: [x8jt, jrm2, wjhp]
+blocked_by: []
+related: [br-x8jt, br-jrm2, br-wjhp]
 tasks: [br-ehv6]
-closed: 2026-10-09T23:11:07Z
+resolved: 2026-10-09T23:11:07Z
 ---
 
 ## The ask

@@ -1,14 +1,14 @@
 ---
-id: 9xbk
+id: br-9xbk
 title: "Research: web design rule sources to steal from, proposed web/mobile pack rules, attribution, and shipping whole rule sets"
 kind: research
-opened: 2026-10-09
-filed_by: external:aide
+created: 2026-10-09
+created_by: external:aide
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [22n2, g49c]
+blocked_by: []
+related: [br-22n2, br-g49c]
 tasks: [br-9xbk]
 ---
 

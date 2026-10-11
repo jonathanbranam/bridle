@@ -1,12 +1,12 @@
 ---
-id: 35mw
+id: br-35mw
 title: dotfiles-local as a bridle project, directly on main
-opened: 2026-09-30
+created: 2026-09-30
 repos: [bridle, dotfiles-local]
 changes: []
 specs: []
-needs: []
-see: [nuc-recovery-on-boot-4r3k, one-daemon-for-several-small-projects-3nkk]
+blocked_by: []
+related: [nuc-recovery-on-boot-4r3k, one-daemon-for-several-small-projects-3nkk]
 ---
 
 ## The ask

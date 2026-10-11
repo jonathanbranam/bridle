@@ -1,13 +1,13 @@
 ---
-id: 93u2
+id: br-93u2
 title: Integration branch per project, or merge straight to main?
-opened: 2026-09-27
+created: 2026-09-27
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: []
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: []
+resolved: 2026-09-30T05:12:44Z
 ---
 
 ## The question

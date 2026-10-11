@@ -1,13 +1,13 @@
 ---
-id: 9p3v
+id: br-9p3v
 title: Projects write and verify specs as they build, starting with bridle-ui
 kind: feature
-opened: 2026-10-05
+created: 2026-10-05
 repos: [bridle, bridle-ui, track-web]
 changes: []
 specs: []
-needs: []
-see: [qpr7, yghs]
+blocked_by: []
+related: [br-qpr7, br-yghs]
 tasks: []
 ---
 

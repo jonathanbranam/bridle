@@ -1,15 +1,15 @@
 ---
-id: 6yb4
+id: br-6yb4
 title: "A prototyper role in the base workflow: build only from the prototype prompt's constraints"
 kind: feature
-opened: 2026-10-02
+created: 2026-10-02
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [refining-a-task-with-the-human-before-it-ships-hvxk]
+blocked_by: []
+related: [refining-a-task-with-the-human-before-it-ships-hvxk]
 tasks: [br-a4ea]
-closed: 2026-10-09T23:11:05Z
+resolved: 2026-10-09T23:11:05Z
 ---
 
 ## The ask

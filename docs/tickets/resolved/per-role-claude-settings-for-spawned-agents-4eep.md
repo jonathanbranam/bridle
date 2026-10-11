@@ -1,13 +1,13 @@
 ---
-id: 4eep
+id: br-4eep
 title: Per-role Claude Code settings for the agents bridle spawns
-opened: 2026-09-27
+created: 2026-09-27
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [78sp, j2vq]
-closed: 2026-09-30T05:12:44Z
+blocked_by: []
+related: [br-78sp, br-j2vq]
+resolved: 2026-09-30T05:12:44Z
 ---
 
 ## The question

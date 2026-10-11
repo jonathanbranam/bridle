@@ -1,13 +1,13 @@
 ---
-id: gtzx
+id: br-gtzx
 title: "Seats: every role is a named, tracked seat that outlives its sessions, with its own inbox, handover and retirement"
 kind: feature
-opened: 2026-10-04
+created: 2026-10-04
 repos: [bridle]
 changes: []
 specs: []
-needs: []
-see: [r8kv, jttf, xxxq, r9vh, ervd, 2vja, 7d62]
+blocked_by: []
+related: [br-r8kv, br-jttf, br-xxxq, br-r9vh, br-ervd, br-2vja, br-7d62]
 tasks: [br-gtzx]
 ---
 
