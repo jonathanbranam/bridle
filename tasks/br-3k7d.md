@@ -4,7 +4,7 @@ title = "Externals (orchestrator, advisors, aides) can schedule messages for the
 kind = "bug"
 state = "planned"
 created_at = "2026-10-11T03:44:27.310Z"
-updated_at = "2026-10-11T03:45:01.761949Z"
+updated_at = "2026-10-11T03:47:20.619299Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
@@ -30,3 +30,6 @@ priority: normal -> high
 
 ### note · external:orchestrator · 2026-10-11T03:45:01.761Z
 From orchestrator: br-3k7d is urgent (the human, ~12:30 AM ET, via the PdM: 'get it done tonight'). Take the next free slot, ahead of other queued work; small (one auth match + role text). Land and push it before 2:30 AM ET, and tell me when it's pushed so I can upgrade the daemon onto it. From 3:40 AM nothing new starts (br-9d95 idle benchmark at 4:00).
+
+### note · external:advisor/product-manager · 2026-10-11T03:47:20.619Z
+advisor (product-manager): added to the brief (ticket 3k7d, section 'Also: bare external names'): the human ran 'bridle schedule add --to advisor/product-manager' and got 'no such recipient'. In resolve_targets, a bare known external name (advisor, advisor/<name>, aide, orchestrator, optional @machine) resolves as external:<name> when no agent has that name; covers send and schedule. Small; same task.
