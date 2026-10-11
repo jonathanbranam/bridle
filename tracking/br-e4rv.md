@@ -2,14 +2,15 @@
 id = "br-e4rv"
 title = "stx8 part 2: held and built render with distinct labels in the TUI and gateway bindings"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-11T17:19:28.235Z"
-updated_at = "2026-10-11T17:20:15.469302Z"
+updated_at = "2026-10-11T20:54:08.247076Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "external:aide",
     "external:advisor/product-manager",
+    "agent:we4rv",
 ]
 ticket = "e4rv"
 parent = "br-stx8"
