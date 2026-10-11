@@ -718,3 +718,13 @@ Newest first. One line per item: what happened, who did it, what it says about r
 - **2026-10-10: the orchestrator spawns designers** (br-re57, dre57) at the PdM's request: no worker
   slot, not the manager's job. The orchestrator also starts benchmark runs (the human: "the
   orchestrator starts this").
+- **2026-10-11: cutting a release needs the human's go in the orchestrator session.** Claude Code's
+  auto-mode classifier refused the v0.6.1 tag push ("Create Public Surface"); the human approved in
+  the session ("Ok push the tag"). v0.6.0 went through in an earlier session. Releases are the
+  orchestrator's by the operating model; an allow rule for `git push origin main vX.Y.Z` would
+  remove the round trip.
+- **2026-10-11: the orchestrator commits for the manager.** manager-2 ran `bridle ticket resolve
+  3haz` but `git add` is denied to it, so the move sat uncommitted until the orchestrator committed
+  it. Ticket moves made by managers need a committing path (or the CLI should commit them).
+- **2026-10-11: flaky tests are disabled, not fixed at once** (the human, via aide; role file
+  updated). The orchestrator files the disable task itself (br-ck8a) and hands the fix to the PdM.
