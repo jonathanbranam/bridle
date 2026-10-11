@@ -30,7 +30,7 @@ a ready-made host and guests:
 
 | Star | Its planets |
 |---|---|
-| cervantes | quijote, dulcinea, rocinante, ~~sancho~~ |
+| ~~cervantes~~ | quijote, dulcinea, rocinante, ~~sancho~~ |
 | ~~copernicus~~ | ~~galileo~~, brahe, lipperhey, janssen, harriot |
 | lich (a pulsar) | draugr, poltergeist, phobetor |
 
@@ -44,12 +44,12 @@ The four machines to name now. Say each into both dictation systems before choos
 
 | Machine | Suggestions | Why |
 |---|---|---|
-| 1. Windows host | `pluto`, `mars`, `cervantes`, `saturn` | A modest star or planet for the host, paired with the guest below. |
+| 1. Windows host | `pluto`, `mars`, ~~`cervantes`~~, `saturn` | A modest star or planet for the host, paired with the guest below. |
 | 2. WSL2 (inside it) | ~~`charon`~~, `phobos`, ~~`sancho`~~, ~~`rhea`~~ | Tied to the host: Pluto and Charon are a double world that orbit each other, as Windows and Linux share one PC, and Charon is the ferryman who carries things across, but `charon` failed dictation (see "Dictation tests"); Phobos is a moon of Mars; Sancho, the loyal helper, a planet of Cervantes; Rhea a moon of Saturn. |
 | 3. NUC | `vega`, ~~`sunna`~~, ~~`inti`~~, ~~`mira`~~, `vesta` | Small, always on, at home: short star and sun-god names; `vesta` is the asteroid named for the goddess of the hearth. |
 | 4. EC2 | `proxima`, `luna`, `terminus`, ~~`mir`~~, `babylon` | The edge box, the NUC's way out: `proxima` is the nearest star (and sounds like proxy); `luna` the nearest wanderer; `terminus` Foundation's edge world; `mir` and `babylon` stations. |
 
-Struck by the human (2026-10-11): `sancho` ("I don't like saying sancho"), `sunna` and `inti`
+Struck by the human (2026-10-11): `cervantes` ("too long; makes me think of Don Quixote"), `sancho` ("I don't like saying sancho"), `sunna` and `inti`
 ("I don't know how to say those anyway").
 
 **Windows and WSL2: `mars` and `phobos` lead** (both pass dictation). Backup pairs, host first:
