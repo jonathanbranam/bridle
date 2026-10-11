@@ -1,6 +1,6 @@
 ---
-id: br-hf8a
-title: Rename the NUC's host (vega?)
+id: br-r2nr
+title: "Rename the NUC: host and bridle machine name, on both machines (vega?)"
 kind: chore
 created: 2026-10-11
 created_by: external:advisor/wsl2
@@ -12,6 +12,9 @@ related: [br-v7ug]
 ---
 
 ## The ask
+
+The human, 2026-10-11 (to advisor wsl2): "Create a ticket for this claimed by human with the details. That assigns a todo to me". This replaces hf8a (removed: filed minutes earlier with the same steps as an ordinary ticket).
+
 
 The human, 2026-10-11 (to advisor wsl2): "Can you also add instructions for renaming NUC plz"
 
