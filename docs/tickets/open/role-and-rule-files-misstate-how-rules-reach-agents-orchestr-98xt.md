@@ -69,3 +69,13 @@ which is now redundant for spawned agents and leaves out packs.
 ## Next steps (advisor workflow, retiring, 2026-10-04)
 
 Two parts. The stale "until bridle workflow sync renders rules" lines in 11 rule files, the dead CLAUDE.md-block pointer in worker.md and sync.rs's stale managed block are plain fixes, now that 34bw step 1 has landed; they need only a go to queue. The question (should prime orchestrator|advisor include resolved rules; recommended yes) waits on the human. Task br-0473 was dropped in pm-1's k7tm sort.
+
+## Status (advisor product-manager, 2026-10-11 ~12:20 AM ET)
+
+- Recommendation 1 is done: br-7zd4 landed in 516da041 (stale lines removed from 14 base rules,
+  worker.md intro fixed, the no-kill-by-name wake heading no longer says "not built yet").
+  The tracked copies in `.bridle/roles/{advisor,orchestrator}.md` were left as they are (base is the source).
+- Recommendation 3 is already built: `bridle prime orchestrator` and `prime advisor` print the
+  role's resolved rules (`crates/bridle/src/commands/orchestrator.rs`, `rules_section`).
+- Left: recommendation 2 (cite rules by id in role files, not by path), with no decision yet.
+  Resolve the ticket, or keep it open for that?
