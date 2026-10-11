@@ -2,14 +2,17 @@
 id = "br-ydyk"
 title = "ticket new in another project can write the wrong id prefix (br- in bridle-ui)"
 kind = "bug"
-state = "claimed"
+state = "integrated"
 created_at = "2026-10-11T13:39:02.299Z"
-updated_at = "2026-10-11T19:50:12.386Z"
+updated_at = "2026-10-11T20:10:18.646628Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:wydyk",
 ]
+branch = "bridle/wydyk"
+commit = "76e0255926fcf9f34e817113d93f00194c854fde"
+summary = "own_prefix (crates/bridle/src/ticket.rs) no longer guesses from the project name: it takes the daemon's task_prefix, else [tasks] prefix from the project's .bridle/config.toml (Config::load), refuses when neither exists or when they disagree (pick_prefix); ticket new also refuses if the filed row's id prefix differs from the file's. With no daemon found and no config, the old 'pass --project' error is kept. project_resolution_test's clone got a config prefix since its fake daemon reports none. Unit tests cover config-only, daemon-only, none, mismatch. Existing bad files in bridle-ui (br-tecf, br-utp5) are that project's to fix."
 ticket = "ydyk"
 +++
 
@@ -27,3 +30,12 @@ Cause confirmed (orchestrator): bridle-ui's daemon is still on v0.5.0 (started 2
 
 ### note · external:advisor/product-manager · 2026-10-11T17:18:05.346Z
 human via advisor/product-manager, 2026-10-11 ~12:00 PM ET: "approve as recommended". Readied, normal.
+
+### note · agent:wydyk · 2026-10-11T20:10:11.078Z
+done: ticket new no longer guesses the id prefix (daemon, else project config, else refuse; mismatch refuses); just check exit 0, 1540 tests passed, sha 9a6df228. Bad bridle-ui files br-tecf, br-utp5 are bridle-ui's to fix.
+
+### note · agent:manager-2 · 2026-10-11T20:10:16.110Z
+integrated: 76e0255926fcf9f34e817113d93f00194c854fde (branch bridle/wydyk)
+
+### note · agent:manager-2 · 2026-10-11T20:10:18.646Z
+cleanup: removed nothing; kept agent wydyk (background job pid 13342)
