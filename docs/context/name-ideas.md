@@ -25,6 +25,11 @@ Idea: one theme per kind of place (home machines one theme, cloud another), so t
 where a machine lives without naming its hardware. Themes needn't all match; "all sci-fi opens up
 a lot of really good options" (the human).
 
+What suits a machine, the human (2026-10-11): "i like planets, stars, place names, space ships for
+machine names. not generally personal names for machines; although the god names fit into several
+categories and could be used." So characters and other personal names are for agent seats, not
+machines.
+
 ## Advisor's suggestions (2026-10-09)
 
 Not decided; the human decides when the WSL2 PC is set up.
@@ -105,15 +110,51 @@ but right as "the aide at Sonic".
 | river | companion | A common word, so less clear. |
 | k9 | the robot dog | A digit; dictation may say "canine". |
 
-**Sci-fi ships** (a favourite; some are long to type, but they sound great)
+**Sci-fi ships** (a favourite; the long ones sound great but run past eight letters. None
+dictation-tested.)
 
 | Name | From | Notes |
 |---|---|---|
-| nostromo | Alien | |
+| enterprise | Star Trek | The famous one; long, and a common word. |
+| voyager, defiant, reliant | Star Trek | Voyager is also the real probe. |
+| excelsior, stargazer, cerritos | Star Trek | Excelsior and stargazer are long. |
+| titan, protostar | Star Trek | Titan is also a moon and a god. |
+| discovery | Star Trek; 2001: A Space Odyssey | Both franchises. A common word, and long. |
+| orville | The Orville | |
+| falcon | Star Wars (the Millennium Falcon) | Also SpaceX's rocket. |
+| tantive | Star Wars (Tantive IV, Leia's ship) | |
+| executor | Star Wars (Vader's flagship) | |
+| ghost | Star Wars Rebels | A common word. |
+| nostromo, sulaco | Alien; Aliens | |
+| auriga, covenant | Alien Resurrection; Alien: Covenant | Auriga is also a constellation. |
+| prometheus | Prometheus; Stargate | Also the Titan. Long. |
 | serenity | Firefly | |
+| rocinante | The Expanse (named after Don Quixote's horse) | Long. |
+| donnager, canterbury | The Expanse | Long. |
 | galactica | Battlestar Galactica | Long. |
-| rocinante | The Expanse (named after Don Quixote's horse) | Not seen yet. Long to type. |
-| discovery | 2001: A Space Odyssey | Also a common word. |
+| pegasus | Battlestar Galactica | Also a constellation. |
+| leonov | 2010: The Year We Make Contact | |
+| endurance | Interstellar | Long. |
+| icarus | Sunshine | |
+| horizon | Event Horizon | A common word. |
+| endeavour | Rendezvous with Rama (Clarke) | Also the real shuttle. Spelled the British way. |
+| moya | Farscape | A living ship. |
+| liberator | Blake's 7 | Long. |
+| starbug | Red Dwarf | |
+| normandy | Mass Effect | |
+| daedalus, odyssey, destiny | Stargate | Odyssey and destiny are common words. |
+| highliner | Dune (the Guild's ships) | |
+
+Real spacecraft, for the same theme:
+
+| Name | Notes |
+|---|---|
+| apollo, gemini, mercury | NASA's crewed programmes; also a god, a constellation and a planet. |
+| voyager, pioneer, viking | Probes that left (or landed); pioneer and viking are common words. |
+| cassini, galileo, kepler, hubble, webb | Probes and telescopes named after astronomers. |
+| juno, rosetta, dawn, huygens | Probes. |
+| atlantis, discovery, endeavour | Shuttles. Leave out challenger and columbia: both were lost with their crews. |
+| soyuz, vostok, sputnik, mir | Soviet craft and station. |
 
 **Sci-fi characters** (Alien and Firefly; first names, easy to say)
 

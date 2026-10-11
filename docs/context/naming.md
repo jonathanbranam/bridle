@@ -193,7 +193,11 @@ For servers, computers and other hardware. The pool of candidates is
 > * Never use physical locations (e.g., front-desk or server-closet). Hardware gets moved to the
 >   warehouse or another floor eventually
 
-Both come from the c2 wiki's [TipsForNamingComputers](https://wiki.c2.com/?TipsForNamingComputers)
+What to choose from (2026-10-11): planets, stars, places and spaceships, and gods, which fit
+several of those; not personal names, which are for agent seats (the human's words are in
+[[name-ideas]]).
+
+Both notes come from the c2 wiki's [TipsForNamingComputers](https://wiki.c2.com/?TipsForNamingComputers)
 ("Possession" and "Location"). The page's other tips, as they apply here:
 
 - **Not its use.** Don't name a machine after what it does ("build", "mail"): the use moves, the
