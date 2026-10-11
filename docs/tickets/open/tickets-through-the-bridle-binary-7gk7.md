@@ -26,6 +26,53 @@ frontmatter `id: mn-ba09`, `title`, `status` only):
 > The agents are free to write their own content into the ticket, although we can in the future,
 > provide templates for different types of tickets, but that isn't critical or urgent.
 
+## Assessment (2026-10-11)
+
+The human (2026-10-11): "assess what is actually needed for 01ff and clarify the description.
+Yes, it is needed, but I think it is mostly complete." Checked against the code at a4cb9331.
+The build is done: br-1e47 (edbf91b9, slice A), br-ae32 (2fbb2cd7, slice B), br-9e4e
+(cc893d01, cleanup), then reshaped by 22ab (syqn, epvy, bpku, 3v75).
+
+| Ask | Status | Evidence |
+|-----|--------|----------|
+| One layout for every project, `docs/tickets/{open,resolved}/<tail>-<id>.md`, owned by bridle | Done | `workflow/base/rules/tickets.md` (br-ae32); other projects read bridle's `workflow/` (`workflow =` in their `.bridle` config). `bridle ticket check` passes in bridle-ui and track-web. data-contracts keeps its frozen old pipeline by its own choice (its ticket 3fm6) |
+| Mint a new ticket (fresh ID, in name and frontmatter) | Done | `ticket new`, `crates/bridle/src/ticket.rs:73`, `mint_id` :1379; IDs unique across tickets and tasks (br-9e15) |
+| `ticket new` also makes the task | Done, reshaped | Every ticket gets its row, same id, `pending` (bpku, ticket.rs:155); `ticket ready` readies it |
+| Update frontmatter | Done | `ticket set`, ticket.rs:875; `ticket link` for blocked_by/parent/related (3v75) |
+| Check links and IDs | Done | `ticket check`, ticket.rs:1192 (br-ae32) |
+| Resolve: move `open/` to `resolved/` | Done | `ticket resolve`, ticket.rs:662; file work only, no daemon |
+| Fields `id, title, opened, repos, changes, specs, needs, see` | Done, superseded | syqn renamed them (`created`, `blocked_by`, `related`; added `kind`, `parent`, `theme`, `created_by`); old names still read and `ticket set` accepts them |
+| A `closed:` timestamp, set on resolving | Done as `resolved:` | syqn renamed `closed` to `resolved` (the human's decision, syqn). `ticket resolve` stamps `resolved: <UTC date-time>` (ticket.rs:429); `closed:` is read as an alias (ticket.rs:826). Nothing to add |
+| Agents write the body freely; templates later | Done | The tickets rule says so; templates stay out of scope (not urgent) |
+| Nothing in `workflow/base/` defines tickets | Done | `workflow/base/rules/tickets.md` |
+
+Not this ticket's work: other projects' existing tickets still carry the old field names and
+bare IDs (bridle-ui 21 of 25 files, track-web 12 of 15) until their owners run the opt-in
+migration `0002-standard-ticket-fields` (xebc); missing `kind:` is the v3dk backfill.
+
+## What is left
+
+Bridle's own docs and spikes still describe the pre-7gk7 setup. A docs chore, size S:
+
+1. `docs/README.md`, "Questions and spikes are tickets": drop the reference to
+   `workflow-instructions/ticket-conventions.md` (line 50) and the `check-tickets.py` loop (lines
+   93-98); say `bridle ticket check` instead. Drop the stale `questions/` tree (line 70). Fix
+   line 85, "resolving a ticket closes its task": `ticket resolve` doesn't touch the row
+   (`docs/design/cli.md`, ticket resolve); say what does (`ticket done` / `drop`).
+2. Spikes: `docs/spikes/open/` (3) and `docs/spikes/done/` (4) are ticket-shaped but outside the
+   binary: old fields (`opened`, `needs`), bare IDs, `done/` not `resolved/`, and `ticket check`
+   doesn't read them. Recommended: move them to `docs/tickets/open|resolved/` as kind `research`
+   (ID and tail kept, fields renamed, qualified IDs, `resolved:` from the git date of the move to
+   `done/`), and keep the numbered findings docs in `docs/spikes/`. The alternative is to stop
+   calling spikes tickets in the README. The human picks; the move is the default.
+
+Verify: `grep -n "workflow-instructions\|check-tickets\|questions/" docs/README.md` finds nothing;
+`bridle ticket check` reports no new problems and covers the moved spikes; `bridle ticket show
+mnzh` prints the spike.
+
+If the human drops item 2, item 1 alone is a few lines and could ride along with any docs change;
+the code ask of this ticket is complete.
+
 ## What that means (as asked; not triaged)
 
 - The ticket layout bridle uses on itself (`docs/README.md`, "How the folders work":
