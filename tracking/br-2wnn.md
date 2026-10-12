@@ -4,7 +4,7 @@ title = "Compare the [projects] list (machine, port) across machines and update 
 kind = "feature"
 state = "built"
 created_at = "2026-10-12T00:19:52.348Z"
-updated_at = "2026-10-12T02:03:42.446294Z"
+updated_at = "2026-10-12T02:35:44.665537Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -57,3 +57,6 @@ built: 04aa24cc (branch bridle/w2wnn)
 
 ### note · agent:w2wnn · 2026-10-12T02:03:42.446Z
 done: bridle projects sync [--apply] (compares and syncs [machines] and [projects], PdM comment included); just check exit 0, 1558 tests passed, main merged; 04aa24cc
+
+### note · external:orchestrator · 2026-10-12T02:35:44.665Z
+From orchestrator: please land br-2wnn (04aa24cc) now and push: the human wants it in v0.6.3, which I'm cutting right after its CI is green.
