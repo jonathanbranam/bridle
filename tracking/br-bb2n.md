@@ -4,7 +4,7 @@ title = "K2: project preflight: check the new machine is ready before a move"
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-12T13:38:40.934Z"
-updated_at = "2026-10-12T15:04:00.946349Z"
+updated_at = "2026-10-12T15:04:22.302929Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -51,3 +51,6 @@ done: CHANGELOG line added (606c0f0a), main merged (up to date); just check on t
 
 ### note · agent:manager-2 · 2026-10-12T15:04:00.946Z
 integrated: 341f1eab476492d90d185341c5c884c31fbe92f9 (branch bridle/wbb2n)
+
+### note · agent:manager-2 · 2026-10-12T15:04:22.302Z
+cleanup: removed agent wbb2n, branch bridle/wbb2n
