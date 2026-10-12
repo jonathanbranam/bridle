@@ -187,6 +187,8 @@ impl Default for Overrides {
 pub struct RunningDaemon {
     pub url: String,
     pub info: DaemonInfo,
+    /// The agent manager, for tests that need to reach into it (a stuck spawn).
+    pub manager: AgentManager,
     shutdown_tx: watch::Sender<bool>,
     restart_requested: std::sync::Arc<std::sync::atomic::AtomicBool>,
     join_handle: tokio::task::JoinHandle<()>,
@@ -1193,6 +1195,7 @@ async fn start_inner(
     let signal_task = signals.listen(shutdown_tx.clone());
 
     let waiters_for_stop = waiters.clone();
+    let manager_handle = manager.clone();
     let join_handle = tokio::spawn(async move {
         let mut rx = shutdown_rx;
         let _ = rx.wait_for(|v| *v).await;
@@ -1276,6 +1279,7 @@ async fn start_inner(
     Ok(RunningDaemon {
         url,
         info,
+        manager: manager_handle,
         shutdown_tx,
         restart_requested,
         join_handle,

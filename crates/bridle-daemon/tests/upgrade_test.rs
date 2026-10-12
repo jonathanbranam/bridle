@@ -749,3 +749,45 @@ async fn the_interval_holds_a_second_automatic_upgrade_across_a_restart_but_not_
     assert_eq!(log(), 2);
     running.join().await.expect("join");
 }
+
+/// A spawn that never finishes (y455, up5r): status names it, the timeout bound releases its
+/// guard, and a restart stops waiting on it once it is past the timeout.
+#[tokio::test]
+async fn a_restart_stops_waiting_on_a_stuck_spawn() {
+    let (daemon, _tmp) = support::start_daemon(Some(hooks("success", "true"))).await;
+    let manager = daemon.running.manager.clone();
+    manager.set_spawn_timeout(Duration::from_millis(1500));
+
+    // (b) A hung spawn future is cut off by the bound and its guard is released.
+    let guard = manager.track_spawn("hung");
+    let hung = {
+        let _guard = manager.track_spawn("hung-bounded");
+        tokio::time::timeout(Duration::from_millis(100), std::future::pending::<()>()).await
+    };
+    assert!(hung.is_err());
+    assert_eq!(manager.spawn_holders().len(), 1);
+
+    // (a) The drain names the holder.
+    daemon.client.restart(&upgrade()).await.expect("reply");
+    let status = support::wait_for("the drain in status", || async {
+        let s = daemon.client.status().await.ok()?;
+        s.draining.then_some(s)
+    })
+    .await;
+    assert!(
+        status
+            .draining_on
+            .iter()
+            .any(|l| l.contains("a spawning agent: hung,")),
+        "{:?}",
+        status.draining_on
+    );
+
+    // (c) Once past the timeout, it no longer holds the restart.
+    support::wait_for("the restart", || async {
+        daemon.running.restart_requested().then_some(())
+    })
+    .await;
+    drop(guard);
+    assert!(!manager.spawning());
+}

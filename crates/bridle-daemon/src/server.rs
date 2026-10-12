@@ -1055,6 +1055,7 @@ async fn status(
             .into_iter()
             .filter(|a| a.state.is_running() && a.state != bridle_api::types::AgentState::Idle)
             .map(|a| a.name)
+            .chain(spawn_holder_labels(&state.manager.spawn_holders()))
             .collect()
     } else {
         Vec::new()
@@ -4866,6 +4867,20 @@ async fn perform_restart(
     result
 }
 
+/// "a spawning agent: incident-2y3m, 77 min" for each spawn in flight.
+fn spawn_holder_labels(holders: &[crate::supervisor::SpawnHolder]) -> Vec<String> {
+    holders
+        .iter()
+        .map(|h| {
+            format!(
+                "a spawning agent: {}, {} min",
+                h.name,
+                h.started.elapsed().as_secs() / 60
+            )
+        })
+        .collect()
+}
+
 async fn drain_and_restart(
     state: &AppState,
     who: &str,
@@ -4874,7 +4889,11 @@ async fn drain_and_restart(
     let started = tokio::time::Instant::now();
     let mut woke = false;
     let running = loop {
-        let spawning = state.manager.spawning();
+        // A spawn past the timeout is stuck (its own timeout should have ended it); it doesn't
+        // hold the restart. Busy agents are still waited for.
+        let limit = state.manager.spawn_timeout();
+        let holders = state.manager.spawn_holders();
+        let spawning = holders.iter().any(|h| h.started.elapsed() <= limit);
         let running: Vec<_> = state
             .store
             .list_agents(false)
@@ -4888,12 +4907,24 @@ async fn drain_and_restart(
             .map(|a| a.name.clone())
             .collect();
         if busy.is_empty() && !spawning {
+            for h in &holders {
+                tracing::error!(agent = %h.name, secs = h.started.elapsed().as_secs(), "restart: not waiting on a stuck spawn");
+                let _ = state
+                    .emitter
+                    .emit(
+                        "restart.stuck_spawn",
+                        crate::supervisor::system_principal().id,
+                        None,
+                        serde_json::json!({"agent": h.name, "secs": h.started.elapsed().as_secs()}),
+                    )
+                    .await;
+            }
             break running;
         }
         if !woke && started.elapsed() >= state.drain_wake_after {
             woke = true;
             let still = if busy.is_empty() {
-                "a spawning agent".to_string()
+                spawn_holder_labels(&holders).join(", ")
             } else {
                 busy.join(", ")
             };

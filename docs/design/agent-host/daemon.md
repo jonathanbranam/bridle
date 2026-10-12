@@ -274,7 +274,7 @@ and comments, queue nudges and wakes are still stored (state `held`, in order) b
 the agent; the end of a turn no longer delivers the next held one. Turns already in progress run to
 their end and nothing is cut off; the queue stays as it is. Interactive sessions (orchestrator,
 aide, advisors) are outside the daemon's turns and are not held. There is no timeout and no 409:
-when no agent is mid-turn and no spawn is in flight (checked every 500 ms) it records the running agents' ids
+when no agent is mid-turn and no spawn is in flight (checked every 500 ms; a spawn is bounded by a 15 min timeout, and one older than that no longer holds the restart: it is logged and recorded as a `restart.stuck_spawn` event; `draining_on` in status names spawn holders as "a spawning agent: <name>, N min") it records the running agents' ids
 (`meta` key `restart.resume`), wakes the orchestrator (`restart`, with the commit), sets the
 restart flag and runs the ordinary shutdown sequence above (agents stop as `daemon_shutdown`, the
 state branch is flushed and pushed, `daemon.json` removed). `run` then `exec`s the binary path resolved once at start-up (`exe_path()`: Linux's `<path> (deleted)` suffix, left after a reinstall, is stripped) with

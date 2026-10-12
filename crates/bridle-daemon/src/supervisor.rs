@@ -177,6 +177,33 @@ struct AgentRuntime {
 
 // ---------- the manager ----------
 
+/// How long a whole `spawn` may take. A hang on an unbounded await (y455, up5r) otherwise holds
+/// the spawn registry, and with it every restart, forever.
+pub const SPAWN_TIMEOUT: Duration = Duration::from_secs(15 * 60);
+
+/// A spawn in flight: who, and since when.
+#[derive(Clone, Debug)]
+pub struct SpawnHolder {
+    pub name: String,
+    pub started: std::time::Instant,
+}
+
+/// Removes its spawn from the registry on drop, whatever path the spawn leaves by.
+pub struct SpawnGuard {
+    inner: Arc<Inner>,
+    id: u64,
+}
+
+impl Drop for SpawnGuard {
+    fn drop(&mut self) {
+        self.inner
+            .spawning
+            .lock()
+            .expect("spawning lock")
+            .retain(|(id, _)| *id != self.id);
+    }
+}
+
 struct Inner {
     store: Store,
     workspace: Workspace,
@@ -188,7 +215,11 @@ struct Inner {
     runtimes: std::sync::Mutex<HashMap<String, Arc<AgentRuntime>>>,
     /// Spawns in flight. Until its first `system/init` an agent reads `idle` although its first
     /// turn is already on the way, so the quiet-point checks count these as busy.
-    spawning: std::sync::atomic::AtomicUsize,
+    spawning: std::sync::Mutex<Vec<(u64, SpawnHolder)>>,
+    spawn_seq: std::sync::atomic::AtomicU64,
+    /// Bound on a whole `spawn` (see `AgentManager::spawn`); a drain also stops waiting on a
+    /// holder older than this.
+    spawn_timeout: std::sync::Mutex<Duration>,
     /// The load watch's last reading; its `holding` flag gates new spawns.
     load: std::sync::Mutex<Option<bridle_api::types::LoadStatus>>,
     /// Short sha of the built commit a drain is waiting to restart into (`None` for a plain
@@ -284,7 +315,9 @@ impl AgentManager {
             project,
             emitter,
             runtimes: std::sync::Mutex::new(HashMap::new()),
-            spawning: std::sync::atomic::AtomicUsize::new(0),
+            spawning: std::sync::Mutex::new(Vec::new()),
+            spawn_seq: std::sync::atomic::AtomicU64::new(0),
+            spawn_timeout: std::sync::Mutex::new(SPAWN_TIMEOUT),
             load: std::sync::Mutex::new(None),
             upgrade_waiting: std::sync::Mutex::new(None),
             draining: std::sync::atomic::AtomicBool::new(false),
@@ -836,7 +869,48 @@ impl AgentManager {
 
     /// Whether any spawn hasn't returned yet (see `Inner::spawning`).
     pub fn spawning(&self) -> bool {
-        self.0.spawning.load(std::sync::atomic::Ordering::SeqCst) > 0
+        !self.0.spawning.lock().expect("spawning lock").is_empty()
+    }
+
+    /// The spawns that haven't returned yet, oldest first.
+    pub fn spawn_holders(&self) -> Vec<SpawnHolder> {
+        let mut v: Vec<SpawnHolder> = self
+            .0
+            .spawning
+            .lock()
+            .expect("spawning lock")
+            .iter()
+            .map(|(_, h)| h.clone())
+            .collect();
+        v.sort_by_key(|h| h.started);
+        v
+    }
+
+    pub fn spawn_timeout(&self) -> Duration {
+        *self.0.spawn_timeout.lock().expect("spawn_timeout lock")
+    }
+
+    pub fn set_spawn_timeout(&self, d: Duration) {
+        *self.0.spawn_timeout.lock().expect("spawn_timeout lock") = d;
+    }
+
+    /// Registers a spawn in flight until the guard drops.
+    pub fn track_spawn(&self, name: &str) -> SpawnGuard {
+        let id = self
+            .0
+            .spawn_seq
+            .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        self.0.spawning.lock().expect("spawning lock").push((
+            id,
+            SpawnHolder {
+                name: name.to_string(),
+                started: std::time::Instant::now(),
+            },
+        ));
+        SpawnGuard {
+            inner: self.0.clone(),
+            id,
+        }
     }
 
     /// Starts (or ends) a drain: see `Inner::draining`. Set on every path out of a restart that
@@ -879,17 +953,22 @@ impl AgentManager {
         req: SpawnRequest,
         principal: &Principal,
     ) -> Result<Agent, SupervisorError> {
-        struct InFlight<'a>(&'a std::sync::atomic::AtomicUsize);
-        impl Drop for InFlight<'_> {
-            fn drop(&mut self) {
-                self.0.fetch_sub(1, std::sync::atomic::Ordering::SeqCst);
+        let name = req
+            .name
+            .clone()
+            .unwrap_or_else(|| format!("({})", req.role));
+        let _in_flight = self.track_spawn(&name);
+        let limit = self.spawn_timeout();
+        match tokio::time::timeout(limit, self.spawn_agent(req, principal)).await {
+            Ok(r) => r,
+            Err(_) => {
+                tracing::error!(agent = %name, secs = limit.as_secs(), "spawn timed out; guard released");
+                Err(SupervisorError::Internal(format!(
+                    "spawning {name} timed out after {}s",
+                    limit.as_secs()
+                )))
             }
         }
-        self.0
-            .spawning
-            .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
-        let _in_flight = InFlight(&self.0.spawning);
-        self.spawn_agent(req, principal).await
     }
 
     async fn spawn_agent(

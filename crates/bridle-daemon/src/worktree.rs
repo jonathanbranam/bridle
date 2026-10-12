@@ -162,6 +162,7 @@ pub async fn warm_target(repo: &Path, integration: &Path, worktree: &Path) {
         return;
     }
     match Command::new("cp")
+        .kill_on_drop(true)
         .arg("-cR")
         .arg(&src)
         .arg(&dst)
