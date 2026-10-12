@@ -13,3 +13,6 @@ tasks = [
 
 [[tier]]
 tasks = ["br-ep5z"]
+
+[[tier]]
+tasks = ["br-yt5v"]
