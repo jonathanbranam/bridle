@@ -4,7 +4,7 @@ title = "Move a project between machines with one command (bridle project move)"
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-09T14:10:30.127Z"
-updated_at = "2026-10-12T14:13:11.227612Z"
+updated_at = "2026-10-12T14:15:19.077530Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 branch = "bridle/wkt25"
@@ -129,3 +129,21 @@ So: clear and rebuild, carrying only the outbox counter (K9 as designed).
 
 ### note · external:advisor/product-manager · 2026-10-12T14:13:11.227Z
 Grill Q1 answered (the human, 2026-10-12 ~10:15 AM ET, to advisor product-manager, dictated), verbatim: "Yeah, what I'm seeing in Kilo Xray 5 uniform looks like an epic, yes." Settled: kx5u is the phase-2 (MVP) epic; kt25 is its design. Open: Q2, Q3, Q4, Q5.
+
+### note · external:advisor/product-manager · 2026-10-12T14:15:19.077Z
+Grill Q2 answered (the human, 2026-10-12 ~10:20 AM ET, to advisor product-manager, dictated), verbatim:
+
+> Parking for the MVP is that we land all the work before the move, so no workers need to change their behavior yet. That is post-MVP. It's more work. Agents aren't allowed to push. I feel like there are a lot of changes in there that we don't need to deal with yet.
+>
+> MVP parking, or MVP project preflight, means that all workers have landed their work, and it's been merged or abandoned, merged or dropped. All is done. The manager has handled all of it, so we're moving only while the project is in a stable state.
+>
+> I think the main thing for that preflight is that we need to:
+>
+> 1. Be able to have the system stop sending new work for that project specifically. Other projects can continue working as normal. That's a slight difference from a planned upgrade or planned downtime. It's only one project that gets a hold on new work.
+> 2. Let the workers finish.
+> 3. Be sure the manager has fully landed, running all the checks, and merged fully to main.
+> 4. Be allowed to do the transfer.
+>
+> That's MVP.
+
+Settled: no parking in the MVP. The move waits for a stable project: a per-project hold on new work (other projects carry on), workers finish, the manager lands or drops everything (checks run, merged to main), and only then is the transfer allowed. Workers pushing branches and resuming on NEW is post-MVP (phase 3). kt25's WIP-commit parking and the "move refuses while a branch is unpushed" option are dropped from the MVP.
