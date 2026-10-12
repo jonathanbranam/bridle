@@ -99,7 +99,7 @@ pub(super) async fn stop_daemon(cli: &Cli) -> Result<(), CliError> {
 /// The daemon keeps answering health until its cleanup is done (agents
 /// stopped, registry entry removed), so a failed health call means it's gone.
 /// Prints as it goes because that can take most of `stop_grace` + 5 s.
-pub(super) async fn stop_daemon_with(
+pub(crate) async fn stop_daemon_with(
     client: &Client,
     out: &mut impl std::io::Write,
     limit: std::time::Duration,

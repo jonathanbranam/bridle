@@ -99,6 +99,11 @@ const CLASSES: &[(&str, Kind, &str)] = &[
         Skip,
         "works on the clone in the cwd or --repo; no daemon, covered by take_over_test",
     ),
+    (
+        "projects stop",
+        Skip,
+        "works on the clone in the cwd, --repo or --project's running daemon; covered by take_over_test",
+    ),
     ("focus", Skip, "the human's own focus gate"),
     (
         "orchestrator note-session",

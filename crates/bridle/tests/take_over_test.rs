@@ -1,4 +1,4 @@
-//! `bridle project take-over` (53gy A): temp bare origin, temp clone, no network, no daemon.
+//! `bridle project take-over` (53gy A) and `project stop` (53gy B): temp bare origin, temp clone, no network, no daemon.
 
 #![allow(clippy::unwrap_used)]
 
@@ -10,6 +10,9 @@ fn bridle(home: &Path, cwd: &Path, args: &[&str]) -> Output {
     Command::new(env!("CARGO_BIN_EXE_bridle"))
         .current_dir(cwd)
         .env("BRIDLE_HOME", home)
+        // No unit files here, so a stop never reaches launchctl or systemctl.
+        .env("HOME", home)
+        .env_remove("XDG_CONFIG_HOME")
         .env_remove("BRIDLE_PROJECT")
         .args(args)
         .output()
@@ -48,6 +51,11 @@ struct World {
 /// An origin whose `bridle/state` says `old-box` owns the project `clone`; this machine is
 /// `new-box` and `[projects]` still places the project on `old-box`.
 fn world() -> World {
+    world_with("released = \"2026-10-09T15:00:00Z\"\n")
+}
+
+/// Like [`world`], with `mark` as the extra lines of the old owner's `owner.toml`.
+fn world_with(mark: &str) -> World {
     let dir = tempfile::tempdir().unwrap();
     let root = dir.path().canonicalize().unwrap();
     let home = root.join("home");
@@ -78,7 +86,7 @@ fn world() -> World {
     ok(git(&seed, &["checkout", "-q", "--orphan", "bridle/state"]));
     fs::write(
         seed.join("owner.toml"),
-        "host = \"old-box\"\nsince = \"2026-10-09T14:00:00Z\"\n",
+        format!("host = \"old-box\"\nsince = \"2026-10-09T14:00:00Z\"\n{mark}"),
     )
     .unwrap();
     ok(git(&seed, &["add", "owner.toml"]));
@@ -176,4 +184,106 @@ fn serve_take_over_is_gone_and_names_the_command() {
     assert!(!out.status.success());
     let err = String::from_utf8_lossy(&out.stderr);
     assert!(err.contains("bridle project take-over"), "{err}");
+}
+
+fn set_machine(w: &World, name: &str) {
+    fs::write(
+        w.home.join("config.toml"),
+        format!("[machine]\nname = \"{name}\"\n\n[projects]\nclone = {{ machine = \"old-box\", port = 7500 }}\n"),
+    )
+    .unwrap();
+}
+
+/// The world seen from the old owner: this machine is `old-box`, with a local `bridle/state`.
+fn owner_world() -> World {
+    let w = world_with("");
+    set_machine(&w, "old-box");
+    ok(git(
+        &w.clone,
+        &["branch", "bridle/state", "origin/bridle/state"],
+    ));
+    w
+}
+
+#[test]
+fn take_over_refuses_a_project_that_was_not_released_and_force_overrides() {
+    let w = world_with("");
+    let out = bridle(&w.home, &w.clone, &["project", "take-over"]);
+    assert!(!out.status.success());
+    let err = String::from_utf8_lossy(&out.stderr);
+    assert!(
+        err.contains("project stop") && err.contains("--force"),
+        "{err}"
+    );
+    assert!(origin_owner(&w).contains("old-box"));
+    ok(bridle(
+        &w.home,
+        &w.clone,
+        &["project", "take-over", "--force"],
+    ));
+    assert!(origin_owner(&w).contains("new-box"));
+}
+
+#[test]
+fn stop_pushes_both_branches_then_marks_released_and_take_over_follows() {
+    let w = owner_world();
+    ok(git(
+        &w.clone,
+        &["commit", "-q", "--allow-empty", "-m", "direct"],
+    ));
+    let out = ok(bridle(&w.home, &w.clone, &["project", "stop", "--yes"]));
+    assert!(out.contains("released mark pushed"), "{out}");
+    assert_eq!(
+        ok(git(&w.origin, &["rev-parse", "main"])),
+        ok(git(&w.clone, &["rev-parse", "main"]))
+    );
+    assert!(
+        origin_owner(&w).contains("released"),
+        "{}",
+        origin_owner(&w)
+    );
+    set_machine(&w, "new-box");
+    let out = ok(bridle(&w.home, &w.clone, &["project", "take-over"]));
+    assert!(out.contains("now owned by new-box (was old-box)"), "{out}");
+}
+
+#[test]
+fn a_failed_push_exits_non_zero_and_marks_nothing() {
+    let w = owner_world();
+    ok(git(
+        &w.clone,
+        &["commit", "-q", "--allow-empty", "-m", "direct"],
+    ));
+    ok(git(
+        &w.clone,
+        &["remote", "set-url", "origin", "/nonexistent/origin.git"],
+    ));
+    let out = bridle(&w.home, &w.clone, &["project", "stop", "--yes"]);
+    assert!(!out.status.success());
+    let err = String::from_utf8_lossy(&out.stderr);
+    assert!(err.contains("NOT released"), "{err}");
+    assert!(!origin_owner(&w).contains("released"));
+}
+
+#[test]
+fn stop_by_a_machine_that_is_not_the_owner_refuses() {
+    let w = world();
+    ok(git(
+        &w.clone,
+        &["branch", "bridle/state", "origin/bridle/state"],
+    ));
+    let out = bridle(&w.home, &w.clone, &["project", "stop", "--yes"]);
+    assert!(!out.status.success());
+    let err = String::from_utf8_lossy(&out.stderr);
+    assert!(err.contains("owned by old-box"), "{err}");
+}
+
+#[test]
+fn stop_list_shows_what_is_left_and_stops_nothing() {
+    let w = owner_world();
+    ok(git(&w.clone, &["branch", "side"]));
+    let out = ok(bridle(&w.home, &w.clone, &["project", "stop", "--list"]));
+    assert!(out.contains("Stopping clone will"), "{out}");
+    assert!(out.contains("branch side (not on origin)"), "{out}");
+    assert!(!origin_owner(&w).contains("released"));
 }

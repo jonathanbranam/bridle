@@ -48,6 +48,8 @@ pub enum StateBranchError {
     De(#[from] toml::de::Error),
     #[error("parsing task file: {0}")]
     Parse(String),
+    #[error("`{0}` is not the recorded owner of this project")]
+    NotOwner(String),
 }
 
 enum PushFailure {
@@ -449,17 +451,36 @@ impl StateBranch {
     /// the worktree already says so. `since` is when this host took the project over, not the
     /// daemon's latest start, so an ordinary restart makes no commit.
     pub fn claim_owner(&self, host: &str, now: DateTime<Utc>) -> Result<(), StateBranchError> {
-        if read_owner_file(&self.dir).is_some_and(|o| o.host == host) {
-            return Ok(());
-        }
-        let rendered = toml::to_string(&Owner {
-            host: host.to_string(),
-            since: now.to_rfc3339_opts(SecondsFormat::Secs, true),
-        })?;
+        let mut owner = match read_owner_file(&self.dir) {
+            Some(o) if o.host == host && o.released.is_none() => return Ok(()),
+            // Serving again after a stop takes the release back.
+            Some(o) if o.host == host => o,
+            _ => Owner {
+                host: host.to_string(),
+                since: now.to_rfc3339_opts(SecondsFormat::Secs, true),
+                released: None,
+            },
+        };
+        owner.released = None;
+        let rendered = toml::to_string(&owner)?;
         self.pending
             .lock()
             .expect("state branch pending lock")
             .owner = Some(rendered);
+        Ok(())
+    }
+
+    /// Marks `host`'s ownership released in `owner.toml` (written at the next flush). Refuses
+    /// unless `host` is the recorded owner.
+    pub fn release_owner(&self, host: &str, now: DateTime<Utc>) -> Result<(), StateBranchError> {
+        let Some(mut owner) = read_owner_file(&self.dir).filter(|o| o.host == host) else {
+            return Err(StateBranchError::NotOwner(host.to_string()));
+        };
+        owner.released = Some(now.to_rfc3339_opts(SecondsFormat::Secs, true));
+        self.pending
+            .lock()
+            .expect("state branch pending lock")
+            .owner = Some(toml::to_string(&owner)?);
         Ok(())
     }
 
@@ -853,6 +874,10 @@ const OWNER_FILE: &str = "owner.toml";
 pub struct Owner {
     pub host: String,
     pub since: String,
+    /// When the owner's `project stop` confirmed its pushes and gave the project up (53gy B).
+    /// Absent means not released: a take-over refuses without `--force`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub released: Option<String>,
 }
 
 /// Whether the state worktree's `owner.toml` names `host`.
@@ -867,8 +892,8 @@ fn read_owner_file(dir: &Path) -> Option<Owner> {
 /// Another host owns the project's state branch on origin.
 #[derive(Debug, thiserror::Error)]
 #[error(
-    "project `{project}` is owned by host `{host}` (since {since}); stop its daemon, let it \
-     push, then run `bridle project take-over` here"
+    "project `{project}` is owned by host `{host}` (since {since}); run `bridle project stop` \
+     on it, then `bridle project take-over` here"
 )]
 pub struct OwnerConflict {
     pub project: String,
@@ -916,6 +941,11 @@ pub enum TakeOverError {
         dir: String,
         origin: String,
     },
+    #[error(
+        "take-over refused: `{host}` has not released {project}. Run `bridle project stop` on \
+         `{host}` first; if that machine is dead, run this again with --force"
+    )]
+    NotReleased { project: String, host: String },
     #[error("take-over refused: {0}")]
     Git(#[from] WorktreeError),
 }
@@ -953,6 +983,7 @@ pub async fn take_over_project(
     project: &str,
     integration: &str,
     names: &[String],
+    force: bool,
 ) -> anyhow::Result<TakeOverOutcome> {
     let dir = if state_dir.join(".git").exists() {
         state_dir
@@ -963,18 +994,109 @@ pub async fn take_over_project(
     require_state_synced(dir, &outcome).await?;
     sync_integration_for_take_over(repo, integration).await?;
     let sb = StateBranch::open(repo, state_dir).await?;
-    let from = read_owner_file(&sb.dir).map(|o| o.host);
+    let owner = read_owner_file(&sb.dir);
+    let from = owner.as_ref().map(|o| o.host.clone());
     if from.as_ref().is_some_and(|h| names.contains(h)) {
         return Ok(TakeOverOutcome::AlreadyOwner);
     }
-    // Seam for br-n4ug (53gy B): require the old owner's "released" mark in `owner.toml` here,
-    // unless forced, before claiming.
+    if let Some(o) = owner.filter(|o| o.released.is_none() && !force) {
+        return Err(TakeOverError::NotReleased {
+            project: project.to_string(),
+            host: o.host,
+        }
+        .into());
+    }
     sb.claim_owner(&names[0], Utc::now())?;
     sb.flush_now().await?;
     sb.push_confirmed()
         .await
         .map_err(|e| anyhow::anyhow!("claimed locally but origin does not have it: {e}"))?;
     Ok(TakeOverOutcome::Claimed { from })
+}
+
+/// The owner `owner.toml` records on the local `bridle/state` branch, if any. Read-only.
+pub async fn local_owner(repo: &Path) -> Option<Owner> {
+    let text = worktree::run_git(
+        repo,
+        &["show", &format!("refs/heads/{BRANCH}:{OWNER_FILE}")],
+    )
+    .await
+    .ok()?;
+    toml::from_str(&text).ok()
+}
+
+/// The giving-up half of `project stop` (53gy B), run once the daemon is gone: pushes the state
+/// branch, then the integration branch's direct commits, confirming after each that origin has
+/// them; only then writes the `released` mark and pushes that as the last commit, confirmed too.
+/// Any failure returns the reason and leaves no mark.
+pub async fn release_project(
+    repo: &Path,
+    state_dir: &Path,
+    integration: &str,
+    names: &[String],
+) -> anyhow::Result<()> {
+    let sb = StateBranch::open(repo, state_dir).await?;
+    let owner = read_owner_file(&sb.dir);
+    if !owner.as_ref().is_some_and(|o| names.contains(&o.host)) {
+        anyhow::bail!(
+            "this machine ({}) is not the owner{}",
+            names[0],
+            owner
+                .map(|o| format!(" ({} is)", o.host))
+                .unwrap_or_default()
+        );
+    }
+    sb.flush_now().await?;
+    sb.push_confirmed()
+        .await
+        .map_err(|e| anyhow::anyhow!("pushing {BRANCH}: {e}"))?;
+    push_integration_confirmed(repo, integration)
+        .await
+        .map_err(|e| anyhow::anyhow!("pushing {integration}: {e}"))?;
+    let host = owner.map(|o| o.host).unwrap_or_default();
+    sb.release_owner(&host, Utc::now())?;
+    sb.flush_now().await?;
+    sb.push_confirmed()
+        .await
+        .map_err(|e| anyhow::anyhow!("pushing the released mark: {e}"))?;
+    Ok(())
+}
+
+/// Pushes the integration branch (never forced) and confirms origin's copy contains the local
+/// tip. A local branch behind origin is fine: nothing of it would be lost. No local branch is
+/// nothing to push.
+async fn push_integration_confirmed(repo: &Path, branch: &str) -> Result<(), String> {
+    let local = local_sha(repo, branch).await;
+    if local == "none" {
+        return Ok(());
+    }
+    let pushed = tokio::time::timeout(
+        PUSH_TIMEOUT,
+        worktree::run_git(repo, &["push", REMOTE, &format!("refs/heads/{branch}")]),
+    )
+    .await;
+    let push_error = match pushed {
+        Ok(Ok(_)) => None,
+        Ok(Err(e)) => Some(e.to_string()),
+        Err(_) => Some("push timed out".to_string()),
+    };
+    let fetched = tokio::time::timeout(
+        PUSH_TIMEOUT,
+        worktree::run_git(
+            repo,
+            &["fetch", "--quiet", REMOTE, &format!("refs/heads/{branch}")],
+        ),
+    )
+    .await;
+    let contains = matches!(fetched, Ok(Ok(_)))
+        && worktree::run_git(repo, &["merge-base", "--is-ancestor", &local, "FETCH_HEAD"])
+            .await
+            .is_ok();
+    if contains {
+        Ok(())
+    } else {
+        Err(push_error.unwrap_or_else(|| format!("origin does not have {local}")))
+    }
 }
 
 /// Turns the start-up fetch's outcome into a take-over verdict: only a state branch that was

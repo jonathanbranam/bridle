@@ -90,9 +90,15 @@ loopback until restarted.
 
 A project has one serving machine ([[docs/design/storage#The state branch|storage]], "Ownership"):
 `serve` fetches `origin/bridle/state` first and refuses to start when its `owner.toml` names
-another host. `bridle project take-over` claims the project and exits (after the old daemon stopped and
-pushed); it never serves, so start the daemon afterwards. It refuses unless origin was reached and `bridle/state` and the integration
-branch fast-forward cleanly to it (errors name both SHAs; no override).
+another host. `bridle project take-over` claims the project and exits; it never serves, so start the daemon afterwards. It refuses unless
+origin was reached and `bridle/state` and the integration branch fast-forward cleanly to it (errors name
+both SHAs; no override), and unless the old owner released the project: `bridle project stop` on the old
+machine stops its agents, daemon and units, pushes `bridle/state` and the integration branch, confirms
+origin has both, then pushes a `released` mark in `owner.toml` as its last commit. A dead machine that
+cannot run stop is taken over with `--force`. A daemon started again by the owner removes the mark. The
+database (`bridle.db`) is never copied by either command; stop lists what stays in it. A `bridle.db` whose
+schema version is newer than the binary's is refused at open (`SchemaTooNew`), so a copied or restored file
+cannot be opened by an older bridle.
 
 On Ctrl-C, SIGTERM or `POST /v1/shutdown`, stopping every running agent
 ([[docs/design/agent-host/agents#Stopping|agents, stopping]]) can take up to

@@ -53,6 +53,7 @@ pub async fn run(cli: &Cli, args: &TakeOverArgs) -> Result<(), CliError> {
         &project,
         &integration,
         &names,
+        args.force,
     )
     .await
     .map_err(|e| CliError::Other(e.context(format!("take-over of {project} refused"))))?;

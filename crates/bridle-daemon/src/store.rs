@@ -37,6 +37,39 @@ pub enum StoreError {
     /// this like the daemon is unavailable, not a 500.
     #[error("store is shutting down")]
     ShuttingDown,
+    /// The database was written by a newer bridle (a copied or restored file, or a downgraded
+    /// binary); running on it could corrupt it.
+    #[error(
+        "the database is schema version {found}, newer than this bridle's {known}: upgrade \
+         bridle before opening it"
+    )]
+    SchemaTooNew { found: usize, known: usize },
+}
+
+/// What a `project stop` leaves in this machine's database (53gy B): the database does not move.
+#[derive(Debug, Default, PartialEq, Eq)]
+pub struct LeftBehind {
+    pub undelivered_mail: i64,
+    pub unread_messages: i64,
+    pub active_schedules: i64,
+    pub agents: i64,
+    pub events: i64,
+}
+
+/// Counts what stays behind, reading `db` without opening a write or migrating it. `None` when
+/// there is no database; a table an older schema lacks counts as 0.
+pub fn left_behind(db: &std::path::Path) -> Option<LeftBehind> {
+    let conn = Connection::open_with_flags(db, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY).ok()?;
+    let count = |sql: &str| conn.query_row(sql, [], |r| r.get(0)).unwrap_or(0);
+    Some(LeftBehind {
+        undelivered_mail: count("SELECT COUNT(*) FROM outbox WHERE state = 'queued'"),
+        unread_messages: count(
+            "SELECT COUNT(*) FROM messages WHERE state NOT IN ('read', 'dropped')",
+        ),
+        active_schedules: count("SELECT COUNT(*) FROM schedules WHERE state = 'active'"),
+        agents: count("SELECT COUNT(*) FROM agents"),
+        events: count("SELECT COUNT(*) FROM events"),
+    })
 }
 
 /// Turns a `spawn_blocking` `JoinError` into a `StoreError`, or resumes the
@@ -1583,6 +1616,12 @@ mod sync {
     pub(super) fn migrate(conn: &Connection) -> Result<(), StoreError> {
         let version: i64 = conn.query_row("PRAGMA user_version", [], |r| r.get(0))?;
         let version = usize::try_from(version).unwrap_or(0);
+        if version > MIGRATIONS.len() {
+            return Err(StoreError::SchemaTooNew {
+                found: version,
+                known: MIGRATIONS.len(),
+            });
+        }
         for (i, sql) in MIGRATIONS.iter().enumerate().skip(version) {
             conn.execute_batch(sql)?;
             conn.pragma_update(None, "user_version", (i + 1) as i64)?;
@@ -4013,6 +4052,40 @@ mod sync {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_database_newer_than_this_binary_is_refused() {
+        let conn = Connection::open_in_memory().expect("open");
+        let newer = (sync::MIGRATIONS.len() + 1) as i64;
+        conn.pragma_update(None, "user_version", newer)
+            .expect("set version");
+        let err = sync::migrate(&conn).unwrap_err();
+        assert!(matches!(err, StoreError::SchemaTooNew { .. }), "{err}");
+        let version: i64 = conn
+            .query_row("PRAGMA user_version", [], |r| r.get(0))
+            .expect("version");
+        assert_eq!(version, newer, "a refused database is left untouched");
+    }
+
+    #[test]
+    fn left_behind_counts_what_is_queued_and_active() {
+        let dir = tempfile::tempdir().expect("dir");
+        let path = dir.path().join("bridle.db");
+        let conn = Connection::open(&path).expect("open");
+        sync::migrate(&conn).expect("migrate");
+        conn.execute(
+            "INSERT INTO outbox (project, from_principal, to_principal, kind, body, when_mode, \
+             state, created_at) VALUES ('p', 'a', 'b', 'note', 'x', 'now', 'queued', 't'), \
+             ('p', 'a', 'b', 'note', 'x', 'now', 'delivered', 't')",
+            [],
+        )
+        .expect("outbox");
+        drop(conn);
+        let left = left_behind(&path).expect("counts");
+        assert_eq!(left.undelivered_mail, 1);
+        assert_eq!(left.active_schedules, 0);
+        assert!(left_behind(&dir.path().join("none.db")).is_none());
+    }
 
     #[test]
     fn v2_migration_keeps_turns_and_gives_them_the_agents_identity() {

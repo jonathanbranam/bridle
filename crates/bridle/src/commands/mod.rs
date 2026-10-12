@@ -43,7 +43,7 @@ use crate::render;
 use crate::serve;
 
 mod agent;
-mod daemon;
+pub(crate) mod daemon;
 mod docs;
 mod hook;
 mod misc;
@@ -251,6 +251,7 @@ pub async fn run(mut cli: Cli) -> Result<(), CliError> {
         Command::Machine(args) => crate::tools_only::run(&args.action),
         Command::Projects(args) => match &args.action {
             crate::cli::ProjectsAction::TakeOver(a) => crate::take_over::run(&cli, a).await,
+            crate::cli::ProjectsAction::Stop(a) => crate::project_stop::run(&cli, a).await,
             action => crate::project_sync::run(action),
         },
         Command::Advisor(args) => crate::advisor::run(&cli, &args.action).await,

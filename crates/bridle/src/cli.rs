@@ -2499,6 +2499,34 @@ pub enum ProjectsAction {
     /// stop the old daemon (it pushes its state; there is nothing else to give up), run this on
     /// the new machine, then start the daemon there. A second run changes nothing.
     TakeOver(TakeOverArgs),
+    /// Stop the project here and give it up: stops its agents, its daemon, and its boot/restart
+    /// units (unloaded and disabled, the files stay), pushes `bridle/state` and the integration
+    /// branch and confirms origin has both, then pushes a `released` mark in `owner.toml` as the
+    /// last commit. Lists what it leaves behind first and asks. Any failure is reported and exits
+    /// non-zero, with the units as they were. Ownership by step of a transfer: 1 this command on
+    /// the old machine; 2 the mark it pushes is the giving up; 3 `take-over` on the new machine,
+    /// which refuses a project with no mark (`--force` for a dead machine); 4 start the daemon
+    /// there. Stopping first also keeps the old unit from exiting 78 once ownership moves.
+    Stop(ProjectStopArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct ProjectStopArgs {
+    /// The clone's main checkout. Defaults to the running daemon's, else the current directory.
+    #[arg(long)]
+    pub repo: Option<PathBuf>,
+    /// Defaults to the repo's parent directory.
+    #[arg(long)]
+    pub workspace: Option<PathBuf>,
+    /// Do not ask before stopping.
+    #[arg(long, short = 'y')]
+    pub yes: bool,
+    /// Print what stopping would leave behind and exit; stops nothing.
+    #[arg(long)]
+    pub list: bool,
+    /// Run on this `[machines]` entry over ssh (needs `--project`).
+    #[arg(long)]
+    pub machine: Option<String>,
 }
 
 #[derive(Debug, Args)]
@@ -2509,6 +2537,10 @@ pub struct TakeOverArgs {
     /// Defaults to the repo's parent directory.
     #[arg(long)]
     pub workspace: Option<PathBuf>,
+    /// Take over although the old owner has not released the project (its machine is dead).
+    /// Anything it never pushed is lost.
+    #[arg(long)]
+    pub force: bool,
 }
 
 #[derive(Debug, Args)]
