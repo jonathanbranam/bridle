@@ -237,8 +237,8 @@ the clone:
    depends on the pusher's own report (8umh). Only the owner's clone can push it (8z7j): a `pre-push` hook that
    `serve` and `bridle sync` install in each clone runs `bridle machine push-check`, which compares
    this machine with `owner.toml` on `bridle/state` (a fresh fetch of origin's, else the local
-   branch; no readable owner refuses) and refuses with the owner's name and `bridle serve
-   --take-over`. Other branches and tags pass; `--no-verify` and `core.hooksPath` edits are denied
+   branch; no readable owner refuses) and refuses with the owner's name and `bridle project
+   take-over`. Other branches and tags pass; `--no-verify` and `core.hooksPath` edits are denied
    to agents (locked), not to the human.
    **Direct commits** (8ay6): commits made straight on the integration branch (tickets, notes, by
    the orchestrator, advisors and aides) never pass through `land`, so the owner's daemon pushes

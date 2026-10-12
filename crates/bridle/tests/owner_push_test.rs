@@ -141,7 +141,7 @@ fn non_owner_is_refused_but_feature_branches_and_tags_pass() {
     let err = String::from_utf8_lossy(&out.stderr);
     assert!(err.contains("some-other-box"), "{err}");
     assert!(err.contains("2026-10-09T14:00:00Z"), "{err}");
-    assert!(err.contains("bridle serve --take-over"), "{err}");
+    assert!(err.contains("bridle project take-over"), "{err}");
     ok(push(&w, "HEAD:refs/heads/feature"));
     ok(git(&w.clone, &["tag", "v1"]));
     ok(push(&w, "v1"));

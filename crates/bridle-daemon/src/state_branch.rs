@@ -282,6 +282,29 @@ impl StateBranch {
         p.record(&mut st, result);
     }
 
+    /// Pushes now and confirms: after the push, origin's `bridle/state` must be this branch's
+    /// tip. For the take-over, which must not report success on a claim origin doesn't have.
+    pub async fn push_confirmed(&self) -> Result<(), String> {
+        let reason = |f: PushFailure| match f {
+            PushFailure::Diverged(m) | PushFailure::Other(m) => m,
+        };
+        run_push(&self.dir, PUSH_TIMEOUT).await.map_err(reason)?;
+        let local = local_sha(&self.dir, BRANCH).await;
+        let remote = worktree::run_git(
+            &self.dir,
+            &["ls-remote", REMOTE, &format!("refs/heads/{BRANCH}")],
+        )
+        .await
+        .map_err(|e| format!("asking origin for {BRANCH}: {e}"))?;
+        match remote.split_whitespace().next() {
+            Some(sha) if sha == local => Ok(()),
+            other => Err(format!(
+                "origin's {BRANCH} is {} after the push, not {local}",
+                other.unwrap_or("missing")
+            )),
+        }
+    }
+
     /// Renders `task` and queues it to overwrite `tasks/<id>.md` at the
     /// next flush.
     pub fn enqueue_task(&self, task: &Ticket) -> Result<(), StateBranchError> {
@@ -442,14 +465,14 @@ impl StateBranch {
 
     /// The fetch-first half of starting a served project (hw6c): fetches `origin`'s
     /// `bridle/state` (adopting it into a missing or untouched local branch) and refuses when
-    /// its `owner.toml` names a host other than `host`, unless `take_over`. `state_dir` is the
+    /// its `owner.toml` names a host other than one of `hosts`, unless `take_over`. `state_dir` is the
     /// state worktree, used when it exists. An unreachable origin or one without the branch
     /// doesn't block: there is nothing to conflict with.
     pub async fn fetch_and_check_owner(
         repo: &Path,
         state_dir: &Path,
         project: &str,
-        host: &str,
+        hosts: &[String],
         take_over: bool,
     ) -> Result<FetchOutcome, OwnerConflict> {
         let dir = if state_dir.join(".git").exists() {
@@ -468,7 +491,7 @@ impl StateBranch {
         let shown = worktree::run_git(dir, &["show", &format!("FETCH_HEAD:{OWNER_FILE}")]).await;
         let owner = shown.ok().and_then(|t| toml::from_str::<Owner>(&t).ok());
         match owner {
-            Some(o) if o.host != host && !take_over => Err(OwnerConflict {
+            Some(o) if !hosts.contains(&o.host) && !take_over => Err(OwnerConflict {
                 project: project.to_string(),
                 host: o.host,
                 since: o.since,
@@ -833,8 +856,8 @@ pub struct Owner {
 }
 
 /// Whether the state worktree's `owner.toml` names `host`.
-pub fn owned_by(dir: &Path, host: &str) -> bool {
-    read_owner_file(dir).is_some_and(|o| o.host == host)
+pub fn owned_by(dir: &Path, hosts: &[String]) -> bool {
+    read_owner_file(dir).is_some_and(|o| hosts.contains(&o.host))
 }
 
 fn read_owner_file(dir: &Path) -> Option<Owner> {
@@ -845,7 +868,7 @@ fn read_owner_file(dir: &Path) -> Option<Owner> {
 #[derive(Debug, thiserror::Error)]
 #[error(
     "project `{project}` is owned by host `{host}` (since {since}); stop its daemon, let it \
-     push, then run `bridle serve --take-over` here"
+     push, then run `bridle project take-over` here"
 )]
 pub struct OwnerConflict {
     pub project: String,
@@ -853,12 +876,12 @@ pub struct OwnerConflict {
     pub since: String,
 }
 
-/// `--take-over` refuses to start rather than run on a history it hasn't seen or has forked
+/// A take-over refuses to start rather than run on a history it hasn't seen or has forked
 /// from. The message names both SHAs; there is no override, the human sorts it out by hand.
 #[derive(Debug, thiserror::Error)]
 pub enum TakeOverError {
     #[error(
-        "--take-over refused: `{branch}` has diverged from origin (local {local}, origin \
+        "take-over refused: `{branch}` has diverged from origin (local {local}, origin \
          {origin}); sort it out by hand, bridle never rebases or forces"
     )]
     Diverged {
@@ -867,7 +890,7 @@ pub enum TakeOverError {
         origin: String,
     },
     #[error(
-        "--take-over refused: `{branch}` not fetched from origin (local {local}, origin \
+        "take-over refused: `{branch}` not fetched from origin (local {local}, origin \
          unknown): {reason}"
     )]
     NotFetched {
@@ -876,7 +899,7 @@ pub enum TakeOverError {
         reason: String,
     },
     #[error(
-        "--take-over refused: local `{branch}` ({local}) is not an ancestor of origin's \
+        "take-over refused: local `{branch}` ({local}) is not an ancestor of origin's \
          ({origin}); sort it out by hand, bridle never rebases or forces"
     )]
     NotAncestor {
@@ -885,7 +908,7 @@ pub enum TakeOverError {
         origin: String,
     },
     #[error(
-        "--take-over refused: the checkout of `{branch}` at {dir} has uncommitted changes, so \
+        "take-over refused: the checkout of `{branch}` at {dir} has uncommitted changes, so \
          it can't be fast-forwarded to origin ({origin}); commit or discard them first"
     )]
     Dirty {
@@ -893,7 +916,7 @@ pub enum TakeOverError {
         dir: String,
         origin: String,
     },
-    #[error("--take-over refused: {0}")]
+    #[error("take-over refused: {0}")]
     Git(#[from] WorktreeError),
 }
 
@@ -910,6 +933,48 @@ async fn local_sha(dir: &Path, branch: &str) -> String {
     .await
     .map(|s| s.trim().to_string())
     .unwrap_or_else(|_| "none".into())
+}
+
+/// What [`take_over_project`] did.
+#[derive(Debug, PartialEq, Eq)]
+pub enum TakeOverOutcome {
+    /// `owner.toml` already names this machine; nothing was written.
+    AlreadyOwner,
+    /// This machine is now the owner, and origin has it.
+    Claimed { from: Option<String> },
+}
+
+/// The one-shot take-over (53gy): claims the project for `names[0]` and confirms origin has the
+/// claim. Same preconditions as the old `serve --take-over`: origin reached, the state branch
+/// level with it, the integration branch fast-forwardable. Starts no daemon and needs none.
+pub async fn take_over_project(
+    repo: &Path,
+    state_dir: &Path,
+    project: &str,
+    integration: &str,
+    names: &[String],
+) -> anyhow::Result<TakeOverOutcome> {
+    let dir = if state_dir.join(".git").exists() {
+        state_dir
+    } else {
+        repo
+    };
+    let outcome = StateBranch::fetch_and_check_owner(repo, state_dir, project, names, true).await?;
+    require_state_synced(dir, &outcome).await?;
+    sync_integration_for_take_over(repo, integration).await?;
+    let sb = StateBranch::open(repo, state_dir).await?;
+    let from = read_owner_file(&sb.dir).map(|o| o.host);
+    if from.as_ref().is_some_and(|h| names.contains(h)) {
+        return Ok(TakeOverOutcome::AlreadyOwner);
+    }
+    // Seam for br-n4ug (53gy B): require the old owner's "released" mark in `owner.toml` here,
+    // unless forced, before claiming.
+    sb.claim_owner(&names[0], Utc::now())?;
+    sb.flush_now().await?;
+    sb.push_confirmed()
+        .await
+        .map_err(|e| anyhow::anyhow!("claimed locally but origin does not have it: {e}"))?;
+    Ok(TakeOverOutcome::Claimed { from })
 }
 
 /// Turns the start-up fetch's outcome into a take-over verdict: only a state branch that was
@@ -947,7 +1012,7 @@ pub async fn require_state_synced(dir: &Path, outcome: &FetchOutcome) -> Result<
     }
 }
 
-/// Fetches `origin`'s integration branch for `--take-over` and fast-forwards the local one to
+/// Fetches `origin`'s integration branch for a take-over and fast-forwards the local one to
 /// it. Refuses unless origin is reached and the local branch is an ancestor of (or equal to)
 /// origin's; moving a branch that is checked out in `repo` also needs a clean checkout, never
 /// a stash. Fast-forward only: no rebase, no reset, no force.
@@ -2447,13 +2512,13 @@ mod tests {
             &repo2,
             &tmp.path().join("state2"),
             "bridle",
-            "nuc",
+            &["nuc".to_string()],
             false,
         )
         .await
         .expect_err("refused");
         assert_eq!(err.host, "laptop");
-        assert!(err.to_string().contains("--take-over"));
+        assert!(err.to_string().contains("bridle project take-over"));
     }
 
     #[tokio::test]
@@ -2462,9 +2527,10 @@ mod tests {
         let origin = origin_owned_by(tmp.path(), "laptop").await;
         let repo2 = second_clone(tmp.path(), &origin).await;
         let dir2 = tmp.path().join("state2");
-        let outcome = StateBranch::fetch_and_check_owner(&repo2, &dir2, "bridle", "nuc", true)
-            .await
-            .expect("take over");
+        let outcome =
+            StateBranch::fetch_and_check_owner(&repo2, &dir2, "bridle", &["nuc".to_string()], true)
+                .await
+                .expect("take over");
         assert_eq!(outcome, FetchOutcome::Created);
         let sb2 = StateBranch::open(&repo2, &dir2)
             .await
@@ -2484,23 +2550,34 @@ mod tests {
         let tmp = tempfile::tempdir().expect("tempdir");
         let origin = origin_owned_by(tmp.path(), "laptop").await;
         let repo2 = second_clone(tmp.path(), &origin).await;
-        StateBranch::fetch_and_check_owner(&repo2, &tmp.path().join("s2"), "p", "laptop", false)
-            .await
-            .expect("same host");
+        StateBranch::fetch_and_check_owner(
+            &repo2,
+            &tmp.path().join("s2"),
+            "p",
+            &["laptop".to_string()],
+            false,
+        )
+        .await
+        .expect("same host");
         // No origin at all, then an origin with no state branch or owner file.
         let tmp2 = tempfile::tempdir().expect("tempdir");
         let lone = tmp2.path().join("lone");
         init_repo(&lone).await;
-        let out =
-            StateBranch::fetch_and_check_owner(&lone, &tmp2.path().join("s"), "p", "h", false)
-                .await
-                .expect("no origin");
+        let out = StateBranch::fetch_and_check_owner(
+            &lone,
+            &tmp2.path().join("s"),
+            "p",
+            &["h".to_string()],
+            false,
+        )
+        .await
+        .expect("no origin");
         assert!(matches!(
             out,
             FetchOutcome::NoRemoteBranch | FetchOutcome::Failed(_)
         ));
         let (_sb, repo, _origin, dir) = pushing(tmp2.path(), None).await;
-        StateBranch::fetch_and_check_owner(&repo, &dir, "p", "h", false)
+        StateBranch::fetch_and_check_owner(&repo, &dir, "p", &["h".to_string()], false)
             .await
             .expect("first serve");
     }
@@ -2531,7 +2608,7 @@ mod tests {
             &repo2,
             &tmp.path().join("state2"),
             "bridle",
-            "laptop",
+            &["laptop".to_string()],
             false,
         )
         .await
@@ -2584,7 +2661,7 @@ mod tests {
     }
 
     async fn state_verdict(repo: &Path, state: &Path) -> Result<(), TakeOverError> {
-        let out = StateBranch::fetch_and_check_owner(repo, state, "p", "nuc", true)
+        let out = StateBranch::fetch_and_check_owner(repo, state, "p", &["nuc".to_string()], true)
             .await
             .expect("owner");
         let dir = if state.join(".git").exists() {

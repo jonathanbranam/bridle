@@ -61,10 +61,10 @@ bridle gateway status | stop | restart                          the gateway writ
 bridle gateway hash-password                                    read a password, print its argon2 hash for `[gateway] password_hash`: when stdin is a terminal, prompt "Password:" on stderr, read with echo off, ask to confirm, refuse on mismatch; when stdin is not a terminal (piped), read the line without prompt for script compatibility
 bridle gateway install [--force]                              write a launchd plist (macOS, `~/Library/LaunchAgents/dev.bridle.gateway.plist`) or systemd user unit (Linux, `bridle-gateway.service`) that runs `bridle gateway` at login/boot, restarts it on a crash only, and logs to `~/.bridle/gateway.log`; prints the load/unload commands, never runs them; needs a `[gateway]` login first; refuses to overwrite without `--force`
 bridle sign setup | binary [path]                             macOS: `setup` creates the self-signed "bridle local signing" identity in the login keychain (asks the keychain password once) and sets the key's partition list so codesign needs no prompt; uses the system /usr/bin/openssl (LibreSSL) because Homebrew's OpenSSL 3+ writes a p12 that macOS `security` cannot import; `binary` re-signs a binary (default: this one) with it, or keeps the ad-hoc signature when the identity is absent; `just install` and the self-upgrade call it (p88z)
-bridle daemon serve   [--repo PATH] [--workspace DIR] [--listen ADDR] [--detach] [--take-over]   --take-over: claim a project another host owns; refuses (both SHAs named) unless
-                                              origin was reached and bridle/state + the integration branch fast-forward cleanly
+bridle daemon serve   [--repo PATH] [--workspace DIR] [--listen ADDR] [--detach]   `--take-over` is removed (53gy): it errors naming `bridle project take-over`
                                               listens on: `--listen`, else `[daemon] listen`, else the `[projects]` port for this project when it is on this
                                               machine (127.0.0.1 + the Tailscale IPv4 address, never 0.0.0.0), else 127.0.0.1:0
+bridle project take-over [--repo PATH] [--workspace DIR]   (alias group of `projects`) make this machine the project's owner and exit; never serves, needs no daemon. Refuses (both SHAs named) unless origin was reached and bridle/state + the integration branch fast-forward cleanly. Commits `owner.toml` (host = `[machine] name`, else `hostname`), pushes and checks origin has it, then moves the project's `[projects]` entry to this machine (port moves up past one already used here) and runs `projects sync --apply` so every `[machines]` entry matches. A second run changes nothing. Ownership in a transfer: 1 stop the old daemon (it pushes its state; nothing else to give up), 2 run this on the new machine, 3 start the daemon there
 bridle daemon stop                            prints "requested shutdown", "acknowledged; the daemon is stopping N agents,
                                               up to Ns" (the daemon's stop_grace + 5 s), "N agents still running" as the count drops,
                                               then "shutdown complete (Ns)"; after 60 s it errors, pointing at `bridle daemon list`
@@ -711,11 +711,11 @@ bridle ticket comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain com
   `--project` alone, since after a project moves `[projects]` no longer puts it here. Mirrors
   `launchd uninstall`.
 - **Owner refusal exit code**: `bridle serve` exits 78 when the project's owner is another
-  machine (without `--take-over`). A launchd plist can't list exit codes, so `launchd install`
+  machine (until `bridle project take-over` runs there). A launchd plist can't list exit codes, so `launchd install`
   runs `serve` through `/bin/sh -c` that maps 78 to 0, which `KeepAlive/SuccessfulExit=false`
-  does not restart (plists from older installs: `launchd install --force`). A unit can't pass
-  `--take-over`, so on a new owner run `bridle serve --take-over` by hand once, stop it, then
-  enable the unit; on the old machine uninstall the unit.
+  does not restart (plists from older installs: `launchd install --force`). On a new owner
+  run `bridle project take-over` once (it exits, nothing to stop), then enable the unit; on the
+  old machine uninstall the unit. Units never carry a take-over flag, so none needs refreshing.
 - **`serve --detach`**: [[docs/design/agent-host/daemon#Running it|running the daemon]].
 - **`tui`** is a subcommand, not a separate binary, so it shares `bridle`'s discovery,
   token and `--url`/`--project` flags like every other command. It's a thin client of

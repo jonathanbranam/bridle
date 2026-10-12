@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+- `bridle project take-over` (br-ga6s, part of br-53gy): a one-shot command that makes this machine the project's owner (commits `owner.toml`, confirms origin has it) and exits; it never serves and needs no daemon. It then moves the project's `[projects]` entry to this machine and runs `projects sync --apply` so every machine matches. `bridle serve --take-over` is removed and errors naming the new command. `owner.toml` now records `[machine] name` (else the hostname); a hostname recorded by an older bridle still counts as this machine. Migration: none for units (none ever carried the flag); anywhere you ran `serve --take-over`, run `bridle project take-over` then start the daemon.
 - A stuck spawn can no longer freeze a restart (br-btdn, incidents y455 and up5r): in-flight spawns are a registry with agent name and start time; `AgentManager::spawn` times out after 15 min (a logged spawn failure that releases its guard) and the `warm_target` `cp` is killed on drop; `bridle status` lists a spawn holder in `draining_on` ("a spawning agent: <name>, N min"); a drain whose only holders are spawns older than the timeout restarts anyway and records a `restart.stuck_spawn` event. Busy agents are still waited for. No migration.
 
 ## [0.6.3] - 2026-10-12

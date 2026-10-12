@@ -319,8 +319,8 @@ says `Linger=yes` when on). Do not start a daemon over SSH on macOS (ticket nrbf
 ## 5. Moving a project onto the new machine
 
 The procedure is "Moving a project to another machine" in
-[[docs/context/nuc-host|the NUC host]]: push, stop the old daemon, clone, `bridle serve
---take-over`, create tokens, start sessions. Adding a brand-new project instead is
+[[docs/context/nuc-host|the NUC host]]: push, stop the old daemon, clone, `bridle project
+take-over`, create tokens, start sessions. Adding a brand-new project instead is
 [[docs/context/adding-a-project|adding a project]]. Two traps the runbook's steps hide:
 
 1. **Remove the old machine's supervisor first.** If the old machine has a launchd plist or
@@ -334,19 +334,18 @@ The procedure is "Moving a project to another machine" in
    rm ~/.config/systemd/user/bridle-P.service && systemctl --user daemon-reload
    ```
 
-2. **Take over by hand before you enable the new unit.** A systemd unit or LaunchAgent cannot
-   take over: it runs plain `bridle serve`, which refuses while `bridle/state` on origin names the
-   old host. In the new clone:
+2. **Take over before you enable the new unit.** A systemd unit or LaunchAgent runs plain
+   `bridle serve`, which refuses while `bridle/state` on origin names the old host. In the new clone:
 
    ```bash
-   bridle serve --take-over --detach
+   bridle project take-over
    ```
 
-   Once it is up and the claim is pushed, you may stop it with `bridle stop-daemon` and enable
-   the new unit (step 4), which then starts as the owner.
+   It claims the project, confirms origin has the claim, updates `[projects]` on every machine
+   and exits; it starts no daemon. Then enable the new unit (step 4), which starts as the owner.
 
 Only the owner's clone can push the project's integration branch (8z7j): `bridle serve` and
-`bridle sync` install a `pre-push` hook that refuses it elsewhere, and `--take-over` moves the
+`bridle sync` install a `pre-push` hook that refuses it elsewhere, and `bridle project take-over` moves the
 right with the project. Pushes of other branches are not touched.
 
 Also update `[projects]` on **every** machine to the new `machine = "newpc"` line (edit it here,

@@ -37,7 +37,6 @@ fn fast_overrides() -> Overrides {
         doc_watch_interval: std::time::Duration::from_secs(3600),
         queue_nudge_debounce: std::time::Duration::from_secs(3600),
         open_watch_debounce: std::time::Duration::from_secs(3600),
-        take_over: false,
         host: None,
     }
 }

@@ -11,6 +11,13 @@ use crate::error::CliError;
 use crate::render;
 
 pub async fn run(cli: &Cli, args: &ServeArgs) -> Result<(), CliError> {
+    if args.take_over {
+        return Err(anyhow::anyhow!(
+            "`bridle serve --take-over` is gone: run `bridle project take-over` (it claims the \
+             project and exits), then `bridle serve`"
+        )
+        .into());
+    }
     crate::tools_only::refuse_serve(&canonical_repo(args)?)?;
     if args.check {
         bridle_daemon::rollback::preflight(&canonical_repo(args)?, None)?;
@@ -46,9 +53,7 @@ async fn run_foreground(cli: &Cli, args: &ServeArgs) -> Result<(), CliError> {
         std::process::Command::new("claude"),
         LOGIN_CHECK_TIMEOUT,
     ));
-    bridle_daemon::run(opts, args.take_over)
-        .await
-        .map_err(owner_refusal)?;
+    bridle_daemon::run(opts).await.map_err(owner_refusal)?;
     Ok(())
 }
 
@@ -57,7 +62,7 @@ async fn run_foreground(cli: &Cli, args: &ServeArgs) -> Result<(), CliError> {
 fn owner_refusal(e: anyhow::Error) -> CliError {
     match e.downcast_ref::<bridle_daemon::state_branch::OwnerConflict>() {
         Some(c) => CliError::OwnerRefused(format!(
-            "this project is owned by {}; refusing to start; run `bridle serve --take-over` here to take it over, or uninstall this unit (since {})",
+            "this project is owned by {}; refusing to start; run `bridle project take-over` here to take it over, or uninstall this unit (since {})",
             c.host, c.since
         )),
         None => CliError::Other(e),

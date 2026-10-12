@@ -33,6 +33,7 @@ mod specid;
 mod statusline;
 mod stop_check;
 mod systemd;
+mod take_over;
 mod ticket;
 mod token_pair;
 mod tools_only;

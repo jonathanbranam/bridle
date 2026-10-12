@@ -84,28 +84,22 @@ fn push_check(_hook_args: &[String]) -> Result<(), CliError> {
         .file_name()
         .map(|n| n.to_string_lossy().into_owned())
         .unwrap_or_default();
-    let host = hostname().context("reading this machine's name")?;
+    let names = bridle_api::machines::owner_names(&bridle_home());
     match read_owner(&main_repo) {
-        Some(o) if o.host == host => Ok(()),
+        Some(o) if names.contains(&o.host) => Ok(()),
         Some(o) => Err(anyhow::anyhow!(
             "refusing to push {integration}. Project {project} is owned by {} (since {}).\n        \
-             To move it here: bridle serve --take-over",
+             To move it here: bridle project take-over",
             o.host,
             o.since
         )
         .into()),
         None => Err(anyhow::anyhow!(
             "refusing to push {integration}. Project {project} has no readable owner ({STATE_BRANCH}:{OWNER_FILE}); \
-             failing closed.\n        To claim it here: bridle serve --take-over"
+             failing closed.\n        To claim it here: bridle project take-over"
         )
         .into()),
     }
-}
-
-fn hostname() -> Option<String> {
-    let out = Command::new("hostname").output().ok()?;
-    let h = String::from_utf8(out.stdout).ok()?.trim().to_string();
-    (!h.is_empty()).then_some(h)
 }
 
 /// The clone's main checkout, also when run from one of its worktrees.

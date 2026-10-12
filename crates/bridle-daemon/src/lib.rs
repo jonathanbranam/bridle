@@ -147,9 +147,7 @@ pub struct Overrides {
     pub queue_nudge_debounce: Duration,
     /// How long readied tasks must stop arriving before the PM is told they're open.
     pub open_watch_debounce: Duration,
-    /// `bridle serve --take-over`: claim a project another host owns (hw6c).
-    pub take_over: bool,
-    /// This machine's name for `owner.toml`. `None` asks `hostname`.
+    /// This machine's name for `owner.toml`. `None` asks `[machine] name`, then `hostname`.
     pub host: Option<String>,
 }
 
@@ -177,7 +175,6 @@ impl Default for Overrides {
             doc_watch_interval: Duration::from_secs(30),
             queue_nudge_debounce: queue_nudge::DEBOUNCE,
             open_watch_debounce: open_watch::DEBOUNCE,
-            take_over: false,
             host: None,
         }
     }
@@ -219,13 +216,10 @@ impl RunningDaemon {
 
 /// Run the daemon until shutdown (SIGINT/SIGTERM or `POST /v1/shutdown`).
 /// Writes `daemon.json` and the machine registry entry once listening.
-pub async fn run(opts: ServeOptions, take_over: bool) -> anyhow::Result<()> {
+pub async fn run(opts: ServeOptions) -> anyhow::Result<()> {
     // Before anything can replace the binary on disk.
     let _ = exe_path();
-    let overrides = Overrides {
-        take_over,
-        ..Overrides::default()
-    };
+    let overrides = Overrides::default();
     let ws = Workspace::new(opts.repo.clone(), opts.workspace.clone());
     let pending = match rollback::begin(&ws) {
         Ok(p) => p,
@@ -327,18 +321,6 @@ fn roll_back(ws: &Workspace, reason: &str) -> anyhow::Error {
         return anyhow::anyhow!("rollback after `{reason}` failed: {e:#}");
     }
     anyhow::anyhow!("rollback: {}", exec_self())
-}
-
-/// This machine's hostname, for `owner.toml`.
-async fn machine_host() -> String {
-    tokio::process::Command::new("hostname")
-        .output()
-        .await
-        .ok()
-        .and_then(|o| String::from_utf8(o.stdout).ok())
-        .map(|s| s.trim().to_string())
-        .filter(|s| !s.is_empty())
-        .unwrap_or_else(|| "unknown".to_string())
 }
 
 /// The port `[projects]` gives `project` when it lives on this machine.
@@ -552,40 +534,32 @@ async fn start_inner(
     // Fetch before anything is written, so a clone on a new machine adopts origin's state
     // rather than diverging from it, and so a project another host owns is refused (hw6c).
     // Never touched when the project doesn't push (we2r).
-    let host = match &overrides.host {
-        Some(h) => h.clone(),
-        None => machine_host().await,
+    let names = match &overrides.host {
+        Some(h) => vec![h.clone()],
+        None => bridle_api::machines::owner_names(
+            overrides
+                .bridle_home
+                .as_deref()
+                .unwrap_or(&discovery::bridle_home()),
+        ),
     };
-    if config.state_push || overrides.take_over {
+    if config.state_push {
         let outcome = state_branch::StateBranch::fetch_and_check_owner(
             &ws.repo,
             &ws.state_branch_dir(),
             &project,
-            &host,
-            overrides.take_over,
+            &names,
+            false,
         )
         .await?;
         tracing::info!("state branch at start: {}", outcome.describe());
-        if overrides.take_over {
-            // Origin must have been reached and the state branch level with it before this
-            // host claims ownership, and the integration branch likewise (24mj).
-            let ws_state = ws.state_branch_dir();
-            let dir = if ws_state.join(".git").exists() {
-                ws_state
-            } else {
-                ws.repo.clone()
-            };
-            state_branch::require_state_synced(&dir, &outcome).await?;
-            state_branch::sync_integration_for_take_over(&ws.repo, &config.branches.integration)
-                .await?;
-        }
     }
     let state_branch = state_branch::StateBranch::open(&ws.repo, &ws.state_branch_dir())
         .await
         .context("opening the state branch")?;
     let state_branch = if config.state_push {
         let sb = state_branch.with_push(state_branch::PUSH_DEBOUNCE);
-        sb.claim_owner(&host, chrono::Utc::now())
+        sb.claim_owner(&names[0], chrono::Utc::now())
             .context("recording this host as the project's owner")?;
         // The pre-push owner check (8z7j) reads `owner.toml` from the state branch: a take-over
         // must have committed it before the daemon serves, not at some later flush.
@@ -878,7 +852,7 @@ async fn start_inner(
         config.review.clone(),
     )
     // A project that doesn't push has no owner file; its one clone is the owner.
-    .with_owner(!config.state_push || state_branch::owned_by(&ws.state_branch_dir(), &host));
+    .with_owner(!config.state_push || state_branch::owned_by(&ws.state_branch_dir(), &names));
     let state = server::AppState {
         store: store.clone(),
         manager: manager.clone(),

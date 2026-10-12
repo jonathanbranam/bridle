@@ -54,6 +54,32 @@ pub struct Remote {
     pub url: String,
 }
 
+/// The names this machine answers to in a project's `owner.toml` (53gy): `[machine] name` first
+/// (the one `[projects]` uses, and the one recorded), then the `hostname`, which older bridles
+/// recorded and so still counts as this machine. Never empty.
+pub fn owner_names(home: &Path) -> Vec<String> {
+    let mut names: Vec<String> = MachineMap::load(home)
+        .ok()
+        .and_then(|m| m.machine.name)
+        .into_iter()
+        .collect();
+    let host = std::process::Command::new("hostname")
+        .output()
+        .ok()
+        .and_then(|o| String::from_utf8(o.stdout).ok())
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty());
+    if let Some(n) = host
+        && !names.contains(&n)
+    {
+        names.push(n);
+    }
+    if names.is_empty() {
+        names.push("unknown".to_string());
+    }
+    names
+}
+
 impl MachineMap {
     /// Reads `<home>/config.toml`; a missing file is an empty map.
     pub fn load(home: &Path) -> Result<Self, DiscoveryError> {

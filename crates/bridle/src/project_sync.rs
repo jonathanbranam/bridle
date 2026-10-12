@@ -240,7 +240,9 @@ fn cell(e: Option<&Entry>) -> String {
 }
 
 pub fn run(action: &crate::cli::ProjectsAction) -> Result<(), crate::error::CliError> {
-    let crate::cli::ProjectsAction::Sync { apply } = action;
+    let crate::cli::ProjectsAction::Sync { apply } = action else {
+        unreachable!("take-over is dispatched before this")
+    };
     let home = bridle_api::discovery::bridle_home();
     let map = bridle_api::machines::MachineMap::load(&home)
         .map_err(|e| crate::error::CliError::Other(e.into()))?;

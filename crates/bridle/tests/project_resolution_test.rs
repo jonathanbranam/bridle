@@ -94,6 +94,11 @@ const CLASSES: &[(&str, Kind, &str)] = &[
         Skip,
         "reads and writes config.toml on the machines; no project",
     ),
+    (
+        "projects take-over",
+        Skip,
+        "works on the clone in the cwd or --repo; no daemon, covered by take_over_test",
+    ),
     ("focus", Skip, "the human's own focus gate"),
     (
         "orchestrator note-session",

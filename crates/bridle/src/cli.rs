@@ -274,7 +274,9 @@ pub enum Command {
     Pane(PaneArgs),
     /// Machine-scope settings for this clone (hw6c).
     Machine(MachineArgs),
-    /// The `[projects]` list of ~/.bridle/config.toml across machines (2wnn).
+    /// A project's placement: take it over, and the `[projects]` list of ~/.bridle/config.toml
+    /// across machines (2wnn, 53gy). `bridle project` and `bridle projects` are the same group.
+    #[command(alias = "project")]
     Projects(ProjectsArgs),
     /// Start the orchestrator or advisor session: `claude` with the role's settings, names and
     /// opening prompt, from any directory (replaces scripts/claude-orchestrator and -advisor).
@@ -1157,9 +1159,8 @@ pub struct ServeArgs {
     /// Re-exec into the background; logs to `<workspace>/.bridle/daemon.log`.
     #[arg(long)]
     pub detach: bool,
-    /// Claim a project whose state branch on origin names another host as owner. Run it after
-    /// the old daemon has stopped and pushed.
-    #[arg(long)]
+    /// Removed: use `bridle project take-over`, then serve.
+    #[arg(long, hide = true)]
     pub take_over: bool,
     /// Load the config and exit 0 (or fail): the daemon runs this on a freshly built binary
     /// before restarting into it.
@@ -2492,6 +2493,22 @@ pub enum ProjectsAction {
         #[arg(long)]
         apply: bool,
     },
+    /// Make this machine the project's owner and exit: commits `owner.toml` on `bridle/state`,
+    /// confirms origin has it, then moves the project's `[projects]` entry to this machine on
+    /// every machine. It never serves and needs no daemon. Ownership by step of a transfer:
+    /// stop the old daemon (it pushes its state; there is nothing else to give up), run this on
+    /// the new machine, then start the daemon there. A second run changes nothing.
+    TakeOver(TakeOverArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct TakeOverArgs {
+    /// The clone's main checkout. Defaults to the current directory.
+    #[arg(long)]
+    pub repo: Option<PathBuf>,
+    /// Defaults to the repo's parent directory.
+    #[arg(long)]
+    pub workspace: Option<PathBuf>,
 }
 
 #[derive(Debug, Args)]

@@ -104,8 +104,8 @@ To move one (old machine to new):
    workflow; remove an old `workflow = <clone>` line to switch.)
 3. **New machine, clone** the repo and build or install `bridle`. `bridle/state` comes with it from
    origin; no manual `git fetch origin bridle/state:bridle/state`.
-4. **New machine, `bridle serve --take-over`** in the clone (add `--detach` to background it).
-   Without `--take-over` it refuses, naming the old host, because `owner.toml` on `bridle/state`
+4. **New machine, `bridle project take-over`** in the clone (it claims the project and exits;
+   start the daemon after). `bridle serve` alone refuses, naming the old host, because `owner.toml` on `bridle/state`
    still names it. It also refuses, naming both SHAs, if origin is unreachable, lacks
    `bridle/state`, or `bridle/state` or the integration branch has diverged from origin's, or if
    the integration branch needs a fast-forward and its checkout is dirty; fix that by hand
@@ -116,8 +116,7 @@ To move one (old machine to new):
 6. **Start the sessions** with the project-aware commands, as in "Running sessions for specific
    projects" above: `bridle session orchestrator --project <name>` and
    `bridle session advisor --project <name> [alias]`.
-   A launchd or systemd unit can't pass `--take-over`: take over by hand once, stop that daemon
-   (`bridle stop-daemon`), then enable the unit on the new machine.
+   Take over first, then enable the unit on the new machine.
 7. **Old machine, uninstall its unit** (`bridle launchd uninstall` / `bridle systemd uninstall
    --project <name>`, then the printed `launchctl bootout` / `systemctl --user disable --now`), or
    it restarts at boot. A unit left behind no longer loops (`serve` exits 78, which the unit
