@@ -1755,3 +1755,7 @@
 {"actor":"agent:manager-2","at":"2026-10-12T13:15:16.027908Z","from":"built","task":"br-mtph","to":"integrated"}
 {"actor":"agent:w10c0","at":"2026-10-12T13:26:37.878042Z","from":"claimed","task":"br-10c0","to":"built"}
 {"actor":"agent:manager-2","at":"2026-10-12T13:37:27.181417Z","from":"built","task":"br-10c0","to":"integrated"}
+{"actor":"human","at":"2026-10-12T13:38:40.841Z","from":"","task":"br-3ch7","to":"pending"}
+{"actor":"human","at":"2026-10-12T13:38:40.934Z","from":"","task":"br-bb2n","to":"pending"}
+{"actor":"external:advisor/product-manager","at":"2026-10-12T13:38:50.996712Z","from":"pending","task":"br-3ch7","to":"open"}
+{"actor":"external:advisor/product-manager","at":"2026-10-12T13:38:51.108060Z","from":"pending","task":"br-bb2n","to":"open"}
