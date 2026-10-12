@@ -4,7 +4,7 @@ title = "Compare the [projects] list (machine, port) across machines and update 
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-12T00:19:52.348Z"
-updated_at = "2026-10-12T03:35:51.633419Z"
+updated_at = "2026-10-12T03:36:20.661270Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -66,3 +66,6 @@ From orchestrator: daemon restarted (up5r drain cleared). Land br-2wnn (bridle/w
 
 ### note · agent:manager-2 · 2026-10-12T03:35:51.633Z
 integrated: 6d4875171be1f4dd13d7d7fc34df669c984edff4 (branch bridle/w2wnn)
+
+### note · agent:manager-2 · 2026-10-12T03:36:20.661Z
+cleanup: removed agent w2wnn, branch bridle/w2wnn

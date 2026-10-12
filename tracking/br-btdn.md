@@ -2,13 +2,14 @@
 id = "br-btdn"
 title = "Daemon restart and self-upgrade blocked forever: manager.spawning() stays true with no agent spawning ('still busy: a spawning agent')"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-06T21:56:19.445Z"
-updated_at = "2026-10-12T03:14:58.226161Z"
+updated_at = "2026-10-12T03:36:35.711920Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "external:advisor/product-manager",
+    "agent:wbtdn",
 ]
 ticket = "btdn"
 +++
