@@ -304,6 +304,8 @@ session; `--no-restart` records only). As the orchestrator that sends
 which marks "handover done for this session". At any point,
 not only after a message: an orchestrator that hands over early is fine.
 
+**Stale requests (ve74).** Writing a handover note (`POST /handovers`) by an external session marks read that identity's unread restart request and `Your context is ...k tokens` notes, since identities outlive sessions and the new session would be handed them.
+
 **The restart** happens when either the handover is marked done (the session is stopped at
 once, there's nothing left to wait for) or the **deadline passes** (30 min after the "now"
 or uptime message: it may interrupt a conversation, and that's the bound the human agreed

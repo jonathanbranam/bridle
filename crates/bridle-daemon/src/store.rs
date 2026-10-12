@@ -535,6 +535,15 @@ impl Store {
             .await
     }
 
+    /// Marks read the unread restart requests and context-limit notes sent to `to`: once the
+    /// session has handed over they are stale, and identities outlive sessions, so the next
+    /// session would otherwise be handed them.
+    pub async fn close_handover_requests(&self, to: &str) -> Result<usize, StoreError> {
+        let to = to.to_string();
+        self.with_conn(move |c| sync::close_handover_requests(c, &to))
+            .await
+    }
+
     /// Revokes `external:<name>`, failing with `NotFound` if no such
     /// external-token principal exists (an agent's own token isn't revoked
     /// this way; that happens through `rm`).
@@ -4048,6 +4057,19 @@ mod sync {
         )?)
     }
 
+    pub(super) fn close_handover_requests(
+        conn: &Connection,
+        to: &str,
+    ) -> Result<usize, StoreError> {
+        Ok(conn.execute(
+            "UPDATE messages SET state = 'read', read_at = ?2
+             WHERE to_kind = 'external' AND to_id = ?1 AND state NOT IN ('read', 'dropped')
+               AND (instr(body, 'Say nothing more once it is written') > 0
+                    OR (from_principal = 'system' AND body LIKE 'Your context is %k tokens%'))",
+            params![to, fmt_dt(Utc::now())],
+        )?)
+    }
+
     pub(super) fn unread_count(conn: &Connection, to: &str) -> Result<u32, StoreError> {
         let n: i64 = conn.query_row(
             "SELECT COUNT(*) FROM messages WHERE to_id = ?1 AND state NOT IN ('read', 'dropped')",
@@ -5145,6 +5167,64 @@ mod tests {
         assert_eq!(row.busy_seconds, 30);
         assert_eq!(row.wall_seconds, Some(80));
         assert!(row.wall_seconds.expect("wall") > row.busy_seconds);
+    }
+
+    #[tokio::test]
+    async fn handover_closes_the_stale_restart_request_and_context_note() {
+        let (store, _tmp) = store().await;
+        let send = |from: &str, to: &str, body: &str| {
+            store.insert_message(NewMessage {
+                from: from.to_string(),
+                to: to.to_string(),
+                to_kind: RecipientKind::External,
+                kind: MessageKind::Note,
+                body: body.to_string(),
+                reply_to: None,
+                when: When::Now,
+                state: MessageState::Written,
+            })
+        };
+        let request = send(
+            "external:aide",
+            "external:aide",
+            "The human is restarting.\n\nSay nothing more once it is written; go.",
+        )
+        .await
+        .expect("request");
+        let ctx = send(
+            "system",
+            "external:aide",
+            "Your context is 200k tokens. Hand over.",
+        )
+        .await
+        .expect("ctx");
+        let other = send("human", "external:aide", "unrelated")
+            .await
+            .expect("other");
+        let elsewhere = send("system", "external:advisor", "Your context is 200k tokens.")
+            .await
+            .expect("else");
+
+        let n = store
+            .close_handover_requests("external:aide")
+            .await
+            .expect("close");
+        assert_eq!(n, 2);
+        let state = |id: String| {
+            let store = &store;
+            async move {
+                store
+                    .get_message(&id)
+                    .await
+                    .expect("get")
+                    .expect("some")
+                    .state
+            }
+        };
+        assert_eq!(state(request.id).await, MessageState::Read);
+        assert_eq!(state(ctx.id).await, MessageState::Read);
+        assert_eq!(state(other.id).await, MessageState::Written);
+        assert_eq!(state(elsewhere.id).await, MessageState::Written);
     }
 
     #[tokio::test]

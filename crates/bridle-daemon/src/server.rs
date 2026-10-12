@@ -549,6 +549,12 @@ async fn write_handover(
         )
         .await?;
     state.tasks.enqueue_handover(&h)?;
+    if principal.id.starts_with("external:") {
+        state
+            .store
+            .close_handover_requests(&format!("external:{}", h.role))
+            .await?;
+    }
     Ok(Json(h))
 }
 
