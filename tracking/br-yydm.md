@@ -2,9 +2,9 @@
 id = "br-yydm"
 title = "bridle-ui: a usage page with week-to-week charts of the five-hour and seven-day limits (xxw9, UI side)"
 kind = "feature"
-state = "pending"
+state = "planned"
 created_at = "2026-10-05T21:06:46.794Z"
-updated_at = "2026-10-11T21:31:40.354848Z"
+updated_at = "2026-10-12T22:40:21.965405Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
