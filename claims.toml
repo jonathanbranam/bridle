@@ -34,11 +34,6 @@ claimed_by = "human"
 claimed_at = "2026-10-11T22:28:58.677Z"
 
 [[claim]]
-task = "br-h7mu"
-claimed_by = "human"
-claimed_at = "2026-10-07T23:25:31.079Z"
-
-[[claim]]
 task = "br-btdn"
 claimed_by = "agent:wbtdn"
 claimed_at = "2026-10-12T03:36:35.711920Z"
@@ -52,13 +47,3 @@ claimed_at = "2026-10-03T11:04:49.780Z"
 task = "br-9667"
 claimed_by = "human"
 claimed_at = "2026-10-03T11:04:49.804Z"
-
-[[claim]]
-task = "br-twg8"
-claimed_by = "human"
-claimed_at = "2026-10-04T13:16:26.410Z"
-
-[[claim]]
-task = "br-a3b9"
-claimed_by = "human"
-claimed_at = "2026-10-02T12:55:45.644Z"

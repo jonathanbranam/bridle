@@ -2,9 +2,9 @@
 id = "br-twg8"
 title = "Try document review (x8jt) on gtzx: install the UI, review add, start the gateway, comment"
 kind = "chore"
-state = "claimed"
+state = "integrated"
 created_at = "2026-10-04T13:16:26.409Z"
-updated_at = "2026-10-11T21:31:25.647596Z"
+updated_at = "2026-10-12T03:52:41.013454Z"
 created_by = "external:advisor/doc-review"
 watchers = [
     "external:advisor/doc-review",
@@ -56,3 +56,6 @@ To-do for you (normal priority): Try document review (x8jt) on gtzx: install the
 
 ### note · external:advisor/product-manager · 2026-10-09T11:04:37.815Z
 watching the task
+
+### note · human · 2026-10-12T03:52:41.013Z
+done

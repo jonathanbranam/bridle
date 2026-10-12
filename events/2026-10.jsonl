@@ -1702,3 +1702,6 @@
 {"actor":"agent:pm-1","at":"2026-10-12T03:14:59.711851Z","queue":"reprioritized"}
 {"actor":"human","at":"2026-10-12T03:15:51.238Z","from":"","task":"br-b264","to":"pending"}
 {"actor":"agent:manager-2","at":"2026-10-12T03:35:51.633419Z","from":"built","task":"br-2wnn","to":"integrated"}
+{"actor":"human","at":"2026-10-12T03:52:12.172831Z","from":"claimed","task":"br-h7mu","to":"integrated"}
+{"actor":"human","at":"2026-10-12T03:52:19.778972Z","from":"claimed","task":"br-a3b9","to":"integrated"}
+{"actor":"human","at":"2026-10-12T03:52:41.013454Z","from":"claimed","task":"br-twg8","to":"integrated"}

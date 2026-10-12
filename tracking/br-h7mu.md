@@ -2,9 +2,9 @@
 id = "br-h7mu"
 title = "Pick a name for the Windows PC (docs/context/naming.md) (v7ug)"
 kind = "chore"
-state = "claimed"
+state = "integrated"
 created_at = "2026-10-07T23:25:31.076Z"
-updated_at = "2026-10-12T03:52:08.169431Z"
+updated_at = "2026-10-12T03:52:12.172831Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -35,3 +35,6 @@ Correction: the human answered at ~7:50 PM ET, not ~7:55.
 
 ### note · human · 2026-10-12T03:52:08.169Z
 The windows PC itself is romulus and the Linux WSL2 inside it is remus. For our purposes, we will interact with remus.
+
+### note · human · 2026-10-12T03:52:12.172Z
+done
