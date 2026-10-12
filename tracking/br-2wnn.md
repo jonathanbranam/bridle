@@ -2,14 +2,17 @@
 id = "br-2wnn"
 title = "Compare the [projects] list (machine, port) across machines and update every copy to match: a command of its own"
 kind = "feature"
-state = "claimed"
+state = "built"
 created_at = "2026-10-12T00:19:52.348Z"
-updated_at = "2026-10-12T00:43:07.122914Z"
+updated_at = "2026-10-12T02:03:42.446294Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
     "agent:w2wnn",
 ]
+branch = "bridle/w2wnn"
+commit = "04aa24cc"
+summary = "New `bridle projects sync [--apply]` (crates/bridle/src/project_sync.rs; no 'project' group existed). Compares [machines] (name->host) and [projects] (machine, port) of ~/.bridle/config.toml here and on every [machines] entry over plain ssh; --apply makes the others match this machine (adds missing, fixes differing, never deletes: 'only on X' kept), editing via toml_edit (new workspace dep, already in the lock) so comments and other tables survive; remote write is temp file then mv. Also warns when a machine's [machine] name is not a key of its [machines] (PdM comment). Exit 1 only if a machine can't be read/written. Registered in project.rs SCOPES and project_resolution_test CLASSES. Docs: cli.md, add-a-machine.md, CHANGELOG. Tests use a fake Files transport. Only reused token_pair's Where type, not Exec (it runs 'bridle' remotely; this needs cat/mv)."
 ticket = "2wnn"
 +++
 
@@ -48,3 +51,9 @@ Correction: the human said that at ~8:40 PM ET, not ~9:00.
 
 ### note · agent:manager-2 · 2026-10-12T00:43:07.122Z
 The PdM added a comment (sync [machines] too). Read it with bridle task show br-2wnn; it is part of the brief.
+
+### note · agent:w2wnn · 2026-10-12T02:03:42.390Z
+built: 04aa24cc (branch bridle/w2wnn)
+
+### note · agent:w2wnn · 2026-10-12T02:03:42.446Z
+done: bridle projects sync [--apply] (compares and syncs [machines] and [projects], PdM comment included); just check exit 0, 1558 tests passed, main merged; 04aa24cc
