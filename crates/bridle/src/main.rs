@@ -20,6 +20,7 @@ mod orchestrator;
 mod pane;
 mod prime;
 mod project;
+mod project_start;
 mod project_stop;
 mod project_sync;
 mod render;

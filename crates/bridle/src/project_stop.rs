@@ -15,7 +15,7 @@ use bridle_api::machines::{MachineMap, owner_names};
 use bridle_daemon::config::Config;
 use bridle_daemon::paths::Workspace;
 use bridle_daemon::state_branch::{local_owner, release_project};
-use bridle_daemon::store::{LeftBehind, left_behind};
+use bridle_daemon::store::{LeftBehind, active_schedules, left_behind};
 
 use crate::cli::{Cli, ProjectStopArgs};
 use crate::commands::{client_for, daemon::stop_daemon_with};
@@ -27,7 +27,7 @@ pub trait Ctl {
     fn run(&self, prog: &str, args: &[String]) -> Result<(), String>;
 }
 
-struct RealCtl;
+pub struct RealCtl;
 
 impl Ctl for RealCtl {
     fn run(&self, prog: &str, args: &[String]) -> Result<(), String> {
@@ -423,14 +423,22 @@ async fn local(
         )
         .await?;
     }
-    release_project(&repo, &ws.state_branch_dir(), &integration, &names)
-        .await
-        .map_err(|e| {
-            CliError::Other(e.context(format!(
-                "{project} is stopped but NOT released: origin may lack its latest work and its \
+    let schedules = serde_json::to_string_pretty(&active_schedules(&ws.db()))
+        .context("encoding the scheduled messages")?;
+    release_project(
+        &repo,
+        &ws.state_branch_dir(),
+        &integration,
+        &names,
+        &schedules,
+    )
+    .await
+    .map_err(|e| {
+        CliError::Other(e.context(format!(
+            "{project} is stopped but NOT released: origin may lack its latest work and its \
                  units were left as they were; fix the cause and run `bridle project stop` again"
-            )))
-        })?;
+        )))
+    })?;
     let _ = writeln!(
         out,
         "origin has bridle/state and {integration}; released mark pushed"

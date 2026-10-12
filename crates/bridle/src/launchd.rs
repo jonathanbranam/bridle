@@ -115,7 +115,7 @@ impl Plist<'_> {
     }
 }
 
-fn install(
+pub(crate) fn install(
     cli: &Cli,
     a: &LaunchdInstallArgs,
     agents_dir: &Path,

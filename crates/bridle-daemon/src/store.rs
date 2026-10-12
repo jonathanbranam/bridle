@@ -72,6 +72,15 @@ pub fn left_behind(db: &std::path::Path) -> Option<LeftBehind> {
     })
 }
 
+/// The active scheduled messages in `db`, read-only like `left_behind`: `project stop` carries
+/// them to the next owner. Empty when there is no database or no such table.
+pub fn active_schedules(db: &std::path::Path) -> Vec<Schedule> {
+    Connection::open_with_flags(db, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)
+        .ok()
+        .and_then(|conn| sync::schedules_list(&conn, None, false).ok())
+        .unwrap_or_default()
+}
+
 /// Turns a `spawn_blocking` `JoinError` into a `StoreError`, or resumes the
 /// unwind if the blocking task genuinely panicked (so real bugs still
 /// surface as panics rather than being swallowed as `ShuttingDown`).

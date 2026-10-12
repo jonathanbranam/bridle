@@ -974,6 +974,9 @@ pub enum TakeOverOutcome {
     Claimed { from: Option<String> },
 }
 
+/// The scheduled messages a released project carries on `bridle/state`.
+pub const SCHEDULES_FILE: &str = "schedules.json";
+
 /// The one-shot take-over (53gy): claims the project for `names[0]` and confirms origin has the
 /// claim. Same preconditions as the old `serve --take-over`: origin reached, the state branch
 /// level with it, the integration branch fast-forwardable. Starts no daemon and needs none.
@@ -1028,12 +1031,14 @@ pub async fn local_owner(repo: &Path) -> Option<Owner> {
 /// The giving-up half of `project stop` (53gy B), run once the daemon is gone: pushes the state
 /// branch, then the integration branch's direct commits, confirming after each that origin has
 /// them; only then writes the `released` mark and pushes that as the last commit, confirmed too.
-/// Any failure returns the reason and leaves no mark.
+/// Any failure returns the reason and leaves no mark. `schedules` (the project's active scheduled
+/// messages as JSON) is committed with the mark as `schedules.json`, for the next owner's take-over.
 pub async fn release_project(
     repo: &Path,
     state_dir: &Path,
     integration: &str,
     names: &[String],
+    schedules: &str,
 ) -> anyhow::Result<()> {
     let sb = StateBranch::open(repo, state_dir).await?;
     let owner = read_owner_file(&sb.dir);
@@ -1054,6 +1059,7 @@ pub async fn release_project(
         .await
         .map_err(|e| anyhow::anyhow!("pushing {integration}: {e}"))?;
     let host = owner.map(|o| o.host).unwrap_or_default();
+    std::fs::write(sb.dir.join(SCHEDULES_FILE), schedules)?;
     sb.release_owner(&host, Utc::now())?;
     sb.flush_now().await?;
     sb.push_confirmed()

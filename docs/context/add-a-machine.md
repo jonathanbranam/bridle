@@ -324,26 +324,30 @@ The procedure is "Moving a project to another machine" in
 take-over`, create tokens, start sessions. Adding a brand-new project instead is
 [[docs/context/adding-a-project|adding a project]]. Two traps the runbook's steps hide:
 
-1. **Remove the old machine's supervisor first.** If the old machine has a launchd plist or
-   systemd unit for the project, `bridle stop-daemon` is not enough: the supervisor restarts the
-   daemon, and it fights the new owner. On macOS, `bridle launchd uninstall --project P`, then the
-   `launchctl bootout` command it prints. On Linux, `bridle systemd uninstall` is not built yet
-   (br-xrkh); until then:
+1. **Stop the old machine first.** `bridle stop-daemon` is not enough: a launchd plist or
+   systemd unit restarts the daemon, and it fights the new owner. On the old machine:
 
    ```bash
-   systemctl --user disable --now bridle-P.service
-   rm ~/.config/systemd/user/bridle-P.service && systemctl --user daemon-reload
+   bridle project stop            # or: bridle --project P project stop --machine old
    ```
 
-2. **Take over before you enable the new unit.** A systemd unit or LaunchAgent runs plain
-   `bridle serve`, which refuses while `bridle/state` on origin names the old host. In the new clone:
+   It stops the agents, the daemon and its units (unloaded and disabled, files kept), pushes
+   `bridle/state` and the integration branch, confirms origin has both, and pushes the `released`
+   mark: that is the giving up of ownership. It also commits the project's scheduled messages.
+
+2. **Take over, then start.** In the new clone:
 
    ```bash
    bridle project take-over
+   bridle project start
    ```
 
-   It claims the project, confirms origin has the claim, updates `[projects]` on every machine
-   and exits; it starts no daemon. Then enable the new unit (step 4), which starts as the owner.
+   `take-over` claims the project, confirms origin has the claim, updates `[projects]` on every
+   machine and exits; it starts no daemon. `start` installs the unit if it is missing, enables it
+   (boot, restart on failure) and starts it, then re-creates the project's tokens on every machine
+   (`token pair`'s code) and re-adds the scheduled messages from the old owner. `bridle.db` is not
+   copied; events, usage and agent history stay on the old machine. Run `start` again if it
+   reports a failure: it keeps what is left to do until it is done.
 
 Only the owner's clone can push the project's integration branch (8z7j): `bridle serve` and
 `bridle sync` install a `pre-push` hook that refuses it elsewhere, and `bridle project take-over` moves the

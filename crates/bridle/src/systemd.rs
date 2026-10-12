@@ -71,11 +71,22 @@ fn check_os(os: &str) -> Result<(), CliError> {
     }
 }
 
-struct UnitEnv {
+pub(crate) struct UnitEnv {
     exe: PathBuf,
     home: String,
     path: String,
     user: String,
+}
+
+impl UnitEnv {
+    pub(crate) fn current(home: &Path) -> anyhow::Result<Self> {
+        Ok(UnitEnv {
+            exe: std::env::current_exe().context("locating the bridle binary")?,
+            home: home.to_string_lossy().into_owned(),
+            path: std::env::var("PATH").unwrap_or_default(),
+            user: std::env::var("USER").unwrap_or_else(|_| "$USER".into()),
+        })
+    }
 }
 
 /// The projects to install: `--project` if the config puts it here, else every project it does.
@@ -160,7 +171,7 @@ fn render_unit(project: &str, repo: &Path, workspace: &Path, env: &UnitEnv) -> S
     )
 }
 
-fn install(
+pub(crate) fn install(
     project: Option<&str>,
     a: &SystemdInstallArgs,
     machines: &MachineMap,

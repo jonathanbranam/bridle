@@ -2508,6 +2508,26 @@ pub enum ProjectsAction {
     /// which refuses a project with no mark (`--force` for a dead machine); 4 start the daemon
     /// there. Stopping first also keeps the old unit from exiting 78 once ownership moves.
     Stop(ProjectStopArgs),
+    /// Start the project's daemon here and keep it running: installs the launchd or systemd
+    /// unit if it is missing, enables it (starts at boot, restarts after a crash) and starts it,
+    /// and re-enables the mail bridge unit if one is installed. Safe to run again. After a
+    /// `take-over` it also re-creates the project's tokens on every machine (the `token pair`
+    /// code) and carries over its scheduled messages from the old owner's stop. Step 4 of a
+    /// transfer; this machine must already own the project. `--machine` runs it over ssh.
+    Start(ProjectStartArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct ProjectStartArgs {
+    /// The clone's main checkout. Defaults to the running daemon's, else the current directory.
+    #[arg(long)]
+    pub repo: Option<PathBuf>,
+    /// Defaults to the repo's parent directory.
+    #[arg(long)]
+    pub workspace: Option<PathBuf>,
+    /// Run on this `[machines]` entry over ssh (needs `--project`).
+    #[arg(long)]
+    pub machine: Option<String>,
 }
 
 #[derive(Debug, Args)]
