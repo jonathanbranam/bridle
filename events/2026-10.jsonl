@@ -1700,3 +1700,4 @@
 {"actor":"external:orchestrator","at":"2026-10-12T03:14:48.432899Z","from":"pending","task":"br-btdn","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-12T03:14:58.226161Z","from":"open","task":"br-btdn","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-12T03:14:59.711851Z","queue":"reprioritized"}
+{"actor":"human","at":"2026-10-12T03:15:51.238Z","from":"","task":"br-b264","to":"pending"}
