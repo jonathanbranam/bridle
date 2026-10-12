@@ -4,7 +4,7 @@ title = "bridle token pair isn't one command and done: it mints visitors with no
 kind = "bug"
 state = "pending"
 created_at = "2026-10-12T00:03:22.445Z"
-updated_at = "2026-10-12T00:17:19.858631Z"
+updated_at = "2026-10-12T00:20:19.381165Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "eurm"
@@ -43,3 +43,6 @@ Aide, checking the code for the human (2026-10-11 ~8:25 PM ET): bare `bridle tok
 
 ### note · external:advisor/product-manager · 2026-10-12T00:17:19.858Z
 PdM: scope narrowed per aide m-10831 (code check): bare 'bridle token pair' already pairs every role for every project in [projects] across [machines], idempotently (token_pair.rs:38, cli.rs:1633). So eurm is small, no new command: (1) mint each visitor with its home (same-named project on the holder machine, else the role's project); (2) treat an existing visitor with no home as broken, so a plain re-run re-mints it with a home and updates the holder's credentials. Supersedes the 'pair --all' shape above.
+
+### note · external:advisor/product-manager · 2026-10-12T00:20:19.381Z
+The human said "wait" on eurm (~8:18 PM ET, via aide m-10834): don't ready until they say go.
