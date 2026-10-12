@@ -8,8 +8,7 @@ description: Grill the human, one or two questions at a time, to clarify a bridl
 Adapted from the `grilling` skill in Matt Pocock's skills
 (https://github.com/mattpocock/skills, `skills/productivity/grilling/SKILL.md`,
 commit 95249b0b), used under the MIT license below. Changes: one or two
-questions at a time, bridle tickets as the record, an epic-or-ticket first
-question, ASCII only.
+questions at a time, bridle tickets as the record, a session-mode question and an epic-or-ticket question first, ASCII only.
 
 > MIT License. Copyright (c) 2026 Matt Pocock
 >
@@ -40,7 +39,9 @@ decisions that hang off it. You never ready, plan or build.
 1. Read the ticket (`bridle ticket show <id>`) and what it names: code, docs,
    specs. For a child ticket (it has a `parent`), read the parent epic first:
    its outcome, done-when and design.
-2. Ask first: **"Is this an epic or a ticket?"** (give your reading of it as the
+2. Ask first: **"Are you going to use (1) mobile with keyboard, (2) computer
+   with keyboard, or (3) voice for this session?"** The answer sets the pace
+   (see Asking). Then ask: **"Is this an epic or a ticket?"** (give your reading of it as the
    recommended answer). An epic needs an outcome, a done-when and a design, plus
    a list of what is not yet specified, so its children can be checked against
    it. A ticket needs a clear ask and a way to verify it.
@@ -48,7 +49,14 @@ decisions that hang off it. You never ready, plan or build.
 ## Asking
 
 Work the tree **one or two questions at a time**. Too many at once overwhelms
-the human and stalls the work. Ask the questions whose prerequisites are
+the human and stalls the work. The session mode sets the limit:
+
+- **Computer**: one or two questions a round.
+- **Mobile**: one or two questions a round, each kept short.
+- **Voice**: exactly one question a round, a sentence or two, the
+  recommendation in one line, no tables or long lists.
+
+ Ask the questions whose prerequisites are
 settled, pick the one or two that matter most, and wait.
 
 Format each question like so:
