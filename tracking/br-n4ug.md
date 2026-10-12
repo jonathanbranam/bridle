@@ -2,9 +2,9 @@
 id = "br-n4ug"
 title = "53gy B: project stop with confirmed pushes and released mark, pre-stop listing, old units unloaded, schema guard; take-over requires the mark"
 kind = "feature"
-state = "open"
+state = "planned"
 created_at = "2026-10-12T01:04:04.403Z"
-updated_at = "2026-10-12T01:04:43.500778Z"
+updated_at = "2026-10-12T01:05:21.662122Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",

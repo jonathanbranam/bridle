@@ -2,9 +2,9 @@
 id = "br-86qp"
 title = "53gy C: project start (systemd --project), token re-pair in take-over (eurm's code), scheduled messages carried over"
 kind = "feature"
-state = "open"
+state = "planned"
 created_at = "2026-10-12T01:04:04.447Z"
-updated_at = "2026-10-12T01:04:50.956584Z"
+updated_at = "2026-10-12T01:05:21.965053Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
