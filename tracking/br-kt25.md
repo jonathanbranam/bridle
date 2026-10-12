@@ -4,7 +4,7 @@ title = "Move a project between machines with one command (bridle project move)"
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-09T14:10:30.127Z"
-updated_at = "2026-10-12T14:26:59.925863Z"
+updated_at = "2026-10-12T14:31:03.814143Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 branch = "bridle/wkt25"
@@ -202,3 +202,16 @@ PdM reading:
 - Still open on Q4: why old messages, events and cost history would be lost (the human questions it), and what "the outgoing mail counter" is. Asked back in the grill.
 - The human asked for clear names for the stages (MVP, V1, V2); asked back in the grill.
 - Lost owning machine: a separate epic, rare, not overengineered (filed; kt25's K8 moves there).
+
+### note · external:advisor/product-manager · 2026-10-12T14:31:03.814Z
+Grill Q4 answered (the human, 2026-10-12 ~10:50 AM ET, to advisor product-manager, dictated), verbatim:
+
+> Oh, I see. Yeah, the outgoing mail counter is fine to lose it or reset it or whatever. I understand now. Thank you.
+>
+> Okay, fine. For Q4, let's do that. We have a project workspace folder, so let's put a folder in there for backing up old databases. I don't actually know. Do we have a database per project? I guess we do, so let's do that as a stopgap. I approve that approach: backup the old database. We can always query it in the future if we need to. It can live on local disk and does not need to be in GitHub. For now, for MVP, that's totally fine, and then we can lose the other things that we've lost.
+
+Settled for K9 (return trip): on a machine that held the project before, the old database is backed up, not deleted, into a folder in the project's workspace (local disk only, not in GitHub, e.g. `<workspace>/.bridle/db-backups/`), and a fresh one is rebuilt from the state branch. The history in it (messages, events, usage) stays queryable by hand later; bridle does not show it. Lost and accepted for the MVP: agent rows, tokens (re-created), the rest.
+
+Fact (advisor): yes, one database per project, at `<workspace>/.bridle/bridle.db` (docs/design/storage.md).
+
+Note for the builder on the outbox counter: the human is fine with it being reset or lost as a user-visible thing, but a plain reset silently drops the project's new mail at the receivers (they dedup on machine, daemon and id; a fresh DB numbers from o-0001 again). The build must avoid that, by carrying the number or by making a rebuilt DB's ids distinct; how is the builder's call. No human decision needed.
