@@ -2,16 +2,16 @@
 id = "br-bb2n"
 title = "K2: project preflight: check the new machine is ready before a move"
 kind = "feature"
-state = "built"
+state = "integrated"
 created_at = "2026-10-12T13:38:40.934Z"
-updated_at = "2026-10-12T14:48:00.641689Z"
+updated_at = "2026-10-12T15:04:00.946349Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "agent:wbb2n",
 ]
 branch = "bridle/wbb2n"
-commit = "8d95b4e6cc5c6acfa9c39e9e17eec6c73c5689db"
+commit = "341f1eab476492d90d185341c5c884c31fbe92f9"
 summary = '`bridle projects preflight --to MACHINE` (new crates/bridle/src/preflight_remote.rs, wired in preflight.rs; cli.rs, cli.md, CHANGELOG). Items run as ssh snippets through a `Remote` trait (fake in tests): reachable (ssh error, stops), clone (asks before git clone), bridle version >= this one, claude login, gh auth, git push dry-run, first word of [commands] check, tmux, timezone offset, WSL systemd, linger, AWS when .bridle/config.toml has [mail]; local: NEW [machine] name == target key, host resolves, projects sync comparison (no --apply). Each failure says "on M run: ...". Caveats: did not make the scan read HEAD (K1 note, left as is); clone path on NEW assumed same as here (HOME-relative); doctor not reused remotely (checks are inline snippets); timezone compares UTC offset.'
 ticket = "bb2n"
 +++
@@ -48,3 +48,6 @@ correction: my CHANGELOG line was missing from the earlier commit; added in 606c
 
 ### note · agent:wbb2n · 2026-10-12T14:48:00.641Z
 done: CHANGELOG line added (606c0f0a), main merged (up to date); just check on that tip: exit 0, 1606 tests passed (6 skipped). sha 606c0f0a8ea4f2bdb56b659a06bccb5845cbc486. Note: my second 'ticket built' call was refused for workers, so the ticket still records 8d95b4e6; the branch tip is 606c0f0a.
+
+### note · agent:manager-2 · 2026-10-12T15:04:00.946Z
+integrated: 341f1eab476492d90d185341c5c884c31fbe92f9 (branch bridle/wbb2n)
