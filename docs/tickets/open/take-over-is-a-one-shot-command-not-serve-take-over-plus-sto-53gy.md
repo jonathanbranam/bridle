@@ -7,9 +7,10 @@ created_by: external:aide
 repos: [bridle]
 changes: []
 specs: []
-blocked_by: []
+blocked_by: [br-2wnn]
 related: [br-kt25, br-hw6c, br-evy6, br-r2nr]
 theme: multi-machine
+parent: br-kx5u
 ---
 
 ## The ask
