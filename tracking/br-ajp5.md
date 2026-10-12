@@ -2,11 +2,14 @@
 id = "br-ajp5"
 title = "A release daemon guesses bridle's repo from the project's origin: wrong workflow fetch and upgrades, and git prompts"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-12T03:03:27.217Z"
-updated_at = "2026-10-12T03:13:36.420987Z"
+updated_at = "2026-10-12T03:56:10.930191Z"
 created_by = "external:advisor/nuc-rename"
-watchers = ["external:advisor/nuc-rename"]
+watchers = [
+    "external:advisor/nuc-rename",
+    "agent:wajp5",
+]
 priority = "high"
 priority_at = "2026-10-12T03:03:48.275619Z"
 ticket = "ajp5"

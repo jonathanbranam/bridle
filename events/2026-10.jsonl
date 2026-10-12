@@ -1705,3 +1705,4 @@
 {"actor":"human","at":"2026-10-12T03:52:12.172831Z","from":"claimed","task":"br-h7mu","to":"integrated"}
 {"actor":"human","at":"2026-10-12T03:52:19.778972Z","from":"claimed","task":"br-a3b9","to":"integrated"}
 {"actor":"human","at":"2026-10-12T03:52:41.013454Z","from":"claimed","task":"br-twg8","to":"integrated"}
+{"actor":"external:advisor/product-manager","at":"2026-10-12T03:55:51.359160Z","from":"pending","task":"br-10c0","to":"open"}
