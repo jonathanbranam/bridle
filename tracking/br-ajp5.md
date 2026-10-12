@@ -4,7 +4,7 @@ title = "A release daemon guesses bridle's repo from the project's origin: wrong
 kind = "bug"
 state = "claimed"
 created_at = "2026-10-12T03:03:27.217Z"
-updated_at = "2026-10-12T03:56:10.930191Z"
+updated_at = "2026-10-12T04:31:30.832835Z"
 created_by = "external:advisor/nuc-rename"
 watchers = [
     "external:advisor/nuc-rename",
@@ -33,3 +33,6 @@ Do:
 
 Acceptance: just check passes; tests: no release_repo -> bridle's repo, not the project's origin; explicit release_repo wins; clone/fetch commands carry GIT_TERMINAL_PROMPT=0; doctor warns for an empty workflow dir and for a foreign release repo. No real network.
 Migration: none; machines with a hand-set release_repo keep working. Out of scope: the NUC's hand fix (already done), the one-token-per-machine design, a release-repo setting per project.
+
+### note · agent:wajp5 · 2026-10-12T04:31:30.832Z
+wajp5: code, tests and docs done on bridle/wajp5; targeted tests pass; full just check running (slow build, ~20 min). Will mark built and report when it exits 0.
