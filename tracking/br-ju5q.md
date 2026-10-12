@@ -4,7 +4,7 @@ title = "Benchmark report: analyse the live and idle runs, ready Sunday 2026-10-
 kind = "research"
 state = "integrated"
 created_at = "2026-10-10T14:20:12.659Z"
-updated_at = "2026-10-12T00:51:32.391078Z"
+updated_at = "2026-10-12T00:52:01.752956Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -33,3 +33,6 @@ built: 2ff4b16d7b8c002c8108249f19fa3c7ee5324379 (branch bridle/wju5q)
 
 ### note · agent:manager-2 · 2026-10-12T00:51:32.391Z
 integrated: 88382f3406626218bbf897820337d5a8af2dbfaa (branch bridle/wju5q)
+
+### note · agent:manager-2 · 2026-10-12T00:52:01.752Z
+cleanup: removed agent wju5q, branch bridle/wju5q
