@@ -4,7 +4,7 @@ title = "bridle-grill asks how the human will answer (mobile, computer or voice)
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-12T14:01:26.541Z"
-updated_at = "2026-10-12T15:12:39.600941Z"
+updated_at = "2026-10-12T15:12:56.151860Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -37,3 +37,6 @@ done: main merged; just check exit 0, 1606 tests passed; aaf8a73eb31c673e41157c9
 
 ### note · agent:manager-2 · 2026-10-12T15:12:39.600Z
 integrated: 7381ff94f3d76669d1303440d0a4c8a49d326c53 (branch bridle/wbs85)
+
+### note · agent:manager-2 · 2026-10-12T15:12:56.151Z
+cleanup: removed agent wbs85, branch bridle/wbs85
