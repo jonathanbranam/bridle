@@ -59,7 +59,8 @@ kuw2), benchmarking (report due), everything is a ticket (step 10 gated on three
 migrations.
 
 1. **Human work: bring the three machines onto bridle** (du7e; the human's to-dos h7mu, jgdb, r2nr)
-   - br-eurm (bug: `token pair` mints visitors with no home, so replies don't come back), child of du7e, top of the queue once readied: blocks remus setup (jgdb) and makes r2nr step 2 hand-made tokens. Design call: each visitor's home.
+   - br-eurm (bug: `token pair` mints visitors with no home, so replies don't come back), child of du7e, top of the queue once readied (the human said "wait", ~8:18 PM ET): blocks remus setup (jgdb) and makes r2nr step 2 hand-made tokens. Design call: each visitor's home.
+   - br-2wnn (a command that compares [projects] (machine, port) across machines and updates every copy to match; small slice of rjd5), child of du7e, pending; after eurm. The human: no big changes.
    - br-53gy (take over as a one-shot command; stop and start a project's daemon on any machine), theme `multi-machine`, pending: not on du7e's path (`serve --take-over` works, stopped by hand) but eases the NUC moves; ready it next if the human wants it before the NUC steps.
 2. **bridle-ui ships with bridle releases** (`ui-releases`; t3dr readied 2026-10-11)
 3. **One orchestrator per machine** (`orchestrator-per-machine`)
