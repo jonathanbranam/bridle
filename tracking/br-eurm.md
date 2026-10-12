@@ -4,7 +4,7 @@ title = "bridle token pair isn't one command and done: it mints visitors with no
 kind = "bug"
 state = "open"
 created_at = "2026-10-12T00:03:22.445Z"
-updated_at = "2026-10-12T00:25:26.550824Z"
+updated_at = "2026-10-12T00:26:02.930793Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "eurm"
@@ -49,3 +49,15 @@ The human said "wait" on eurm (~8:18 PM ET, via aide m-10834): don't ready until
 
 ### note · external:aide · 2026-10-12T00:25:10.457Z
 From the human, via aide (~8:25 PM ET), verbatim: "want to use these commands to set up the remus wsl2 and vesta nuc with new name". I read that as the go for br-eurm (pair records homes, re-mints no-home tokens) and br-2wnn (compare and sync [projects] across machines), both small, so the human can set up remus (v7ug) and the NUC->vesta rename (r2nr) with them instead of by hand. The human waits for both before doing remus and the rename.
+
+### note · agent:pm-1 · 2026-10-12T00:26:02.930Z
+Build brief (pm-1). Scope is the PdM's narrowed comment: no new command, no one-token-per-machine (B is off; the human said no big changes). Model: Sonnet. Small; runs before br-2wnn (they do not share files, so order is only the human's priority).
+
+Do:
+1. `bridle token pair` mints every visitor with its home. Today crates/bridle/src/commands/misc.rs ~883-887 (PairMint) sends home: None. Home = the same-named project on the holder machine if the holder has it in [projects], else the project the role lives in (bridle for orchestrator/advisor/aide, the role's own project otherwise; use TOKEN_ROLES in crates/bridle/src/token_pair.rs:38 to carry the default). Reuse the existing visitor --home path from br-n7cg; do not invent a second one.
+2. An existing visitor with no home counts as not working: a plain re-run re-mints it with a home and updates the holder's installed credentials (what --rotate does today, but automatic for these only). Idempotent: a second run changes nothing.
+3. Docs: docs/design/specs/token-pairing.md (add homes and the re-mint rule; keep its spec format, check `bridle workflow spec` runs it if specs there are executable), principals.md "Replies come home" cross-reference, docs/design/cli.md pair entry, CHANGELOG. Also fix the r2nr-style workaround text if a doc says "revoke then token create --home by hand" instead of pair.
+
+Acceptance: just check passes; tests: pair mints with home (same-named project and fallback cases), a no-home visitor is re-minted on a plain run, a second run is a no-op. Use the existing pair test seams (no real SSH).
+Migration: none to files; existing pairings heal on the next `bridle token pair` run (that is the point).
+Out of scope: one token per machine (B), `pair --all`, a placement record (evy6), any change to the visitor/peer token model.
