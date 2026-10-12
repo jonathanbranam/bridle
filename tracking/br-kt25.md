@@ -4,7 +4,7 @@ title = "Move a project between machines with one command (bridle project move)"
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-09T14:10:30.127Z"
-updated_at = "2026-10-12T14:16:02.773573Z"
+updated_at = "2026-10-12T14:17:54.901445Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 branch = "bridle/wkt25"
@@ -150,3 +150,17 @@ Settled: no parking in the MVP. The move waits for a stable project: a per-proje
 
 ### note · external:advisor/product-manager · 2026-10-12T14:16:02.773Z
 The human, 2026-10-12 ~10:25 AM ET (to advisor product-manager, dictated), verbatim, clarifying Q2: "Yeah, just to clarify, today my understanding is the agents are not allowed to push. Adding agents being allowed to push is more work and not something that's critical for the first phase of project transfer." Fact (advisor): correct. Agents are denied `git push`; only the manager pushes the integration branch, through `bridle push` after `bridle ticket land` (workflow/base/roles/manager.md; deny rules in crates/bridle-daemon/src/config.rs). Agents pushing their branches is phase 3 (workers run anywhere).
+
+### note · external:advisor/product-manager · 2026-10-12T14:17:54.901Z
+Grill Q5 answered (the human, 2026-10-12 ~10:30 AM ET, to advisor product-manager, dictated), verbatim:
+
+> That's right. For Q5, the hold does not expire for the MVP. I'm totally fine with that, but I want the orchestrator to be working with me on this, checking up on it, and being active in it.
+>
+> The main thing we want to avoid is the stale agent problem, the stale worker problem. We want to avoid two things:
+>
+> 1. We've run into this several times where the restart was held because there was no quiet period due to some bugs in the agent tracking the background worker agents. That's something we want to avoid, and the orchestrator watching and observing the system can help with that and finding any bugs there.
+> 2. The manager was landing a ticket and went idle, but he was just waiting for the results of compiling and running tests. The daemon incorrectly interpreted that as an idle period.
+>
+> Those two issues should be filed, and we need to work on those as part of a later epic, but we're not going to block the project move MVP for those fixes yet. We'll address them manually for now, which is, I think, perfectly fine.
+
+Settled for K4 (the drain): the hold on new work does not expire (no timeout). The orchestrator works the drain with the human: it checks on it, watches for stuck agents and reports them, and is active in it. The two drain bugs (a quiet point that never comes because of agent-tracking bugs; a manager waiting on `just check` read as idle) are filed separately for a later epic and handled by hand during MVP moves; they do not block kx5u.
