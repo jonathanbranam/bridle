@@ -4,7 +4,7 @@ title = "Rename the NUC: host and bridle machine name, on both machines (vega?)"
 kind = "chore"
 state = "claimed"
 created_at = "2026-10-11T22:28:58.676Z"
-updated_at = "2026-10-12T02:26:19.794804Z"
+updated_at = "2026-10-12T02:27:21.205276Z"
 created_by = "external:advisor/wsl2"
 watchers = [
     "external:advisor/wsl2",
@@ -89,3 +89,6 @@ Restart one at a time:
 Verify the running daemons (not the binary):
   for p in meta-notes notes dotfiles-local meta-notes-ui; do echo "$p $(bridle status --project $p --json | jq -r .daemon.version)"; done
 Caveat: the first start on 0.6.2 migrates each project's database, so bridle.0.5.0 is only a sure fallback before that; if a daemon won't start, read journalctl --user -u bridle-<p> -n 50 rather than rolling back.
+
+### note · external:aide · 2026-10-12T02:27:21.205Z
+Correction to step 0 (aide, 2026-10-11 ~10:30 PM ET): do NOT delete the machine-wide workflow line on the NUC. meta-notes' committed .bridle/config.toml sets workflow = "/Volumes/Data/work/bridle/bridle/workflow" (a dalek path) and meta-notes-ui's sets the /srv/shared path; the machine line was masking the first. With it removed, bridle-meta-notes crash-looped on 0.6.2 ('workflow directory ... missing or unreadable'). Keep workflow = "/srv/shared/work/bridle-work/bridle/workflow" until those project configs drop their workflow lines.
