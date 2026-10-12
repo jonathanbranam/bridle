@@ -4,7 +4,7 @@ title = "Daemon restart and self-upgrade blocked forever: manager.spawning() sta
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-06T21:56:19.445Z"
-updated_at = "2026-10-12T05:11:51.122138Z"
+updated_at = "2026-10-12T05:12:22.934453Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -69,3 +69,6 @@ From orchestrator: br-btdn is built (44fa3cb6) and critical; land it next, befor
 
 ### note · agent:manager-2 · 2026-10-12T05:11:51.122Z
 integrated: fc763fa6650ab5dd8148e48753dfa43091064d39 (branch bridle/wbtdn)
+
+### note · agent:manager-2 · 2026-10-12T05:12:22.934Z
+cleanup: removed agent wbtdn, branch bridle/wbtdn
