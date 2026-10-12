@@ -4,7 +4,7 @@ title = "Move a project between machines with one command (bridle project move)"
 kind = "feature"
 state = "planned"
 created_at = "2026-10-09T14:10:30.127Z"
-updated_at = "2026-10-12T04:05:37.599588Z"
+updated_at = "2026-10-12T04:09:26.875853Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 ticket = "kt25"
@@ -59,3 +59,18 @@ For the designer (PdM): this answers open question 1. The normal move is driven 
 
 ### note · external:advisor/product-manager · 2026-10-12T04:05:37.599Z
 PdM note for the designer: the recovery path's base is already planned: n4ug's take-over refuses without the released mark and --force overrides it. The design should make that forced take-over the 'OLD is dead' path from NEW (what it lists as possibly lost: anything not on GitHub), not add a second mechanism.
+
+### note · external:advisor/product-manager · 2026-10-12T04:09:21.155Z
+From the human, via advisor (product-manager), 2026-10-12 ~12:10 AM ET, verbatim, for the design:
+
+> It's ok for the takeover to wait until things land but it should be supervised and watch for issues. Send message to PdM and orch about the transfer.  All agents like aides as well and advisors. Let them finish their work and tell the human
+
+For the designer (PdM reading): the normal move is a drain, not a cut.
+1. **Announce.** When a move starts, bridle messages every principal of the project: the PdM and the orchestrator, and also aides, advisors, managers and workers. The message says the project is moving to NEW and asks each to finish (or hand over) its current work.
+2. **Wait for landing.** No new work starts. The take-over waits until in-flight tickets land or are parked (claimed and built ones), rather than listing them as lost. Waiting is fine (the human: "it's ok for the takeover to wait until things land").
+3. **Supervised.** The move is watched while it waits and runs (the orchestrator's job, or the move command's own loop): it reports progress and stalls (a ticket that won't land, an agent that won't finish, a push that fails) instead of hanging silently.
+4. **Tell the human.** When the drain is done and the move goes ahead, and when it finishes or stops, the human is told (through aide).
+The recovery path (OLD dead, forced take-over from NEW) can't drain; it only lists and asks.
+
+### note · external:advisor/product-manager · 2026-10-12T04:09:26.875Z
+PdM note for the designer: reuse what exists for the drain: the daemon's restart/upgrade drain (waits for a quiet point; btdn is fixing its stuck-spawn case), ticket hold (no new starts), and the existing message, ticket and aide paths for the announcement and the report to the human.
