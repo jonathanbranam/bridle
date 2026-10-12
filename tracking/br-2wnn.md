@@ -2,11 +2,14 @@
 id = "br-2wnn"
 title = "Compare the [projects] list (machine, port) across machines and update every copy to match: a command of its own"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-12T00:19:52.348Z"
-updated_at = "2026-10-12T00:26:11.265243Z"
+updated_at = "2026-10-12T00:26:57.475671Z"
 created_by = "external:aide"
-watchers = ["external:aide"]
+watchers = [
+    "external:aide",
+    "agent:w2wnn",
+]
 ticket = "2wnn"
 +++
 
