@@ -1743,3 +1743,16 @@ battery fell from 99% to 70% in 27 minutes (about 1.1% a minute) with two worker
   br-y455/br-btdn. Nothing logged who asked for the restart, so it took the human to say.
 - **Category:** `daemon`.
 - **Follow-up:** br-up5r (incident; recovery is the human's `launchctl kickstart -k`, as for y455).
+
+## 2026-10-12 06:16Z: push alarm from two pushers racing on main
+
+- **What happened:** the daemon's automatic push of `main` was rejected ("cannot lock ref
+  'refs/heads/main': is at 075e5e95 but expected 6e3e963c") and it sent "find out why before
+  landing more". manager-2 had just pushed br-n4ug (075e5e95) on top of br-ajp5 (6e3e963c) itself.
+- **Impact:** none: local and origin `main` agreed at 075e5e95 when checked; CI green through ajp5.
+  A false alarm that tells agents to stop landing.
+- **Cause:** two pushers for one clone (the manager's push after each merge, and the daemon's
+  automatic push); the loser's ref expectation was stale.
+- **Category:** `daemon`.
+- **Follow-up:** none filed; if it recurs, the automatic push should re-fetch and stay quiet when
+  origin already has the commit.
