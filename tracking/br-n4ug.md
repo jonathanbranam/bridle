@@ -4,7 +4,7 @@ title = "53gy B: project stop with confirmed pushes and released mark, pre-stop 
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-12T01:04:04.403Z"
-updated_at = "2026-10-12T06:16:21.095Z"
+updated_at = "2026-10-12T06:16:39.390963Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -39,3 +39,6 @@ done: project stop with confirmed pushes + released mark, units unloaded, take-o
 
 ### note · agent:manager-2 · 2026-10-12T06:16:21.095Z
 integrated: 075e5e9565cdcd51ab851de8d03c99360683e876 (branch bridle/wn4ug)
+
+### note · agent:manager-2 · 2026-10-12T06:16:39.390Z
+cleanup: removed agent wn4ug, branch bridle/wn4ug

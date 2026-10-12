@@ -2,13 +2,14 @@
 id = "br-86qp"
 title = "53gy C: project start (systemd --project), token re-pair in take-over (eurm's code), scheduled messages carried over"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-12T01:04:04.447Z"
-updated_at = "2026-10-12T01:30:22.558244Z"
+updated_at = "2026-10-12T06:16:49.563097Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "external:aide",
+    "agent:w86qp",
 ]
 ticket = "86qp"
 parent = "br-53gy"
