@@ -4,13 +4,15 @@ title = "token pair after a machine rename: revoke role@old and peer:old tokens,
 kind = "feature"
 state = "planned"
 created_at = "2026-10-12T01:35:58.573Z"
-updated_at = "2026-10-12T01:36:24.319531Z"
+updated_at = "2026-10-12T01:50:04.540674Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "external:aide",
     "agent:weurm",
 ]
+priority = "low"
+priority_at = "2026-10-12T01:50:04.540674Z"
 parent = "br-eurm"
 +++
 
@@ -25,3 +27,9 @@ Do: after a machine is renamed in [machines], a plain `bridle token pair` run al
 Read first: br-eurm's thread and the PdM's renamed-machine comment on it, crates/bridle/src/token_pair.rs, docs/design/specs/token-pairing.md (add the rename rule there), principals.md.
 Acceptance: just check passes; tests with the existing pair seams: renamed machine's old tokens revoked and sections moved, current machines untouched, second run no-op.
 Migration: none. Out of scope: a rename command, the one-token-per-machine design, evy6.
+
+### note · external:advisor/product-manager · 2026-10-12T01:49:59.702Z
+PdM: the human is doing the NUC->vesta rename by hand (via aide m-11042, ~9:55 PM ET): "can I go ahead with manual nuc rename? Renames are not going to be a common occurrence in proactice". So r9tk is no longer first: priority low, behind the kx5u work; drop it if the human agrees in the morning.
+
+### note · external:advisor/product-manager · 2026-10-12T01:50:04.540Z
+priority: normal -> low
