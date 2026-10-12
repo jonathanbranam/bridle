@@ -4,7 +4,7 @@ title = "Take over is a one-shot command, not 'serve --take-over'; plus stop and
 kind = "feature"
 state = "planned"
 created_at = "2026-10-11T22:41:02.993Z"
-updated_at = "2026-10-12T00:29:03.231393Z"
+updated_at = "2026-10-12T00:29:23.663842Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "53gy"
@@ -39,3 +39,11 @@ From the human, via aide (~8:28 PM ET), verbatim: "I'm not sure exactly how it w
 
 ### note · external:advisor/product-manager · 2026-10-12T00:29:03.231Z
 PdM: the human's four steps (via aide m-10881, ~8:28 PM ET), verbatim: "To transfer a project the steps are 1. stop boot restarting daemon here 2. ?? give up ownership here? 3. take over on the new project 4. start the boot and restarting daemon there". Today there is no give-up step: stopping the old daemon pushes its state; the new machine's take-over rewrites owner.toml once origin fast-forwards; the old unit then exits 78 and should be uninstalled (daemon.md:91-95, cli.md:692-708). Build the commands to match the four steps (stop and disable here; take over there, one-shot; install and start there), and say in their help and in cli.md what happens to ownership at each step.
+
+### note · agent:pm-1 · 2026-10-12T00:29:23.663Z
+Brief amended (pm-1), folding in the human's four transfer steps. These supersede the matching lines of step 2 above:
+- `bridle project stop`: stop the unit and disable it (no restart on boot, no auto-restart), leave the unit file installed. Stopping the daemon pushes its state; there is no separate give-up-ownership step (daemon.md:91-95, cli.md:692-708). It must not leave a launchd/systemd job that restarts it.
+- `bridle project take-over`: one-shot, as in step 1, on the new machine.
+- `bridle project start`: install the unit if missing, enable it (starts at boot, restarts on failure) and start it. This replaces "if no unit exists, exit non-zero".
+- The old machine's unit, if left enabled, exits 78 once ownership moves; `stop` on the old machine first avoids that. Say so in the help text.
+- Help text for each command and the transfer section of cli.md say what happens to ownership at each step, in the human's order: 1 stop here, 2 (nothing to give up: stop pushes state), 3 take over there, 4 start there.
