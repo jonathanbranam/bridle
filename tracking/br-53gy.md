@@ -4,7 +4,7 @@ title = "Take over is a one-shot command, not 'serve --take-over'; plus stop and
 kind = "feature"
 state = "planned"
 created_at = "2026-10-11T22:41:02.993Z"
-updated_at = "2026-10-12T00:29:23.663842Z"
+updated_at = "2026-10-12T00:35:05.764652Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "53gy"
@@ -47,3 +47,12 @@ Brief amended (pm-1), folding in the human's four transfer steps. These supersed
 - `bridle project start`: install the unit if missing, enable it (starts at boot, restarts on failure) and start it. This replaces "if no unit exists, exit non-zero".
 - The old machine's unit, if left enabled, exits 78 once ownership moves; `stop` on the old machine first avoids that. Say so in the help text.
 - Help text for each command and the transfer section of cli.md say what happens to ownership at each step, in the human's order: 1 stop here, 2 (nothing to give up: stop pushes state), 3 take over there, 4 start there.
+
+### note · external:aide · 2026-10-12T00:34:41.342Z
+From the human, via aide (~8:34 PM ET), verbatim: "make bridle safely stop the daemon and push the state and everything. don't make it best effort". Context (aide, checked in code): today stopping pushes the state branch best-effort with a 10 s limit (crates/bridle-daemon/src/lib.rs:1229, state_branch.rs:272 push_on_shutdown) and says nothing if it fails; take-over checks only that the new machine is level with origin (state_branch.rs:918 require_state_synced), not that the old machine pushed everything, so unpushed state would be left behind. Required for 53gy's 'bridle project stop' (step 1 of the human's four): stop the daemon, push the state branch and anything else the move needs (the integration branch's direct commits too), and confirm origin has it; if any push fails, say so plainly and exit non-zero, never report success. Take-over must not proceed on a project whose old owner stopped without a confirmed push.
+
+### note · external:advisor/product-manager · 2026-10-12T00:34:56.917Z
+PdM: required, not optional. The human (via aide m-10890, ~8:34 PM ET), verbatim: "make bridle safely stop the daemon and push the state and everything. don't make it best effort". Today shutdown pushes the state branch best-effort, 10 s, silent on failure (bridle-daemon lib.rs:1229, state_branch.rs:272), and take-over checks only that the new machine is level with origin (state_branch.rs:918). Required: the stop command stops the daemon, pushes the state branch and the integration branch's direct commits, confirms origin has them, and on any failure says so plainly and exits non-zero. Take-over refuses a project whose old owner has not confirmed a clean stop. PdM suggestion for how take-over can tell (planner's call, keep it small): the stop writes a 'released' mark in owner.toml as its last pushed commit; take-over requires it (with an explicit --force for a dead machine). That mark is the human's step 2, 'give up ownership here'.
+
+### note · agent:pm-1 · 2026-10-12T00:35:05.764Z
+Brief acknowledged (pm-1), per the PdM's last comment (required by the human): `project stop` must confirm the state push reached origin (fail non-zero and leave the unit as it was if the push cannot be confirmed), not best effort; `project take-over` must refuse unless origin's bridle/state shows the old owner's final push (fast-forward clean), saying what to run on the old machine. Tests: stop with a failing push exits non-zero and does not disable; take-over refuses on a diverged or unpushed state and succeeds after. These add to step 1 and step 2 above; the worker should read the PdM's comment for the exact wording.
