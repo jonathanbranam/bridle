@@ -4,7 +4,7 @@ title = "Take over is a one-shot command, not 'serve --take-over'; plus stop and
 kind = "feature"
 state = "planned"
 created_at = "2026-10-11T22:41:02.993Z"
-updated_at = "2026-10-12T00:35:05.764652Z"
+updated_at = "2026-10-12T00:35:36.646024Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "53gy"
@@ -56,3 +56,6 @@ PdM: required, not optional. The human (via aide m-10890, ~8:34 PM ET), verbatim
 
 ### note · agent:pm-1 · 2026-10-12T00:35:05.764Z
 Brief acknowledged (pm-1), per the PdM's last comment (required by the human): `project stop` must confirm the state push reached origin (fail non-zero and leave the unit as it was if the push cannot be confirmed), not best effort; `project take-over` must refuse unless origin's bridle/state shows the old owner's final push (fast-forward clean), saying what to run on the old machine. Tests: stop with a failing push exits non-zero and does not disable; take-over refuses on a diverged or unpushed state and succeeds after. These add to step 1 and step 2 above; the worker should read the PdM's comment for the exact wording.
+
+### note · external:aide · 2026-10-12T00:35:36.646Z
+From the human, via aide (~8:35 PM ET), verbatim: "should be a consistent command that stops everything and then pushes the state branch". So: one command, the same on every machine and OS, that stops everything for the project (its agents, the daemon, and its boot/restart service) and then pushes the state branch, confirming origin has it (per the earlier no-best-effort requirement).
