@@ -89,6 +89,11 @@ const CLASSES: &[(&str, Kind, &str)] = &[
     ("workflow", Skip, "reads and writes the cwd's repo files"),
     ("pane", Skip, "tmux"),
     ("machine", Skip, "machine setup"),
+    (
+        "projects sync",
+        Skip,
+        "reads and writes config.toml on the machines; no project",
+    ),
     ("focus", Skip, "the human's own focus gate"),
     (
         "orchestrator note-session",

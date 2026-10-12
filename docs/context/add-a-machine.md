@@ -132,6 +132,11 @@ newpc = "newpc"
 # my-project = { machine = "newpc", port = 7407 }
 ```
 
+Once this machine's `[machines]` and `[projects]` are right, `bridle projects sync` compares the
+`[machines]` and `[projects]` lists with every `[machines]` entry over ssh, and `bridle projects sync --apply` copies
+this machine's entries to the others (adds missing, fixes differing, never deletes), and notes any
+machine whose `[machine] name` is not a key of its `[machines]`.
+
 Without the `[machines]` line a project on `newpc` can't be reached. A listed project with no
 `[machine] name` on the machine that reads it is an error. Check the file loads: `bridle doctor`
 warns about unknown sections and keys (`--strict` fails on them).
@@ -344,7 +349,8 @@ Only the owner's clone can push the project's integration branch (8z7j): `bridle
 `bridle sync` install a `pre-push` hook that refuses it elsewhere, and `--take-over` moves the
 right with the project. Pushes of other branches are not touched.
 
-Also update `[projects]` on **every** machine to the new `machine = "newpc"` line, and re-mint
+Also update `[projects]` on **every** machine to the new `machine = "newpc"` line (edit it here,
+then `bridle projects sync --apply`), and re-mint
 the tokens for that project (steps 3a, 3b): a visitor and a peer token are tied to the daemon
 that minted them. Inbox messages do not move.
 

@@ -233,6 +233,12 @@ bridle pane tag <name>                       set the @bridle tmux pane option to
                                              if not in a tmux pane); used by launcher scripts
 bridle pane untag                            clear the @bridle tmux pane option (errors if not in a
                                              tmux pane)
+bridle projects sync [--apply]               compare the [machines] and [projects] lists of ~/.bridle/config.toml
+                                             here and on every [machines] entry over ssh, print the differences
+                                             (exit 1 only if a machine can't be read or written). --apply makes
+                                             the others match this machine: adds missing entries, fixes differing
+                                             ones, never deletes an entry this machine lacks ("only on X"). Edits
+                                             keep comments and other tables; remote writes go to a temp file then rename.
 bridle machine tools-only-check [--repo P]   exit 1, saying why, if the clone is listed in ~/.bridle/config.toml
                                              `[machine] tools_only = [paths]` (~ and $VAR expand); the
                                              launch scripts call it. `bridle daemon serve` refuses there too

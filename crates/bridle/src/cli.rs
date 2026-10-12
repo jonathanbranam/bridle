@@ -274,6 +274,8 @@ pub enum Command {
     Pane(PaneArgs),
     /// Machine-scope settings for this clone (hw6c).
     Machine(MachineArgs),
+    /// The `[projects]` list of ~/.bridle/config.toml across machines (2wnn).
+    Projects(ProjectsArgs),
     /// Start the orchestrator or advisor session: `claude` with the role's settings, names and
     /// opening prompt, from any directory (replaces scripts/claude-orchestrator and -advisor).
     Session(SessionArgs),
@@ -2472,6 +2474,24 @@ pub enum SessionRole {
     /// the Claude session id. Never fails.
     #[command(hide = true)]
     Note,
+}
+
+#[derive(Debug, Args)]
+pub struct ProjectsArgs {
+    #[command(subcommand)]
+    pub action: ProjectsAction,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum ProjectsAction {
+    /// Compare `[projects]` (project, machine, port) here and on every `[machines]` entry over
+    /// ssh, and print the differences. Read-only unless `--apply`.
+    Sync {
+        /// Update the other machines to match this one: add missing entries and fix differing
+        /// ones. Never deletes an entry this machine lacks.
+        #[arg(long)]
+        apply: bool,
+    },
 }
 
 #[derive(Debug, Args)]

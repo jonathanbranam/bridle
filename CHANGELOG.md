@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+- `bridle projects sync [--apply]` (br-2wnn): compares the `[machines]` and `[projects]` lists of `~/.bridle/config.toml` across this machine and every `[machines]` entry over ssh; `--apply` adds missing entries and fixes differing ones on the others to match this machine, never deleting, keeping comments and other tables. No migration.
 - `bridle token pair` mints visitor tokens with their home (br-eurm): the same-named project on the holder's machine, else the role's project there (bridle), so replies come back; a visitor token with no home counts as not working, so a plain re-run re-mints it and replaces the holder's entry. `GET /v1/status` gains `visitor_home`. Migration: run `bridle token pair` once; no files change by hand.
 
 ## [0.6.2] - 2026-10-11

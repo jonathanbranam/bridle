@@ -157,6 +157,7 @@ mod tests {
         ("explore", NoProject("scratch directories")),
         ("pane", NoProject("tmux")),
         ("machine", NoProject("machine setup")),
+        ("projects", NoProject("config.toml on the machines")),
         ("session", Resolver),
         ("advisor", Resolver),
         ("trace", NoProject("reads the cwd's repo")),
