@@ -4,12 +4,13 @@ title = "K1: refuse a project move while committed config has absolute paths"
 kind = "feature"
 state = "claimed"
 created_at = "2026-10-12T13:38:40.841Z"
-updated_at = "2026-10-12T13:44:06.050833Z"
+updated_at = "2026-10-12T14:03:03.474007Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "agent:w3ch7",
 ]
+summary = "Added 'bridle project preflight [--repo]': a list of named checks (CHECKS in crates/bridle/src/preflight.rs, K2 appends), first 'absolute paths' scanning .bridle/config.toml for absolute/~ workflow and system_prompt, refusing with file:line key and 'fix by hand'. doctor warns via the same absolute_path_findings ('portable paths'). Working-tree scan, not git show HEAD. No --to flag (yagni, K2 adds). Docs: cli.md, CHANGELOG; classified in project_resolution_test."
 ticket = "3ch7"
 +++
 
