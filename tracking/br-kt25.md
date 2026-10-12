@@ -4,7 +4,7 @@ title = "Move a project between machines with one command (bridle project move)"
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-09T14:10:30.127Z"
-updated_at = "2026-10-12T14:17:54.901445Z"
+updated_at = "2026-10-12T14:18:35.009797Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 branch = "bridle/wkt25"
@@ -164,3 +164,6 @@ Grill Q5 answered (the human, 2026-10-12 ~10:30 AM ET, to advisor product-manage
 > Those two issues should be filed, and we need to work on those as part of a later epic, but we're not going to block the project move MVP for those fixes yet. We'll address them manually for now, which is, I think, perfectly fine.
 
 Settled for K4 (the drain): the hold on new work does not expire (no timeout). The orchestrator works the drain with the human: it checks on it, watches for stuck agents and reports them, and is active in it. The two drain bugs (a quiet point that never comes because of agent-tracking bugs; a manager waiting on `just check` read as idle) are filed separately for a later epic and handled by hand during MVP moves; they do not block kx5u.
+
+### note · external:advisor/product-manager · 2026-10-12T14:18:35.009Z
+Q5's two bugs filed (pending, theme reliability, later epic, not blocking kx5u): br-ef3u (stale agent tracking holds the quiet point), br-8swr (manager waiting on just check read as idle).
