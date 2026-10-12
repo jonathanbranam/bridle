@@ -208,3 +208,8 @@ From the human's session with advisor wsl2, 2026-10-10 (times US Eastern).
   `release_repo = "jonathanbranam/bridle"` under `[daemon]` (aide, br-r2nr thread: without it
   the release repo and workflow fetch fall back to each project's origin). Next: add-a-machine
   steps 1 (git identity "Jonathan Branam (remus)") and 2 (config), then tokens.
+- SSH out of remus (2026-10-12): dalek and vesta run plain OpenSSH with keys only (vesta has
+  Tailscale SSH off), so remus got its own key (`ssh-keygen -t ed25519 -C jbranam@remus`, no
+  passphrase so daemons can use it), added to `~/.ssh/authorized_keys` on dalek and vesta. Works.
+  Tailscale SSH on vesta was not used: its browser check would break dalek's unattended SSH.
+  Interim, while ticket r2nr is part done: remus's `[machines]` says `nuc = "vesta"`.
