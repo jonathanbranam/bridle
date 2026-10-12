@@ -1736,3 +1736,4 @@
 {"actor":"agent:w86qp","at":"2026-10-12T06:52:41.168730Z","from":"claimed","task":"br-86qp","to":"built"}
 {"actor":"agent:manager-2","at":"2026-10-12T06:53:02.533392Z","from":"built","task":"br-wayb","to":"integrated"}
 {"actor":"agent:manager-2","at":"2026-10-12T06:57:04.609347Z","from":"built","task":"br-86qp","to":"integrated"}
+{"actor":"agent:manager-2","at":"2026-10-12T07:17:14.635103Z","from":"planned","task":"br-kt25","to":"integrated"}
