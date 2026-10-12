@@ -4,7 +4,7 @@ title = "Move a project between machines with one command (bridle project move)"
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-09T14:10:30.127Z"
-updated_at = "2026-10-12T13:29:49.796031Z"
+updated_at = "2026-10-12T13:30:31.796165Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 branch = "bridle/wkt25"
@@ -105,3 +105,14 @@ From the human, via advisor (product-manager), 2026-10-12, verbatim: answers to 
 > I want to use the grill-me or our version on this epic to get clarity.
 
 PdM: 1 and 3 are not settled (1 needs the list of what a return trip loses; 3 needs a review of drain behaviour, linked to the upgrade drain problems). 2 short term is open. 4: yes for now. 5: the PdM orders K1-K9. No K child is filed until the grilling session on kx5u/kt25 settles 1-3.
+
+### note · external:advisor/product-manager · 2026-10-12T13:30:31.796Z
+Grilling session (advisor product-manager, skill bridle-grill), on epic kx5u with its design kt25. Started 2026-10-12 ~9:35 AM ET at the human's ask ("I want to use the grill-me or our version on this epic to get clarity").
+
+Open questions (5 now; may grow):
+- Q1: epic or ticket? kx5u = phase 2 (MVP) epic; kt25 = its design, not a build.
+- Q2: parking in the MVP: workers push their own branches during the drain (the long-term vision), rather than an automatic WIP commit.
+- Q3: what does the MVP leave manual (the human: "may still include a few manual steps")?
+- Q4: return trips: the list of what a return trip loses (fact: the PdM is compiling it), then clear-and-rebuild or not.
+- Q5: drain behaviour: a review across moves and upgrades (too weak / too aggressive / can't tell a manager is waiting on just check).
+Settled: interactive sessions are told, not started, for now (the human: "short term, yes"); build order is the PdM's.
