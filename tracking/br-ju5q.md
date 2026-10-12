@@ -2,13 +2,14 @@
 id = "br-ju5q"
 title = "Benchmark report: analyse the live and idle runs, ready Sunday 2026-10-11 morning"
 kind = "research"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-10T14:20:12.659Z"
-updated_at = "2026-10-11T21:32:27.863687Z"
+updated_at = "2026-10-12T00:20:50.941054Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "external:aide",
+    "agent:wju5q",
 ]
 size = "S"
 ticket = "ju5q"
