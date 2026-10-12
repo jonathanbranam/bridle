@@ -2,11 +2,14 @@
 id = "br-g5dm"
 title = "Products: a product is a set of projects with one roadmap and one product manager; several product managers"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-09T20:06:43.304Z"
-updated_at = "2026-10-12T03:56:53.367948Z"
+updated_at = "2026-10-12T09:44:57.368290Z"
 created_by = "external:advisor/product-manager"
-watchers = ["external:advisor/product-manager"]
+watchers = [
+    "external:advisor/product-manager",
+    "agent:wg5dm",
+]
 priority = "low"
 priority_at = "2026-10-09T20:11:04.169227Z"
 ticket = "g5dm"
