@@ -9,6 +9,7 @@ with project addenda:
 |---|---|---|
 | `bridle-manager` | orient, decompose, plan, spawn, wait, arbitrate | driver-guide, propose/new/continue/ff-change |
 | `bridle-worker` | claim, read plan, implement, report on the task as it goes, handoff | apply-agent-guide, apply-change |
+| `bridle-grill` | interview the human, one or two questions at a time, to clarify a ticket or epic; check a child against its epic (copied from Matt Pocock's `grilling`, MIT; credit in the file) | ad-hoc clarification |
 | `bridle-plan` | writing the task plan, spec edits with ids, impact declaration | propose-change, design.md conventions |
 | `bridle-review` | reviewing a diff against plan + specs + impact | verify-change, acceptance-verifier |
 | `bridle-triage` | intake → planned, dropping, dedup | ticket-conventions, maintenance |
