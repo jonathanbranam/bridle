@@ -4,7 +4,7 @@ title = "Products: a product is a set of projects with one roadmap and one produ
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-09T20:06:43.304Z"
-updated_at = "2026-10-12T09:55:46.877393Z"
+updated_at = "2026-10-12T09:55:49.533082Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -44,3 +44,6 @@ done: design in ticket body, 5 questions for the human in the summary; 45dcd855
 
 ### note · agent:manager-2 · 2026-10-12T09:55:46.877Z
 integrated: 5b239233e8aa3b6f86d65ae01e269ed32b353733 (branch bridle/wg5dm)
+
+### note · agent:manager-2 · 2026-10-12T09:55:49.533Z
+cleanup: removed nothing; kept agent wg5dm (background job pid 34394)
