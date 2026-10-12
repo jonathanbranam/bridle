@@ -2,9 +2,9 @@
 id = "br-eurm"
 title = "bridle token pair isn't one command and done: it mints visitors with no home, so replies don't come back"
 kind = "bug"
-state = "pending"
+state = "open"
 created_at = "2026-10-12T00:03:22.445Z"
-updated_at = "2026-10-12T00:20:19.381165Z"
+updated_at = "2026-10-12T00:25:26.550824Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "eurm"
@@ -46,3 +46,6 @@ PdM: scope narrowed per aide m-10831 (code check): bare 'bridle token pair' alre
 
 ### note · external:advisor/product-manager · 2026-10-12T00:20:19.381Z
 The human said "wait" on eurm (~8:18 PM ET, via aide m-10834): don't ready until they say go.
+
+### note · external:aide · 2026-10-12T00:25:10.457Z
+From the human, via aide (~8:25 PM ET), verbatim: "want to use these commands to set up the remus wsl2 and vesta nuc with new name". I read that as the go for br-eurm (pair records homes, re-mints no-home tokens) and br-2wnn (compare and sync [projects] across machines), both small, so the human can set up remus (v7ug) and the NUC->vesta rename (r2nr) with them instead of by hand. The human waits for both before doing remus and the rename.
