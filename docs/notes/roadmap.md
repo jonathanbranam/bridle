@@ -66,6 +66,7 @@ Done or finishing: machine setup (code done), messaging, scheduled messages (wha
 kuw2), benchmarking (report due), everything is a ticket (step 10 gated on three machines current),
 migrations.
 
+0. **Usage you can trust** (`usage`, br-rdkn; the human, 2026-10-12 ~6:35 PM ET: "Let's do it"; front of the queue)
 1. **Human work: bring the three machines onto bridle** (du7e; the human's to-dos h7mu, jgdb, r2nr)
    - The builds it waits on are epic kx5u (below).
 1b. **Machines: set up a new machine and transfer a project to it, nothing left behind** (kx5u; the human, 2026-10-11 ~8:45 PM ET: transfer bridle and bridle-ui to remus, a smaller project first). Order: 3pc2 inventory, eurm, 2wnn, 53gy, kt25 (carry bridle.db, mail bridge, gateway; overrides kt25's wait for orchestrator-per-machine). Then rjd5, n63z folded in or dropped.
@@ -373,6 +374,17 @@ The orchestrator and daemons stay up, relaunch once, upgrade cleanly and recover
 ### Theme `performance`: Performance and resource cost
 
 Bridle's own cost on the machine: measure against a baseline, then cut it.
+
+#### Epic `usage` (br-rdkn): Usage you can trust: every session counted, costs right, the weekly limits charted
+
+- Outcome: The human can see, and trust, where the account's token budget goes. The human, 2026-10-12 ~6:00 PM ET: "we need tracing and reporting to know for sure"; ~6:35 PM: "Agree on 1-3. Let's do it" and "Put this in a proper theme and epic of course".
+- Done when: (PdM draft) no negative costs, a renew doesn't skew totals (9y7v); external and interactive sessions counted in `bridle usage`, or reported as not measured (hd28); week-to-week limit charts in bridle-ui (yydm).
+
+| Task | Title | Pri | State | Next |
+|---|---|---|---|---|
+| br-9y7v | Usage shows negative costs for long-running agents | | open | to plan (first) |
+| br-hd28 | Count the external and interactive sessions in bridle usage | | open | to plan |
+| br-yydm | Usage page: week-to-week charts of the five-hour and seven-day limits | | open | to plan; a ui- half to file |
 
 #### Epic `benchmarking`: Benchmarking bridle's own cost
 
@@ -690,3 +702,4 @@ Chores assigned to the human: expand on an idea, review a ticket or branch.
 - 2026-10-10 10:20 PM ET: 8umh, 3mz4, n4w4 resolved (n4w4: all 9 recommendations landed). 3haz slices 4 and 5 landed; 3haz stays open for slice 6, br-qac3 (readied, the human's Q3), in `messaging`. syqn parts 2 and 3 (br-epvy, br-wrmu) readied, in `everything-is-a-ticket` after br-syqn.
 - 2026-10-11 12:07 AM ET: 95mu moved from everything-is-a-ticket to reviews-enforced, renamed "Gates: design before build, review before landing" (the human: "yes, agreed move it"). cbbn design decided (plain [[restart]] config), readied; new 3k7d (externals schedule for themselves, high, tonight) in scheduled-messages; new jstr (recipient hint, low) in agents-and-cli. 3haz, fd8e resolved; qac3, fd8e landed.
 - 2026-10-12 5:30 PM ET: tables regenerated (stale since 10-10); Delivered list brought up to date (epic kx5u MVP complete: K1-K6, K9, K10 and yt5v; K7 is V1, later; K8 moved to epic ehg7).
+- 2026-10-12 6:50 PM ET: new epic `usage` (br-rdkn, theme performance), first in order: 9y7v (negative costs), hd28 (count external sessions; answers 368g), yydm (limit charts), all readied on the human's go.
