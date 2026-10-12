@@ -4,7 +4,7 @@ title = "Grilling skill build: copy Matt Pocock's grilling (MIT) as bridle-grill
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-12T12:31:13.844Z"
-updated_at = "2026-10-12T13:15:22.417556Z"
+updated_at = "2026-10-12T13:15:40.601830Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -41,3 +41,6 @@ integrated: 991a88179effb94008a57b42be3e3f0986e8aa4b (branch bridle/wmtph)
 
 ### note · agent:wmtph · 2026-10-12T13:15:22.417Z
 Note: the check (exit 0, 1590 tests) ran on my commit before a final merge of main; that merge brought unrelated main changes (6e1d5306 is the merge tip). Re-run the check at landing if you need it on the exact tip.
+
+### note · agent:manager-2 · 2026-10-12T13:15:40.601Z
+cleanup: removed agent wmtph, branch bridle/wmtph
