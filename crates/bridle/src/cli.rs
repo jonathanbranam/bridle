@@ -2520,7 +2520,7 @@ pub enum ProjectsAction {
     /// transfer; this machine must already own the project. `--machine` runs it over ssh.
     Start(ProjectStartArgs),
     /// Read-only checks that the project can move to another machine; exits non-zero and says
-    /// what to fix when any fails. So far: no absolute or `~` `workflow` / `system_prompt` in
+    /// what to fix when any fails. Checks: no absolute or `~` `workflow` / `system_prompt` in
     /// `.bridle/config.toml` (fix those by hand; bridle does not rewrite them).
     Preflight(PreflightArgs),
 }
@@ -2530,6 +2530,12 @@ pub struct PreflightArgs {
     /// The clone's main checkout. Defaults to the current directory.
     #[arg(long)]
     pub repo: Option<PathBuf>,
+    /// Also check this machine (a key of `[machines]`) over ssh: bridle version, `claude` and
+    /// `gh` logins, git push access, the project's toolchain, tmux, `[machine] name`, host name,
+    /// timezone, AWS credentials when `[mail]` is set, WSL systemd and linger, the clone (asks
+    /// before cloning) and a `projects sync` comparison. Each failure says what to run there.
+    #[arg(long)]
+    pub to: Option<String>,
 }
 
 #[derive(Debug, Args)]

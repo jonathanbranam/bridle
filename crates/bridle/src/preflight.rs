@@ -1,5 +1,6 @@
 //! `bridle project preflight` (br-3ch7, kx5u K1): read-only checks that a project can move to
-//! another machine. A list of named checks, each pass or fail with a message; K2 adds to it.
+//! another machine. A list of named checks, each pass or fail with a message; `--to` adds the
+//! new machine's (`preflight_remote`, br-bb2n).
 //! The absolute-path scan is shared with `bridle doctor`.
 
 use std::path::{Path, PathBuf};
@@ -106,7 +107,34 @@ pub fn run(cli: &Cli, args: &PreflightArgs) -> Result<(), CliError> {
         Some(p) => p.clone(),
         None => std::env::current_dir().context("current directory")?,
     };
-    let results = run_checks(&repo);
+    let mut results = run_checks(&repo);
+    if let Some(machine) = &args.to {
+        let home = bridle_api::discovery::bridle_home();
+        let map =
+            bridle_api::machines::MachineMap::load(&home).map_err(|e| CliError::Other(e.into()))?;
+        let confirm = |q: &str| {
+            use std::io::{BufRead, Write};
+            if cli.json {
+                return false;
+            }
+            print!("{q} [y/N] ");
+            let _ = std::io::stdout().flush();
+            let mut line = String::new();
+            std::io::stdin().lock().read_line(&mut line).is_ok()
+                && line.trim().eq_ignore_ascii_case("y")
+        };
+        let files = crate::project_sync::Real { home };
+        let remote = crate::preflight_remote::run_to(
+            &repo,
+            machine,
+            &map,
+            &crate::preflight_remote::Ssh,
+            &files,
+            &confirm,
+        )
+        .map_err(|e| CliError::Other(anyhow::anyhow!(e)))?;
+        results.extend(remote);
+    }
     if cli.json {
         render::print_json(&results)?;
     } else {
