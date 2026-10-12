@@ -11,6 +11,7 @@ specs: []
 blocked_by: [br-mzy4, br-kefh, br-3vv3, br-3v2m, br-d6h6]
 related: [br-kx5u, br-kt25]
 parent: br-kx5u
+resolved: 2026-10-12T18:52:06Z
 ---
 
 Child of epic br-kx5u (MVP), from the human's grilling session 2026-10-12 (Q3, verbatim on br-kt25's thread).
