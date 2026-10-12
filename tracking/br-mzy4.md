@@ -4,7 +4,7 @@ title = "K3: project stop refuses unless the project is stable (all work landed 
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-12T16:16:45.887Z"
-updated_at = "2026-10-12T17:17:40.838995Z"
+updated_at = "2026-10-12T17:18:07.922677Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -37,3 +37,6 @@ main merged (only cli.md conflicted, resolved); just check exit 0, 1613 tests pa
 
 ### note · agent:manager-2 · 2026-10-12T17:17:40.838Z
 integrated: b4020b51e4cec76fc2bb4524b55e79fe796e1da7 (branch bridle/wmzy4)
+
+### note · agent:manager-2 · 2026-10-12T17:18:07.922Z
+cleanup: removed agent wmzy4, branch bridle/wmzy4
