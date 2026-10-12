@@ -1,6 +1,6 @@
 ---
 id: br-yydm
-title: "bridle-ui: a usage page with week-to-week charts of the five-hour and seven-day limits (xxw9, UI side)"
+title: Gateway serves the account's usage history (/v1/usage/history) for the UI's limit charts (bridle half; UI is ui-u6uz)
 kind: feature
 created: 2026-10-11
 created_by: external:orchestrator
@@ -19,5 +19,13 @@ The UI side of br-xxw9. The human, 2026-10-05 ~2:55 PM ET (to the aide), in xxw9
 
 The data exists: br-xxw9 (landed 2026-10-06) keeps the history of usage readings, served by the daemon at `GET /v1/usage/history` (CLI: `bridle usage --history five_hour|seven_day`). The account is one budget shared by every daemon, so the history is the account's.
 
-1. bridle: the gateway serves that history (it proxies no usage routes today; br-qhsa covers the rest of usage and is not part of this).
-2. bridle-ui: a usage page with week-to-week charts: for each week, how often and how close the human came to the five-hour limit, and the seven-day utilization over the week. The planner files the bridle-ui half as a ui- ticket, as with br-gd43/ui-vnuu.
+## Scope (narrowed 2026-10-12, after manager-2's review)
+
+This ticket is the **bridle half only: the gateway route**. The bridle-ui page is ui-u6uz (blocked by this one).
+
+The gateway serves the account's usage history by proxying the daemon's `GET /v1/usage/history?window=&since=` (returns `Vec<RateLimitPoint>`; `crates/bridle-daemon/src/server.rs` `usage_history`), the way it proxies other per-project routes. The account is one budget across daemons, so one project's daemon is enough: per project under the usual project prefix; no merged-across-projects route (that's br-qhsa, not this).
+
+Acceptance:
+- A gateway test: the route returns the daemon's history for `window=five_hour` and `window=seven_day`, with `since` passed through.
+- An unreachable daemon gives an error the UI can show as unreachable (as other proxied routes do), never an empty list.
+- Read-only, same auth as the other gateway read routes; docs/design (the gateway's route list) and CHANGELOG updated.
