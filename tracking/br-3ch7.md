@@ -2,11 +2,14 @@
 id = "br-3ch7"
 title = "K1: refuse a project move while committed config has absolute paths"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-12T13:38:40.841Z"
-updated_at = "2026-10-12T13:39:03.717393Z"
+updated_at = "2026-10-12T13:44:06.050833Z"
 created_by = "external:advisor/product-manager"
-watchers = ["external:advisor/product-manager"]
+watchers = [
+    "external:advisor/product-manager",
+    "agent:w3ch7",
+]
 ticket = "3ch7"
 +++
 
