@@ -2421,3 +2421,27 @@ from = "br-eas4"
 to = "br-r2nr"
 kind = "related"
 created_at = "2026-10-12T02:49:17.461Z"
+
+[[edge]]
+from = "br-ajp5"
+to = "br-r2nr"
+kind = "related"
+created_at = "2026-10-12T03:03:48.914Z"
+
+[[edge]]
+from = "br-kx5u"
+to = "br-ajp5"
+kind = "parent"
+created_at = "2026-10-12T03:03:48.917Z"
+
+[[edge]]
+from = "br-ajp5"
+to = "br-eurm"
+kind = "related"
+created_at = "2026-10-12T03:03:48.918Z"
+
+[[edge]]
+from = "br-ajp5"
+to = "br-v7ug"
+kind = "related"
+created_at = "2026-10-12T03:03:48.920Z"
