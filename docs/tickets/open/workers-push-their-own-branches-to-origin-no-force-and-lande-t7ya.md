@@ -14,7 +14,7 @@ related: [br-kx5u, br-ehg7, br-kt25]
 
 ## The ask
 
-The human, 2026-10-12 ~11:00 AM ET (to advisor product-manager, dictated, in the grilling session on kx5u/kt25), verbatim:
+The human, 2026-10-12 ~10:36 AM ET (to advisor product-manager, dictated, in the grilling session on kx5u/kt25), verbatim:
 
 > Not part of project moves. I don't know which epic or theme this fits in, but I do want to do the one thing that's from V2, which is that workers should push their branches. Frankly, branches are cheap. They're cheap on local, and they're cheap on remote. The most expensive thing about a branch for us is the build artifacts, but those are not pushed.
 >

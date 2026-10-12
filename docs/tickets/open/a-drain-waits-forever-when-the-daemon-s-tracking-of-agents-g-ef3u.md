@@ -14,7 +14,7 @@ related: [br-kt25, br-y455, br-btdn]
 
 ## The ask
 
-The human, 2026-10-12 ~10:30 AM ET (to advisor product-manager, dictated, in the grilling session on kx5u/kt25, Q5 on the drain), verbatim:
+The human, 2026-10-12 ~10:17 AM ET (to advisor product-manager, dictated, in the grilling session on kx5u/kt25, Q5 on the drain), verbatim:
 
 > The main thing we want to avoid is the stale agent problem, the stale worker problem. We want to avoid two things:
 >

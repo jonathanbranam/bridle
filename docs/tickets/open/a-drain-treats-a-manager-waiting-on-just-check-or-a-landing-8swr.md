@@ -14,7 +14,7 @@ related: [br-kt25, br-y55w]
 
 ## The ask
 
-The human, 2026-10-12 ~10:30 AM ET (to advisor product-manager, dictated, in the grilling session on kx5u/kt25, Q5 on the drain), verbatim:
+The human, 2026-10-12 ~10:17 AM ET (to advisor product-manager, dictated, in the grilling session on kx5u/kt25, Q5 on the drain), verbatim:
 
 > 2. The manager was landing a ticket and went idle, but he was just waiting for the results of compiling and running tests. The daemon incorrectly interpreted that as an idle period.
 >

@@ -46,6 +46,27 @@ The human sets up a new machine with bridle's commands, then moves a project to 
 5. br-kt25: the rest of the move, designed first (the human, 2026-10-12: "a massive ticket that is likely an epic itself"): a design pass that maps every 3pc2 gap to ga6s/n4ug/86qp, a new child here, the pre-move listing or jw75, and splits the rest into build tickets under this epic. The database is NOT copied (the human, 2026-10-11, on kt25's thread). Its 2026-10-10 sequencing (after the orchestrator-per-machine epic) is overridden by this ask.
 6. Related, to fold in or drop after the inventory: br-rjd5 (set up a project everywhere), br-n63z (peer tokens at project creation).
 
+### The MVP build children (from kt25's design, settled in the grill 2026-10-12)
+
+The grill's answers are verbatim on br-kt25's thread. This epic is the **MVP**: it moves a stable
+project with both machines up; the human (or the orchestrator) runs the steps by hand in order;
+the orchestrator works the drain with the human. **V1** is the one `bridle project move` command
+(kt25's K7), reliable with no manual steps, after the drain bugs br-ef3u and br-8swr. **V2** (moves
+with work in flight) is a judgment call later and may never be built. A lost owning machine is
+its own epic, br-ehg7 (kt25's K8 moved there).
+
+- br-3ch7 K1: config with absolute paths refuses (`project preflight` created). Landed.
+- br-bb2n K2: preflight checks the new machine (`--to M`, over ssh). Landed.
+- br-mzy4 K3: `project stop` refuses unless the project is stable (no parking in the MVP).
+- br-kefh K4: `project drain`: hold new work for this project only, no timeout. After K3.
+- br-3vv3 K5: the old machine can never serve the project after a stop.
+- br-3v2m K6: the mail bridge and gateway follow the project.
+- br-d6h6 K9: return trip: back up the old database in the workspace, carry the outbox counter.
+- br-ep5z K10: the MVP runbook, after K3-K9.
+
+Trials (the human, 2026-10-12, on this thread): data-contracts moves dalek -> remus idle, then
+back, then with work in flight (the move lands it first).
+
 ## Notes
 
 - Moving bridle itself is special: dalek's orchestrator runs in the bridle project (one per machine). The inventory and kt25 must say what happens to it and to dalek's other projects that send to bridle.

@@ -14,7 +14,7 @@ related: [br-kx5u, br-kt25, br-53gy]
 
 ## The ask
 
-The human, 2026-10-12 ~10:40 AM ET (to advisor product-manager, dictated, in the grilling session on kx5u/kt25), verbatim:
+The human, 2026-10-12 ~10:26 AM ET (to advisor product-manager, dictated, in the grilling session on kx5u/kt25), verbatim:
 
 > The only situation where that breaks down is where we have lost a computer. Let's have a separate epic for tracking project move with a lost origin, and that's going to be a really rare edge case. I don't want to overengineer it at all. I might not do any of these tickets because, hopefully, that just never happens, and we end up at a state where, in the future, we find different solutions for all these problems. I don't think we need to overengineer anything.
 >
