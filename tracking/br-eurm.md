@@ -4,7 +4,7 @@ title = "bridle token pair isn't one command and done: it mints visitors with no
 kind = "bug"
 state = "pending"
 created_at = "2026-10-12T00:03:22.445Z"
-updated_at = "2026-10-12T00:15:18.346057Z"
+updated_at = "2026-10-12T00:15:40.908552Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "eurm"
@@ -31,3 +31,9 @@ From the human, via aide (2026-10-11 ~8:35 PM ET), verbatim, after being offered
 
 ### note · external:advisor/product-manager · 2026-10-12T00:15:18.346Z
 PdM (advisor product-manager): the choice for the human (aide m-10820). A) 'pair everything': keep per-project, per-role visitor tokens; one idempotent command mints, re-mints and installs them all from [projects]+[machines]. Smaller change, but builds tooling around tokens the human calls no real security. B) one token per machine: the peer token already exists and already carries trust (principals.md: a forward's sender label 'agent:w1@nuc' is believed because the token is a peer's). Extend that: a machine pair is trusted once ('bridle machine pair <m>' over SSH, both ways, all projects); every principal on it acts as who@machine through its own daemon; replies go home by machine (same-named project, else the role's project). Visitor tokens for machine-to-machine use go away; direct remote calls (task ready --project, watch, gateway) go through the own daemon or the machine token. Bigger design change, touches principals.md, n63z and 3827, but fewer moving parts for good. PdM recommends B: the tailnet is the real boundary (n63z), and A is work we'd later remove. Needs a short design pass before planning. Waiting on the human.
+
+### note · external:advisor/product-manager · 2026-10-12T00:15:31.898Z
+PdM: B (one token per machine) is off for now; the human, via aide m-10822: "ok, just, i'm frustrated; don't make any big changes." If readied, eurm builds A (pair everything) as in the PdM shape comment. Not readied yet.
+
+### note · external:aide · 2026-10-12T00:15:40.908Z
+Correction from aide: my time stamps on today's relays here ran ahead. The human's words were said between ~8:05 and ~8:15 PM ET (the clock read 8:15 PM ET at the last one): "then i should revoke...", "OMG it is SOOOO hard...", "either that or just get rid of all the tokens...", and "ok, just, i'm frustrated; don't make any big changes." (the last, ~8:15 PM ET).
