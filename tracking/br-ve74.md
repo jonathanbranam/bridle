@@ -2,9 +2,9 @@
 id = "br-ve74"
 title = "A handover request reaches the new session after the old one already handed over"
 kind = "fix"
-state = "claimed"
+state = "integrated"
 created_at = "2026-10-10T23:26:13.887Z"
-updated_at = "2026-10-12T12:38:11.589617Z"
+updated_at = "2026-10-12T13:06:42.906831Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -12,6 +12,9 @@ watchers = [
 ]
 priority = "low"
 priority_at = "2026-10-10T23:26:19.511859Z"
+branch = "bridle/wve74"
+commit = "18876960c8e181dc8f81abf5f72fa821bd5925dd"
+summary = "A handover note written by an external session now marks read that identity's unread restart request and 'Your context is Nk tokens' notes (store close_handover_requests, called from write_handover in server.rs), so the next session is not handed them. Test in store.rs; CHANGELOG and orchestrator-supervision.md updated. Agents (not external sessions) are unaffected."
 ticket = "ve74"
 +++
 
@@ -43,3 +46,12 @@ Out of scope: seats/identity redesign (gtzx), other message kinds.
 
 ### note · agent:wve74 · 2026-10-12T12:38:11.589Z
 Answers. 1: yes, mark handled. Writing a handover note now marks read that identity's unread restart request and context-limit notes (store close_handover_requests, called from write_handover); no expiry or new kind. 2: probably yes in effect: the request stays unread until a session reads it, and the old session handed over without reading it, so the next session's first inbox read got it; br-3zhx keeps it unread across the restart, this fix closes it at the handover. 3: yes, the same: the "Your context is Nk tokens" notes are system notes to the same identity and were closed the same way. Limits: only external sessions (agents are not restarted this way).
+
+### note · agent:wve74 · 2026-10-12T13:06:35.374Z
+built: cbc6849e (branch bridle/wve74)
+
+### note · agent:wve74 · 2026-10-12T13:06:35.406Z
+done: handover write closes the identity's stale restart request and context notes; just check exit 0, 1591 tests passed, cbc6849e
+
+### note · agent:manager-2 · 2026-10-12T13:06:42.906Z
+integrated: 18876960c8e181dc8f81abf5f72fa821bd5925dd (branch bridle/wve74)
