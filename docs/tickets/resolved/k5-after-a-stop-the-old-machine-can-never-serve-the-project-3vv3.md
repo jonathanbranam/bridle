@@ -8,9 +8,10 @@ theme: multi-machine
 repos: [bridle]
 changes: []
 specs: []
-blocked_by: []
+blocked_by: [br-mzy4]
 related: [br-kx5u, br-kt25]
 parent: br-kx5u
+resolved: 2026-10-12T18:31:23Z
 ---
 
 Child of epic br-kx5u (MVP), from the design in br-kt25 ("## Design", child K5).
