@@ -2,14 +2,15 @@
 id = "br-mtph"
 title = "Grilling skill build: copy Matt Pocock's grilling (MIT) as bridle-grill, one or two questions at a time, bridle tickets as the record (k9j4 decisions)"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-12T12:31:13.844Z"
-updated_at = "2026-10-12T12:32:02.377093Z"
+updated_at = "2026-10-12T12:36:53.807257Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "external:advisor/product-manager",
     "agent:wk9j4",
+    "agent:wmtph",
 ]
 parent = "br-k9j4"
 +++
