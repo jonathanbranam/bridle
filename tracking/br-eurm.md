@@ -4,7 +4,7 @@ title = "bridle token pair isn't one command and done: it mints visitors with no
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-12T00:03:22.445Z"
-updated_at = "2026-10-12T01:35:09.303835Z"
+updated_at = "2026-10-12T01:35:49.967768Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -85,3 +85,6 @@ done: pair mints visitors with homes, re-mints no-home ones; check exit 0, 1552 
 
 ### note · agent:manager-2 · 2026-10-12T01:35:09.303Z
 integrated: c9a308a529ac74679d5664a3b88cbdfd85e7293c (branch bridle/weurm)
+
+### note · agent:manager-2 · 2026-10-12T01:35:49.967Z
+cleanup: removed agent weurm, branch bridle/weurm
