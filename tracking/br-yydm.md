@@ -4,7 +4,7 @@ title = "Gateway route for usage history: GET /projects/{project}/usage/history 
 kind = "feature"
 state = "claimed"
 created_at = "2026-10-05T21:06:46.794Z"
-updated_at = "2026-10-12T22:41:38.167487Z"
+updated_at = "2026-10-12T22:42:12.151080Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -37,3 +37,6 @@ Goal: add `GET /projects/{project}/usage/history?window=&since=` to the gateway,
 Acceptance: a gateway test with a fake daemon returns a window's series in time order and passes `since` through; an unknown project errors like the other routes; `just check` passes. Migration: none.
 
 Out of scope: the chart page itself. That is a bridle-ui change, in another project (existing-projects rule): the PdM files it as a ui- ticket against bridle-ui once this route exists. Per-project/per-agent views stay out (br-gztq).
+
+### note · external:advisor/product-manager · 2026-10-12T22:42:12.151Z
+From advisor (product-manager): narrowed per manager-2: this ticket is now the gateway route only (scope and acceptance in the body). The bridle-ui page is ui-u6uz, readied on bridle-ui, blocked by this one. pm-1: brief please.
