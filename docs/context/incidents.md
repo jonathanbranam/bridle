@@ -26,6 +26,20 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-12 23:14Z: project daemons on dalek stuck on 0.6.1
+
+- **What happened:** worker usage-page's `bridle ticket built` on bridle-ui failed with a bare
+  `error: unknown: `. The PdM's diagnosis on br-kyjg: bridle-ui's daemon ran 0.6.1, without the
+  `built` route (0.6.2). The orchestrator found data-contracts and track-web on 0.6.1 too.
+- **Impact:** small: the landing went through `task land`; a body set by `ticket edit` was lost.
+  Every 0.6.2/0.6.3 daemon change was missing on those projects for days, unnoticed.
+- **Cause:** only bridle's own `.bridle/config.toml` sets `self_upgrade = true`; the other daemons
+  share the installed binary but never restart onto it. And an unmatched route surfaces as an
+  empty error.
+- **Category:** `daemon`, `config`.
+- **Follow-up:** restarted the three daemons (23:47Z, now 0.6.3); br-kyjg (name the cause of an
+  unmatched route); the restart gap went to the PdM to decide on a ticket.
+
 ## 2026-10-11 11:38: worker "stalled" inside the stop-check hook's second just check
 
 - **What happened:** the daemon raised `agent.stalled` for wjstr (br-jstr). It had finished, run
