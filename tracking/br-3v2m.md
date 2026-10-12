@@ -2,11 +2,14 @@
 id = "br-3v2m"
 title = "K6: the mail bridge and gateway follow a moved project"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-12T16:16:46.164Z"
-updated_at = "2026-10-12T16:17:43.828728Z"
+updated_at = "2026-10-12T16:22:10.051039Z"
 created_by = "external:advisor/product-manager"
-watchers = ["external:advisor/product-manager"]
+watchers = [
+    "external:advisor/product-manager",
+    "agent:w3v2m",
+]
 ticket = "3v2m"
 +++
 

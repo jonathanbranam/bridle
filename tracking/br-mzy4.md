@@ -2,11 +2,14 @@
 id = "br-mzy4"
 title = "K3: project stop refuses unless the project is stable (all work landed or dropped, nothing unpushed, no undelivered mail)"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-12T16:16:45.887Z"
-updated_at = "2026-10-12T16:17:43.112650Z"
+updated_at = "2026-10-12T16:22:11.060633Z"
 created_by = "external:advisor/product-manager"
-watchers = ["external:advisor/product-manager"]
+watchers = [
+    "external:advisor/product-manager",
+    "agent:wmzy4",
+]
 ticket = "mzy4"
 +++
 
