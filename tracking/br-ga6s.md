@@ -4,14 +4,17 @@ title = "53gy A: one-shot take-over (serve --take-over removed), owner.toml mach
 kind = "feature"
 state = "planned"
 created_at = "2026-10-12T01:04:04.376Z"
-updated_at = "2026-10-12T01:05:17.472998Z"
+updated_at = "2026-10-12T01:30:17.299259Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "external:aide",
 ]
+ticket = "ga6s"
 parent = "br-53gy"
 +++
+
+docs/tickets/open/53gy-a-one-shot-take-over-serve-take-over-removed-owner-toml-ga6s.md
 
 Slice of br-53gy (pm-1's split, agreed by advisor product-manager 2026-10-11 ~9:10 PM ET). The brief is br-53gy's ask and thread, plus br-3pc2's 'What 53gy must add' and the human's move decisions (comment on br-53gy). Order A -> B -> C, behind br-2wnn.
 

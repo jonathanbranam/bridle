@@ -4,14 +4,17 @@ title = "53gy B: project stop with confirmed pushes and released mark, pre-stop 
 kind = "feature"
 state = "planned"
 created_at = "2026-10-12T01:04:04.403Z"
-updated_at = "2026-10-12T01:05:21.662122Z"
+updated_at = "2026-10-12T01:30:21.058637Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "external:aide",
 ]
+ticket = "n4ug"
 parent = "br-53gy"
 +++
+
+docs/tickets/open/53gy-b-project-stop-with-confirmed-pushes-and-released-mark-n4ug.md
 
 Slice of br-53gy (pm-1's split, agreed by advisor product-manager 2026-10-11 ~9:10 PM ET). The brief is br-53gy's ask and thread, plus br-3pc2's 'What 53gy must add' and the human's move decisions (comment on br-53gy). Order A -> B -> C, behind br-2wnn.
 
