@@ -2691,3 +2691,15 @@ from = "br-kx5u"
 to = "br-ep5z"
 kind = "parent"
 created_at = "2026-10-12T16:17:27.223Z"
+
+[[edge]]
+from = "br-3ch7"
+to = "br-mzy4"
+kind = "blocks"
+created_at = "2026-10-12T16:17:57.285Z"
+
+[[edge]]
+from = "br-mzy4"
+to = "br-3vv3"
+kind = "blocks"
+created_at = "2026-10-12T16:17:57.294Z"
