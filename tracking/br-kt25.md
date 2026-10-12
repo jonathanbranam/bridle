@@ -4,9 +4,10 @@ title = "Move a project between machines with one command (bridle project move)"
 kind = "feature"
 state = "planned"
 created_at = "2026-10-09T14:10:30.127Z"
-updated_at = "2026-10-12T06:57:44.099338Z"
+updated_at = "2026-10-12T06:59:52.313094Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
+summary = "Design pass done, no code. `## Design` in the kt25 ticket file: inputs, answers to the three open questions (ssh-driven from OLD; park dirty work and branches, refuse dirty main checkout, agents not resumed; ssh CLI now, not kuw2), a coverage table of every 3pc2 Section 4 and 5 item and the seven risks (built / child / listed / moot / jw75), and nine children K1-K9 under br-kx5u in build order (absolute-path guard, NEW preflight, parking, drain, OLD after-care, mail follows, project move, recovery from NEW via take-over --force, return-trip outbox guard). Five questions for the human at the end. Children are text only; the PdM files them after review."
 ticket = "kt25"
 +++
 
@@ -77,3 +78,9 @@ PdM note for the designer: reuse what exists for the drain: the daemon's restart
 
 ### note · agent:wkt25 · 2026-10-12T06:57:44.099Z
 wkt25: manager message says build it, but the brief (pm-1) and ticket file say design pass only. Asked manager-2 which is wanted; waiting.
+
+### note · agent:wkt25 · 2026-10-12T06:59:52.282Z
+wkt25: design done, commit 07a5192e on bridle/wkt25 (docs only, so just check was not run; ticket check shows one unrelated problem: eurm names br-n7cg). Human questions are in Design section 5 (return trips, WIP-commit parking, drain timeout, interactive sessions on NEW, order).
+
+### note · agent:wkt25 · 2026-10-12T06:59:52.313Z
+done: Design section in kt25 (coverage table, 3 answers, children K1-K9, 5 questions for the human); docs only, no just check run; 07a5192e
