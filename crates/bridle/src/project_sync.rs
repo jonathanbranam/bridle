@@ -26,7 +26,7 @@ pub struct Real {
 
 const REMOTE_FILE: &str = "$HOME/.bridle/config.toml";
 
-fn ssh(host: &str, script: &str, stdin: Option<&str>) -> Result<String, String> {
+pub(crate) fn ssh(host: &str, script: &str, stdin: Option<&str>) -> Result<String, String> {
     let mut child = Command::new("ssh")
         // No prompt can be answered here: fail rather than hang.
         .args(["-o", "BatchMode=yes", host, script])

@@ -75,7 +75,7 @@ pub async fn run(cli: &Cli, args: &TakeOverArgs) -> Result<(), CliError> {
             );
             // Tokens and scheduled messages are made by the new daemon, so `project start`
             // finishes the move once it is up.
-            crate::project_start::note_moved_in(&ws).map_err(|e| {
+            crate::project_start::note_moved_in(&ws, from.as_deref()).map_err(|e| {
                 CliError::Other(e.context("recording what `project start` carries"))
             })?;
             let _ = writeln!(

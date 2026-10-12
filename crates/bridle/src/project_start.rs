@@ -21,8 +21,12 @@ use chrono::{DateTime, Utc};
 use crate::cli::{Cli, LaunchdInstallArgs, ProjectStartArgs, SystemdInstallArgs};
 use crate::commands::client_for;
 use crate::error::CliError;
+use crate::project_mail::{Old, OldMachine};
 use crate::project_stop::{Ctl, RealCtl, Unit, installed_units};
 use crate::token_pair::{Exec, Fleet, Options, Runner, Where, pair};
+
+/// Moves the mail bridge once the tokens exist: given the old machine's name and the output.
+type MailStep<'a> = dyn Fn(Option<&str>, &mut dyn Write) -> Result<(), String> + 'a;
 
 /// Written by `take-over` in the workspace's `.bridle/`, removed once `start` has carried it in.
 const MOVED_IN: &str = "moved-in.json";
@@ -30,11 +34,15 @@ const MOVED_IN: &str = "moved-in.json";
 #[derive(serde::Serialize, serde::Deserialize, Default)]
 struct MovedIn {
     schedules: Vec<Schedule>,
+    /// The machine that owned the project before, where its `[mail]` section and `mail.key` are
+    /// fetched from. Absent after a take-over with no previous owner.
+    #[serde(default)]
+    from: Option<String>,
 }
 
 /// Records, after a take-over, what `project start` must do once the daemon is up: re-create the
 /// tokens (the file existing says so) and carry the schedules the old owner's stop committed.
-pub fn note_moved_in(ws: &Workspace) -> anyhow::Result<()> {
+pub fn note_moved_in(ws: &Workspace, from: Option<&str>) -> anyhow::Result<()> {
     let schedules = match std::fs::read_to_string(ws.state_branch_dir().join(SCHEDULES_FILE)) {
         Ok(text) => serde_json::from_str(&text).context("reading the carried schedules")?,
         // A stop from before schedules were carried, or a forced take-over of a dead machine.
@@ -43,7 +51,10 @@ pub fn note_moved_in(ws: &Workspace) -> anyhow::Result<()> {
     std::fs::create_dir_all(ws.state_dir())?;
     std::fs::write(
         ws.state_dir().join(MOVED_IN),
-        serde_json::to_string_pretty(&MovedIn { schedules })?,
+        serde_json::to_string_pretty(&MovedIn {
+            schedules,
+            from: from.map(str::to_string),
+        })?,
     )?;
     Ok(())
 }
@@ -286,7 +297,35 @@ async fn local(
 
     wait_for_daemon(&project, Duration::from_secs(60)).await?;
     let _ = writeln!(out, "{project}: daemon is up");
-    carry_in(cli, home, &ws, &project, &mut out).await
+    let mail = |from: Option<&str>, out: &mut dyn Write| -> Result<(), String> {
+        let fleet = Fleet::from_config(&MachineMap::load(home).map_err(|e| e.to_string())?);
+        let old = from
+            .and_then(|m| fleet.hosts.get(m))
+            .map(|h| OldMachine { host: h.clone() });
+        let old: Option<&dyn Old> = old.as_ref().map(|o| o as &dyn Old);
+        if !crate::project_mail::bring(old, home, &project, out)? {
+            return Ok(());
+        }
+        let has_unit = |units: &[Unit]| units.iter().any(|u| u.what == "mail bridge");
+        if !has_unit(&installed_units(os, &home_dir, &config_home, &project)) {
+            crate::mail_install::install_at(
+                cli,
+                &crate::cli::MailInstallArgs { force: false },
+                repo.clone(),
+                project.clone(),
+            )
+            .map_err(|e| e.to_string())?;
+        }
+        let bridge: Vec<Unit> = installed_units(os, &home_dir, &config_home, &project)
+            .into_iter()
+            .filter(|u| u.what == "mail bridge")
+            .collect();
+        for line in start_units(os, &uid, &bridge, ctl)? {
+            let _ = writeln!(out, "{line}");
+        }
+        Ok(())
+    };
+    carry_in(cli, home, &ws, &project, &mail, &mut out).await
 }
 
 async fn wait_for_daemon(project: &str, limit: Duration) -> Result<(), CliError> {
@@ -319,6 +358,7 @@ async fn carry_in(
     home: &Path,
     ws: &Workspace,
     project: &str,
+    mail: &MailStep<'_>,
     out: &mut dyn Write,
 ) -> Result<(), CliError> {
     let note = ws.state_dir().join(MOVED_IN);
@@ -365,6 +405,10 @@ async fn carry_in(
         )
         .into());
     }
+    // After the tokens: the bridge needs its `mail` token to start.
+    mail(moved.from.as_deref(), out).map_err(|e| {
+        anyhow::anyhow!("{project} is running, but its mail bridge was not moved ({e}): fix it and run `bridle project start` again")
+    })?;
     std::fs::remove_file(&note).context("removing moved-in.json")?;
     Ok(())
 }
@@ -494,7 +538,7 @@ mod tests {
             serde_json::to_string(&list).unwrap(),
         )
         .unwrap();
-        note_moved_in(&ws).unwrap();
+        note_moved_in(&ws, None).unwrap();
         let moved: MovedIn =
             serde_json::from_str(&std::fs::read_to_string(ws.state_dir().join(MOVED_IN)).unwrap())
                 .unwrap();

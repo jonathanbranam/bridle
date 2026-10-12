@@ -69,9 +69,20 @@ fn check_ready(config: &str, credentials: &Path, project: &str) -> Result<(), Cl
 }
 
 pub fn install(cli: &Cli, a: &MailInstallArgs) -> Result<(), CliError> {
-    let home = PathBuf::from(std::env::var_os("HOME").ok_or_else(|| anyhow!("$HOME is not set"))?);
     let workdir = std::env::current_dir().context("current directory")?;
     let project = project_name(cli, &workdir)?;
+    install_at(cli, a, workdir, project)
+}
+
+/// `install` for a given workdir and project: `project start` installs the bridge of a project
+/// it just moved here, from wherever it was run.
+pub fn install_at(
+    cli: &Cli,
+    a: &MailInstallArgs,
+    workdir: PathBuf,
+    project: String,
+) -> Result<(), CliError> {
+    let home = PathBuf::from(std::env::var_os("HOME").ok_or_else(|| anyhow!("$HOME is not set"))?);
     let os = std::env::consts::OS;
     let path = unit_path(os, &home, &project)?;
     let config_path = discovery::bridle_home().join("config.toml");
