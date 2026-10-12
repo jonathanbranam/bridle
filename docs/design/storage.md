@@ -35,6 +35,7 @@ messages(seq INTEGER PK AUTOINCREMENT, id UNIQUE,    -- id = m-0042 from seq
                                                       -- by a delegate's reply (`answer_for_human`)
          incident_task)                               -- SCHEMA_V18: the incident a broadcast notice announces
 outbox(seq INTEGER PK AUTOINCREMENT, id,              -- SCHEMA_V20, mail for another daemon (3haz); id = o-0007
+                                                    -- the AUTOINCREMENT counter is the id source; take-over seeds a fresh database's above the last owner's (d6h6)
        project, from_principal, to_principal, kind, body, reply_to, when_mode,
        state,                                         -- queued | delivered | failed (refused for good)
        attempts, last_error, remote_ids, created_at, delivered_at)

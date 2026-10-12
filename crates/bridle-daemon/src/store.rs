@@ -439,6 +439,38 @@ impl Store {
         self.with_conn(move |c| sync::outbox_enqueue(c, &row)).await
     }
 
+    /// The highest outbox id number this database ever issued (0 for none), kept by SQLite's
+    /// AUTOINCREMENT even for rows since deleted. `project stop` carries it to the next owner.
+    pub async fn outbox_high_water(&self) -> Result<i64, StoreError> {
+        self.with_conn(|c| {
+            Ok(c.query_row(
+                "SELECT COALESCE((SELECT seq FROM sqlite_sequence WHERE name = 'outbox'), 0)",
+                [],
+                |r| r.get(0),
+            )?)
+        })
+        .await
+    }
+
+    /// Makes the next outbox id come after number `seq`, so a fresh database does not reissue
+    /// ids a receiver has already seen (it dedups on machine, daemon and id). Never lowers it.
+    pub async fn outbox_seed_counter(&self, seq: i64) -> Result<(), StoreError> {
+        self.with_conn(move |c| {
+            let n = c.execute(
+                "UPDATE sqlite_sequence SET seq = MAX(seq, ?1) WHERE name = 'outbox'",
+                rusqlite::params![seq],
+            )?;
+            if n == 0 {
+                c.execute(
+                    "INSERT INTO sqlite_sequence(name, seq) VALUES('outbox', ?1)",
+                    rusqlite::params![seq],
+                )?;
+            }
+            Ok(())
+        })
+        .await
+    }
+
     /// The oldest still-queued message for `project`.
     pub async fn outbox_next(&self, project: &str) -> Result<Option<OutboxRow>, StoreError> {
         let project = project.to_string();

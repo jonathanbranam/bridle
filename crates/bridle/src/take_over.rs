@@ -78,6 +78,16 @@ pub async fn run(cli: &Cli, args: &TakeOverArgs) -> Result<(), CliError> {
             crate::project_start::note_moved_in(&ws, from.as_deref()).map_err(|e| {
                 CliError::Other(e.context("recording what `project start` carries"))
             })?;
+            if let Some(dir) = crate::project_start::fresh_database(&ws)
+                .await
+                .map_err(|e| CliError::Other(e.context("setting the database aside")))?
+            {
+                let _ = writeln!(
+                    out,
+                    "{project}: the old database is kept in {}; the daemon builds a fresh one",
+                    dir.display()
+                );
+            }
             let _ = writeln!(
                 out,
                 "next: `bridle project start` here re-creates the tokens and carries the scheduled messages"

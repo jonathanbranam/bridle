@@ -440,12 +440,22 @@ async fn local(
     }
     let schedules = serde_json::to_string_pretty(&active_schedules(&ws.db()))
         .context("encoding the scheduled messages")?;
+    let outbox_seq = match ws.db().exists() {
+        true => bridle_daemon::store::Store::open(ws.db())
+            .await
+            .context("opening the database to read the outbox counter")?
+            .outbox_high_water()
+            .await
+            .context("reading the outbox counter")?,
+        false => 0,
+    };
     release_project(
         &repo,
         &ws.state_branch_dir(),
         &integration,
         &names,
         &schedules,
+        outbox_seq,
     )
     .await
     .map_err(|e| {

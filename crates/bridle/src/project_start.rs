@@ -15,7 +15,8 @@ use bridle_api::discovery::{bridle_home, list_registry};
 use bridle_api::machines::{MachineMap, owner_names};
 use bridle_api::types::{Schedule, ScheduleAddRequest};
 use bridle_daemon::paths::Workspace;
-use bridle_daemon::state_branch::{SCHEDULES_FILE, local_owner};
+use bridle_daemon::state_branch::{OUTBOX_SEQ_FILE, SCHEDULES_FILE, local_owner};
+use bridle_daemon::store::Store;
 use chrono::{DateTime, Utc};
 
 use crate::cli::{Cli, LaunchdInstallArgs, ProjectStartArgs, SystemdInstallArgs};
@@ -57,6 +58,69 @@ pub fn note_moved_in(ws: &Workspace, from: Option<&str>) -> anyhow::Result<()> {
         })?,
     )?;
     Ok(())
+}
+
+/// The return-trip half of a take-over (d6h6): a database left from an earlier time on this
+/// machine is moved, with its `-wal` and `-shm`, to `db-backups/<date>-<sha>/` in the workspace
+/// (kept, not deleted, not in git), so the daemon builds a fresh one from the state branch. The
+/// fresh database's outbox counter is seeded above both the old database's and the one the last
+/// owner's stop committed, so receivers (who dedup on machine, daemon and id) never see an id
+/// reused. Returns where the old database went, if there was one.
+pub async fn fresh_database(ws: &Workspace) -> anyhow::Result<Option<PathBuf>> {
+    let db = ws.db();
+    let mut seed = std::fs::read_to_string(ws.state_branch_dir().join(OUTBOX_SEQ_FILE))
+        .ok()
+        .and_then(|t| t.trim().parse::<i64>().ok())
+        .unwrap_or(0);
+    let mut backup = None;
+    if db.exists() {
+        let old = Store::open(&db).await.context("opening the old database")?;
+        seed = seed.max(
+            old.outbox_high_water()
+                .await
+                .context("reading its outbox counter")?,
+        );
+        drop(old);
+        let sha = Command::new("git")
+            .arg("-C")
+            .arg(&ws.repo)
+            .args(["rev-parse", "--short", "refs/heads/bridle/state"])
+            .output()
+            .ok()
+            .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
+            .filter(|s| !s.is_empty())
+            .unwrap_or_else(|| "nosha".to_string());
+        let mut dir = ws
+            .state_dir()
+            .join("db-backups")
+            .join(format!("{}-{sha}", Utc::now().format("%Y-%m-%d")));
+        // Two returns on one day at one state commit are possible; never overwrite a backup.
+        let mut n = 1;
+        while dir.exists() {
+            n += 1;
+            dir.set_file_name(format!("{}-{sha}-{n}", Utc::now().format("%Y-%m-%d")));
+        }
+        std::fs::create_dir_all(&dir).context("creating the backup folder")?;
+        for suffix in ["", "-wal", "-shm"] {
+            let from = PathBuf::from(format!("{}{suffix}", db.display()));
+            if from.exists() {
+                let to = dir.join(from.file_name().expect("db file name"));
+                std::fs::rename(&from, &to)
+                    .with_context(|| format!("moving {}", from.display()))?;
+            }
+        }
+        backup = Some(dir);
+    }
+    if seed > 0 {
+        let fresh = Store::open(&db)
+            .await
+            .context("creating the new database")?;
+        fresh
+            .outbox_seed_counter(seed)
+            .await
+            .context("seeding the outbox counter")?;
+    }
+    Ok(backup)
 }
 
 /// Enables and starts each unit; running it on units already running changes nothing.
@@ -567,5 +631,58 @@ mod tests {
         )
         .unwrap();
         assert!(units.join("bridle-p.service").exists());
+    }
+
+    async fn send(store: &Store) -> String {
+        store
+            .outbox_enqueue(bridle_daemon::store::OutboxRow {
+                id: String::new(),
+                project: "other".into(),
+                from: "agent:a".parse().expect("principal"),
+                to: "human".into(),
+                kind: bridle_api::types::MessageKind::System,
+                body: "hi".into(),
+                reply_to: None,
+                when: bridle_api::types::When::Now,
+                attempts: 0,
+                last_error: None,
+            })
+            .await
+            .expect("enqueue")
+    }
+
+    #[tokio::test]
+    async fn a_return_trip_backs_up_the_old_database_and_seeds_above_it() {
+        let tmp = tempfile::tempdir().expect("tmp");
+        let ws = Workspace::new(tmp.path().join("repo"), Some(tmp.path().to_path_buf()));
+        std::fs::create_dir_all(ws.state_branch_dir()).expect("state dir");
+        // OLD sent three messages before it stopped; NEW, a different machine, sent one.
+        let old = Store::open(ws.db()).await.expect("old db");
+        for _ in 0..3 {
+            send(&old).await;
+        }
+        drop(old);
+        std::fs::write(ws.state_branch_dir().join(OUTBOX_SEQ_FILE), "1").expect("seq");
+
+        let backup = fresh_database(&ws).await.expect("fresh").expect("backup");
+
+        assert!(backup.starts_with(ws.state_dir().join("db-backups")));
+        assert!(backup.join("bridle.db").exists(), "old database kept");
+        let fresh = Store::open(ws.db()).await.expect("fresh db");
+        assert_eq!(send(&fresh).await, "o-0004", "above OLD's last id");
+    }
+
+    #[tokio::test]
+    async fn a_first_visit_has_nothing_to_back_up_and_seeds_from_the_stop() {
+        let tmp = tempfile::tempdir().expect("tmp");
+        let ws = Workspace::new(tmp.path().join("repo"), Some(tmp.path().to_path_buf()));
+        std::fs::create_dir_all(ws.state_branch_dir()).expect("state dir");
+        assert!(fresh_database(&ws).await.expect("fresh").is_none());
+        assert!(!ws.db().exists(), "no seed, no database made here");
+
+        std::fs::write(ws.state_branch_dir().join(OUTBOX_SEQ_FILE), "7").expect("seq");
+        assert!(fresh_database(&ws).await.expect("fresh").is_none());
+        let fresh = Store::open(ws.db()).await.expect("db");
+        assert_eq!(send(&fresh).await, "o-0008");
     }
 }

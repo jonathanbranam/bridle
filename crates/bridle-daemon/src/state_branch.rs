@@ -976,6 +976,9 @@ pub enum TakeOverOutcome {
 
 /// The scheduled messages a released project carries on `bridle/state`.
 pub const SCHEDULES_FILE: &str = "schedules.json";
+/// The outbox id high-water mark a stop commits with the released mark (d6h6). Absent in a
+/// release from before it was carried: the next owner then seeds nothing.
+pub const OUTBOX_SEQ_FILE: &str = "outbox-seq";
 
 /// The one-shot take-over (53gy): claims the project for `names[0]` and confirms origin has the
 /// claim. Same preconditions as the old `serve --take-over`: origin reached, the state branch
@@ -1032,13 +1035,15 @@ pub async fn local_owner(repo: &Path) -> Option<Owner> {
 /// branch, then the integration branch's direct commits, confirming after each that origin has
 /// them; only then writes the `released` mark and pushes that as the last commit, confirmed too.
 /// Any failure returns the reason and leaves no mark. `schedules` (the project's active scheduled
-/// messages as JSON) is committed with the mark as `schedules.json`, for the next owner's take-over.
+/// messages as JSON) is committed with the mark as `schedules.json`, and `outbox_seq` (the outbox
+/// id high-water mark) as `outbox-seq`, for the next owner's take-over.
 pub async fn release_project(
     repo: &Path,
     state_dir: &Path,
     integration: &str,
     names: &[String],
     schedules: &str,
+    outbox_seq: i64,
 ) -> anyhow::Result<()> {
     let sb = StateBranch::open(repo, state_dir).await?;
     let owner = read_owner_file(&sb.dir);
@@ -1060,6 +1065,7 @@ pub async fn release_project(
         .map_err(|e| anyhow::anyhow!("pushing {integration}: {e}"))?;
     let host = owner.map(|o| o.host).unwrap_or_default();
     std::fs::write(sb.dir.join(SCHEDULES_FILE), schedules)?;
+    std::fs::write(sb.dir.join(OUTBOX_SEQ_FILE), outbox_seq.to_string())?;
     sb.release_owner(&host, Utc::now())?;
     sb.flush_now().await?;
     sb.push_confirmed()
