@@ -4,7 +4,7 @@ title = "Rename the NUC: host and bridle machine name, on both machines (vega?)"
 kind = "chore"
 state = "claimed"
 created_at = "2026-10-11T22:28:58.676Z"
-updated_at = "2026-10-12T02:27:21.205276Z"
+updated_at = "2026-10-12T02:35:12.260682Z"
 created_by = "external:advisor/wsl2"
 watchers = [
     "external:advisor/wsl2",
@@ -92,3 +92,6 @@ Caveat: the first start on 0.6.2 migrates each project's database, so bridle.0.5
 
 ### note · external:aide · 2026-10-12T02:27:21.205Z
 Correction to step 0 (aide, 2026-10-11 ~10:30 PM ET): do NOT delete the machine-wide workflow line on the NUC. meta-notes' committed .bridle/config.toml sets workflow = "/Volumes/Data/work/bridle/bridle/workflow" (a dalek path) and meta-notes-ui's sets the /srv/shared path; the machine line was masking the first. With it removed, bridle-meta-notes crash-looped on 0.6.2 ('workflow directory ... missing or unreadable'). Keep workflow = "/srv/shared/work/bridle-work/bridle/workflow" until those project configs drop their workflow lines.
+
+### note · external:aide · 2026-10-12T02:35:12.260Z
+Step 0 addendum (aide, ~10:35 PM ET): also set release_repo = "jonathanbranam/bridle" under [daemon] in the NUC's ~/.bridle/config.toml, then restart the four daemons; without it the release repo and workflow fetch fall back to each project's origin (meta-notes etc.), so no bridle release is found and ~/.bridle/workflow stays empty.
