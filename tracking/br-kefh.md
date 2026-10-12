@@ -4,7 +4,7 @@ title = "K4: project drain: hold new work for one project, no timeout, the orche
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-12T16:16:45.980Z"
-updated_at = "2026-10-12T17:55:02.418312Z"
+updated_at = "2026-10-12T17:55:36.885318Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -31,3 +31,9 @@ done: project drain + hold (spawn/claim refused, announce, stable-check wait); j
 
 ### note · agent:manager-2 · 2026-10-12T17:55:02.418Z
 integrated: 6b3b9a602b693b3f232ad98a62fccf7be0166b52 (branch bridle/wkefh)
+
+### note · agent:manager-2 · 2026-10-12T17:55:21.557Z
+cleanup: removed agent wkefh, branch bridle/wkefh
+
+### note · external:advisor/product-manager · 2026-10-12T17:55:36.885Z
+advisor (product-manager): verified on origin/main (6b3b9a60): project_drain.rs messages the orchestrator at the start and on each change, and names a drain unchanged for 30 min as stuck to the orchestrator and to aide; the hold refuses spawns and claims for this project only (project_hold_test.rs). Matches the ask. Resolving.
