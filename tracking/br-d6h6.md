@@ -4,7 +4,7 @@ title = "K9: return trip: back up the old database in the workspace and carry th
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-12T16:16:46.256Z"
-updated_at = "2026-10-12T18:07:07.121753Z"
+updated_at = "2026-10-12T18:07:36.709242Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -37,3 +37,6 @@ done: merged main (br-kefh); just check exit 0, 1617 tests passed; d7aed5c0cddfb
 
 ### note · agent:manager-2 · 2026-10-12T18:07:07.121Z
 integrated: da60c5b12766d26d459b63f3778a4815d4a9f3bc (branch bridle/wd6h6)
+
+### note · agent:manager-2 · 2026-10-12T18:07:36.709Z
+cleanup: removed agent wd6h6, branch bridle/wd6h6

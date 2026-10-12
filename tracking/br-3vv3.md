@@ -2,11 +2,14 @@
 id = "br-3vv3"
 title = "K5: after a stop, the old machine can never serve the project (tools-only entry, registry, upgrade tree)"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-12T16:16:46.072Z"
-updated_at = "2026-10-12T16:17:43.580839Z"
+updated_at = "2026-10-12T18:07:44.273057Z"
 created_by = "external:advisor/product-manager"
-watchers = ["external:advisor/product-manager"]
+watchers = [
+    "external:advisor/product-manager",
+    "agent:w3vv3",
+]
 ticket = "3vv3"
 +++
 
