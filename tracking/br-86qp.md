@@ -4,13 +4,14 @@ title = "53gy C: project start (systemd --project), token re-pair in take-over (
 kind = "feature"
 state = "claimed"
 created_at = "2026-10-12T01:04:04.447Z"
-updated_at = "2026-10-12T06:16:49.563097Z"
+updated_at = "2026-10-12T06:49:43.825142Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "external:aide",
     "agent:w86qp",
 ]
+summary = "`bridle project start` (crates/bridle/src/project_start.rs): refuses unless this machine owns the project; installs the launchd/systemd unit if missing (existing launchd/systemd install code, systemd with --project), enables and starts the daemon and any installed mail unit (launchd enable + bootstrap-if-unloaded, systemd daemon-reload + enable --now; idempotent), waits for the daemon, then runs the carry-in. --machine runs it over ssh. Decision: tokens and schedules cannot be made in take-over because minting needs a running daemon and take-over never serves; so take-over writes <workspace>/.bridle/moved-in.json and start does the re-pair (token_pair::pair narrowed to the project: no second minting path) and re-adds schedules, deleting the note only when both succeed. Schedules travel on bridle/state: project stop now commits schedules.json (store::active_schedules, read-only, release_project takes the JSON) with the released mark; take-over reads it. A one-shot already past is reported, not added. Stops by an older bridle carry none. Tests: start_units for both OSes (idempotent, no re-bootstrap), failing unit, schedule conversion/carry, moved-in note, systemd install. Docs: cli.md, add-a-machine.md, CHANGELOG. Not done: the pre-stop listing and mail-count prompt were already in br-n4ug."
 ticket = "86qp"
 parent = "br-53gy"
 +++
