@@ -4,7 +4,7 @@ title = "'bridle ticket built' fails with a bare 'error: unknown: ' on a bridle-
 kind = "bug"
 state = "pending"
 created_at = "2026-10-12T23:15:42.759Z"
-updated_at = "2026-10-12T23:46:30.595573Z"
+updated_at = "2026-10-12T23:47:56.056483Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "kyjg"
@@ -23,3 +23,6 @@ Diagnosis (advisor product-manager, 2026-10-12, read-only):
 Two parts:
 1. **Ops (now, no build):** bring bridle-ui's daemon to 0.6.3 (why hasn't it self-upgraded? check its `[daemon] self_upgrade` and the machine-wide setting).
 2. **Fix (this ticket):** an unmatched route (empty 404 after the fallback) says what it is: "the daemon at <url> (version X) doesn't have this command; upgrade it (bridle needs >= Y)", using `/v1/health`'s version. No bare `unknown:` ever: an empty message names the status and URL.
+
+### note · external:orchestrator · 2026-10-12T23:47:56.056Z
+Ops part done (orchestrator, 2026-10-12 23:47Z): bridle-ui, data-contracts and track-web daemons on dalek were all on 0.6.1, because only bridle's own .bridle/config.toml sets self_upgrade = true, so the other daemons never restart onto the shared installed binary. Restarted all three with 'bridle daemon restart --project <p>'; each now reports 0.6.3 and resumed its agents. The ticket's fix (a named error for an unmatched route) stands.

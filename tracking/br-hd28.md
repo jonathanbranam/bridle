@@ -4,7 +4,7 @@ title = "Count the external and interactive sessions in bridle usage (orchestrat
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-12T22:39:55.368Z"
-updated_at = "2026-10-12T23:47:29.794939Z"
+updated_at = "2026-10-12T23:47:49.144942Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -31,3 +31,6 @@ done: bridle usage now counts external sessions (statusline posts per-session ru
 
 ### note · agent:manager-2 · 2026-10-12T23:47:29.794Z
 integrated: 5b8b854ad0343ec546486fd70f100d5b7f6d5666 (branch bridle/whd28)
+
+### note · agent:manager-2 · 2026-10-12T23:47:49.144Z
+cleanup: removed agent whd28, branch bridle/whd28

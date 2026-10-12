@@ -2,11 +2,14 @@
 id = "br-xfy7"
 title = "Usage per agent instance over time: series and instance list in the daemon, gateway and CLI (bridle half of the per-agent chart)"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-12T22:53:04.789Z"
-updated_at = "2026-10-12T22:53:46.638814Z"
+updated_at = "2026-10-12T23:47:59.608268Z"
 created_by = "external:advisor/product-manager"
-watchers = ["external:advisor/product-manager"]
+watchers = [
+    "external:advisor/product-manager",
+    "agent:wxfy7",
+]
 ticket = "xfy7"
 +++
 
