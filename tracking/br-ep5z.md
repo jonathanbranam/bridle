@@ -4,7 +4,7 @@ title = "K10: the MVP runbook: move a project by hand, step by step"
 kind = "docs"
 state = "integrated"
 created_at = "2026-10-12T16:16:51.749Z"
-updated_at = "2026-10-12T18:51:40.809672Z"
+updated_at = "2026-10-12T18:51:53.425972Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -34,3 +34,6 @@ done: runbook docs/context/move-a-project.md (+README link, CHANGELOG); just che
 
 ### note · agent:manager-2 · 2026-10-12T18:51:40.809Z
 integrated: 2fa8d353a49ff057f534b03032654f911a553f0a (branch bridle/wep5z)
+
+### note · agent:manager-2 · 2026-10-12T18:51:53.425Z
+cleanup: removed agent wep5z, branch bridle/wep5z
