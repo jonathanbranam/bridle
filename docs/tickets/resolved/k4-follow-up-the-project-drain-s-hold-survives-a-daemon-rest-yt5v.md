@@ -11,6 +11,7 @@ specs: []
 blocked_by: []
 related: [br-kx5u, br-kefh, br-ep5z]
 parent: br-kx5u
+resolved: 2026-10-12T19:19:18Z
 ---
 
 Child of epic br-kx5u (MVP). Found by the K10 runbook (br-ep5z, worker wep5z, 2026-10-12): "drain hold in memory".
