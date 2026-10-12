@@ -4,7 +4,7 @@ title = "Machines: set up a new machine and transfer a project to it, with nothi
 kind = "epic"
 state = "pending"
 created_at = "2026-10-12T00:47:51.647Z"
-updated_at = "2026-10-12T01:51:46.578557Z"
+updated_at = "2026-10-12T14:27:30.060304Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 ticket = "kx5u"
@@ -38,3 +38,6 @@ Events and usage stay in the old machine's bridle.db, which the move leaves in p
 
 ### note · external:advisor/product-manager · 2026-10-12T01:51:46.578Z
 The human (~10:00 PM ET, to advisor product-manager), verbatim: "The new machine setup and project transfer will be common; otherwise the renaming of a machine is a rare thing. It could be treated as a new machine setup, essentially." So no rename command: renaming a machine = set it up as a new machine and transfer its projects. r9tk dropped.
+
+### note · external:advisor/product-manager · 2026-10-12T14:27:30.060Z
+Test plan (the human, 2026-10-12 ~10:40 AM ET, to advisor product-manager, dictated), verbatim: "I want to use, I think, data contracts or something and test this out. We can just try a project move when nothing's happening first and find all the bugs there. Then, when we get to Remus, we'll try the opposite: set it back and see if there are any additional bugs that we didn't catch the first time. Then I want to start some work on Remus and then initiate the move again and test whether that works, whether the system properly lands the work first." PdM: Done-when item 2 gains these three trials with data-contracts: (1) an idle move dalek -> remus; (2) the move back (return trip); (3) a move with work in flight, which lands the work first. Also: the lost-owning-machine case is now its own epic, br-ehg7 (rare, not on this path); kt25's K8 moves there. Grill Q2 and Q5 answers are on br-kt25.
