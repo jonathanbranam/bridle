@@ -72,6 +72,47 @@ pub fn left_behind(db: &std::path::Path) -> Option<LeftBehind> {
     })
 }
 
+/// What in `db` makes a project unstable for a move (br-mzy4): claimed or built tickets,
+/// running agents, undelivered mail. Read-only like `left_behind`; a missing database or table
+/// counts as empty.
+pub fn unstable_in_db(db: &std::path::Path) -> Vec<String> {
+    let Ok(conn) = Connection::open_with_flags(db, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)
+    else {
+        return Vec::new();
+    };
+    let col = |sql: &str| -> Vec<String> {
+        conn.prepare(sql)
+            .and_then(|mut s| s.query_map([], |r| r.get(0))?.collect())
+            .unwrap_or_default()
+    };
+    let mut bad = Vec::new();
+    for state in ["claimed", "built"] {
+        let t = col(&format!(
+            "SELECT id FROM tasks WHERE state = '{state}' ORDER BY id"
+        ));
+        if !t.is_empty() {
+            bad.push(format!(
+                "{state} ticket(s) not landed or dropped: {}",
+                t.join(", ")
+            ));
+        }
+    }
+    let a = col(
+        "SELECT name FROM agents WHERE state IN ('starting','idle','working','stopping') ORDER BY name",
+    );
+    if !a.is_empty() {
+        bad.push(format!("agent(s) running: {}", a.join(", ")));
+    }
+    let m = col("SELECT CAST(id AS TEXT) FROM outbox WHERE state = 'queued'");
+    if !m.is_empty() {
+        bad.push(format!(
+            "{} undelivered message(s) in the outbox (something is wrong; find out why before moving)",
+            m.len()
+        ));
+    }
+    bad
+}
+
 /// The active scheduled messages in `db`, read-only like `left_behind`: `project stop` carries
 /// them to the next owner. Empty when there is no database or no such table.
 pub fn active_schedules(db: &std::path::Path) -> Vec<Schedule> {

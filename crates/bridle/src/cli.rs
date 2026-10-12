@@ -2536,6 +2536,9 @@ pub struct PreflightArgs {
     /// before cloning) and a `projects sync` comparison. Each failure says what to run there.
     #[arg(long)]
     pub to: Option<String>,
+    /// Checkout paths that may stay dirty through the stable-project check; they are listed as LEFT.
+    #[arg(long)]
+    pub leave: Vec<String>,
 }
 
 #[derive(Debug, Args)]
@@ -2568,6 +2571,9 @@ pub struct ProjectStopArgs {
     /// Run on this `[machines]` entry over ssh (needs `--project`).
     #[arg(long)]
     pub machine: Option<String>,
+    /// Checkout paths that may stay dirty through the stable-project check; they are listed as LEFT.
+    #[arg(long)]
+    pub leave: Vec<String>,
 }
 
 #[derive(Debug, Args)]

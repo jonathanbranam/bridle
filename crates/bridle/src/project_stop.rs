@@ -310,6 +310,9 @@ pub fn remote(
     if let Some(r) = &args.repo {
         base.extend(["--repo".into(), r.display().to_string()]);
     }
+    for l in &args.leave {
+        base.extend(["--leave".into(), l.clone()]);
+    }
     let mut ask = base.clone();
     ask.push("--list".into());
     let listing = runner
@@ -393,6 +396,8 @@ async fn local(
         ),
         None => None,
     };
+    let (unstable, leave_listed) =
+        crate::stable::unstable(&repo, &ws.db(), &integration, &args.leave, true);
     let left = left_behind(&ws.db());
     let unpushed = left_unpushed(&repo, &["bridle/state", &integration]);
     let mut out = std::io::stdout();
@@ -408,6 +413,16 @@ async fn local(
             &unpushed
         )
     );
+    if !leave_listed.is_empty() {
+        let _ = writeln!(out, "LEFT in the checkout: {}", leave_listed.join(", "));
+    }
+    if !unstable.is_empty() {
+        let list: String = unstable.iter().map(|u| format!("\n  {u}")).collect();
+        return Err(anyhow::anyhow!(
+            "{project} is not stable; nothing was stopped (land or drop the work first):{list}"
+        )
+        .into());
+    }
     if args.list {
         return Ok(());
     }
@@ -590,6 +605,7 @@ mod tests {
             yes: true,
             list: false,
             machine: Some("m".into()),
+            leave: vec![],
         };
         let mut out = Vec::new();
         remote(&fake, &Where::Ssh("h".into()), "p", &args, &mut out).unwrap();

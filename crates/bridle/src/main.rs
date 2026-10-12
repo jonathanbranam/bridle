@@ -35,6 +35,7 @@ mod spec_coverage;
 mod spec_export;
 mod spec_import;
 mod specid;
+mod stable;
 mod statusline;
 mod stop_check;
 mod systemd;

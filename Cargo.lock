@@ -697,6 +697,7 @@ dependencies = [
  "hex",
  "nix 0.31.3",
  "rpassword",
+ "rusqlite",
  "serde",
  "serde_json",
  "tempfile",

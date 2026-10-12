@@ -70,7 +70,8 @@ pub struct Outcome {
 
 type PreflightCheck = (&'static str, fn(&Path) -> (bool, String));
 
-/// The checks, in order. K2 appends here.
+/// The checks, in order. The stable-project check (K3) is added by `run_checks`: it also takes
+/// `--leave`.
 const CHECKS: &[PreflightCheck] = &[("absolute paths", absolute_paths)];
 
 fn absolute_paths(repo: &Path) -> (bool, String) {
@@ -88,8 +89,8 @@ fn absolute_paths(repo: &Path) -> (bool, String) {
     )
 }
 
-pub fn run_checks(repo: &Path) -> Vec<Outcome> {
-    CHECKS
+pub fn run_checks(repo: &Path, leave: &[String]) -> Vec<Outcome> {
+    let mut out: Vec<Outcome> = CHECKS
         .iter()
         .map(|(name, f)| {
             let (pass, message) = f(repo);
@@ -99,7 +100,14 @@ pub fn run_checks(repo: &Path) -> Vec<Outcome> {
                 message,
             }
         })
-        .collect()
+        .collect();
+    let (pass, message) = crate::stable::check(repo, leave);
+    out.push(Outcome {
+        name: "stable project",
+        pass,
+        message,
+    });
+    out
 }
 
 pub fn run(cli: &Cli, args: &PreflightArgs) -> Result<(), CliError> {
@@ -107,7 +115,7 @@ pub fn run(cli: &Cli, args: &PreflightArgs) -> Result<(), CliError> {
         Some(p) => p.clone(),
         None => std::env::current_dir().context("current directory")?,
     };
-    let mut results = run_checks(&repo);
+    let mut results = run_checks(&repo, &args.leave);
     if let Some(machine) = &args.to {
         let home = bridle_api::discovery::bridle_home();
         let map =
@@ -172,7 +180,7 @@ mod tests {
         let f = absolute_path_findings(d.path());
         assert_eq!(f.len(), 1);
         assert_eq!((f[0].line, f[0].key.as_str()), (3, "workflow"));
-        let r = run_checks(d.path());
+        let r = run_checks(d.path(), &[]);
         assert!(!r[0].pass);
         assert!(r[0].message.contains(".bridle/config.toml:3 workflow"));
     }
@@ -191,7 +199,7 @@ mod tests {
             "# workflow = \"/abs\"\n",
         ] {
             let d = repo_with(c);
-            assert!(run_checks(d.path())[0].pass, "{c}");
+            assert!(run_checks(d.path(), &[])[0].pass, "{c}");
         }
     }
 }
