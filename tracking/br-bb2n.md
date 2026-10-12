@@ -2,11 +2,14 @@
 id = "br-bb2n"
 title = "K2: project preflight: check the new machine is ready before a move"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-12T13:38:40.934Z"
-updated_at = "2026-10-12T13:39:03.872262Z"
+updated_at = "2026-10-12T14:06:22.661846Z"
 created_by = "external:advisor/product-manager"
-watchers = ["external:advisor/product-manager"]
+watchers = [
+    "external:advisor/product-manager",
+    "agent:wbb2n",
+]
 ticket = "bb2n"
 +++
 

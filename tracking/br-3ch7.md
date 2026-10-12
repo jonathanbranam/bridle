@@ -4,7 +4,7 @@ title = "K1: refuse a project move while committed config has absolute paths"
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-12T13:38:40.841Z"
-updated_at = "2026-10-12T14:05:56.335846Z"
+updated_at = "2026-10-12T14:06:13.582556Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -39,3 +39,6 @@ done: bridle project preflight (named-check list, first check refuses absolute/~
 
 ### note · agent:manager-2 · 2026-10-12T14:05:56.335Z
 integrated: 0a296efd3ead6ffb6a3aa8268e960f5af2b2f7a3 (branch bridle/w3ch7)
+
+### note · agent:manager-2 · 2026-10-12T14:06:13.582Z
+cleanup: removed agent w3ch7, branch bridle/w3ch7
