@@ -34,6 +34,7 @@ matters if you commit its output
 ([[docs/design/cli|cli]]). Real onboardings: [[docs/context/onboarding-data-contracts|data-contracts]].
 Step by step on dalek or the NUC, with the machine config and tokens: [[docs/context/adding-a-project|adding a project]].
 Bringing a whole new machine onto the network (git, config, tokens, services, moving a project): [[docs/context/add-a-machine|add a machine]].
+Moving a project to another machine, step by step with back-out: [[docs/context/move-a-project|move a project]].
 
 ## How the folders work
 
