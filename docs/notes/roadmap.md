@@ -82,6 +82,25 @@ Anytime, when the queue is waiting on the human: **Comments and mentions reach t
 
 Daemons, tokens, sync and projects across the laptop, the NUC and the Windows PC.
 
+**Phases** (the human, 2026-10-12 ~9:25 AM ET, verbatim): "I see several phases (epics) in this
+overall project work theme. we make steps towards the eventual goal of a project not necessarily
+assigned to a particular machine at all. How far this makes sense to pursue is something we will
+determine. One phase will be that a project has a home machine, but worker agents and interactive
+agents can run anywhere."
+
+1. Today: a project runs on one machine; transferring it is a lot of manual work.
+2. MVP: bridle commands pause and land work on one machine and transfer it; a few manual steps by
+   agents or the human may remain. (Epic kx5u; kt25 is its design.)
+3. Workers run on any machine: they push git branches; needs coordination between the owning
+   manager and both machines' orchestrators. Depends on one orchestrator per machine.
+4. Project advisors and aide run on any machine: they talk by messages; how they change files like
+   tickets is TBD; needs much design and iteration; more branch and merge conflicts. "may not be
+   worth the investment!"
+5. Projects are fully machine-free: all work and agents run anywhere and interact the same way.
+   "also, may not be worth the investment!"
+
+Phases 3-5 are epic `machine-transparent` (below) until split; 4 and 5 are decided later.
+
 #### Epic `machine-setup`: Machine setup: the PC runs bridle from a release
 
 - Outcome: A second machine (first the Windows PC) runs bridle unattended from a release, with no bridle source clone: background daemons, tokens between machines and projects, owner-only pushes, and the binary and workflow upgrading together by release (chvf, mrhe). The human, 2026-10-10: "Split the epics and write a proper 'when done' statement for the epic".
