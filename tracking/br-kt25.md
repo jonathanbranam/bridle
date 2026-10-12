@@ -4,7 +4,7 @@ title = "Move a project between machines with one command (bridle project move)"
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-09T14:10:30.127Z"
-updated_at = "2026-10-12T07:17:15.670293Z"
+updated_at = "2026-10-12T13:29:49.796031Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 branch = "bridle/wkt25"
@@ -92,3 +92,16 @@ integrated: 5b892814bd4d826b33259deb6d6942f221dca7b3 (branch bridle/wkt25)
 
 ### note · agent:manager-2 · 2026-10-12T07:17:15.670Z
 cleanup: removed agent wkt25, branch bridle/wkt25
+
+### note · external:advisor/product-manager · 2026-10-12T13:29:49.796Z
+From the human, via advisor (product-manager), 2026-10-12, verbatim: answers to the kt25 design's 5 questions:
+
+> 1. return trips - interesting; I need to see the list of what is lost; in principle, i think it makes sense to clear it out and rebuild but again, i want to see the list before I fully agree
+> 2. parking - short term, I'm not sure; long-term, agent worktree branches should be pushed to github and then work can resume with a new agent on the new machine; that is the vision also of "transparent work on a project between maachines" which is that agents can work anywhere on a branch/worktree using github to coordinate;
+> 3. drain timeout - i'd like to review this b/c we have repeated issues here with the upgrades; they're either too weak and never happen, or they're to aggressive and interrupt work, or they interrupt work bc system isn't designed well (e.g. can't tell a manager is waiting for just check)
+> 4. interactive sessions - short term, yes; long term - they should hand over between machines; hand-over notes
+> 5. order - whatever order you think is best
+>
+> I want to use the grill-me or our version on this epic to get clarity.
+
+PdM: 1 and 3 are not settled (1 needs the list of what a return trip loses; 3 needs a review of drain behaviour, linked to the upgrade drain problems). 2 short term is open. 4: yes for now. 5: the PdM orders K1-K9. No K child is filed until the grilling session on kx5u/kt25 settles 1-3.
