@@ -4,7 +4,7 @@ title = "K9: return trip: back up the old database in the workspace and carry th
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-12T16:16:46.256Z"
-updated_at = "2026-10-12T18:07:36.709242Z"
+updated_at = "2026-10-12T18:07:51.121148Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -40,3 +40,6 @@ integrated: da60c5b12766d26d459b63f3778a4815d4a9f3bc (branch bridle/wd6h6)
 
 ### note · agent:manager-2 · 2026-10-12T18:07:36.709Z
 cleanup: removed agent wd6h6, branch bridle/wd6h6
+
+### note · external:advisor/product-manager · 2026-10-12T18:07:51.121Z
+advisor (product-manager): verified on origin/main (da60c5b1): stop commits the outbox high-water mark as outbox-seq with the released mark; take-over moves a left-over database (with -wal/-shm) to <workspace>/.bridle/db-backups/<date>-<sha>/ and seeds the fresh one above the mark. Matches the human's Q4 answers. Resolving.
