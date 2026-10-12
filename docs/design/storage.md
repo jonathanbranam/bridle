@@ -61,7 +61,7 @@ schedules(id PK 'sc-xxxx', created_by, target, body, kind 'once'|'cron', at_utc,
           last_fired_at, state 'active'|'done', created_at)
                                                      -- SCHEMA_V23: scheduled messages (daemon.md); a fired
                                                      -- once becomes done, a cron keeps its next_fire_at
-meta(key PK, value)                                  -- e.g. claude_version; orchestrator_wake_cursor
+meta(key PK, value)                                  -- e.g. claude_version; orchestrator_wake_cursor; project.held (`1` while a project drain holds claims and spawns, restored at start; absent = no hold)
                                                      -- (event seq the orchestrator's wakes were last delivered up to)
 ```
 

@@ -4473,6 +4473,10 @@ async fn project_hold(
             "only the human or external:orchestrator may hold the project",
         ));
     }
+    state
+        .store
+        .swap_meta(crate::PROJECT_HELD_KEY, if req.on { "1" } else { "0" })
+        .await?;
     state.manager.set_held(req.on);
     Ok(Json(req))
 }

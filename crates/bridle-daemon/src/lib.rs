@@ -479,6 +479,9 @@ async fn ensure_own_workflow(
 /// Starts the daemon and returns once it's listening, autostart has run,
 /// and background tasks are up. Does not block for shutdown; see
 /// [`RunningDaemon::join`].
+/// The `meta` key holding a project drain's hold: `1` while held, `0` or absent when not.
+pub(crate) const PROJECT_HELD_KEY: &str = "project.held";
+
 pub async fn start(opts: ServeOptions, overrides: Overrides) -> anyhow::Result<RunningDaemon> {
     start_inner(opts, overrides, None).await
 }
@@ -678,6 +681,10 @@ async fn start_inner(
         emitter.clone(),
         governor_handle.clone(),
     );
+    // A project drain's hold outlives a restart (yt5v); absent means no hold.
+    if store.get_meta(PROJECT_HELD_KEY).await?.as_deref() == Some("1") {
+        manager.set_held(true);
+    }
     let governor = Governor::new(
         store.clone(),
         manager.clone(),
