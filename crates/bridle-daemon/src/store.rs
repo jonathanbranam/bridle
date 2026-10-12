@@ -689,6 +689,19 @@ impl Store {
             .await
     }
 
+    /// The claude session's own running `total_cost_usd` as of its last turn (0 for a fresh
+    /// session): the baseline the next turn's cost delta is taken against.
+    pub async fn session_cost(&self, id: &str) -> Result<f64, StoreError> {
+        let id = id.to_string();
+        self.with_conn(move |c| sync::session_cost(c, &id)).await
+    }
+
+    pub async fn set_session_cost(&self, id: &str, cost: f64) -> Result<(), StoreError> {
+        let id = id.to_string();
+        self.with_conn(move |c| sync::set_session_cost(c, &id, cost))
+            .await
+    }
+
     pub async fn set_agent_exit(&self, id: &str, exit: ExitInfo) -> Result<(), StoreError> {
         let id = id.to_string();
         self.with_conn(move |c| sync::set_agent_exit(c, &id, &exit))
@@ -1647,13 +1660,28 @@ mod sync {
         CREATE INDEX tickets_state ON tickets(state);
     "#;
 
+    // Negative costs (br-9y7v): a respawned agent's new claude session counts its cost from 0,
+    // but the delta baseline was the agent's lifetime total, so the first turn after a renew
+    // recorded a large negative cost. `session_cost_usd` is the baseline per session now. The
+    // repair zeroes each negative turn (its true delta is not recoverable) and re-sums the
+    // lifetime total of every agent that had one. Existing agents start with their lifetime total
+    // as the session baseline (right unless renewed; then the next delta clamps to 0).
+    pub(super) const SCHEMA_V27: &str = r#"
+        ALTER TABLE agents ADD COLUMN session_cost_usd REAL NOT NULL DEFAULT 0;
+        UPDATE agents SET cost_usd_total = (
+            SELECT COALESCE(SUM(MAX(t.cost_total, 0)), 0) FROM turns t WHERE t.agent_id = agents.id)
+        WHERE id IN (SELECT agent_id FROM turns WHERE cost_total < 0);
+        UPDATE turns SET cost_total = 0 WHERE cost_total < 0;
+        UPDATE agents SET session_cost_usd = cost_usd_total;
+    "#;
+
     pub(super) const RATE_LIMIT_HISTORY_DAYS: i64 = 90;
 
     pub(super) const MIGRATIONS: &[&str] = &[
         SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6, SCHEMA_V7, SCHEMA_V8,
         SCHEMA_V9, SCHEMA_V10, SCHEMA_V11, SCHEMA_V12, SCHEMA_V13, SCHEMA_V14, SCHEMA_V15,
         SCHEMA_V16, SCHEMA_V17, SCHEMA_V18, SCHEMA_V19, SCHEMA_V20, SCHEMA_V21, SCHEMA_V22,
-        SCHEMA_V23, SCHEMA_V24, SCHEMA_V25, SCHEMA_V26,
+        SCHEMA_V23, SCHEMA_V24, SCHEMA_V25, SCHEMA_V26, SCHEMA_V27,
     ];
 
     pub(super) fn open(path: &Path) -> Result<Connection, StoreError> {
@@ -2741,12 +2769,34 @@ mod sync {
     ) -> Result<(), StoreError> {
         let n = conn.execute(
             "UPDATE agents SET session_id = ?1, session_started = 0, context_tokens = NULL,
-                updated_at = ?2 WHERE id = ?3",
+                session_cost_usd = 0, updated_at = ?2 WHERE id = ?3",
             params![session_id, fmt_dt(Utc::now()), id],
         )?;
         if n == 0 {
             return Err(StoreError::NotFound(id.to_string()));
         }
+        Ok(())
+    }
+
+    pub(super) fn session_cost(conn: &Connection, id: &str) -> Result<f64, StoreError> {
+        conn.query_row(
+            "SELECT session_cost_usd FROM agents WHERE id = ?1",
+            params![id],
+            |r| r.get(0),
+        )
+        .optional()?
+        .ok_or_else(|| StoreError::NotFound(id.to_string()))
+    }
+
+    pub(super) fn set_session_cost(
+        conn: &Connection,
+        id: &str,
+        cost: f64,
+    ) -> Result<(), StoreError> {
+        conn.execute(
+            "UPDATE agents SET session_cost_usd = ?1 WHERE id = ?2",
+            params![cost, id],
+        )?;
         Ok(())
     }
 
@@ -4225,6 +4275,49 @@ mod tests {
             .query_row("SELECT COUNT(*) FROM turns", [], |r| r.get(0))
             .expect("count");
         assert_eq!(n, 1);
+    }
+
+    /// br-9y7v: negative turn costs are zeroed and the agent's total re-summed; an agent
+    /// without one keeps its total; a second pass changes nothing.
+    #[test]
+    fn v27_migration_repairs_negative_turn_costs() {
+        let conn = Connection::open_in_memory().expect("open");
+        for sql in &sync::MIGRATIONS[..26] {
+            conn.execute_batch(sql).expect("earlier schema");
+        }
+        conn.pragma_update(None, "user_version", 26)
+            .expect("set version");
+        conn.execute_batch(
+            "INSERT INTO agents(id, name, role, state, model, session_id, workdir_kind, cwd,
+                                created_at, updated_at, created_by, cost_usd_total)
+             VALUES ('a-1', 'w1', 'worker', 'idle', 'sonnet', 's', 'repo', '/r', 't', 't', 'human', -1.0),
+                    ('a-2', 'w2', 'worker', 'idle', 'sonnet', 's', 'repo', '/r', 't', 't', 'human', 7.0);
+             INSERT INTO turns(agent_id, agent_name, role, model, n, started_at, cost_total) VALUES
+                ('a-1', 'w1', 'worker', 'sonnet', 1, 't', 1.5),
+                ('a-1', 'w1', 'worker', 'sonnet', 2, 't', -3.0),
+                ('a-1', 'w1', 'worker', 'sonnet', 3, 't', 0.5),
+                ('a-2', 'w2', 'worker', 'sonnet', 1, 't', 7.0);",
+        )
+        .expect("rows");
+
+        sync::migrate(&conn).expect("migrate");
+
+        let total = |id: &str| -> f64 {
+            conn.query_row(
+                "SELECT cost_usd_total FROM agents WHERE id = ?1",
+                [id],
+                |r| r.get(0),
+            )
+            .expect("total")
+        };
+        assert_eq!(total("a-1"), 2.0);
+        assert_eq!(total("a-2"), 7.0);
+        let negative: i64 = conn
+            .query_row("SELECT COUNT(*) FROM turns WHERE cost_total < 0", [], |r| {
+                r.get(0)
+            })
+            .expect("count");
+        assert_eq!(negative, 0);
     }
 
     #[test]

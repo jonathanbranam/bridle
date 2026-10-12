@@ -152,8 +152,10 @@ def emit_user(content):
 
 
 def bump_cost():
-    state["cost"] = round(state["cost"] + 0.001, 3)
-    state["process_cost"] = round(state["process_cost"] + 0.001, 3)
+    # FAKE_CLAUDE_COST_STEP lets a test make costs big enough to see a wrong delta.
+    step = float(os.environ.get("FAKE_CLAUDE_COST_STEP", "0.001"))
+    state["cost"] = round(state["cost"] + step, 3)
+    state["process_cost"] = round(state["process_cost"] + step, 3)
 
 
 def over_budget():

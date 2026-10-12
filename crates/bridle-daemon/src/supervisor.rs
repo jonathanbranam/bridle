@@ -294,7 +294,6 @@ struct StartingAgent<'a> {
     agent_id: &'a str,
     session_id: &'a str,
     turns_so_far: u32,
-    cost_so_far: f64,
     resuming: bool,
 }
 
@@ -1319,7 +1318,6 @@ impl AgentManager {
                     agent_id: &agent.id,
                     session_id: &agent.session_id,
                     turns_so_far: agent.turns,
-                    cost_so_far: agent.cost_usd_total,
                     resuming: false,
                 },
                 spawned,
@@ -1421,9 +1419,9 @@ impl AgentManager {
             agent_id,
             session_id,
             turns_so_far,
-            cost_so_far,
             resuming,
         } = start;
+        let session_cost = self.0.store.session_cost(agent_id).await?;
         let pid = spawned.handle.pid();
         let start = tokio::task::spawn_blocking(move || containment::start_time(pid))
             .await
@@ -1451,7 +1449,7 @@ impl AgentManager {
             state: AsyncMutex::new(RuntimeState {
                 tracker: Tracker::new(pid, start),
                 fifo: VecDeque::new(),
-                last_cumulative: cost_so_far,
+                last_cumulative: session_cost,
                 turn_n: turns_so_far,
                 stall_notified: false,
                 session_id: session_id.to_string(),
@@ -1668,9 +1666,12 @@ impl AgentManager {
                     // Fall back to the last known cumulative (a zero delta),
                     // not 0.0: claude's `total_cost_usd` is a running total,
                     // so treating a missing value as "zero so far" would
-                    // manufacture a large negative delta.
+                    // manufacture a large negative delta. The total is per
+                    // claude session (br-9y7v): `last_cumulative` starts at the
+                    // session's own last total (0 for a fresh one), not the
+                    // agent's lifetime cost, and a delta is never negative.
                     let cumulative = r.total_cost_usd.unwrap_or(st.last_cumulative);
-                    let delta = cumulative - st.last_cumulative;
+                    let delta = (cumulative - st.last_cumulative).max(0.0);
                     st.last_cumulative = cumulative;
                     st.good_turn |= !r.is_error;
                     (delta, cumulative, st.turn_n, st.context_renew_pending)
@@ -1725,6 +1726,7 @@ impl AgentManager {
                     context_tokens,
                 };
                 let _ = self.0.store.end_turn(id, n, turn_end).await;
+                let _ = self.0.store.set_session_cost(id, cumulative).await;
 
                 if !r.permission_denials.is_empty() {
                     let _ = self
@@ -2789,7 +2791,6 @@ impl AgentManager {
                 agent_id: &agent.id,
                 session_id: &session_id,
                 turns_so_far: agent.turns,
-                cost_so_far: agent.cost_usd_total,
                 resuming,
             },
             spawned,
@@ -2983,7 +2984,6 @@ impl AgentManager {
                 agent_id: &agent.id,
                 session_id: &session_id.to_string(),
                 turns_so_far: agent.turns,
-                cost_so_far: agent.cost_usd_total,
                 resuming: false,
             },
             spawned,

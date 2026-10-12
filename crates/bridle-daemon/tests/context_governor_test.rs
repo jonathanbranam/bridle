@@ -134,6 +134,52 @@ async fn crossing_wind_down_at_sends_handoff_and_renews_once() {
     assert_eq!(events.len(), 1, "renew must fire exactly once per crossing");
 }
 
+/// br-9y7v: a renewed agent's new claude session counts its cost from 0, so the first turn
+/// after a renew must not record a negative delta against the agent's lifetime total.
+#[tokio::test]
+async fn renew_keeps_turn_costs_non_negative_and_the_total_summing() {
+    let config = format!("[context.wind_down_at]\ndefault = {THRESHOLD}\n");
+    let (daemon, _tmp) = start_daemon_with_config(Some(fast_overrides()), Some(&config)).await;
+    let c = &daemon.client;
+
+    let agent = c
+        .spawn(&SpawnRequest {
+            components: Vec::new(),
+            role: "worker".to_string(),
+            name: Some("w1".to_string()),
+            prompt: Some("SLEEP 1".to_string()),
+            workdir: Some(Workdir::Worktree { base: None }),
+            model: None,
+            extra_allowed_tools: Vec::new(),
+            extra_env: vec![("FAKE_CLAUDE_COST_STEP".to_string(), "1".to_string())],
+            ignore_budget: false,
+        })
+        .await
+        .expect("spawn");
+    write_high_context_usage(&agent.cwd);
+    wait_for_event(c, "agent.renewed", Some(&agent.id), |_| true).await;
+
+    // The first turn (1.0), the handoff turn (1.0) and the renewed session's continuation
+    // turn (1.0, its counter restarting at 0): 3.0 in all. The old baseline made the last
+    // one -1.0.
+    let mut total = 0.0;
+    for _ in 0..100 {
+        total = c
+            .get_agent(&agent.id)
+            .await
+            .expect("get agent")
+            .cost_usd_total;
+        if total >= 3.0 {
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+    assert!(
+        total >= 3.0,
+        "lifetime cost {total} should reach 3.0 across the renew"
+    );
+}
+
 /// Regression coverage for two races the single-shot test above can't catch
 /// reliably (both found by manually stress-running that test tens of times,
 /// not by a single run): (1) `expire_context_renews`'s sweep and the

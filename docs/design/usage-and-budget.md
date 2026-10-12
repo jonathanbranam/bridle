@@ -53,7 +53,9 @@ Built with the agent host, for the agents it hosts:
   ([[docs/design/storage#The daemon's database|database]]), kept after the
   agent is removed. The cost counter
   is cumulative per session and survives `--resume`, so a turn's cost is the
-  difference between consecutive counters;
+  difference between consecutive counters. A new session (a renew) restarts the counter at 0,
+  so the baseline is the session's own last total (`agents.session_cost_usd`, reset when the
+  session id changes), not the agent's lifetime cost, and a delta is never negative (br-9y7v);
 - the latest `rate_limit_event` per window. It arrives once per process, so
   it can be stale while no agent is starting.
 

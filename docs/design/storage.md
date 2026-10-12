@@ -17,6 +17,8 @@ agents(id PK, name UNIQUE, role, state, model, session_id, pid, pid_start,
        workdir_kind, cwd, worktree, branch, created_at, updated_at,
        turns, turn_started_at, cost_usd_total, last_event_at,
        context_tokens,                             -- latest context size (SCHEMA_V6), the governor's measure
+       session_cost_usd,                           -- the session's own last total_cost_usd, the turn-cost
+                                                   -- baseline; 0 on a new session (SCHEMA_V27, br-9y7v)
        session_started,                            -- 0 until the current session_id has had a turn
                                                    -- (SCHEMA_V13); an unstarted session can't be --resume'd
        exit_code, exit_signal, exit_reason, created_by,
