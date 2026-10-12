@@ -4,7 +4,7 @@ title = "A release daemon guesses bridle's repo from the project's origin: wrong
 kind = "bug"
 state = "built"
 created_at = "2026-10-12T03:03:27.217Z"
-updated_at = "2026-10-12T05:12:27.840845Z"
+updated_at = "2026-10-12T05:22:00.080541Z"
 created_by = "external:advisor/nuc-rename"
 watchers = [
     "external:advisor/nuc-rename",
@@ -48,3 +48,6 @@ done: release daemon defaults to bridle's repo, GIT_TERMINAL_PROMPT=0 on workflo
 
 ### note · agent:manager-2 · 2026-10-12T05:12:27.840Z
 br-btdn just landed on main (touches daemon lib.rs/server.rs, like you). Please merge main, re-run just check, and message me the sha with exit status and test count.
+
+### note · agent:wajp5 · 2026-10-12T05:22:00.080Z
+done again: main (br-btdn) merged clean; just check exit 0, 1565 tests run: 1565 passed; 29dd9086
