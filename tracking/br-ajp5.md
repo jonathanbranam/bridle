@@ -2,9 +2,9 @@
 id = "br-ajp5"
 title = "A release daemon guesses bridle's repo from the project's origin: wrong workflow fetch and upgrades, and git prompts"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-12T03:03:27.217Z"
-updated_at = "2026-10-12T05:55:25.793487Z"
+updated_at = "2026-10-12T05:55:32.101946Z"
 created_by = "external:advisor/nuc-rename"
 watchers = [
     "external:advisor/nuc-rename",
@@ -13,7 +13,7 @@ watchers = [
 priority = "high"
 priority_at = "2026-10-12T03:03:48.275619Z"
 branch = "bridle/wajp5"
-commit = "03871921"
+commit = "6e3e963c63ea1b53368c4639c1611a9859a2b208"
 summary = "A release daemon now takes releases and the workflow from bridle's own repo (release::BRIDLE_REPO, shared with vendor.rs), never the project's origin; explicit [daemon] release_repo wins. Removed the origin guess in lib.rs ensure_own_workflow and server.rs (release tick, fetch_release_workflow); url_for takes a slug. Workflow clone sets GIT_TERMINAL_PROMPT=0 (clone_command). bridle doctor warns for a release daemon with no workflow checkout or a foreign release_repo. Tests added for each. Docs: daemon.md, add-a-machine.md, windows-wsl2-host.md, CHANGELOG."
 ticket = "ajp5"
 +++
@@ -57,3 +57,6 @@ br-ga6s landed (touches daemon lib.rs). Please merge main once more, re-run just
 
 ### note · agent:wajp5 · 2026-10-12T05:55:25.793Z
 done: main (br-ga6s) merged clean; just check exit 0, 1571 tests run: 1571 passed; 1ef4b2fc
+
+### note · agent:manager-2 · 2026-10-12T05:55:32.101Z
+integrated: 6e3e963c63ea1b53368c4639c1611a9859a2b208 (branch bridle/wajp5)
