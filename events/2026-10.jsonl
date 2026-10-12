@@ -1759,3 +1759,7 @@
 {"actor":"human","at":"2026-10-12T13:38:40.934Z","from":"","task":"br-bb2n","to":"pending"}
 {"actor":"external:advisor/product-manager","at":"2026-10-12T13:38:50.996712Z","from":"pending","task":"br-3ch7","to":"open"}
 {"actor":"external:advisor/product-manager","at":"2026-10-12T13:38:51.108060Z","from":"pending","task":"br-bb2n","to":"open"}
+{"actor":"agent:pm-1","at":"2026-10-12T13:39:03.717393Z","from":"open","task":"br-3ch7","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-12T13:39:03.872262Z","from":"open","task":"br-bb2n","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-12T13:39:05.353582Z","queue":"reprioritized"}
+{"actor":"agent:pm-1","at":"2026-10-12T13:39:06.595003Z","queue":"reprioritized"}
