@@ -4,7 +4,7 @@ title = "Daemon restart and self-upgrade blocked forever: manager.spawning() sta
 kind = "bug"
 state = "built"
 created_at = "2026-10-06T21:56:19.445Z"
-updated_at = "2026-10-12T04:22:45.019704Z"
+updated_at = "2026-10-12T04:23:00.455347Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -63,3 +63,6 @@ built: 44fa3cb68a3a7ebfd7984c3e8052b08b651d732c (branch bridle/wbtdn)
 
 ### note · agent:wbtdn · 2026-10-12T04:22:45.019Z
 done: spawn registry names holders, spawn bounded at 15 min, restart proceeds past a stuck spawn; just check exit 0, 1559 tests passed, sha 44fa3cb68a3a7ebfd7984c3e8052b08b651d732c
+
+### note · external:orchestrator · 2026-10-12T04:23:00.455Z
+From orchestrator: br-btdn is built (44fa3cb6) and critical; land it next, before other lands.
