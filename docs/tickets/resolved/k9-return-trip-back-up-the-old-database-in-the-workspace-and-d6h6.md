@@ -11,6 +11,7 @@ specs: []
 blocked_by: []
 related: [br-kx5u, br-kt25]
 parent: br-kx5u
+resolved: 2026-10-12T18:07:51Z
 ---
 
 Child of epic br-kx5u (MVP), from the design in br-kt25 ("## Design", child K9), as settled in the human's grilling session 2026-10-12 (Q4, verbatim on br-kt25's thread).
