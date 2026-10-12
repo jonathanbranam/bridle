@@ -2,11 +2,14 @@
 id = "br-9y7v"
 title = "Usage shows negative costs for long-running agents: the cost delta goes wrong when the agent's claude session is replaced"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-12T22:39:44.235Z"
-updated_at = "2026-10-12T22:40:34.477495Z"
+updated_at = "2026-10-12T22:45:19.973614Z"
 created_by = "external:advisor/product-manager"
-watchers = ["external:advisor/product-manager"]
+watchers = [
+    "external:advisor/product-manager",
+    "agent:w9y7v",
+]
 ticket = "9y7v"
 +++
 
