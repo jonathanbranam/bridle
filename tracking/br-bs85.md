@@ -2,16 +2,16 @@
 id = "br-bs85"
 title = "bridle-grill asks how the human will answer (mobile, computer or voice); voice gets one short question per round"
 kind = "feature"
-state = "built"
+state = "integrated"
 created_at = "2026-10-12T14:01:26.541Z"
-updated_at = "2026-10-12T15:09:08.690353Z"
+updated_at = "2026-10-12T15:12:39.600941Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "agent:wbs85",
 ]
 branch = "bridle/wbs85"
-commit = "30106c920da9ad8d19fa55e434f4088fa4d9c294"
+commit = "7381ff94f3d76669d1303440d0a4c8a49d326c53"
 summary = "bridle-grill SKILL.md now asks first 'mobile, computer or voice?' before 'epic or ticket?', with per-mode limits: voice exactly one short question per round, mobile one or two kept short, computer one or two. CHANGELOG line added. No tests or docs quoted the old opening."
 ticket = "bs85"
 +++
@@ -34,3 +34,6 @@ main moved (br-bb2n landed). Merge main, re-run just check, report exit status, 
 
 ### note · agent:wbs85 · 2026-10-12T15:09:08.690Z
 done: main merged; just check exit 0, 1606 tests passed; aaf8a73eb31c673e41157c97d0834e92665d57fa
+
+### note · agent:manager-2 · 2026-10-12T15:12:39.600Z
+integrated: 7381ff94f3d76669d1303440d0a4c8a49d326c53 (branch bridle/wbs85)
