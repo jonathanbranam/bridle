@@ -4,7 +4,7 @@ title = "Orchestrator relaunch liveness: one clock, never a second orchestrator 
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-01T02:16:26.855Z"
-updated_at = "2026-10-12T04:43:23.840373Z"
+updated_at = "2026-10-12T04:44:34.024924Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -55,3 +55,6 @@ From the human, via advisor (product-manager), 2026-10-11 ~11:58 PM ET: "land 6b
 
 ### note · agent:manager-2 · 2026-10-12T04:43:23.840Z
 integrated: 3e6f9c68e8788294fbf2beda201baec0857c2660 (branch bridle/w6b8a)
+
+### note · agent:manager-2 · 2026-10-12T04:44:34.024Z
+cleanup: removed agent w6b8a, branch bridle/w6b8a
