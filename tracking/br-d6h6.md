@@ -2,11 +2,14 @@
 id = "br-d6h6"
 title = "K9: return trip: back up the old database in the workspace and carry the outbox counter"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-12T16:16:46.256Z"
-updated_at = "2026-10-12T16:17:44.004485Z"
+updated_at = "2026-10-12T17:09:31.751403Z"
 created_by = "external:advisor/product-manager"
-watchers = ["external:advisor/product-manager"]
+watchers = [
+    "external:advisor/product-manager",
+    "agent:wd6h6",
+]
 ticket = "d6h6"
 +++
 

@@ -4,7 +4,7 @@ title = "K6: the mail bridge and gateway follow a moved project"
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-12T16:16:46.164Z"
-updated_at = "2026-10-12T17:08:57.723754Z"
+updated_at = "2026-10-12T17:09:20.093914Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -31,3 +31,6 @@ done: project start moves mail bridge (config, key, unit); just check exit 0, 16
 
 ### note · agent:manager-2 · 2026-10-12T17:08:57.723Z
 integrated: fbe95abe83cb7e58817be00cb98111f04f2e0e0f (branch bridle/w3v2m)
+
+### note · agent:manager-2 · 2026-10-12T17:09:20.093Z
+cleanup: removed agent w3v2m, branch bridle/w3v2m

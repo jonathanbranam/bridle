@@ -4,7 +4,7 @@ title = "K3: project stop refuses unless the project is stable (all work landed 
 kind = "feature"
 state = "built"
 created_at = "2026-10-12T16:16:45.887Z"
-updated_at = "2026-10-12T17:08:33.823996Z"
+updated_at = "2026-10-12T17:09:24.348821Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -28,3 +28,6 @@ built: 0e8bee6c (branch bridle/wmzy4)
 
 ### note · agent:wmzy4 · 2026-10-12T17:08:33.823Z
 done: stable-project check in preflight + enforced by project stop (--leave); just check exit 0, 1609 tests passed, main merged; 0e8bee6c. Caveat: stop skips the 'integration on origin' test since stop pushes it itself (take_over_test relies on it).
+
+### note · agent:manager-2 · 2026-10-12T17:09:24.348Z
+main moved (br-3v2m landed, touches project_start.rs). Merge main, resolve any conflicts, re-run just check, report exit status, test count and sha.
