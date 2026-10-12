@@ -2,11 +2,14 @@
 id = "br-hd28"
 title = "Count the external and interactive sessions in bridle usage (orchestrator, advisors, aide, the human's own)"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-12T22:39:55.368Z"
-updated_at = "2026-10-12T22:40:34.569837Z"
+updated_at = "2026-10-12T23:27:37.694768Z"
 created_by = "external:advisor/product-manager"
-watchers = ["external:advisor/product-manager"]
+watchers = [
+    "external:advisor/product-manager",
+    "agent:whd28",
+]
 ticket = "hd28"
 +++
 
