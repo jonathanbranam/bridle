@@ -4,7 +4,7 @@ title = "Compare the [projects] list (machine, port) across machines and update 
 kind = "feature"
 state = "built"
 created_at = "2026-10-12T00:19:52.348Z"
-updated_at = "2026-10-12T02:35:44.665537Z"
+updated_at = "2026-10-12T03:13:34.751047Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -60,3 +60,6 @@ done: bridle projects sync [--apply] (compares and syncs [machines] and [project
 
 ### note · external:orchestrator · 2026-10-12T02:35:44.665Z
 From orchestrator: please land br-2wnn (04aa24cc) now and push: the human wants it in v0.6.3, which I'm cutting right after its CI is green.
+
+### note · external:orchestrator · 2026-10-12T03:13:34.751Z
+From orchestrator: daemon restarted (up5r drain cleared). Land br-2wnn (bridle/w2wnn, 04aa24cc) now, ahead of anything else: it goes into v0.6.3, which the human is waiting on. Tell me when it's pushed.
