@@ -1729,7 +1729,7 @@ battery fell from 99% to 70% in 27 minutes (about 1.1% a minute) with two worker
 - **Follow-up:** br-w6ww, made critical and readied by the orchestrator; br-d7r5 (a self-upgrade
   restart also kills a land's background check).
 
-### 2026-10-12 ~01:56Z: bridle's daemon stuck draining, every agent message held
+## 2026-10-12 ~01:56Z: bridle's daemon stuck draining, every agent message held
 
 - **What happened:** the daemon (v0.6.2) reported `draining: true` with nothing in `draining_on`
   and every agent idle. Each message to an agent was held, so manager-2 never saw the workers'
