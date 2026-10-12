@@ -378,13 +378,14 @@ Bridle's own cost on the machine: measure against a baseline, then cut it.
 #### Epic `usage` (br-rdkn): Usage you can trust: every session counted, costs right, the weekly limits charted
 
 - Outcome: The human can see, and trust, where the account's token budget goes. The human, 2026-10-12 ~6:00 PM ET: "we need tracing and reporting to know for sure"; ~6:35 PM: "Agree on 1-3. Let's do it" and "Put this in a proper theme and epic of course".
-- Done when: (PdM draft) no negative costs, a renew doesn't skew totals (9y7v); external and interactive sessions counted in `bridle usage`, or reported as not measured (hd28); week-to-week limit charts in bridle-ui (yydm).
+- Done when: (PdM draft) no negative costs, a renew doesn't skew totals (9y7v); external and interactive sessions counted in `bridle usage`, or reported as not measured (hd28); week-to-week limit charts in bridle-ui (yydm, ui-u6uz); any agent instance's usage charted (xfy7, ui-mxkj).
 
 | Task | Title | Pri | State | Next |
 |---|---|---|---|---|
 | br-9y7v | Usage shows negative costs for long-running agents | | open | to plan (first) |
 | br-hd28 | Count the external and interactive sessions in bridle usage | | open | to plan |
-| br-yydm | Usage page: week-to-week charts of the five-hour and seven-day limits | | open | to plan; a ui- half to file |
+| br-yydm | Gateway route for the limit history (UI: ui-u6uz) | | claimed | building |
+| br-xfy7 | Usage per agent instance over time (UI: ui-mxkj) | | open | to plan; after 9y7v |
 
 #### Epic `benchmarking`: Benchmarking bridle's own cost
 
@@ -703,3 +704,4 @@ Chores assigned to the human: expand on an idea, review a ticket or branch.
 - 2026-10-11 12:07 AM ET: 95mu moved from everything-is-a-ticket to reviews-enforced, renamed "Gates: design before build, review before landing" (the human: "yes, agreed move it"). cbbn design decided (plain [[restart]] config), readied; new 3k7d (externals schedule for themselves, high, tonight) in scheduled-messages; new jstr (recipient hint, low) in agents-and-cli. 3haz, fd8e resolved; qac3, fd8e landed.
 - 2026-10-12 5:30 PM ET: tables regenerated (stale since 10-10); Delivered list brought up to date (epic kx5u MVP complete: K1-K6, K9, K10 and yt5v; K7 is V1, later; K8 moved to epic ehg7).
 - 2026-10-12 6:50 PM ET: new epic `usage` (br-rdkn, theme performance), first in order: 9y7v (negative costs), hd28 (count external sessions; answers 368g), yydm (limit charts), all readied on the human's go.
+- 2026-10-12 6:55 PM ET: usage epic: yydm narrowed to the gateway route, ui-u6uz filed (UI page); new xfy7 + ui-mxkj (chart one agent instance; the human), done-when item 4.

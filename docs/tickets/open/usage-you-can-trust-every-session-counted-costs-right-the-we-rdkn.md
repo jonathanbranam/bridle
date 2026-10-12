@@ -27,11 +27,13 @@ The human can see, and trust, where the account's token budget goes: every sessi
 1. No agent's cost in `bridle usage` is ever negative; a session restart or renew doesn't skew the totals (br-9y7v).
 2. The human's and the external sessions' use (orchestrator, advisors, aide) is counted in `bridle usage`, or the gap is reported per session, so the biggest consumers are not invisible (br-hd28, which answers br-368g's question).
 3. bridle-ui shows week-to-week charts of the five-hour and seven-day limits from the history bridle already keeps (br-yydm; data from br-xxw9).
+4. The human picks any agent instance (live, removed, or external once br-hd28 lands) and charts its usage over time (br-xfy7, ui-mxkj). The human, 2026-10-12 ~6:50 PM ET: "When this is done I want to be able to choose a specific agent instance and chart its usage".
 
 ## Child tickets
 
 - br-9y7v: negative costs for long-running agents (bug)
 - br-hd28: count the external and interactive sessions (answers br-368g)
-- br-yydm: the usage charts (UI side of br-xxw9)
+- br-yydm: the gateway route for the limit history; ui-u6uz: the Usage page with the limit charts
+- br-xfy7: usage per agent instance over time; ui-mxkj: pick an agent and chart it
 
 Later, in the theme, not this epic: br-qhsa (gateway usage routes), br-n4p9 (which projects and agents use tokens), br-kpgy (bridle work vs real projects), br-jxwr (task timing).
