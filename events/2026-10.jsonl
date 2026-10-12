@@ -1716,3 +1716,4 @@
 {"actor":"external:advisor/product-manager","at":"2026-10-12T03:59:45.375345Z","from":"pending","task":"br-wayb","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-12T03:59:57.040760Z","from":"open","task":"br-wayb","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-12T03:59:58.899167Z","queue":"reprioritized"}
+{"actor":"external:advisor/product-manager","at":"2026-10-12T04:02:27.819566Z","from":"pending","task":"br-kt25","to":"open"}
