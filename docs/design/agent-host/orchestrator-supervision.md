@@ -58,6 +58,17 @@ the pid counts as alive when it is a `bridle session`.
 If the pid doesn't match but is a running `bridle session`, the supervisor files one incident and
 does **not** relaunch: a second orchestrator beside a live one is worse than a missed relaunch.
 
+**Cross-check and recovery mode** (br-10c0, ticket 7d62). Each tick the supervisor also compares
+the pid file with the wake polls it sees: a dead pid with a poll open, or a live pid with more than
+one open, is a disagreement. It never relaunches on one; on first sight it sends a `note` to
+`external:orchestrator` asking it to confirm its own pid and stop any extra session. If the
+disagreement is still there 5 minutes later it records an incident and enters **recovery mode**:
+the file `$BRIDLE_HOME/orchestrator.recovery` exists and the supervisor does nothing (no relaunch,
+no context or uptime notes, no incidents) until `bridle orchestrator clear-recovery` removes it
+(the human or the orchestrator). A disagreement that goes away on its own is forgotten. This is
+the minimum flag, not the general hold of 8fsx. The launcher already refuses under a bridle
+agent (`BRIDLE_AGENT_ID`, k6b3) and beside a live pid (`--replace`).
+
 ## 2. Config
 
 An `[orchestrator]` table in the project's `.bridle/config.toml` (`roles-and-config.md`, "Other keys").

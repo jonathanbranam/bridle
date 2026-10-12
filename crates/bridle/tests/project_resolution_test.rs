@@ -115,6 +115,11 @@ const CLASSES: &[(&str, Kind, &str)] = &[
         Skip,
         "runs from a hook, in the agent's own env",
     ),
+    (
+        "orchestrator clear-recovery",
+        Skip,
+        "removes a per-machine file under $BRIDLE_HOME; no daemon",
+    ),
     ("session orchestrator", Session, ""),
     ("session advisor", Session, ""),
     ("session aide", Session, ""),

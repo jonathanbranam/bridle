@@ -2089,6 +2089,10 @@ pub enum OrchestratorAction {
     /// The launcher's SessionStart hook: reads the hook JSON on stdin and records the session
     /// id and transcript path in `$BRIDLE_HOME/orchestrator.session`. Never fails.
     NoteSession,
+    /// Leave recovery mode: the daemon's orchestrator supervisor resumes (relaunch, notes). It
+    /// enters recovery when the pid file and the wake polls disagree and the orchestrator
+    /// doesn't settle it.
+    ClearRecovery,
     /// Every agent's handover note (same as `bridle handover`).
     Handover(HandoverArgs),
     /// Print a fresh session's opening context for a role.

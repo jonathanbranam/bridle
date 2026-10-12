@@ -214,6 +214,9 @@ pub async fn run(mut cli: Cli) -> Result<(), CliError> {
             crate::orchestrator::note_session(&input);
             Ok(())
         }
+        Command::Orchestrator(OrchestratorArgs {
+            action: OrchestratorAction::ClearRecovery,
+        }) => crate::orchestrator::clear_recovery(),
         Command::Focus(FocusArgs {
             action: FocusAction::Gate,
         }) => {

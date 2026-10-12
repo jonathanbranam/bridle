@@ -229,6 +229,11 @@ impl Waiters {
         WaiterGuard(self.clone())
     }
 
+    /// Wake requests open now.
+    pub fn open_count(&self) -> u32 {
+        self.state.lock().expect("waiters lock").open
+    }
+
     /// A poll answered with wakes just now.
     pub fn delivered(&self, at: DateTime<Utc>) {
         self.state.lock().expect("waiters lock").last_delivered = Some(at);

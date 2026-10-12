@@ -30,6 +30,12 @@ const SHELL_RECHECK: Duration = Duration::from_secs(5);
 const CONFIRM_WITHIN: Duration = Duration::from_secs(60);
 /// After SIGTERM, a process still alive this long gets SIGKILL.
 const KILL_AFTER: Duration = Duration::from_secs(15);
+/// A pid file and wake-poll disagreement the orchestrator hasn't settled in this long puts the
+/// supervisor in recovery mode.
+const CROSSCHECK_WAIT: Duration = Duration::from_secs(300);
+/// Present in `$BRIDLE_HOME` while the supervisor is in recovery mode; `bridle orchestrator
+/// clear-recovery` removes it. A file so that it survives a daemon restart.
+pub const RECOVERY_FILE: &str = "orchestrator.recovery";
 
 pub trait Tmux: Send + Sync {
     /// `(pane id, @bridle tag)` for every pane; the tag is empty when unset.
@@ -106,6 +112,8 @@ impl Handover {
 /// The interim "record an incident" (section 8): one function nc7r replaces.
 pub trait Incidents: Send + Sync {
     async fn record(&self, text: &str);
+    /// A message to `external:orchestrator`: the cross-check asking it to confirm its own pid.
+    async fn ask_orchestrator(&self, text: &str);
 }
 
 /// `<pid> @<start epoch> <launch epoch>`. Older session binaries wrote the local-time `ps lstart`
@@ -156,6 +164,10 @@ struct State {
     mismatch_noted: bool,
     /// No wake command has been running for longer than `waiter_grace`; reported once.
     waiter_noted: bool,
+    /// When the pid file and the wake polls were first seen to disagree; the orchestrator was
+    /// asked then.
+    disagree_since: Option<DateTime<Utc>>,
+    recovery_noted: bool,
     /// The last incident text, so a condition that persists across ticks is reported once.
     last_incident: Option<String>,
     /// The launch epoch the per-session fields below belong to.
@@ -233,6 +245,14 @@ impl<T: Tmux, P: Procs, I: Incidents, W: WakeSink, E: EventEmitter> Supervisor<T
 
     pub async fn tick(&self, now: DateTime<Utc>) {
         let mut st = self.state.lock().await;
+        // Recovery mode: the supervisor acts on nothing (no relaunch, no notes) until cleared.
+        if self.home.join(RECOVERY_FILE).exists() {
+            if !std::mem::replace(&mut st.recovery_noted, true) {
+                tracing::info!("orchestrator supervisor is in recovery mode: doing nothing");
+            }
+            return;
+        }
+        st.recovery_noted = false;
         let Some(rec) = std::fs::read_to_string(self.home.join("orchestrator.pid"))
             .ok()
             .and_then(|t| parse_pid_file(&t))
@@ -256,6 +276,10 @@ impl<T: Tmux, P: Procs, I: Incidents, W: WakeSink, E: EventEmitter> Supervisor<T
             st.dead_noted = false;
             st.mismatch_noted = false;
             st.last_incident = None;
+            // Two sessions polling for one orchestrator.
+            let two = self.waiters.open_count() > 1;
+            self.crosscheck(&mut st, now, two, "two wake commands are polling")
+                .await;
             self.check_waiter(&mut st, now, rec.launched).await;
             self.check_thresholds(&mut st, now, &rec).await;
             return;
@@ -274,6 +298,19 @@ impl<T: Tmux, P: Procs, I: Incidents, W: WakeSink, E: EventEmitter> Supervisor<T
         }
         st.mismatch_noted = false;
         st.waiter_noted = false;
+        // The pid is dead but an orchestrator is polling: don't relaunch beside it.
+        let polling = self.waiters.open_count() > 0;
+        if self
+            .crosscheck(
+                &mut st,
+                now,
+                polling,
+                "the pid is not running but a wake command is polling",
+            )
+            .await
+        {
+            return;
+        }
 
         if !std::mem::replace(&mut st.dead_noted, true) {
             let text = match st.deliberate {
@@ -601,6 +638,42 @@ impl<T: Tmux, P: Procs, I: Incidents, W: WakeSink, E: EventEmitter> Supervisor<T
         }
     }
 
+    /// The pid file against what the daemon sees of `external:orchestrator`. On a disagreement:
+    /// ask the orchestrator to confirm its pid, and if it hasn't settled within `CROSSCHECK_WAIT`
+    /// file an incident and enter recovery mode. Returns whether they disagree now.
+    async fn crosscheck(
+        &self,
+        st: &mut State,
+        now: DateTime<Utc>,
+        disagree: bool,
+        what: &str,
+    ) -> bool {
+        if !disagree {
+            st.disagree_since = None;
+            return false;
+        }
+        let Some(since) = st.disagree_since else {
+            st.disagree_since = Some(now);
+            self.incidents
+                .ask_orchestrator(&format!(
+                    "The pid file and what the daemon sees disagree: {what}. Please confirm your own pid (`echo $PPID` in your session's shell) and whether another orchestrator is running, and stop any extra one. If this isn't settled in {} minutes the supervisor stops acting (recovery mode) until `bridle orchestrator clear-recovery`.",
+                    CROSSCHECK_WAIT.as_secs() / 60
+                ))
+                .await;
+            return true;
+        };
+        if now - since >= chrono_dur(CROSSCHECK_WAIT) {
+            let _ = std::fs::write(self.home.join(RECOVERY_FILE), now.to_rfc3339());
+            st.disagree_since = None;
+            self.incidents
+                .record(&format!(
+                    "The orchestrator pid file and what the daemon sees still disagree ({what}) and it was not settled. The supervisor is in recovery mode: no relaunch, no handover notes. Fix it, then `bridle orchestrator clear-recovery`."
+                ))
+                .await;
+        }
+        true
+    }
+
     async fn report(&self, st: &mut State, text: String) {
         if st.last_incident.as_deref() == Some(&text) {
             return;
@@ -840,6 +913,20 @@ impl Incidents for RealIncidents {
             )
             .await;
     }
+
+    async fn ask_orchestrator(&self, text: &str) {
+        let _ = self
+            .manager
+            .send(
+                "system".to_string(),
+                ToTarget::External("external:orchestrator".to_string()),
+                MessageKind::Note,
+                text.to_string(),
+                When::Now,
+                None,
+            )
+            .await;
+    }
 }
 
 pub type RealSupervisor = Supervisor<RealTmux, RealProcs, RealIncidents, Arc<Wakes>, Emitter>;
@@ -925,10 +1012,13 @@ mod tests {
     }
 
     #[derive(Default)]
-    struct FakeIncidents(StdMutex<Vec<String>>);
+    struct FakeIncidents(StdMutex<Vec<String>>, StdMutex<Vec<String>>);
     impl Incidents for Arc<FakeIncidents> {
         async fn record(&self, text: &str) {
             self.0.lock().unwrap().push(text.into());
+        }
+        async fn ask_orchestrator(&self, text: &str) {
+            self.1.lock().unwrap().push(text.into());
         }
     }
 
@@ -965,6 +1055,8 @@ mod tests {
         waiters: Arc<Waiters>,
         wakes: Arc<FakeWakes>,
         handover: Arc<Handover>,
+        /// The live session's wake command; it ends with the session (see `tick`).
+        poll: StdMutex<Option<crate::wake::WaiterGuard>>,
         t0: DateTime<Utc>,
     }
 
@@ -1016,6 +1108,7 @@ mod tests {
                 waiters,
                 wakes,
                 handover,
+                poll: StdMutex::new(None),
                 t0,
             }
         }
@@ -1039,7 +1132,7 @@ mod tests {
             self.write_pid(10, self.t0.timestamp());
             self.procs.alive.lock().unwrap().insert(10);
             // The waiter incident isn't under test here.
-            std::mem::forget(self.waiters.opened());
+            *self.poll.lock().unwrap() = Some(self.waiters.opened());
         }
 
         fn wakes(&self) -> Vec<String> {
@@ -1062,8 +1155,15 @@ mod tests {
             self.emitter.0.lock().unwrap().clone()
         }
 
+        fn asks(&self) -> Vec<String> {
+            self.incidents.1.lock().unwrap().clone()
+        }
+
         /// A tick `secs` after t0.
         async fn tick(&self, secs: i64) {
+            if self.procs.alive.lock().unwrap().is_empty() {
+                self.poll.lock().unwrap().take();
+            }
             self.sup
                 .tick(self.t0 + chrono::Duration::seconds(secs))
                 .await;
@@ -1170,6 +1270,62 @@ mod tests {
         assert_eq!(r.typed(), 0);
         assert_eq!(r.incidents().len(), 1, "reported once");
         assert!(r.incidents()[0].contains("Not relaunching"));
+    }
+
+    #[tokio::test]
+    async fn a_dead_pid_with_a_polling_orchestrator_asks_and_never_relaunches() {
+        let rig = Rig::new();
+        rig.write_pid(10, rig.t0.timestamp());
+        let _poll = rig.waiters.opened();
+        rig.relaunch(100).await;
+        rig.relaunch(200).await;
+        assert_eq!(rig.asks().len(), 1);
+        assert_eq!(rig.typed(), 0);
+        assert!(rig.incidents().is_empty());
+    }
+
+    #[tokio::test]
+    async fn a_disagreement_that_settles_is_forgotten() {
+        let rig = Rig::new();
+        rig.write_pid(10, rig.t0.timestamp());
+        let poll = rig.waiters.opened();
+        rig.tick(100).await;
+        drop(poll);
+        rig.tick(110).await;
+        let _poll = rig.waiters.opened();
+        rig.tick(500).await;
+        // The clock restarted at the second sighting: asked again, still no incident.
+        assert_eq!(rig.asks().len(), 2);
+        assert!(!rig.dir.path().join(RECOVERY_FILE).exists());
+    }
+
+    #[tokio::test]
+    async fn two_polling_sessions_are_asked_about() {
+        let rig = Rig::new();
+        rig.live(); // one poll, held for good
+        let _second = rig.waiters.opened();
+        rig.tick(100).await;
+        assert_eq!(rig.asks().len(), 1);
+        assert!(rig.incidents().is_empty());
+    }
+
+    #[tokio::test]
+    async fn an_unsettled_disagreement_enters_recovery_until_cleared() {
+        let rig = Rig::new();
+        rig.write_pid(10, rig.t0.timestamp());
+        let poll = rig.waiters.opened();
+        rig.tick(100).await;
+        rig.tick(100 + 301).await;
+        assert_eq!(rig.incidents().len(), 1);
+        assert!(rig.dir.path().join(RECOVERY_FILE).exists());
+        // Recovery: the poll is gone and the pid is dead, yet nothing is relaunched.
+        drop(poll);
+        rig.relaunch(1000).await;
+        assert_eq!(rig.typed(), 0);
+        // Cleared: supervision resumes.
+        std::fs::remove_file(rig.dir.path().join(RECOVERY_FILE)).unwrap();
+        rig.relaunch(1100).await;
+        assert_eq!(rig.typed(), 1);
     }
 
     #[tokio::test]

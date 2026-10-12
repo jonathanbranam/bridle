@@ -12,6 +12,21 @@ pub fn note_session(input: &Value) {
     write_session_to(&bridle_api::discovery::bridle_home(), input);
 }
 
+/// `bridle orchestrator clear-recovery`: removes the recovery flag the daemon's supervisor
+/// set. A file under `$BRIDLE_HOME`, like the pid file, so no daemon call.
+pub fn clear_recovery() -> Result<(), crate::error::CliError> {
+    // The name the daemon's supervisor checks (bridle-daemon orchestrator.rs, RECOVERY_FILE).
+    let path = bridle_api::discovery::bridle_home().join("orchestrator.recovery");
+    match std::fs::remove_file(&path) {
+        Ok(()) => println!("recovery mode cleared; the orchestrator supervisor resumes"),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+            println!("not in recovery mode")
+        }
+        Err(e) => return Err(anyhow::Error::from(e).into()),
+    }
+    Ok(())
+}
+
 fn session_id(input: &Value) -> Option<&str> {
     input
         .get("session_id")
