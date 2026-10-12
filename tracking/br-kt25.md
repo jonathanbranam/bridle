@@ -4,7 +4,7 @@ title = "Move a project between machines with one command (bridle project move)"
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-09T14:10:30.127Z"
-updated_at = "2026-10-12T14:18:35.009797Z"
+updated_at = "2026-10-12T14:26:59.925863Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 branch = "bridle/wkt25"
@@ -167,3 +167,38 @@ Settled for K4 (the drain): the hold on new work does not expire (no timeout). T
 
 ### note · external:advisor/product-manager · 2026-10-12T14:18:35.009Z
 Q5's two bugs filed (pending, theme reliability, later epic, not blocking kx5u): br-ef3u (stale agent tracking holds the quiet point), br-8swr (manager waiting on just check read as idle).
+
+### note · external:advisor/product-manager · 2026-10-12T14:26:59.925Z
+Grill Q4 (return trips), partly answered, plus the test plan and a lost-machine epic (the human, 2026-10-12 ~10:40 AM ET, to advisor product-manager, dictated), verbatim:
+
+> Another comment for this effort is that I want to use, I think, data contracts or something and test this out. We can just try a project move when nothing's happening first and find all the bugs there. Then, when we get to Remus, we'll try the opposite: set it back and see if there are any additional bugs that we didn't catch the first time. Then I want to start some work on Remus and then initiate the move again and test whether that works, whether the system properly lands the work first.
+>
+> Okay, I think that makes sense. I'm not sure why we lose old messages. I guess you're just saying drop the entire database. Losing events is also interesting to me because they're just a log of what happened, so I don't know why we would lose events. Cost history: I don't know why we would lose that. Agent rows and tokens, yes, that's fine for now. I think in a future epic, maybe we address that, but if it's automated, it doesn't matter if we make new tokens at all. It's quick and easy. I don't know what you mean by the outgoing mail counter. You're talking about just the counter or the actual messages?
+>
+> For the MVP, we should be fine to just wait and make sure there's no outgoing mail being sent. That's totally fine. I'm thinking through what we do in the future. If our end-state goal is that we need to put names on these things so I can talk about them more easily (so this was MVP), then let's talk about it in terms of V1 and V2. Let's make those really clear definitions. We could give them a name if you want to. That's fine.
+>
+> For V1, that's where we have the project move command that we expect to work reliably. I think for V1 we should just make sure messages are delivered first. I guess I can't think of any reason why, if both machines are up, both projects are running, and we've got things running on both, there would be an undelivered message. I think we just check that and refuse if there are undelivered messages, because it means something's wrong, essentially.
+>
+> Undelivered messages mean, let me think this through: if Data Contracts is running on Dalek, an undelivered message would mean that Remus is trying to send a message to the Data Contracts project on Delic, and it has not yet been delivered. In that case, I think we just wait for delivery. The only situation where that breaks down is where we have lost a computer. Let's have a separate epic for tracking project move with a lost origin, and that's going to be a really rare edge case. I don't want to overengineer it at all. I might not do any of these tickets because, hopefully, that just never happens, and we end up at a state where, in the future, we find different solutions for all these problems. I don't think we need to overengineer anything.
+>
+> That could be: we should just have a ticket where we're accumulating all of the things, all the considerations that we're aware of right now for what would happen if we lost a machine that owned the project. Those would be:
+>
+> * We may have lost git pushes.
+> * We may have lost bridle state.
+> * We've lost any workers or worker agents.
+> * We've lost the interactive sessions.
+> * Obviously, they don't have a handover node.
+> * Obviously, we've lost the old databases.
+> * Any outgoing messages will not be delivered, and those could come from any machine within the cluster. We would lose those, or we could reroute those, potentially, but we would have to handle that.
+>
+> Also note that we need to have a solution in that case for when the lost machine comes back. Let's say my laptop crashes or whatever. I leave it in a hotel for a week and I want to keep working, but a week later I find it, I find Dalek, and turn it back on. For first true reliability, we need to have that button down.
+>
+> We can just think in terms of cloud servers too. I don't want to pay for cloud servers. That's why I'm using machines that I own, but if you think of a cloud server that's running something that's lost, it could come back in the future. The goal there would be that when that thing comes back online, the rest of the system is resilient to that and realizes that they should tell that system that it's been offline and it's no longer owning the project, and and the other thing that's important is that there needs to be a way. Soon after boot, these demons are going to come up on boot. I don't know what they're going to do exactly, but there needs to be a way to pretty quickly get in there and tell them that the project's been moved
+
+PdM reading:
+- Test plan (on kx5u too): (1) move data-contracts dalek -> remus with nothing happening, fix what breaks; (2) move it back (the return trip); (3) start work on it, move again, and check the move lands the work first.
+- Undelivered mail: the move checks and refuses (or waits) while any mail to or from the project is undelivered; with both machines up it means something is wrong. For the MVP, waiting until nothing is outgoing is fine.
+- Tokens and agent rows: losing them is fine (re-created automatically).
+- Still open on Q4: why old messages, events and cost history would be lost (the human questions it), and what "the outgoing mail counter" is. Asked back in the grill.
+- The human asked for clear names for the stages (MVP, V1, V2); asked back in the grill.
+- Lost owning machine: a separate epic, rare, not overengineered (filed; kt25's K8 moves there).
