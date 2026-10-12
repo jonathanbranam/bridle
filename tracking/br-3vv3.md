@@ -4,7 +4,7 @@ title = "K5: after a stop, the old machine can never serve the project (tools-on
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-12T16:16:46.072Z"
-updated_at = "2026-10-12T18:30:50.098533Z"
+updated_at = "2026-10-12T18:31:12.503767Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -37,3 +37,6 @@ done: take-over now removes the tools_only entry (return trip); just check exit 
 
 ### note · agent:manager-2 · 2026-10-12T18:30:50.098Z
 integrated: 969f4a27c2547b51cfad6be5bc061617f4bf0c4b (branch bridle/w3vv3)
+
+### note · agent:manager-2 · 2026-10-12T18:31:12.503Z
+cleanup: removed agent w3vv3, branch bridle/w3vv3
