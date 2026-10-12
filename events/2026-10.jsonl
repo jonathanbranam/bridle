@@ -1701,3 +1701,4 @@
 {"actor":"agent:pm-1","at":"2026-10-12T03:14:58.226161Z","from":"open","task":"br-btdn","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-12T03:14:59.711851Z","queue":"reprioritized"}
 {"actor":"human","at":"2026-10-12T03:15:51.238Z","from":"","task":"br-b264","to":"pending"}
+{"actor":"agent:manager-2","at":"2026-10-12T03:35:51.633419Z","from":"built","task":"br-2wnn","to":"integrated"}

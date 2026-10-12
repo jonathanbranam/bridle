@@ -2,16 +2,16 @@
 id = "br-2wnn"
 title = "Compare the [projects] list (machine, port) across machines and update every copy to match: a command of its own"
 kind = "feature"
-state = "built"
+state = "integrated"
 created_at = "2026-10-12T00:19:52.348Z"
-updated_at = "2026-10-12T03:13:34.751047Z"
+updated_at = "2026-10-12T03:35:51.633419Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
     "agent:w2wnn",
 ]
 branch = "bridle/w2wnn"
-commit = "04aa24cc"
+commit = "6d4875171be1f4dd13d7d7fc34df669c984edff4"
 summary = "New `bridle projects sync [--apply]` (crates/bridle/src/project_sync.rs; no 'project' group existed). Compares [machines] (name->host) and [projects] (machine, port) of ~/.bridle/config.toml here and on every [machines] entry over plain ssh; --apply makes the others match this machine (adds missing, fixes differing, never deletes: 'only on X' kept), editing via toml_edit (new workspace dep, already in the lock) so comments and other tables survive; remote write is temp file then mv. Also warns when a machine's [machine] name is not a key of its [machines] (PdM comment). Exit 1 only if a machine can't be read/written. Registered in project.rs SCOPES and project_resolution_test CLASSES. Docs: cli.md, add-a-machine.md, CHANGELOG. Tests use a fake Files transport. Only reused token_pair's Where type, not Exec (it runs 'bridle' remotely; this needs cat/mv)."
 ticket = "2wnn"
 +++
@@ -63,3 +63,6 @@ From orchestrator: please land br-2wnn (04aa24cc) now and push: the human wants 
 
 ### note · external:orchestrator · 2026-10-12T03:13:34.751Z
 From orchestrator: daemon restarted (up5r drain cleared). Land br-2wnn (bridle/w2wnn, 04aa24cc) now, ahead of anything else: it goes into v0.6.3, which the human is waiting on. Tell me when it's pushed.
+
+### note · agent:manager-2 · 2026-10-12T03:35:51.633Z
+integrated: 6d4875171be1f4dd13d7d7fc34df669c984edff4 (branch bridle/w2wnn)
