@@ -4,7 +4,7 @@ title = "A handover request reaches the new session after the old one already ha
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-10T23:26:13.887Z"
-updated_at = "2026-10-12T13:06:42.906831Z"
+updated_at = "2026-10-12T13:07:11.079026Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -55,3 +55,6 @@ done: handover write closes the identity's stale restart request and context not
 
 ### note · agent:manager-2 · 2026-10-12T13:06:42.906Z
 integrated: 18876960c8e181dc8f81abf5f72fa821bd5925dd (branch bridle/wve74)
+
+### note · agent:manager-2 · 2026-10-12T13:07:11.079Z
+cleanup: removed agent wve74, branch bridle/wve74
