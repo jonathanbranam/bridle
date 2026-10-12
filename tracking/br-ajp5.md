@@ -4,7 +4,7 @@ title = "A release daemon guesses bridle's repo from the project's origin: wrong
 kind = "bug"
 state = "built"
 created_at = "2026-10-12T03:03:27.217Z"
-updated_at = "2026-10-12T05:44:54.547056Z"
+updated_at = "2026-10-12T05:55:25.793487Z"
 created_by = "external:advisor/nuc-rename"
 watchers = [
     "external:advisor/nuc-rename",
@@ -54,3 +54,6 @@ done again: main (br-btdn) merged clean; just check exit 0, 1565 tests run: 1565
 
 ### note · agent:manager-2 · 2026-10-12T05:44:54.547Z
 br-ga6s landed (touches daemon lib.rs). Please merge main once more, re-run just check, and message me the sha with exit status and test count.
+
+### note · agent:wajp5 · 2026-10-12T05:55:25.793Z
+done: main (br-ga6s) merged clean; just check exit 0, 1571 tests run: 1571 passed; 1ef4b2fc
