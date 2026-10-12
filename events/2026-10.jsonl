@@ -1835,3 +1835,4 @@
 {"actor":"agent:manager-2","at":"2026-10-12T23:27:07.070650Z","from":"built","task":"br-9y7v","to":"integrated"}
 {"actor":"agent:whd28","at":"2026-10-12T23:47:21.187161Z","from":"claimed","task":"br-hd28","to":"built"}
 {"actor":"agent:manager-2","at":"2026-10-12T23:47:29.794939Z","from":"built","task":"br-hd28","to":"integrated"}
+{"actor":"human","at":"2026-10-12T23:48:22.429Z","from":"","task":"br-jp52","to":"pending"}
