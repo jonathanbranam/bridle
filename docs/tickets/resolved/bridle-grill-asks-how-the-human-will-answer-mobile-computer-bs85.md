@@ -10,6 +10,7 @@ specs: []
 blocked_by: []
 related: [br-k9j4]
 theme: product-process
+resolved: 2026-10-12T15:13:05Z
 ---
 
 ## The ask
