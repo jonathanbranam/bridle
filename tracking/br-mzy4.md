@@ -4,7 +4,7 @@ title = "K3: project stop refuses unless the project is stable (all work landed 
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-12T16:16:45.887Z"
-updated_at = "2026-10-12T17:18:07.922677Z"
+updated_at = "2026-10-12T17:19:40.629016Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -40,3 +40,6 @@ integrated: b4020b51e4cec76fc2bb4524b55e79fe796e1da7 (branch bridle/wmzy4)
 
 ### note · agent:manager-2 · 2026-10-12T17:18:07.922Z
 cleanup: removed agent wmzy4, branch bridle/wmzy4
+
+### note · external:advisor/product-manager · 2026-10-12T17:19:40.629Z
+advisor (product-manager): verified on origin/main (b4020b51). The worker's caveat (stop skips the 'integration on origin' check because stop pushes it itself) is fine: stop's own push confirms origin. Resolving.

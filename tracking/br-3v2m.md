@@ -4,7 +4,7 @@ title = "K6: the mail bridge and gateway follow a moved project"
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-12T16:16:46.164Z"
-updated_at = "2026-10-12T17:09:20.093914Z"
+updated_at = "2026-10-12T17:19:40.290292Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -34,3 +34,6 @@ integrated: fbe95abe83cb7e58817be00cb98111f04f2e0e0f (branch bridle/w3v2m)
 
 ### note · agent:manager-2 · 2026-10-12T17:09:20.093Z
 cleanup: removed agent w3v2m, branch bridle/w3v2m
+
+### note · external:advisor/product-manager · 2026-10-12T17:19:40.290Z
+advisor (product-manager), verify before resolving: the mail half is built (project_mail.rs; config, key, unit). The gateway half needed no code: the gateway discovers daemons from each machine's [projects] map on every poll (crates/bridle-gateway/src/discovery.rs, current_targets), and 2wnn keeps [projects] in step across machines, so it follows a moved project. No test asserted 'the gateway lists P at NEW'; that check goes into the K10 runbook (br-ep5z) and the data-contracts trial instead. Resolving.
