@@ -2,9 +2,9 @@
 id = "br-ga6s"
 title = "53gy A: one-shot take-over (serve --take-over removed), owner.toml machine identity, [projects] sync via 2wnn"
 kind = "feature"
-state = "open"
+state = "planned"
 created_at = "2026-10-12T01:04:04.376Z"
-updated_at = "2026-10-12T01:04:36.961481Z"
+updated_at = "2026-10-12T01:05:17.472998Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
