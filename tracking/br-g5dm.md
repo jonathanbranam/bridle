@@ -2,9 +2,9 @@
 id = "br-g5dm"
 title = "Products: a product is a set of projects with one roadmap and one product manager; several product managers"
 kind = "feature"
-state = "claimed"
+state = "integrated"
 created_at = "2026-10-09T20:06:43.304Z"
-updated_at = "2026-10-12T09:45:40.620564Z"
+updated_at = "2026-10-12T09:55:46.877393Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -12,6 +12,8 @@ watchers = [
 ]
 priority = "low"
 priority_at = "2026-10-09T20:11:04.169227Z"
+branch = "bridle/wg5dm"
+commit = "5b239233e8aa3b6f86d65ae01e269ed32b353733"
 summary = "Design written into the ticket body (## Design). Recommendation: a [product] table in each project's .bridle/config.toml (home project declares name + home=true, members name the product and home); no table = product-less; migration none (optional field). Roadmap stays in the home project (optional roadmap path), hand-kept; gateway reads it via the home daemon, only additive product info on the project info response. Themes scoped per product (<product>/<slug>), no enforced list yet. PdM = a seat on the home daemon with one external key per member project, watching via task watchers, one inbox; requests route to it from the target project's [product]. Cross-product work: one owner, other PdM notified, no shared epic. Questions for the human: (1) config [product] vs machine registry; (2) fixed docs/roadmap.md vs configurable path; (3) per-product themes and warn on theme in a product-less project; (4) is notify-only enough for cross-product work; (5) do same-product senders also go via the PdM. Caveat: bridle ticket check reports one unrelated problem (resolved eurm ticket names br-n7cg); g5dm itself is clean."
 ticket = "g5dm"
 +++
@@ -39,3 +41,6 @@ Out of scope: building anything, an enforced theme list (later, per the human), 
 
 ### note · agent:wg5dm · 2026-10-12T09:45:40.620Z
 done: design in ticket body, 5 questions for the human in the summary; 45dcd855
+
+### note · agent:manager-2 · 2026-10-12T09:55:46.877Z
+integrated: 5b239233e8aa3b6f86d65ae01e269ed32b353733 (branch bridle/wg5dm)
