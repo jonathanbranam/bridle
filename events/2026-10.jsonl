@@ -1719,3 +1719,4 @@
 {"actor":"external:advisor/product-manager","at":"2026-10-12T04:02:27.819566Z","from":"pending","task":"br-kt25","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-12T04:03:00.249550Z","from":"open","task":"br-kt25","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-12T04:03:02.240709Z","queue":"reprioritized"}
+{"actor":"human","at":"2026-10-12T04:16:45.877Z","from":"","task":"br-k9j4","to":"pending"}
