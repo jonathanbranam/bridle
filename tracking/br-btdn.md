@@ -2,15 +2,18 @@
 id = "br-btdn"
 title = "Daemon restart and self-upgrade blocked forever: manager.spawning() stays true with no agent spawning ('still busy: a spawning agent')"
 kind = "bug"
-state = "claimed"
+state = "built"
 created_at = "2026-10-06T21:56:19.445Z"
-updated_at = "2026-10-12T03:36:35.711920Z"
+updated_at = "2026-10-12T04:22:45.019704Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "external:advisor/product-manager",
     "agent:wbtdn",
 ]
+branch = "bridle/wbtdn"
+commit = "44fa3cb68a3a7ebfd7984c3e8052b08b651d732c"
+summary = "In-flight spawns are now a registry (agent name, start time) in supervisor.rs behind spawning(); AgentManager::spawn is bounded by a 15 min timeout (set_spawn_timeout for tests) that fails the spawn and releases the guard; warm_target's cp is kill_on_drop. Status draining_on lists spawn holders ('a spawning agent: <name>, N min'; no wire change); the drain wake uses the same labels. drain_and_restart ignores spawns older than the timeout, logs them and emits restart.stuck_spawn, still waiting on busy agents. RunningDaemon gains pub manager for tests. Test: a_restart_stops_waiting_on_a_stuck_spawn (upgrade_test.rs); (b) is covered by the timeout wrapper plus guard-drop test, not a real hung spawn. CHANGELOG and daemon.md updated."
 ticket = "btdn"
 +++
 
@@ -54,3 +57,9 @@ watching the task
 
 ### note · external:orchestrator · 2026-10-12T03:14:53.787Z
 From orchestrator: br-btdn is critical (it froze the daemon for 77 min tonight, incident up5r, and ~23 h in y455). I've written the ask and readied it. Please plan it and put it in the top tier, right after br-2wnn lands (2wnn first: v0.6.3 waits on it). Sonnet.
+
+### note · agent:wbtdn · 2026-10-12T04:22:44.884Z
+built: 44fa3cb68a3a7ebfd7984c3e8052b08b651d732c (branch bridle/wbtdn)
+
+### note · agent:wbtdn · 2026-10-12T04:22:45.019Z
+done: spawn registry names holders, spawn bounded at 15 min, restart proceeds past a stuck spawn; just check exit 0, 1559 tests passed, sha 44fa3cb68a3a7ebfd7984c3e8052b08b651d732c
