@@ -103,6 +103,9 @@ pub async fn act_route(
     let action = Action::parse(&action).ok_or(ActionError::UnknownAction(action))?;
     let req = body.map(|b| b.0).unwrap_or_default();
     let (url, token) = resolve(&project).await?;
+    // Links carry bare ids and ticket file ids (br-wayb); the daemon wants the row id.
+    let lookup = Client::new_with_timeout(url.clone(), Some(token.clone()), PROBE_TIMEOUT * 5);
+    let id = crate::tasks::resolve_id(&lookup, &id).await;
     act(&url, Some(token), action, &id, &req.text).await?;
     Ok(Json(ActionResult {
         project,

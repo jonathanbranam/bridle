@@ -180,11 +180,37 @@ pub(crate) async fn list(
     })
 }
 
+/// The row id a link's `id` names (br-wayb). The daemon knows only project-qualified row ids,
+/// but links carry a bare id (`btdn`) or a ticket file's id whose row has another id
+/// (`7d62` -> `br-10c0`). An id the daemon has as is stays as is; otherwise a unique row whose
+/// id tail, or whose ticket's tail, is the given tail wins. No unique match leaves `id` for the
+/// daemon to refuse.
+pub(crate) async fn resolve_id(client: &Client, id: &str) -> String {
+    let Ok(rows) = client.list_tasks().await else {
+        return id.to_string();
+    };
+    if rows.iter().any(|t| t.id == id) {
+        return id.to_string();
+    }
+    let tail = |s: &str| s.split_once('-').map_or(s, |(_, t)| t).to_string();
+    let want = tail(id);
+    let by_row: Vec<_> = rows.iter().filter(|t| tail(&t.id) == want).collect();
+    let by_file: Vec<_> = rows
+        .iter()
+        .filter(|t| t.ticket.as_deref().is_some_and(|f| tail(f) == want))
+        .collect();
+    match (by_row.as_slice(), by_file.as_slice()) {
+        ([t], _) | ([], [t]) => t.id.clone(),
+        _ => id.to_string(),
+    }
+}
+
 pub(crate) async fn detail(
     client: &Client,
     project: &str,
     id: &str,
 ) -> Result<TicketDetail, ActionError> {
+    let id = &resolve_id(client, id).await;
     let t = client.get_task(id).await.map_err(api_error)?;
     let edges = client.list_edges().await.map_err(api_error)?;
     let agent = claim_agent(client, t.claimed_by.as_deref()).await;
@@ -369,6 +395,48 @@ mod tests {
         assert_eq!(d.blocked_by, ["t-2"]);
         assert_eq!(d.branch.as_deref(), Some("bridle/x"));
         assert_eq!(d.summary.agent.expect("agent").role, "worker");
+    }
+
+    #[tokio::test]
+    async fn links_with_bare_or_file_ids_open_the_row() {
+        let mut rows = vec![task("br-btdn", "planned", None, "2026-01-05T00:00:00Z")];
+        let mut moved = task("br-10c0", "planned", None, "2026-01-05T00:00:00Z");
+        moved["ticket"] = json!("br-7d62");
+        rows.push(moved);
+        let by_id = rows.clone();
+        let app = Router::new()
+            .route("/v1/tickets", get(move || async move { Json(rows) }))
+            .route(
+                "/v1/tickets/{id}",
+                get(
+                    move |axum::extract::Path(id): axum::extract::Path<String>| async move {
+                        by_id
+                            .into_iter()
+                            .find(|t| t["id"] == id)
+                            .map(Json)
+                            .ok_or(axum::http::StatusCode::NOT_FOUND)
+                    },
+                ),
+            )
+            .route("/v1/edges", get(|| async { Json(json!([])) }))
+            .route("/v1/agents", get(|| async { Json(json!([])) }));
+        let l = tokio::net::TcpListener::bind("127.0.0.1:0")
+            .await
+            .expect("bind");
+        let url = format!("http://{}", l.local_addr().expect("addr"));
+        tokio::spawn(async move { axum::serve(l, app).await });
+        let c = Client::new_with_timeout(url, None, PROBE_TIMEOUT * 5);
+        for (link, row) in [
+            ("btdn", "br-btdn"),
+            ("br-btdn", "br-btdn"),
+            ("7d62", "br-10c0"),
+            ("br-7d62", "br-10c0"),
+            ("br-10c0", "br-10c0"),
+        ] {
+            let d = detail(&c, "p", link).await.expect(link);
+            assert_eq!(d.summary.id, row, "{link}");
+        }
+        assert!(detail(&c, "p", "zzzz").await.is_err());
     }
 
     #[tokio::test]

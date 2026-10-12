@@ -429,7 +429,7 @@ fn ticket_of(t: &bridle_api::Ticket) -> Option<String> {
 /// This project's id prefix: the running daemon's, else the project's own `[tasks] prefix` from
 /// its `.bridle/config.toml`. Never guessed from the project name: an older daemon reports no
 /// prefix, and a guess wrote `br-` ids into another project (ydyk).
-async fn own_prefix(cli: &Cli, repo: &Path) -> Result<String, CliError> {
+pub(crate) async fn own_prefix(cli: &Cli, repo: &Path) -> Result<String, CliError> {
     let client = client_for(cli).await;
     let daemon = match &client {
         Ok(c) => c.status().await.ok().and_then(|s| s.daemon.task_prefix),
@@ -784,7 +784,7 @@ pub fn split_id(id: &str) -> (Option<&str>, &str) {
     }
 }
 
-fn is_bare_id(s: &str) -> bool {
+pub(crate) fn is_bare_id(s: &str) -> bool {
     s.len() == ID_LEN && s.bytes().all(|b| ID_ALPHABET.contains(&b))
 }
 

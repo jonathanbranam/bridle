@@ -53,7 +53,7 @@ fn url(
     Ok(format!("{base}/p/{p}/tickets/{}", encode(target, false)))
 }
 
-pub fn run(cli: &Cli, args: &LinkArgs) -> Result<(), CliError> {
+pub async fn run(cli: &Cli, args: &LinkArgs) -> Result<(), CliError> {
     let repo = crate::ticket::repo_root().ok();
     let Some(base) = ui_base_url(&bridle_home(), repo.as_deref()).map_err(anyhow::Error::from)?
     else {
@@ -63,9 +63,18 @@ pub fn run(cli: &Cli, args: &LinkArgs) -> Result<(), CliError> {
         let loaded = specs::load(repo.as_deref()?);
         specs::path_for(&loaded, id)
     };
+    // The daemon knows only project-qualified row ids, so a bare ticket id gets the prefix
+    // (br-wayb); the UI also expands bare ids in old links.
+    let mut target = args.id.clone();
+    if crate::ticket::is_bare_id(&target)
+        && let Some(repo) = &repo
+        && let Ok(prefix) = crate::ticket::own_prefix(cli, repo).await
+    {
+        target = format!("{prefix}-{target}");
+    }
     println!(
         "{}",
-        url(&base, &args.id, || project::resolve(cli), spec_path)?
+        url(&base, &target, || project::resolve(cli), spec_path)?
     );
     Ok(())
 }
