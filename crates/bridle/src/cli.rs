@@ -2519,6 +2519,17 @@ pub enum ProjectsAction {
     /// code) and carries over its scheduled messages from the old owner's stop. Step 4 of a
     /// transfer; this machine must already own the project. `--machine` runs it over ssh.
     Start(ProjectStartArgs),
+    /// Read-only checks that the project can move to another machine; exits non-zero and says
+    /// what to fix when any fails. So far: no absolute or `~` `workflow` / `system_prompt` in
+    /// `.bridle/config.toml` (fix those by hand; bridle does not rewrite them).
+    Preflight(PreflightArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct PreflightArgs {
+    /// The clone's main checkout. Defaults to the current directory.
+    #[arg(long)]
+    pub repo: Option<PathBuf>,
 }
 
 #[derive(Debug, Args)]

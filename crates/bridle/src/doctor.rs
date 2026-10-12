@@ -370,6 +370,15 @@ fn config_file_checks(repo: &Path, config: &Config) -> Vec<Check> {
             "create them or fix the paths in .bridle/config.toml",
         )
     });
+    let abs = crate::preflight::absolute_path_findings(repo);
+    if !abs.is_empty() {
+        let list: Vec<String> = abs.iter().map(crate::preflight::describe).collect();
+        out.push(Check::warn(
+            "portable paths",
+            format!("machine-specific: {}", list.join("; ")),
+            crate::preflight::ABSOLUTE_FIX,
+        ));
+    }
     out.push(if no_prompt.is_empty() {
         Check::ok("role prompts", "every role has a system prompt")
     } else {
