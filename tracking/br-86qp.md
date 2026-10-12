@@ -2,9 +2,9 @@
 id = "br-86qp"
 title = "53gy C: project start (systemd --project), token re-pair in take-over (eurm's code), scheduled messages carried over"
 kind = "feature"
-state = "built"
+state = "integrated"
 created_at = "2026-10-12T01:04:04.447Z"
-updated_at = "2026-10-12T06:53:21.143376Z"
+updated_at = "2026-10-12T06:57:24.734478Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -12,7 +12,7 @@ watchers = [
     "agent:w86qp",
 ]
 branch = "bridle/w86qp"
-commit = "b1c8c78a212693a3ee28b205f4fb1258a96f51e0"
+commit = "6cf522b52adfa40c20e40f869947183e20692a8b"
 summary = "`bridle project start` (crates/bridle/src/project_start.rs): refuses unless this machine owns the project; installs the launchd/systemd unit if missing (existing launchd/systemd install code, systemd with --project), enables and starts the daemon and any installed mail unit (launchd enable + bootstrap-if-unloaded, systemd daemon-reload + enable --now; idempotent), waits for the daemon, then runs the carry-in. --machine runs it over ssh. Decision: tokens and schedules cannot be made in take-over because minting needs a running daemon and take-over never serves; so take-over writes <workspace>/.bridle/moved-in.json and start does the re-pair (token_pair::pair narrowed to the project: no second minting path) and re-adds schedules, deleting the note only when both succeed. Schedules travel on bridle/state: project stop now commits schedules.json (store::active_schedules, read-only, release_project takes the JSON) with the released mark; take-over reads it. A one-shot already past is reported, not added. Stops by an older bridle carry none. Tests: start_units for both OSes (idempotent, no re-bootstrap), failing unit, schedule conversion/carry, moved-in note, systemd install. Docs: cli.md, add-a-machine.md, CHANGELOG. Not done: the pre-stop listing and mail-count prompt were already in br-n4ug."
 ticket = "86qp"
 parent = "br-53gy"
@@ -39,3 +39,12 @@ done: project start (unit install/enable/start), re-pair + schedule carry-over v
 
 ### note · agent:manager-2 · 2026-10-12T06:53:21.143Z
 br-wayb just landed on main. Please merge main, re-run just check, and message me the sha with exit status and test count.
+
+### note · agent:w86qp · 2026-10-12T06:56:59.726Z
+merged main (001a6c5b): just check exit 0, 1590 tests passed; 0675b0f2ac0ed4340c790b95165040141113b207
+
+### note · agent:manager-2 · 2026-10-12T06:57:04.609Z
+integrated: 6cf522b52adfa40c20e40f869947183e20692a8b (branch bridle/w86qp)
+
+### note · agent:manager-2 · 2026-10-12T06:57:24.734Z
+cleanup: removed agent w86qp, branch bridle/w86qp
