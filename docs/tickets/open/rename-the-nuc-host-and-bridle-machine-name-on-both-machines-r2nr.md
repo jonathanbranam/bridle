@@ -40,6 +40,12 @@ has the reasons).
 
 ## Steps
 
+0. **First, separately: upgrade the NUC to v0.6.2 with release self-upgrade**, and check it is
+   healthy before going on (the human, 2026-10-11, via aide). The commands are aide's comment on
+   this ticket's thread ("Step 0, before the rename"); they install into `~/.cargo/bin`, where
+   the NUC's units run bridle from. The NUC also has a kernel reboot pending (7.0.0-38 installed,
+   -34 running, checked 2026-10-11): reboot with the upgrade, not during the rename.
+
 1. **Outboxes empty, both machines.** `bridle status` on dalek and the NUC; every `outbox` line
    must be gone or 0 queued. (Forward de-duplication is keyed by the origin machine, so a message
    retried across the rename could arrive twice.)
