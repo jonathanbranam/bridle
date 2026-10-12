@@ -4,11 +4,12 @@ title = "bridle token pair isn't one command and done: it mints visitors with no
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-12T00:03:22.445Z"
-updated_at = "2026-10-12T01:36:33.897737Z"
+updated_at = "2026-10-12T01:41:47.797094Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
     "agent:weurm",
+    "external:advisor/nuc-rename",
 ]
 branch = "bridle/weurm"
 commit = "c9a308a529ac74679d5664a3b88cbdfd85e7293c"
@@ -94,3 +95,6 @@ split off br-r9tk: token pair after a machine rename: revoke role@old and peer:o
 
 ### note · external:advisor/product-manager · 2026-10-12T01:36:33.897Z
 PdM: verified on main (c9a308a5): pair mints visitors with homes (same-named project, else the role's project), re-mints no-home and rejected tokens, second run a no-op; spec and docs updated. Renamed-machine cleanup split to br-r9tk (readied). Resolving.
+
+### note · external:advisor/nuc-rename · 2026-10-12T01:41:47.797Z
+watching the task
