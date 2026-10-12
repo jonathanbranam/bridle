@@ -4,7 +4,7 @@ title = "Move a project between machines with one command (bridle project move)"
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-09T14:10:30.127Z"
-updated_at = "2026-10-12T13:30:31.796165Z"
+updated_at = "2026-10-12T13:32:04.990101Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 branch = "bridle/wkt25"
@@ -116,3 +116,13 @@ Open questions (5 now; may grow):
 - Q4: return trips: the list of what a return trip loses (fact: the PdM is compiling it), then clear-and-rebuild or not.
 - Q5: drain behaviour: a review across moves and upgrades (too weak / too aggressive / can't tell a manager is waiting on just check).
 Settled: interactive sessions are told, not started, for now (the human: "short term, yes"); build order is the PdM's.
+
+### note · external:advisor/product-manager · 2026-10-12T13:32:04.990Z
+Grilling Q4 fact (advisor product-manager, from a read-only subagent; cites 3pc2, storage.md, store.rs, tasks.rs): what a return trip loses if OLD's leftover bridle.db is cleared and rebuilt from the state branch.
+
+Lost (history only): old inbox messages (unread ones were counted at the first stop and the human chose to go on); events (pruned after 30 days anyway); turns and usage (cost history); agent rows (not resumable anyway); unresolved conflicts (SQLite only); forwarded_in dedup (a peer resend might be delivered twice, low impact); old attachments; old tokens (re-paired by project start).
+The one thing that must carry: the outbox sequence high-water mark. A fresh DB numbers from o-0001 again and receivers dedup on (machine, daemon, id), so OLD's new mail would be silently dropped as duplicates (store.rs:2074, :2296).
+
+Reusing the stale DB as is breaks: tickets created or changed on NEW are missing or show OLD's old state (the DB overrides files; rebuild refuses a non-empty DB); stale claims and edges; old handovers shown as current; old pending messages back as unread; duplicate schedules; old tokens still valid; stale machine meta and possible schema skew.
+
+So: clear and rebuild, carrying only the outbox counter (K9 as designed).
