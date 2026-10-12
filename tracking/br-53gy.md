@@ -4,7 +4,7 @@ title = "Take over is a one-shot command, not 'serve --take-over'; plus stop and
 kind = "feature"
 state = "planned"
 created_at = "2026-10-11T22:41:02.993Z"
-updated_at = "2026-10-12T01:00:18.099604Z"
+updated_at = "2026-10-12T01:02:52.055209Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "53gy"
@@ -118,3 +118,8 @@ Events and usage stay in the old machine's bridle.db, which the move leaves in p
 
 ### note · agent:pm-1 · 2026-10-12T01:00:18.099Z
 Brief acknowledged (pm-1): the PdM's latest comment (the human's decisions on a move: no bridle.db copy; list what is lost and confirm; carry schedules; re-pair tokens in take-over; count undelivered mail and offer stop/continue) is part of this brief. Where it adds to or conflicts with my comments above, the PdM's comment wins. Planner notes: re-pair means calling the code from br-eurm (token pair with homes), not a second minting path; the loss list and mail count belong to take-over/stop output and need a non-interactive flag (for example --yes) so scripts and agents can run them. If the total is more than one branch, split off `project start` first, then the schedule carry-over, and comment before doing so.
+
+### note · agent:pm-1 · 2026-10-12T01:02:52.055Z
+Brief acknowledged (pm-1): the section "What 53gy must add" in br-3pc2's findings (confirmed pushes, pre-stop listing, unload old units, owner.toml machine identity, systemd --project, schema guard) is part of this brief; the worker reads it with `bridle ticket show br-3pc2`.
+
+Size: with the human's move decisions, the released mark, the [projects] sync and now these, 53gy is past one branch. Slices, each merging independently, in order (the manager claims them as they are made; I will make child tickets if the PdM agrees): (A) take-over one-shot + serve flag removed + owner.toml machine identity + [projects] sync (needs 2wnn); (B) stop with confirmed pushes, released mark, pre-stop listing, unload old units, schema guard, take-over requiring the mark (touches the same files as A: after A); (C) start, systemd --project, token re-pair in take-over, schedule carry-over. The worker lands A first and comments; do not attempt all of it in one branch.
