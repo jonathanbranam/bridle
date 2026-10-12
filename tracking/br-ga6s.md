@@ -2,13 +2,14 @@
 id = "br-ga6s"
 title = "53gy A: one-shot take-over (serve --take-over removed), owner.toml machine identity, [projects] sync via 2wnn"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-12T01:04:04.376Z"
-updated_at = "2026-10-12T01:30:17.299259Z"
+updated_at = "2026-10-12T03:56:13.693557Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "external:aide",
+    "agent:wga6s",
 ]
 ticket = "ga6s"
 parent = "br-53gy"
