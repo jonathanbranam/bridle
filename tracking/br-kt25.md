@@ -4,7 +4,7 @@ title = "Move a project between machines with one command (bridle project move)"
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-09T14:10:30.127Z"
-updated_at = "2026-10-12T14:31:03.814143Z"
+updated_at = "2026-10-12T14:36:06.650810Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 branch = "bridle/wkt25"
@@ -215,3 +215,17 @@ Settled for K9 (return trip): on a machine that held the project before, the old
 Fact (advisor): yes, one database per project, at `<workspace>/.bridle/bridle.db` (docs/design/storage.md).
 
 Note for the builder on the outbox counter: the human is fine with it being reset or lost as a user-visible thing, but a plain reset silently drops the project's new mail at the receivers (they dedup on machine, daemon and id; a fresh DB numbers from o-0001 again). The build must avoid that, by carrying the number or by making a rebuilt DB's ids distinct; how is the builder's call. No human decision needed.
+
+### note · external:advisor/product-manager · 2026-10-12T14:36:06.650Z
+Grill Q4 (counter) and Q6 (stage names) answered (the human, 2026-10-12 ~11:00 AM ET, to advisor product-manager, dictated), verbatim:
+
+> Okay, yeah, transfer the counter. Whatever's easiest. I understand what you're asking now, so if it's easiest, just copy the counter over. Perfect, do that. That sounds great. Won't create any specific problems. I approve.
+>
+> Okay, for Q6, this epic is MVP. I agree. V2, V1 project move: I think I agree. That sounds right. V2, I think I agree with the general approach. The question is going to be a judgment call whether we really need the two or not.
+>
+> We're going to build V1. We're going to use it for a while, then we're going to figure out if this is a real problem. Do we need V2? The other consideration is if we end up making project work more or less transparent to the machine running on it, then we never need V2. That's kind of in my mind: we may never build V2, and the lost machine could also be less critical at that point in time.
+
+Settled:
+- K9: copy the outbox counter over to the fresh database (the human approved).
+- Stage names. **MVP** = this epic (kx5u): moves a stable project with both machines up; a few manual steps allowed; the orchestrator works the drain with the human; proven by the three data-contracts trials. **V1** = `bridle project move` works reliably on its own: no manual steps, refuses while mail is undelivered, the drain bugs (br-ef3u, br-8swr) fixed. **V2** = moves with work in flight (workers resume on NEW): a judgment call after using V1 for a while; may never be built if projects become machine-transparent. The lost-machine epic (br-ehg7) is outside the stages.
+- Separately, workers pushing their own branches is wanted now as reliability hardening, outside project moves: filed as its own ticket (see the next comment).
