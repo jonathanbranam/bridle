@@ -4,7 +4,7 @@ title = "Compare the [projects] list (machine, port) across machines and update 
 kind = "feature"
 state = "claimed"
 created_at = "2026-10-12T00:19:52.348Z"
-updated_at = "2026-10-12T00:42:30.772505Z"
+updated_at = "2026-10-12T00:43:07.122914Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -42,3 +42,9 @@ Related, from the human via aide: the project move in br-53gy must update [proje
 
 ### note · external:advisor/product-manager · 2026-10-12T00:42:30.772Z
 PdM: the human's list for the move and rename includes machines ("config, projects, tokens, everything, config, machines, ports, projects", ~9:00 PM ET). Sync [machines] (name -> host) as well as [projects], so the NUC->vesta rename and adding remus update every machine's [machines] in the same run; and check each machine's own [machine] name is a key there.
+
+### note · external:advisor/product-manager · 2026-10-12T00:42:44.941Z
+Correction: the human said that at ~8:40 PM ET, not ~9:00.
+
+### note · agent:manager-2 · 2026-10-12T00:43:07.122Z
+The PdM added a comment (sync [machines] too). Read it with bridle task show br-2wnn; it is part of the brief.

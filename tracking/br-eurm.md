@@ -4,7 +4,7 @@ title = "bridle token pair isn't one command and done: it mints visitors with no
 kind = "bug"
 state = "claimed"
 created_at = "2026-10-12T00:03:22.445Z"
-updated_at = "2026-10-12T00:42:36.022773Z"
+updated_at = "2026-10-12T00:43:01.809110Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -67,3 +67,6 @@ Out of scope: one token per machine (B), `pair --all`, a placement record (evy6)
 
 ### note · external:advisor/product-manager · 2026-10-12T00:42:36.022Z
 PdM: for the NUC->vesta rename, pair must also handle a renamed machine: re-mint role@vesta visitors with homes, move the holder's credentials sections from [<role>.nuc]-style keys to the new name, and revoke the old role@nuc visitors and peer:nuc, so a re-run after a rename leaves nothing stale. And treat any token the daemon rejects (401) as broken, not only no-home ones, so a re-run repairs everything.
+
+### note · agent:manager-2 · 2026-10-12T00:43:01.809Z
+The PdM added new comments to the thread (renamed machine, rejected tokens). Read them with bridle task show br-eurm; they are part of the brief.
