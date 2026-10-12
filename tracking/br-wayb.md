@@ -2,11 +2,14 @@
 id = "br-wayb"
 title = "Ticket links from bridle link don't open: bare ids (and file ids with a different row id) 404 on the daemon"
 kind = "fix"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-12T03:59:35.068Z"
-updated_at = "2026-10-12T04:00:32.768242Z"
+updated_at = "2026-10-12T06:17:22.957785Z"
 created_by = "external:advisor/product-manager"
-watchers = ["external:advisor/product-manager"]
+watchers = [
+    "external:advisor/product-manager",
+    "agent:wwayb",
+]
 priority = "high"
 priority_at = "2026-10-12T03:59:45.418153Z"
 ticket = "wayb"
