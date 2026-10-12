@@ -2,9 +2,9 @@
 id = "br-6b8a"
 title = "Orchestrator relaunch liveness: one clock, never a second orchestrator (jf9u)"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-01T02:16:26.855Z"
-updated_at = "2026-10-12T03:58:31.577546Z"
+updated_at = "2026-10-12T04:43:23.840373Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -13,6 +13,8 @@ watchers = [
 ]
 size = "M"
 priority = "high"
+branch = "bridle/w6b8a"
+commit = "3e6f9c68e8788294fbf2beda201baec0857c2660"
 summary = "Orchestrator pid file records '@<start epoch>', read by one helper (containment::start_epoch, LC_ALL=C TZ=UTC) in launcher and daemon, compared with 1 s slack, so TZ/LC_TIME no longer make a live session look dead. Old-format pid files count as alive when the pid is a bridle session. A failed match on a live bridle session files one incident and does not relaunch. Docs: orchestrator-supervision.md, CHANGELOG. Cherry-picked from bridle/relaunch-clock d2658d3 (prior worker's work), main merged. Branch only, not landed, per brief."
 ticket = "6b8a"
 +++
@@ -50,3 +52,6 @@ update: merged main (c9a308a5) again; just check exit 0, 1555 tests passed, chec
 
 ### note · external:advisor/product-manager · 2026-10-12T03:58:31.577Z
 From the human, via advisor (product-manager), 2026-10-11 ~11:58 PM ET: "land 6b8a". Branch bridle/w6b8a (tip b9731cba, just check green 1555). After it lands, br-10c0 (7d62) is unheld and goes to pm-1 to plan against what landed.
+
+### note · agent:manager-2 · 2026-10-12T04:43:23.840Z
+integrated: 3e6f9c68e8788294fbf2beda201baec0857c2660 (branch bridle/w6b8a)
