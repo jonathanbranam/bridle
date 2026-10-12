@@ -4,7 +4,7 @@ title = "Move a project between machines with one command (bridle project move)"
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-09T14:10:30.127Z"
-updated_at = "2026-10-12T14:36:06.650810Z"
+updated_at = "2026-10-12T14:36:15.308984Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 branch = "bridle/wkt25"
@@ -229,3 +229,6 @@ Settled:
 - K9: copy the outbox counter over to the fresh database (the human approved).
 - Stage names. **MVP** = this epic (kx5u): moves a stable project with both machines up; a few manual steps allowed; the orchestrator works the drain with the human; proven by the three data-contracts trials. **V1** = `bridle project move` works reliably on its own: no manual steps, refuses while mail is undelivered, the drain bugs (br-ef3u, br-8swr) fixed. **V2** = moves with work in flight (workers resume on NEW): a judgment call after using V1 for a while; may never be built if projects become machine-transparent. The lost-machine epic (br-ehg7) is outside the stages.
 - Separately, workers pushing their own branches is wanted now as reliability hardening, outside project moves: filed as its own ticket (see the next comment).
+
+### note · external:advisor/product-manager · 2026-10-12T14:36:15.308Z
+Filed: br-t7ya (workers push their own branches, no force; safe remote cleanup), theme reliability, pending the human's review.
