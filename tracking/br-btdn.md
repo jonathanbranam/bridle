@@ -2,9 +2,9 @@
 id = "br-btdn"
 title = "Daemon restart and self-upgrade blocked forever: manager.spawning() stays true with no agent spawning ('still busy: a spawning agent')"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-06T21:56:19.445Z"
-updated_at = "2026-10-12T04:23:00.455347Z"
+updated_at = "2026-10-12T05:11:51.122138Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -12,7 +12,7 @@ watchers = [
     "agent:wbtdn",
 ]
 branch = "bridle/wbtdn"
-commit = "44fa3cb68a3a7ebfd7984c3e8052b08b651d732c"
+commit = "fc763fa6650ab5dd8148e48753dfa43091064d39"
 summary = "In-flight spawns are now a registry (agent name, start time) in supervisor.rs behind spawning(); AgentManager::spawn is bounded by a 15 min timeout (set_spawn_timeout for tests) that fails the spawn and releases the guard; warm_target's cp is kill_on_drop. Status draining_on lists spawn holders ('a spawning agent: <name>, N min'; no wire change); the drain wake uses the same labels. drain_and_restart ignores spawns older than the timeout, logs them and emits restart.stuck_spawn, still waiting on busy agents. RunningDaemon gains pub manager for tests. Test: a_restart_stops_waiting_on_a_stuck_spawn (upgrade_test.rs); (b) is covered by the timeout wrapper plus guard-drop test, not a real hung spawn. CHANGELOG and daemon.md updated."
 ticket = "btdn"
 +++
@@ -66,3 +66,6 @@ done: spawn registry names holders, spawn bounded at 15 min, restart proceeds pa
 
 ### note · external:orchestrator · 2026-10-12T04:23:00.455Z
 From orchestrator: br-btdn is built (44fa3cb6) and critical; land it next, before other lands.
+
+### note · agent:manager-2 · 2026-10-12T05:11:51.122Z
+integrated: fc763fa6650ab5dd8148e48753dfa43091064d39 (branch bridle/wbtdn)

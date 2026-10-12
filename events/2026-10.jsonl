@@ -1726,3 +1726,4 @@
 {"actor":"agent:wbtdn","at":"2026-10-12T04:22:44.884754Z","from":"claimed","task":"br-btdn","to":"built"}
 {"actor":"agent:manager-2","at":"2026-10-12T04:43:23.840373Z","from":"planned","task":"br-6b8a","to":"integrated"}
 {"actor":"agent:wajp5","at":"2026-10-12T04:59:51.105239Z","from":"claimed","task":"br-ajp5","to":"built"}
+{"actor":"agent:manager-2","at":"2026-10-12T05:11:51.122138Z","from":"built","task":"br-btdn","to":"integrated"}
