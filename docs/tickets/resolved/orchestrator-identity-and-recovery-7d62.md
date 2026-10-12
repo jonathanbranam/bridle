@@ -8,6 +8,7 @@ specs: []
 blocked_by: []
 related: [nuc-recovery-on-boot-4r3k, one-orchestrator-and-advisor-or-one-per-project-ma8e, hold-the-orchestrator-relaunch-8fsx]
 kind: feature
+resolved: 2026-10-12T13:38:13Z
 ---
 
 ## The ask
