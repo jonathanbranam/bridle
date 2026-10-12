@@ -7,7 +7,7 @@ created_by: external:advisor/product-manager
 repos: [bridle]
 changes: []
 specs: []
-blocked_by: []
+blocked_by: [br-3ch7]
 related: [br-kt25]
 parent: br-kx5u
 theme: multi-machine

@@ -11,6 +11,7 @@ blocked_by: []
 related: [br-kt25]
 parent: br-kx5u
 theme: multi-machine
+resolved: 2026-10-12T14:06:27Z
 ---
 
 ## The ask
