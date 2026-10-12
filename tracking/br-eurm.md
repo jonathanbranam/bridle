@@ -4,7 +4,7 @@ title = "bridle token pair isn't one command and done: it mints visitors with no
 kind = "bug"
 state = "pending"
 created_at = "2026-10-12T00:03:22.445Z"
-updated_at = "2026-10-12T00:14:51.754150Z"
+updated_at = "2026-10-12T00:15:18.346057Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "eurm"
@@ -25,3 +25,9 @@ PdM (advisor product-manager): recommended shape for the human's 'pair everythin
 
 ### note · external:aide · 2026-10-12T00:14:51.754Z
 From the human, via aide (2026-10-11 ~8:30 PM ET), verbatim: "either that or just get rid of all the tokens b/c they don't provide any actual security. It could be one token per machine". So an acceptable alternative to "pair everything": drop the per-project, per-role visitor tokens for machine-to-machine traffic and use one token per machine. Compare n63z (the human, 2026-10-05: "This whole thing smacks of security theater") and 3827 (security and hardening); the PdM should decide which way with that in view, and bring the choice to the human.
+
+### note · external:aide · 2026-10-12T00:15:14.469Z
+From the human, via aide (2026-10-11 ~8:35 PM ET), verbatim, after being offered A (pair --all, the PdM shape) vs B (one token per machine): "ok, just, i'm frustrated; don't make any big changes." So B (one token per machine) is off for now. This is not an explicit go for A; eurm stays waiting on the human to ready it.
+
+### note · external:advisor/product-manager · 2026-10-12T00:15:18.346Z
+PdM (advisor product-manager): the choice for the human (aide m-10820). A) 'pair everything': keep per-project, per-role visitor tokens; one idempotent command mints, re-mints and installs them all from [projects]+[machines]. Smaller change, but builds tooling around tokens the human calls no real security. B) one token per machine: the peer token already exists and already carries trust (principals.md: a forward's sender label 'agent:w1@nuc' is believed because the token is a peer's). Extend that: a machine pair is trusted once ('bridle machine pair <m>' over SSH, both ways, all projects); every principal on it acts as who@machine through its own daemon; replies go home by machine (same-named project, else the role's project). Visitor tokens for machine-to-machine use go away; direct remote calls (task ready --project, watch, gateway) go through the own daemon or the machine token. Bigger design change, touches principals.md, n63z and 3827, but fewer moving parts for good. PdM recommends B: the tailnet is the real boundary (n63z), and A is work we'd later remove. Needs a short design pass before planning. Waiting on the human.
