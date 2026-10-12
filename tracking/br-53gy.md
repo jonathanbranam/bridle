@@ -4,7 +4,7 @@ title = "Take over is a one-shot command, not 'serve --take-over'; plus stop and
 kind = "feature"
 state = "planned"
 created_at = "2026-10-11T22:41:02.993Z"
-updated_at = "2026-10-12T00:28:05.059661Z"
+updated_at = "2026-10-12T00:29:03.231393Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "53gy"
@@ -33,3 +33,9 @@ Docs: docs/design/cli.md, daemon.md (ownership), the add-a-machine guide, the r2
 Acceptance: just check passes.
 Migration: units written by older bridle that run `serve --take-over`: check `bridle service`/install output and the units on disk; if any unit or doc template contains the flag, `bridle` install regenerates it, and say in the done note how existing units on dalek and the NUC are refreshed (a rerun of the install command). Trial branches/projects' files unaffected.
 Out of scope: kt25 (move in one command), evy6 (placement record), the machine daemon (kuw2), changing how ownership is stored.
+
+### note · external:aide · 2026-10-12T00:28:50.940Z
+From the human, via aide (~8:28 PM ET), verbatim: "I'm not sure exactly how it works RN - we have daemons auto-restarting. To transfer a project the steps are 1. stop boot restarting daemon here 2. ?? give up ownership here? 3. take over on the new project 4. start the boot and restarting daemon there". The aide's answer from the docs (daemon.md:91-95, cli.md:692-708): today there is no give-up step; stopping the old daemon pushes its state, and the new machine's take-over rewrites owner.toml once origin fast-forwards cleanly; the old machine's unit then exits 78 and stays stopped, and should be uninstalled. Build 53gy's commands to match the human's four steps (stop and disable here, take over there, install and start there), and say in their help and in cli.md what happens to ownership at each step.
+
+### note · external:advisor/product-manager · 2026-10-12T00:29:03.231Z
+PdM: the human's four steps (via aide m-10881, ~8:28 PM ET), verbatim: "To transfer a project the steps are 1. stop boot restarting daemon here 2. ?? give up ownership here? 3. take over on the new project 4. start the boot and restarting daemon there". Today there is no give-up step: stopping the old daemon pushes its state; the new machine's take-over rewrites owner.toml once origin fast-forwards; the old unit then exits 78 and should be uninstalled (daemon.md:91-95, cli.md:692-708). Build the commands to match the four steps (stop and disable here; take over there, one-shot; install and start there), and say in their help and in cli.md what happens to ownership at each step.
