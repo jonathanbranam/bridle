@@ -4,7 +4,7 @@ title = "Move a project between machines with one command (bridle project move)"
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-09T14:10:30.127Z"
-updated_at = "2026-10-12T14:15:19.077530Z"
+updated_at = "2026-10-12T14:16:02.773573Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 branch = "bridle/wkt25"
@@ -147,3 +147,6 @@ Grill Q2 answered (the human, 2026-10-12 ~10:20 AM ET, to advisor product-manage
 > That's MVP.
 
 Settled: no parking in the MVP. The move waits for a stable project: a per-project hold on new work (other projects carry on), workers finish, the manager lands or drops everything (checks run, merged to main), and only then is the transfer allowed. Workers pushing branches and resuming on NEW is post-MVP (phase 3). kt25's WIP-commit parking and the "move refuses while a branch is unpushed" option are dropped from the MVP.
+
+### note · external:advisor/product-manager · 2026-10-12T14:16:02.773Z
+The human, 2026-10-12 ~10:25 AM ET (to advisor product-manager, dictated), verbatim, clarifying Q2: "Yeah, just to clarify, today my understanding is the agents are not allowed to push. Adding agents being allowed to push is more work and not something that's critical for the first phase of project transfer." Fact (advisor): correct. Agents are denied `git push`; only the manager pushes the integration branch, through `bridle push` after `bridle ticket land` (workflow/base/roles/manager.md; deny rules in crates/bridle-daemon/src/config.rs). Agents pushing their branches is phase 3 (workers run anywhere).
