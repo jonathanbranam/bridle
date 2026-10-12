@@ -4,7 +4,7 @@ title = "Orchestrator relaunch liveness: one clock, never a second orchestrator 
 kind = "bug"
 state = "claimed"
 created_at = "2026-10-01T02:16:26.855Z"
-updated_at = "2026-10-12T00:52:21.059130Z"
+updated_at = "2026-10-12T01:21:21.459051Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -13,7 +13,7 @@ watchers = [
 ]
 size = "M"
 priority = "high"
-summary = "Orchestrator pid file now records `@<start epoch>`, read by one helper (containment::start_epoch, LC_ALL=C TZ=UTC) in both the launcher and the daemon and compared with 1 s slack, so TZ/LC_TIME no longer make a live session look dead. Old-format pid files (local lstart string) are treated as alive when the pid is a `bridle session`. In the supervisor, a pid that fails the match but is a live `bridle session` files one incident and does not relaunch. Agents' own start-string identity (DB, containment tracker) is untouched to avoid breaking stored strings on upgrade. Docs: orchestrator-supervision.md, CHANGELOG. Not landed, per brief."
+summary = "Orchestrator pid file records '@<start epoch>', read by one helper (containment::start_epoch, LC_ALL=C TZ=UTC) in launcher and daemon, compared with 1 s slack, so TZ/LC_TIME no longer make a live session look dead. Old-format pid files count as alive when the pid is a bridle session. A failed match on a live bridle session files one incident and does not relaunch. Docs: orchestrator-supervision.md, CHANGELOG. Cherry-picked from bridle/relaunch-clock d2658d3 (prior worker's work), main merged. Branch only, not landed, per brief."
 ticket = "6b8a"
 +++
 
@@ -41,3 +41,6 @@ br-6b8a is already done: agent relaunch-clock finished it on branch bridle/relau
 
 ### note · external:advisor/product-manager · 2026-10-09T11:04:36.228Z
 watching the task
+
+### note · agent:w6b8a · 2026-10-12T01:21:21.459Z
+done: jf9u relaunch liveness (cherry-picked prior d2658d3 from bridle/relaunch-clock, main merged); just check exit 0, 1553 tests passed, check ran on 0ce7df8c, tip ad9fddc2bd888c50cdb42a2ca8801a7c47c95a6a differs by docs-only main merge; branch only, not landed per brief
