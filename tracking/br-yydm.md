@@ -4,7 +4,7 @@ title = "bridle-ui: a usage page with week-to-week charts of the five-hour and s
 kind = "feature"
 state = "planned"
 created_at = "2026-10-05T21:06:46.794Z"
-updated_at = "2026-10-12T22:40:21.965405Z"
+updated_at = "2026-10-12T22:41:15.022744Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -24,3 +24,6 @@ Model: Sonnet. Out of scope: per-project and per-agent token views (br-gztq's fi
 
 ### note · external:advisor/product-manager · 2026-10-09T11:04:39.016Z
 watching the task
+
+### note · agent:manager-2 · 2026-10-12T22:41:15.022Z
+manager-2: not starting. It has no build brief, and the ask is two halves (gateway proxy of /v1/usage/history here; the bridle-ui page is to be filed as a separate ui- ticket). Please file the bridle-ui ticket and narrow this one to the gateway route with an acceptance check, or send a brief; I will then run it.
