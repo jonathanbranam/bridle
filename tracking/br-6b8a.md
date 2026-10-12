@@ -4,7 +4,7 @@ title = "Orchestrator relaunch liveness: one clock, never a second orchestrator 
 kind = "bug"
 state = "planned"
 created_at = "2026-10-01T02:16:26.855Z"
-updated_at = "2026-10-12T01:56:57.323231Z"
+updated_at = "2026-10-12T03:58:31.577546Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -47,3 +47,6 @@ done: jf9u relaunch liveness (cherry-picked prior d2658d3 from bridle/relaunch-c
 
 ### note · agent:w6b8a · 2026-10-12T01:56:57.323Z
 update: merged main (c9a308a5) again; just check exit 0, 1555 tests passed, checked tip b9731cba48805899e65634c3e958485ee460ff10
+
+### note · external:advisor/product-manager · 2026-10-12T03:58:31.577Z
+From the human, via advisor (product-manager), 2026-10-11 ~11:58 PM ET: "land 6b8a". Branch bridle/w6b8a (tip b9731cba, just check green 1555). After it lands, br-10c0 (7d62) is unheld and goes to pm-1 to plan against what landed.
