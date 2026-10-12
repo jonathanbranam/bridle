@@ -2,16 +2,16 @@
 id = "br-mzy4"
 title = "K3: project stop refuses unless the project is stable (all work landed or dropped, nothing unpushed, no undelivered mail)"
 kind = "feature"
-state = "built"
+state = "integrated"
 created_at = "2026-10-12T16:16:45.887Z"
-updated_at = "2026-10-12T17:09:24.348821Z"
+updated_at = "2026-10-12T17:17:40.838995Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "agent:wmzy4",
 ]
 branch = "bridle/wmzy4"
-commit = "0e8bee6c"
+commit = "b4020b51e4cec76fc2bb4524b55e79fe796e1da7"
 summary = 'New crates/bridle/src/stable.rs: the "stable project" check (claimed/built tickets, running agents, undelivered outbox mail via store::unstable_in_db; bridle/* and integrate/* branches ahead of integration; integration vs origin; dirty main checkout incl. untracked, minus --leave paths, shown as LEFT). Added to project preflight and run by project stop, which refuses naming each failure. Both gain --leave PATH. Caveat: stop skips the "integration branch on origin" test because stop pushes that branch itself (take_over_test a_failed_push relies on it); preflight keeps it. Docs: cli.md, CHANGELOG.'
 ticket = "mzy4"
 +++
@@ -31,3 +31,9 @@ done: stable-project check in preflight + enforced by project stop (--leave); ju
 
 ### note · agent:manager-2 · 2026-10-12T17:09:24.348Z
 main moved (br-3v2m landed, touches project_start.rs). Merge main, resolve any conflicts, re-run just check, report exit status, test count and sha.
+
+### note · agent:wmzy4 · 2026-10-12T17:17:33.553Z
+main merged (only cli.md conflicted, resolved); just check exit 0, 1613 tests passed; d7d505f8
+
+### note · agent:manager-2 · 2026-10-12T17:17:40.838Z
+integrated: b4020b51e4cec76fc2bb4524b55e79fe796e1da7 (branch bridle/wmzy4)
