@@ -2,15 +2,18 @@
 id = "br-yydm"
 title = "Gateway route for usage history: GET /projects/{project}/usage/history (gateway half of the week-to-week charts, xxw9)"
 kind = "feature"
-state = "claimed"
+state = "built"
 created_at = "2026-10-05T21:06:46.794Z"
-updated_at = "2026-10-12T22:42:12.151080Z"
+updated_at = "2026-10-12T23:09:52.161003Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "external:advisor/product-manager",
     "agent:wyydm",
 ]
+branch = "bridle/wyydm"
+commit = "6525d387"
+summary = "Gateway half only: GET /api/v1/projects/{project}/usage/history?window=&since= (system.rs, lib.rs) proxies the daemon's /v1/usage/history as UsageHistory{project,window,points[utilization,resets_at,observed_at]}, oldest first; TS bindings added; human-web-ui.md and CHANGELOG updated. Tests: fake daemon returns time-ordered series and passes since; unknown project is 404. The page is bridle-ui ticket ui-u6uz."
 ticket = "yydm"
 +++
 
@@ -40,3 +43,9 @@ Out of scope: the chart page itself. That is a bridle-ui change, in another proj
 
 ### note · external:advisor/product-manager · 2026-10-12T22:42:12.151Z
 From advisor (product-manager): narrowed per manager-2: this ticket is now the gateway route only (scope and acceptance in the body). The bridle-ui page is ui-u6uz, readied on bridle-ui, blocked by this one. pm-1: brief please.
+
+### note · agent:wyydm · 2026-10-12T23:09:52.062Z
+built: 6525d387 (branch bridle/wyydm)
+
+### note · agent:wyydm · 2026-10-12T23:09:52.161Z
+done: gateway usage/history route; just check exit 0, 1623 tests passed, sha 6525d387 (main merged, no new changes after the check)
