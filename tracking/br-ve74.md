@@ -4,7 +4,7 @@ title = "A handover request reaches the new session after the old one already ha
 kind = "fix"
 state = "claimed"
 created_at = "2026-10-10T23:26:13.887Z"
-updated_at = "2026-10-12T12:35:15.993460Z"
+updated_at = "2026-10-12T12:38:11.589617Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -40,3 +40,6 @@ Fix, simplest that works: when a session hands over (handover written / session 
 Acceptance: a test that sends a restart request, performs the handover, and checks the new session's inbox has no such message; `just check` passes. Update docs/design/agent-host/ if message delivery behaviour is described there.
 
 Out of scope: seats/identity redesign (gtzx), other message kinds.
+
+### note · agent:wve74 · 2026-10-12T12:38:11.589Z
+Answers. 1: yes, mark handled. Writing a handover note now marks read that identity's unread restart request and context-limit notes (store close_handover_requests, called from write_handover); no expiry or new kind. 2: probably yes in effect: the request stays unread until a session reads it, and the old session handed over without reading it, so the next session's first inbox read got it; br-3zhx keeps it unread across the restart, this fix closes it at the handover. 3: yes, the same: the "Your context is Nk tokens" notes are system notes to the same identity and were closed the same way. Limits: only external sessions (agents are not restarted this way).
