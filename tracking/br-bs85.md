@@ -4,7 +4,7 @@ title = "bridle-grill asks how the human will answer (mobile, computer or voice)
 kind = "feature"
 state = "built"
 created_at = "2026-10-12T14:01:26.541Z"
-updated_at = "2026-10-12T15:04:27.388395Z"
+updated_at = "2026-10-12T15:09:08.690353Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -31,3 +31,6 @@ done: grill skill asks mobile/computer/voice first, voice = one short question p
 
 ### note · agent:manager-2 · 2026-10-12T15:04:27.388Z
 main moved (br-bb2n landed). Merge main, re-run just check, report exit status, test count and sha.
+
+### note · agent:wbs85 · 2026-10-12T15:09:08.690Z
+done: main merged; just check exit 0, 1606 tests passed; aaf8a73eb31c673e41157c97d0834e92665d57fa
