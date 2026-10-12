@@ -61,6 +61,7 @@ migrations.
 1. **Human work: bring the three machines onto bridle** (du7e; the human's to-dos h7mu, jgdb, r2nr)
    - The builds it waits on are epic kx5u (below).
 1b. **Machines: set up a new machine and transfer a project to it, nothing left behind** (kx5u; the human, 2026-10-11 ~8:45 PM ET: transfer bridle and bridle-ui to remus, a smaller project first). Order: 3pc2 inventory, eurm, 2wnn, 53gy, kt25 (carry bridle.db, mail bridge, gateway; overrides kt25's wait for orchestrator-per-machine). Then rjd5, n63z folded in or dropped.
+1c. **Move bridle and bridle-ui to remus: remus the dev machine, dalek a release client** (jw75; the human, 2026-10-11 ~9:05 PM ET). After kx5u, proven first on a small project (data-contracts). First step a design (orchestrator home, workflow source, upgrades, UI).
 2. **bridle-ui ships with bridle releases** (`ui-releases`; t3dr landed 2026-10-11, in v0.6.2: done)
 3. **One orchestrator per machine** (`orchestrator-per-machine`)
 4. **Machine admin role** (j6d3; gb97)
