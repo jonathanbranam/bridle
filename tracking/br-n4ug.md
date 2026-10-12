@@ -2,13 +2,14 @@
 id = "br-n4ug"
 title = "53gy B: project stop with confirmed pushes and released mark, pre-stop listing, old units unloaded, schema guard; take-over requires the mark"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-12T01:04:04.403Z"
-updated_at = "2026-10-12T01:30:21.058637Z"
+updated_at = "2026-10-12T05:45:03.916767Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "external:aide",
+    "agent:wn4ug",
 ]
 ticket = "n4ug"
 parent = "br-53gy"
