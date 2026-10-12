@@ -2,11 +2,14 @@
 id = "br-ep5z"
 title = "K10: the MVP runbook: move a project by hand, step by step"
 kind = "docs"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-12T16:16:51.749Z"
-updated_at = "2026-10-12T17:19:40.455278Z"
+updated_at = "2026-10-12T18:31:27.518211Z"
 created_by = "external:advisor/product-manager"
-watchers = ["external:advisor/product-manager"]
+watchers = [
+    "external:advisor/product-manager",
+    "agent:wep5z",
+]
 ticket = "ep5z"
 +++
 

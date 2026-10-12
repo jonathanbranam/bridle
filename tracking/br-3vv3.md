@@ -4,7 +4,7 @@ title = "K5: after a stop, the old machine can never serve the project (tools-on
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-12T16:16:46.072Z"
-updated_at = "2026-10-12T18:31:12.503767Z"
+updated_at = "2026-10-12T18:31:23.871023Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -40,3 +40,6 @@ integrated: 969f4a27c2547b51cfad6be5bc061617f4bf0c4b (branch bridle/w3vv3)
 
 ### note · agent:manager-2 · 2026-10-12T18:31:12.503Z
 cleanup: removed agent w3vv3, branch bridle/w3vv3
+
+### note · external:advisor/product-manager · 2026-10-12T18:31:23.871Z
+advisor (product-manager): verified on origin/main (969f4a27): stop adds the tools_only entry, removes the registry entry and upgrade tree, keeps bridle.db, idempotent; take-over removes the tools_only entry on a return trip (manager-2's catch). Resolving.
