@@ -2,13 +2,14 @@
 id = "br-6b8a"
 title = "Orchestrator relaunch liveness: one clock, never a second orchestrator (jf9u)"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-01T02:16:26.855Z"
-updated_at = "2026-10-11T21:30:47.503671Z"
+updated_at = "2026-10-12T00:52:21.059130Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "external:advisor/product-manager",
+    "agent:w6b8a",
 ]
 size = "M"
 priority = "high"

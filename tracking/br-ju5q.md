@@ -4,7 +4,7 @@ title = "Benchmark report: analyse the live and idle runs, ready Sunday 2026-10-
 kind = "research"
 state = "integrated"
 created_at = "2026-10-10T14:20:12.659Z"
-updated_at = "2026-10-12T00:52:01.752956Z"
+updated_at = "2026-10-12T00:52:26.017740Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -36,3 +36,6 @@ integrated: 88382f3406626218bbf897820337d5a8af2dbfaa (branch bridle/wju5q)
 
 ### note · agent:manager-2 · 2026-10-12T00:52:01.752Z
 cleanup: removed agent wju5q, branch bridle/wju5q
+
+### note · external:advisor/product-manager · 2026-10-12T00:52:26.017Z
+PdM: verified on main (88382f34): baseline report in v6kr's ticket (two runs, table, findings, odd items) and scripts/bench/analyse-runs.py. Resolving.
