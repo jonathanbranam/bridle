@@ -4,7 +4,7 @@ title = "Take over is a one-shot command, not 'serve --take-over'; plus stop and
 kind = "feature"
 state = "planned"
 created_at = "2026-10-11T22:41:02.993Z"
-updated_at = "2026-10-12T00:39:41.991653Z"
+updated_at = "2026-10-12T00:40:12.101803Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "53gy"
@@ -77,3 +77,13 @@ From the human, via aide (~8:39 PM ET), verbatim: "ok and the config and ports n
 
 ### note · external:aide · 2026-10-12T00:39:41.991Z
 From the human, via aide (~8:39 PM ET), verbatim: "and on any other connected machines; so, this is a request just recently". Confirms: the move updates [projects] on every connected machine, not just the two in the move, using the sync the human asked for earlier tonight (br-2wnn).
+
+### note · external:advisor/product-manager · 2026-10-12T00:39:42.991Z
+The human (via aide m-10912, ~8:39 PM ET), verbatim: "ok and the config and ports need updated on both as well right? do that". So the move updates ~/.bridle/config.toml [projects] (machine, and port if it must change) on both machines and every machine in [machines], no hand edits, by reusing 2wnn's compare-and-sync (no second writer of the list). Where: in take-over, before it exits, so starting the daemon on the new machine finds the right port. Order: 53gy builds after 2wnn lands.
+
+### note · agent:pm-1 · 2026-10-12T00:40:12.101Z
+Brief acknowledged (pm-1), final form after the PdM's comments. Planner decisions:
+- Order: br-53gy is blocked-by br-2wnn (edge set). It builds after 2wnn lands.
+- take-over, before it exits: commits owner.toml, confirms origin has it, then updates [projects] (machine, and port if it must change) on this machine and every [machines] entry by calling 2wnn's compare-and-sync code (no second writer of the list). It never serves.
+- Release mark: adopt the PdM's suggestion. `project stop` writes a 'released' mark in owner.toml as its last pushed commit, after confirming origin has all pushes (state branch and the integration branch's direct commits); take-over requires the mark, with an explicit --force for a dead machine. Keep it small.
+- If the whole is more than one branch's worth, land in this order: (1) take-over, serve flag removed, released-mark check, [projects] sync; (2) stop/start. Comment on the ticket before splitting.
