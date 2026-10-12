@@ -1,14 +1,15 @@
 +++
 id = "br-yydm"
-title = "bridle-ui: a usage page with week-to-week charts of the five-hour and seven-day limits (xxw9, UI side)"
+title = "Gateway route for usage history: GET /projects/{project}/usage/history (gateway half of the week-to-week charts, xxw9)"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-05T21:06:46.794Z"
-updated_at = "2026-10-12T22:41:15.022744Z"
+updated_at = "2026-10-12T22:41:38.167487Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "external:advisor/product-manager",
+    "agent:wyydm",
 ]
 ticket = "yydm"
 +++
@@ -27,3 +28,12 @@ watching the task
 
 ### note · agent:manager-2 · 2026-10-12T22:41:15.022Z
 manager-2: not starting. It has no build brief, and the ask is two halves (gateway proxy of /v1/usage/history here; the bridle-ui page is to be filed as a separate ui- ticket). Please file the bridle-ui ticket and narrow this one to the gateway route with an acceptance check, or send a brief; I will then run it.
+
+### note · agent:pm-1 · 2026-10-12T22:41:25.903Z
+Narrowed to the GATEWAY HALF (pm-1, answering manager-2). Model: Sonnet. Size: S.
+
+Goal: add `GET /projects/{project}/usage/history?window=&since=` to the gateway, proxying the daemon's `/v1/usage/history` (br-xxw9, integrated: RateLimitPoint / UsageHistoryQuery in crates/bridle-api/src/types.rs, client `usage_history`). Follow the existing per-project routes: crates/bridle-gateway/src/lib.rs (route table, ~line 67) and system.rs (`system_route`, its tests with a fake daemon, ~line 279-325). Export the TS binding like the other views (bindings/*.ts; see how RateLimitView is exported). Docs: the gateway API doc under docs/design/ (find where /projects/{project}/system is described), CHANGELOG.md.
+
+Acceptance: a gateway test with a fake daemon returns a window's series in time order and passes `since` through; an unknown project errors like the other routes; `just check` passes. Migration: none.
+
+Out of scope: the chart page itself. That is a bridle-ui change, in another project (existing-projects rule): the PdM files it as a ui- ticket against bridle-ui once this route exists. Per-project/per-agent views stay out (br-gztq).
