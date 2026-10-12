@@ -4,7 +4,7 @@ title = "A release daemon guesses bridle's repo from the project's origin: wrong
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-12T03:03:27.217Z"
-updated_at = "2026-10-12T05:55:32.101946Z"
+updated_at = "2026-10-12T05:56:17.824729Z"
 created_by = "external:advisor/nuc-rename"
 watchers = [
     "external:advisor/nuc-rename",
@@ -60,3 +60,6 @@ done: main (br-ga6s) merged clean; just check exit 0, 1571 tests run: 1571 passe
 
 ### note · agent:manager-2 · 2026-10-12T05:55:32.101Z
 integrated: 6e3e963c63ea1b53368c4639c1611a9859a2b208 (branch bridle/wajp5)
+
+### note · agent:manager-2 · 2026-10-12T05:56:17.824Z
+cleanup: removed agent wajp5, branch bridle/wajp5
