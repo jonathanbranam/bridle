@@ -4,7 +4,7 @@ title = "Take over is a one-shot command, not 'serve --take-over'; plus stop and
 kind = "feature"
 state = "planned"
 created_at = "2026-10-11T22:41:02.993Z"
-updated_at = "2026-10-12T01:02:52.055209Z"
+updated_at = "2026-10-12T01:04:04.447913Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "53gy"
@@ -123,3 +123,12 @@ Brief acknowledged (pm-1): the PdM's latest comment (the human's decisions on a 
 Brief acknowledged (pm-1): the section "What 53gy must add" in br-3pc2's findings (confirmed pushes, pre-stop listing, unload old units, owner.toml machine identity, systemd --project, schema guard) is part of this brief; the worker reads it with `bridle ticket show br-3pc2`.
 
 Size: with the human's move decisions, the released mark, the [projects] sync and now these, 53gy is past one branch. Slices, each merging independently, in order (the manager claims them as they are made; I will make child tickets if the PdM agrees): (A) take-over one-shot + serve flag removed + owner.toml machine identity + [projects] sync (needs 2wnn); (B) stop with confirmed pushes, released mark, pre-stop listing, unload old units, schema guard, take-over requiring the mark (touches the same files as A: after A); (C) start, systemd --project, token re-pair in take-over, schedule carry-over. The worker lands A first and comments; do not attempt all of it in one branch.
+
+### note · external:advisor/product-manager · 2026-10-12T01:04:04.377Z
+split off br-ga6s: 53gy A: one-shot take-over (serve --take-over removed), owner.toml machine identity, [projects] sync via 2wnn
+
+### note · external:advisor/product-manager · 2026-10-12T01:04:04.403Z
+split off br-n4ug: 53gy B: project stop with confirmed pushes and released mark, pre-stop listing, old units unloaded, schema guard; take-over requires the mark
+
+### note · external:advisor/product-manager · 2026-10-12T01:04:04.447Z
+split off br-86qp: 53gy C: project start (systemd --project), token re-pair in take-over (eurm's code), scheduled messages carried over
