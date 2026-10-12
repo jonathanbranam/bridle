@@ -2,11 +2,14 @@
 id = "br-bs85"
 title = "bridle-grill asks how the human will answer (mobile, computer or voice); voice gets one short question per round"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-12T14:01:26.541Z"
-updated_at = "2026-10-12T14:01:42.818887Z"
+updated_at = "2026-10-12T14:06:42.035757Z"
 created_by = "external:advisor/product-manager"
-watchers = ["external:advisor/product-manager"]
+watchers = [
+    "external:advisor/product-manager",
+    "agent:wbs85",
+]
 ticket = "bs85"
 +++
 

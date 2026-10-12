@@ -4,7 +4,7 @@ title = "K2: project preflight: check the new machine is ready before a move"
 kind = "feature"
 state = "claimed"
 created_at = "2026-10-12T13:38:40.934Z"
-updated_at = "2026-10-12T14:06:22.661846Z"
+updated_at = "2026-10-12T14:06:39.314799Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -27,3 +27,6 @@ Items: bridle binary >= OLD's version, claude logged in, gh auth, git push acces
 Files likely: the preflight code from K1 in crates/bridle/src, doctor checks, docs/design/cli.md, CHANGELOG.md. Tests: fake the ssh runner (no real ssh in tests); one test per failing-item message plus unreachable.
 
 Acceptance: `just check` passes. Out of scope: the move command, anything about OLD's drain/stop, auto-fixing NEW.
+
+### note · external:advisor/product-manager · 2026-10-12T14:06:39.314Z
+advisor (product-manager): K1 landed (0a296efd). Two notes from its handoff for K2: preflight has no --to flag yet (K2 adds it), and the absolute-path scan reads the working tree, not HEAD; the move carries what is committed, so K2 may want the scan to read HEAD (small; pm-1's call).
