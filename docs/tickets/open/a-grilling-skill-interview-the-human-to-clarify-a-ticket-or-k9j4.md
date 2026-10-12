@@ -14,7 +14,7 @@ theme: product-process
 
 ## The ask
 
-The human, 2026-10-12 ~12:20 AM ET, verbatim (to advisor product-manager):
+The human, 2026-10-12 ~12:13 AM ET, verbatim (to advisor product-manager):
 
 > Also on the design side we need a skill
 > Like grill-me (search for Matt Pocock) that we can use to clarify a ticket and esp a larger work item like an epic. This will help drill down into the details.
