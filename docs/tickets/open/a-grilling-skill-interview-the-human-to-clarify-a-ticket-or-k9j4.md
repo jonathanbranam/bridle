@@ -113,3 +113,28 @@ draft follows that layout. Those two are role loops; this one is a technique a r
 4. Which role runs it first: the PdM, the designer, or either?
 5. Should the skill be allowed to edit the ticket body (with your answer quoted on the thread),
    or only comment and leave the edit to the PdM?
+
+## Decisions (the human, 2026-10-12 ~8:30 AM ET)
+
+Verbatim (to advisor product-manager):
+
+> Keep it simple: maybe one skill, and it says, "Ask if this is an epic or a ticket." That'd probably be, I guess, what I'd say first.
+>
+> I think we can take as much from Matt as we want. ... I really prefer one or two questions at a time. ... I feel like it's overwhelming to get a ton of questions that I'm supposed to answer. I'd always said that it leads me to kind of stop the work.
+>
+> If it's MIT licensed, we could just copy GrillMe to start with and have it available for our agents. That would be totally fine.
+>
+> 1. Copy GrillMe.
+> 2. Attribute Matt.
+> 3. Just make it work in our system. ... make it work with Bridle, so it will use bridle tickets for this, basically, and then make our version.
+
+So this is a build, not a design pass (supersedes "Open for the design" above):
+
+1. **Copy** Matt Pocock's `grilling` skill (the body behind `grill-me`) from github.com/mattpocock/skills, `skills/productivity/grilling/SKILL.md` at commit 95249b0b, MIT, Copyright (c) 2026 Matt Pocock, into `workflow/base/skills/grill/SKILL.md` (name `bridle-grill`, or what fits the existing `bridle-manager`/`bridle-worker` names). Keep its core: the design tree, facts looked up (subagents) and decisions asked, a recommended answer on each question worded so "yes" accepts it, and done only when the human confirms a shared understanding; it never builds.
+2. **Attribute**: the MIT notice in the skill file (or a LICENSE beside it) and a credit line with the source URL and commit.
+3. **One skill.** Its first question: "Is this an epic or a ticket?"
+4. **One or two questions at a time**, not grilling's whole-frontier rounds. Because the human otherwise assumes a batch is all that's needed, the skill keeps the open questions written down on the ticket and says, with each question, how many are open now (the count can grow as answers open new branches).
+5. **Bridle tickets** are the record: it reads the ticket and what it names; each answer goes on the ticket's thread quoted (`bridle ticket comment`), and the settled result into the ticket body (the ask, outcome, done-when, design). For a child ticket it reads the parent epic first and turns each mismatch with the epic into a question.
+6. It never readies, plans or builds; it ends with "shared understanding?" and the human's yes.
+
+Acceptance: the skill is installed for agents like the existing ones; a short note in the docs where skills are listed; `just check` green. Size S.
