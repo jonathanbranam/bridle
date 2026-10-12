@@ -8,10 +8,10 @@
 use std::collections::BTreeMap;
 
 use axum::Json;
-use axum::extract::Path;
+use axum::extract::{Path, Query};
 use bridle_api::client::{Client, ClientError};
-use bridle_api::types::{Agent, Status, TicketState};
-use serde::Serialize;
+use bridle_api::types::{Agent, Status, TicketState, UsageHistoryQuery};
+use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 use crate::actions::{ActionError, resolve};
@@ -24,6 +24,32 @@ pub struct RateLimitView {
     pub utilization: Option<f64>,
     /// RFC 3339, UTC.
     pub resets_at: Option<String>,
+}
+
+/// One reading in a window's history; a flat stretch is one point (see the daemon's
+/// `/v1/usage/history`).
+#[derive(Debug, Clone, PartialEq, Serialize, TS)]
+pub struct UsagePoint {
+    pub utilization: Option<f64>,
+    /// RFC 3339, UTC.
+    pub resets_at: Option<String>,
+    /// RFC 3339, UTC.
+    pub observed_at: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, TS)]
+pub struct UsageHistory {
+    pub project: String,
+    pub window: String,
+    /// Oldest first.
+    pub points: Vec<UsagePoint>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UsageHistoryParams {
+    pub window: String,
+    /// RFC 3339; only readings at or after it.
+    pub since: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
@@ -223,6 +249,31 @@ pub(crate) async fn agents(client: &Client, project: &str) -> Result<AgentList, 
     })
 }
 
+pub(crate) async fn usage_history(
+    client: &Client,
+    project: &str,
+    params: UsageHistoryParams,
+) -> Result<UsageHistory, ActionError> {
+    let query = UsageHistoryQuery {
+        window: params.window.clone(),
+        since: params.since,
+    };
+    let mut points = client.usage_history(&query).await.map_err(api_error)?;
+    points.sort_by_key(|p| p.observed_at);
+    Ok(UsageHistory {
+        project: project.to_string(),
+        window: params.window,
+        points: points
+            .into_iter()
+            .map(|p| UsagePoint {
+                utilization: p.utilization,
+                resets_at: p.resets_at.map(rfc),
+                observed_at: rfc(p.observed_at),
+            })
+            .collect(),
+    })
+}
+
 async fn client_for(project: &str) -> Result<Client, ActionError> {
     let (url, token) = resolve(project).await?;
     Ok(Client::new_with_timeout(
@@ -251,6 +302,17 @@ pub async fn system_route(Path(project): Path<String>) -> Result<Json<SystemView
 pub async fn agents_route(Path(project): Path<String>) -> Result<Json<AgentList>, ActionError> {
     let client = client_for(&project).await?;
     Ok(Json(agents(&client, &project).await?))
+}
+
+/// `GET /api/v1/projects/{project}/usage/history?window=&since=`: the account's rate-limit
+/// readings for one window, oldest first. The limits are account-wide; the project only picks
+/// which daemon is asked.
+pub async fn usage_history_route(
+    Path(project): Path<String>,
+    Query(params): Query<UsageHistoryParams>,
+) -> Result<Json<UsageHistory>, ActionError> {
+    let client = client_for(&project).await?;
+    Ok(Json(usage_history(&client, &project, params).await?))
 }
 
 #[cfg(test)]
@@ -359,6 +421,57 @@ mod tests {
         for secret in ["SECRET", "/secret", "4242", "principal", "127.0.0.1"] {
             assert!(!out.contains(secret), "{secret} leaked: {out}");
         }
+    }
+
+    #[tokio::test]
+    async fn usage_history_is_time_ordered_and_passes_since() {
+        let seen = std::sync::Arc::new(std::sync::Mutex::new(String::new()));
+        let seen2 = seen.clone();
+        let c = serve(Router::new().route(
+            "/v1/usage/history",
+            get(
+                move |axum::extract::RawQuery(q): axum::extract::RawQuery| async move {
+                    *seen2.lock().expect("lock") = q.unwrap_or_default();
+                    Json(json!([
+                        {"window": "five_hour", "utilization": 0.9, "resets_at": null,
+                            "observed_at": "2026-01-02T00:00:00Z"},
+                        {"window": "five_hour", "utilization": 0.2,
+                            "resets_at": "2026-01-01T05:00:00Z",
+                            "observed_at": "2026-01-01T00:00:00Z"},
+                    ]))
+                },
+            ),
+        ))
+        .await;
+        let params = UsageHistoryParams {
+            window: "five_hour".into(),
+            since: Some("2026-01-01T00:00:00Z".parse().expect("time")),
+        };
+        let h = usage_history(&c, "p", params).await.expect("history");
+        let u: Vec<_> = h.points.iter().map(|p| p.utilization).collect();
+        assert_eq!(u, [Some(0.2), Some(0.9)]);
+        assert_eq!(h.window, "five_hour");
+        let q = seen.lock().expect("lock").clone();
+        assert!(
+            q.contains("window=five_hour") && q.contains("since=2026-01-01"),
+            "{q}"
+        );
+    }
+
+    #[tokio::test]
+    async fn usage_history_unknown_project_is_404() {
+        use axum::response::IntoResponse;
+        let params = UsageHistoryParams {
+            window: "five_hour".into(),
+            since: None,
+        };
+        let err = usage_history_route(Path("no-such-project-yydm".into()), Query(params))
+            .await
+            .expect_err("unknown");
+        assert_eq!(
+            err.into_response().status(),
+            axum::http::StatusCode::NOT_FOUND
+        );
     }
 
     #[tokio::test]

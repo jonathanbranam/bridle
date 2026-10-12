@@ -67,6 +67,10 @@ pub fn router(login: Option<Login>, ui: UiConfig, interactions: report::Interact
         .route("/projects/{project}/system", get(system::system_route))
         .route("/projects/{project}/agents", get(system::agents_route))
         .route(
+            "/projects/{project}/usage/history",
+            get(system::usage_history_route),
+        )
+        .route(
             "/projects/{project}/recipients",
             get(messages::recipients_route),
         )
