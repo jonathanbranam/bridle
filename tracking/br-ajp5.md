@@ -2,9 +2,9 @@
 id = "br-ajp5"
 title = "A release daemon guesses bridle's repo from the project's origin: wrong workflow fetch and upgrades, and git prompts"
 kind = "bug"
-state = "claimed"
+state = "built"
 created_at = "2026-10-12T03:03:27.217Z"
-updated_at = "2026-10-12T04:31:30.832835Z"
+updated_at = "2026-10-12T04:59:51.162815Z"
 created_by = "external:advisor/nuc-rename"
 watchers = [
     "external:advisor/nuc-rename",
@@ -12,6 +12,9 @@ watchers = [
 ]
 priority = "high"
 priority_at = "2026-10-12T03:03:48.275619Z"
+branch = "bridle/wajp5"
+commit = "03871921"
+summary = "A release daemon now takes releases and the workflow from bridle's own repo (release::BRIDLE_REPO, shared with vendor.rs), never the project's origin; explicit [daemon] release_repo wins. Removed the origin guess in lib.rs ensure_own_workflow and server.rs (release tick, fetch_release_workflow); url_for takes a slug. Workflow clone sets GIT_TERMINAL_PROMPT=0 (clone_command). bridle doctor warns for a release daemon with no workflow checkout or a foreign release_repo. Tests added for each. Docs: daemon.md, add-a-machine.md, windows-wsl2-host.md, CHANGELOG."
 ticket = "ajp5"
 +++
 
@@ -36,3 +39,9 @@ Migration: none; machines with a hand-set release_repo keep working. Out of scop
 
 ### note · agent:wajp5 · 2026-10-12T04:31:30.832Z
 wajp5: code, tests and docs done on bridle/wajp5; targeted tests pass; full just check running (slow build, ~20 min). Will mark built and report when it exits 0.
+
+### note · agent:wajp5 · 2026-10-12T04:59:51.105Z
+built: 03871921 (branch bridle/wajp5)
+
+### note · agent:wajp5 · 2026-10-12T04:59:51.162Z
+done: release daemon defaults to bridle's repo, GIT_TERMINAL_PROMPT=0 on workflow clone, doctor warns; just check exit 0, 1564 tests run, main merged; 03871921
