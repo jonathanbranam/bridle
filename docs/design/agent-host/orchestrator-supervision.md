@@ -29,7 +29,7 @@ over, and carries its wake conditions, with no agent in the loop.
 
 ```
 bridle session orchestrator   launches the session; writes the pid file; adds a SessionStart hook (in one --settings object with the lean keys, ct8m)
-$BRIDLE_HOME/orchestrator.pid       "<pid> <process start time> <launch epoch>"   (launcher)
+$BRIDLE_HOME/orchestrator.pid       "<pid> @<start epoch> <launch epoch>"   (launcher)
 $BRIDLE_HOME/orchestrator.session   the current session id                        (the hook)
 $BRIDLE_HOME/context/<session id>   context tokens                                (bridle statusline, exists)
 daemon: orchestrator supervisor     one task, ticks every 10 s
@@ -48,8 +48,15 @@ the statusline files are named by session id. The launcher no longer pins `--ses
 writes `~/.bridle-orchestrator-session`. The `Stop` hook isn't needed: the design never asks
 whether the session is idle (see 5).
 
-The pid file's start time is the check `containment` already uses for agents (pid and start time
-must match), so a reused pid is never signalled.
+The pid file's start time is a Unix epoch (`@<seconds>`) read from `ps lstart` with `LC_ALL=C TZ=UTC`
+by one helper (`containment::start_epoch`) in both the launcher and the daemon, so it doesn't move
+with either side's `TZ` or `LC_TIME` (jf9u). Pid and start must match within one second (procps
+derives start times from boot time plus jiffies), so a reused pid is never signalled. A pid file
+written by an older launcher holds the local-time `lstart` string instead; it can't be compared, so
+the pid counts as alive when it is a `bridle session`.
+
+If the pid doesn't match but is a running `bridle session`, the supervisor files one incident and
+does **not** relaunch: a second orchestrator beside a live one is worse than a missed relaunch.
 
 ## 2. Config
 

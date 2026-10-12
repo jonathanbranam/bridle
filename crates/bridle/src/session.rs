@@ -265,21 +265,15 @@ fn tag_pane(tag: &str) {
         .status();
 }
 
-/// "<pid> <process start time> <launch epoch>", which the daemon's supervisor and `bridle mail
-/// run` read. The pid is bridle's, which lives exactly as long as claude. The start time is `ps`
-/// lstart, the same identity check the daemon uses for agents.
+/// "<pid> @<start epoch> <launch epoch>", which the daemon's supervisor and `bridle mail run`
+/// read. The pid is bridle's, which lives exactly as long as claude. The start is read by the
+/// daemon's own helper in a fixed zone and locale, so both sides agree whatever their `TZ` is.
 fn write_pid_file(path: &Path) -> anyhow::Result<()> {
     let pid = std::process::id();
-    let out = Command::new("ps")
-        .args(["-o", "lstart=", "-p", &pid.to_string()])
-        .output()
-        .context("running ps")?;
-    let lstart = String::from_utf8_lossy(&out.stdout)
-        .split_whitespace()
-        .collect::<Vec<_>>()
-        .join(" ");
+    let start = bridle_daemon::containment::start_epoch(pid as i32)
+        .context("reading this process's start time")?;
     let now = chrono::Utc::now().timestamp();
-    std::fs::write(path, format!("{pid} {lstart} {now}\n"))
+    std::fs::write(path, format!("{pid} @{start} {now}\n"))
         .with_context(|| format!("writing {}", path.display()))
 }
 

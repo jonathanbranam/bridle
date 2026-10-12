@@ -191,6 +191,49 @@ pub fn are_same_processes(procs: &[(i32, String)]) -> Vec<bool> {
         .collect()
 }
 
+/// `ps` with the locale and zone pinned, so the output doesn't move with the caller's `TZ` or
+/// `LC_TIME` (jf9u).
+fn ps_fixed(args: &[&str]) -> Option<String> {
+    let out = Command::new("ps")
+        .args(args)
+        .env("LC_ALL", "C")
+        .env("TZ", "UTC")
+        .output()
+        .ok()?;
+    out.status
+        .success()
+        .then(|| String::from_utf8_lossy(&out.stdout).trim().to_string())
+}
+
+/// The instant `pid` started, as Unix seconds: `lstart` read in a fixed locale and zone, so every
+/// process computes the same value however its environment is set. `None` if it isn't running.
+pub fn start_epoch(pid: i32) -> Option<i64> {
+    let text = ps_fixed(&["-o", "lstart=", "-p", &pid.to_string()])?;
+    let squeezed = text.split_whitespace().collect::<Vec<_>>().join(" ");
+    chrono::NaiveDateTime::parse_from_str(&squeezed, "%a %b %d %H:%M:%S %Y")
+        .ok()
+        .map(|t| t.and_utc().timestamp())
+}
+
+/// Whether `pid` is a `bridle session` launcher. Used to tell a live orchestrator whose identity
+/// can't be compared from a reused pid.
+pub fn is_bridle_session(pid: i32) -> bool {
+    let Some(cmd) = ps_fixed(&["-o", "command=", "-p", &pid.to_string()]) else {
+        return false;
+    };
+    let mut words = cmd.split_whitespace();
+    words
+        .next()
+        .is_some_and(|w| w.rsplit('/').next() == Some("bridle"))
+        && words.next() == Some("session")
+}
+
+/// Start epochs from different `ps` reads of one process can differ by a second (procps derives
+/// them from boot time plus jiffies).
+pub fn epochs_match(a: i64, b: i64) -> bool {
+    (a - b).abs() <= 1
+}
+
 /// Maps each pid in `snap` to its start time, for O(1) identity checks
 /// instead of a linear scan per tracked pid.
 fn start_index(snap: &[ProcInfo]) -> HashMap<i32, &str> {

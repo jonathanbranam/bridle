@@ -42,6 +42,8 @@ pub trait Tmux: Send + Sync {
 pub trait Procs: Send + Sync {
     /// The pid exists and its start time matches: a reused pid is not the session.
     async fn is_alive(&self, pid: i32, start: &str) -> bool;
+    /// The pid is a `bridle session` launcher, whatever its start time says.
+    async fn is_session(&self, pid: i32) -> bool;
     /// SIGTERM, or SIGKILL when `kill`, to the pid if its start time still matches.
     async fn signal(&self, pid: i32, start: &str, kill: bool);
 }
@@ -106,7 +108,8 @@ pub trait Incidents: Send + Sync {
     async fn record(&self, text: &str);
 }
 
-/// `<pid> <process start time> <launch epoch>`; the start time has spaces (`ps lstart`).
+/// `<pid> @<start epoch> <launch epoch>`. Older session binaries wrote the local-time `ps lstart`
+/// string (with spaces) instead of `@<epoch>`; that can't be compared across time zones.
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct PidRecord {
     pid: i32,
@@ -149,6 +152,8 @@ struct State {
     shell_seen: Option<DateTime<Utc>>,
     /// The death of this session has been reported.
     dead_noted: bool,
+    /// The pid is a live `bridle session` whose start time doesn't match: reported once.
+    mismatch_noted: bool,
     /// No wake command has been running for longer than `waiter_grace`; reported once.
     waiter_noted: bool,
     /// The last incident text, so a condition that persists across ticks is reported once.
@@ -249,11 +254,25 @@ impl<T: Tmux, P: Procs, I: Incidents, W: WakeSink, E: EventEmitter> Supervisor<T
             st.pending = None;
             st.shell_seen = None;
             st.dead_noted = false;
+            st.mismatch_noted = false;
             st.last_incident = None;
             self.check_waiter(&mut st, now, rec.launched).await;
             self.check_thresholds(&mut st, now, &rec).await;
             return;
         }
+        // Never a second orchestrator beside a live one: a pid that is a `bridle session` but
+        // whose start time doesn't match is more likely a clock-reading bug than a reused pid.
+        if self.procs.is_session(rec.pid).await {
+            if !std::mem::replace(&mut st.mismatch_noted, true) {
+                let text = format!(
+                    "The orchestrator pid file names pid {}, a running `bridle session`, but its start time ({}) doesn't match. Not relaunching, so as not to start a second orchestrator; fix or remove orchestrator.pid.",
+                    rec.pid, rec.start
+                );
+                self.report(&mut st, text).await;
+            }
+            return;
+        }
+        st.mismatch_noted = false;
         st.waiter_noted = false;
 
         if !std::mem::replace(&mut st.dead_noted, true) {
@@ -727,7 +746,20 @@ pub struct RealProcs;
 impl Procs for RealProcs {
     async fn is_alive(&self, pid: i32, start: &str) -> bool {
         let start = start.to_string();
-        tokio::task::spawn_blocking(move || crate::containment::is_same_process(pid, &start))
+        tokio::task::spawn_blocking(move || match start.strip_prefix('@') {
+            Some(epoch) => match (epoch.parse::<i64>(), crate::containment::start_epoch(pid)) {
+                (Ok(want), Some(got)) => crate::containment::epochs_match(want, got),
+                _ => false,
+            },
+            // An old pid file: the string can't be compared, so a bridle session counts as alive.
+            None => crate::containment::is_bridle_session(pid),
+        })
+        .await
+        .unwrap_or(false)
+    }
+
+    async fn is_session(&self, pid: i32) -> bool {
+        tokio::task::spawn_blocking(move || crate::containment::is_bridle_session(pid))
             .await
             .unwrap_or(false)
     }
@@ -736,7 +768,18 @@ impl Procs for RealProcs {
         let start = start.to_string();
         let _ = tokio::task::spawn_blocking(move || {
             // Never signal a reused pid.
-            if !crate::containment::is_same_process(pid, &start) {
+            let same = match start.strip_prefix('@') {
+                Some(e) => e
+                    .parse::<i64>()
+                    .ok()
+                    .zip(crate::containment::start_epoch(pid)),
+                None => None,
+            }
+            .map(|(want, got)| crate::containment::epochs_match(want, got))
+            .unwrap_or_else(|| {
+                !start.starts_with('@') && crate::containment::is_bridle_session(pid)
+            });
+            if !same {
                 return;
             }
             let sig = if kill {
@@ -856,12 +899,17 @@ mod tests {
     #[derive(Default)]
     struct FakeProcs {
         alive: StdMutex<HashSet<i32>>,
+        /// Pids that are a `bridle session` even when `alive` says the start time mismatches.
+        sessions: StdMutex<HashSet<i32>>,
         /// `(pid, kill)` for every signal sent.
         signals: StdMutex<Vec<(i32, bool)>>,
     }
     impl Procs for Arc<FakeProcs> {
         async fn is_alive(&self, pid: i32, _start: &str) -> bool {
             self.alive.lock().unwrap().contains(&pid)
+        }
+        async fn is_session(&self, pid: i32) -> bool {
+            self.sessions.lock().unwrap().contains(&pid)
         }
         async fn signal(&self, pid: i32, _start: &str, kill: bool) {
             self.signals.lock().unwrap().push((pid, kill));
@@ -1110,6 +1158,26 @@ mod tests {
             )]
         );
         assert!(r.incidents()[0].contains("not running"));
+    }
+
+    #[tokio::test]
+    async fn a_live_session_with_a_mismatched_start_is_never_doubled() {
+        let r = Rig::new();
+        r.write_pid(10, r.t0.timestamp() - 1000);
+        r.procs.sessions.lock().unwrap().insert(10);
+        r.relaunch(0).await;
+        r.relaunch(60).await;
+        assert_eq!(r.typed(), 0);
+        assert_eq!(r.incidents().len(), 1, "reported once");
+        assert!(r.incidents()[0].contains("Not relaunching"));
+    }
+
+    #[tokio::test]
+    async fn a_dead_pid_that_is_not_a_session_still_relaunches() {
+        let r = Rig::new();
+        r.write_pid(10, r.t0.timestamp() - 1000);
+        r.relaunch(0).await;
+        assert_eq!(r.typed(), 1);
     }
 
     #[tokio::test]
@@ -1456,7 +1524,7 @@ mod tests {
             tokio::time::sleep(Duration::from_millis(100)).await;
         }
         assert!(has_child);
-        let start = crate::containment::start_time(pid).unwrap();
+        let start = format!("@{}", crate::containment::start_epoch(pid).unwrap());
         RealProcs.signal(pid, &start, false).await;
         // sh started the next sleep after the first died: it was the child that got the signal.
         tokio::time::sleep(Duration::from_millis(500)).await;
@@ -1466,5 +1534,41 @@ mod tests {
         );
         RealProcs.signal(pid, &start, true).await;
         script.wait().unwrap();
+    }
+
+    /// jf9u: a session looks alive whatever TZ and LC_TIME the reader runs in, a reused pid
+    /// (another instant) does not, and one second of drift is tolerated.
+    #[tokio::test]
+    async fn real_identity_ignores_tz_and_tolerates_a_second() {
+        let mut child = std::process::Command::new("sleep")
+            .arg("60")
+            .spawn()
+            .unwrap();
+        let pid = child.id() as i32;
+        let epoch = crate::containment::start_epoch(pid).unwrap();
+        // The same instant read in another zone (IST, UTC+5:30) is a different string, which is
+        // what broke the old comparison; the pinned helper gives one value regardless.
+        let other = std::process::Command::new("ps")
+            .args(["-o", "lstart=", "-p", &pid.to_string()])
+            .env("TZ", "Asia/Kolkata")
+            .env("LC_ALL", "C")
+            .output()
+            .unwrap();
+        let local = String::from_utf8(other.stdout).unwrap();
+        let local = local.split_whitespace().collect::<Vec<_>>().join(" ");
+        let local = chrono::NaiveDateTime::parse_from_str(&local, "%a %b %d %H:%M:%S %Y")
+            .unwrap()
+            .and_utc()
+            .timestamp();
+        assert!((local - 19_800 - epoch).abs() <= 1);
+        let spec = format!("@{epoch}");
+        assert!(RealProcs.is_alive(pid, &spec).await);
+        assert!(RealProcs.is_alive(pid, &format!("@{}", epoch + 1)).await);
+        assert!(!RealProcs.is_alive(pid, &format!("@{}", epoch + 3600)).await);
+        // An old pid file can't be compared and `sleep` isn't a bridle session.
+        assert!(!RealProcs.is_alive(pid, "Mon Sep 29 10:00:00 2026").await);
+        child.kill().unwrap();
+        child.wait().unwrap();
+        assert!(!RealProcs.is_alive(pid, &spec).await);
     }
 }

@@ -56,6 +56,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Ticket frontmatter fields get standard names: `needs` -> `blocked_by`, `see` -> `related`, `opened` -> `created`, `filed_by` -> `created_by`, `closed` -> `resolved`, plus new optional `parent` and `theme` (a slug). `bridle ticket new/set/resolve` write the new names; readers and `ticket check` accept both forms (new wins, both present warns), and `ticket set` accepts the old field names. No migration yet: existing tickets keep working (br-syqn).
 - Messages handed to a `bridle agent wake` waiter stay unread until the same session next runs `bridle agent wake` or `bridle inbox`, so a waiter whose output is lost loses nothing; delivery (`message.delivered`) and acknowledgement (`message.read`) are separate audit events. `bridle agent wake` refuses to run with stdout sent to `/dev/null`. Messages already read stay read; takes effect on daemon upgrade (br-3zhx).
+### Fixed
+- A live orchestrator no longer looks dead (and gets a second one launched beside it) when the daemon and the session run in different time zones or locales, which also stopped context wakes on client machines. The pid file now records the start as a UTC epoch read by one shared helper, compared with a second of slack; old pid files still work; a pid that is a live `bridle session` with a mismatched start files an incident instead of relaunching (jf9u).
 
 ### Added
 
