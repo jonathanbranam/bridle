@@ -377,7 +377,7 @@ for every daemon on the machine in `~/.bridle/config.toml` (`[daemon] self_upgra
 `self_upgrade_min_interval`): the machine value wins over a project's, and a key unset there leaves
 the project's value alone, so a project that builds `main` keeps doing so. On the same
 tick and the same quiet-point test, the daemon asks GitHub (`curl`, unauthenticated; the repo is
-`[daemon] release_repo` or the checkout's `origin`) for the newest release, at most every 30
+`[daemon] release_repo`, else bridle's own, `release::BRIDLE_REPO`; never the project's `origin`) for the newest release, at most every 30
 minutes (`release::POLL_EVERY`, counted even when the ask fails, so rate limits back off). A tag
 newer than the running version (plain `X.Y.Z` compare, a prerelease or odd tag is never newer)
 starts a background upgrade: download `bridle-<tag>-<target>.tar.gz` and `SHA256SUMS` (names from
@@ -396,7 +396,9 @@ value is the tag, which the restart's commit reports. Bridle's own daemon keeps 
 vendored) keeps its own copy of the base workflow at the binary's tag: a shallow clone of `vX.Y.Z`
 in `~/.bridle/workflow/vX.Y.Z/` (read-only by convention; the `.git` is dropped), and the base layer
 points at its `workflow/` directory (`workflow_checkout.rs`). The source is the machine's
-`workflow_url`, else `github.com/<release_repo>`. At start, if the running version's checkout is
+`workflow_url`, else `github.com/<release_repo>` (bridle's own by default). Git network calls
+set `GIT_TERMINAL_PROMPT=0`, so a failed clone is an error in the log, not a prompt. `bridle doctor`
+warns for a release daemon with no checkout or a `release_repo` that is not bridle's. At start, if the running version's checkout is
 absent, it is fetched before the config is read; after a release install the new tag is fetched
 before the restart. The last two tags are kept, older ones deleted. A failed fetch doesn't stop the
 upgrade or the start: the newest older checkout stays in use and the orchestrator gets one

@@ -245,7 +245,8 @@ mkdir -p ~/.bridle && printf '[daemon]\nself_upgrade = "release"\n' >> ~/.bridle
 ```
 
 The last line makes the daemon keep itself current from releases; if `~/.bridle/config.toml`
-already has a `[daemon]` table, add the key there instead. Unverified: the script on WSL2 (it
+already has a `[daemon]` table, add the key there instead. No `release_repo` is needed: it defaults to
+bridle's own repo (br-ajp5). Unverified: the script on WSL2 (it
 is tested on a local fixture release only).
 
 Then the daemon's units (this step is **to be verified under WSL's systemd**; the audit task

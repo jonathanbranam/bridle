@@ -43,7 +43,8 @@ self_upgrade = "release"
 
 (`docs/design/agent-host/daemon.md`, "Release upgrade"; it also keeps the base workflow at the
 binary's tag.) A machine that builds from a clone uses `just install` instead and leaves
-`self_upgrade` alone.
+`self_upgrade` alone. Leave `release_repo` unset: it defaults to bridle's own repo, never the
+project's origin.
 
 On macOS, a downloaded release binary is ad-hoc signed by the build, and the signature is a new
 identity for each release, so the application firewall asks "Allow incoming connections?" again

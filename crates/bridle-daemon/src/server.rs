@@ -4580,18 +4580,7 @@ async fn release_upgrade_tick(state: &AppState) {
         state.upgrader.release();
         return;
     }
-    let repo = match &state.release_repo {
-        Some(r) => Some(r.clone()),
-        None => crate::worktree::run_git(&state.workspace.repo, &["remote", "get-url", "origin"])
-            .await
-            .ok()
-            .and_then(|u| crate::release::github_slug(&u)),
-    };
-    let Some(repo) = repo else {
-        tracing::warn!("self-upgrade: no GitHub repo (set [daemon] release_repo)");
-        state.upgrader.release();
-        return;
-    };
+    let repo = crate::release::release_repo(state.release_repo.as_deref());
     let src = state.upgrader.releases();
     let latest = tokio::task::spawn_blocking(move || src.latest(&repo)).await;
     let release = match latest {
@@ -4671,16 +4660,10 @@ async fn fetch_release_workflow(state: &AppState, release: &crate::release::Rele
     let pinned = crate::config::Config::load_with_home(&state.workspace.repo, Some(&home))
         .map(|c| !crate::workflow_checkout::is_unpinned(&home, c.workflow.as_deref()))
         .unwrap_or(false);
-    let repo = match &state.release_repo {
-        Some(r) => Some(r.clone()),
-        None => crate::worktree::run_git(&state.workspace.repo, &["remote", "get-url", "origin"])
-            .await
-            .ok()
-            .and_then(|u| crate::release::github_slug(&u)),
-    };
-    let (Some(repo), false) = (repo, pinned) else {
+    let repo = crate::release::release_repo(state.release_repo.as_deref());
+    if pinned {
         return;
-    };
+    }
     let src = state.upgrader.releases();
     let tag = release.tag.clone();
     let result = tokio::task::spawn_blocking(move || src.fetch_workflow(&home, &repo, &tag))

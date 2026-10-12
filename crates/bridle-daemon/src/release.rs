@@ -88,8 +88,7 @@ impl ReleaseSource for CurlSource {
     }
 
     fn fetch_workflow(&self, home: &Path, repo: &str, tag: &str) -> Result<(), String> {
-        let url = crate::workflow_checkout::url_for(home, Some(repo))
-            .ok_or("no URL to fetch the workflow from")?;
+        let url = crate::workflow_checkout::url_for(home, repo);
         crate::workflow_checkout::ensure(home, &url, tag)
     }
 }
@@ -305,6 +304,15 @@ pub fn fetch_and_install(
     }
     let _ = std::fs::remove_dir_all(&dir);
     result
+}
+
+/// Bridle's own GitHub repo: where a release daemon looks for releases and the workflow unless
+/// `[daemon] release_repo` says otherwise. Never the project's origin (ticket ajp5).
+pub const BRIDLE_REPO: &str = "jonathanbranam/bridle";
+
+/// The repo to take releases and the workflow from: the explicit setting, else bridle's own.
+pub fn release_repo(configured: Option<&str>) -> String {
+    configured.unwrap_or(BRIDLE_REPO).to_string()
 }
 
 /// `owner/name` from a GitHub remote URL (https or scp-style ssh).

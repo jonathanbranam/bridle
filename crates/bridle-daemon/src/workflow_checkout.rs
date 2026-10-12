@@ -67,6 +67,15 @@ pub fn is_unpinned(home: &Path, workflow: Option<&str>) -> bool {
     workflow.is_none_or(|w| Path::new(w).starts_with(root(home)))
 }
 
+/// The shallow clone of `tag`. No prompt ever: a failure is an error in the log, not a hang.
+fn clone_command(url: &str, tag: &str, dest: &Path) -> Command {
+    let mut cmd = Command::new("git");
+    cmd.args(["clone", "--quiet", "--depth", "1", "--branch", tag, url])
+        .arg(dest)
+        .env("GIT_TERMINAL_PROMPT", "0");
+    cmd
+}
+
 /// Shallow-clones `tag` of `url` into `<home>/workflow/<tag>` unless it's already there, then
 /// drops all but the newest [`KEEP`] checkouts. The clone lands in a scratch directory first so a
 /// failed or interrupted fetch never leaves a half checkout under a tag's name.
@@ -77,9 +86,7 @@ pub fn ensure(home: &Path, url: &str, tag: &str) -> Result<(), String> {
         let scratch = root(home).join(format!(".fetching-{tag}"));
         let _ = std::fs::remove_dir_all(&scratch);
         let _ = std::fs::remove_dir_all(&dest);
-        let out = Command::new("git")
-            .args(["clone", "--quiet", "--depth", "1", "--branch", tag, url])
-            .arg(&scratch)
+        let out = clone_command(url, tag, &scratch)
             .output()
             .map_err(|e| format!("running git: {e}"))?;
         let result = if !out.status.success() {
@@ -109,11 +116,11 @@ fn prune(home: &Path) {
 }
 
 /// Where to fetch from: the machine's `workflow_url`, else the GitHub repo releases come from.
-pub fn url_for(home: &Path, repo_slug: Option<&str>) -> Option<String> {
+pub fn url_for(home: &Path, repo_slug: &str) -> String {
     crate::config::Config::machine_workflow_url(Some(home))
         .ok()
         .flatten()
-        .or_else(|| repo_slug.map(|s| format!("https://github.com/{s}.git")))
+        .unwrap_or_else(|| format!("https://github.com/{repo_slug}.git"))
 }
 
 #[cfg(test)]
@@ -160,6 +167,27 @@ mod tests {
 
     fn read(p: PathBuf) -> String {
         std::fs::read_to_string(p.join("base/rules/a.md")).expect("rule")
+    }
+
+    #[test]
+    fn clone_never_prompts() {
+        let cmd = clone_command("u", "v1.0.0", Path::new("/d"));
+        let env: Vec<_> = cmd.get_envs().collect();
+        assert!(env.contains(&(
+            std::ffi::OsStr::new("GIT_TERMINAL_PROMPT"),
+            Some(std::ffi::OsStr::new("0"))
+        )));
+    }
+
+    #[test]
+    fn url_defaults_to_bridles_repo() {
+        let home = tempfile::tempdir().expect("home");
+        let slug = crate::release::release_repo(None);
+        assert_eq!(
+            url_for(home.path(), &slug),
+            "https://github.com/jonathanbranam/bridle.git"
+        );
+        assert_eq!(crate::release::release_repo(Some("a/b")), "a/b");
     }
 
     #[test]

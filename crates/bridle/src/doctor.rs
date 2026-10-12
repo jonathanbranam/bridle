@@ -205,6 +205,9 @@ pub fn local_checks(repo: &Path, home: Option<&Path>) -> (Vec<Check>, Option<Con
     }
 
     out.push(machine_config_check(home));
+    if let Some(c) = &config {
+        out.extend(release_checks(c, home));
+    }
 
     if let Some(config) = &config {
         out.extend(config_file_checks(repo, config));
@@ -218,6 +221,40 @@ pub fn local_checks(repo: &Path, home: Option<&Path>) -> (Vec<Check>, Option<Con
         }
     }
     (out, config)
+}
+
+/// A release daemon needs its own tag's workflow checkout and bridle's repo to fetch it from
+/// (ticket ajp5); without either it runs a stale or foreign workflow.
+fn release_checks(config: &Config, home: Option<&Path>) -> Vec<Check> {
+    use bridle_daemon::config::SelfUpgrade;
+    use bridle_daemon::{release, workflow_checkout};
+    let mut out = Vec::new();
+    if config.self_upgrade != SelfUpgrade::Release {
+        return out;
+    }
+    if let Some(r) = config.release_repo.as_deref()
+        && r != release::BRIDLE_REPO
+    {
+        out.push(Check::warn(
+            "release repo",
+            format!("release_repo {r} is not bridle's repo ({})", release::BRIDLE_REPO),
+            "remove release_repo from [daemon] in ~/.bridle/config.toml (the default is bridle's repo)",
+        ));
+    }
+    let home = home
+        .map(Path::to_path_buf)
+        .unwrap_or_else(bridle_api::discovery::bridle_home);
+    let version = env!("CARGO_PKG_VERSION");
+    if workflow_checkout::is_unpinned(&home, config.workflow.as_deref())
+        && workflow_checkout::managed_root(&home, version).is_none()
+    {
+        out.push(Check::warn(
+            "workflow checkout",
+            format!("no workflow checkout under {}/workflow", home.display()),
+            "restart the daemon (it fetches v{version}'s workflow), or set `workflow` to a checkout",
+        ));
+    }
+    out
 }
 
 /// `~/.bridle/config.toml`: each `[[focus]]` / `[[budget.schedule]]` block whose overnight end
@@ -818,6 +855,27 @@ stop_at = 90
             c.detail
         );
         assert_eq!(c.detail.matches("before start").count(), 1, "{}", c.detail);
+    }
+
+    fn release_check_names(toml: &str) -> Vec<&'static str> {
+        let d = repo(Some(toml));
+        let home = tempfile::tempdir().expect("home");
+        let cfg = Config::load_with_home(d.path(), Some(home.path())).expect("config");
+        release_checks(&cfg, Some(home.path()))
+            .into_iter()
+            .map(|c| c.name)
+            .collect()
+    }
+
+    #[test]
+    fn release_daemon_warns_for_no_checkout_and_a_foreign_repo() {
+        let names = release_check_names(
+            "[daemon]\nself_upgrade = \"release\"\nrelease_repo = \"someone/else\"\n",
+        );
+        assert_eq!(names, ["release repo", "workflow checkout"]);
+        let names = release_check_names("[daemon]\nself_upgrade = \"release\"\n");
+        assert_eq!(names, ["workflow checkout"]);
+        assert!(release_check_names("").is_empty());
     }
 
     #[test]

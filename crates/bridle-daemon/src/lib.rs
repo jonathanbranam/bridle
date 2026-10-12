@@ -40,7 +40,7 @@ pub mod ports;
 mod principal_wake;
 mod queue_nudge;
 pub mod reevaluate;
-mod release;
+pub mod release;
 mod restart;
 mod restart_at;
 pub mod rollback;
@@ -453,18 +453,11 @@ async fn ensure_own_workflow(
     {
         return None;
     }
-    let slug = match &config.release_repo {
-        Some(r) => Some(r.clone()),
-        None => worktree::run_git(repo, &["remote", "get-url", "origin"])
-            .await
-            .ok()
-            .and_then(|u| release::github_slug(&u)),
-    };
+    let slug = release::release_repo(config.release_repo.as_deref());
     let tag = workflow_checkout::tag_for(version);
     let h = home.clone();
     let fetched = tokio::task::spawn_blocking(move || {
-        let url = workflow_checkout::url_for(&h, slug.as_deref())
-            .ok_or("no URL to fetch it from (set [daemon] release_repo or workflow_url)")?;
+        let url = workflow_checkout::url_for(&h, &slug);
         workflow_checkout::ensure(&h, &url, &tag)
     })
     .await

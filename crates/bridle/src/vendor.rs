@@ -12,7 +12,12 @@ use bridle_daemon::config::{Config, VENDORED_WORKFLOW};
 use crate::cli::WorkflowAction;
 use crate::error::CliError;
 
-const DEFAULT_URL: &str = "https://github.com/jonathanbranam/bridle.git";
+fn default_url() -> String {
+    format!(
+        "https://github.com/{}.git",
+        bridle_daemon::release::BRIDLE_REPO
+    )
+}
 
 /// The tag matching this binary's own version.
 fn own_tag() -> String {
@@ -130,7 +135,7 @@ pub fn fetch_and_install(
 }
 
 fn url() -> anyhow::Result<String> {
-    Ok(Config::machine_workflow_url(None)?.unwrap_or_else(|| DEFAULT_URL.to_string()))
+    Ok(Config::machine_workflow_url(None)?.unwrap_or_else(default_url))
 }
 
 /// For `bridle init`: vendors the workflow unless the project already names one (or has a
