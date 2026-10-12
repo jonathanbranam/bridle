@@ -318,3 +318,83 @@ for Sunday morning. Verbatim (to the aide, relayed as m-9234), the benchmark par
 > I'll probably like some of this you can have in the dashboard, the bridle-ui, maybe. I also work a lot, and I'm a data scientist as well, so having this in a Jupyter notebook in the future (like some ready-made Python functions I can call from the notebook to load up all the benchmark data and create some basic charts from it) would be something. That's a future thing. Don't do that right now, but add that to this theme.
 >
 > And then, after this or during this, I want the messaging work to really get done. What we've got planned so far, the scheduled messages, is a real high priority for me. Assuming the setup for the WSL2 work is done, assuming the machine work is done, adding scheduled messages is the next priority.
+
+## Baseline report (2026-10-11)
+
+Two passive 30-minute runs on dalek.local (Intel Mac, 16 cores), 15 s interval, from
+`bridle/benchmarks`: live `20261010T170825Z` (daemon 0.5.0, 47 spawns counted by the sampler,
+working agents max 2 / mean 0.53, 219 events) and idle `20261011T075924Z` (daemon 0.6.1, no
+working agents, 9 events). Analysis: `python3 -I scripts/bench/analyse-runs.py <run dirs>`.
+Both runs complete: 120 of 120 samples, longest gap 17 s, no daemon restart (pid 640 throughout).
+
+| measure | live | idle |
+|---|---|---|
+| host load1 min/mean/max | 2.5 / 7.8 / 29.5 | 2.2 / 3.7 / 5.5 |
+| daemon CPU (sum of rises) | 86.7 s = 4.9% of a core | 175.0 s = 9.8% of a core |
+| daemon CPU, typical 15 s | 0.5-1.8 s (3-12%) | 0.5-0.7 s (3-5%) |
+| daemon RSS MB min/mean/max | 76 / 92 / 98 | 79 / 81 / 83 |
+| children (cargo, git, etc.) CPU | 11.6 s (0.65%) | 0.8 s (0.04%) |
+| claude processes CPU | 269 s (15%) | 126 s (7.1%) |
+| claude RSS MB (12-14 procs) | 3837 / 4165 / 4666 | 4381 / 4390 / 4557 |
+| compressed MB | 2236 -> 2092 | 1354 -> 1323 |
+| swap used MB | 1512, flat | 2683, flat |
+| memory pressure level | 1 (normal) throughout | 1 throughout |
+| sampler's own CPU | 32.2 s = 1.8% of a core | 27.3 s = 1.5% of a core |
+
+What it says:
+
+- **Bridle's daemon is cheap.** About 80-100 MB RSS, and a steady 0.5-0.7 s CPU per 15 s
+  (about 4% of one core) with nothing happening. Busy added only a little over that (up to 1.8 s
+  per 15 s while agents worked and messages flowed). It never went above 98 MB.
+- **The agents are the cost.** The 12-14 `claude` processes hold about 4.2-4.4 GB RSS even when
+  idle; a idle agent still costs memory, not CPU. Their CPU was 15% of a core live and 7% idle.
+  The idle figure is not zero because idle sessions are still ticking (the orchestrator, advisor
+  and aide sessions are among the 13 processes; not separated by the sampler).
+- **Children are noise** except bursts: peak 41 MB / 17 children live, 36 MB / 20 children idle.
+- **Memory pressure never left level 1** and swap did not move inside either run. Swap and
+  compressed differ between the days (1.5 vs 2.7 GB swap, 2.1 vs 1.3 GB compressed) because of
+  what else the Mac was doing, not bridle: compare within a run, not across.
+
+What happened in each run (from the events):
+
+- Live: a typical working stretch. Orchestrator and PdM filed 5 tickets (br-9dcz, g8pe, fv86,
+  t3dr, k3jk) and moved them open/planned; a CI run failed on 5fad2e08 (the sampler script's own
+  commit) at 17:15:50 and another passed at 17:32:55; br-ygkc integrated at 17:16:18; one agent
+  (a-57s9v) was stopped and removed; the advisor and aide sessions ended at 17:23. 41 messages
+  were sent and 14 turns ran. Host load1 peaked at 29.5, which is the machine, not the daemon.
+- Idle: 2 messages (orchestrator start notes), 1 context event, and one `disk.checked` at 08:25:14.
+
+Odd or worth a look:
+
+1. **Idle daemon burned more CPU than the live run** (175 s vs 87 s). Cause: from 08:22:30 to
+   08:25:13 (about 2.7 min) the daemon ran about 10 s CPU per 15 s (two-thirds of a core) in
+   11 consecutive samples, ending at the `disk.checked` event (9.3 GB data dir against a 10.2 GB
+   target). That is about 105 s for one disk check. Without it the idle run is about 70 s (4%),
+   the same as live. Likely a directory size walk of the data dir; worth confirming and making
+   cheaper (cache, or `du` in a child at low priority). Different daemon versions (0.5.0 vs
+   0.6.1) mean this might also be new in 0.6.x; the live run showed no such burst, but it may
+   just not have hit the check's interval.
+2. **The cumulative daemon CPU counter did not carry over**: live ended at 199.4 s, idle began at
+   136.8 s for the same pid 640. The daemon upgraded at 07:22Z (per the orchestrator note), so the
+   pid is probably reused across exec, but the counter dropped. Unexplained; treat the cumulative
+   column as per-run only (the script uses rises within a run).
+3. **claude CPU counter is not monotonic** (2 drops live, net -705 s): when a claude process exits
+   its CPU leaves the sum. Rises are a lower bound of live CPU. Per-process rows would fix this.
+4. **The sampler costs about as much as the daemon** (1.5-1.8% vs 4-10% of a core, and 27-32 s
+   per half hour). Most is probably the `ps` and `sysctl` forks every 15 s. Fine for 30 minutes;
+   not something to leave running. A 30 s interval would halve it.
+5. `spawns: 47` for the live run counts something other than agent spawns (only a few agents
+   changed state; one stopped); check what the sampler counts before relying on it.
+6. The live run was not a clean busy run: working agents mean 0.53, and no worker built or tested
+   in the window, so child CPU (cargo, nextest) is barely measured. The "busy" cost of a real
+   `just check` is still unknown.
+
+Suggested next:
+
+- **Counters** (already planned in the design): per-process rows for claude (to split orchestrator,
+  advisor, workers and fix the CPU-exit gap); daemon fds/threads; time spent in the disk check and
+  other periodic jobs; forks per minute.
+- **Scenarios:** a run with 3-4 workers building (`just check` in parallel) for the true busy cost;
+  an idle run with the disk check separately timed or skipped, to get a clean daemon floor; repeat
+  the idle run after a fix to confirm the burst is gone.
+- Do the data-dir check fix as its own ticket (not filed here).
