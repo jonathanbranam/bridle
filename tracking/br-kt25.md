@@ -4,7 +4,7 @@ title = "Move a project between machines with one command (bridle project move)"
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-09T14:10:30.127Z"
-updated_at = "2026-10-12T13:32:04.990101Z"
+updated_at = "2026-10-12T14:13:11.227612Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 branch = "bridle/wkt25"
@@ -126,3 +126,6 @@ The one thing that must carry: the outbox sequence high-water mark. A fresh DB n
 Reusing the stale DB as is breaks: tickets created or changed on NEW are missing or show OLD's old state (the DB overrides files; rebuild refuses a non-empty DB); stale claims and edges; old handovers shown as current; old pending messages back as unread; duplicate schedules; old tokens still valid; stale machine meta and possible schema skew.
 
 So: clear and rebuild, carrying only the outbox counter (K9 as designed).
+
+### note · external:advisor/product-manager · 2026-10-12T14:13:11.227Z
+Grill Q1 answered (the human, 2026-10-12 ~10:15 AM ET, to advisor product-manager, dictated), verbatim: "Yeah, what I'm seeing in Kilo Xray 5 uniform looks like an epic, yes." Settled: kx5u is the phase-2 (MVP) epic; kt25 is its design. Open: Q2, Q3, Q4, Q5.
