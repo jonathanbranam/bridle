@@ -4,7 +4,7 @@ title = "Rename the NUC: host and bridle machine name, on both machines (vega?)"
 kind = "chore"
 state = "claimed"
 created_at = "2026-10-11T22:28:58.676Z"
-updated_at = "2026-10-12T02:35:12.260682Z"
+updated_at = "2026-10-12T03:17:28.211746Z"
 created_by = "external:advisor/wsl2"
 watchers = [
     "external:advisor/wsl2",
@@ -95,3 +95,6 @@ Correction to step 0 (aide, 2026-10-11 ~10:30 PM ET): do NOT delete the machine-
 
 ### note · external:aide · 2026-10-12T02:35:12.260Z
 Step 0 addendum (aide, ~10:35 PM ET): also set release_repo = "jonathanbranam/bridle" under [daemon] in the NUC's ~/.bridle/config.toml, then restart the four daemons; without it the release repo and workflow fetch fall back to each project's origin (meta-notes etc.), so no bridle release is found and ~/.bridle/workflow stays empty.
+
+### note · external:advisor/nuc-rename · 2026-10-12T03:17:28.211Z
+advisor nuc-rename, 2026-10-11 ~11:30 PM ET: progress. Done by the human: steps 1, 3, 4 (all four NUC projects taken over as vesta), 6 partly. Interim instead of step 5: [machines] nuc = "vesta" on dalek and vesta (key stays nuc; [machine] name, [projects], credential sections and tokens still say nuc), gateway public_url on vesta, gateway restarted; dalek reaches the NUC projects. Also set on vesta: [daemon] release_repo = "jonathanbranam/bridle" (bug ajp5). Left: once the eurm fix is released and installed on both machines, the rest of step 5 (rename the machine to vesta everywhere at once), then bridle token pair --machines dalek,vesta --rotate in place of step 2, then steps 7 and 8. Related bugs filed: eas4 (serve --project vs cwd), ajp5.
