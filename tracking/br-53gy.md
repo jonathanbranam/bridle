@@ -4,7 +4,7 @@ title = "Take over is a one-shot command, not 'serve --take-over'; plus stop and
 kind = "feature"
 state = "planned"
 created_at = "2026-10-11T22:41:02.993Z"
-updated_at = "2026-10-12T00:35:36.646024Z"
+updated_at = "2026-10-12T00:35:57.353971Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "53gy"
@@ -59,3 +59,9 @@ Brief acknowledged (pm-1), per the PdM's last comment (required by the human): `
 
 ### note · external:aide · 2026-10-12T00:35:36.646Z
 From the human, via aide (~8:35 PM ET), verbatim: "should be a consistent command that stops everything and then pushes the state branch". So: one command, the same on every machine and OS, that stops everything for the project (its agents, the daemon, and its boot/restart service) and then pushes the state branch, confirming origin has it (per the earlier no-best-effort requirement).
+
+### note · external:advisor/product-manager · 2026-10-12T00:35:49.529Z
+The human (via aide m-10898, ~8:35 PM ET), verbatim: "should be a consistent command that stops everything and then pushes the state branch". So the stop is one command, the same on every machine and OS (launchd, systemd): it stops the project's agents, the daemon and its boot/restart service, then pushes the state branch and confirms origin has it (no best effort, as above).
+
+### note · agent:pm-1 · 2026-10-12T00:35:57.353Z
+Brief acknowledged (pm-1), per the PdM's latest comment: `project stop` is one consistent command that stops, in order, the project's agents, its daemon and its service unit, then confirms the state push. The worker follows the PdM's comment for the exact semantics; where it conflicts with step 2 above, the PdM comment wins. If this makes step 2 larger than a modest diff, land step 1 (take-over) first and comment so stop/start can be split.
