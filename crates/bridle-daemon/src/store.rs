@@ -8,16 +8,16 @@
 //! private `sync` module, which is plain, synchronous and independently
 //! testable without an async runtime.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
 use bridle_api::types::{
-    Agent, AgentState, AgentUsage, Conflict, Edge, EdgeKind, Event, EventQuery, ExitInfo, Handover,
-    InteractiveUsageRow, Message, MessageKind, MessageState, OutboxEntry, OutboxPeer,
-    PortAllocation, PrincipalId, PrincipalKind, RateLimit, RateLimitPoint, Schedule, TicketKind,
-    TicketState, TokenCreated, TokenInfo, TokenTotals, Usage, UsageBreakdown, UsageGroup,
-    UsageGroupBy, When,
+    Agent, AgentState, AgentUsage, Conflict, Edge, EdgeKind, Event, EventQuery, ExitInfo,
+    ExternalUsage, Handover, InteractiveUsageRow, Message, MessageKind, MessageState, OutboxEntry,
+    OutboxPeer, PortAllocation, PrincipalId, PrincipalKind, RateLimit, RateLimitPoint, Schedule,
+    TicketKind, TicketState, TokenCreated, TokenInfo, TokenTotals, Usage, UsageBreakdown,
+    UsageGroup, UsageGroupBy, When,
 };
 use chrono::{DateTime, SecondsFormat, SubsecRound, Utc};
 use rusqlite::Connection;
@@ -1675,13 +1675,24 @@ mod sync {
         UPDATE agents SET session_cost_usd = cost_usd_total;
     "#;
 
+    // External sessions in `bridle usage` (hd28): who reported, their running token totals, and
+    // the deltas against the session's previous report (what the usage report sums).
+    pub(super) const SCHEMA_V28: &str = r#"
+        ALTER TABLE interactive_usage ADD COLUMN identity TEXT;
+        ALTER TABLE interactive_usage ADD COLUMN total_input_tokens INTEGER;
+        ALTER TABLE interactive_usage ADD COLUMN total_output_tokens INTEGER;
+        ALTER TABLE interactive_usage ADD COLUMN cost_delta REAL;
+        ALTER TABLE interactive_usage ADD COLUMN input_delta INTEGER;
+        ALTER TABLE interactive_usage ADD COLUMN output_delta INTEGER;
+    "#;
+
     pub(super) const RATE_LIMIT_HISTORY_DAYS: i64 = 90;
 
     pub(super) const MIGRATIONS: &[&str] = &[
         SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6, SCHEMA_V7, SCHEMA_V8,
         SCHEMA_V9, SCHEMA_V10, SCHEMA_V11, SCHEMA_V12, SCHEMA_V13, SCHEMA_V14, SCHEMA_V15,
         SCHEMA_V16, SCHEMA_V17, SCHEMA_V18, SCHEMA_V19, SCHEMA_V20, SCHEMA_V21, SCHEMA_V22,
-        SCHEMA_V23, SCHEMA_V24, SCHEMA_V25, SCHEMA_V26, SCHEMA_V27,
+        SCHEMA_V23, SCHEMA_V24, SCHEMA_V25, SCHEMA_V26, SCHEMA_V27, SCHEMA_V28,
     ];
 
     pub(super) fn open(path: &Path) -> Result<Connection, StoreError> {
@@ -4000,6 +4011,7 @@ mod sync {
             total_cost_usd: total_cost,
             rate_limits: rate_limits(conn)?,
             interactive_today: interactive_usage_today(conn)?,
+            external: external_usage(conn, None, UsageGroupBy::Agent)?,
         })
     }
 
@@ -4079,6 +4091,20 @@ mod sync {
             total_tokens,
             cache_hit_ratio,
             total_cost_usd: total_cost,
+            external: external_usage(conn, since, by)?,
+        })
+    }
+
+    /// The delta of a running total against the session's previous report: a total that went
+    /// down means the session restarted its counter, so the new total is all new. The first
+    /// report of a session is its baseline (its earlier spend can't be dated), so 0. A figure
+    /// the report lacks stays `None`: not measured.
+    fn running_delta(prev: Option<f64>, cur: Option<f64>) -> Option<f64> {
+        let cur = cur?;
+        Some(match prev {
+            Some(p) if cur >= p => cur - p,
+            Some(_) => cur,
+            None => 0.0,
         })
     }
 
@@ -4086,11 +4112,45 @@ mod sync {
         conn: &Connection,
         row: &InteractiveUsageRow,
     ) -> Result<(), StoreError> {
+        let prev: Option<(Option<f64>, Option<i64>, Option<i64>)> = match &row.session_id {
+            Some(sid) => conn
+                .query_row(
+                    "SELECT cost_usd, total_input_tokens, total_output_tokens
+                     FROM interactive_usage WHERE session_id = ?1 ORDER BY id DESC LIMIT 1",
+                    params![sid],
+                    |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+                )
+                .optional()?,
+            None => None,
+        };
+        let cur = (
+            row.cost_usd,
+            row.total_input_tokens.map(|n| n as i64),
+            row.total_output_tokens.map(|n| n as i64),
+        );
+        // The statusline fires on every update; only a change in the totals is a new row.
+        if prev == Some(cur) {
+            return Ok(());
+        }
+        let (pc, pi, po) = prev.unwrap_or((None, None, None));
+        // A session with no id can't be told apart from another: nothing to subtract from.
+        let measurable = row.session_id.is_some();
+        let cost_delta = measurable
+            .then(|| running_delta(pc, row.cost_usd))
+            .flatten();
+        let input_delta = measurable
+            .then(|| running_delta(pi.map(|n| n as f64), cur.1.map(|n| n as f64)))
+            .flatten();
+        let output_delta = measurable
+            .then(|| running_delta(po.map(|n| n as f64), cur.2.map(|n| n as f64)))
+            .flatten();
         conn.execute(
             "INSERT INTO interactive_usage
                 (observed_at, session_id, model, cost_usd, context_used_percentage,
-                 context_used_tokens, context_max_tokens)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+                 context_used_tokens, context_max_tokens, identity,
+                 total_input_tokens, total_output_tokens,
+                 cost_delta, input_delta, output_delta)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
             params![
                 fmt_dt(row.observed_at),
                 row.session_id,
@@ -4099,9 +4159,88 @@ mod sync {
                 row.context_used_percentage,
                 row.context_used_tokens.map(|n| n as i64),
                 row.context_max_tokens.map(|n| n as i64),
+                row.identity,
+                cur.1,
+                cur.2,
+                cost_delta,
+                input_delta.map(|d| d as i64),
+                output_delta.map(|d| d as i64),
             ],
         )?;
         Ok(())
+    }
+
+    /// External sessions' deltas since `since`, grouped like the hosted breakdown: `agent` is
+    /// the identity, `role` its first path part, `model` the model. A group's figure is
+    /// `None` when none of its rows had one (not measured).
+    fn external_usage(
+        conn: &Connection,
+        since: Option<DateTime<Utc>>,
+        by: UsageGroupBy,
+    ) -> Result<Vec<ExternalUsage>, StoreError> {
+        let mut stmt = conn.prepare(
+            "SELECT identity, model, session_id, cost_delta, input_delta, output_delta
+             FROM interactive_usage WHERE (?1 IS NULL OR observed_at >= ?1)",
+        )?;
+        let rows = stmt.query_map(params![since.map(fmt_dt)], |r| {
+            Ok((
+                r.get::<_, Option<String>>(0)?,
+                r.get::<_, Option<String>>(1)?,
+                r.get::<_, Option<String>>(2)?,
+                r.get::<_, Option<f64>>(3)?,
+                r.get::<_, Option<i64>>(4)?,
+                r.get::<_, Option<i64>>(5)?,
+            ))
+        })?;
+        let mut groups: BTreeMap<String, (BTreeSet<Option<String>>, ExternalUsage)> =
+            BTreeMap::new();
+        for row in rows {
+            let (identity, model, session, cost, input, output) = row?;
+            let identity = identity.unwrap_or_else(|| "external:unbridled".to_string());
+            let key = match by {
+                UsageGroupBy::Agent => identity,
+                UsageGroupBy::Role => identity
+                    .strip_prefix("external:")
+                    .unwrap_or(&identity)
+                    .split('/')
+                    .next()
+                    .unwrap_or_default()
+                    .to_string(),
+                UsageGroupBy::Model => model.unwrap_or_else(|| "unknown".to_string()),
+            };
+            let (sessions, g) = groups.entry(key.clone()).or_insert_with(|| {
+                (
+                    BTreeSet::new(),
+                    ExternalUsage {
+                        key,
+                        sessions: 0,
+                        cost_usd: None,
+                        input_tokens: None,
+                        output_tokens: None,
+                    },
+                )
+            });
+            sessions.insert(session);
+            g.cost_usd = add_opt(g.cost_usd, cost);
+            g.input_tokens = add_opt(g.input_tokens.map(|n| n as f64), input.map(|n| n as f64))
+                .map(|n| n as u64);
+            g.output_tokens = add_opt(g.output_tokens.map(|n| n as f64), output.map(|n| n as f64))
+                .map(|n| n as u64);
+        }
+        Ok(groups
+            .into_values()
+            .map(|(sessions, mut g)| {
+                g.sessions = sessions.len() as u32;
+                g
+            })
+            .collect())
+    }
+
+    fn add_opt(a: Option<f64>, b: Option<f64>) -> Option<f64> {
+        match (a, b) {
+            (None, None) => None,
+            (a, b) => Some(a.unwrap_or(0.0) + b.unwrap_or(0.0)),
+        }
     }
 
     /// Since UTC midnight, newest first: `bridle usage` shows it alongside
@@ -4126,6 +4265,9 @@ mod sync {
                 context_used_percentage: row.get(4)?,
                 context_used_tokens: row.get::<_, Option<i64>>(5)?.map(|n| n as u64),
                 context_max_tokens: row.get::<_, Option<i64>>(6)?.map(|n| n as u64),
+                identity: None,
+                total_input_tokens: None,
+                total_output_tokens: None,
             })
         })?;
         rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
@@ -5525,6 +5667,9 @@ mod tests {
                 context_used_percentage: Some(0.25),
                 context_used_tokens: Some(50_000),
                 context_max_tokens: Some(200_000),
+                identity: None,
+                total_input_tokens: None,
+                total_output_tokens: None,
             })
             .await
             .expect("record");
@@ -5552,12 +5697,111 @@ mod tests {
                 context_used_percentage: None,
                 context_used_tokens: None,
                 context_max_tokens: None,
+                identity: None,
+                total_input_tokens: None,
+                total_output_tokens: None,
             })
             .await
             .expect("record");
 
         let usage = store.usage().await.expect("usage");
         assert!(usage.interactive_today.is_empty());
+    }
+
+    fn external_row(
+        session: &str,
+        identity: &str,
+        cost: Option<f64>,
+        input: Option<u64>,
+    ) -> InteractiveUsageRow {
+        InteractiveUsageRow {
+            observed_at: Utc::now(),
+            session_id: Some(session.to_string()),
+            model: Some("opus".to_string()),
+            cost_usd: cost,
+            context_used_percentage: None,
+            context_used_tokens: None,
+            context_max_tokens: None,
+            identity: Some(identity.to_string()),
+            total_input_tokens: input,
+            total_output_tokens: None,
+        }
+    }
+
+    #[tokio::test]
+    async fn external_usage_sums_deltas_per_session_and_survives_a_counter_reset() {
+        let (store, _tmp) = store().await;
+        let rec = |r| store.record_interactive_usage(r);
+        // First report is the baseline; then +1.0, an unchanged repeat (no row), a reset to
+        // 0.5 (all new), and a second session of the same role.
+        rec(external_row(
+            "s1",
+            "external:advisor/a",
+            Some(10.0),
+            Some(100),
+        ))
+        .await
+        .expect("1");
+        rec(external_row(
+            "s1",
+            "external:advisor/a",
+            Some(11.0),
+            Some(150),
+        ))
+        .await
+        .expect("2");
+        rec(external_row(
+            "s1",
+            "external:advisor/a",
+            Some(11.0),
+            Some(150),
+        ))
+        .await
+        .expect("3");
+        rec(external_row(
+            "s1",
+            "external:advisor/a",
+            Some(0.5),
+            Some(20),
+        ))
+        .await
+        .expect("4");
+        rec(external_row("s2", "external:advisor/b", Some(2.0), None))
+            .await
+            .expect("5");
+        rec(external_row("s2", "external:advisor/b", Some(3.0), None))
+            .await
+            .expect("6");
+
+        let by_agent = store.usage().await.expect("usage").external;
+        assert_eq!(by_agent.len(), 2);
+        assert_eq!(by_agent[0].key, "external:advisor/a");
+        assert_eq!(by_agent[0].cost_usd, Some(1.5));
+        assert_eq!(by_agent[0].input_tokens, Some(70));
+        // No token totals ever reported: not measured, not zero.
+        assert_eq!(by_agent[1].cost_usd, Some(1.0));
+        assert_eq!(by_agent[1].input_tokens, None);
+
+        let by_role = store
+            .usage_breakdown(None, UsageGroupBy::Role)
+            .await
+            .expect("breakdown")
+            .external;
+        assert_eq!(by_role.len(), 1);
+        assert_eq!(by_role[0].key, "advisor");
+        assert_eq!(by_role[0].sessions, 2);
+        assert_eq!(by_role[0].cost_usd, Some(2.5));
+    }
+
+    #[tokio::test]
+    async fn external_usage_without_a_session_id_is_not_measured() {
+        let (store, _tmp) = store().await;
+        let mut row = external_row("x", "external:aide", Some(5.0), None);
+        row.session_id = None;
+        store.record_interactive_usage(row).await.expect("record");
+        let ext = store.usage().await.expect("usage").external;
+        assert_eq!(ext.len(), 1);
+        assert_eq!(ext[0].cost_usd, None);
     }
 
     #[tokio::test]

@@ -8,13 +8,13 @@ use anyhow::Context;
 use bridle_api::discovery::{self, Env, ProcessEnv};
 use bridle_api::{
     AllocPortRequest, BudgetHoldRequest, BudgetOverrideRequest, Client, DoneTicketRequest,
-    DropTicketRequest, EditTicketRequest, Event, EventQuery, Impact, ImpactCheckRequest,
-    InterruptRequest, LandRequest, MaxWorkersRequest, MessageKind, MessageQuery, NewTicketRequest,
-    OverlapLevel, ProbeOutcome, ProbeRequest, ProbeResult, RemoveQuery, RenewRequest,
-    ResolveConflictRequest, ResumeRequest, SendRequest, SetImpactRequest, SetKindRequest,
-    SetPriorityRequest, SetSummaryRequest, SpawnRequest, SpecRef, StopRequest, Ticket, TicketKind,
-    TicketPriority, TicketSize, TokenCreateRequest, UsageBreakdownQuery, UsageGroupBy,
-    UsageHistoryQuery, Workdir, event_kind,
+    DropTicketRequest, EditTicketRequest, Event, EventQuery, ExternalUsage, Impact,
+    ImpactCheckRequest, InterruptRequest, LandRequest, MaxWorkersRequest, MessageKind,
+    MessageQuery, NewTicketRequest, OverlapLevel, ProbeOutcome, ProbeRequest, ProbeResult,
+    RemoveQuery, RenewRequest, ResolveConflictRequest, ResumeRequest, SendRequest,
+    SetImpactRequest, SetKindRequest, SetPriorityRequest, SetSummaryRequest, SpawnRequest, SpecRef,
+    StopRequest, Ticket, TicketKind, TicketPriority, TicketSize, TokenCreateRequest,
+    UsageBreakdownQuery, UsageGroupBy, UsageHistoryQuery, Workdir, event_kind,
 };
 use chrono::{Local, TimeZone, Utc};
 use clap::CommandFactory;

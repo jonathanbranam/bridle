@@ -4,12 +4,10 @@ use super::*;
 
 /// Claude Code's statusLine command (docs/design/cli.md, docs/design/usage-and-budget.md
 /// "Where bridle can see usage"). Reads Claude Code's JSON from stdin and prints a short
-/// line back. Purely local: no daemon call, so unparseable stdin is the only way this
-/// can produce a degraded line, never a slow or failed one. It no longer records a
-/// snapshot with the daemon (dropped per s8kn's scope change: the context governor
-/// gets account-wide windows from `get_usage` instead, and `POST /v1/statusline` /
-/// `interactive_usage` stay in the daemon unused for now, not removed). It does write the
-/// session's context size to a local file (`statusline::record_context`, ticket c9zm).
+/// line back. Its daemon calls (the counts, and the post of the session's running cost and
+/// tokens that `bridle usage` counts as external usage, hd28) are best effort with a short
+/// timeout, so they can't fail or stall the line. It also writes the session's context size
+/// to a local file (`statusline::record_context`, ticket c9zm).
 pub(super) async fn statusline(_cli: &Cli) -> Result<(), CliError> {
     let input: serde_json::Value = std::io::read_to_string(std::io::stdin())
         .ok()
@@ -30,9 +28,17 @@ pub(super) async fn statusline(_cli: &Cli) -> Result<(), CliError> {
         .clone()
         .or_else(|| std::env::current_dir().ok())
         .unwrap_or_default();
-    if let Some(counts) =
-        bridle_counts(&cwd, &ProcessEnv, &discovery::statusline_token_path()).await
-    {
+    let token_path = discovery::statusline_token_path();
+    let mut post = report.clone();
+    post.identity = Some(crate::statusline::session_identity(
+        std::env::var("BRIDLE_AS").ok().as_deref(),
+        std::env::var("BRIDLE_ADVISOR_NAME").ok().as_deref(),
+    ));
+    let (counts, ()) = tokio::join!(
+        bridle_counts(&cwd, &ProcessEnv, &token_path),
+        post_statusline_report(&cwd, &ProcessEnv, &token_path, &post)
+    );
+    if let Some(counts) = counts {
         line.push_str(" \u{b7} ");
         line.push_str(&counts);
     }

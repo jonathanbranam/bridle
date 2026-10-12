@@ -65,7 +65,24 @@ pub fn parse(input: &Value) -> StatusLineReport {
         context_used_percentage,
         context_used_tokens,
         context_max_tokens,
+        identity: None,
+        total_input_tokens: input
+            .pointer("/context_window/total_input_tokens")
+            .and_then(Value::as_u64),
+        total_output_tokens: input
+            .pointer("/context_window/total_output_tokens")
+            .and_then(Value::as_u64),
         rate_limits,
+    }
+}
+
+/// The identity an interactive session reports under, from its launcher's environment
+/// (`BRIDLE_AS`, `BRIDLE_ADVISOR_NAME`); a session not started by bridle is `unbridled`.
+pub fn session_identity(bridle_as: Option<&str>, advisor_name: Option<&str>) -> String {
+    match (bridle_as, advisor_name) {
+        (Some("advisor"), Some(n)) => format!("external:advisor/{n}"),
+        (Some(a @ ("advisor" | "aide" | "orchestrator")), _) => format!("external:{a}"),
+        _ => "external:unbridled".to_string(),
     }
 }
 
@@ -489,6 +506,7 @@ mod tests {
             context_used_tokens: Some(100_000),
             context_max_tokens: Some(200_000),
             rate_limits: vec![],
+            ..Default::default()
         };
         let line = render_line(&report, None, None);
         assert!(line.contains("ctx 50% (100k)"), "{line}");
@@ -504,11 +522,26 @@ mod tests {
             context_used_tokens: None,
             context_max_tokens: Some(200_000),
             rate_limits: vec![],
+            ..Default::default()
         };
         let line = render_line(&report, None, None);
         assert!(line.contains("ctx 0%"), "{line}");
         // Should not have token count in parentheses
         assert!(!line.contains("("), "{line}");
+    }
+
+    #[test]
+    fn session_identity_follows_the_launcher_environment() {
+        assert_eq!(
+            session_identity(Some("orchestrator"), None),
+            "external:orchestrator"
+        );
+        assert_eq!(
+            session_identity(Some("advisor"), Some("pm")),
+            "external:advisor/pm"
+        );
+        assert_eq!(session_identity(Some("aide"), None), "external:aide");
+        assert_eq!(session_identity(None, None), "external:unbridled");
     }
 
     #[test]

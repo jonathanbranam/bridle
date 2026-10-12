@@ -39,6 +39,30 @@ pub(super) fn format_cost_dollars(cost: f64) -> String {
     }
 }
 
+/// External and interactive sessions, next to the hosted agents' table. Marked as external;
+/// a figure no session reported is "not measured", never 0.
+fn print_external(external: &[ExternalUsage]) {
+    if external.is_empty() {
+        println!("external sessions: not measured (no statusline report yet)");
+        return;
+    }
+    println!("external sessions (statusline reports; not in the totals above):");
+    for e in external {
+        let cost = e
+            .cost_usd
+            .map(|c| format!("${}", format_cost_dollars(c)))
+            .unwrap_or_else(|| "not measured".to_string());
+        let tokens = match (e.input_tokens, e.output_tokens) {
+            (None, None) => "not measured".to_string(),
+            (i, o) => format!("{} tokens", format_tokens(i.unwrap_or(0) + o.unwrap_or(0))),
+        };
+        println!(
+            "  {:<28} {:>2} sessions {:>14} {:>16}",
+            e.key, e.sessions, tokens, cost
+        );
+    }
+}
+
 pub(super) async fn usage(cli: &Cli, args: &UsageArgs) -> Result<(), CliError> {
     let client = client_for_read(cli).await?;
 
@@ -156,6 +180,7 @@ pub(super) async fn usage(cli: &Cli, args: &UsageArgs) -> Result<(), CliError> {
             if let Some(ratio) = breakdown.cache_hit_ratio {
                 println!("cache hit ratio: {:.1}%", ratio * 100.0);
             }
+            print_external(&breakdown.external);
         }
         return Ok(());
     }
@@ -216,25 +241,7 @@ pub(super) async fn usage(cli: &Cli, args: &UsageArgs) -> Result<(), CliError> {
                 );
             }
         }
-        if !usage.interactive_today.is_empty() {
-            println!("today, interactive (bridle statusline):");
-            for row in &usage.interactive_today {
-                let cost = row
-                    .cost_usd
-                    .map(|c| format!("${}", format_cost_dollars(c)))
-                    .unwrap_or_else(|| "-".to_string());
-                let ctx = match row.context_used_percentage {
-                    Some(p) => format!("{:.0}%", p * 100.0),
-                    None => "-".to_string(),
-                };
-                println!(
-                    "  {} {:<10} {:>9} ctx {ctx}",
-                    row.observed_at.format("%H:%M:%S"),
-                    row.model.as_deref().unwrap_or("-"),
-                    cost
-                );
-            }
-        }
+        print_external(&usage.external);
     }
     Ok(())
 }

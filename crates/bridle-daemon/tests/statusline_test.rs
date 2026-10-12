@@ -46,6 +46,8 @@ async fn statusline_report_feeds_rate_limits_and_usage() {
                 utilization: Some(0.42),
                 resets_at: Some(Utc::now()),
             }],
+            identity: Some("external:aide".to_string()),
+            ..Default::default()
         })
         .await
         .expect("report statusline");

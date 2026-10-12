@@ -237,6 +237,33 @@ fn token_from_file(contents: &str) -> Option<&str> {
 /// (docs/design/cli.md). Any failure (no token file, no daemon, timeout,
 /// HTTP error) is silent to the line, logged at debug.
 pub(super) async fn bridle_counts(cwd: &Path, env: &impl Env, token_path: &Path) -> Option<String> {
+    let client = statusline_client(cwd, env, token_path)?;
+    match client.status().await {
+        Ok(status) => Some(crate::statusline::render_counts(&status)),
+        Err(e) => {
+            tracing::debug!("statusline: bridle status call failed: {e}");
+            None
+        }
+    }
+}
+
+/// Posts the session's running totals so `bridle usage` can count it (hd28). Best effort:
+/// any failure is only logged, the status line must stay fast.
+pub(super) async fn post_statusline_report(
+    cwd: &Path,
+    env: &impl Env,
+    token_path: &Path,
+    report: &bridle_api::types::StatusLineReport,
+) {
+    let Some(client) = statusline_client(cwd, env, token_path) else {
+        return;
+    };
+    if let Err(e) = client.report_statusline(report).await {
+        tracing::debug!("statusline: posting the session's usage failed: {e}");
+    }
+}
+
+fn statusline_client(cwd: &Path, env: &impl Env, token_path: &Path) -> Option<Client> {
     let token = match std::fs::read_to_string(token_path) {
         Ok(s) => {
             let Some(token) = token_from_file(&s) else {
@@ -258,14 +285,7 @@ pub(super) async fn bridle_counts(cwd: &Path, env: &impl Env, token_path: &Path)
         }
     };
     let timeout = std::time::Duration::from_secs(2);
-    let client = Client::new_with_timeout(endpoint.url, Some(token), timeout);
-    match client.status().await {
-        Ok(status) => Some(crate::statusline::render_counts(&status)),
-        Err(e) => {
-            tracing::debug!("statusline: bridle status call failed: {e}");
-            None
-        }
-    }
+    Some(Client::new_with_timeout(endpoint.url, Some(token), timeout))
 }
 
 /// `bridle wait-for-wake`: the daemon holds the request until a wake is pending.

@@ -57,8 +57,13 @@ rate_limit_history(id PK AUTOINCREMENT, window, utilization, resets_at, observed
                                                      -- same series (no shared store exists). GET /v1/usage/history
 interactive_usage(id PK AUTOINCREMENT, observed_at, session_id, model,
                    cost_usd, context_used_tokens, context_max_tokens,
-                   context_used_percentage)          -- V10: Claude's own figure; right on 1M models
-                                                     -- from `bridle statusline`; no agent id, nothing bridle hosts
+                   context_used_percentage,          -- V10: Claude's own figure; right on 1M models
+                   identity, total_input_tokens, total_output_tokens,
+                   cost_delta, input_delta, output_delta)
+                                                     -- from `bridle statusline`; no agent id, nothing bridle hosts.
+                                                     -- V28 (hd28): one row per change in a session's running totals;
+                                                     -- the *_delta columns are against that session's previous row
+                                                     -- (0 on the first, NULL = not measured) and are what `bridle usage` sums
 schedules(id PK 'sc-xxxx', created_by, target, body, kind 'once'|'cron', at_utc, cron, tz, next_fire_at,
           last_fired_at, state 'active'|'done', created_at)
                                                      -- SCHEMA_V23: scheduled messages (daemon.md); a fired

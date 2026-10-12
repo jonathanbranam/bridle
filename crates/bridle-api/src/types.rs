@@ -1295,6 +1295,22 @@ pub struct Usage {
     /// doesn't host, so there's no agent to attach them to.
     #[serde(default)]
     pub interactive_today: Vec<InteractiveUsageRow>,
+    /// External and interactive sessions (orchestrator, advisors, aide, unbridled), all
+    /// time, by identity. Only what their statusline reported to this daemon.
+    #[serde(default)]
+    pub external: Vec<ExternalUsage>,
+}
+
+/// What `bridle statusline` reported for external sessions, summed per group. A `None`
+/// total is "not measured" (the sessions reported no such figure), never zero.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExternalUsage {
+    /// The identity (`external:advisor/<name>`), role (`advisor`) or model, by the grouping.
+    pub key: String,
+    pub sessions: u32,
+    pub cost_usd: Option<f64>,
+    pub input_tokens: Option<u64>,
+    pub output_tokens: Option<u64>,
 }
 
 /// `GET /v1/usage/breakdown` grouping: role and model aggregate turns across
@@ -1348,6 +1364,9 @@ pub struct UsageBreakdown {
     pub total_tokens: TokenTotals,
     pub cache_hit_ratio: Option<f64>,
     pub total_cost_usd: f64,
+    /// External sessions in the same window, grouped the same way (`agent` = identity).
+    #[serde(default)]
+    pub external: Vec<ExternalUsage>,
 }
 
 // ---------- interactions ----------
@@ -1420,6 +1439,16 @@ pub struct StatusLineReport {
     /// extended-context models.
     #[serde(default)]
     pub context_max_tokens: Option<u64>,
+    /// Who the session is (`external:orchestrator`, `external:advisor/<name>`,
+    /// `external:aide`, `external:unbridled`), from the session's own environment.
+    #[serde(default)]
+    pub identity: Option<String>,
+    /// `context_window.total_input_tokens` / `total_output_tokens`: the session's running
+    /// totals, like `cost_usd`.
+    #[serde(default)]
+    pub total_input_tokens: Option<u64>,
+    #[serde(default)]
+    pub total_output_tokens: Option<u64>,
     #[serde(default)]
     pub rate_limits: Vec<StatusLineRateLimitReading>,
 }
@@ -1447,6 +1476,14 @@ pub struct InteractiveUsageRow {
     pub context_used_percentage: Option<f64>,
     pub context_used_tokens: Option<u64>,
     pub context_max_tokens: Option<u64>,
+    #[serde(default)]
+    pub identity: Option<String>,
+    /// The session's running totals as last reported (`cost_usd` is one too); the daemon
+    /// turns them into deltas against the session's previous report.
+    #[serde(default)]
+    pub total_input_tokens: Option<u64>,
+    #[serde(default)]
+    pub total_output_tokens: Option<u64>,
 }
 
 // ---------- budget governor ----------

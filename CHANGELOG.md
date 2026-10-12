@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- `bridle usage` now counts the orchestrator, advisors, aide and the human's own Claude Code sessions as external sessions (cost and tokens per session identity, with `--by` and `--since`), from the statusline's per-session running totals; a session that reports nothing shows "not measured", not zero. Existing projects need nothing but the new binary (daemon migration 28).
 - Usage no longer shows negative costs for long-running agents (br-9y7v): a renewed (or fresh-session) agent's cost counter restarts at 0, but the turn's cost delta was taken against the agent's lifetime total, so the first turn after a renew recorded a large negative cost. The baseline is now the claude session's own last total (new `agents.session_cost_usd`), and a delta is never negative. Migration 27 zeroes existing negative turn costs and re-sums those agents' lifetime totals.
 - Gateway: `GET /api/v1/projects/{project}/usage/history?window=&since=` serves the daemon's rate-limit history (br-yydm, the gateway half of the usage charts; the page is a bridle-ui ticket). Migration: none.
 - The project drain's hold survives a daemon restart (br-yt5v, kx5u K4 follow-up): `bridle project drain` now stores the hold in the database and the daemon restores it at start; only `drain --undo` lifts it. Migration: none (absent means no hold).

@@ -891,12 +891,11 @@ bridle ticket comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain com
   reads Claude Code's JSON on stdin and prints a short line back: model, context %
   (`context_window.used_percentage`) and token count (e.g., `40.0k`, `1.2M`) when available,
   the `5h`/`7d` rate-limit windows, the current folder and git branch, and the estimated
-  session cost last, parenthesized. It's purely local — no daemon call, no token, never
-  fails or hangs — since it runs on every render of the prompt. It does **not** call
-  `POST /v1/statusline` any more (dropped in s8kn: the context governor gets account-wide
-  windows from `get_usage` instead); that route and the `interactive_usage` table still
-  exist in the daemon, unused for now, in case something needs per-invocation interactive
-  snapshots later ([[docs/design/usage-and-budget#Where bridle can see usage|usage and budget]]).
+  session cost last, parenthesized. It runs on every render of the prompt, so its
+  daemon calls (the counts, and `POST /v1/statusline` with the session's running cost, tokens and
+  identity, hd28) are best effort with a 2 s timeout and never fail the line. `bridle usage` lists
+  those sessions as "external sessions", apart from the hosted totals, "not measured" where nothing
+  was reported ([[docs/design/usage-and-budget#Where bridle can see usage|usage and budget]]).
 
   If `~/.bridle/statusline.token` holds a token, it also appends a short "N working · M for
   you" from `GET /v1/status` (agents in `working`/`starting`, and `unread_human_messages`) —

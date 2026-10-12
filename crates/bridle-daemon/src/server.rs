@@ -2528,6 +2528,9 @@ async fn report_statusline(
             context_used_percentage: req.context_used_percentage,
             context_used_tokens: req.context_used_tokens,
             context_max_tokens: req.context_max_tokens,
+            identity: req.identity,
+            total_input_tokens: req.total_input_tokens,
+            total_output_tokens: req.total_output_tokens,
         })
         .await?;
     Ok(StatusCode::NO_CONTENT)

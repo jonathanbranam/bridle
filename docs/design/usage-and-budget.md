@@ -29,7 +29,7 @@ In practice this means:
 |---|---|---|
 | stream-json `rate_limit_event` | `status` (`allowed` / `allowed_warning` / `rejected`), `resetsAt`, `utilization` (0–1), and the window type (`five_hour`, `seven_day`, `seven_day_opus`, `seven_day_sonnet`). Emitted **when the status changes** | headless workers |
 | stream-json `result` | `usage` (input, output, cache-creation and cache-read tokens), per-model `modelUsage`, `total_cost_usd` (list-price equivalent, **cumulative across turns** in streaming mode) | headless workers |
-| status line JSON | `rate_limits.five_hour` / `.seven_day` / `.seven_day_opus` / `.seven_day_sonnet`: `used_percentage`, `resets_at`; `context_window.used_percentage`/`.context_window_size`/`.current_usage` (last API call only, `null` before it or after `/compact`); session cost. Confirmed field names, [[docs/design/cli#Built|cli.md]] | interactive sessions (the human's, the orchestrator): bridle ships `bridle statusline` as the status line command, which shows the numbers. It's local-only now (s8kn) — it no longer records them with the daemon |
+| status line JSON | `rate_limits.five_hour` / `.seven_day` / `.seven_day_opus` / `.seven_day_sonnet`: `used_percentage`, `resets_at`; `context_window.used_percentage`/`.context_window_size`/`.current_usage` (last API call only, `null` before it or after `/compact`); session cost. Confirmed field names, [[docs/design/cli#Built|cli.md]] | interactive sessions (the human's, the orchestrator): bridle ships `bridle statusline` as the status line command, which shows the numbers. It posts the session's running cost and token totals, with its identity, to the project's daemon (hd28); see "External sessions" below |
 | assistant error `rate_limit` | a turn failed on a limit | both |
 | OpenTelemetry | tokens, cost, per request | later, optional |
 
@@ -59,11 +59,23 @@ Built with the agent host, for the agents it hosts:
 - the latest `rate_limit_event` per window. It arrives once per process, so
   it can be stale while no agent is starting.
 
-`POST /v1/statusline` and its `interactive_usage` table still exist (the same
-rate-limit-window path plus a per-invocation cost/context row, for a session
-bridle doesn't host), but nothing calls the route today: `bridle statusline`
-stopped posting snapshots (s8kn) once the context governor got account-wide
-windows from `get_usage` instead, which covers the reason this existed.
+**External sessions (hd28).** The orchestrator, advisors, aide and the human's own sessions
+spend the same account but are not hosted agents. `bridle statusline` runs in each of them and
+posts (`POST /v1/statusline`, best effort, 2 s timeout) the session id, model, running cost and
+running input/output token totals, plus an identity from the launcher's environment
+(`external:orchestrator`, `external:advisor/<name>`, `external:aide`, else `external:unbridled`).
+The totals are running totals per session, so the daemon stores a delta against the session's
+previous report in `interactive_usage` (same trap as br-9y7v): a total that goes down is a
+restarted counter and the new total is all new; an unchanged report adds no row. A session's
+first report is its baseline and counts 0 (earlier spend can't be dated), so usage is counted
+from when bridle first saw the session. A figure the session never reported (or any report with
+no session id) is "not measured", shown as such, never 0. `bridle usage` lists these sessions
+in their own section (grouped by identity, or by role/model with `--by`, and `--since`), not
+added to the hosted totals. Scope: each project has its own daemon and database, so this covers
+the sessions whose statusline reached *this* daemon (the project the session works in, found
+from its cwd); a machine-wide or account-wide sum needs every project's `bridle usage`
+added up. Rate-limit windows still go through the same path. Reading Claude Code's own session
+files is not done.
 
 `bridle usage` (and `GET /v1/usage`) shows per-agent turns, tokens, cost,
 busy and wall time, totals, the cache hit ratio (cache reads ÷ all input
