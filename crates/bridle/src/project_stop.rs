@@ -483,11 +483,65 @@ async fn local(
     for line in done {
         let _ = writeln!(out, "{line}");
     }
+    for line in retire(&repo, &ws, &project, home).await? {
+        let _ = writeln!(out, "{line}");
+    }
     let _ = writeln!(
         out,
         "{project} is stopped and released; take it over on the new machine"
     );
     Ok(())
+}
+
+/// After a successful stop (kx5u K5): this machine can never serve the project again. Lists the
+/// clone in `[machine] tools_only`, drops the registry entry and removes the upgrade worktree and
+/// `upgrade-*` tree. `bridle.db` stays: events and usage can still be read there. Running it
+/// again changes nothing.
+async fn retire(
+    repo: &Path,
+    ws: &Workspace,
+    project: &str,
+    home: &Path,
+) -> anyhow::Result<Vec<String>> {
+    let mut lines = Vec::new();
+    if crate::tools_only::add_entry(repo, home)? {
+        lines.push(format!(
+            "{} added to [machine] tools_only in {}: `bridle serve` refuses it here now",
+            repo.display(),
+            home.join("config.toml").display()
+        ));
+    }
+    bridle_api::discovery::remove_registry(project).context("removing the registry entry")?;
+    let state = ws.state_dir();
+    if let Ok(rd) = std::fs::read_dir(&state) {
+        let mut found = false;
+        for e in rd.flatten() {
+            if !e.file_name().to_string_lossy().starts_with("upgrade-") {
+                continue;
+            }
+            found = true;
+            let path = e.path();
+            let _ = bridle_daemon::worktree::remove(repo, &path, true).await;
+            if path.is_dir() {
+                std::fs::remove_dir_all(&path)
+                    .with_context(|| format!("removing {}", path.display()))?;
+            } else {
+                std::fs::remove_file(&path)
+                    .with_context(|| format!("removing {}", path.display()))?;
+            }
+        }
+        if found {
+            let _ = bridle_daemon::worktree::prune(repo).await;
+            lines.push("upgrade worktree and build tree removed".to_string());
+        }
+    }
+    if ws.db().exists() {
+        lines.push(format!(
+            "{} stays here: events and usage can still be read there",
+            ws.db().display()
+        ));
+    }
+    Ok(lines)
 }
 
 #[cfg(test)]
@@ -527,6 +581,24 @@ mod tests {
         }
         let units = installed_units(os, dir.path(), &dir.path().join(".config"), "p");
         (dir, units)
+    }
+
+    #[tokio::test]
+    async fn retire_closes_the_old_machine_twice_the_same_and_keeps_the_database() {
+        let h = tempfile::tempdir().unwrap();
+        let repo = tempfile::tempdir().unwrap();
+        let wsdir = tempfile::tempdir().unwrap();
+        let ws = Workspace::new(repo.path().to_path_buf(), Some(wsdir.path().to_path_buf()));
+        std::fs::create_dir_all(ws.state_dir().join("upgrade-target/x")).unwrap();
+        std::fs::write(ws.db(), "db").unwrap();
+        let first = retire(repo.path(), &ws, "p-none", h.path()).await.unwrap();
+        assert!(first.iter().any(|l| l.contains("tools_only")));
+        assert!(!ws.state_dir().join("upgrade-target").exists());
+        assert!(ws.db().exists());
+        assert!(crate::tools_only::refuse_serve_in(repo.path(), h.path()).is_err());
+        let second = retire(repo.path(), &ws, "p-none", h.path()).await.unwrap();
+        assert!(!second.iter().any(|l| l.contains("tools_only")));
+        assert!(ws.db().exists());
     }
 
     #[test]

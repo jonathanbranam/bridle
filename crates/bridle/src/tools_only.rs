@@ -38,10 +38,76 @@ fn reason(repo: &Path) -> String {
 
 /// `bridle serve`'s guard.
 pub fn refuse_serve(repo: &Path) -> anyhow::Result<()> {
-    if is_tools_only(repo, &bridle_home())? {
+    refuse_serve_in(repo, &bridle_home())
+}
+
+pub fn refuse_serve_in(repo: &Path, home: &Path) -> anyhow::Result<()> {
+    if is_tools_only(repo, home)? {
         bail!("refusing to serve: {}", reason(repo));
     }
     Ok(())
+}
+
+/// Lists `repo` in `[machine] tools_only` of `<home>/config.toml` (kx5u K5), keeping comments
+/// and other tables; true when it added the entry, false when the clone was already listed.
+pub fn add_entry(repo: &Path, home: &Path) -> anyhow::Result<bool> {
+    if is_tools_only(repo, home)? {
+        return Ok(false);
+    }
+    let path = home.join("config.toml");
+    let text = match std::fs::read_to_string(&path) {
+        Ok(t) => t,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => String::new(),
+        Err(e) => return Err(e).with_context(|| format!("reading {}", path.display())),
+    };
+    let mut doc: toml_edit::DocumentMut = text
+        .parse()
+        .with_context(|| format!("parsing {}", path.display()))?;
+    let machine = doc
+        .entry("machine")
+        .or_insert_with(toml_edit::table)
+        .as_table_mut()
+        .context("[machine] in config.toml is not a table")?;
+    let list = machine
+        .entry("tools_only")
+        .or_insert_with(|| toml_edit::value(toml_edit::Array::new()))
+        .as_array_mut()
+        .context("[machine] tools_only is not an array")?;
+    list.push(repo.to_string_lossy().as_ref());
+    std::fs::create_dir_all(home)?;
+    let tmp = path.with_extension("toml.tmp");
+    std::fs::write(&tmp, doc.to_string())?;
+    std::fs::rename(&tmp, &path)?;
+    Ok(true)
+}
+
+/// Takes `repo` out of `[machine] tools_only` (the return trip of kx5u K5: `take-over` makes this
+/// machine the owner again); true when an entry was removed. Entries compare as `is_tools_only` does.
+pub fn remove_entry(repo: &Path, home: &Path) -> anyhow::Result<bool> {
+    if !is_tools_only(repo, home)? {
+        return Ok(false);
+    }
+    let path = home.join("config.toml");
+    let mut doc: toml_edit::DocumentMut = std::fs::read_to_string(&path)
+        .with_context(|| format!("reading {}", path.display()))?
+        .parse()
+        .with_context(|| format!("parsing {}", path.display()))?;
+    let repo = repo.canonicalize().unwrap_or_else(|_| repo.to_path_buf());
+    let list = doc["machine"]["tools_only"]
+        .as_array_mut()
+        .context("[machine] tools_only is not an array")?;
+    list.retain(|v| {
+        let Some(e) = v.as_str() else { return true };
+        let Ok(e) = bridle_daemon::config::expand_path(e) else {
+            return true;
+        };
+        let p = PathBuf::from(e);
+        p.canonicalize().unwrap_or(p) != repo
+    });
+    let tmp = path.with_extension("toml.tmp");
+    std::fs::write(&tmp, doc.to_string())?;
+    std::fs::rename(&tmp, &path)?;
+    Ok(true)
 }
 
 pub fn run(action: &MachineAction) -> Result<(), CliError> {
@@ -407,6 +473,36 @@ mod tests {
 
     fn write(p: &Path, s: &str) {
         std::fs::write(p, s).unwrap();
+    }
+
+    #[test]
+    fn add_entry_lists_the_clone_once_and_keeps_the_rest() {
+        let h = tempfile::tempdir().unwrap();
+        let repo = tempfile::tempdir().unwrap();
+        write(
+            &h.path().join("config.toml"),
+            "# mine\n[machine]\nname = \"a\"\n",
+        );
+        assert!(add_entry(repo.path(), h.path()).unwrap());
+        assert!(is_tools_only(repo.path(), h.path()).unwrap());
+        let once = std::fs::read_to_string(h.path().join("config.toml")).unwrap();
+        assert!(once.contains("# mine") && once.contains("name = \"a\""));
+        assert!(!add_entry(repo.path(), h.path()).unwrap());
+        assert_eq!(
+            std::fs::read_to_string(h.path().join("config.toml")).unwrap(),
+            once
+        );
+    }
+
+    #[test]
+    fn remove_entry_undoes_add_entry() {
+        let h = tempfile::tempdir().unwrap();
+        let repo = tempfile::tempdir().unwrap();
+        assert!(!remove_entry(repo.path(), h.path()).unwrap());
+        add_entry(repo.path(), h.path()).unwrap();
+        assert!(remove_entry(repo.path(), h.path()).unwrap());
+        assert!(refuse_serve_in(repo.path(), h.path()).is_ok());
+        assert!(!remove_entry(repo.path(), h.path()).unwrap());
     }
 
     #[test]

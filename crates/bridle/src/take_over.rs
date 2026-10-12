@@ -94,6 +94,15 @@ pub async fn run(cli: &Cli, args: &TakeOverArgs) -> Result<(), CliError> {
             );
         }
     }
+    // A machine that gave the project up (`project stop`, kx5u K5) listed its clone as tools-only;
+    // owning it again means serving it again.
+    if crate::tools_only::remove_entry(&repo, &home).map_err(CliError::Other)? {
+        let _ = writeln!(
+            out,
+            "{project}: {} removed from [machine] tools_only; `bridle serve` works here again",
+            repo.display()
+        );
+    }
     // Also on a repeat: it is how an interrupted run finishes.
     update_projects(&home, &project, &mut out).map_err(|e| {
         CliError::Other(anyhow::anyhow!(
