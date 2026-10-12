@@ -82,9 +82,14 @@ direct bridle's workforce on bridle itself. `bridle session orchestrator` starts
     cut a patch release whenever `main` has changes client machines need (roles, rules, CLI or
     daemon), at most about daily. Client daemons on `self_upgrade = "release"` take it on their
     own, so an unreleased fix doesn't reach them.
+  - **You cut and push releases yourself** (the human, 2026-10-11, v0.6.3): the release commit
+    (version bump, CHANGELOG), the `vX.Y.Z` tag and `git push origin main vX.Y.Z`, with no need to
+    ask first. Run them as separate commands, not one `&&` chain, so each matches its rule in
+    `.claude/settings.local.json` (`git commit -am 'Release *'`, `git tag -a v*`,
+    `git push origin main v*`). If a step is refused anyway, send the human the commands to run.
 - **MCP is a deferred nice-to-have**, and so are permission prompts, which
   depend on it (spike 03). The parked branch is `bridle/mcp-1`; don't merge
-  it. The requirements get refined later (ticket u6wk).
+  a. The requirements get refined later (ticket u6wk).
 
 ### Upgrades and restarts
 
