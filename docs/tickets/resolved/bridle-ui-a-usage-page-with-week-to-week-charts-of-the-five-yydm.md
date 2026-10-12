@@ -11,6 +11,7 @@ blocked_by: []
 related: [br-xxw9, br-qhsa]
 parent: br-rdkn
 theme: performance
+resolved: 2026-10-12T23:10:39Z
 ---
 
 ## The ask
