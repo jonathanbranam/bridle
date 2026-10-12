@@ -89,7 +89,7 @@ direct bridle's workforce on bridle itself. `bridle session orchestrator` starts
     `git push origin main v*`). If a step is refused anyway, send the human the commands to run.
 - **MCP is a deferred nice-to-have**, and so are permission prompts, which
   depend on it (spike 03). The parked branch is `bridle/mcp-1`; don't merge
-  a. The requirements get refined later (ticket u6wk).
+  it. The requirements get refined later (ticket u6wk).
 
 ### Upgrades and restarts
 
