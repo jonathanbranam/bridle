@@ -2,11 +2,14 @@
 id = "br-kefh"
 title = "K4: project drain: hold new work for one project, no timeout, the orchestrator watching"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-12T16:16:45.980Z"
-updated_at = "2026-10-12T16:17:43.350407Z"
+updated_at = "2026-10-12T17:18:25.312189Z"
 created_by = "external:advisor/product-manager"
-watchers = ["external:advisor/product-manager"]
+watchers = [
+    "external:advisor/product-manager",
+    "agent:wkefh",
+]
 ticket = "kefh"
 +++
 
