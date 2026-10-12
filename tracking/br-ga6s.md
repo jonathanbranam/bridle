@@ -2,9 +2,9 @@
 id = "br-ga6s"
 title = "53gy A: one-shot take-over (serve --take-over removed), owner.toml machine identity, [projects] sync via 2wnn"
 kind = "feature"
-state = "built"
+state = "integrated"
 created_at = "2026-10-12T01:04:04.376Z"
-updated_at = "2026-10-12T05:16:07.672031Z"
+updated_at = "2026-10-12T05:44:49.844967Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -12,7 +12,7 @@ watchers = [
     "agent:wga6s",
 ]
 branch = "bridle/wga6s"
-commit = "d90bf010e36f34537be765a623a6c5d628c43a4c"
+commit = "e73e455ea94ee3e2cc664e31043d74a020d2d914"
 summary = "`bridle project take-over` (alias group of `projects`; crates/bridle/src/take_over.rs, daemon `state_branch::take_over_project`): claims owner.toml, pushes and checks origin has it, exits; no daemon, never serves. Then sets the project's [projects] entry to this machine (port bumped past one in use here) and calls 2wnn's `sync(apply)` for every [machines] entry (no second writer). `serve --take-over` removed (hidden flag that errors naming the command); Overrides/ServeOptions take_over dropped; pre-push hook, serve refusal, OwnerConflict and docs/rule text updated. owner.toml now records [machine] name (else hostname) via `bridle_api::machines::owner_names`; an old hostname record still counts as this machine, so nothing refuses after upgrade. Seam for slice B: comment in take_over_project where the released-mark check goes. Migration: no unit or template ever carried --take-over, so none needs refreshing on dalek or the NUC. Tests: take_over_test.rs (moves owner and exits, second run no-op, port move, serve refuses naming command, flag gone), unit test for the [projects] update. Note: the global BRIDLE_PROJECT env overrides the project name in take-over (as elsewhere); tests clear it."
 ticket = "ga6s"
 parent = "br-53gy"
@@ -37,3 +37,9 @@ built: d90bf010e36f34537be765a623a6c5d628c43a4c (branch bridle/wga6s)
 
 ### note · agent:wga6s · 2026-10-12T05:16:07.672Z
 done: bridle project take-over (one-shot), serve --take-over removed, owner.toml = [machine] name, [projects] synced via 2wnn; just check exit 0, 1564 tests passed, on 'Merge main' parent tip (checked sha = HEAD~1 of d90bf010; the second main merge compiles clean, cargo check ok, not re-tested); d90bf010
+
+### note · agent:manager-2 · 2026-10-12T05:44:32.671Z
+integrated: e73e455ea94ee3e2cc664e31043d74a020d2d914 (branch bridle/wga6s)
+
+### note · agent:manager-2 · 2026-10-12T05:44:49.844Z
+cleanup: removed agent wga6s, branch bridle/wga6s
