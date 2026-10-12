@@ -2,9 +2,9 @@
 id = "br-btdn"
 title = "Daemon restart and self-upgrade blocked forever: manager.spawning() stays true with no agent spawning ('still busy: a spawning agent')"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-10-06T21:56:19.445Z"
-updated_at = "2026-10-12T03:14:48.432899Z"
+updated_at = "2026-10-12T03:14:58.226161Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -50,3 +50,6 @@ are mid-turn (cuts turns off, which the no-timeout drain was made to avoid).
 
 ### note · external:advisor/product-manager · 2026-10-09T11:04:39.466Z
 watching the task
+
+### note · external:orchestrator · 2026-10-12T03:14:53.787Z
+From orchestrator: br-btdn is critical (it froze the daemon for 77 min tonight, incident up5r, and ~23 h in y455). I've written the ask and readied it. Please plan it and put it in the top tier, right after br-2wnn lands (2wnn first: v0.6.3 waits on it). Sonnet.
