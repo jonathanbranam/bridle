@@ -20,6 +20,9 @@ pub struct TokenRole {
     /// Only held on other machines, as `human@<machine>`: the local human uses the workspace
     /// token file.
     pub remote_only: bool,
+    /// Where its visitor token's replies go when the holder machine has no project of the same
+    /// name as the daemon's project (br-eurm): the project the role lives in.
+    pub home: &'static str,
 }
 
 pub const HUMAN: &str = "human";
@@ -39,22 +42,27 @@ pub const TOKEN_ROLES: &[TokenRole] = &[
     TokenRole {
         name: HUMAN,
         remote_only: true,
+        home: "bridle",
     },
     TokenRole {
         name: ORCHESTRATOR,
         remote_only: false,
+        home: "bridle",
     },
     TokenRole {
         name: ADVISOR,
         remote_only: false,
+        home: "bridle",
     },
     TokenRole {
         name: AIDE,
         remote_only: false,
+        home: "bridle",
     },
     TokenRole {
         name: MAIL,
         remote_only: false,
+        home: "bridle",
     },
 ];
 
@@ -303,8 +311,9 @@ pub fn pair(
                         continue;
                     }
                     let label = format!("{role} -> {daemon}/{project}");
+                    let home = (!same).then(|| home_for(&up[holder], project, role));
                     match one(
-                        opts, fleet, runner, holder, daemon, project, *port, role, same,
+                        opts, fleet, runner, holder, daemon, project, *port, role, home,
                     ) {
                         Ok(Outcome::Kept) => t.kept += 1,
                         Ok(Outcome::Minted) => t.minted += 1,
@@ -455,6 +464,26 @@ fn peer_one(
     Ok(Outcome::Minted)
 }
 
+/// The visitor's home on the holder machine: the project of the same name if the holder has it,
+/// else the role's own project, else the holder's first project (a daemon with none cannot
+/// receive replies at all).
+fn home_for(holder_projects: &[(String, u16)], project: &str, role: &str) -> String {
+    let has = |p: &str| holder_projects.iter().any(|(h, _)| h == p);
+    let default = TOKEN_ROLES
+        .iter()
+        .find(|r| r.name == role)
+        .map_or("bridle", |r| r.home);
+    if has(project) {
+        project.to_string()
+    } else if has(default) {
+        default.to_string()
+    } else {
+        holder_projects
+            .first()
+            .map_or(default.to_string(), |(p, _)| p.clone())
+    }
+}
+
 enum Outcome {
     Kept,
     Minted,
@@ -471,10 +500,12 @@ fn one(
     project: &str,
     port: u16,
     role: &str,
-    same: bool,
+    home: Option<String>,
 ) -> Result<Outcome, String> {
     let holder_at = fleet.at(holder);
     let daemon_at = fleet.at(daemon);
+    // A token held for another machine's daemon is a visitor there, and has a home.
+    let same = home.is_none();
     if !opts.rotate {
         // The holder judges its own entry against the daemon, so no token leaves it.
         let mut a = args(&["--project", project]);
@@ -499,6 +530,9 @@ fn one(
     let mut mint = args(&["--project", project, "token", "pair-mint", role]);
     if !same {
         mint.extend(args(&["--for", holder]));
+        if let Some(home) = &home {
+            mint.extend(args(&["--home", home]));
+        }
     }
     let token = runner
         .run(&daemon_at, &mint, None)
@@ -541,6 +575,8 @@ mod tests {
         /// (daemon machine, receiving project, sending machine) -> live peer token
         peer: RefCell<HashMap<(String, String, String), String>>,
         n: RefCell<u32>,
+        /// token -> the home it was minted with (visitor tokens only)
+        homes: RefCell<HashMap<String, Option<String>>>,
     }
 
     impl Sim {
@@ -591,9 +627,12 @@ mod tests {
                     let creds = self.creds.borrow();
                     let tok = creds.get(&key).ok_or("no entry")?;
                     let valid = self.valid.borrow();
-                    if valid
-                        .get(&(daemon, project))
-                        .is_some_and(|s| s.contains(tok))
+                    let visitor_ok = !val("--machine").is_some()
+                        || self.homes.borrow().get(tok).is_some_and(Option::is_some);
+                    if visitor_ok
+                        && valid
+                            .get(&(daemon, project))
+                            .is_some_and(|s| s.contains(tok))
                     {
                         Ok(String::new())
                     } else {
@@ -608,6 +647,7 @@ mod tests {
                     // A principal has one active token: the old one is revoked.
                     let _ = a[i + 2].as_str();
                     set.insert(tok.clone());
+                    self.homes.borrow_mut().insert(tok.clone(), val("--home"));
                     Ok(format!("{tok}\n"))
                 }
                 "pair-store" => {
@@ -694,6 +734,68 @@ mod tests {
                 .keys()
                 .any(|(_, p, m, _)| p == "human" && m.is_none())
         );
+    }
+
+    // br-eurm
+    #[test]
+    fn home_is_the_same_named_project_else_the_roles_else_any() {
+        let p = |names: &[&str]| -> Vec<(String, u16)> {
+            names.iter().map(|n| (n.to_string(), 1)).collect()
+        };
+        assert_eq!(home_for(&p(&["bridle", "notes"]), "notes", "aide"), "notes");
+        assert_eq!(home_for(&p(&["bridle", "x"]), "notes", "aide"), "bridle");
+        assert_eq!(home_for(&p(&["x", "y"]), "notes", "aide"), "x");
+    }
+
+    // br-eurm, s-8088
+    #[test]
+    fn visitors_are_minted_with_a_home_and_no_home_is_reminted() {
+        let mut s = sim();
+        // mbp also has `notes`: the same-named project is the home there.
+        s.projects
+            .get_mut("mbp")
+            .unwrap()
+            .push(("notes".into(), 7403));
+        run(&s, &Options::default());
+        let mint_homes = |s: &Sim| -> Vec<(String, String, String)> {
+            s.calls
+                .borrow()
+                .iter()
+                .filter(|c| c.iter().any(|x| x == "pair-mint") && c.iter().any(|x| x == "--home"))
+                .map(|c| {
+                    let at = |k: &str| c[c.iter().position(|x| x == k).unwrap() + 1].clone();
+                    (at("--project"), at("pair-mint"), at("--home"))
+                })
+                .collect()
+        };
+        let homes = mint_homes(&s);
+        // nuc/notes held by mbp: mbp has `notes`.
+        assert!(homes.contains(&("notes".into(), "aide".into(), "notes".into())));
+        // mbp/bridle held by nuc: nuc has no `bridle` and no home for the role: its first project.
+        assert!(homes.contains(&("bridle".into(), "aide".into(), "notes".into())));
+        // Every cross-machine mint carried a home.
+        let cross = s
+            .calls
+            .borrow()
+            .iter()
+            .filter(|c| c.iter().any(|x| x == "pair-mint") && c.iter().any(|x| x == "--for"))
+            .count();
+        assert_eq!(homes.len(), cross);
+
+        // A visitor minted before homes existed is not working: the plain re-run re-mints it.
+        for h in s.homes.borrow_mut().values_mut() {
+            *h = None;
+        }
+        let (ok, out) = run(&s, &Options::default());
+        assert!(ok, "{out}");
+        assert!(out.contains("(role tokens): minted"), "{out}");
+        assert!(!out.contains("(role tokens): minted 0"), "{out}");
+        // And then a further run changes nothing.
+        let before: BTreeMap<_, _> = s.creds.borrow().clone().into_iter().collect();
+        let (_, out) = run(&s, &Options::default());
+        assert_eq!(out.matches("(role tokens): minted 0").count(), 2, "{out}");
+        let after: BTreeMap<_, _> = s.creds.borrow().clone().into_iter().collect();
+        assert_eq!(before, after);
     }
 
     // s-7504

@@ -1672,6 +1672,9 @@ pub enum TokenAction {
         /// The machine that will hold the token, when not this one.
         #[arg(long = "for")]
         for_machine: Option<String>,
+        /// With `--for`: the visitor's home project on that machine (as `token create --home`).
+        #[arg(long)]
+        home: Option<String>,
     },
     /// Helper for `token pair`: store the token on stdin as the role's entry for `--project`.
     #[command(hide = true)]

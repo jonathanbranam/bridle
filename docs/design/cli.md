@@ -152,7 +152,11 @@ bridle token pair [--machines m,..] [--projects p,..] [--roles r,..] [--tokens r
                                              the default also pairs `peer` tokens: the receiving daemon mints `peer:<sending machine>` and the sender's file gets
                                              `[peer] <receiving project>`, for every project that sends to every other (same machine too);
                                              `[mail] peers = false` in a project's config leaves it out both ways (role tokens still
-                                             minted). `bridle init` runs it for the new project when its daemon is already up, and
+                                             minted). A role token held for another machine's daemon is minted with a home (br-eurm: the
+                                             same-named project on the holder's machine, else the role's project there, else its first
+                                             project; `pair-mint --for <m> --home <p>`), and one with no home counts as not working
+                                             (`GET /v1/status` carries `visitor_home`), so a plain run re-mints it and replaces the
+                                             holder's entry: no revoke and `token create --home` by hand. `bridle init` runs it for the new project when its daemon is already up, and
                                              otherwise lists it as a next step. Spec: design/specs/token-pairing.md.
                                              Hidden helpers it runs: `token pair-projects|pair-check|pair-mint|pair-store|
                                              pair-peer-held|pair-peer-active|pair-peer-mint`.

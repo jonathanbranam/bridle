@@ -1059,6 +1059,7 @@ async fn status(
     } else {
         Vec::new()
     };
+    let visitor_home = state.store.visitor_home(&principal.id.to_string()).await?;
     Ok(Json(Status {
         daemon: bridle_api::types::DaemonInfo {
             project: state.project.clone(),
@@ -1071,6 +1072,7 @@ async fn status(
             version: state.version.clone(),
         },
         principal: principal.id,
+        visitor_home,
         agents_by_state,
         unread_human_messages: unread,
         rate_limits,

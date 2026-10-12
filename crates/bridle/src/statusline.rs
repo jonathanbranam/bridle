@@ -391,6 +391,7 @@ mod tests {
 
     fn sample_status(agents_by_state: &[(&str, u32)], unread: u32) -> Status {
         Status {
+            visitor_home: None,
             daemon: bridle_api::types::DaemonInfo {
                 project: "demo".to_string(),
                 workspace: "/ws".to_string(),

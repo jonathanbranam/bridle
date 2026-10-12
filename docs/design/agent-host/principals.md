@@ -176,7 +176,8 @@ token, like `task ready --project`; the outbox is for a project with no such tok
   lands in the home daemon's ordinary inbox, where its own waiter wakes; nobody reads another
   machine. The sender is labelled with this machine (`external:advisor@dalek`). The `send` answers
   with the outbox id as the message id. Migration: a visitor token minted before this has no
-  home (`principals.home` NULL) and keeps its inbox here as before; so does one whose home can no
+  home (`principals.home` NULL) and keeps its inbox here as before (`bridle token pair` re-mints
+  such a token with a home on its next run, br-eurm); so does one whose home can no
   longer be forwarded to (no peer token), with a warning in the log. A home is only for visitors.
   Every principal's home is its own machine's daemon, so a visitor token with a home is the
   only record needed; `external:orchestrator` itself stays local.

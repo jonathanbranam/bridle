@@ -102,6 +102,10 @@ pub struct Status {
     pub daemon: DaemonInfo,
     /// The principal the request was authenticated as.
     pub principal: PrincipalId,
+    /// The caller's home when it is a visitor token that has one (br-eurm): `token pair` treats a
+    /// visitor without one as not working.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub visitor_home: Option<String>,
     /// Agent counts keyed by `AgentState` in snake_case.
     pub agents_by_state: BTreeMap<String, u32>,
     pub unread_human_messages: u32,

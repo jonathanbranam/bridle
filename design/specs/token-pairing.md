@@ -59,6 +59,21 @@ when given SHALL select exactly the names listed. There SHALL be no option that 
 - **WHEN** bridle token pair --roles aide --tokens peer runs
 - **THEN** it fails with a usage error and writes nothing
 
+### Requirement: A token for another machine's daemon has a home  {#r-bf98}
+
+A role token held for a daemon on another machine SHALL be minted with a home: the project of
+the same name on the holder's machine if it has one, else the role's own project there, else the
+holder's first project. A token for another machine's daemon that has no home SHALL count as not
+working, so a plain run re-mints it and replaces the holder's entry.
+
+#### Scenario: A visitor without a home is re-minted by a plain run  {#s-8088}
+
+*Verification*: **executable**
+
+- **GIVEN** machines paired, then every cross-machine token marked as having no home
+- **WHEN** bridle token pair runs with no options
+- **THEN** those tokens are minted again with a home, and a further run changes nothing
+
 ### Requirement: A second run changes nothing, and a failure never stops the rest  {#r-2af0}
 
 An entry that works SHALL be kept. Only missing or broken entries SHALL be minted, and

@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+- `bridle token pair` mints visitor tokens with their home (br-eurm): the same-named project on the holder's machine, else the role's project there (bridle), so replies come back; a visitor token with no home counts as not working, so a plain re-run re-mints it and replaces the holder's entry. `GET /v1/status` gains `visitor_home`. Migration: run `bridle token pair` once; no files change by hand.
 
 ## [0.6.2] - 2026-10-11
 - bridle-ui ships with each release (br-t3dr): `release.yml` builds the bridle-ui commit named in the new `ui.pin` and puts it in every release tarball as `ui/`; `install-release.sh` and a `self_upgrade = "release"` daemon install it in `~/.bridle/ui/` (atomic rename; tarballs without `ui/` leave the folder alone), so a release machine needs no bridle-ui clone. The release fails if the UI's `api-version` differs from the gateway's. Bump `ui.pin` when cutting a release. The workflow's first real run is the next tag. No migration.
