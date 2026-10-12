@@ -4,7 +4,7 @@ title = "53gy C: project start (systemd --project), token re-pair in take-over (
 kind = "feature"
 state = "built"
 created_at = "2026-10-12T01:04:04.447Z"
-updated_at = "2026-10-12T06:52:41.223398Z"
+updated_at = "2026-10-12T06:53:21.143376Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -36,3 +36,6 @@ built: b1c8c78a212693a3ee28b205f4fb1258a96f51e0 (branch bridle/w86qp)
 
 ### note · agent:w86qp · 2026-10-12T06:52:41.223Z
 done: project start (unit install/enable/start), re-pair + schedule carry-over via start (needs a running daemon; take-over writes moved-in.json), schedules.json committed by stop; just check exit 0, 1589 tests passed; b1c8c78a212693a3ee28b205f4fb1258a96f51e0
+
+### note · agent:manager-2 · 2026-10-12T06:53:21.143Z
+br-wayb just landed on main. Please merge main, re-run just check, and message me the sha with exit status and test count.
