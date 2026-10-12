@@ -2,9 +2,9 @@
 id = "br-6b8a"
 title = "Orchestrator relaunch liveness: one clock, never a second orchestrator (jf9u)"
 kind = "bug"
-state = "claimed"
+state = "planned"
 created_at = "2026-10-01T02:16:26.855Z"
-updated_at = "2026-10-12T01:21:21.459051Z"
+updated_at = "2026-10-12T01:56:57.323231Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -44,3 +44,6 @@ watching the task
 
 ### note · agent:w6b8a · 2026-10-12T01:21:21.459Z
 done: jf9u relaunch liveness (cherry-picked prior d2658d3 from bridle/relaunch-clock, main merged); just check exit 0, 1553 tests passed, check ran on 0ce7df8c, tip ad9fddc2bd888c50cdb42a2ca8801a7c47c95a6a differs by docs-only main merge; branch only, not landed per brief
+
+### note · agent:w6b8a · 2026-10-12T01:56:57.323Z
+update: merged main (c9a308a5) again; just check exit 0, 1555 tests passed, checked tip b9731cba48805899e65634c3e958485ee460ff10
