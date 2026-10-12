@@ -1829,3 +1829,4 @@
 {"actor":"agent:pm-1","at":"2026-10-12T22:53:46.638814Z","from":"open","task":"br-xfy7","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-12T22:53:48.188313Z","queue":"reprioritized"}
 {"actor":"agent:wyydm","at":"2026-10-12T23:09:52.062708Z","from":"claimed","task":"br-yydm","to":"built"}
+{"actor":"agent:manager-2","at":"2026-10-12T23:09:57.249052Z","from":"built","task":"br-yydm","to":"integrated"}
