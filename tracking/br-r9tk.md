@@ -2,9 +2,9 @@
 id = "br-r9tk"
 title = "token pair after a machine rename: revoke role@old and peer:old tokens, move old credential sections (eurm follow-up, for nuc->vesta)"
 kind = "feature"
-state = "planned"
+state = "dropped"
 created_at = "2026-10-12T01:35:58.573Z"
-updated_at = "2026-10-12T01:50:04.540674Z"
+updated_at = "2026-10-12T01:51:49.243874Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -33,3 +33,9 @@ PdM: the human is doing the NUC->vesta rename by hand (via aide m-11042, ~9:55 P
 
 ### note · external:advisor/product-manager · 2026-10-12T01:50:04.540Z
 priority: normal -> low
+
+### note · external:advisor/product-manager · 2026-10-12T01:51:46.277Z
+The human (~10:00 PM ET, to advisor product-manager), verbatim: "The new machine setup and project transfer will be common; otherwise the renaming of a machine is a rare thing. It could be treated as a new machine setup, essentially." PdM: dropped; a rename is handled as a new machine setup (epic br-kx5u).
+
+### note · external:advisor/product-manager · 2026-10-12T01:51:49.243Z
+dropped: the human: a machine rename is treated as a new machine setup (br-kx5u)

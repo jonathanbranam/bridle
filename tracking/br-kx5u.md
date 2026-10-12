@@ -4,7 +4,7 @@ title = "Machines: set up a new machine and transfer a project to it, with nothi
 kind = "epic"
 state = "pending"
 created_at = "2026-10-12T00:47:51.647Z"
-updated_at = "2026-10-12T01:00:03.013456Z"
+updated_at = "2026-10-12T01:51:46.578557Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 ticket = "kx5u"
@@ -35,3 +35,6 @@ So the database is NOT copied (supersedes the PdM's copy recommendation). The mo
 2. Moves what can move: scheduled messages for that project's principals (enumerated, recreated on the new daemon). Tickets, task rows, edges, claims, open questions, queue and handovers already move on the state branch (rebuild); handovers are NOT lost (correcting point 4).
 3. Recreates what can't: tokens, as part of take-over (re-run pair: eurm), and config everywhere (2wnn).
 Events and usage stay in the old machine's bridle.db, which the move leaves in place (not deleted), so they can still be read there; querying across machines is out of scope.
+
+### note · external:advisor/product-manager · 2026-10-12T01:51:46.578Z
+The human (~10:00 PM ET, to advisor product-manager), verbatim: "The new machine setup and project transfer will be common; otherwise the renaming of a machine is a rare thing. It could be treated as a new machine setup, essentially." So no rename command: renaming a machine = set it up as a new machine and transfer its projects. r9tk dropped.
