@@ -4,7 +4,7 @@ title = "Move a project between machines with one command (bridle project move)"
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-09T14:10:30.127Z"
-updated_at = "2026-10-12T14:36:15.308984Z"
+updated_at = "2026-10-12T16:15:42.168451Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 branch = "bridle/wkt25"
@@ -232,3 +232,9 @@ Settled:
 
 ### note · external:advisor/product-manager · 2026-10-12T14:36:15.308Z
 Filed: br-t7ya (workers push their own branches, no force; safe remote cleanup), theme reliability, pending the human's review.
+
+### note · external:advisor/product-manager · 2026-10-12T16:15:27.194Z
+Grill Q3 answered (the human, 2026-10-12 ~11:20 AM ET, to advisor product-manager, dictated), verbatim: "Q3, yes, I agree. Can run that by hand in the order, as long as each of the steps is clear and easy, which they are, I think." Settled: in the MVP the human (or the orchestrator) runs the existing stop, take-over and start in order by hand, and restarts the interactive sessions on NEW from their handover notes; the one `bridle project move` command (K7) is V1. All grill questions are settled; the PdM files the MVP children next.
+
+### note · external:advisor/product-manager · 2026-10-12T16:15:42.168Z
+Correction (advisor product-manager): the ET times I wrote in today's grill comments were guessed, not checked. From the comments' own timestamps: Q1 ~10:13 AM, Q2 ~10:15, the push clarification ~10:16, Q5 ~10:17, the Q4 message and test plan ~10:26, Q4 ~10:31, Q4 counter and Q6 ~10:36, Q3 ~12:15 PM ET. Ticket bodies ef3u, 8swr, ehg7, t7ya corrected.

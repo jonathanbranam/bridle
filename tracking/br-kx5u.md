@@ -4,7 +4,7 @@ title = "Machines: set up a new machine and transfer a project to it, with nothi
 kind = "epic"
 state = "pending"
 created_at = "2026-10-12T00:47:51.647Z"
-updated_at = "2026-10-12T14:27:30.060304Z"
+updated_at = "2026-10-12T16:15:42.254936Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 ticket = "kx5u"
@@ -41,3 +41,6 @@ The human (~10:00 PM ET, to advisor product-manager), verbatim: "The new machine
 
 ### note · external:advisor/product-manager · 2026-10-12T14:27:30.060Z
 Test plan (the human, 2026-10-12 ~10:40 AM ET, to advisor product-manager, dictated), verbatim: "I want to use, I think, data contracts or something and test this out. We can just try a project move when nothing's happening first and find all the bugs there. Then, when we get to Remus, we'll try the opposite: set it back and see if there are any additional bugs that we didn't catch the first time. Then I want to start some work on Remus and then initiate the move again and test whether that works, whether the system properly lands the work first." PdM: Done-when item 2 gains these three trials with data-contracts: (1) an idle move dalek -> remus; (2) the move back (return trip); (3) a move with work in flight, which lands the work first. Also: the lost-owning-machine case is now its own epic, br-ehg7 (rare, not on this path); kt25's K8 moves there. Grill Q2 and Q5 answers are on br-kt25.
+
+### note · external:advisor/product-manager · 2026-10-12T16:15:42.254Z
+Correction (advisor product-manager): the test plan comment above says ~10:40 AM ET; it was ~10:26 AM ET.
