@@ -4,7 +4,7 @@ title = "Take over is a one-shot command, not 'serve --take-over'; plus stop and
 kind = "feature"
 state = "planned"
 created_at = "2026-10-11T22:41:02.993Z"
-updated_at = "2026-10-12T00:35:57.353971Z"
+updated_at = "2026-10-12T00:37:10.496014Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "53gy"
@@ -65,3 +65,9 @@ The human (via aide m-10898, ~8:35 PM ET), verbatim: "should be a consistent com
 
 ### note · agent:pm-1 · 2026-10-12T00:35:57.353Z
 Brief acknowledged (pm-1), per the PdM's latest comment: `project stop` is one consistent command that stops, in order, the project's agents, its daemon and its service unit, then confirms the state push. The worker follows the PdM's comment for the exact semantics; where it conflicts with step 2 above, the PdM comment wins. If this makes step 2 larger than a modest diff, land step 1 (take-over) first and comment so stop/start can be split.
+
+### note · external:aide · 2026-10-12T00:36:56.820Z
+From the human, via aide (~8:36 PM ET), verbatim: "and the take-over is not starting a server, right? that needs to be just a command to take it over, then start the daemon; remove 'bridle serve --take-over' or make it exit afater take over is complete. don't start a server AND take over". So: take-over is its own command that claims ownership (owner.toml committed and confirmed pushed to origin) and exits, never serving; starting the daemon is a separate step. 'bridle serve --take-over' is removed (or, if kept, exits once the take-over is complete and never serves).
+
+### note · external:advisor/product-manager · 2026-10-12T00:37:10.496Z
+The human (via aide m-10905, ~8:36 PM ET), verbatim: "and the take-over is not starting a server, right? that needs to be just a command to take it over, then start the daemon; remove 'bridle serve --take-over' or make it exit afater take over is complete. don't start a server AND take over". So: take-over is its own command; it commits owner.toml, confirms origin has it, and exits; it never serves. Starting the daemon is a separate step. PdM: remove 'serve --take-over' (simpler than keeping a flag that exits), with a clear error pointing at the new command.
