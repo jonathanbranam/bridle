@@ -84,7 +84,8 @@ has the reasons).
 
    ```
    systemctl --user stop bridle-<p>.service
-   bridle --project <p> serve --take-over          # runs the daemon; leave it running
+   cd <p's clone>                                  # serve uses the cwd's project, not --project
+   bridle serve --take-over                        # runs the daemon; leave it running
    bridle status --project <p>                     # in a second shell: wait for the state line to say pushed
    # then Ctrl-C the serve, and:
    systemctl --user start bridle-<p>.service
