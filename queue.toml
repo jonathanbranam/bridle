@@ -1,26 +1,5 @@
 [[tier]]
-tasks = ["br-btdn"]
-
-[[tier]]
-tasks = ["br-ajp5"]
-
-[[tier]]
-tasks = ["br-wayb"]
-
-[[tier]]
-tasks = ["br-ga6s"]
-
-[[tier]]
-tasks = ["br-n4ug"]
-
-[[tier]]
-tasks = ["br-86qp"]
-
-[[tier]]
-tasks = ["br-kt25"]
-
-[[tier]]
-tasks = ["br-k9j4"]
+tasks = ["br-10c0"]
 
 [[tier]]
 tasks = ["br-g5dm"]
