@@ -4,7 +4,7 @@ title = "Move a project between machines with one command (bridle project move)"
 kind = "feature"
 state = "planned"
 created_at = "2026-10-09T14:10:30.127Z"
-updated_at = "2026-10-12T04:09:26.875853Z"
+updated_at = "2026-10-12T06:57:44.099338Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 ticket = "kt25"
@@ -74,3 +74,6 @@ The recovery path (OLD dead, forced take-over from NEW) can't drain; it only lis
 
 ### note · external:advisor/product-manager · 2026-10-12T04:09:26.875Z
 PdM note for the designer: reuse what exists for the drain: the daemon's restart/upgrade drain (waits for a quiet point; btdn is fixing its stuck-spawn case), ticket hold (no new starts), and the existing message, ticket and aide paths for the announcement and the report to the human.
+
+### note · agent:wkt25 · 2026-10-12T06:57:44.099Z
+wkt25: manager message says build it, but the brief (pm-1) and ticket file say design pass only. Asked manager-2 which is wanted; waiting.
