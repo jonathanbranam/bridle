@@ -114,6 +114,11 @@ const CLASSES: &[(&str, Kind, &str)] = &[
         Skip,
         "reads the clone in the cwd or --repo; no daemon, covered by preflight's unit tests",
     ),
+    (
+        "projects drain",
+        Skip,
+        "works on the clone in the cwd, --repo or --project's running daemon; covered by project_hold_test and the unit tests",
+    ),
     ("focus", Skip, "the human's own focus gate"),
     (
         "orchestrator note-session",

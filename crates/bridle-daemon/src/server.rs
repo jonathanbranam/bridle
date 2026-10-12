@@ -223,6 +223,7 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/rebuild", post(rebuild))
         .route("/v1/shutdown", post(shutdown))
         .route("/v1/restart", post(restart))
+        .route("/v1/project/hold", post(project_hold))
         .layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware,
@@ -1106,6 +1107,7 @@ async fn status(
         upgrade_waiting: state.manager.upgrade_waiting(),
         draining,
         draining_on,
+        held: state.manager.held(),
         sessions: state.sessions.list(),
         outbox: state.store.outbox_peers().await?,
     }))
@@ -4196,6 +4198,13 @@ async fn claim_task(
             "not claiming: the daemon is draining for a restart; retry once it has restarted",
         ));
     }
+    if state.manager.held() {
+        return Err(ApiError::new(
+            StatusCode::CONFLICT,
+            "conflict",
+            "not claiming: the project is held for a move (`bridle project drain --undo` lifts it)",
+        ));
+    }
     let from = state.tasks.get_task(&id).map(|t| t.state);
     let task = state.tasks.claim_task(&id, &principal.id).await?;
     emit_state_change(&state, principal.id, &task, from).await;
@@ -4453,6 +4462,21 @@ async fn shutdown(
 
 /// Restart in place, or (`upgrade`) build the newest green commit first and then restart. Only
 /// the human and the orchestrator may ask.
+/// `POST /v1/project/hold`: start or end the hold on new claims and spawns (`bridle project drain`).
+async fn project_hold(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Json(req): Json<bridle_api::types::HoldRequest>,
+) -> Result<Json<bridle_api::types::HoldRequest>, ApiError> {
+    if principal.kind != PrincipalKind::Human && principal.id != crate::wake::ORCHESTRATOR {
+        return Err(ApiError::forbidden(
+            "only the human or external:orchestrator may hold the project",
+        ));
+    }
+    state.manager.set_held(req.on);
+    Ok(Json(req))
+}
+
 async fn restart(
     State(state): State<AppState>,
     Extension(principal): Extension<Principal>,

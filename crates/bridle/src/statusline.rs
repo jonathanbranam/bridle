@@ -422,6 +422,7 @@ mod tests {
             upgrade_waiting: None,
             draining: false,
             draining_on: Vec::new(),
+            held: false,
             sessions: Vec::new(),
             pending_tasks: Vec::new(),
         }

@@ -228,6 +228,10 @@ struct Inner {
     /// A restart is draining the daemon (daemon.md, "Restart in place"): no spawns, no claims and
     /// no new turns; messages are stored held until after the restart's resume.
     draining: std::sync::atomic::AtomicBool,
+    /// `bridle project drain` (kx5u K4): this project is moving, so no spawns and no claims; unlike
+    /// `draining`, running agents keep their turns and messages flow. In memory: the drain command
+    /// sets it again if a restart lost it.
+    held: std::sync::atomic::AtomicBool,
     governor: crate::governor::GovernorHandle,
     /// `bridle budget max-workers`: a live cap replacing
     /// `[budget] max_workers` until cleared or the daemon restarts.
@@ -321,6 +325,7 @@ impl AgentManager {
             load: std::sync::Mutex::new(None),
             upgrade_waiting: std::sync::Mutex::new(None),
             draining: std::sync::atomic::AtomicBool::new(false),
+            held: std::sync::atomic::AtomicBool::new(false),
             governor,
             max_workers_override: std::sync::Mutex::new(None),
             task_wake: std::sync::Mutex::new(TicketWake::default()),
@@ -931,6 +936,14 @@ impl AgentManager {
         }
     }
 
+    pub fn set_held(&self, on: bool) {
+        self.0.held.store(on, std::sync::atomic::Ordering::SeqCst);
+    }
+
+    pub fn held(&self) -> bool {
+        self.0.held.load(std::sync::atomic::Ordering::SeqCst)
+    }
+
     pub fn draining(&self) -> bool {
         self.0.draining.load(std::sync::atomic::Ordering::SeqCst)
     }
@@ -987,6 +1000,12 @@ impl AgentManager {
         if !req.ignore_budget {
             self.refuse_if_holding(&model)?;
             self.refuse_if_load_held()?;
+        }
+        if self.held() {
+            return Err(SupervisorError::Conflict(
+                "not spawning: the project is held for a move (`bridle project drain --undo` lifts it)"
+                    .to_string(),
+            ));
         }
         if self.draining() {
             return Err(SupervisorError::Conflict(

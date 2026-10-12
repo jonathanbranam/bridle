@@ -2523,6 +2523,25 @@ pub enum ProjectsAction {
     /// what to fix when any fails. Checks: no absolute or `~` `workflow` / `system_prompt` in
     /// `.bridle/config.toml` (fix those by hand; bridle does not rewrite them).
     Preflight(PreflightArgs),
+    /// Before `stop`: hold new claims and spawns for this project only, tell every principal to
+    /// finish, and wait (no timeout) until the stable-project check passes. Messages the
+    /// orchestrator at the start and on each change, and names a drain that stops moving to it
+    /// and to the human through aide. `--undo` lifts the hold. The hold lives in the daemon, so
+    /// a restart loses it; a running drain takes it again.
+    Drain(ProjectDrainArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct ProjectDrainArgs {
+    /// The clone's main checkout. Defaults to the running daemon's, else the current directory.
+    #[arg(long)]
+    pub repo: Option<PathBuf>,
+    /// Lift the hold and exit.
+    #[arg(long)]
+    pub undo: bool,
+    /// Checkout paths that may stay dirty through the stable-project check.
+    #[arg(long)]
+    pub leave: Vec<String>,
 }
 
 #[derive(Debug, Args)]

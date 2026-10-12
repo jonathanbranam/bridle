@@ -15,10 +15,10 @@ use crate::types::{
     AskQuestionRequest, BudgetHoldRequest, BudgetOverrideRequest, BudgetStatus, BuiltTicketRequest,
     Conflict, DoneTicketRequest, DropTicketRequest, Edge, EditTicketRequest, Event, EventQuery,
     ForwardAck, ForwardRequest, ForwardState, Handover, HandoverDone, Health, HelloRequest,
-    HoldTicketRequest, ImpactCheckRequest, ImpactReport, Interaction, InteractionsQuery,
-    InterruptRequest, InterruptResponse, LandRequest, LandResult, MaxWorkersRequest, Message,
-    MessageQuery, NewEdgeRequest, NewTicketRequest, NoteTicketRequest, OpenQuestion,
-    OrchestratorWakeQuery, OutboxEntry, OutboxSendRequest, PeerTokenCreateRequest,
+    HoldRequest, HoldTicketRequest, ImpactCheckRequest, ImpactReport, Interaction,
+    InteractionsQuery, InterruptRequest, InterruptResponse, LandRequest, LandResult,
+    MaxWorkersRequest, Message, MessageQuery, NewEdgeRequest, NewTicketRequest, NoteTicketRequest,
+    OpenQuestion, OrchestratorWakeQuery, OutboxEntry, OutboxSendRequest, PeerTokenCreateRequest,
     PeerWatchRequest, PortAllocation, PrincipalWakeQuery, PrincipalWakeResponse, ProbeRequest,
     ProbeResult, PushResult, Queue, Queued, RateLimitPoint, Recipient, RemoteWatchRequest,
     RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest, RestartRequest,
@@ -1018,6 +1018,14 @@ impl Client {
     pub async fn remove_edge(&self, query: &RemoveEdgeQuery) -> Result<(), ClientError> {
         let req = self.request(Method::DELETE, &["v1", "edges"])?.query(query);
         self.send_unit(req).await
+    }
+
+    /// `POST /v1/project/hold`.
+    pub async fn hold_project(&self, on: bool) -> Result<(), ClientError> {
+        let _: HoldRequest = self
+            .post_json(&["v1", "project", "hold"], &HoldRequest { on })
+            .await?;
+        Ok(())
     }
 
     /// A plain restart answers once the daemon has drained and decided to go, which can take as

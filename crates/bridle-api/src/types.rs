@@ -47,6 +47,12 @@ pub struct ShutdownResponse {
     pub stop_limit_secs: u64,
 }
 
+/// `POST /v1/project/hold`: hold (or release) new claims and spawns for this project's daemon.
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
+pub struct HoldRequest {
+    pub on: bool,
+}
+
 /// `POST /v1/restart`. A plain restart drains the daemon (no new turns) and answers once it has
 /// decided to go, however long the running turns take; there is no timeout.
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
@@ -147,6 +153,10 @@ pub struct Status {
     /// While draining, the agents still mid-turn (what the restart waits on).
     #[serde(default)]
     pub draining_on: Vec<String>,
+    /// The project is held for a move (`bridle project drain`): no spawns or claims; running
+    /// agents carry on.
+    #[serde(default)]
+    pub held: bool,
     /// Registered interactive sessions (advisors) still running.
     #[serde(default)]
     pub sessions: Vec<SessionInfo>,
