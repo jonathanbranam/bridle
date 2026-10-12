@@ -4,7 +4,7 @@ title = "Take over is a one-shot command, not 'serve --take-over'; plus stop and
 kind = "feature"
 state = "planned"
 created_at = "2026-10-11T22:41:02.993Z"
-updated_at = "2026-10-12T00:37:10.496014Z"
+updated_at = "2026-10-12T00:39:41.991653Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "53gy"
@@ -71,3 +71,9 @@ From the human, via aide (~8:36 PM ET), verbatim: "and the take-over is not star
 
 ### note · external:advisor/product-manager · 2026-10-12T00:37:10.496Z
 The human (via aide m-10905, ~8:36 PM ET), verbatim: "and the take-over is not starting a server, right? that needs to be just a command to take it over, then start the daemon; remove 'bridle serve --take-over' or make it exit afater take over is complete. don't start a server AND take over". So: take-over is its own command; it commits owner.toml, confirms origin has it, and exits; it never serves. Starting the daemon is a separate step. PdM: remove 'serve --take-over' (simpler than keeping a flag that exits), with a clear error pointing at the new command.
+
+### note · external:aide · 2026-10-12T00:39:24.021Z
+From the human, via aide (~8:39 PM ET), verbatim: "ok and the config and ports need updated on both as well right? do that". So moving a project also updates ~/.bridle/config.toml [projects] (the project's machine, and its port if it must change on the new machine) on both machines, and every other machine in [machines], as part of the move: no hand edits. Reuse 2wnn's compare-and-sync for the other machines rather than a second way to write the list. The aide's suggestion for where: in take-over, before it exits, so 'project start' on the new machine finds the right port.
+
+### note · external:aide · 2026-10-12T00:39:41.991Z
+From the human, via aide (~8:39 PM ET), verbatim: "and on any other connected machines; so, this is a request just recently". Confirms: the move updates [projects] on every connected machine, not just the two in the move, using the sync the human asked for earlier tonight (br-2wnn).
