@@ -197,3 +197,14 @@ From the human's session with advisor wsl2, 2026-10-10 (times US Eastern).
   update --init`, a new `host-remus/rcrc` (dalek's with `HOSTNAME="remus"`), `RCRC=... rcup -B
   remus`, `chsh` to zsh. Then dotfiles-local's auto-update as a systemd user timer (its README's
   Linux section; linger is on). GitHub push auth: `gh auth login` + `gh auth setup-git`.
+- Dotfiles on remus: thoughtbot and dotfiles-local cloned to `~/work/dotfiles/thoughtbot-df` and
+  `~/work/dotfiles/local-df` (the human's choice), `host-remus/rcrc` with full-path
+  `DOTFILES_DIRS` and `EXCLUDES` (rcm resolves a relative `dotfiles:` prefix from `$PWD`), zsh,
+  the `dotfiles-update` timer (with the clone path as its argument). The timer skips until
+  `host-remus/` is committed. GitHub: a fine-grained PAT per machine (Contents rw, Actions r,
+  Workflows rw as needed) through `gh auth login --with-token` + `gh auth setup-git`; done.
+- Claude Code 2.1.296 installed. Bridle installed from the release script: got v0.6.2 (released
+  minutes before), in `~/.local/bin`, with `[daemon] self_upgrade = "release"`. Also needs
+  `release_repo = "jonathanbranam/bridle"` under `[daemon]` (aide, br-r2nr thread: without it
+  the release repo and workflow fetch fall back to each project's origin). Next: add-a-machine
+  steps 1 (git identity "Jonathan Branam (remus)") and 2 (config), then tokens.
