@@ -2415,3 +2415,9 @@ from = "br-ga6s"
 to = "br-n4ug"
 kind = "blocks"
 created_at = "2026-10-12T01:30:29.705Z"
+
+[[edge]]
+from = "br-eas4"
+to = "br-r2nr"
+kind = "related"
+created_at = "2026-10-12T02:49:17.461Z"
