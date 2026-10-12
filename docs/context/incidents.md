@@ -1737,7 +1737,9 @@ battery fell from 99% to 70% in 27 minutes (about 1.1% a minute) with two worker
   v0.6.3 hadn't moved.
 - **Impact:** about 77 minutes with no landings or new turns (the human's kickstart restarted it at
   03:13Z). The human's v0.6.3 release was delayed.
-- **Cause:** unknown who asked for the restart (nothing logs it before the drain ends). With every
-  agent idle, the drain can only be waiting on the spawn counter: the same stuck flag as br-y455.
+- **Cause:** the human's `bridle daemon restart` at ~01:56Z (confirmed via aide, 03:16Z: "I did run
+  a daemon restart ... I think it just took that long to happen"). It never reached a quiet point:
+  status said it was waiting on a spawning agent with every agent idle, the same stuck flag as
+  br-y455/br-btdn. Nothing logged who asked for the restart, so it took the human to say.
 - **Category:** `daemon`.
 - **Follow-up:** br-up5r (incident; recovery is the human's `launchctl kickstart -k`, as for y455).
