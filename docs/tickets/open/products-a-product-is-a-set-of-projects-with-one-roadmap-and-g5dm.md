@@ -75,3 +75,155 @@ trial (docs/notes/product-manager-trial.md) feeds it.
 An enforced list of themes comes later (the human, 2026-10-09 ~5:40 PM ET: "agree no enforced
 list of themes yet, but that should come later"); it likely belongs with this epic, since themes
 are per product.
+
+## Design
+
+Status: design for the human's review; nothing is built. Designer pass (worker wg5dm), 2026-10-12.
+Kept small on purpose: the PdM trial (`docs/notes/product-manager-trial.md`) is still running,
+and every choice below is a field or a convention that can be replaced without a migration.
+
+### Problem
+
+Today one PdM keeps one roadmap (`docs/notes/roadmap.md`, by hand) for everything bridle runs.
+The human wants several products (bridle + bridle-ui; meta-notes + meta-notes-ui + notes;
+track-web alone), each with its own roadmap and PdM, so neither the agent's context nor the
+human's mixes unrelated work. Some projects have no product (dotfiles-local), and some work
+crosses products.
+
+### What exists
+
+- A project is one repo with one daemon and a registry entry (`~/.bridle`); the machine config
+  has a `[projects]` table for cross-machine addresses (principals.md, "Addressing").
+- `theme:` and `parent` are ticket fields (br-22ab, `bridle ticket new --theme`, `ticket set`).
+  A theme is a free slug, not checked against any list. Epics and the roadmap are kept by hand
+  in `docs/notes/roadmap.md`.
+- Roles are scoped per project: a role's token and inbox belong to one daemon. External
+  principals (advisors) hold one key per project (principals.md).
+- Requests between projects go to a named agent (`bridle send`) or to the project's aide.
+- The PdM role does not exist yet (br-6h65); advisor/product-manager is the stand-in.
+
+### Decisions already made (the human, in the ticket)
+
+A product is optional. A product-less project has tickets, maybe epics, a project manager and
+the rest of bridle, but no roadmap, PdM role or themes. A request for a project that has a
+product goes to the PdM; otherwise to the project aide.
+
+### 1. Where a product is declared, and how a project names it
+
+Options:
+
+- A. A machine-level registry of products (`~/.bridle/products.toml`) listing member projects.
+  Rejected: it is per machine, so each machine needs its own copy and they drift; products
+  are a property of the work, not of a laptop.
+- B. A `[product]` table in every member project's `.bridle/config.toml`, each naming the
+  product. Needs no home project, but the members can disagree and nothing says where the
+  roadmap is.
+- C. **Recommended.** The product is declared once, in its **home project's**
+  `.bridle/config.toml`; every other member names it with one line.
+
+```toml
+# home project (the one holding the roadmap), e.g. bridle
+[product]
+name = "bridle"             # slug; unique among the human's products
+home = true                 # this project holds the roadmap
+
+# member project, e.g. bridle-ui
+[product]
+name = "bridle"
+home = "bridle"             # the home project's name, so a member can find it
+```
+
+Simplified: `name` is required; `home` is `true` in the home project and the home's project
+name in a member. No `[product]` table means product-less. It travels with the repo (git is the
+source of truth) and is read by every machine that clones it. A member naming a product
+whose home it cannot reach (not on the registry) is a warning in `bridle doctor`, not an error.
+Membership is therefore the set of projects whose config names the product; the daemon never
+needs a list. Projects are 1:1 with repos, so a repo cannot be in two products (see 5).
+
+Migration (xebc): none. The table is optional and absent means product-less, so existing
+projects need nothing.
+
+### 2. Where the roadmap lives, and how the gateway shows it
+
+The roadmap lives in the home project. It stays where it is for bridle
+(`docs/notes/roadmap.md`), and the `[product]` table gets an optional
+`roadmap = "docs/notes/roadmap.md"` path, defaulting to `docs/roadmap.md`. It stays a
+hand-kept document owned by the PdM for now; tasks in member projects are listed in it by
+qualified id (`ui-vhrb`, `br-g5dm`), which the id scheme already makes unambiguous across
+projects. A database-backed roadmap is deferred (YAGNI): the trial has not settled its shape.
+
+Gateway (bridle-ui ticket ui-vhrb, theme page and roadmap page): the roadmap page is chosen
+by product, read from the home project's daemon (document read already crosses projects in
+`bridle-docs`). The gateway lists products by scanning the configs of the projects it already
+knows; a product-less project shows no roadmap or theme pages. Nothing new is needed on the
+wire beyond `product` (name, home, roadmap path) on the project's info response; that is the
+only API change, and it is additive.
+
+### 3. Theme slugs per product
+
+Themes are scoped to the product: `product-process` in bridle and `product-process` in
+meta-notes are different themes that happen to share a slug. A ticket's `theme:` is
+interpreted in its project's product; a product-less project's `theme:` is ignored by the
+roadmap and a warning from `bridle ticket check` (the human decided themes belong to
+products). The qualified name used outside a product's context is `<product>/<slug>`
+(`bridle/product-process`). No enforced list yet (the human, 2026-10-09: later). When it comes,
+the natural place is a `themes = [...]` array in the home project's `[product]` table, checked
+by `bridle ticket check`; deferred, not rejected.
+
+### 4. Scoping the product manager role (br-6h65)
+
+The PdM is a seat belonging to the **home project's daemon**, not a separate kind of daemon:
+
+- **Tokens.** One external-principal key per member project (the same mechanism advisors use),
+  so the PdM reads and files tickets in each member daemon and in no others. Product-less
+  projects and other products' projects have no key for it. Created when a project joins the
+  product (`bridle token create --external product-manager/<product>` on the member).
+- **Daemons watched.** Exactly the member projects found by section 1, plus none else. Watching
+  uses the existing task watcher mechanism (br-519b), not a new poll.
+- **Inbox.** One inbox on the home daemon, address `product-manager/<product>@<home>`.
+  Requests for a member project go there instead of the project aide (the decided routing):
+  `bridle send` and the request-a-feature path resolve the recipient from the target project's
+  `[product]` table, falling back to the aide when it is absent. The member's aide keeps its
+  own inbox for project-internal matters, so nothing is lost if the PdM is not running (and
+  per br-6h65, the PdM need not be standing: a message to its inbox starts it).
+- Rejected: one PdM with a "current product" switch. That keeps every product in one context,
+  the problem this epic exists to remove.
+
+### 5. Work that spans products
+
+One owner, others notified. A task belongs to exactly one project, hence to one product; the
+owning PdM sequences it. If it touches another product, its ticket lists that product's
+project in `repos:` (already a field) and the owner's PdM sends a one-line note to the other
+PdM's inbox naming the ticket; the other PdM records a dependency or a "watch" in its roadmap
+and decides nothing about the work. No shared epic across products: if the work is large,
+each product gets its own epic and they are linked with `related`. Rejected: a cross-product
+roadmap, which recreates the mixed context.
+
+### What this defers (and why)
+
+- Enforced theme list: the human said later; section 3 names where it goes.
+- Roadmap in the database and auto-generated pages: the trial's hand format is not settled.
+- A `bridle product` CLI (list, add member): `[product]` in config plus doctor is enough until
+  there are two products to manage.
+- PdM auto start and stop: owned by br-6h65 / w2hj, not this design.
+- A project in two products: not allowed; the 1:1 repo to project rule makes it unnecessary.
+
+### How to verify a build of this
+
+A project with and one without `[product]`: `bridle doctor` accepts both; the info response
+carries `product` only for the first; a message addressed "request" to a member project lands
+in the PdM inbox, to a product-less project in the aide's; the gateway shows a roadmap page
+only for the product.
+
+### Questions for the human
+
+1. Is `[product]` in `.bridle/config.toml` (home declares, members name it) the right place, or
+   do you want a machine-level registry despite the drift problem?
+2. Should the roadmap file move to a fixed `docs/roadmap.md`, or keep the configurable path
+   (bridle's stays `docs/notes/roadmap.md`)?
+3. Are themes per product with the qualified form `<product>/<slug>` right, and should
+   `bridle ticket check` warn on a `theme:` in a product-less project?
+4. Cross-product work: is "one owner, the other PdM notified, no shared epic" enough, or do you
+   want a real shared epic?
+5. Should a message from one agent to a member project reach the PdM even when the sender is in
+   the same product (a bridle-ui worker asking bridle), or only for outside senders?
