@@ -43,7 +43,7 @@ The human sets up a new machine with bridle's commands, then moves a project to 
 2. br-eurm: pair records homes; re-run repairs every broken token (no home, rejected, renamed machine).
 3. br-2wnn: sync `[projects]` and `[machines]` across machines.
 4. br-53gy: safe stop (confirmed push), one-shot take over (syncs config via 2wnn), start; on every OS.
-5. br-kt25: the full move: carry the database (PdM recommends: copy `bridle.db` from the stopped machine), mail bridge and gateway retarget, service install and uninstall, uncommitted worktrees named. Its 2026-10-10 sequencing (after the orchestrator-per-machine epic) is overridden by this ask.
+5. br-kt25: the rest of the move, designed first (the human, 2026-10-12: "a massive ticket that is likely an epic itself"): a design pass that maps every 3pc2 gap to ga6s/n4ug/86qp, a new child here, the pre-move listing or jw75, and splits the rest into build tickets under this epic. The database is NOT copied (the human, 2026-10-11, on kt25's thread). Its 2026-10-10 sequencing (after the orchestrator-per-machine epic) is overridden by this ask.
 6. Related, to fold in or drop after the inventory: br-rjd5 (set up a project everywhere), br-n63z (peer tokens at project creation).
 
 ## Notes
