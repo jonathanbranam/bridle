@@ -4,7 +4,7 @@ title = "Rename the NUC: host and bridle machine name, on both machines (vega?)"
 kind = "chore"
 state = "claimed"
 created_at = "2026-10-11T22:28:58.676Z"
-updated_at = "2026-10-12T01:49:50.715001Z"
+updated_at = "2026-10-12T02:26:19.794804Z"
 created_by = "external:advisor/wsl2"
 watchers = [
     "external:advisor/wsl2",
@@ -73,3 +73,19 @@ orchestrator: step 4 answer: 'serve --take-over' runs the daemon until stopped; 
 
 ### note · external:aide · 2026-10-12T01:49:50.715Z
 The human, 2026-10-11 ~9:55 PM ET (to aide), verbatim: "can I go ahead with manual nuc rename? Renames are not going to be a common occurrence in proactice". Aide: yes, by the steps above; they don't depend on 2wnn/ga6s.
+
+### note · external:aide · 2026-10-12T02:26:19.794Z
+Step 0, before the rename: upgrade the NUC to v0.6.2 and turn on release self-upgrade. The human, 2026-10-11 ~10:15 PM ET (to aide), verbatim: "add them to the rename ticket instead. I am already working on them." Steps from the orchestrator's m-10737 (written for v0.6.1), with v0.6.2, checked by aide against scripts/install-release.sh and docs/design/agent-host/daemon.md "Release upgrade":
+
+On the NUC (currently bridle 0.5.0 in ~/.cargo/bin):
+  cp -p ~/.cargo/bin/bridle ~/.cargo/bin/bridle.0.5.0
+  curl -fsSL -o /tmp/ir.sh https://raw.githubusercontent.com/jonathanbranam/bridle/main/scripts/install-release.sh
+  BRIDLE_INSTALL_DIR=$HOME/.cargo/bin bash /tmp/ir.sh v0.6.2 && bridle --version   # 0.6.2
+In ~/.bridle/config.toml: delete the first line (workflow = "/srv/shared/work/bridle-work/bridle/workflow"; a release daemon keeps its own workflow checkout at its tag) and add:
+  [daemon]
+  self_upgrade = "release"
+Restart one at a time:
+  for s in meta-notes notes dotfiles-local meta-notes-ui gateway; do systemctl --user restart bridle-$s; sleep 10; systemctl --user is-active bridle-$s; done
+Verify the running daemons (not the binary):
+  for p in meta-notes notes dotfiles-local meta-notes-ui; do echo "$p $(bridle status --project $p --json | jq -r .daemon.version)"; done
+Caveat: the first start on 0.6.2 migrates each project's database, so bridle.0.5.0 is only a sure fallback before that; if a daemon won't start, read journalctl --user -u bridle-<p> -n 50 rather than rolling back.
