@@ -384,7 +384,7 @@ Bridle's own cost on the machine: measure against a baseline, then cut it.
 |---|---|---|---|---|
 | br-9y7v | Usage shows negative costs for long-running agents | | open | to plan (first) |
 | br-hd28 | Count the external and interactive sessions in bridle usage | | open | to plan |
-| br-yydm | Gateway route for the limit history (UI: ui-u6uz) | | claimed | building |
+| br-yydm | Gateway route for the limit history (UI: ui-u6uz) | | integrated | delivered; ui-u6uz delivered too (5690c8b) |
 | br-xfy7 | Usage per agent instance over time (UI: ui-mxkj) | | open | to plan; after 9y7v |
 
 #### Epic `benchmarking`: Benchmarking bridle's own cost
@@ -705,3 +705,4 @@ Chores assigned to the human: expand on an idea, review a ticket or branch.
 - 2026-10-12 5:30 PM ET: tables regenerated (stale since 10-10); Delivered list brought up to date (epic kx5u MVP complete: K1-K6, K9, K10 and yt5v; K7 is V1, later; K8 moved to epic ehg7).
 - 2026-10-12 6:50 PM ET: new epic `usage` (br-rdkn, theme performance), first in order: 9y7v (negative costs), hd28 (count external sessions; answers 368g), yydm (limit charts), all readied on the human's go.
 - 2026-10-12 6:55 PM ET: usage epic: yydm narrowed to the gateway route, ui-u6uz filed (UI page); new xfy7 + ui-mxkj (chart one agent instance; the human), done-when item 4.
+- 2026-10-12 7:16 PM ET: br-yydm and ui-u6uz delivered and resolved (the Usage page shows on dalek after its next self-upgrade). New br-kyjg (bug: `ticket built` fails with a bare 'unknown' on bridle-ui; from the orchestrator) in reliability, not in an epic, pending the human.
