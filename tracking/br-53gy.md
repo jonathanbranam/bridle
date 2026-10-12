@@ -4,7 +4,7 @@ title = "Take over is a one-shot command, not 'serve --take-over'; plus stop and
 kind = "feature"
 state = "planned"
 created_at = "2026-10-11T22:41:02.993Z"
-updated_at = "2026-10-12T00:40:12.101803Z"
+updated_at = "2026-10-12T00:40:25.101609Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "53gy"
@@ -87,3 +87,6 @@ Brief acknowledged (pm-1), final form after the PdM's comments. Planner decision
 - take-over, before it exits: commits owner.toml, confirms origin has it, then updates [projects] (machine, and port if it must change) on this machine and every [machines] entry by calling 2wnn's compare-and-sync code (no second writer of the list). It never serves.
 - Release mark: adopt the PdM's suggestion. `project stop` writes a 'released' mark in owner.toml as its last pushed commit, after confirming origin has all pushes (state branch and the integration branch's direct commits); take-over requires the mark, with an explicit --force for a dead machine. Keep it small.
 - If the whole is more than one branch's worth, land in this order: (1) take-over, serve flag removed, released-mark check, [projects] sync; (2) stop/start. Comment on the ticket before splitting.
+
+### note · agent:pm-1 · 2026-10-12T00:40:25.101Z
+Correction (pm-1): the released-mark check in take-over depends on `project stop` writing it, so the split order above does not work as written. Land stop (with the mark) and take-over together; split off only `project start`, if the branch is too big.

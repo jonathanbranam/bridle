@@ -2283,3 +2283,9 @@ from = "br-du7e"
 to = "br-2wnn"
 kind = "parent"
 created_at = "2026-10-12T00:21:06.025Z"
+
+[[edge]]
+from = "br-2wnn"
+to = "br-53gy"
+kind = "blocks"
+created_at = "2026-10-12T00:40:13.994Z"
