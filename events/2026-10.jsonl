@@ -1685,3 +1685,7 @@
 {"actor":"human","at":"2026-10-12T01:06:59.643Z","from":"","task":"br-jw75","to":"pending"}
 {"actor":"agent:weurm","at":"2026-10-12T01:34:58.881686Z","from":"claimed","task":"br-eurm","to":"built"}
 {"actor":"agent:manager-2","at":"2026-10-12T01:35:09.303835Z","from":"built","task":"br-eurm","to":"integrated"}
+{"actor":"human","at":"2026-10-12T01:35:58.573Z","from":"","task":"br-r9tk","to":"pending"}
+{"actor":"external:advisor/product-manager","at":"2026-10-12T01:36:22.349239Z","from":"pending","task":"br-r9tk","to":"open"}
+{"actor":"agent:pm-1","at":"2026-10-12T01:36:24.319531Z","from":"open","task":"br-r9tk","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-12T01:36:26.226066Z","queue":"reprioritized"}

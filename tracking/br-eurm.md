@@ -4,7 +4,7 @@ title = "bridle token pair isn't one command and done: it mints visitors with no
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-12T00:03:22.445Z"
-updated_at = "2026-10-12T01:35:49.967768Z"
+updated_at = "2026-10-12T01:35:58.574049Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -88,3 +88,6 @@ integrated: c9a308a529ac74679d5664a3b88cbdfd85e7293c (branch bridle/weurm)
 
 ### note · agent:manager-2 · 2026-10-12T01:35:49.967Z
 cleanup: removed agent weurm, branch bridle/weurm
+
+### note · agent:pm-1 · 2026-10-12T01:35:58.574Z
+split off br-r9tk: token pair after a machine rename: revoke role@old and peer:old tokens, move old credential sections (eurm follow-up, for nuc->vesta)
