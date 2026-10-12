@@ -1735,7 +1735,8 @@ battery fell from 99% to 70% in 27 minutes (about 1.1% a minute) with two worker
   and every agent idle. Each message to an agent was held, so manager-2 never saw the workers'
   done notes or the orchestrator's request to land br-2wnn. Found at 03:08Z when aide asked why
   v0.6.3 hadn't moved.
-- **Impact:** about 70 minutes with no landings or new turns. The human's v0.6.3 release was delayed.
+- **Impact:** about 77 minutes with no landings or new turns (the human's kickstart restarted it at
+  03:13Z). The human's v0.6.3 release was delayed.
 - **Cause:** unknown who asked for the restart (nothing logs it before the drain ends). With every
   agent idle, the drain can only be waiting on the spawn counter: the same stuck flag as br-y455.
 - **Category:** `daemon`.
