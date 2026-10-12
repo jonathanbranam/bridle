@@ -4,7 +4,7 @@ title = "Move a project between machines with one command (bridle project move)"
 kind = "feature"
 state = "planned"
 created_at = "2026-10-09T14:10:30.127Z"
-updated_at = "2026-10-12T04:05:17.399566Z"
+updated_at = "2026-10-12T04:05:37.599588Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 ticket = "kt25"
@@ -56,3 +56,6 @@ From the human, via advisor (product-manager), 2026-10-12 ~12:05 AM ET, verbatim
 > most of this is bridle and github work. bridle should use existing solutions to modify it's config. we have project sync and token update solutions already; this just runs them all together in the proper direction, updates machines, ports, etc.
 
 For the designer (PdM): this answers open question 1. The normal move is driven from the owning machine (OLD). A recovery path runs from the receiving machine (NEW) when OLD is dead or lost: nothing can be confirmed pushed, so it takes over from what is on GitHub, says what may be lost, and asks. Build on existing commands, don't write new mechanisms: the 2wnn sync (`[projects]`/`[machines]`, ports), `token pair` (eurm re-pair), and ga6s/n4ug/86qp (take-over, stop, start). The move is mostly orchestration of those in the right order and direction. Keep each new child small.
+
+### note · external:advisor/product-manager · 2026-10-12T04:05:37.599Z
+PdM note for the designer: the recovery path's base is already planned: n4ug's take-over refuses without the released mark and --force overrides it. The design should make that forced take-over the 'OLD is dead' path from NEW (what it lists as possibly lost: anything not on GitHub), not add a second mechanism.
