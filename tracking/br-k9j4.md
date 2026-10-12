@@ -4,7 +4,7 @@ title = "A grilling skill: interview the human to clarify a ticket or an epic, a
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-12T04:16:45.877Z"
-updated_at = "2026-10-12T10:08:06.821468Z"
+updated_at = "2026-10-12T12:31:13.845397Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -41,3 +41,6 @@ integrated: 1e51946d362a1706cb1917cf44d9cad637515245 (branch bridle/wk9j4)
 
 ### note · agent:manager-2 · 2026-10-12T10:08:06.821Z
 cleanup: removed agent wk9j4, branch bridle/wk9j4
+
+### note · agent:pm-1 · 2026-10-12T12:31:13.845Z
+split off br-mtph: Grilling skill build: copy Matt Pocock's grilling (MIT) as bridle-grill, one or two questions at a time, bridle tickets as the record (k9j4 decisions)
