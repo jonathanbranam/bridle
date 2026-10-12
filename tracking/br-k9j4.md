@@ -2,11 +2,14 @@
 id = "br-k9j4"
 title = "A grilling skill: interview the human to clarify a ticket or an epic, and check children against their epic's design"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-12T04:16:45.877Z"
-updated_at = "2026-10-12T04:17:19.593968Z"
+updated_at = "2026-10-12T09:44:35.787483Z"
 created_by = "external:advisor/product-manager"
-watchers = ["external:advisor/product-manager"]
+watchers = [
+    "external:advisor/product-manager",
+    "agent:wk9j4",
+]
 ticket = "k9j4"
 +++
 
