@@ -29,7 +29,7 @@ Builds on sk7p/n63z (tokens), rjd5 (sync), 3haz slice 2 (br-n7cg, mail follows t
 
 ## Now: a design pass that splits the move into build tickets
 
-The human, 2026-10-12 ~12:15 AM ET (to advisor product-manager): "This is actually a massive
+The human, 2026-10-12 ~12:00 AM ET (to advisor product-manager): "This is actually a massive
 ticket that is likely an epic itself. I asked for a rewview and design I see related tickets but
 not sure where the design it."
 
