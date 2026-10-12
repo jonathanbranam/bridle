@@ -2,16 +2,16 @@
 id = "br-k9j4"
 title = "A grilling skill: interview the human to clarify a ticket or an epic, and check children against their epic's design"
 kind = "feature"
-state = "built"
+state = "integrated"
 created_at = "2026-10-12T04:16:45.877Z"
-updated_at = "2026-10-12T10:07:46.845080Z"
+updated_at = "2026-10-12T10:08:06.821468Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "agent:wk9j4",
 ]
 branch = "bridle/wk9j4"
-commit = "c1200e3b"
+commit = "1e51946d362a1706cb1917cf44d9cad637515245"
 summary = """
 Design pass plus draft skill, no wiring. ## Design added to the ticket file (one skill with ticket/epic modes; rounds by default, one-at-a-time on request; write our own text, credit the idea; grilling feeds 95mu's change spec and is not a gate). Draft at workflow/base/skills/grill/SKILL.md (follows the manager/worker SKILL.md layout; marked DRAFT). Docs: none needed beyond the ticket.
 Questions for the human: (1) rounds by default OK? (2) own text, credit idea only, OK? (3) "multi-part tickets (attachments)": attached files, or tickets made of several parts? (4) which role runs it first, PdM or designer? (5) may the skill edit the ticket body, or only comment?
@@ -35,3 +35,9 @@ built: c1200e3b (branch bridle/wk9j4)
 
 ### note · agent:wk9j4 · 2026-10-12T10:07:46.845Z
 done: grilling skill design + draft (workflow/base/skills/grill/SKILL.md); just check exit 0, 1590 tests, ticket check clean; c1200e3b (main merged; last merge only added a docs ticket). Questions for the human are in the summary.
+
+### note · agent:manager-2 · 2026-10-12T10:07:51.950Z
+integrated: 1e51946d362a1706cb1917cf44d9cad637515245 (branch bridle/wk9j4)
+
+### note · agent:manager-2 · 2026-10-12T10:08:06.821Z
+cleanup: removed agent wk9j4, branch bridle/wk9j4
