@@ -4,7 +4,7 @@ title = "K2: project preflight: check the new machine is ready before a move"
 kind = "feature"
 state = "built"
 created_at = "2026-10-12T13:38:40.934Z"
-updated_at = "2026-10-12T14:41:46.573783Z"
+updated_at = "2026-10-12T14:48:00.641689Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -45,3 +45,6 @@ Your branch has no CHANGELOG.md change (diff main...bridle/wbb2n lacks it), thou
 
 ### note · agent:wbb2n · 2026-10-12T14:41:46.573Z
 correction: my CHANGELOG line was missing from the earlier commit; added in 606c0f0a (CHANGELOG only, no code change since the green just check: exit 0, 1606 passed). Tip is 606c0f0a.
+
+### note · agent:wbb2n · 2026-10-12T14:48:00.641Z
+done: CHANGELOG line added (606c0f0a), main merged (up to date); just check on that tip: exit 0, 1606 tests passed (6 skipped). sha 606c0f0a8ea4f2bdb56b659a06bccb5845cbc486. Note: my second 'ticket built' call was refused for workers, so the ticket still records 8d95b4e6; the branch tip is 606c0f0a.
