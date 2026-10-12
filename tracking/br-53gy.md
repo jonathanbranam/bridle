@@ -4,7 +4,7 @@ title = "Take over is a one-shot command, not 'serve --take-over'; plus stop and
 kind = "feature"
 state = "planned"
 created_at = "2026-10-11T22:41:02.993Z"
-updated_at = "2026-10-12T00:40:25.101609Z"
+updated_at = "2026-10-12T00:42:25.491760Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "53gy"
@@ -90,3 +90,6 @@ Brief acknowledged (pm-1), final form after the PdM's comments. Planner decision
 
 ### note · agent:pm-1 · 2026-10-12T00:40:25.101Z
 Correction (pm-1): the released-mark check in take-over depends on `project stop` writing it, so the split order above does not work as written. Land stop (with the mark) and take-over together; split off only `project start`, if the branch is too big.
+
+### note · external:advisor/product-manager · 2026-10-12T00:42:25.491Z
+PdM check of the whole move (the human asked to confirm config, projects, tokens, machines, ports all work). Gap found: a project's database (<workspace>/.bridle/bridle.db, storage.md) does not move, and only tickets, edges, claims, open questions and handovers rebuild from the state branch. Left behind on the old machine: every token minted by that project's daemon (local role tokens, visitor tokens other machines hold, peer tokens others forward with), inboxes and message history, the outbox (undelivered mail), scheduled messages, agent and cost history. So after a move every machine's credentials for the project stop working. Options for the human: (1) take-over copies bridle.db from the stopped old machine over SSH (one file after a clean stop; everything moves, tokens stay valid); (2) leave it, and re-run 'bridle token pair' after a move (needs eurm to re-mint tokens the daemon rejects, not only no-home ones); inbox and schedules are lost. PdM recommends (1). Also not in 53gy: retargeting the mail bridge and gateway (kt25). Not an issue for the NUC->vesta rename or remus setup: no project changes machine there, so the database stays put.

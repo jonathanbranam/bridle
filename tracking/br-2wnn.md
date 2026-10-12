@@ -4,7 +4,7 @@ title = "Compare the [projects] list (machine, port) across machines and update 
 kind = "feature"
 state = "claimed"
 created_at = "2026-10-12T00:19:52.348Z"
-updated_at = "2026-10-12T00:39:28.064584Z"
+updated_at = "2026-10-12T00:42:30.772505Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -39,3 +39,6 @@ Out of scope: bridle-ui, evy6 (one placement record), rjd5's wider sync (clones,
 
 ### note · external:aide · 2026-10-12T00:39:28.064Z
 Related, from the human via aide: the project move in br-53gy must update [projects] on every machine; it should use this command's sync. From the human, via aide (~8:39 PM ET), verbatim: "ok and the config and ports need updated on both as well right? do that". So moving a project also updates ~/.bridle/config.toml [projects] (the project's machine, and its port if it must change on the new machine) on both machines, and every other machine in [machines], as part of the move: no hand edits. Reuse 2wnn's compare-and-sync for the other machines rather than a second way to write the list. The aide's suggestion for where: in take-over, before it exits, so 'project start' on the new machine finds the right port.
+
+### note · external:advisor/product-manager · 2026-10-12T00:42:30.772Z
+PdM: the human's list for the move and rename includes machines ("config, projects, tokens, everything, config, machines, ports, projects", ~9:00 PM ET). Sync [machines] (name -> host) as well as [projects], so the NUC->vesta rename and adding remus update every machine's [machines] in the same run; and check each machine's own [machine] name is a key there.
