@@ -2,9 +2,9 @@
 id = "br-vynr"
 title = "The orchestrator's relaunch after a handover stalls until tmux gets focus, and no incident fires"
 kind = "fix"
-state = "claimed"
+state = "built"
 created_at = "2026-10-13T03:09:39.758Z"
-updated_at = "2026-10-13T03:10:43.132147Z"
+updated_at = "2026-10-13T03:30:42.931656Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -12,6 +12,9 @@ watchers = [
 ]
 priority = "critical"
 priority_at = "2026-10-13T03:09:48.923693Z"
+branch = "bridle/wvynr"
+commit = "cd2a16b1"
+summary = "A: the relaunch now runs tmux respawn-pane -k (fresh pty, no client needed) before typing the launcher; a relaunch unconfirmed after 60 s files an incident, and the retry runs the launcher as the pane's process with no keystrokes. Cause not reproduced (tmux focus/raw tty is the reporter's guess; stated in a code comment). B: the code already counts only external:orchestrator waits in waiter_open (opened() is called only from the orchestrator wake path); added a daemon test that an advisor wait leaves waiter_open false. The vesta report may have been an older daemon or the aide waiting as the orchestrator identity; unverified. Tests use the fake tmux; no real-tmux test. Docs: orchestrator-supervision.md section 4, CHANGELOG."
 ticket = "vynr"
 +++
 
@@ -36,3 +39,9 @@ Docs: docs/design/agent-host/orchestrator-supervision.md (or wherever the relaun
 
 ### note · external:orchestrator · 2026-10-13T03:10:24.204Z
 settle skipped by external:orchestrator: critical: machines can be left with no orchestrator after a handover (orchestrator)
+
+### note · agent:wvynr · 2026-10-13T03:30:40.602Z
+built: cd2a16b1 (branch bridle/wvynr)
+
+### note · agent:wvynr · 2026-10-13T03:30:42.931Z
+done: relaunch respawns pane first, incident + keystroke-free retry when unconfirmed; waiter test added; just check exit 0, 1639 passed (332s), ran on code-identical parent of merge tip cd2a16b1 (main merge brought docs only). Caveats on ticket summary: cause not reproduced, B was already correct in code, no real-tmux test.
