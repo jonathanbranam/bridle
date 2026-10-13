@@ -38,3 +38,14 @@ A project never re-lists or blanks out the machine's sections. It gets on/off sw
 4. A local role for the notes assistant, and how others message a role they don't know by name.
 
 Write the design only when the human asks; keep it to switches, no list merging.
+
+## Budget pacing (the human, 2026-10-13 ~5:20 PM ET)
+
+Verbatim: "The behavior I really want is something like pacing, right? Generally speaking, I don't want to use all my budget up in the first 3 days of the week. Maybe I do in some cases, but I kind of want to pace the week. The current limits are okay, but I could potentially run into a problem where I go up to 85% on the first day of the week. That would be disappointing and surprising. On the other hand, when we're getting close to the end, what I really wanted to do is drive really hard and try to use up all of the budget before it runs out. If it's Wednesday at 1 am and I still have 5% budget left, I actually just want it to go wild and try to use every bit of that budget until 3 am because I'm asleep anyway. I don't know how to do that. I don't know how to design that, really. ... budget and focus are a little bit different, but these are kind of similar things where we have some configuration that needs to be shared and coordinated. Budget in particular is a shared resource, so if every project tries to burst the budget right before it expires, we'll probably hit the limit, which would be okay."
+
+What exists: the governor's `seven_day` thresholds are flat percentages (e.g. wind down at 90) whatever the day of the week; nothing paces and nothing sprints. `resets_at` for the 7-day window is known (statusline, rate_limit_event).
+
+A simple shape to start from (not decided): two numbers, no new lists.
+- Pace: the 7-day ceiling at any moment is the share of the week elapsed plus a margin (e.g. elapsed 30% + 15 = hold new work above 45%), so day one can't reach 85%.
+- Sprint: in the last N hours before the 7-day reset (e.g. 4), the ceiling lifts to 100% and the governor allows more workers. Hitting the limit at the very end is acceptable (the human: "which would be okay").
+It is account-wide, so it belongs in the shared (cluster) policy, not per project.
