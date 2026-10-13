@@ -4,7 +4,7 @@ title = "External sessions chart like agent instances: list and series include b
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-13T00:14:41.914Z"
-updated_at = "2026-10-13T00:56:07.117739Z"
+updated_at = "2026-10-13T00:56:45.725011Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -31,3 +31,6 @@ done: external identities listed and charted like instances (external flag, turn
 
 ### note · agent:manager-2 · 2026-10-13T00:56:07.117Z
 integrated: 100f2e19718be97fd1e78ce230ecce7e232a6b4c (branch bridle/wnjjt)
+
+### note · agent:manager-2 · 2026-10-13T00:56:45.725Z
+cleanup: removed agent wnjjt, branch bridle/wnjjt
