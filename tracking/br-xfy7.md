@@ -4,12 +4,13 @@ title = "Usage per agent instance over time: series and instance list in the dae
 kind = "feature"
 state = "claimed"
 created_at = "2026-10-12T22:53:04.789Z"
-updated_at = "2026-10-12T23:55:46.136357Z"
+updated_at = "2026-10-13T00:02:05.651724Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "agent:wxfy7",
 ]
+summary = "Added per-instance usage over time, all read-only over the turns ledger (no migration). Store: sync::usage_series (UTC hour/day buckets, empty ones omitted) and usage_instances (removed flag = no agents row). Daemon: GET /v1/usage/agents and /v1/usage/agents/{id}/series; types in bridle-api types.rs, client usage_instances/usage_series. CLI: bridle usage --agent <name|id> [--since] [--bucket]. Gateway: /api/v1/projects/{project}/usage/agents[/{id}/series] with flat string-time views and TS bindings. Test: removed agent listed and charted, hourly and daily buckets sum to the breakdown. External sessions (hd28) live in a separate table, not turns, so they are not instances here; noted in usage-and-budget.md. Docs: api.md, usage-and-budget.md, human-web-ui.md, CHANGELOG."
 ticket = "xfy7"
 +++
 
