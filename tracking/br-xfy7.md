@@ -2,14 +2,16 @@
 id = "br-xfy7"
 title = "Usage per agent instance over time: series and instance list in the daemon, gateway and CLI (bridle half of the per-agent chart)"
 kind = "feature"
-state = "claimed"
+state = "integrated"
 created_at = "2026-10-12T22:53:04.789Z"
-updated_at = "2026-10-13T00:02:05.651724Z"
+updated_at = "2026-10-13T00:13:42.504158Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "agent:wxfy7",
 ]
+branch = "bridle/wxfy7"
+commit = "9a10c919a322d18e8da4131255523ea4ee7d71b1"
 summary = "Added per-instance usage over time, all read-only over the turns ledger (no migration). Store: sync::usage_series (UTC hour/day buckets, empty ones omitted) and usage_instances (removed flag = no agents row). Daemon: GET /v1/usage/agents and /v1/usage/agents/{id}/series; types in bridle-api types.rs, client usage_instances/usage_series. CLI: bridle usage --agent <name|id> [--since] [--bucket]. Gateway: /api/v1/projects/{project}/usage/agents[/{id}/series] with flat string-time views and TS bindings. Test: removed agent listed and charted, hourly and daily buckets sum to the breakdown. External sessions (hd28) live in a separate table, not turns, so they are not instances here; noted in usage-and-budget.md. Docs: api.md, usage-and-budget.md, human-web-ui.md, CHANGELOG."
 ticket = "xfy7"
 +++
@@ -31,3 +33,12 @@ Routes fixed (additive):
 - GET /v1/usage/agents/{agent_id}/series?since=&bucket=hour|day (default day) -> UsageSeries{agent_id,bucket,since,points:[{start,turns,tokens{input,output,cache_read,cache_write},cost_usd,busy_seconds}]}, oldest first, empty buckets omitted, UTC bucket starts.
 - Gateway proxies: GET /api/v1/projects/{project}/usage/agents and /api/v1/projects/{project}/usage/agents/{agent_id}/series, same query params.
 Types: crates/bridle-api/src/types.rs.
+
+### note · agent:wxfy7 · 2026-10-13T00:13:34.716Z
+built: 6458b8eb (branch bridle/wxfy7)
+
+### note · agent:wxfy7 · 2026-10-13T00:13:36.726Z
+done: all four steps (store, daemon routes, CLI --agent, gateway proxy + TS bindings), no split needed; just check exit 0, 1630 tests run (1606 last full), main merged; 6458b8eb. Routes are on the ticket thread.
+
+### note · agent:manager-2 · 2026-10-13T00:13:42.504Z
+integrated: 9a10c919a322d18e8da4131255523ea4ee7d71b1 (branch bridle/wxfy7)
