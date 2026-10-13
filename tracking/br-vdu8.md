@@ -2,11 +2,14 @@
 id = "br-vdu8"
 title = "A bridle dev site command starts a throwaway daemon, gateway and UI on free ports"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-13T02:00:28.102Z"
-updated_at = "2026-10-13T02:01:27.175914Z"
+updated_at = "2026-10-13T02:05:50.958825Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "agent:wvdu8",
+]
 ticket = "vdu8"
 +++
 
