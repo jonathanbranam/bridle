@@ -4,7 +4,7 @@ title = "External sessions: count a new session's first statusline report in ful
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-13T23:05:26.992Z"
-updated_at = "2026-10-13T23:33:07.119676Z"
+updated_at = "2026-10-13T23:33:47.275623Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -31,3 +31,6 @@ done: new external session's first statusline report counts in full (cost<$1, to
 
 ### note · agent:manager-2 · 2026-10-13T23:33:07.119Z
 integrated: 3142585e5ea7cf48c9b529fbb82f95431ec4e565 (branch bridle/mksa)
+
+### note · agent:manager-2 · 2026-10-13T23:33:47.275Z
+cleanup: removed agent mksa, branch bridle/mksa

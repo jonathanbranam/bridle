@@ -2,11 +2,14 @@
 id = "br-pemk"
 title = "Daemon usage periods: the week from the seven-day reset, its days, and each real five-hour window with peak and limit hit (ktgd step 2a)"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-13T23:05:38.293Z"
-updated_at = "2026-10-13T23:06:47.153405Z"
+updated_at = "2026-10-13T23:34:02.074869Z"
 created_by = "external:advisor/product-manager"
-watchers = ["external:advisor/product-manager"]
+watchers = [
+    "external:advisor/product-manager",
+    "agent:pemk",
+]
 ticket = "pemk"
 +++
 
