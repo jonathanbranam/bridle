@@ -26,6 +26,17 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-13 03:23Z: main red on a flaky macOS test
+
+- **What happened:** CI failed on 6111b0b7 (a docs-only commit) on macos-latest:
+  `principal_wake_test::a_waiter_open_during_a_restart_is_told_why_and_the_event_counts_it` timed
+  out waiting for `daemon.stopping`. The same code had passed one run earlier. Found by the
+  orchestrator's CI wake; manager-2 couldn't read the log (`gh` is denied to it).
+- **Impact:** small. Landings paused for one CI cycle; br-vynr (critical) kept building.
+- **Cause:** unknown: a timing race in the test, or load on the runner.
+- **Category:** `ci`.
+- **Follow-up:** br-tmmj (pending, sent to the PdM). The test is disabled with `#[ignore]` naming it.
+
 ## 2026-10-12 03:31Z and 15:42Z: vesta's orchestrator relaunch stalled until tmux got focus
 
 - **What happened:** after handovers h-0034 and h-0035 (meta-notes, on vesta) the relaunch never
