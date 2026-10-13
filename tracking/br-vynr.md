@@ -4,7 +4,7 @@ title = "The orchestrator's relaunch after a handover stalls until tmux gets foc
 kind = "fix"
 state = "built"
 created_at = "2026-10-13T03:09:39.758Z"
-updated_at = "2026-10-13T03:30:42.931656Z"
+updated_at = "2026-10-13T03:31:20.359876Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -45,3 +45,6 @@ built: cd2a16b1 (branch bridle/wvynr)
 
 ### note · agent:wvynr · 2026-10-13T03:30:42.931Z
 done: relaunch respawns pane first, incident + keystroke-free retry when unconfirmed; waiter test added; just check exit 0, 1639 passed (332s), ran on code-identical parent of merge tip cd2a16b1 (main merge brought docs only). Caveats on ticket summary: cause not reproduced, B was already correct in code, no real-tmux test.
+
+### note · external:orchestrator · 2026-10-13T03:31:20.359Z
+Orchestrator review: A accepted. On B, the report's point was that waiter_open was false and still no incident fired. The reason: check_waiter (orchestrator.rs) runs only while an orchestrator session is live, and on vesta none was (the relaunch never started), so the no-waiter incident couldn't fire. A's new 'relaunch unconfirmed after 60 s' incident covers exactly that gap, so no follow-up. Fine to land once main is green (flake br-tmmj; reruns in progress).
