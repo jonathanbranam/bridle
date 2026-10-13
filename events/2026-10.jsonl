@@ -1905,3 +1905,4 @@
 {"actor":"external:advisor/product-manager","at":"2026-10-13T22:53:10.907610Z","from":"pending","task":"br-ktgd","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-13T22:53:44.619868Z","from":"open","task":"br-ktgd","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-13T22:53:44.724029Z","queue":"reprioritized"}
+{"actor":"external:advisor/product-manager","at":"2026-10-13T22:55:24.796369Z","from":"planned","task":"br-ktgd","to":"held"}

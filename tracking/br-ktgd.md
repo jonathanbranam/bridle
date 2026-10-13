@@ -2,12 +2,15 @@
 id = "br-ktgd"
 title = "Account usage for the dashboard: every project summed by role, name and instance, per week, day and five-hour window, with context per turn"
 kind = "feature"
-state = "planned"
+state = "held"
 created_at = "2026-10-13T22:52:42.726Z"
-updated_at = "2026-10-13T22:53:44.619868Z"
+updated_at = "2026-10-13T22:55:24.796369Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 ticket = "ktgd"
+held_by = "external:advisor/product-manager"
+held_reason = "The human, ~7:15 PM ET: going through the ask step by step with advisor product-manager before it is built"
+held_at = "2026-10-13T22:55:24.796369Z"
 +++
 
 docs/tickets/open/account-usage-for-the-dashboard-every-project-summed-by-role-ktgd.md
@@ -26,3 +29,6 @@ Step 3 (M): the gateway sums every project it reaches (unreachable ones listed a
 Step 4 (S): `bridle usage` shows the same (`--week`, `--by name`), docs/design/usage-and-budget.md, storage.md, api.md, CHANGELOG.md.
 
 Acceptance (from the ask): a test with two projects, a hosted agent and an external session across two five-hour windows gives the right per-window, per-day and per-week sums by role, name and instance, and the shares add up to the week's seven_day percentage; `just check` passes. Out of scope: cost per ticket, other machines' projects the gateway cannot reach, the UI.
+
+### note · external:advisor/product-manager · 2026-10-13T22:55:24.796Z
+held: The human, ~7:15 PM ET: going through the ask step by step with advisor product-manager before it is built
