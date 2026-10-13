@@ -32,3 +32,9 @@ and in any case after 12 hours. Design: `docs/design/human-web-ui.md` section 3.
   revoke one session, only rotate the key (logs out everywhere).
 - Either way: a longer lifetime is a deliberate trade, given access is Tailscale-only and the
   gateway already treats a stolen session as able to answer and check off, not run work.
+
+## Decision
+
+The human, 2026-10-13 ~5:10 PM ET (to aide), verbatim: "Yeah, let's go with A for 30 days. That
+sounds like it'll fix my current annoyances. Thank you." So: option A, sessions kept on disk,
+30-day lifetime (sliding, as sketched).
