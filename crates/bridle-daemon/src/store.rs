@@ -4336,16 +4336,24 @@ mod sync {
 
     /// The delta of a running total against the session's previous report: a total that went
     /// down means the session restarted its counter, so the new total is all new. The first
-    /// report of a session is its baseline (its earlier spend can't be dated), so 0. A figure
-    /// the report lacks stays `None`: not measured.
-    fn running_delta(prev: Option<f64>, cur: Option<f64>) -> Option<f64> {
+    /// report of a session is its baseline (its earlier spend can't be dated), so 0, unless
+    /// `fresh`: the total is small enough that the session is new and the report is all new
+    /// spend. A figure the report lacks stays `None`: not measured.
+    fn running_delta(prev: Option<f64>, cur: Option<f64>, fresh: bool) -> Option<f64> {
         let cur = cur?;
         Some(match prev {
             Some(p) if cur >= p => cur - p,
             Some(_) => cur,
+            None if fresh => cur,
             None => 0.0,
         })
     }
+
+    /// A never-seen session whose first running totals are all below these is new, not resumed:
+    /// its first report counts in full (startup cost is real spend). A resumed session's first
+    /// report carries its earlier spend and stays a baseline.
+    const FRESH_SESSION_MAX_COST_USD: f64 = 1.0;
+    const FRESH_SESSION_MAX_TOKENS: i64 = 100_000;
 
     pub(super) fn record_interactive_usage(
         conn: &Connection,
@@ -4371,17 +4379,21 @@ mod sync {
         if prev == Some(cur) {
             return Ok(());
         }
+        let fresh = prev.is_none()
+            && row.cost_usd.is_none_or(|c| c < FRESH_SESSION_MAX_COST_USD)
+            && cur.1.is_none_or(|n| n < FRESH_SESSION_MAX_TOKENS)
+            && cur.2.is_none_or(|n| n < FRESH_SESSION_MAX_TOKENS);
         let (pc, pi, po) = prev.unwrap_or((None, None, None));
         // A session with no id can't be told apart from another: nothing to subtract from.
         let measurable = row.session_id.is_some();
         let cost_delta = measurable
-            .then(|| running_delta(pc, row.cost_usd))
+            .then(|| running_delta(pc, row.cost_usd, fresh))
             .flatten();
         let input_delta = measurable
-            .then(|| running_delta(pi.map(|n| n as f64), cur.1.map(|n| n as f64)))
+            .then(|| running_delta(pi.map(|n| n as f64), cur.1.map(|n| n as f64), fresh))
             .flatten();
         let output_delta = measurable
-            .then(|| running_delta(po.map(|n| n as f64), cur.2.map(|n| n as f64)))
+            .then(|| running_delta(po.map(|n| n as f64), cur.2.map(|n| n as f64), fresh))
             .flatten();
         conn.execute(
             "INSERT INTO interactive_usage
@@ -6035,6 +6047,34 @@ mod tests {
             total_input_tokens: input,
             total_output_tokens: None,
         }
+    }
+
+    #[tokio::test]
+    async fn a_new_sessions_first_report_counts_but_a_resumed_ones_does_not() {
+        let (store, _tmp) = store().await;
+        let rec = |r| store.record_interactive_usage(r);
+        rec(external_row(
+            "new",
+            "external:advisor/n",
+            Some(0.2),
+            Some(5_000),
+        ))
+        .await
+        .expect("new");
+        rec(external_row(
+            "old",
+            "external:advisor/o",
+            Some(30.0),
+            Some(900_000),
+        ))
+        .await
+        .expect("resumed");
+        let by_agent = store.usage().await.expect("usage").external;
+        let get = |k: &str| by_agent.iter().find(|r| r.key == k).expect("row").clone();
+        assert_eq!(get("external:advisor/n").cost_usd, Some(0.2));
+        assert_eq!(get("external:advisor/n").input_tokens, Some(5_000));
+        assert_eq!(get("external:advisor/o").cost_usd, Some(0.0));
+        assert_eq!(get("external:advisor/o").input_tokens, Some(0));
     }
 
     #[tokio::test]

@@ -68,7 +68,10 @@ The totals are running totals per session, so the daemon stores a delta against 
 previous report in `interactive_usage` (same trap as br-9y7v): a total that goes down is a
 restarted counter and the new total is all new; an unchanged report adds no row. A session's
 first report is its baseline and counts 0 (earlier spend can't be dated), so usage is counted
-from when bridle first saw the session. A figure the session never reported (or any report with
+from when bridle first saw the session, except a new session: a first report whose running
+totals are all small (cost under `FRESH_SESSION_MAX_COST_USD`, $1, and each token total under
+`FRESH_SESSION_MAX_TOKENS`, 100,000) is a session just started, and counts in full, so its
+startup cost shows. A larger first total (a resumed session) stays a baseline. A figure the session never reported (or any report with
 no session id) is "not measured", shown as such, never 0. `bridle usage` lists these sessions
 in their own section (grouped by identity, or by role/model with `--by`, and `--since`), not
 added to the hosted totals. Scope: each project has its own daemon and database, so this covers
