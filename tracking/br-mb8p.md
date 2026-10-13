@@ -4,7 +4,7 @@ title = "Fix the macOS flake in principal_wake_test a_waiter_open_during_a_resta
 kind = "fix"
 state = "planned"
 created_at = "2026-10-13T13:07:23.476Z"
-updated_at = "2026-10-13T13:38:39.572093Z"
+updated_at = "2026-10-13T13:47:14.785691Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 summary = "Cause: test race, not product. With no agents to stop, the daemon drops its HTTP server milliseconds after announcing daemon.stopping; the test then polled events over HTTP (100 ms), and a poll landing after shutdown got connection refused, which wait_for_event swallows until the 60 s guard. Fix: the test joins the daemon, then reads the daemon.stopping row from the sqlite db (comment says why); #[ignore] removed. 30/30 loop passes; just check exit 0, 1639 passed. No product change, no CHANGELOG."
@@ -23,3 +23,6 @@ done: flake was a test race (event polled over HTTP after daemon exit); test now
 
 ### note · agent:mb8p · 2026-10-13T13:38:39.572Z
 mb8p: 'bridle ticket built' was refused (worker agents cannot use agent lifecycle endpoints); not marked built. Branch bridle/mb8p at 05925962, check green.
+
+### note · agent:mb8p · 2026-10-13T13:47:14.785Z
+done (re-merged main): just check exit 0, 1641 passed; ae6702bd69c9c216eff757caf91289eef7e898ce
