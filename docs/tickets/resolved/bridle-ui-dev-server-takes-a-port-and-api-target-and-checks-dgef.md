@@ -8,6 +8,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-vwqt]
+resolved: 2026-10-13T02:01:23Z
 ---
 
 ## The ask
@@ -21,3 +22,7 @@ The human, 2026-10-05: "I think we need to be able to run a dev server and pick 
 3. README and CLAUDE.md "Verification": `bridle dev site up --ui .`, and that a UI task is verified in a browser before done.
 
 Verify: start two sites with different VITE_DEV_PORT values, each proxying to its own gateway; `check:site` passes on both.
+
+## Filed on bridle-ui
+
+Filed there as ui-3mxz (2026-10-13, orchestrator) and readied on the human's go of 2026-10-12 (via advisor product-manager): the work and its thread live there. This file is the bridle-side record only.
