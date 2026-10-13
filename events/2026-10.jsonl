@@ -1935,3 +1935,4 @@
 {"actor":"external:orchestrator","at":"2026-10-13T23:21:13.644264Z","from":"pending","task":"br-63nr","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-13T23:21:33.713029Z","from":"open","task":"br-63nr","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-13T23:21:34.172379Z","queue":"reprioritized"}
+{"actor":"human","at":"2026-10-13T23:22:31.932Z","from":"","task":"br-f2yd","to":"pending"}
