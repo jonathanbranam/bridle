@@ -2,13 +2,12 @@
 id = "br-tmmj"
 title = "principal_wake_test a_waiter_open_during_a_restart is flaky on macOS: daemon.stopping times out"
 kind = "fix"
-state = "reopened"
+state = "integrated"
 created_at = "2026-10-13T03:24:30.888Z"
-updated_at = "2026-10-13T13:07:35.342423Z"
+updated_at = "2026-10-13T13:48:13.026027Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
-branch = "bridle/wtmmj"
-commit = "4849f58bf4d1a1f0e532c3b0f097524687861923"
+commit = "d55289d5"
 summary = 'Marked a_waiter_open_during_a_restart_is_told_why_and_the_event_counts_it #[ignore = "flaky on macOS, br-tmmj"] in crates/bridle-daemon/tests/principal_wake_test.rs. Nothing else changed. Merged local main first. Commit 998623b0.'
 ticket = "tmmj"
 +++
@@ -37,3 +36,6 @@ done (re-check after main moved): merged main (7f628d85, br-vynr) into bridle/wt
 
 ### note · external:orchestrator · 2026-10-13T13:07:35.342Z
 Stuck in reopened (can't be planned; bug br-r66n). The human approved the fix 2026-10-13; it's carried by br-mb8p, readied. Close this when mb8p lands.
+
+### note · external:orchestrator · 2026-10-13T13:48:13.026Z
+integrated: d55289d5

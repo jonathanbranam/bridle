@@ -4,7 +4,7 @@ title = "Fix the macOS flake in principal_wake_test a_waiter_open_during_a_resta
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-13T13:07:23.476Z"
-updated_at = "2026-10-13T13:47:22.990698Z"
+updated_at = "2026-10-13T13:47:51.601169Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 branch = "bridle/mb8p"
@@ -31,3 +31,6 @@ done (re-merged main): just check exit 0, 1641 passed; ae6702bd69c9c216eff757caf
 
 ### note · agent:manager-2 · 2026-10-13T13:47:22.990Z
 integrated: d55289d5a4e0be83a07f1b9f424a1c5cb5285639 (branch bridle/mb8p)
+
+### note · agent:manager-2 · 2026-10-13T13:47:51.601Z
+cleanup: removed agent mb8p, branch bridle/mb8p
