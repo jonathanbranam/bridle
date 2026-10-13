@@ -4,7 +4,7 @@ title = "Web UI session cookie is re-issued when the session slides (follow-up t
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-13T22:20:53.849Z"
-updated_at = "2026-10-13T22:46:37.979881Z"
+updated_at = "2026-10-13T22:46:53.043744Z"
 created_by = "agent:manager-2"
 watchers = [
     "agent:manager-2",
@@ -31,3 +31,6 @@ done: session cookie re-issued with fresh Max-Age on the hourly slide; just chec
 
 ### note · agent:manager-2 · 2026-10-13T22:46:37.979Z
 integrated: ce415e795094f7c0d65f156af2284f770c278907 (branch bridle/ry8z)
+
+### note · agent:manager-2 · 2026-10-13T22:46:53.043Z
+cleanup: removed agent ry8z, branch bridle/ry8z
