@@ -2,11 +2,14 @@
 id = "br-pac3"
 title = "Turns record their Claude session id and context size (ktgd step 1)"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-13T23:05:26.791Z"
-updated_at = "2026-10-13T23:06:46.341625Z"
+updated_at = "2026-10-13T23:10:48.626966Z"
 created_by = "external:advisor/product-manager"
-watchers = ["external:advisor/product-manager"]
+watchers = [
+    "external:advisor/product-manager",
+    "agent:pac3",
+]
 ticket = "pac3"
 +++
 

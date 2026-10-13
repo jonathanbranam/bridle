@@ -2,11 +2,14 @@
 id = "br-mksa"
 title = "External sessions: count a new session's first statusline report in full (ktgd note 3)"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-13T23:05:26.992Z"
-updated_at = "2026-10-13T23:06:46.710958Z"
+updated_at = "2026-10-13T23:10:53.761599Z"
 created_by = "external:advisor/product-manager"
-watchers = ["external:advisor/product-manager"]
+watchers = [
+    "external:advisor/product-manager",
+    "agent:mksa",
+]
 ticket = "mksa"
 +++
 
