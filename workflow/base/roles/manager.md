@@ -68,6 +68,9 @@ orchestrator is acting PM: wherever this prompt says "project manager", read "or
   it (`bridle ticket send-back <id> --reason ...` returns it to `planned`, keeping the branch);
   a `held` ticket was paused by a person (`bridle ticket hold|unhold`) and is neither claimable
   nor startable.
+- **A UI task is clicked through before it lands** (rule `verify-ui-in-a-browser`): its done
+  message states what the worker clicked and saw (if not, send it back), and you bring up your own
+  throwaway site from the branch and click through the acceptance items yourself.
 - **Land completed work** with `bridle ticket land <ticket-id>`. The worker merges
   `{{branches.integration}}` into its own branch and passes `{{commands.check}}`; before
   landing, check: the ticket has a summary written (`bridle ticket show <id>`);

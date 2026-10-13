@@ -113,8 +113,11 @@ the fixture is shipped with the same bridle binary as the gateway, so it can't b
   `/tmp/<task-id>-verify/`, never the repo. A project with another browser tool names it in
   its CLAUDE.md. If the tool is missing, rule `missing-tools` applies: ask, don't skip.
 - **Who:** the worker verifies before reporting done, and says in the done message what it
-  clicked and what it saw (one line per acceptance item). The manager checks that line at
-  review; the aide may re-drive the site. A "done" for a UI task without it is not done.
+  clicked and what it saw (one line per acceptance item). The merger (manager) then brings up
+  its own throwaway site from the branch and clicks through the acceptance items itself before
+  merging, as it runs the check itself rather than take the worker's word (human, 2026-10-12:
+  "definitely before something's merged, somebody needs to be able to click around on the
+  site"); the aide may re-drive the site. A "done" for a UI task without the line is not done.
 - **Teardown:** `bridle dev site down` before reporting. The done check includes `list` empty.
 - **Rule text** (`workflow/base/rules/verify-ui-in-a-browser.md`, severity `must`, since it only
   applies to tasks whose acceptance is something the user sees):
@@ -122,15 +125,17 @@ the fixture is shipped with the same bridle binary as the gateway, so it can't b
   > A task that changes what a user sees in a browser is not done until you have used it in a
   > browser. Start a throwaway site (own port, own data, own login: never the human's running
   > instance, never their database), log in, click through each acceptance item, and say in your
-  > done message what you did and saw. Stop what you started, by pid. For a bridle project:
-  > `bridle dev site up`; for another, the project's recipe (CLAUDE.md, "Verification").
+  > done message what you did and saw. Stop what you started, by pid. The merger does the same
+  > from the branch before merging. For a bridle project: `bridle dev site up`; for another,
+  > the project's recipe (CLAUDE.md, "Verification").
   > Why: the human, 2026-10-05: "While building a UI, the agents need to be able to do this
   > as well to verify that tasks are actually working."
 
 - **Role-doc text.** `worker.md` ("How you work"): "For a UI task, verify it in a browser on a
   throwaway site (rule `verify-ui-in-a-browser`) and put what you clicked and saw in your done
-  message." `manager.md` (review): "A UI task's done message states what was clicked and seen; if
-  not, send it back." No new role.
+  message." `manager.md` (review): "A UI task is clicked through before it lands: its done message states
+  what the worker clicked and saw (if not, send it back), and you bring up your own throwaway
+  site from the branch and click through the acceptance items yourself." No new role.
 
 ## 4. Carrying it to every project with a web UI
 
@@ -154,7 +159,7 @@ Two layers, one contract.
 | Project | Gets | How |
 |---|---|---|
 | Every bridle project | the rule and role text | `bridle workflow update` then `bridle sync`: no project file changes, as with any rule |
-| Every project | `.agent-site/` in `.gitignore` | a migration (next id in `crates/bridle/src/migrate.rs`), idempotent, appends the line if absent |
+| Every project | `.agent-site/` in `.gitignore` | migration `0007-gitignore-agent-site` (`crates/bridle/src/migrate.rs`), idempotent, appends the line if absent |
 | bridle itself | `bridle dev site` and fixtures | ships in the binary |
 | bridle-ui | the dev-server config and `check:site` | its ticket (section 6); its CLAUDE.md "Verification" names `bridle dev site up --ui .` |
 | track-web | the rule only | its CLAUDE.md already has "Verification" naming its recipe; nothing else changed |

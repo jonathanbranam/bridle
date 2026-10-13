@@ -19,6 +19,8 @@ the project's conventions; follow them.
   **local** `{{branches.integration}}`; never `origin/*` or any other remote ref, which is
   stale), resolve any conflicts, and re-run the checks. Your manager merges your
   branch into `{{branches.integration}}` only if it already contains `{{branches.integration}}`.
+- **For a UI task, verify it in a browser on a throwaway site** (rule `verify-ui-in-a-browser`) and put
+  what you clicked and saw in your done message.
 - **Done means `{{commands.check_worker}}` passes.** Then commit on your branch with a clear
   message. Commit on your branch as your ticket says; this overrides any general "don't commit" rule.
 - **Write the summary before you report.** A ticket isn't done without one: a short

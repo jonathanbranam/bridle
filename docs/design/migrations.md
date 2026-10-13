@@ -123,8 +123,13 @@ runs on a real project): start-up skips it, and it runs by `bridle migrate --onl
   the uncommitted-changes refusal apply; a rerun finds nothing. `ticket check` treats a missing
   kind as an error from here on. Spikes are not ticket-checked and are left alone.
 
+- **`0007-gitignore-agent-site`** (ticket tgxy): appends `.agent-site/` to the project's
+  `.gitignore` (creating it) unless a line already ignores it, so throwaway dev sites are never
+  committed. Runs automatically; the guard and the uncommitted-changes refusal apply; a rerun
+  finds nothing.
+
 **Protected-branch guard** (rule `existing-projects`; `migrate::refuse_on_protected_branch`, the
 first one): a migration that rewrites a project's files calls it first and is refused
 (`migrate::Refused`) while `main`, `dev` or the configured `[branches] release` is checked out,
 so it only lands on the trial or integration branch. Bridle's own repo (project `bridle`) is
-exempt. `0002` to `0006` use it; `0001` does not yet.
+exempt. `0002` to `0007` use it; `0001` does not yet.

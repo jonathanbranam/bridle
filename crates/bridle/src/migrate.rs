@@ -104,7 +104,56 @@ pub const MIGRATIONS: &[Migration] = &[
         manual_only: false,
         run: backfill_ticket_kind,
     },
+    Migration {
+        id: "0007-gitignore-agent-site",
+        description: "Add `.agent-site/` (throwaway dev sites) to .gitignore (ticket tgxy).",
+        // Automatic: one line, appended only if absent; the guard and the uncommitted-changes
+        // refusal still apply.
+        manual_only: false,
+        run: gitignore_agent_site,
+    },
 ];
+
+const AGENT_SITE_LINE: &str = ".agent-site/";
+
+/// Appends `.agent-site/` to `.gitignore` unless a line already says so, so a rerun finds nothing.
+fn gitignore_agent_site(ctx: &Ctx) -> anyhow::Result<Report> {
+    let project = project_of(ctx.repo);
+    refuse_on_protected_branch(ctx.repo, &project)?;
+    let path = ctx.repo.join(".gitignore");
+    let text = match std::fs::read_to_string(&path) {
+        Ok(t) => t,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => String::new(),
+        Err(e) => return Err(e).with_context(|| format!("reading {}", path.display())),
+    };
+    let has = text.lines().any(|l| {
+        matches!(
+            l.trim(),
+            ".agent-site" | ".agent-site/" | "/.agent-site" | "/.agent-site/"
+        )
+    });
+    if has {
+        return Ok(Report {
+            files: vec![],
+            summary: ".gitignore already ignores .agent-site/".into(),
+        });
+    }
+    let files = vec![".gitignore".to_string()];
+    refuse_if_uncommitted(ctx.repo, &files)?;
+    if !ctx.dry_run {
+        let mut new = text;
+        if !new.is_empty() && !new.ends_with('\n') {
+            new.push('\n');
+        }
+        new.push_str(AGENT_SITE_LINE);
+        new.push('\n');
+        std::fs::write(&path, new).with_context(|| format!("writing {}", path.display()))?;
+    }
+    Ok(Report {
+        files,
+        summary: format!("added {AGENT_SITE_LINE} to .gitignore"),
+    })
+}
 
 const OLD_ROLE: &str = "product-manager";
 const NEW_ROLE: &str = "project-manager";
@@ -1477,5 +1526,25 @@ mod tests {
         assert_eq!(kind_for(&rows, "br-dddd"), "feature");
         assert_eq!(kind_for(&rows, "br-eeee"), "chore");
         assert_eq!(kind_for(&rows, "br-zzzz"), "chore");
+    }
+
+    #[test]
+    fn gitignore_agent_site_appends_once() {
+        let d = tempfile::tempdir().unwrap();
+        let gi = d.path().join(".gitignore");
+        std::fs::write(&gi, "/target").unwrap();
+        let ctx = |dry_run| Ctx {
+            repo: d.path(),
+            dry_run,
+        };
+        let r = gitignore_agent_site(&ctx(true)).unwrap();
+        assert_eq!(r.files, [".gitignore"]);
+        assert_eq!(std::fs::read_to_string(&gi).unwrap(), "/target");
+        gitignore_agent_site(&ctx(false)).unwrap();
+        assert_eq!(
+            std::fs::read_to_string(&gi).unwrap(),
+            "/target\n.agent-site/\n"
+        );
+        assert!(gitignore_agent_site(&ctx(false)).unwrap().files.is_empty());
     }
 }

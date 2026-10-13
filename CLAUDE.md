@@ -67,6 +67,13 @@ cargo test -p <crate>   # when working on one crate
   every agent it spawns. Record anything worth keeping in the repo (docs, tickets, or
   `workflow/base/rules/`). See `workflow/base/rules/memory.none.md`.
 
+## Verification
+
+A task that changes what a user sees in a browser is verified in one (rule
+`verify-ui-in-a-browser`): `bridle dev site up` starts a throwaway site in `.agent-site/<name>/`
+(own ports, data and login; the UI too when a `bridle-ui` checkout is found), `playwright-cli`
+drives it, `bridle dev site down` stops it. See `docs/design/dev-site.md`.
+
 ## Build configuration
 
 On Intel Macs (x86_64), binaries must be ad-hoc code-signed at link time to avoid crashes in macOS's
