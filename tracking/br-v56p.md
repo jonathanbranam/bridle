@@ -2,11 +2,14 @@
 id = "br-v56p"
 title = "Web UI login survives a reboot or gateway restart: sessions are in memory only"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-13T21:00:37.279Z"
-updated_at = "2026-10-13T22:03:48.136327Z"
+updated_at = "2026-10-13T22:04:31.633427Z"
 created_by = "external:aide"
-watchers = ["external:aide"]
+watchers = [
+    "external:aide",
+    "agent:v56p",
+]
 ticket = "v56p"
 +++
 
