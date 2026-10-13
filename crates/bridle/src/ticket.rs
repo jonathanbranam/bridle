@@ -188,16 +188,32 @@ async fn ready_cmd(cli: &Cli, repo: &Path, args: &TicketReadyArgs) -> Result<(),
     let path = find_by_id(&root.join("open"), &id)?;
     let text =
         std::fs::read_to_string(&path).with_context(|| format!("reading {}", path.display()))?;
-    task_source(&text)?;
+    let (title, kind) = task_source(&text)?;
     let rel = path.strip_prefix(repo).unwrap_or(&path).to_path_buf();
     ensure_committed(repo, &rel)?;
     let client = client_for(cli).await?;
-    let task = client
-        .list_tasks()
-        .await?
-        .into_iter()
-        .find(|t| ticket_of(t).is_some_and(|tk| split_id(&tk).1 == id))
-        .ok_or_else(|| anyhow!("ticket {id} has no row on this daemon"))?;
+    let rows = client.list_tasks().await?;
+    let named = |t: &&bridle_api::Ticket| ticket_of(t).is_some_and(|tk| split_id(&tk).1 == id);
+    // A dropped duplicate must not shadow a live row: prefer pending, then any not dropped.
+    let found = rows
+        .iter()
+        .filter(named)
+        .find(|t| t.state == bridle_api::TicketState::Pending)
+        .or_else(|| {
+            rows.iter()
+                .filter(named)
+                .find(|t| t.state != bridle_api::TicketState::Dropped)
+        })
+        .or_else(|| rows.iter().find(named));
+    let task = match found {
+        Some(t) => t.clone(),
+        None => {
+            // An older ticket file made before every ticket had a row (22ab): file it now,
+            // from the file's own title and kind, as `ticket new` does.
+            let rel_s = rel.display().to_string();
+            make_task(cli, &title, kind, &id, &rel_s, false, None).await?
+        }
+    };
     let task = client.ready_task(&task.id).await?;
     println!("{}", task.id);
     Ok(())

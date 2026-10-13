@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- `bridle ticket ready` files the row of a ticket file that has none, prefers a pending row over a dropped duplicate, and the daemon strips its own prefix from a qualified `ticket` on `POST /v1/tasks` (no more `br-br-xxxx`) (br-w8jm). Migration: none.
+
 ## [0.7.1] - 2026-10-13
 
 - The orchestrator relaunch no longer depends on tmux focus (br-vynr): the pane is respawned (`tmux respawn-pane -k`) before the launcher is typed, a relaunch that never starts a session files an incident, and the retry runs the launcher in the pane directly with no keystrokes. A test pins that another identity's wait does not count as the orchestrator's waiter. Migration: none.

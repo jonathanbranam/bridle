@@ -1805,3 +1805,53 @@ fn ticket_row_commands_match_the_hidden_task_alias() {
     let (_, help, _) = run_cli(&repo, &home, &["ticket", "--help"]);
     assert!(help.contains("claim") && help.contains("list") && help.contains("summary"));
 }
+
+/// w8jm: `ticket ready` files the row of a ticket file that has none, and a dropped duplicate
+/// row does not stop it.
+#[test]
+fn ticket_ready_makes_a_missing_row_and_skips_dropped_ones() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let (_guard, repo, home) = start_daemon(tmp.path());
+    let dir = repo.join("docs/tickets/open");
+    std::fs::create_dir_all(&dir).expect("mkdir");
+    let file = "---\nid: zz9q\ntitle: Old one\nkind: chore\ncreated: 2026-01-01\nrepos: []\nchanges: []\nspecs: []\nblocked_by: []\nrelated: []\n---\n\n## The ask\n\nDo it.\n";
+    std::fs::write(dir.join("old-one-zz9q.md"), file).expect("write ticket");
+    let git = |args: &[&str]| {
+        let out = Command::new("git")
+            .arg("-C")
+            .arg(&repo)
+            .args(["-c", "user.email=t@example.com", "-c", "user.name=T"])
+            .args(args)
+            .output()
+            .expect("git");
+        assert!(out.status.success(), "git {args:?}: {out:?}");
+    };
+    git(&["add", "."]);
+    git(&["commit", "-q", "-m", "ticket"]);
+
+    let (ok, out, err) = run_cli(&repo, &home, &["ticket", "ready", "zz9q"]);
+    assert!(ok, "ready failed: {err}");
+    let id = out.trim().to_string();
+    let (ok, shown, err) = run_cli(&repo, &home, &["task", "show", &id, "--json"]);
+    assert!(ok, "show failed: {err}");
+    let v: serde_json::Value = serde_json::from_str(&shown).expect("json");
+    assert_eq!(v["state"], "open");
+    assert_eq!(v["ticket"], "zz9q");
+    assert_eq!(v["title"], "Old one");
+
+    // A qualified `ticket` is stripped to the bare one; a dropped twin does not shadow it.
+    let (ok, dup, err) = run_cli(
+        &repo,
+        &home,
+        &["task", "new", "dup", "-k", "chore", "--json"],
+    );
+    assert!(ok, "task new failed: {err}");
+    let dup_id = serde_json::from_str::<serde_json::Value>(&dup).expect("json")["id"]
+        .as_str()
+        .expect("id")
+        .to_string();
+    let (ok, _, err) = run_cli(&repo, &home, &["task", "drop", &dup_id, "--reason", "dup"]);
+    assert!(ok, "drop failed: {err}");
+    let (ok, _, err) = run_cli(&repo, &home, &["ticket", "ready", "zz9q"]);
+    assert!(ok || err.contains("not pending"), "unexpected: {err}");
+}

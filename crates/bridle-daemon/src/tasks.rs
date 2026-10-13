@@ -544,7 +544,19 @@ impl TicketManager {
         let ticket = ticket
             .map(|t| t.trim().to_string())
             .filter(|t| !t.is_empty())
-            .or(legacy);
+            .or(legacy)
+            // A qualified id (`br-vdu8`) names the same ticket as the bare one, and the row id
+            // is `<prefix>-<ticket>`: strip our own prefix so it isn't doubled. Another
+            // project's prefix is kept as given; it is not ours to rewrite.
+            .map(|t| {
+                match t
+                    .strip_prefix(self.prefix.as_str())
+                    .and_then(|r| r.strip_prefix('-'))
+                {
+                    Some(bare) if !bare.is_empty() => bare.to_string(),
+                    _ => t,
+                }
+            });
         let ticket_ref = ticket.as_deref();
         let row = self
             .store
@@ -2056,6 +2068,38 @@ mod tests {
             .expect("edit body");
         assert_eq!(edited.body, "new body");
         assert_eq!(edited.title, "Add foo, better");
+    }
+
+    #[tokio::test]
+    async fn a_qualified_ticket_is_stored_bare_and_another_prefix_is_kept() {
+        let (tm, _tmp) = manager().await;
+        let own = tm
+            .new_task_for_ticket(
+                "T",
+                TicketKind::Feature,
+                String::new(),
+                vec![],
+                None,
+                "a",
+                Some("tw-abcd".into()),
+            )
+            .await
+            .expect("own");
+        assert_eq!(own.ticket.as_deref(), Some("abcd"));
+        assert_eq!(own.id, "tw-abcd");
+        let other = tm
+            .new_task_for_ticket(
+                "T",
+                TicketKind::Feature,
+                String::new(),
+                vec![],
+                None,
+                "a",
+                Some("ui-wxyz".into()),
+            )
+            .await
+            .expect("other");
+        assert_eq!(other.ticket.as_deref(), Some("ui-wxyz"));
     }
 
     #[tokio::test]

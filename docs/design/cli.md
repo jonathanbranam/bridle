@@ -319,7 +319,9 @@ bridle ticket ready <id>                     marks the ticket's row ready (`pend
                                              rows). Taken only with the human's approval (orchestrator or an advisor in
                                              a conversation with them; a manager for its own small fix). Refuses an
                                              empty `## The ask` and a ticket file not in the tip of local `main`
-                                             (commit it first; k7tm's race fix); needs a daemon; prints the task id
+                                             (commit it first; k7tm's race fix); needs a daemon; prints the task id. A ticket
+                                             file with no row gets one filed from its title and kind; a pending row is
+                                             preferred and dropped rows are skipped (w8jm)
 bridle ticket resolve <id>                   stamps `resolved: <UTC date-time>` into the frontmatter and moves
                                              the ticket from `open/` to `resolved/` (a plain move: committing
                                              is the caller's); errors on an unknown or ambiguous id; doesn't
