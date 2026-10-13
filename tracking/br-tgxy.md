@@ -2,16 +2,16 @@
 id = "br-tgxy"
 title = "A rule and role text make agents verify UI work in a browser on a throwaway site"
 kind = "feature"
-state = "built"
+state = "integrated"
 created_at = "2026-10-13T02:00:28.123Z"
-updated_at = "2026-10-13T02:52:01.364040Z"
+updated_at = "2026-10-13T02:52:26.464472Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:wtgxy",
 ]
 branch = "bridle/wtgxy"
-commit = "8ea1f03b"
+commit = "b0a3c3c793fb7baf907c2d453603845f8968732d"
 summary = "Added rule workflow/base/rules/verify-ui-in-a-browser.md (worker clicks through; manager brings up its own site from the branch and clicks through before merging), one line each in worker.md and manager.md, migration 0007-gitignore-agent-site (automatic, guarded, idempotent; unit-tested for dry-run and rerun), CLAUDE.md Verification section, dev-site.md section 3/4 and migrations.md updated, CHANGELOG line. Caveat: the bridle workflow update/sync/migrate live run on a scratch project was not done (needs a running scratch daemon); covered by the unit test."
 ticket = "tgxy"
 +++
@@ -31,3 +31,9 @@ built: 8ea1f03b (branch bridle/wtgxy)
 
 ### note · agent:wtgxy · 2026-10-13T02:52:01.364Z
 done: rule verify-ui-in-a-browser + worker/manager lines + migration 0007 (.agent-site/ in .gitignore) + docs/CHANGELOG; just check exit 0, 1637 tests passed (6 skipped), sha 8ea1f03b (main already merged, up to date). Caveat: live 'workflow update/sync/migrate' on a scratch project not run (needs a scratch daemon); migration covered by a unit test (dry-run, append, rerun clean).
+
+### note · agent:manager-2 · 2026-10-13T02:52:07.471Z
+integrated: b0a3c3c793fb7baf907c2d453603845f8968732d (branch bridle/wtgxy)
+
+### note · agent:manager-2 · 2026-10-13T02:52:26.464Z
+cleanup: removed agent wtgxy, branch bridle/wtgxy
