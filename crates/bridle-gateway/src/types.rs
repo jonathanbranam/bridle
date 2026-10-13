@@ -16,7 +16,7 @@ use crate::interactions::{DayReport, HoursReport, InteractionReport, IntervalsRe
 use crate::items::{Decision, Items, Priority, ProjectItems, Todo};
 use crate::messages::{MessageRequest, MessageSent, Recipients};
 use crate::specs::{ProjectSpecs, SpecDiagnostic, SpecFile, SpecRequirement, SpecScenario};
-use crate::system::{AgentList, SystemView, UsageHistory};
+use crate::system::{AgentList, SystemView, UsageHistory, UsageInstances, UsageSeriesView};
 use crate::tasks::{
     ClaimAgent, ThreadItem, TicketDetail, TicketList, TicketListByTasks, TicketSummary,
 };
@@ -58,6 +58,8 @@ pub fn export_all(dir: &Path) -> Result<(), ts_rs::ExportError> {
     SystemView::export_all(&config)?;
     AgentList::export_all(&config)?;
     UsageHistory::export_all(&config)?;
+    UsageInstances::export_all(&config)?;
+    UsageSeriesView::export_all(&config)?;
     Recipients::export_all(&config)?;
     MessageRequest::export_all(&config)?;
     MessageSent::export_all(&config)?;

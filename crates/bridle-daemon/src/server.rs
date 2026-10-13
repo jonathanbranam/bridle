@@ -26,7 +26,8 @@ use bridle_api::types::{
     SkipSettleRequest, SpawnRequest, Status, StatusLineReport, StopRequest, SubmitTicketRequest,
     Ticket, TicketQuery, TicketState, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine,
     TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery, UsageGroupBy, UsageHistoryQuery,
-    WakeResponse, When, WindowStatus, WriteHandoverRequest, event_kind,
+    UsageInstance, UsageInstancesQuery, UsageSeries, UsageSeriesQuery, WakeResponse, When,
+    WindowStatus, WriteHandoverRequest, event_kind,
 };
 use bridle_api::types::{
     PeerWatchRequest, PrincipalId, RemoteWatchRequest, Schedule, ScheduleAddRequest,
@@ -148,6 +149,8 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/usage", get(usage))
         .route("/v1/usage/breakdown", get(usage_breakdown))
         .route("/v1/usage/history", get(usage_history))
+        .route("/v1/usage/agents", get(usage_instances))
+        .route("/v1/usage/agents/{agent_id}/series", get(usage_series))
         .route("/v1/statusline", post(report_statusline))
         .route("/v1/budget", get(budget))
         .route("/v1/budget/hold", post(budget_hold))
@@ -2486,6 +2489,24 @@ async fn usage_history(
 ) -> Result<Json<Vec<RateLimitPoint>>, ApiError> {
     Ok(Json(
         state.store.rate_limit_history(q.window, q.since).await?,
+    ))
+}
+
+async fn usage_instances(
+    State(state): State<AppState>,
+    Query(q): Query<UsageInstancesQuery>,
+) -> Result<Json<Vec<UsageInstance>>, ApiError> {
+    Ok(Json(state.store.usage_instances(q.since).await?))
+}
+
+async fn usage_series(
+    State(state): State<AppState>,
+    Path(agent_id): Path<String>,
+    Query(q): Query<UsageSeriesQuery>,
+) -> Result<Json<UsageSeries>, ApiError> {
+    let bucket = q.bucket.unwrap_or_default();
+    Ok(Json(
+        state.store.usage_series(agent_id, q.since, bucket).await?,
     ))
 }
 

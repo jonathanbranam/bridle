@@ -17,7 +17,7 @@ use bridle_api::types::{
     ExternalUsage, Handover, InteractiveUsageRow, Message, MessageKind, MessageState, OutboxEntry,
     OutboxPeer, PortAllocation, PrincipalId, PrincipalKind, RateLimit, RateLimitPoint, Schedule,
     TicketKind, TicketState, TokenCreated, TokenInfo, TokenTotals, Usage, UsageBreakdown,
-    UsageGroup, UsageGroupBy, When,
+    UsageBucket, UsageGroup, UsageGroupBy, UsageInstance, UsageSeries, UsageSeriesPoint, When,
 };
 use chrono::{DateTime, SecondsFormat, SubsecRound, Utc};
 use rusqlite::Connection;
@@ -1211,6 +1211,26 @@ impl Store {
         by: UsageGroupBy,
     ) -> Result<UsageBreakdown, StoreError> {
         self.with_conn(move |c| sync::usage_breakdown(c, since, by))
+            .await
+    }
+
+    /// One agent's turns bucketed by start time, from the ledger alone (removed agents too).
+    pub async fn usage_series(
+        &self,
+        agent_id: String,
+        since: Option<DateTime<Utc>>,
+        bucket: UsageBucket,
+    ) -> Result<UsageSeries, StoreError> {
+        self.with_conn(move |c| sync::usage_series(c, &agent_id, since, bucket))
+            .await
+    }
+
+    /// Agent instances with a turn in the period, from the ledger alone.
+    pub async fn usage_instances(
+        &self,
+        since: Option<DateTime<Utc>>,
+    ) -> Result<Vec<UsageInstance>, StoreError> {
+        self.with_conn(move |c| sync::usage_instances(c, since))
             .await
     }
 
@@ -4095,6 +4115,112 @@ mod sync {
         })
     }
 
+    fn bucket_secs(b: UsageBucket) -> i64 {
+        match b {
+            UsageBucket::Hour => 3600,
+            UsageBucket::Day => 86400,
+        }
+    }
+
+    pub(super) fn usage_series(
+        conn: &Connection,
+        agent_id: &str,
+        since: Option<DateTime<Utc>>,
+        bucket: UsageBucket,
+    ) -> Result<UsageSeries, StoreError> {
+        let since_str = since.map(fmt_dt);
+        let mut stmt = conn.prepare(
+            "SELECT started_at, ended_at, input_tokens, output_tokens, cache_read, cache_write,
+                    cost_total
+             FROM turns WHERE agent_id = ?1 AND (?2 IS NULL OR started_at >= ?2)
+             ORDER BY started_at",
+        )?;
+        let rows = stmt.query_map(params![agent_id, since_str], |row| {
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, Option<String>>(1)?,
+                [2, 3, 4, 5].map(|i| row.get::<_, i64>(i).unwrap_or(0) as u64),
+                row.get::<_, f64>(6)?,
+            ))
+        })?;
+        let mut points: BTreeMap<DateTime<Utc>, UsageSeriesPoint> = BTreeMap::new();
+        for row in rows {
+            let (started, ended, t, cost) = row?;
+            let started = parse_dt(&started)?;
+            let secs = bucket_secs(bucket);
+            let start = DateTime::from_timestamp(started.timestamp().div_euclid(secs) * secs, 0)
+                .unwrap_or(started);
+            let p = points.entry(start).or_insert_with(|| UsageSeriesPoint {
+                start,
+                turns: 0,
+                tokens: TokenTotals::default(),
+                cost_usd: 0.0,
+                busy_seconds: 0,
+            });
+            p.turns += 1;
+            p.tokens.input += t[0];
+            p.tokens.output += t[1];
+            p.tokens.cache_read += t[2];
+            p.tokens.cache_write += t[3];
+            p.cost_usd += cost;
+            if let Some(e) = parse_dt_opt(ended)? {
+                p.busy_seconds += (e - started).num_seconds().max(0) as u64;
+            }
+        }
+        Ok(UsageSeries {
+            agent_id: agent_id.to_string(),
+            bucket,
+            since,
+            points: points.into_values().collect(),
+        })
+    }
+
+    pub(super) fn usage_instances(
+        conn: &Connection,
+        since: Option<DateTime<Utc>>,
+    ) -> Result<Vec<UsageInstance>, StoreError> {
+        let since_str = since.map(fmt_dt);
+        // The newest turn's name/role/model win: an agent keeps its identity, but a role or
+        // model change mid-life shows the current one.
+        let mut stmt = conn.prepare(
+            "SELECT t.agent_id, t.agent_name, t.role, t.model,
+                    EXISTS (SELECT 1 FROM agents a WHERE a.id = t.agent_id),
+                    COUNT(*), SUM(t.cost_total), MIN(t.started_at), MAX(t.started_at)
+             FROM turns t WHERE (?1 IS NULL OR t.started_at >= ?1)
+             GROUP BY t.agent_id
+             ORDER BY MAX(t.started_at) DESC",
+        )?;
+        let rows = stmt.query_map(params![since_str], |row| {
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, String>(2)?,
+                row.get::<_, String>(3)?,
+                row.get::<_, bool>(4)?,
+                row.get::<_, i64>(5)?,
+                row.get::<_, f64>(6)?,
+                row.get::<_, String>(7)?,
+                row.get::<_, String>(8)?,
+            ))
+        })?;
+        let mut out = Vec::new();
+        for row in rows {
+            let (agent_id, name, role, model, live, turns, cost_usd, first, last) = row?;
+            out.push(UsageInstance {
+                agent_id,
+                name,
+                role,
+                model,
+                removed: !live,
+                turns: turns as u32,
+                cost_usd,
+                first_turn_at: parse_dt(&first)?,
+                last_turn_at: parse_dt(&last)?,
+            });
+        }
+        Ok(out)
+    }
+
     /// The delta of a running total against the session's previous report: a total that went
     /// down means the session restarted its counter, so the new total is all new. The first
     /// report of a session is its baseline (its earlier spend can't be dated), so 0. A figure
@@ -5370,6 +5496,76 @@ mod tests {
             .expect("sonnet group");
         assert_eq!(sonnet.turns, 2);
         assert!((sonnet.cost_usd_total - 0.15).abs() < 1e-9);
+    }
+
+    /// A removed agent is still listed and charted, and the buckets add up to the breakdown.
+    #[tokio::test]
+    async fn usage_series_and_instances_cover_removed_agents() {
+        let (store, _tmp) = store().await;
+        let a = store.insert_agent(new_agent("w1")).await.expect("insert");
+        let base = DateTime::parse_from_rfc3339("2026-10-10T10:30:00Z")
+            .expect("ts")
+            .with_timezone(&Utc);
+        for (n, at, cost) in [
+            (1, base, 1.0),
+            (2, base + chrono::Duration::minutes(10), 2.0),
+            (3, base + chrono::Duration::hours(2), 4.0),
+            (4, base + chrono::Duration::days(1), 8.0),
+        ] {
+            store.add_turn_start(&a.id, n, at).await.expect("start");
+            store
+                .end_turn(
+                    &a.id,
+                    n,
+                    TurnEnd {
+                        subtype: "success".to_string(),
+                        is_error: false,
+                        terminal_reason: None,
+                        input_tokens: 10,
+                        output_tokens: 1,
+                        cache_read: 5,
+                        cache_write: 2,
+                        cost_total: cost,
+                        context_tokens: 10,
+                    },
+                )
+                .await
+                .expect("end");
+        }
+        store.delete_agent(&a.id).await.expect("remove");
+
+        let inst = store.usage_instances(None).await.expect("instances");
+        assert_eq!(inst.len(), 1);
+        assert!(inst[0].removed);
+        assert_eq!(inst[0].name, "w1");
+        assert_eq!(inst[0].turns, 4);
+        assert_eq!(inst[0].first_turn_at, base);
+
+        let hourly = store
+            .usage_series(a.id.clone(), None, UsageBucket::Hour)
+            .await
+            .expect("hourly");
+        assert_eq!(hourly.points.len(), 3);
+        assert_eq!(hourly.points[0].turns, 2);
+        assert!((hourly.points[0].cost_usd - 3.0).abs() < 1e-9);
+
+        let daily = store
+            .usage_series(a.id.clone(), None, UsageBucket::Day)
+            .await
+            .expect("daily");
+        assert_eq!(daily.points.len(), 2);
+        let bd = store
+            .usage_breakdown(None, UsageGroupBy::Agent)
+            .await
+            .expect("breakdown");
+        for series in [&hourly, &daily] {
+            let turns: u32 = series.points.iter().map(|p| p.turns).sum();
+            let cost: f64 = series.points.iter().map(|p| p.cost_usd).sum();
+            let input: u64 = series.points.iter().map(|p| p.tokens.input).sum();
+            assert_eq!(turns, bd.total_turns);
+            assert!((cost - bd.total_cost_usd).abs() < 1e-9);
+            assert_eq!(input, bd.total_tokens.input);
+        }
     }
 
     #[tokio::test]

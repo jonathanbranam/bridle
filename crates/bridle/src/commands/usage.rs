@@ -63,6 +63,73 @@ fn print_external(external: &[ExternalUsage]) {
     }
 }
 
+/// `--agent`: resolve the name or id through the instance list (so removed agents work), then
+/// print the series. A name shared by several instances picks the one with the latest turn.
+async fn usage_agent_series(
+    cli: &Cli,
+    client: &Client,
+    who: &str,
+    since: Option<chrono::DateTime<Utc>>,
+    bucket: Option<UsageBucketArg>,
+) -> Result<(), CliError> {
+    let instances = client
+        .usage_instances(&UsageInstancesQuery::default())
+        .await?;
+    let inst = instances
+        .iter()
+        .find(|i| i.agent_id == who)
+        .or_else(|| instances.iter().find(|i| i.name == who))
+        .ok_or_else(|| CliError::Other(anyhow::anyhow!("no usage recorded for agent {who:?}")))?;
+    let bucket = match bucket {
+        Some(UsageBucketArg::Hour) => UsageBucket::Hour,
+        Some(UsageBucketArg::Day) | None => UsageBucket::Day,
+    };
+    let series = client
+        .usage_series(
+            &inst.agent_id,
+            &UsageSeriesQuery {
+                since,
+                bucket: Some(bucket),
+            },
+        )
+        .await?;
+    if cli.json {
+        return Ok(render::print_json(&series)?);
+    }
+    let fmt = if bucket == UsageBucket::Hour {
+        "%Y-%m-%d %H:00"
+    } else {
+        "%Y-%m-%d"
+    };
+    println!(
+        "{} ({}), {}",
+        inst.name,
+        inst.agent_id,
+        if inst.removed { "removed" } else { "live" }
+    );
+    println!(
+        "{:<16} {:>5} {:>10} {:>10} {:>10} {:>10} {:>9} {:>8}",
+        "BUCKET", "TURNS", "INPUT", "OUTPUT", "CACHE-R", "CACHE-W", "COST", "BUSY"
+    );
+    for p in &series.points {
+        println!(
+            "{:<16} {:>5} {:>10} {:>10} {:>10} {:>10} {:>9} {:>8}",
+            p.start.format(fmt),
+            p.turns,
+            format_tokens(p.tokens.input),
+            format_tokens(p.tokens.output),
+            format_tokens(p.tokens.cache_read),
+            format_tokens(p.tokens.cache_write),
+            format_cost_dollars(p.cost_usd),
+            format_duration_secs(p.busy_seconds),
+        );
+    }
+    let cost: f64 = series.points.iter().map(|p| p.cost_usd).sum();
+    let turns: u32 = series.points.iter().map(|p| p.turns).sum();
+    println!("total: {turns} turns, ${}", format_cost_dollars(cost));
+    Ok(())
+}
+
 pub(super) async fn usage(cli: &Cli, args: &UsageArgs) -> Result<(), CliError> {
     let client = client_for_read(cli).await?;
 
@@ -75,6 +142,10 @@ pub(super) async fn usage(cli: &Cli, args: &UsageArgs) -> Result<(), CliError> {
                 .ok_or_else(|| CliError::Other(anyhow::anyhow!("bad --since duration: {s:?}")))
         })
         .transpose()?;
+
+    if let Some(who) = &args.agent {
+        return usage_agent_series(cli, &client, who, since, args.bucket).await;
+    }
 
     if let Some(window) = &args.history {
         let points = client

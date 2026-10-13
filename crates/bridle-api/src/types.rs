@@ -1369,6 +1369,72 @@ pub struct UsageBreakdown {
     pub external: Vec<ExternalUsage>,
 }
 
+/// Bucket size of `GET /v1/usage/agents/{agent_id}/series`.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum UsageBucket {
+    Hour,
+    #[default]
+    Day,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct UsageSeriesQuery {
+    /// Only turns started at or after this time.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub since: Option<DateTime<Utc>>,
+    /// Defaults to `day`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub bucket: Option<UsageBucket>,
+}
+
+/// One bucket of an agent's usage: the turns that started in `[start, start + bucket)` (UTC).
+/// Empty buckets are left out; the client fills the gaps.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct UsageSeriesPoint {
+    pub start: DateTime<Utc>,
+    pub turns: u32,
+    pub tokens: TokenTotals,
+    pub cost_usd: f64,
+    pub busy_seconds: u64,
+}
+
+/// `GET /v1/usage/agents/{agent_id}/series`. Works for removed agents: it reads the turns ledger
+/// alone. The points sum to the agent's group in `GET /v1/usage/breakdown?by=agent` for the
+/// same `since`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UsageSeries {
+    pub agent_id: String,
+    pub bucket: UsageBucket,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub since: Option<DateTime<Utc>>,
+    /// Oldest first.
+    pub points: Vec<UsageSeriesPoint>,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct UsageInstancesQuery {
+    /// Only instances with a turn started at or after this time.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub since: Option<DateTime<Utc>>,
+}
+
+/// One agent instance with usage in a period, live or removed
+/// (`GET /v1/usage/agents`). Name, role and model are the ledger's own copy.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct UsageInstance {
+    pub agent_id: String,
+    pub name: String,
+    pub role: String,
+    pub model: String,
+    /// Whether the agent row is gone (`bridle rm`).
+    pub removed: bool,
+    pub turns: u32,
+    pub cost_usd: f64,
+    pub first_turn_at: DateTime<Utc>,
+    pub last_turn_at: DateTime<Utc>,
+}
+
 // ---------- interactions ----------
 
 /// One line of the machine's `~/.bridle/prompts.jsonl` (written by `bridle focus gate`,

@@ -1467,6 +1467,19 @@ pub struct UsageArgs {
     /// Show the rate-limit history of this window (`five_hour`, `seven_day`, ...) instead.
     #[arg(long, value_name = "WINDOW")]
     pub history: Option<String>,
+    /// Show one agent instance's usage over time (name or id; removed agents too) instead.
+    #[arg(long, value_name = "NAME|ID")]
+    pub agent: Option<String>,
+    /// Bucket size for `--agent`: `hour` or `day` (default `day`).
+    #[arg(long, requires = "agent")]
+    pub bucket: Option<UsageBucketArg>,
+}
+
+#[derive(Debug, Clone, Copy, ValueEnum)]
+#[value(rename_all = "lower")]
+pub enum UsageBucketArg {
+    Hour,
+    Day,
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]

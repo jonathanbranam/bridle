@@ -10,7 +10,10 @@ use std::collections::BTreeMap;
 use axum::Json;
 use axum::extract::{Path, Query};
 use bridle_api::client::{Client, ClientError};
-use bridle_api::types::{Agent, Status, TicketState, UsageHistoryQuery};
+use bridle_api::types::{
+    Agent, Status, TicketState, UsageBucket, UsageHistoryQuery, UsageInstancesQuery,
+    UsageSeriesQuery,
+};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
@@ -50,6 +53,67 @@ pub struct UsageHistoryParams {
     pub window: String,
     /// RFC 3339; only readings at or after it.
     pub since: Option<chrono::DateTime<chrono::Utc>>,
+}
+
+/// One agent instance with usage in a period (the daemon's `/v1/usage/agents`).
+#[derive(Debug, Clone, PartialEq, Serialize, TS)]
+pub struct UsageInstanceView {
+    pub agent_id: String,
+    pub name: String,
+    pub role: String,
+    pub model: String,
+    pub removed: bool,
+    pub turns: u32,
+    pub cost_usd: f64,
+    /// RFC 3339, UTC.
+    pub first_turn_at: String,
+    /// RFC 3339, UTC.
+    pub last_turn_at: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, TS)]
+pub struct UsageInstances {
+    pub project: String,
+    /// Latest turn first.
+    pub instances: Vec<UsageInstanceView>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, TS)]
+pub struct UsageSeriesBucket {
+    /// RFC 3339, UTC: the start of the bucket.
+    pub start: String,
+    pub turns: u32,
+    pub input_tokens: u64,
+    pub output_tokens: u64,
+    pub cache_read_tokens: u64,
+    pub cache_write_tokens: u64,
+    pub cost_usd: f64,
+    pub busy_seconds: u64,
+}
+
+/// One instance's usage by hour or day (the daemon's `/v1/usage/agents/{id}/series`). Empty
+/// buckets are absent.
+#[derive(Debug, Clone, PartialEq, Serialize, TS)]
+pub struct UsageSeriesView {
+    pub project: String,
+    pub agent_id: String,
+    /// `hour` or `day`.
+    pub bucket: String,
+    /// Oldest first.
+    pub points: Vec<UsageSeriesBucket>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UsageSinceParams {
+    /// RFC 3339; only turns started at or after it.
+    pub since: Option<chrono::DateTime<chrono::Utc>>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UsageSeriesParams {
+    pub since: Option<chrono::DateTime<chrono::Utc>>,
+    /// `hour` or `day` (default `day`).
+    pub bucket: Option<UsageBucket>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
@@ -274,6 +338,77 @@ pub(crate) async fn usage_history(
     })
 }
 
+pub(crate) async fn usage_instances(
+    client: &Client,
+    project: &str,
+    params: UsageSinceParams,
+) -> Result<UsageInstances, ActionError> {
+    let list = client
+        .usage_instances(&UsageInstancesQuery {
+            since: params.since,
+        })
+        .await
+        .map_err(api_error)?;
+    Ok(UsageInstances {
+        project: project.to_string(),
+        instances: list
+            .into_iter()
+            .map(|i| UsageInstanceView {
+                agent_id: i.agent_id,
+                name: i.name,
+                role: i.role,
+                model: i.model,
+                removed: i.removed,
+                turns: i.turns,
+                cost_usd: i.cost_usd,
+                first_turn_at: rfc(i.first_turn_at),
+                last_turn_at: rfc(i.last_turn_at),
+            })
+            .collect(),
+    })
+}
+
+pub(crate) async fn usage_series(
+    client: &Client,
+    project: &str,
+    agent_id: &str,
+    params: UsageSeriesParams,
+) -> Result<UsageSeriesView, ActionError> {
+    let s = client
+        .usage_series(
+            agent_id,
+            &UsageSeriesQuery {
+                since: params.since,
+                bucket: params.bucket,
+            },
+        )
+        .await
+        .map_err(api_error)?;
+    Ok(UsageSeriesView {
+        project: project.to_string(),
+        agent_id: s.agent_id,
+        bucket: match s.bucket {
+            UsageBucket::Hour => "hour",
+            UsageBucket::Day => "day",
+        }
+        .to_string(),
+        points: s
+            .points
+            .into_iter()
+            .map(|p| UsageSeriesBucket {
+                start: rfc(p.start),
+                turns: p.turns,
+                input_tokens: p.tokens.input,
+                output_tokens: p.tokens.output,
+                cache_read_tokens: p.tokens.cache_read,
+                cache_write_tokens: p.tokens.cache_write,
+                cost_usd: p.cost_usd,
+                busy_seconds: p.busy_seconds,
+            })
+            .collect(),
+    })
+}
+
 async fn client_for(project: &str) -> Result<Client, ActionError> {
     let (url, token) = resolve(project).await?;
     Ok(Client::new_with_timeout(
@@ -313,6 +448,27 @@ pub async fn usage_history_route(
 ) -> Result<Json<UsageHistory>, ActionError> {
     let client = client_for(&project).await?;
     Ok(Json(usage_history(&client, &project, params).await?))
+}
+
+/// `GET /api/v1/projects/{project}/usage/agents?since=`: the agent instances (live and removed)
+/// with usage in the period, for the chart's picker.
+pub async fn usage_instances_route(
+    Path(project): Path<String>,
+    Query(params): Query<UsageSinceParams>,
+) -> Result<Json<UsageInstances>, ActionError> {
+    let client = client_for(&project).await?;
+    Ok(Json(usage_instances(&client, &project, params).await?))
+}
+
+/// `GET /api/v1/projects/{project}/usage/agents/{agent_id}/series?since=&bucket=`.
+pub async fn usage_series_route(
+    Path((project, agent_id)): Path<(String, String)>,
+    Query(params): Query<UsageSeriesParams>,
+) -> Result<Json<UsageSeriesView>, ActionError> {
+    let client = client_for(&project).await?;
+    Ok(Json(
+        usage_series(&client, &project, &agent_id, params).await?,
+    ))
 }
 
 #[cfg(test)]
@@ -456,6 +612,58 @@ mod tests {
             q.contains("window=five_hour") && q.contains("since=2026-01-01"),
             "{q}"
         );
+    }
+
+    #[tokio::test]
+    async fn usage_series_and_instances_map_the_daemon_shapes() {
+        let c = serve(
+            Router::new()
+                .route(
+                    "/v1/usage/agents",
+                    get(|| async {
+                        Json(json!([{
+                            "agent_id": "a-1", "name": "w1", "role": "worker", "model": "m",
+                            "removed": true, "turns": 2, "cost_usd": 1.5,
+                            "first_turn_at": "2026-01-01T00:00:00Z",
+                            "last_turn_at": "2026-01-02T00:00:00Z"
+                        }]))
+                    }),
+                )
+                .route(
+                    "/v1/usage/agents/{id}/series",
+                    get(|| async {
+                        Json(json!({
+                            "agent_id": "a-1", "bucket": "hour",
+                            "points": [{
+                                "start": "2026-01-01T00:00:00Z", "turns": 2,
+                                "tokens": {"input": 10, "output": 1, "cache_read": 5,
+                                    "cache_write": 2},
+                                "cost_usd": 1.5, "busy_seconds": 30
+                            }]
+                        }))
+                    }),
+                ),
+        )
+        .await;
+        let l = usage_instances(&c, "p", UsageSinceParams { since: None })
+            .await
+            .expect("instances");
+        assert!(l.instances[0].removed);
+        assert_eq!(l.instances[0].last_turn_at, "2026-01-02T00:00:00+00:00");
+        let s = usage_series(
+            &c,
+            "p",
+            "a-1",
+            UsageSeriesParams {
+                since: None,
+                bucket: Some(UsageBucket::Hour),
+            },
+        )
+        .await
+        .expect("series");
+        assert_eq!(s.bucket, "hour");
+        assert_eq!(s.points[0].cache_read_tokens, 5);
+        assert_eq!(s.points[0].busy_seconds, 30);
     }
 
     #[tokio::test]

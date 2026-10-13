@@ -14,7 +14,8 @@ use bridle_api::{
     RemoveQuery, RenewRequest, ResolveConflictRequest, ResumeRequest, SendRequest,
     SetImpactRequest, SetKindRequest, SetPriorityRequest, SetSummaryRequest, SpawnRequest, SpecRef,
     StopRequest, Ticket, TicketKind, TicketPriority, TicketSize, TokenCreateRequest,
-    UsageBreakdownQuery, UsageGroupBy, UsageHistoryQuery, Workdir, event_kind,
+    UsageBreakdownQuery, UsageBucket, UsageGroupBy, UsageHistoryQuery, UsageInstancesQuery,
+    UsageSeriesQuery, Workdir, event_kind,
 };
 use chrono::{Local, TimeZone, Utc};
 use clap::CommandFactory;
@@ -32,8 +33,8 @@ use crate::cli::{
     RowPlanArgs, RowPriorityArgs, RowReopenArgs, RowSearchArgs, RowShowArgs, RowSkipSettleArgs,
     RowSummaryArgs, RowWatchArgs, RulesAction, RulesArgs, RulesDiffArgs, RulesExplainArgs,
     SendArgs, ShowArgs, SpawnArgs, SpecAction, SpecArgs, SpecExportArgs, SpecFormatArg, StopArgs,
-    TicketKindArg, TicketPriorityArg, TicketSizeArg, TokenAction, TokenArgs, UsageArgs, UsageByArg,
-    WaitArgs, WakeArgs, WhenArg,
+    TicketKindArg, TicketPriorityArg, TicketSizeArg, TokenAction, TokenArgs, UsageArgs,
+    UsageBucketArg, UsageByArg, WaitArgs, WakeArgs, WhenArg,
 };
 use crate::cli::{
     FocusAction, FocusArgs, LandArgs, OrchestratorAction, OrchestratorArgs, PortAction, PortArgs,

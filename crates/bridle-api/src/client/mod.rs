@@ -29,7 +29,8 @@ use crate::types::{
     SkipSettleRequest, SpawnRequest, Status, StatusLineReport, StopRequest, StopWakeRequest,
     StopWakeResponse, SubmitTicketRequest, Ticket, TicketQuery, TokenCreateRequest, TokenCreated,
     TokenInfo, TranscriptLine, TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery,
-    UsageHistoryQuery, WakeResponse, WriteHandoverRequest,
+    UsageHistoryQuery, UsageInstance, UsageInstancesQuery, UsageSeries, UsageSeriesQuery,
+    WakeResponse, WriteHandoverRequest,
 };
 
 pub use bridle_docs::documents::{
@@ -450,6 +451,24 @@ impl Client {
         query: &UsageBreakdownQuery,
     ) -> Result<UsageBreakdown, ClientError> {
         self.get_json_query(&["v1", "usage", "breakdown"], query)
+            .await
+    }
+
+    /// `GET /v1/usage/agents`: the agent instances (live and removed) with usage in the period.
+    pub async fn usage_instances(
+        &self,
+        query: &UsageInstancesQuery,
+    ) -> Result<Vec<UsageInstance>, ClientError> {
+        self.get_json_query(&["v1", "usage", "agents"], query).await
+    }
+
+    /// `GET /v1/usage/agents/{agent_id}/series`: one instance's usage by hour or day.
+    pub async fn usage_series(
+        &self,
+        agent_id: &str,
+        query: &UsageSeriesQuery,
+    ) -> Result<UsageSeries, ClientError> {
+        self.get_json_query(&["v1", "usage", "agents", agent_id, "series"], query)
             .await
     }
 
