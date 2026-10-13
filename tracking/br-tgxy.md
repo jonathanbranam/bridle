@@ -2,11 +2,14 @@
 id = "br-tgxy"
 title = "A rule and role text make agents verify UI work in a browser on a throwaway site"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-13T02:00:28.123Z"
-updated_at = "2026-10-13T02:01:27.344128Z"
+updated_at = "2026-10-13T02:33:30.190094Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "agent:wtgxy",
+]
 ticket = "tgxy"
 +++
 

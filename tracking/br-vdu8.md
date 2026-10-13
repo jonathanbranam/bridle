@@ -4,7 +4,7 @@ title = "A bridle dev site command starts a throwaway daemon, gateway and UI on 
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-13T02:00:28.102Z"
-updated_at = "2026-10-13T02:32:59.251204Z"
+updated_at = "2026-10-13T02:33:18.736762Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -34,3 +34,6 @@ done: bridle dev site up|down|list, steps 1-5 coded; 1-4 tested (integration tes
 
 ### note · agent:manager-2 · 2026-10-13T02:32:59.251Z
 integrated: 70db43fa37181026da9e42364426a4cd5be992b1 (branch bridle/wvdu8)
+
+### note · agent:manager-2 · 2026-10-13T02:33:18.736Z
+cleanup: removed agent wvdu8, branch bridle/wvdu8
