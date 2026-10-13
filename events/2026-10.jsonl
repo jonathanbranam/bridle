@@ -1844,3 +1844,4 @@
 {"actor":"agent:pm-1","at":"2026-10-13T00:15:02.489510Z","from":"open","task":"br-njjt","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-13T00:15:02.625841Z","queue":"reprioritized"}
 {"actor":"agent:wnjjt","at":"2026-10-13T00:56:01.628592Z","from":"claimed","task":"br-njjt","to":"built"}
+{"actor":"agent:manager-2","at":"2026-10-13T00:56:07.117739Z","from":"built","task":"br-njjt","to":"integrated"}

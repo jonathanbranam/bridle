@@ -2,16 +2,16 @@
 id = "br-njjt"
 title = "External sessions chart like agent instances: list and series include br-hd28's sessions (follow-up to br-xfy7)"
 kind = "feature"
-state = "built"
+state = "integrated"
 created_at = "2026-10-13T00:14:41.914Z"
-updated_at = "2026-10-13T00:56:01.671851Z"
+updated_at = "2026-10-13T00:56:07.117739Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "agent:wnjjt",
 ]
 branch = "bridle/wnjjt"
-commit = "1b9c607d"
+commit = "100f2e19718be97fd1e78ce230ecce7e232a6b4c"
 summary = "GET /v1/usage/agents now also lists external identities (interactive_usage, br-hd28) as instances with external=true, agent_id=name=identity, role=first path part; /series for an external: id buckets the stored per-report deltas (they sum to the external by=agent row). Shape changes (types.rs, additive on the wire except nullability): UsageInstance.turns and UsageSeriesPoint.turns/busy_seconds are now Option (null for external, never zero), UsageInstance.external added (default false); gateway views and TS bindings follow (turns: number|null, busy_seconds: number|null, external: boolean) - bridle-ui planner note. CLI: bridle usage --agent external:advisor/x works. Reports with no session id carry no delta and are left out. No migration. Docs: usage-and-budget, api, human-web-ui, CHANGELOG."
 ticket = "njjt"
 +++
@@ -28,3 +28,6 @@ built: 1b9c607d (branch bridle/wnjjt)
 
 ### note · agent:wnjjt · 2026-10-13T00:56:01.671Z
 done: external identities listed and charted like instances (external flag, turns/busy_seconds null); just check exit 0, 1631 tests passed, on 1b9c607d (main merged). Shape change noted in summary for bridle-ui.
+
+### note · agent:manager-2 · 2026-10-13T00:56:07.117Z
+integrated: 100f2e19718be97fd1e78ce230ecce7e232a6b4c (branch bridle/wnjjt)
