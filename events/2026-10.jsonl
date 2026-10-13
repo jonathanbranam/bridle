@@ -1898,3 +1898,5 @@
 {"actor":"agent:pm-1","at":"2026-10-13T22:21:53.983836Z","from":"open","task":"br-ry8z","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-13T22:21:54.103857Z","queue":"reprioritized"}
 {"actor":"human","at":"2026-10-13T22:40:28.112Z","from":"","task":"br-63nr","to":"pending"}
+{"actor":"agent:ry8z","at":"2026-10-13T22:46:31.850647Z","from":"claimed","task":"br-ry8z","to":"built"}
+{"actor":"agent:manager-2","at":"2026-10-13T22:46:37.979881Z","from":"built","task":"br-ry8z","to":"integrated"}
