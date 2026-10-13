@@ -1845,3 +1845,9 @@
 {"actor":"agent:pm-1","at":"2026-10-13T00:15:02.625841Z","queue":"reprioritized"}
 {"actor":"agent:wnjjt","at":"2026-10-13T00:56:01.628592Z","from":"claimed","task":"br-njjt","to":"built"}
 {"actor":"agent:manager-2","at":"2026-10-13T00:56:07.117739Z","from":"built","task":"br-njjt","to":"integrated"}
+{"actor":"human","at":"2026-10-13T02:00:06.867Z","from":"","task":"br-br-vdu8","to":"pending"}
+{"actor":"human","at":"2026-10-13T02:00:06.888Z","from":"","task":"br-br-tgxy","to":"pending"}
+{"actor":"external:orchestrator","at":"2026-10-13T02:00:21.939407Z","from":"pending","task":"br-br-vdu8","to":"dropped"}
+{"actor":"external:orchestrator","at":"2026-10-13T02:00:21.982955Z","from":"pending","task":"br-br-tgxy","to":"dropped"}
+{"actor":"human","at":"2026-10-13T02:00:28.102Z","from":"","task":"br-vdu8","to":"pending"}
+{"actor":"human","at":"2026-10-13T02:00:28.123Z","from":"","task":"br-tgxy","to":"pending"}
