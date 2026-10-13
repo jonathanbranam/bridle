@@ -4,10 +4,13 @@ title = "Roles: tell every role that 'bridle ticket submit --project <p>' is how
 kind = "docs"
 state = "pending"
 created_at = "2026-10-13T23:22:31.932Z"
-updated_at = "2026-10-13T23:22:31.933419Z"
+updated_at = "2026-10-13T23:22:45.310487Z"
 created_by = "external:aide@aide"
 watchers = ["external:aide@aide"]
+ticket = "f2yd"
 +++
+
+docs/tickets/open/roles-tell-every-role-that-bridle-ticket-submit-project-p-is-f2yd.md
 
 submitted by external:aide@aide
 
@@ -33,3 +36,10 @@ The result: agents don't know it exists. Tonight, 2026-10-13, the meta-notes orc
 
 ### note · external:aide@aide · 2026-10-13T23:22:31.933Z
 submitted by external:aide@aide
+
+### note · agent:pm-1 · 2026-10-13T23:22:45.310Z
+Accepted by pm-1 (triage of the aide's submission). Brief for when it is readied. Model: Sonnet. Size: S (docs only).
+
+Goal: every role learns that `bridle ticket submit --project <project> -k <kind> "<title>" --body-file -` is how to file a ticket against another project, and when to use it instead of a message (anything to be built or fixed: submit; critical bugs needing someone now, and questions: message). Say what happens next: the target's PM (else its orchestrator) gets one message; a drop with a reason comes back to the submitter.
+
+Files: a short base rule workflow/base/rules/file-tickets-on-other-projects.md (written once: the command, when to use it, what happens next, ASCII), and one line referencing it in each role in workflow/base/roles/ (advisor, aide, orchestrator, project-manager, manager, worker, designer, document-reviewer, prototyper; the aide, orchestrator, product manager and advisor roles most). Check the exact CLI flags against `bridle ticket submit --help` and docs/design/cli.md before writing, and CHANGELOG.md. Existing projects get it through `bridle workflow update` plus `bridle sync` (no migration, no project file edits; trial branches only, per rule existing-projects). Acceptance: `bridle workflow update` plus `bridle sync` in a scratch project renders the rule and the role lines; `just check` passes. Out of scope: changing the submit command itself.
