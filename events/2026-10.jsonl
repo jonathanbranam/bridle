@@ -1873,3 +1873,4 @@
 {"actor":"agent:manager-2","at":"2026-10-13T04:07:13.199748Z","from":"built","task":"br-vynr","to":"integrated"}
 {"actor":"agent:manager-2","at":"2026-10-13T04:11:52.937567Z","from":"planned","task":"br-tmmj","to":"integrated"}
 {"actor":"agent:manager-2","at":"2026-10-13T04:12:03.494077Z","from":"integrated","task":"br-tmmj","to":"reopened"}
+{"actor":"external:advisor/product-manager","at":"2026-10-13T13:06:30.077122Z","from":"pending","task":"br-w8jm","to":"open"}
