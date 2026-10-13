@@ -125,7 +125,8 @@ actions as writes and refuses the rest, so a stolen session can answer and check
   (each use pushes the expiry out), and live in `<bridle home>/gateway-sessions.json` (mode 0600,
   written atomically, keyed by a sha256 of the cookie value, so the file can't be replayed). They
   survive a gateway restart or a reboot; logout deletes the session. The slide is written at most
-  hourly. A missing or corrupt file just means everyone logs in again. Reached over Tailscale (bind the
+  hourly, and the response that saves it re-issues the cookie with a fresh 30-day `Max-Age`, so
+  the browser keeps it as long as the session is used. A missing or corrupt file just means everyone logs in again. Reached over Tailscale (bind the
   Tailscale or loopback address, never 0.0.0.0); `tailscale serve` can add HTTPS.
 - **The UI** is its own TypeScript repo, `bridle-ui`, beside `bridle/`. Its build output is
   installed into a folder the gateway serves, **`~/.bridle/ui/`**, so page and API share an

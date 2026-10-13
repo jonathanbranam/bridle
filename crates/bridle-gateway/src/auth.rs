@@ -110,17 +110,19 @@ impl Sessions {
         }
     }
 
-    /// The session's user, sliding its expiry.
-    fn touch(&mut self, id: &str, now: u64) -> Option<String> {
+    /// The session's user, sliding its expiry; the flag is true when the slide was saved, which
+    /// is when the browser's cookie gets a fresh Max-Age too.
+    fn touch(&mut self, id: &str, now: u64) -> Option<(String, bool)> {
         self.map.retain(|_, s| s.expires > now);
         let found = self.map.get_mut(&hash_id(id)).map(|s| {
             s.expires = now + SESSION_TTL.as_secs();
             s.username.clone()
         });
-        if found.is_some() && now.saturating_sub(self.last_saved) >= SAVE_EVERY_SECS {
+        let save = found.is_some() && now.saturating_sub(self.last_saved) >= SAVE_EVERY_SECS;
+        if save {
             self.save(now);
         }
-        found
+        found.map(|user| (user, save))
     }
 }
 
@@ -147,13 +149,30 @@ impl Auth {
         }
     }
 
-    fn session_user(&self, headers: &HeaderMap) -> Option<String> {
+    /// The session's user, and a `Set-Cookie` value when the cookie should be re-issued.
+    fn session_user(&self, headers: &HeaderMap) -> Option<(String, Option<String>)> {
         let id = session_id(headers)?;
-        self.sessions
+        let (user, slid) = self
+            .sessions
             .lock()
             .expect("sessions lock")
-            .touch(&id, now_secs())
+            .touch(&id, now_secs())?;
+        Some((user, slid.then(|| session_cookie(&id))))
     }
+}
+
+fn session_cookie(id: &str) -> String {
+    format!(
+        "{COOKIE_NAME}={id}; HttpOnly; SameSite=Strict; Path=/; Max-Age={}",
+        SESSION_TTL.as_secs()
+    )
+}
+
+fn with_cookie(mut resp: Response, cookie: Option<String>) -> Response {
+    if let Some(v) = cookie.and_then(|c| header::HeaderValue::from_str(&c).ok()) {
+        resp.headers_mut().append(header::SET_COOKIE, v);
+    }
+    resp
 }
 
 fn session_id(headers: &HeaderMap) -> Option<String> {
@@ -183,10 +202,10 @@ fn unauthorized() -> Response {
 
 /// Refuses every route it wraps without a live session.
 pub async fn require_session(State(auth): State<Auth>, req: Request, next: Next) -> Response {
-    if auth.session_user(req.headers()).is_none() {
+    let Some((_, cookie)) = auth.session_user(req.headers()) else {
         return unauthorized();
-    }
-    next.run(req).await
+    };
+    with_cookie(next.run(req).await, cookie)
 }
 
 #[derive(Deserialize, TS)]
@@ -230,12 +249,8 @@ pub async fn login(State(auth): State<Auth>, Json(creds): Json<Credentials>) -> 
         .lock()
         .expect("sessions lock")
         .insert(&id, login.username.clone(), now_secs());
-    let cookie = format!(
-        "{COOKIE_NAME}={id}; HttpOnly; SameSite=Strict; Path=/; Max-Age={}",
-        SESSION_TTL.as_secs()
-    );
     (
-        [(header::SET_COOKIE, cookie)],
+        [(header::SET_COOKIE, session_cookie(&id))],
         Json(json!({ "username": login.username })),
     )
         .into_response()
@@ -260,7 +275,9 @@ pub struct SessionInfo {
 /// Who the session belongs to; the UI's "am I logged in" probe.
 pub async fn session(State(auth): State<Auth>, headers: HeaderMap) -> Response {
     match auth.session_user(&headers) {
-        Some(username) => Json(SessionInfo { username }).into_response(),
+        Some((username, cookie)) => {
+            with_cookie(Json(SessionInfo { username }).into_response(), cookie)
+        }
         None => unauthorized(),
     }
 }
@@ -288,7 +305,7 @@ mod tests {
         let mode = std::fs::metadata(&path).expect("meta").permissions().mode();
         assert_eq!(mode & 0o777, 0o600);
         let mut b = Sessions::load(Some(path), 2000);
-        assert_eq!(b.touch("secret-id", 2000).as_deref(), Some("jo"));
+        assert_eq!(b.touch("secret-id", 2000), Some(("jo".to_string(), false)));
         assert_eq!(b.touch("other", 2000), None);
     }
 
@@ -304,6 +321,16 @@ mod tests {
         let mut r = Sessions::load(Some(path), 58 * DAY);
         assert!(r.touch("id", 58 * DAY + 1).is_some());
         assert!(s.touch("id", 58 * DAY + 31 * DAY).is_none());
+    }
+
+    #[test]
+    fn the_cookie_is_refreshed_only_when_the_slide_is_saved() {
+        let mut s = Sessions::load(None, 0);
+        s.insert("id", "jo".into(), 0);
+        assert_eq!(s.touch("id", 10).map(|t| t.1), Some(false));
+        assert_eq!(s.touch("id", SAVE_EVERY_SECS).map(|t| t.1), Some(true));
+        assert_eq!(s.touch("id", SAVE_EVERY_SECS + 1).map(|t| t.1), Some(false));
+        assert!(session_cookie("id").contains("Max-Age=2592000"));
     }
 
     #[test]
