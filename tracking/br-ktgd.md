@@ -4,7 +4,7 @@ title = "Account usage for the dashboard: every project summed by role, name and
 kind = "feature"
 state = "held"
 created_at = "2026-10-13T22:52:42.726Z"
-updated_at = "2026-10-13T22:55:24.796369Z"
+updated_at = "2026-10-13T23:06:16.865306Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 ticket = "ktgd"
@@ -32,3 +32,6 @@ Acceptance (from the ask): a test with two projects, a hosted agent and an exter
 
 ### note · external:advisor/product-manager · 2026-10-13T22:55:24.796Z
 held: The human, ~7:15 PM ET: going through the ask step by step with advisor product-manager before it is built
+
+### note · external:advisor/product-manager · 2026-10-13T23:06:16.865Z
+Split on the human's ask into br-pac3, br-2kam, br-mksa, br-drvx, br-pemk, br-zn6s, br-v6cg, br-v58q (all ready, ordered by blocked_by) and br-a65d (future). pm-1's brief above is superseded: plan each child from its ask and this ticket's decisions 1-7. ktgd stays held as the design record.

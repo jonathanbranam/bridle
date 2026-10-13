@@ -2901,3 +2901,153 @@ from = "br-xfsp"
 to = "br-rdkn"
 kind = "related"
 created_at = "2026-10-13T22:53:35.388Z"
+
+[[edge]]
+from = "br-mksa"
+to = "br-ktgd"
+kind = "related"
+created_at = "2026-10-13T23:06:06.915Z"
+
+[[edge]]
+from = "br-rdkn"
+to = "br-mksa"
+kind = "parent"
+created_at = "2026-10-13T23:06:06.917Z"
+
+[[edge]]
+from = "br-pemk"
+to = "br-ktgd"
+kind = "related"
+created_at = "2026-10-13T23:06:06.923Z"
+
+[[edge]]
+from = "br-rdkn"
+to = "br-pemk"
+kind = "parent"
+created_at = "2026-10-13T23:06:06.925Z"
+
+[[edge]]
+from = "br-pac3"
+to = "br-2kam"
+kind = "blocks"
+created_at = "2026-10-13T23:06:06.927Z"
+
+[[edge]]
+from = "br-2kam"
+to = "br-ktgd"
+kind = "related"
+created_at = "2026-10-13T23:06:06.928Z"
+
+[[edge]]
+from = "br-rdkn"
+to = "br-2kam"
+kind = "parent"
+created_at = "2026-10-13T23:06:06.930Z"
+
+[[edge]]
+from = "br-zn6s"
+to = "br-v6cg"
+kind = "blocks"
+created_at = "2026-10-13T23:06:06.932Z"
+
+[[edge]]
+from = "br-v6cg"
+to = "br-ktgd"
+kind = "related"
+created_at = "2026-10-13T23:06:06.934Z"
+
+[[edge]]
+from = "br-pemk"
+to = "br-v6cg"
+kind = "blocks"
+created_at = "2026-10-13T23:06:06.936Z"
+
+[[edge]]
+from = "br-rdkn"
+to = "br-v6cg"
+kind = "parent"
+created_at = "2026-10-13T23:06:06.943Z"
+
+[[edge]]
+from = "br-v58q"
+to = "br-ktgd"
+kind = "related"
+created_at = "2026-10-13T23:06:06.949Z"
+
+[[edge]]
+from = "br-pemk"
+to = "br-v58q"
+kind = "blocks"
+created_at = "2026-10-13T23:06:06.951Z"
+
+[[edge]]
+from = "br-zn6s"
+to = "br-v58q"
+kind = "blocks"
+created_at = "2026-10-13T23:06:06.952Z"
+
+[[edge]]
+from = "br-rdkn"
+to = "br-v58q"
+kind = "parent"
+created_at = "2026-10-13T23:06:06.954Z"
+
+[[edge]]
+from = "br-drvx"
+to = "br-ktgd"
+kind = "related"
+created_at = "2026-10-13T23:06:06.956Z"
+
+[[edge]]
+from = "br-rdkn"
+to = "br-drvx"
+kind = "parent"
+created_at = "2026-10-13T23:06:06.958Z"
+
+[[edge]]
+from = "br-zn6s"
+to = "br-ktgd"
+kind = "related"
+created_at = "2026-10-13T23:06:06.961Z"
+
+[[edge]]
+from = "br-rdkn"
+to = "br-zn6s"
+kind = "parent"
+created_at = "2026-10-13T23:06:06.963Z"
+
+[[edge]]
+from = "br-pemk"
+to = "br-zn6s"
+kind = "blocks"
+created_at = "2026-10-13T23:06:06.964Z"
+
+[[edge]]
+from = "br-pac3"
+to = "br-zn6s"
+kind = "blocks"
+created_at = "2026-10-13T23:06:06.966Z"
+
+[[edge]]
+from = "br-rdkn"
+to = "br-a65d"
+kind = "parent"
+created_at = "2026-10-13T23:06:06.968Z"
+
+[[edge]]
+from = "br-a65d"
+to = "br-ktgd"
+kind = "related"
+created_at = "2026-10-13T23:06:06.970Z"
+
+[[edge]]
+from = "br-pac3"
+to = "br-ktgd"
+kind = "related"
+created_at = "2026-10-13T23:06:06.973Z"
+
+[[edge]]
+from = "br-rdkn"
+to = "br-pac3"
+kind = "parent"
+created_at = "2026-10-13T23:06:06.975Z"
