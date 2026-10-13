@@ -2,11 +2,14 @@
 id = "br-63nr"
 title = "Usage wake re-fires every poll while utilization hovers at the threshold"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-13T22:40:28.112Z"
-updated_at = "2026-10-13T23:21:33.713029Z"
+updated_at = "2026-10-13T23:32:34.246604Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "agent:63nr",
+]
 ticket = "63nr"
 +++
 
