@@ -2,9 +2,9 @@
 id = "br-vynr"
 title = "The orchestrator's relaunch after a handover stalls until tmux gets focus, and no incident fires"
 kind = "fix"
-state = "built"
+state = "integrated"
 created_at = "2026-10-13T03:09:39.758Z"
-updated_at = "2026-10-13T03:31:20.359876Z"
+updated_at = "2026-10-13T04:07:30.182359Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -13,7 +13,7 @@ watchers = [
 priority = "critical"
 priority_at = "2026-10-13T03:09:48.923693Z"
 branch = "bridle/wvynr"
-commit = "cd2a16b1"
+commit = "7f628d85835ecc9b1be0cc8e48cd508cb847b32a"
 summary = "A: the relaunch now runs tmux respawn-pane -k (fresh pty, no client needed) before typing the launcher; a relaunch unconfirmed after 60 s files an incident, and the retry runs the launcher as the pane's process with no keystrokes. Cause not reproduced (tmux focus/raw tty is the reporter's guess; stated in a code comment). B: the code already counts only external:orchestrator waits in waiter_open (opened() is called only from the orchestrator wake path); added a daemon test that an advisor wait leaves waiter_open false. The vesta report may have been an older daemon or the aide waiting as the orchestrator identity; unverified. Tests use the fake tmux; no real-tmux test. Docs: orchestrator-supervision.md section 4, CHANGELOG."
 ticket = "vynr"
 +++
@@ -48,3 +48,9 @@ done: relaunch respawns pane first, incident + keystroke-free retry when unconfi
 
 ### note · external:orchestrator · 2026-10-13T03:31:20.359Z
 Orchestrator review: A accepted. On B, the report's point was that waiter_open was false and still no incident fired. The reason: check_waiter (orchestrator.rs) runs only while an orchestrator session is live, and on vesta none was (the relaunch never started), so the no-waiter incident couldn't fire. A's new 'relaunch unconfirmed after 60 s' incident covers exactly that gap, so no follow-up. Fine to land once main is green (flake br-tmmj; reruns in progress).
+
+### note · agent:manager-2 · 2026-10-13T04:07:13.199Z
+integrated: 7f628d85835ecc9b1be0cc8e48cd508cb847b32a (branch bridle/wvynr)
+
+### note · agent:manager-2 · 2026-10-13T04:07:30.182Z
+cleanup: removed agent wvynr, branch bridle/wvynr
