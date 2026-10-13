@@ -26,6 +26,21 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-12 03:31Z and 15:42Z: vesta's orchestrator relaunch stalled until tmux got focus
+
+- **What happened:** after handovers h-0034 and h-0035 (meta-notes, on vesta) the relaunch never
+  ran. The first time the human found a dead pane with `^M`s at 03:42 and pressed Ctrl-C. The
+  second time the launcher command was typed five times and echoed as
+  `.bridle/claude-orchestrator^M`; it started at 22:13:04 the moment the human focused tmux.
+  Reported by the meta-notes aide (the human: "Yes ok but report."), relayed by aide@nuc (m-11894).
+- **Impact:** about 6.5 h with no orchestrator for vesta's four daemons (meta-notes, notes,
+  meta-notes-ui, dotfiles-local), plus about 10 min the first time. No incident was raised: the
+  aide's own waiter counted as a waiter.
+- **Cause:** unknown. The guess is that the terminal teardown waits for a terminal reply that only
+  arrives while a client has focus, leaving the tty in raw mode.
+- **Category:** `host`, `daemon`, `messaging`.
+- **Follow-up:** br-vynr (critical, ready).
+
 ## 2026-10-12 23:14Z: project daemons on dalek stuck on 0.6.1
 
 - **What happened:** worker usage-page's `bridle ticket built` on bridle-ui failed with a bare
