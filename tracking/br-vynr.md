@@ -4,7 +4,7 @@ title = "The orchestrator's relaunch after a handover stalls until tmux gets foc
 kind = "fix"
 state = "planned"
 created_at = "2026-10-13T03:09:39.758Z"
-updated_at = "2026-10-13T03:10:02.593942Z"
+updated_at = "2026-10-13T03:10:24.204115Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 priority = "critical"
@@ -30,3 +30,6 @@ A. The relaunch must not depend on tmux focus. Read the ask's evidence first. St
 B. The no-waiter incident counts only the orchestrator's waiter: in crates/bridle-daemon/src/server.rs find the waiter tracking (`waiter_open`) and the 15-minute incident; an external session of another identity (an aide's waiter) must not satisfy it. Test: only an aide waiter open -> the incident still fires after the interval (use the existing clock/test hooks).
 
 Docs: docs/design/agent-host/orchestrator-supervision.md (or wherever the relaunch and the incident are described), CHANGELOG.md. Migration: none. Out of scope: br-5j35 (restart from inside a session), the interactive-session redesign.
+
+### note · external:orchestrator · 2026-10-13T03:10:24.204Z
+settle skipped by external:orchestrator: critical: machines can be left with no orchestrator after a handover (orchestrator)
