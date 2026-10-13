@@ -116,7 +116,9 @@ same incident.
 
 ## 4. Relaunch and crash-loop prevention
 
-To relaunch: `tmux send-keys -t <pane_id> -l 'bridle session orchestrator --project <project>'` (or `[orchestrator] launcher`, verbatim; the
+To relaunch: first `tmux respawn-pane -k -t <pane_id>` (br-vynr: a fresh shell in a fresh pty; it
+needs no attached client, and typed text had sat as `^M` in a pane until a human focused tmux; the
+cause was not reproduced), then `tmux send-keys -t <pane_id> -l 'bridle session orchestrator --project <project>'` (or `[orchestrator] launcher`, verbatim; the
 pane's shell finds `bridle` on its PATH, as the advisor relaunch does), then a separate
 `tmux send-keys -t <pane_id> Enter` (spike #7; the two calls are the tested form). The launcher
 does `cd`, writes the pid file and starts `claude` with a one-line prompt telling it to run
@@ -125,7 +127,9 @@ worker's `pkill -f <pattern>`, which is how two sessions died (fx7x). A fresh se
 
 A launch is *confirmed* when the pid file changes to a live pid within 60 s. A launch that isn't
 confirmed (the trust prompt of spike Surprise 2, a broken launcher) counts as a failed relaunch
-and the pane is then not typed into again until the backoff has passed.
+and the pane is then not typed into again until the backoff has passed. It also files an incident,
+and the next attempt types nothing: `tmux respawn-pane -k` runs the launcher as the pane's process
+(`<launcher>; exec $SHELL`, so the pane returns to a shell when it exits).
 
 Crash loop: the supervisor keeps `attempts` and `last_attempt` in memory:
 

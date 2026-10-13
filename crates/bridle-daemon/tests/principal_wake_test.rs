@@ -453,6 +453,20 @@ async fn a_waiter_open_during_a_restart_is_told_why_and_the_event_counts_it() {
     daemon.running.join().await.expect("join");
 }
 
+// br-vynr: the no-orchestrator-waiter incident reads `waiter_open`; another identity's wait
+// (an aide's, an advisor's) must not satisfy it.
+#[tokio::test]
+async fn another_identitys_wait_is_not_the_orchestrators_waiter() {
+    let (daemon, _tmp) = support::start_daemon(None).await;
+    let advisor = daemon.external_client("advisor").await;
+    let waiting =
+        tokio::spawn(async move { advisor.principal_wake(&query("external:advisor", 60)).await });
+    tokio::time::sleep(Duration::from_millis(300)).await;
+    let status = daemon.client.status().await.expect("status");
+    assert!(!status.waiter_open, "{status:?}");
+    waiting.abort();
+}
+
 #[tokio::test]
 async fn a_new_wait_from_the_same_session_replaces_the_old_one() {
     let (daemon, _tmp) = support::start_daemon(None).await;

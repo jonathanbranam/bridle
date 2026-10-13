@@ -43,6 +43,9 @@ pub trait Tmux: Send + Sync {
     async fn pane_command(&self, pane: &str) -> Result<String, String>;
     /// Types `text` literally, then a separate Enter (spike 07 #7).
     async fn type_line(&self, pane: &str, text: &str) -> Result<(), String>;
+    /// Restarts the pane's process in a fresh pty (`respawn-pane -k`): the pane's shell when
+    /// `command` is `None`, else `command` run by tmux's shell. Needs no attached client.
+    async fn respawn(&self, pane: &str, command: Option<&str>) -> Result<(), String>;
 }
 
 pub trait Procs: Send + Sync {
@@ -340,6 +343,12 @@ impl<T: Tmux, P: Procs, I: Incidents, W: WakeSink, E: EventEmitter> Supervisor<T
             }
             // Never confirmed (the trust prompt, a broken launcher): a failed relaunch.
             st.pending = None;
+            let text = format!(
+                "The orchestrator relaunch at {} did not start a session within {} s; trying again another way.",
+                at.format("%H:%M:%S UTC"),
+                CONFIRM_WITHIN.as_secs()
+            );
+            self.report(&mut st, text).await;
         }
         // A restart we caused is not a crash: no backoff, no count, and it can't give up.
         let free = st.deliberate.is_some();
@@ -421,7 +430,21 @@ impl<T: Tmux, P: Procs, I: Incidents, W: WakeSink, E: EventEmitter> Supervisor<T
         }
         st.shell_seen = None;
         tracing::info!(pane = %pane, attempt = st.attempts, free, "relaunching the orchestrator");
-        match self.tmux.type_line(&pane, &self.launcher).await {
+        // br-vynr: on vesta typed launchers sat in the pane as `^M` until a human focused tmux.
+        // The cause is not reproduced (the tty may have been left raw by Claude's teardown, as
+        // the reporter guessed), so the pane gets a fresh pty before anything is typed, and a
+        // relaunch that then never confirms is retried without keystrokes at all: tmux runs the
+        // launcher as the pane's process. Neither needs an attached client.
+        let started = if free || st.attempts <= 1 {
+            match self.tmux.respawn(&pane, None).await {
+                Ok(()) => self.tmux.type_line(&pane, &self.launcher).await,
+                Err(e) => Err(e),
+            }
+        } else {
+            let direct = format!("{}; exec \"${{SHELL:-sh}}\"", self.launcher);
+            self.tmux.respawn(&pane, Some(&direct)).await
+        };
+        match started {
             Ok(()) => st.pending = Some(now),
             Err(e) => {
                 self.report(&mut st, format!("Relaunching the orchestrator failed: {e}"))
@@ -780,6 +803,12 @@ impl Tmux for RealTmux {
         Self::run(&["send-keys", "-t", pane, "Enter"]).await?;
         Ok(())
     }
+
+    async fn respawn(&self, pane: &str, command: Option<&str>) -> Result<(), String> {
+        let mut args = vec!["respawn-pane", "-k", "-t", pane];
+        args.extend(command);
+        Self::run(&args).await.map(|_| ())
+    }
 }
 
 /// The last `assistant` entry's usage in a transcript: input + cache creation + cache read
@@ -969,6 +998,8 @@ mod tests {
         panes: StdMutex<Vec<(String, String)>>,
         command: StdMutex<String>,
         typed: StdMutex<Vec<(String, String)>>,
+        /// `(pane, command)` for every respawn; `None` is a fresh shell.
+        respawned: StdMutex<Vec<(String, Option<String>)>>,
     }
     impl Tmux for Arc<FakeTmux> {
         async fn panes(&self) -> Result<Vec<(String, String)>, String> {
@@ -979,6 +1010,13 @@ mod tests {
         }
         async fn type_line(&self, pane: &str, text: &str) -> Result<(), String> {
             self.typed.lock().unwrap().push((pane.into(), text.into()));
+            Ok(())
+        }
+        async fn respawn(&self, pane: &str, command: Option<&str>) -> Result<(), String> {
+            self.respawned
+                .lock()
+                .unwrap()
+                .push((pane.into(), command.map(str::to_string)));
             Ok(())
         }
     }
@@ -1143,8 +1181,17 @@ mod tests {
             self.procs.signals.lock().unwrap().clone()
         }
 
+        /// Launch attempts: a typed line, or a direct respawn running the launcher.
         fn typed(&self) -> usize {
             self.tmux.typed.lock().unwrap().len()
+                + self
+                    .tmux
+                    .respawned
+                    .lock()
+                    .unwrap()
+                    .iter()
+                    .filter(|(_, c)| c.is_some())
+                    .count()
         }
 
         fn incidents(&self) -> Vec<String> {
@@ -1258,6 +1305,36 @@ mod tests {
             )]
         );
         assert!(r.incidents()[0].contains("not running"));
+        assert_eq!(
+            *r.tmux.respawned.lock().unwrap(),
+            vec![("%2".to_string(), None)],
+            "the pane gets a fresh pty before the launcher is typed"
+        );
+    }
+
+    #[tokio::test]
+    async fn an_unconfirmed_relaunch_is_an_incident_and_retried_without_keystrokes() {
+        let r = Rig::new();
+        r.write_pid(10, r.t0.timestamp() - 1000);
+        r.relaunch(0).await;
+        assert_eq!(r.tmux.typed.lock().unwrap().len(), 1);
+        r.relaunch(70).await;
+        assert!(
+            r.incidents()
+                .iter()
+                .any(|t| t.contains("did not start a session")),
+            "{:?}",
+            r.incidents()
+        );
+        assert_eq!(r.tmux.typed.lock().unwrap().len(), 1, "nothing more typed");
+        let respawned = r.tmux.respawned.lock().unwrap().clone();
+        let (pane, cmd) = respawned.last().unwrap();
+        assert_eq!(pane, "%2");
+        assert!(
+            cmd.as_deref()
+                .unwrap()
+                .starts_with("bridle session orchestrator --project proj; exec")
+        );
     }
 
     #[tokio::test]
