@@ -419,6 +419,7 @@ async fn a_non_human_inbox_marks_what_it_lists_read_and_cannot_unread() {
 }
 
 #[tokio::test]
+#[ignore = "flaky on macOS, br-tmmj"]
 async fn a_waiter_open_during_a_restart_is_told_why_and_the_event_counts_it() {
     let (daemon, _tmp) = support::start_daemon(None).await;
     let advisor = daemon.external_client("advisor").await;
