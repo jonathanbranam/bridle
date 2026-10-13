@@ -2,11 +2,14 @@
 id = "br-vynr"
 title = "The orchestrator's relaunch after a handover stalls until tmux gets focus, and no incident fires"
 kind = "fix"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-13T03:09:39.758Z"
-updated_at = "2026-10-13T03:10:24.204115Z"
+updated_at = "2026-10-13T03:10:43.132147Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "agent:wvynr",
+]
 priority = "critical"
 priority_at = "2026-10-13T03:09:48.923693Z"
 ticket = "vynr"
