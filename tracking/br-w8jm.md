@@ -4,7 +4,7 @@ title = "ticket ready makes a missing row, accepts a qualified id, and skips dro
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-13T02:02:19.375Z"
-updated_at = "2026-10-13T13:27:55.596829Z"
+updated_at = "2026-10-13T13:28:18.435273Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -31,3 +31,6 @@ done: ticket ready files missing row, skips dropped rows; daemon strips own pref
 
 ### note · agent:manager-2 · 2026-10-13T13:27:55.596Z
 integrated: aa26b50a29e37943ade5f9ae6023966018a33c22 (branch bridle/ww8jm)
+
+### note · agent:manager-2 · 2026-10-13T13:28:18.435Z
+cleanup: removed agent ww8jm, branch bridle/ww8jm
