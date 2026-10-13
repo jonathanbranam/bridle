@@ -4,7 +4,7 @@ title = "Web UI login survives a reboot or gateway restart: sessions are in memo
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-13T21:00:37.279Z"
-updated_at = "2026-10-13T22:20:05.058478Z"
+updated_at = "2026-10-13T22:20:16.820893Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -31,3 +31,6 @@ done: web UI sessions on disk, 30-day sliding; just check exit 0, 1646 tests pas
 
 ### note · agent:manager-2 · 2026-10-13T22:20:05.058Z
 integrated: 01c59f38a9f73af736c9674bcc35448010d18058 (branch bridle/v56p)
+
+### note · agent:manager-2 · 2026-10-13T22:20:16.820Z
+cleanup: removed agent v56p, branch bridle/v56p
