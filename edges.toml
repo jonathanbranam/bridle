@@ -2853,3 +2853,9 @@ from = "br-njjt"
 to = "br-rdkn"
 kind = "related"
 created_at = "2026-10-13T00:15:10.187Z"
+
+[[edge]]
+from = "br-vdu8"
+to = "br-tgxy"
+kind = "blocks"
+created_at = "2026-10-13T02:01:40.025Z"
