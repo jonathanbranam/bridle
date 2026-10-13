@@ -26,3 +26,13 @@ For bridle (aide's reading; the design is open):
 - Any number of agents can run one at once (free ports, separate directories); each stops only its own (by pid, never by name).
 - Agents and the aide can drive it in a browser (log in, click, read the page) to verify a task before calling it done. The bridle-ui worker role/brief says to.
 - The human said this is critical for all software: the approach should carry to other web projects (track-web already has its own), e.g. as a rule or pack.
+
+## Again, 2026-10-12 ~9 PM ET (to advisor product-manager)
+
+The human, verbatim: "there should be some sort of a dev setup here for the agents to inspect the results of things. ... Changes are getting shipped without an agent ever looking at the web page at all, let alone testing it, and the results are pretty subpar. I've had a lot better results when the agents can use Playwright and look at some pages, even click around and try out things. The results are far, far better. Probably even the worker agent should be able to do that, the one who's actually building it, but definitely before something's merged, somebody needs to be able to click around on the site. That means two things: 1. The site needs to be able to come up in some sort of test dev version that's got a free port that's available just for that agent. 2. Something like Playwright needs to be installed so they can click and view pages."
+
+And: "Long term, you could make an epic for user interface testing or something similar for bridle, but we need a much, much better approach to this."
+
+Example (advisor product-manager): ui-mxkj (per-agent usage chart) merged 2026-10-12 with "e2e unverified"; nobody had opened the page.
+
+Status: designed in docs/design/dev-site.md (2026-10-06), build tickets vdu8, dgef, tgxy, none scheduled yet. `playwright-cli` is installed on dalek (track-web uses it). New since the design: the pre-merge click-through (see tgxy).
