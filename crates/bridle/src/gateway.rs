@@ -97,7 +97,13 @@ pub async fn run(cli: &Cli, args: &GatewayArgs) -> Result<(), CliError> {
     let _pid_file = bridle_gateway::PidFile::write(&home).context("writing the pid file")?;
     let mut sigterm = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
         .context("installing the SIGTERM handler")?;
-    let serving = bridle_gateway::serve(listener, config.login, config.ui, interactions);
+    let serving = bridle_gateway::serve(
+        listener,
+        config.login,
+        Some(home.join("gateway-sessions.json")),
+        config.ui,
+        interactions,
+    );
     tokio::select! {
         r = serving => r.context("gateway")?,
         _ = sigterm.recv() => tracing::info!("SIGTERM; shutting down"),

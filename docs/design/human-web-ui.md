@@ -121,7 +121,11 @@ actions as writes and refuses the rest, so a stolen session can answer and check
   `just` target for `bridle-ui` to consume. (utoipa plus openapi-typescript only if a full
   endpoint spec becomes worth it.)
 - **Login:** username and password; the `argon2` hash lives in the machine config. Generate it with `bridle gateway hash-password` (reads from stdin or a terminal prompt, asks for confirmation on a terminal). A successful
-  login sets an `HttpOnly`, `SameSite=Strict` session cookie. Reached over Tailscale (bind the
+  login sets an `HttpOnly`, `SameSite=Strict` session cookie. Sessions last 30 days, sliding
+  (each use pushes the expiry out), and live in `<bridle home>/gateway-sessions.json` (mode 0600,
+  written atomically, keyed by a sha256 of the cookie value, so the file can't be replayed). They
+  survive a gateway restart or a reboot; logout deletes the session. The slide is written at most
+  hourly. A missing or corrupt file just means everyone logs in again. Reached over Tailscale (bind the
   Tailscale or loopback address, never 0.0.0.0); `tailscale serve` can add HTTPS.
 - **The UI** is its own TypeScript repo, `bridle-ui`, beside `bridle/`. Its build output is
   installed into a folder the gateway serves, **`~/.bridle/ui/`**, so page and API share an

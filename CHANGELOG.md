@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- The web UI login survives a gateway restart or reboot: sessions are kept on disk (`<bridle home>/gateway-sessions.json`, hashed, mode 0600) and last 30 days, sliding, instead of 12 hours in memory (br-v56p). Migration: none; everyone logs in once after the upgrade.
 - `bridle ticket ready` files the row of a ticket file that has none, prefers a pending row over a dropped duplicate, and the daemon strips its own prefix from a qualified `ticket` on `POST /v1/tasks` (no more `br-br-xxxx`) (br-w8jm). Migration: none.
 
 ## [0.7.1] - 2026-10-13

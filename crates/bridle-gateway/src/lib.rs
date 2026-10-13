@@ -37,8 +37,13 @@ pub const API_VERSION: u32 = 1;
 
 /// Only health and login are open; everything else, even a path that doesn't exist yet, needs
 /// a session. With no `login` nobody can get one, so only health answers.
-pub fn router(login: Option<Login>, ui: UiConfig, interactions: report::Interactions) -> Router {
-    let auth = auth::Auth::new(login);
+pub fn router(
+    login: Option<Login>,
+    sessions_path: Option<std::path::PathBuf>,
+    ui: UiConfig,
+    interactions: report::Interactions,
+) -> Router {
+    let auth = auth::Auth::new(login, sessions_path);
     let human_time = Router::new()
         .route("/interactions/report", get(report::report))
         .route("/interactions/day", get(report::day))
@@ -236,6 +241,7 @@ pub async fn binary_changed(path: &std::path::Path, every: std::time::Duration) 
 pub async fn serve(
     listener: TcpListener,
     login: Option<Login>,
+    sessions_path: Option<std::path::PathBuf>,
     ui: UiConfig,
     interactions: report::Interactions,
 ) -> std::io::Result<()> {
@@ -243,7 +249,7 @@ pub async fn serve(
         tracing::info!(%addr, "gateway listening");
     }
     ui::log_status(&ui);
-    axum::serve(listener, router(login, ui, interactions)).await
+    axum::serve(listener, router(login, sessions_path, ui, interactions)).await
 }
 
 #[cfg(test)]
@@ -417,7 +423,7 @@ mod tests {
         };
         let listener = bind(&config).await.expect("bind");
         let addr = listener.local_addr().expect("addr");
-        let server = tokio::spawn(serve(listener, None, no_ui(), no_interactions()));
+        let server = tokio::spawn(serve(listener, None, None, no_ui(), no_interactions()));
         let body: Value = reqwest::get(format!("http://{addr}/api/v1/health"))
             .await
             .expect("get")
@@ -439,7 +445,7 @@ mod tests {
     async fn start_ui(login: Option<Login>, ui: UiConfig) -> String {
         let listener = TcpListener::bind("127.0.0.1:0").await.expect("bind");
         let addr = listener.local_addr().expect("addr");
-        tokio::spawn(serve(listener, login, ui, no_interactions()));
+        tokio::spawn(serve(listener, login, None, ui, no_interactions()));
         format!("http://{addr}{API_PREFIX}")
     }
 
