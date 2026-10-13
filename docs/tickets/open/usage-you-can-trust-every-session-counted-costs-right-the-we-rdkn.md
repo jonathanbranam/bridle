@@ -35,5 +35,6 @@ The human can see, and trust, where the account's token budget goes: every sessi
 - br-hd28: count the external and interactive sessions (answers br-368g)
 - br-yydm: the gateway route for the limit history; ui-u6uz: the Usage page with the limit charts
 - br-xfy7: usage per agent instance over time; ui-mxkj: pick an agent and chart it
+- br-njjt: the external sessions chart like instances (xfy7's item 3, not built in xfy7)
 
 Later, in the theme, not this epic: br-qhsa (gateway usage routes), br-n4p9 (which projects and agents use tokens), br-kpgy (bridle work vs real projects), br-jxwr (task timing).
