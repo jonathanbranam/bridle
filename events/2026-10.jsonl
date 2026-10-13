@@ -1893,3 +1893,4 @@
 {"actor":"agent:pm-1","at":"2026-10-13T22:03:49.742904Z","queue":"reprioritized"}
 {"actor":"agent:v56p","at":"2026-10-13T22:19:58.548529Z","from":"claimed","task":"br-v56p","to":"built"}
 {"actor":"agent:manager-2","at":"2026-10-13T22:20:05.058478Z","from":"built","task":"br-v56p","to":"integrated"}
+{"actor":"human","at":"2026-10-13T22:20:53.849Z","from":"","task":"br-ry8z","to":"pending"}
