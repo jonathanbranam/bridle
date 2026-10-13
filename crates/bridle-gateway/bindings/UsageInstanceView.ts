@@ -3,7 +3,11 @@
 /**
  * One agent instance with usage in a period (the daemon's `/v1/usage/agents`).
  */
-export type UsageInstanceView = { agent_id: string, name: string, role: string, model: string, removed: boolean, turns: number, cost_usd: number, 
+export type UsageInstanceView = { agent_id: string, name: string, role: string, model: string, removed: boolean, 
+/**
+ * An external (unbridled) session: `agent_id` is its identity, `turns` is null.
+ */
+external: boolean, turns: number | null, cost_usd: number, 
 /**
  * RFC 3339, UTC.
  */

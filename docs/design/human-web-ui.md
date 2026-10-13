@@ -243,7 +243,7 @@ The limits are account-wide, so the project only picks the daemon.
 `GET .../usage/agents?since=` returns `UsageInstances {project, instances}` (the instances with
 usage, live and removed, latest first) and `GET .../usage/agents/{agent_id}/series?since=&bucket=hour|day`
 returns `UsageSeriesView {project, agent_id, bucket, points}`, each point the usage of one
-bucket (`start`, turns, the four token counts, `cost_usd`, `busy_seconds`; empty buckets absent) (br-xfy7). An unknown project is 404. **Dropped, by building the wire types from an
+bucket (`start`, turns, the four token counts, `cost_usd`, `busy_seconds`; empty buckets absent) (br-xfy7). External sessions are instances too (br-njjt): `external: true`, `agent_id` the identity, and `turns` / `busy_seconds` null (not measured). An unknown project is 404. **Dropped, by building the wire types from an
 allow-list:** the principal; the daemon's workspace, repo and URL; an agent's session id, pid,
 cwd, worktree, created_by and message counts; a session's pid, pane and Claude session id. No
 token or credential path is in the daemon's status or agent records. Not built: servers and ports

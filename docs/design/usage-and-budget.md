@@ -106,7 +106,11 @@ groups omit it. `bridle usage --agent <name|id> [--since 7d] [--bucket hour|day]
 `GET /v1/usage/agents/{agent_id}/series`, with `GET /v1/usage/agents` listing the
 instances to pick from) charts one agent instance over time from the same ledger,
 so a removed agent works too; the buckets add up to its `--by agent` row. External
-sessions (above) are not in the turns ledger and are not instances here.
+identities (above) are listed and charted the same way (njjt): one `external: true`
+instance per identity, `agent_id` = the identity (`external:advisor/pm`), buckets of the
+stored per-report deltas, summing to its external `--by agent` row. Turns and busy time
+aren't reported by the statusline, so they are `null` (not zero); a report without a
+session id has no delta and is left out.
 `--since` accepts a plain `<n><unit>` duration (`s`/`m`/`h`/`d`,
 e.g. `30d`) and keeps only turns started within it. Task, project and kind
 grouping, and `bridle usage task`/`trend`/`compare` below, are not built: they need the ledger's task, kind and

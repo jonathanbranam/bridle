@@ -105,7 +105,13 @@ async fn usage_agent_series(
         "{} ({}), {}",
         inst.name,
         inst.agent_id,
-        if inst.removed { "removed" } else { "live" }
+        if inst.external {
+            "external"
+        } else if inst.removed {
+            "removed"
+        } else {
+            "live"
+        }
     );
     println!(
         "{:<16} {:>5} {:>10} {:>10} {:>10} {:>10} {:>9} {:>8}",
@@ -115,18 +121,22 @@ async fn usage_agent_series(
         println!(
             "{:<16} {:>5} {:>10} {:>10} {:>10} {:>10} {:>9} {:>8}",
             p.start.format(fmt),
-            p.turns,
+            p.turns.map_or("-".to_string(), |t| t.to_string()),
             format_tokens(p.tokens.input),
             format_tokens(p.tokens.output),
             format_tokens(p.tokens.cache_read),
             format_tokens(p.tokens.cache_write),
             format_cost_dollars(p.cost_usd),
-            format_duration_secs(p.busy_seconds),
+            p.busy_seconds.map_or("-".to_string(), format_duration_secs),
         );
     }
     let cost: f64 = series.points.iter().map(|p| p.cost_usd).sum();
-    let turns: u32 = series.points.iter().map(|p| p.turns).sum();
-    println!("total: {turns} turns, ${}", format_cost_dollars(cost));
+    if inst.external {
+        println!("total: ${}", format_cost_dollars(cost));
+    } else {
+        let turns: u32 = series.points.iter().filter_map(|p| p.turns).sum();
+        println!("total: {turns} turns, ${}", format_cost_dollars(cost));
+    }
     Ok(())
 }
 

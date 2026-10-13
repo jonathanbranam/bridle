@@ -4,4 +4,12 @@ export type UsageSeriesBucket = {
 /**
  * RFC 3339, UTC: the start of the bucket.
  */
-start: string, turns: number, input_tokens: bigint, output_tokens: bigint, cache_read_tokens: bigint, cache_write_tokens: bigint, cost_usd: number, busy_seconds: bigint, };
+start: string, 
+/**
+ * Null for an external session (not measured).
+ */
+turns: number | null, input_tokens: bigint, output_tokens: bigint, cache_read_tokens: bigint, cache_write_tokens: bigint, cost_usd: number, 
+/**
+ * Null for an external session (not measured).
+ */
+busy_seconds: bigint | null, };

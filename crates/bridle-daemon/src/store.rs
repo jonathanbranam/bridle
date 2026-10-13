@@ -4122,12 +4122,18 @@ mod sync {
         }
     }
 
+    const EXTERNAL_PREFIX: &str = "external:";
+    const UNBRIDLED: &str = "external:unbridled";
+
     pub(super) fn usage_series(
         conn: &Connection,
         agent_id: &str,
         since: Option<DateTime<Utc>>,
         bucket: UsageBucket,
     ) -> Result<UsageSeries, StoreError> {
+        if agent_id.starts_with(EXTERNAL_PREFIX) {
+            return external_series(conn, agent_id, since, bucket);
+        }
         let since_str = since.map(fmt_dt);
         let mut stmt = conn.prepare(
             "SELECT started_at, ended_at, input_tokens, output_tokens, cache_read, cache_write,
@@ -4152,19 +4158,19 @@ mod sync {
                 .unwrap_or(started);
             let p = points.entry(start).or_insert_with(|| UsageSeriesPoint {
                 start,
-                turns: 0,
+                turns: Some(0),
                 tokens: TokenTotals::default(),
                 cost_usd: 0.0,
-                busy_seconds: 0,
+                busy_seconds: Some(0),
             });
-            p.turns += 1;
+            *p.turns.get_or_insert(0) += 1;
             p.tokens.input += t[0];
             p.tokens.output += t[1];
             p.tokens.cache_read += t[2];
             p.tokens.cache_write += t[3];
             p.cost_usd += cost;
             if let Some(e) = parse_dt_opt(ended)? {
-                p.busy_seconds += (e - started).num_seconds().max(0) as u64;
+                *p.busy_seconds.get_or_insert(0) += (e - started).num_seconds().max(0) as u64;
             }
         }
         Ok(UsageSeries {
@@ -4173,6 +4179,110 @@ mod sync {
             since,
             points: points.into_values().collect(),
         })
+    }
+
+    /// An external identity's series: the per-report deltas `record_interactive_usage` stored,
+    /// bucketed by report time, so the points add up to its group in the `by=agent` breakdown.
+    /// Turns and busy time aren't reported, so they stay `None`; a row with no delta (no
+    /// session id) has nothing to bucket.
+    fn external_series(
+        conn: &Connection,
+        identity: &str,
+        since: Option<DateTime<Utc>>,
+        bucket: UsageBucket,
+    ) -> Result<UsageSeries, StoreError> {
+        let mut stmt = conn.prepare(
+            "SELECT observed_at, cost_delta, input_delta, output_delta
+             FROM interactive_usage
+             WHERE COALESCE(identity, ?3) = ?1 AND (?2 IS NULL OR observed_at >= ?2)
+               AND (cost_delta IS NOT NULL OR input_delta IS NOT NULL OR output_delta IS NOT NULL)
+             ORDER BY observed_at",
+        )?;
+        let rows = stmt.query_map(params![identity, since.map(fmt_dt), UNBRIDLED], |r| {
+            Ok((
+                r.get::<_, String>(0)?,
+                r.get::<_, Option<f64>>(1)?,
+                r.get::<_, Option<i64>>(2)?,
+                r.get::<_, Option<i64>>(3)?,
+            ))
+        })?;
+        let secs = bucket_secs(bucket);
+        let mut points: BTreeMap<DateTime<Utc>, UsageSeriesPoint> = BTreeMap::new();
+        for row in rows {
+            let (at, cost, input, output) = row?;
+            let at = parse_dt(&at)?;
+            let start =
+                DateTime::from_timestamp(at.timestamp().div_euclid(secs) * secs, 0).unwrap_or(at);
+            let p = points.entry(start).or_insert_with(|| UsageSeriesPoint {
+                start,
+                turns: None,
+                tokens: TokenTotals::default(),
+                cost_usd: 0.0,
+                busy_seconds: None,
+            });
+            p.cost_usd += cost.unwrap_or(0.0);
+            p.tokens.input += input.unwrap_or(0).max(0) as u64;
+            p.tokens.output += output.unwrap_or(0).max(0) as u64;
+        }
+        Ok(UsageSeries {
+            agent_id: identity.to_string(),
+            bucket,
+            since,
+            points: points.into_values().collect(),
+        })
+    }
+
+    /// External identities with reports in the period, as instances: the identity is the id and
+    /// name, the first path part of it the role.
+    fn external_instances(
+        conn: &Connection,
+        since: Option<DateTime<Utc>>,
+    ) -> Result<Vec<UsageInstance>, StoreError> {
+        let mut stmt = conn.prepare(
+            "SELECT COALESCE(identity, ?2), model, cost_delta, observed_at
+             FROM interactive_usage
+             WHERE (?1 IS NULL OR observed_at >= ?1)
+               AND (cost_delta IS NOT NULL OR input_delta IS NOT NULL OR output_delta IS NOT NULL)
+             ORDER BY observed_at",
+        )?;
+        let rows = stmt.query_map(params![since.map(fmt_dt), UNBRIDLED], |r| {
+            Ok((
+                r.get::<_, String>(0)?,
+                r.get::<_, Option<String>>(1)?,
+                r.get::<_, Option<f64>>(2)?,
+                r.get::<_, String>(3)?,
+            ))
+        })?;
+        let mut by_id: BTreeMap<String, UsageInstance> = BTreeMap::new();
+        for row in rows {
+            let (id, model, cost, at) = row?;
+            let at = parse_dt(&at)?;
+            let inst = by_id.entry(id.clone()).or_insert_with(|| UsageInstance {
+                role: id
+                    .strip_prefix(EXTERNAL_PREFIX)
+                    .unwrap_or(&id)
+                    .split('/')
+                    .next()
+                    .unwrap_or_default()
+                    .to_string(),
+                agent_id: id.clone(),
+                name: id.clone(),
+                model: "unknown".to_string(),
+                removed: false,
+                external: true,
+                turns: None,
+                cost_usd: 0.0,
+                first_turn_at: at,
+                last_turn_at: at,
+            });
+            // Rows come oldest first, so the newest model wins.
+            if let Some(m) = model {
+                inst.model = m;
+            }
+            inst.cost_usd += cost.unwrap_or(0.0);
+            inst.last_turn_at = at;
+        }
+        Ok(by_id.into_values().collect())
     }
 
     pub(super) fn usage_instances(
@@ -4212,12 +4322,15 @@ mod sync {
                 role,
                 model,
                 removed: !live,
-                turns: turns as u32,
+                external: false,
+                turns: Some(turns as u32),
                 cost_usd,
                 first_turn_at: parse_dt(&first)?,
                 last_turn_at: parse_dt(&last)?,
             });
         }
+        out.extend(external_instances(conn, since)?);
+        out.sort_by_key(|a| std::cmp::Reverse(a.last_turn_at));
         Ok(out)
     }
 
@@ -5538,7 +5651,7 @@ mod tests {
         assert_eq!(inst.len(), 1);
         assert!(inst[0].removed);
         assert_eq!(inst[0].name, "w1");
-        assert_eq!(inst[0].turns, 4);
+        assert_eq!(inst[0].turns, Some(4));
         assert_eq!(inst[0].first_turn_at, base);
 
         let hourly = store
@@ -5546,7 +5659,7 @@ mod tests {
             .await
             .expect("hourly");
         assert_eq!(hourly.points.len(), 3);
-        assert_eq!(hourly.points[0].turns, 2);
+        assert_eq!(hourly.points[0].turns, Some(2));
         assert!((hourly.points[0].cost_usd - 3.0).abs() < 1e-9);
 
         let daily = store
@@ -5559,7 +5672,7 @@ mod tests {
             .await
             .expect("breakdown");
         for series in [&hourly, &daily] {
-            let turns: u32 = series.points.iter().map(|p| p.turns).sum();
+            let turns: u32 = series.points.iter().filter_map(|p| p.turns).sum();
             let cost: f64 = series.points.iter().map(|p| p.cost_usd).sum();
             let input: u64 = series.points.iter().map(|p| p.tokens.input).sum();
             assert_eq!(turns, bd.total_turns);
@@ -5987,6 +6100,47 @@ mod tests {
         assert_eq!(by_role[0].key, "advisor");
         assert_eq!(by_role[0].sessions, 2);
         assert_eq!(by_role[0].cost_usd, Some(2.5));
+    }
+
+    /// An external session is listed and charted like an instance, and its buckets add up to
+    /// the `by=agent` external totals; turns and busy time stay unmeasured.
+    #[tokio::test]
+    async fn external_sessions_list_and_chart_like_instances() {
+        let (store, _tmp) = store().await;
+        let mut r1 = external_row("s1", "external:advisor/a", Some(10.0), Some(100));
+        let mut r2 = external_row("s1", "external:advisor/a", Some(12.5), Some(180));
+        r1.observed_at = DateTime::parse_from_rfc3339("2026-10-10T10:00:00Z")
+            .expect("ts")
+            .with_timezone(&Utc);
+        r2.observed_at = r1.observed_at + chrono::Duration::hours(3);
+        store.record_interactive_usage(r1).await.expect("1");
+        store.record_interactive_usage(r2).await.expect("2");
+
+        let inst = store.usage_instances(None).await.expect("instances");
+        assert_eq!(inst.len(), 1);
+        assert!(inst[0].external && !inst[0].removed);
+        assert_eq!(inst[0].agent_id, "external:advisor/a");
+        assert_eq!(inst[0].role, "advisor");
+        assert_eq!(inst[0].turns, None);
+        assert!((inst[0].cost_usd - 2.5).abs() < 1e-9);
+
+        let series = store
+            .usage_series("external:advisor/a".to_string(), None, UsageBucket::Hour)
+            .await
+            .expect("series");
+        // The baseline report adds a zero bucket; the second report carries the delta.
+        assert_eq!(series.points.len(), 2);
+        assert!(
+            series
+                .points
+                .iter()
+                .all(|p| p.turns.is_none() && p.busy_seconds.is_none())
+        );
+        let cost: f64 = series.points.iter().map(|p| p.cost_usd).sum();
+        let input: u64 = series.points.iter().map(|p| p.tokens.input).sum();
+        let ext = store.usage().await.expect("usage").external;
+        assert!((cost - ext[0].cost_usd.expect("cost")).abs() < 1e-9);
+        assert_eq!(Some(input), ext[0].input_tokens);
     }
 
     #[tokio::test]

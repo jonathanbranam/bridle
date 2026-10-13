@@ -1393,10 +1393,14 @@ pub struct UsageSeriesQuery {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct UsageSeriesPoint {
     pub start: DateTime<Utc>,
-    pub turns: u32,
+    /// `None` for an external session: the statusline doesn't report turns.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub turns: Option<u32>,
     pub tokens: TokenTotals,
     pub cost_usd: f64,
-    pub busy_seconds: u64,
+    /// `None` for an external session: busy time isn't measured.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub busy_seconds: Option<u64>,
 }
 
 /// `GET /v1/usage/agents/{agent_id}/series`. Works for removed agents: it reads the turns ledger
@@ -1419,7 +1423,7 @@ pub struct UsageInstancesQuery {
     pub since: Option<DateTime<Utc>>,
 }
 
-/// One agent instance with usage in a period, live or removed
+/// One agent instance with usage in a period, live or removed, or an external identity
 /// (`GET /v1/usage/agents`). Name, role and model are the ledger's own copy.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct UsageInstance {
@@ -1429,7 +1433,12 @@ pub struct UsageInstance {
     pub model: String,
     /// Whether the agent row is gone (`bridle rm`).
     pub removed: bool,
-    pub turns: u32,
+    /// An external (unbridled) session, from the statusline reports (`interactive_usage`):
+    /// `agent_id` and `name` are its identity, `role` its first path part, `turns` is `None`.
+    #[serde(default)]
+    pub external: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub turns: Option<u32>,
     pub cost_usd: f64,
     pub first_turn_at: DateTime<Utc>,
     pub last_turn_at: DateTime<Utc>,

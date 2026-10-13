@@ -63,7 +63,9 @@ pub struct UsageInstanceView {
     pub role: String,
     pub model: String,
     pub removed: bool,
-    pub turns: u32,
+    /// An external (unbridled) session: `agent_id` is its identity, `turns` is null.
+    pub external: bool,
+    pub turns: Option<u32>,
     pub cost_usd: f64,
     /// RFC 3339, UTC.
     pub first_turn_at: String,
@@ -82,13 +84,15 @@ pub struct UsageInstances {
 pub struct UsageSeriesBucket {
     /// RFC 3339, UTC: the start of the bucket.
     pub start: String,
-    pub turns: u32,
+    /// Null for an external session (not measured).
+    pub turns: Option<u32>,
     pub input_tokens: u64,
     pub output_tokens: u64,
     pub cache_read_tokens: u64,
     pub cache_write_tokens: u64,
     pub cost_usd: f64,
-    pub busy_seconds: u64,
+    /// Null for an external session (not measured).
+    pub busy_seconds: Option<u64>,
 }
 
 /// One instance's usage by hour or day (the daemon's `/v1/usage/agents/{id}/series`). Empty
@@ -359,6 +363,7 @@ pub(crate) async fn usage_instances(
                 role: i.role,
                 model: i.model,
                 removed: i.removed,
+                external: i.external,
                 turns: i.turns,
                 cost_usd: i.cost_usd,
                 first_turn_at: rfc(i.first_turn_at),
@@ -663,7 +668,7 @@ mod tests {
         .expect("series");
         assert_eq!(s.bucket, "hour");
         assert_eq!(s.points[0].cache_read_tokens, 5);
-        assert_eq!(s.points[0].busy_seconds, 30);
+        assert_eq!(s.points[0].busy_seconds, Some(30));
     }
 
     #[tokio::test]
