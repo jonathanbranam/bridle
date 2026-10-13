@@ -45,7 +45,11 @@ Verbatim: "The behavior I really want is something like pacing, right? Generally
 
 What exists: the governor's `seven_day` thresholds are flat percentages (e.g. wind down at 90) whatever the day of the week; nothing paces and nothing sprints. `resets_at` for the 7-day window is known (statusline, rate_limit_event).
 
-A simple shape to start from (not decided): two numbers, no new lists.
-- Pace: the 7-day ceiling at any moment is the share of the week elapsed plus a margin (e.g. elapsed 30% + 15 = hold new work above 45%), so day one can't reach 85%.
-- Sprint: in the last N hours before the 7-day reset (e.g. 4), the ceiling lifts to 100% and the governor allows more workers. Hitting the limit at the very end is acceptable (the human: "which would be okay").
+The human's design, 2026-10-13 ~5:50 PM ET, verbatim (trimmed): "1/7 is that we can use 14% of our budget daily and be fine, but that kind of strict pacing is a little bit more than I want. I want the freedom to go past that. ... If there's a line that shows the budget window, it goes up day by day: the first day's budget would be 14%, then 28%. We don't want to slavishly hit that because I work in bursts. ... If you exceed 10% more than the line, there should just be a notification, not a hold. That's probably an enhancement that would be a good benefit right now. Maybe a message goes to the orchestrator and the human: 'Hey, you're more than 10% over. Just letting you know.' Then there would be holds and wind-downs and such, but I wouldn't set a forced shut-off. I might if we're blowing past the budget on day one. I probably would want to have a hard cap on that. ... I would do day-based, not really hour-based. ... It's like PTO. We don't want to accrue PTO hourly. ... As soon as the clock rolls over, it's Wednesday at 3 am Eastern for me. ... As soon as that rolls over, you have 24 hours to spend 14% plus those settings. It'd always be 14%, whatever that is: 1/7 of the week, plus 10% gives you a warning, plus 15% gives you a wind-down, plus 30% gives you a stop, something like that. I think that does make sense."
+
+So (the human's numbers):
+- The line: a step per day from the 7-day reset (`resets_at`; the human's is Wednesday 3 AM ET). Day d of the week (1..7) has line = d/7 of the budget (14%, 28%, ... 100%), granted in full when the day starts, not accrued hourly.
+- Above the line: +10 points: a notification only, to the orchestrator and the human ("more than 10% over the line"); +15: wind-down; +30: stop (a hard cap). Margins are configurable.
+- The end-of-week sprint (above) still applies: in the last hours before the reset, use what is left.
+- The +10 warning alone is "a good benefit right now": it can ship first, on its own.
 It is account-wide, so it belongs in the shared (cluster) policy, not per project.
