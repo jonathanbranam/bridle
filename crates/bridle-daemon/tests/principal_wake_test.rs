@@ -419,7 +419,6 @@ async fn a_non_human_inbox_marks_what_it_lists_read_and_cannot_unread() {
 }
 
 #[tokio::test]
-#[ignore = "flaky on macOS, br-tmmj"]
 async fn a_waiter_open_during_a_restart_is_told_why_and_the_event_counts_it() {
     let (daemon, _tmp) = support::start_daemon(None).await;
     let advisor = daemon.external_client("advisor").await;
@@ -443,15 +442,27 @@ async fn a_waiter_open_during_a_restart_is_told_why_and_the_event_counts_it() {
     );
     let text = got.reasons[0].text.as_deref().expect("reason text");
     assert!(text.contains("restarting by request"), "{text}");
-    let ev = support::wait_for_event(&daemon.client, "daemon.stopping", None, |_| true).await;
-    assert_eq!(ev.data["waiters_ended"], 1, "{ev:?}");
+    // Read the event from the database after the daemon has exited, not over HTTP: with no agents
+    // to stop, the server goes away within milliseconds of the waiter being told, and a poll that
+    // lands after that gets connection refused until the 60 s guard (br-tmmj, flaky on macOS).
+    let db = daemon.workspace.join(".bridle/bridle.db");
+    daemon.running.join().await.expect("join");
+    let conn = rusqlite::Connection::open(db).expect("open db");
+    let data: String = conn
+        .query_row(
+            "SELECT data FROM events WHERE kind = 'daemon.stopping'",
+            [],
+            |r| r.get(0),
+        )
+        .expect("daemon.stopping event");
+    let data: serde_json::Value = serde_json::from_str(&data).expect("event data");
+    assert_eq!(data["waiters_ended"], 1, "{data:?}");
     assert!(
-        ev.data["reason"]
+        data["reason"]
             .as_str()
             .is_some_and(|r| r.contains("restarting by request")),
-        "{ev:?}"
+        "{data:?}"
     );
-    daemon.running.join().await.expect("join");
 }
 
 // br-vynr: the no-orchestrator-waiter incident reads `waiter_open`; another identity's wait
