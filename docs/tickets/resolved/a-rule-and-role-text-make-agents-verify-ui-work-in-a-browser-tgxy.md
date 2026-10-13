@@ -6,8 +6,9 @@ created: 2026-10-06
 repos: [bridle]
 changes: []
 specs: []
-blocked_by: []
+blocked_by: [br-vdu8]
 related: [br-vwqt]
+resolved: 2026-10-13T02:52:36Z
 ---
 
 ## The ask
