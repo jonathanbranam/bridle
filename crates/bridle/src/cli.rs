@@ -49,6 +49,8 @@ pub enum Command {
     Docs(DocsArgs),
     /// What happened in this project lately: features delivered, bugs, blocked work, incidents.
     Report(ReportArgs),
+    /// Developer tools: a throwaway second site to click through the web UI on.
+    Dev(DevArgs),
     /// Run the gateway: the human web UI's API (`[gateway]` in ~/.bridle/config.toml).
     Gateway(GatewayArgs),
     /// Ask the daemon to shut down gracefully.
@@ -1019,6 +1021,56 @@ pub struct ReportArgs {
     /// Save it as docs/reports/YYYY-MM-DD.md (Eastern date) and print the path; no commit.
     #[arg(long)]
     pub write: bool,
+}
+
+#[derive(Debug, Args)]
+pub struct DevArgs {
+    #[command(subcommand)]
+    pub action: DevAction,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum DevAction {
+    /// A throwaway daemon, gateway and UI on free ports, with its own login and fixture projects.
+    Site(SiteArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct SiteArgs {
+    #[command(subcommand)]
+    pub action: SiteAction,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum SiteAction {
+    /// Start a site in `.agent-site/<name>/` and print its URL and login.
+    Up(SiteUpArgs),
+    /// SIGTERM the site's recorded processes (checked by start time and argv) and delete it.
+    Down(SiteDownArgs),
+    /// Sites under this directory's `.agent-site/`, and whether their processes are alive.
+    List,
+}
+
+#[derive(Debug, Args)]
+pub struct SiteUpArgs {
+    /// Default: `$BRIDLE_AGENT_NAME`, else a random word.
+    #[arg(long)]
+    pub name: Option<String>,
+    /// The bridle-ui checkout to run (default: `../bridle-ui`).
+    #[arg(long)]
+    pub ui: Option<PathBuf>,
+    /// Gateway only: no UI dev server (use the API with curl).
+    #[arg(long)]
+    pub no_ui: bool,
+}
+
+#[derive(Debug, Args)]
+pub struct SiteDownArgs {
+    /// Default: `$BRIDLE_AGENT_NAME`.
+    pub name: Option<String>,
+    /// Every site under this directory's `.agent-site/`.
+    #[arg(long, conflicts_with = "name")]
+    pub all: bool,
 }
 
 #[derive(Debug, Args)]

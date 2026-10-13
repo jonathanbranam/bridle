@@ -64,6 +64,11 @@ const CLASSES: &[(&str, Kind, &str)] = &[
         Skip,
         "config lookup; only a ticket link needs --project, covered by link_test.rs",
     ),
+    (
+        "dev site",
+        Skip,
+        "starts its own daemons under its own BRIDLE_HOME; takes no project",
+    ),
     ("gateway", Skip, "serves every project"),
     (
         "mail run",

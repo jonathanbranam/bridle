@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- `bridle dev site up | down | list` (br-vdu8): a throwaway second site (own `BRIDLE_HOME`, login, ports, two fixture projects, daemons seeded through the CLI, the gateway, and the UI dev server when `bridle-ui` is present) in `.agent-site/<name>/`, stopped only by recorded pid after a start-time and argv check. Migration: none.
 - The per-instance usage list and series now include external sessions (br-njjt): one `external` instance per identity, charted from the statusline reports; `turns` and busy time are null for them, and `bridle usage --agent external:advisor` works.
 ## [0.7.0] - 2026-10-12
 - Usage of one agent instance over time (br-xfy7): `bridle usage --agent <name|id> --since 7d [--bucket hour|day]` prints its turns, tokens, cost and busy time per bucket, removed agents included. New daemon routes `GET /v1/usage/agents` (instances with usage) and `GET /v1/usage/agents/{id}/series`, proxied by the gateway under `/api/v1/projects/{project}/usage/agents`. Migration: none.

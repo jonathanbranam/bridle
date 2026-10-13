@@ -5,6 +5,7 @@ mod advisor;
 mod arch_guard;
 mod cli;
 mod commands;
+mod dev_site;
 mod doctor;
 mod error;
 mod focus;

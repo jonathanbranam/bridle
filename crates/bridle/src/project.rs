@@ -76,6 +76,10 @@ mod tests {
         ),
         ("gateway", NoProject("serves every project")),
         (
+            "dev",
+            NoProject("starts its own daemons under its own BRIDLE_HOME"),
+        ),
+        (
             "link",
             NoProject("config lookup; a ticket link takes --project or the cwd's workspace"),
         ),

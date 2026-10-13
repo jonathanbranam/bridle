@@ -1,6 +1,13 @@
 # The throwaway dev site
 
-> **Status (checked 2026-10-06):** Planned: nothing here is built. Ticket
+> **Status (checked 2026-10-12):** Sections 1 and 2 (bridle half) are built: `bridle dev site
+> up | down | list` (`crates/bridle/src/dev_site.rs`, fixtures in `crates/bridle/fixtures/dev-site/`).
+> Differences from the text below: the gateway's port is probed (it cannot report a `:0` port),
+> not bound; the gateway finds the daemons through the site's own registry, so no `[projects]`
+> entries are written; no usage figure is seeded (there is no way without an agent); no
+> `[dev_site] ui_dir` key yet (`--ui`, default `../bridle-ui`). The UI step is untested until
+> the bridle-ui half (dgef) lands. Sections 3 and 4 (rule, role text, gitignore migration) are
+> planned (tgxy). Ticket
 > [[docs/tickets/open/agents-can-run-a-throwaway-bridle-site-on-a-free-port-log-in-vwqt|vwqt]] holds
 > the human's ask; the build tickets are listed in section 6. Modelled on track-web's
 > `docs/dev-second-instance.md` (read only; track-web keeps its own recipe).

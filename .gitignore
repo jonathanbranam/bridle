@@ -16,3 +16,6 @@
 
 # bridle spec export output (docs/design/specs-to-tests.md): regenerated, never committed
 .bridle/cache/
+
+# Throwaway dev sites (bridle dev site)
+.agent-site/

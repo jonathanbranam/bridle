@@ -1,0 +1,6 @@
+# A fixture project of the throwaway dev site: nothing leaves the laptop.
+[state]
+push = false
+
+[tasks]
+prefix = "sh"
