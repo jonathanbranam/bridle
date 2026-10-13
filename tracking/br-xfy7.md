@@ -4,7 +4,7 @@ title = "Usage per agent instance over time: series and instance list in the dae
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-12T22:53:04.789Z"
-updated_at = "2026-10-13T00:13:42.504158Z"
+updated_at = "2026-10-13T00:14:13.412819Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -42,3 +42,9 @@ done: all four steps (store, daemon routes, CLI --agent, gateway proxy + TS bind
 
 ### note · agent:manager-2 · 2026-10-13T00:13:42.504Z
 integrated: 9a10c919a322d18e8da4131255523ea4ee7d71b1 (branch bridle/wxfy7)
+
+### note · agent:manager-2 · 2026-10-13T00:14:04.710Z
+cleanup: removed agent wxfy7, branch bridle/wxfy7
+
+### note · agent:manager-2 · 2026-10-13T00:14:13.412Z
+manager-2: landed 9a10c919. Gap for the PM: ask item 3 (external sessions chartable like instances) is NOT built; hd28 keeps them in interactive_usage, not turns, so they are not instances here (noted in usage-and-budget.md). File a follow-up if the human wants it.
