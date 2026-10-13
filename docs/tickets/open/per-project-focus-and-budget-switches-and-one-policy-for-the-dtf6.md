@@ -53,3 +53,14 @@ So (the human's numbers):
 - The end-of-week sprint (above) still applies: in the last hours before the reset, use what is left.
 - The +10 warning alone is "a good benefit right now": it can ship first, on its own.
 It is account-wide, so it belongs in the shared (cluster) policy, not per project.
+
+## Simplest version (the human, 2026-10-13 ~6 PM ET)
+
+The human worked the numbers: with a 14%-a-day line, a +20 hold on day 5 is 72 + 20 = 92%, and on day 6 the line is already near 100, so margins on top of the line get hard to reason about. "What we have now works pretty well, but it's annoying to update. I just updated the budget to get some more work done, and that's obviously a bad thing. ... Let's try to keep this simple. What's the very simplest thing that would work? We have not exceeded our pace so far, so I'm not too concerned about building that yet."
+
+Two small pieces, nothing else:
+
+1. **Pace warning only** (no holds): when the day starts (counted from the 7-day reset), the line is day x 1/7 of the week (the human said "day number - 1 x 14, and then add 10"; advisor's reading: day 1 = 14%), plus a configured margin (10). When `seven_day` goes over it, one message to the orchestrator and the human. Thresholds stay as they are.
+2. **End-of-week sprint with the current schedule**: today it can't be configured. `[[budget.schedule]]` periods replace only the `five_hour` thresholds ("seven_day (and every other window) is never affected", usage-and-budget.md), and a period's `max_workers` applies only through `bridle budget override`. The small change: let a schedule period also set the `seven_day` thresholds (and `max_workers` while it matches by the clock). Then the human writes one period, e.g. `name = "sprint", days = ["wed"], start = "00:00", end = "03:00"` with everything at 100, and nobody edits the config by hand. Needs a guard so the period follows the real reset day (`resets_at`), or a warning when they disagree.
+
+Not now: the human isn't scheduling any of this yet.
