@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.7.1] - 2026-10-13
+
 - The orchestrator relaunch no longer depends on tmux focus (br-vynr): the pane is respawned (`tmux respawn-pane -k`) before the launcher is typed, a relaunch that never starts a session files an incident, and the retry runs the launcher in the pane directly with no keystrokes. A test pins that another identity's wait does not count as the orchestrator's waiter. Migration: none.
 - Rule `verify-ui-in-a-browser` (br-tgxy): a task that changes what a user sees is clicked through in a browser on a throwaway site (`bridle dev site up`) by the worker, and again by the manager before merging; role lines in worker.md and manager.md. Migration `0007-gitignore-agent-site` adds `.agent-site/` to a project's `.gitignore` (automatic, idempotent). Run `bridle workflow update` and `bridle sync` to get the rule.
 - `bridle dev site up | down | list` (br-vdu8): a throwaway second site (own `BRIDLE_HOME`, login, ports, two fixture projects, daemons seeded through the CLI, the gateway, and the UI dev server when `bridle-ui` is present) in `.agent-site/<name>/`, stopped only by recorded pid after a start-time and argv check. Migration: none.
