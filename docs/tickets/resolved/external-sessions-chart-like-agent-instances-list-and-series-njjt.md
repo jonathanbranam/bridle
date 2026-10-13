@@ -11,6 +11,7 @@ specs: []
 blocked_by: []
 related: [br-xfy7, br-hd28, br-rdkn]
 parent: br-rdkn
+resolved: 2026-10-13T00:57:04Z
 ---
 
 Follow-up to br-xfy7, item 3 of its ask, not built (manager-2, landing 9a10c919: "ask item 3 (external sessions chartable like instances) is NOT built; hd28 keeps them in interactive_usage, not turns, so they are not instances here").
