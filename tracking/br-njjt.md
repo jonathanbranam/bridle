@@ -2,11 +2,14 @@
 id = "br-njjt"
 title = "External sessions chart like agent instances: list and series include br-hd28's sessions (follow-up to br-xfy7)"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-13T00:14:41.914Z"
-updated_at = "2026-10-13T00:15:02.489510Z"
+updated_at = "2026-10-13T00:20:19.110533Z"
 created_by = "external:advisor/product-manager"
-watchers = ["external:advisor/product-manager"]
+watchers = [
+    "external:advisor/product-manager",
+    "agent:wnjjt",
+]
 ticket = "njjt"
 +++
 
