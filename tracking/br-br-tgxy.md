@@ -4,10 +4,10 @@ title = "A rule and role text make agents verify UI work in a browser on a throw
 kind = "feature"
 state = "dropped"
 created_at = "2026-10-13T02:00:06.888Z"
-updated_at = "2026-10-13T02:00:21.982955Z"
+updated_at = "2026-10-13T02:00:36.232643Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
-ticket = "br-tgxy"
+ticket = "dropped-dup"
 +++
 
 docs/tickets/open/a-rule-and-role-text-make-agents-verify-ui-work-in-a-browser-tgxy.md
