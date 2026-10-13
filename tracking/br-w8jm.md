@@ -2,11 +2,14 @@
 id = "br-w8jm"
 title = "ticket ready makes a missing row, accepts a qualified id, and skips dropped rows"
 kind = "fix"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-13T02:02:19.375Z"
-updated_at = "2026-10-13T13:07:08.161876Z"
+updated_at = "2026-10-13T13:07:57.133699Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "agent:ww8jm",
+]
 ticket = "w8jm"
 +++
 
