@@ -1,8 +1,19 @@
 [[tier]]
-tasks = ["br-v56p"]
+tasks = [
+    "br-pac3",
+    "br-pemk",
+    "br-mksa",
+]
 
 [[tier]]
-tasks = ["br-ry8z"]
+tasks = [
+    "br-2kam",
+    "br-zn6s",
+    "br-drvx",
+]
 
 [[tier]]
-tasks = ["br-ktgd"]
+tasks = [
+    "br-v6cg",
+    "br-v58q",
+]

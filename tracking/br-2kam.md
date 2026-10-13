@@ -2,9 +2,9 @@
 id = "br-2kam"
 title = "Each hosted session records how it started and ended, and the renewal limit in force (ktgd decision 7)"
 kind = "feature"
-state = "open"
+state = "planned"
 created_at = "2026-10-13T23:05:26.890Z"
-updated_at = "2026-10-13T23:06:30.223378Z"
+updated_at = "2026-10-13T23:06:46.453729Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 ticket = "2kam"
