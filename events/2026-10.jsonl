@@ -1867,3 +1867,4 @@
 {"actor":"agent:pm-1","at":"2026-10-13T03:10:03.852257Z","queue":"reprioritized"}
 {"actor":"human","at":"2026-10-13T03:24:30.888Z","from":"","task":"br-tmmj","to":"pending"}
 {"actor":"agent:wvynr","at":"2026-10-13T03:30:40.602557Z","from":"claimed","task":"br-vynr","to":"built"}
+{"actor":"agent:manager-2","at":"2026-10-13T03:45:36.076507Z","from":"pending","task":"br-tmmj","to":"open"}
