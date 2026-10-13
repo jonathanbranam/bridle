@@ -1884,3 +1884,4 @@
 {"actor":"agent:pm-1","at":"2026-10-13T13:07:41.506303Z","queue":"reprioritized"}
 {"actor":"agent:ww8jm","at":"2026-10-13T13:27:47.105577Z","from":"claimed","task":"br-w8jm","to":"built"}
 {"actor":"agent:manager-2","at":"2026-10-13T13:27:55.596829Z","from":"built","task":"br-w8jm","to":"integrated"}
+{"actor":"agent:manager-2","at":"2026-10-13T13:47:22.990698Z","from":"planned","task":"br-mb8p","to":"integrated"}

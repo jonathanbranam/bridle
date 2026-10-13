@@ -2,11 +2,13 @@
 id = "br-mb8p"
 title = "Fix the macOS flake in principal_wake_test a_waiter_open_during_a_restart (carries br-tmmj)"
 kind = "fix"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-13T13:07:23.476Z"
-updated_at = "2026-10-13T13:47:14.785691Z"
+updated_at = "2026-10-13T13:47:22.990698Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+branch = "bridle/mb8p"
+commit = "d55289d5a4e0be83a07f1b9f424a1c5cb5285639"
 summary = "Cause: test race, not product. With no agents to stop, the daemon drops its HTTP server milliseconds after announcing daemon.stopping; the test then polled events over HTTP (100 ms), and a poll landing after shutdown got connection refused, which wait_for_event swallows until the 60 s guard. Fix: the test joins the daemon, then reads the daemon.stopping row from the sqlite db (comment says why); #[ignore] removed. 30/30 loop passes; just check exit 0, 1639 passed. No product change, no CHANGELOG."
 ticket = "mb8p"
 +++
@@ -26,3 +28,6 @@ mb8p: 'bridle ticket built' was refused (worker agents cannot use agent lifecycl
 
 ### note · agent:mb8p · 2026-10-13T13:47:14.785Z
 done (re-merged main): just check exit 0, 1641 passed; ae6702bd69c9c216eff757caf91289eef7e898ce
+
+### note · agent:manager-2 · 2026-10-13T13:47:22.990Z
+integrated: d55289d5a4e0be83a07f1b9f424a1c5cb5285639 (branch bridle/mb8p)
