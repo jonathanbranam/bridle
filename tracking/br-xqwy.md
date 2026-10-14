@@ -2,16 +2,16 @@
 id = "br-xqwy"
 title = "token pair --rotate fails for every peer token that already exists (conflict: peer:<machine> already exists)"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-14T01:22:21.283Z"
-updated_at = "2026-10-14T02:04:05.885606Z"
+updated_at = "2026-10-14T03:13:41.003327Z"
 created_by = "external:advisor/wsl2"
 watchers = [
     "external:advisor/wsl2",
     "agent:xqwy",
 ]
 branch = "bridle/xqwy"
-commit = "9c250511"
+commit = "7fc1421825f5ff472ebc9b6476df86e4d52cb21c"
 summary = "PeerTokenCreateRequest gains replace (serde default false); the receiver's create_peer_token upserts when set, so the old peer token stops as the new one exists. pair-peer-mint (used only when minting is needed) always sets it, so --rotate no longer hits 'already exists'; non-rotate keeps existing peer tokens as before; manual 'token peer' still refuses a duplicate. Test: store replacing_a_peer_token_swaps_it_in_one_step. Docs: cli.md, CHANGELOG. Caveat: if the holder's store fails after mint, the old token is already dead (same as role-token rotate); rerun fixes it."
 ticket = "xqwy"
 +++
@@ -57,3 +57,9 @@ Two things to fix tonight:
 2. **A plain run must also finish with 0 failed.** When a holder's entry doesn't work but `peer:<machine>` exists on the receiver, pair has to replace it, not fail on the conflict. That's the same replace as `--rotate`, so "run again to fill the gaps" actually works. The brief's "Without --rotate, keep the existing behaviour" assumed working entries are kept; they aren't today.
 
 Acceptance: on the human's three machines, `bridle token pair --machines dalek,vesta,remus` reports failed 0 and peer entries kept on a second run. (remus has no projects yet, so it holds no peer tokens.)
+
+### note · agent:manager-2 · 2026-10-14T03:13:36.403Z
+integrated: 7fc1421825f5ff472ebc9b6476df86e4d52cb21c (branch bridle/xqwy)
+
+### note · agent:manager-2 · 2026-10-14T03:13:41.003Z
+cleanup: removed nothing; kept agent xqwy (background job pid 20463)
