@@ -34,3 +34,11 @@ The human, 2026-10-14 ~8:30 AM ET (to aide), verbatim: "I haven't seen a bridle 
    with the daemon, or the bridge notices its binary was replaced and re-execs.
 2. The digest doesn't silently die: unknown enum values are tolerated (or the item skipped), and
    a failed digest is logged and raised (an event or a message to the orchestrator; see br-zpc7).
+
+## Decision
+
+The human, 2026-10-14 ~6:15 PM ET (to aide), verbatim: "yes, please fix the mail daemon it should
+self-upgrade and restart with the rest of bridle. That should work on the machine that builds
+bridle and those that install it from release". So item 1 covers both upgrade paths: the
+source-build self-upgrade (dalek: `just install` and the daemon's build self-upgrade) and the
+release self-upgrade (`self_upgrade = "release"`, e.g. vesta, remus), on launchd and systemd.
