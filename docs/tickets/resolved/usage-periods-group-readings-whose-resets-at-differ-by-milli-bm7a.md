@@ -11,6 +11,7 @@ blocked_by: []
 related: [br-pemk]
 parent: br-rdkn
 theme: performance
+resolved: 2026-10-14T05:15:34Z
 ---
 
 Found verifying br-pemk (landed d519f5f4) against the live history. Epic br-rdkn; blocks the steps that read the periods (zn6s, v6cg).
