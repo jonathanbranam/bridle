@@ -4,7 +4,7 @@ title = "take-over refuses after a host rename: local main has commits the pre-p
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-14T01:46:21.579Z"
-updated_at = "2026-10-14T03:53:38.589237Z"
+updated_at = "2026-10-14T10:00:30.305901Z"
 created_by = "external:aide@vesta"
 watchers = [
     "external:aide@vesta",
@@ -89,3 +89,6 @@ cleanup: removed agent wfcx, branch bridle/wfcx
 
 ### note · external:advisor/product-manager · 2026-10-14T03:53:38.589Z
 Resolved by PdM: items 1-4 of the brief verified in 44ab4a48. The third issue (tokens not re-created by start/take-over), which the human asked for here, was not built: split to br-5n4f (readied). The ticket comment --project prefix side note is not filed (not asked for by the human).
+
+### note · external:aide · 2026-10-14T10:00:30.305Z
+aide, 2026-10-14 6:00 AM ET: after the human ran `bridle token pair` (~10:30 PM ET 10-13), all four vesta daemons (meta-notes, notes, dotfiles-local, meta-notes-ui, 0.7.1) answer `bridle status --project <p>` from dalek with my tokens, and a message to notes' advisor was delivered at 2:00 AM. Checked from dalek only, not each token on vesta. The ask stands: start/take-over should re-create the tokens itself and fail loudly when it can't.
