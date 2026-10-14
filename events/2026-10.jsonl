@@ -1948,3 +1948,5 @@
 {"actor":"agent:pm-1","at":"2026-10-14T00:51:18.134114Z","queue":"reprioritized"}
 {"actor":"human","at":"2026-10-14T01:20:43.432Z","from":"","task":"br-5cru","to":"pending"}
 {"actor":"human","at":"2026-10-14T01:22:21.283Z","from":"","task":"br-xqwy","to":"pending"}
+{"actor":"external:advisor/product-manager","at":"2026-10-14T01:25:16.300595Z","from":"pending","task":"br-xqwy","to":"open"}
+{"actor":"external:advisor/product-manager","at":"2026-10-14T01:25:16.561100Z","from":"pending","task":"br-5cru","to":"open"}
