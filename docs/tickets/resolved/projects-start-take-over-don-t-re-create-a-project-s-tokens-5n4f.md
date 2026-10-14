@@ -10,6 +10,7 @@ specs: []
 blocked_by: []
 related: [br-wfcx, br-xqwy]
 theme: multi-machine
+resolved: 2026-10-14T05:45:00Z
 ---
 
 Split from br-wfcx (landed 44ab4a48 without it; its builder listed it as out of scope). Theme multi-machine.
