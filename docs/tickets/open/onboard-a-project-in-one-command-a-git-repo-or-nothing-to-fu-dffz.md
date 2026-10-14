@@ -252,7 +252,7 @@ gap, so `--check` is the tool to trust-but-verify); the "next:" hook in four com
   `project start` does) or only on the owning one. Recommend only on the owner at first.
 - Whether `bridle projects` or `bridle project` is the spelling to document. Both work today.
 
-## Design approved (the human, 2026-10-14 ~4:15 PM ET)
+## Design approved (the human, 2026-10-14 ~6:15 PM ET)
 
 Verbatim: "that looks really good. And yes, my standard is `$WORK_ROOT/<proj-name>-work/<proj-name>`"
 
