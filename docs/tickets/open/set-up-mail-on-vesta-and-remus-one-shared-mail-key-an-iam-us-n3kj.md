@@ -48,6 +48,54 @@ Make one managed policy, e.g. `bridle-mail-bridge`, and attach it to each machin
 
 Create users `bridle-mail-vesta` and `bridle-mail-remus` with that policy and one access key each.
 
+### 1a. AWS credentials on a machine (vesta and remus)
+
+Background: [[docs/context/add-a-machine|add a machine]], step 2 (`[mail]` and "AWS credentials
+from the standard chain"); [[docs/design/mail|mail design]], Config; the original AWS setup (bucket,
+SES, IAM) is section 3 of [[email-and-texting-for-bridle-and-track-web-rs7p|rs7p]]. There is no
+longer guide yet. Why it is done this way:
+
+- The bridge reads the standard AWS chain, never bridle's files. Its unit sets only `HOME` and
+  `BRIDLE_AS`, so the key must be in the **`[default]` profile** of `~/.aws/credentials`: a named
+  profile is not found unless `AWS_PROFILE` is set, and the unit doesn't set it.
+- `bridle project preflight --to <machine>` only checks that `~/.aws/credentials` or
+  `~/.aws/config` exists (`preflight_remote.rs`), not that the key works. Test it yourself (step 4).
+
+1. **Create the access key** in the AWS console: IAM > Users > `bridle-mail-<machine>` > Security
+   credentials > Create access key > "Application running outside AWS". Copy the access key ID and
+   secret now (the secret is shown once). No console password for these users.
+2. **Write the files on the machine** (by hand; the AWS CLI is not needed for the bridge):
+
+   ```sh
+   mkdir -p ~/.aws && chmod 700 ~/.aws
+   cat > ~/.aws/credentials <<'EOF'
+   [default]
+   aws_access_key_id = AKIA...
+   aws_secret_access_key = ...
+   EOF
+   cat > ~/.aws/config <<'EOF'
+   [default]
+   region = us-east-1
+   EOF
+   chmod 600 ~/.aws/credentials ~/.aws/config
+   ```
+
+   If `~/.aws/credentials` already exists, look at it first and add only a missing `[default]`
+   (don't overwrite another key). Paste the secret in an editor rather than on a command line, so
+   it stays out of shell history.
+3. **Don't copy dalek's `~/.aws`**: each machine has its own user, so one can be revoked
+   (IAM > the user > deactivate the key) without touching the others.
+4. **Check the key works**, with the AWS CLI if installed (`sudo apt install awscli`, or
+   `brew install awscli` on macOS):
+
+   ```sh
+   aws sts get-caller-identity                     # Arn ends in user/bridle-mail-<machine>
+   aws s3 ls s3://branam-bridle-mail/inbound/      # lists (or nothing), no AccessDenied
+   ```
+
+   Without the CLI, the first bridge on the machine is the test: `tail ~/.bridle/mail-<p>.log`
+   shows polls with no `AccessDenied` or `InvalidClientTokenId` warning.
+
 ### 2. vesta
 
 ```sh
@@ -59,7 +107,7 @@ shasum -a 256 < ~/.bridle/mail.key      # same hash as vesta's (hash the raw fil
 
 On vesta:
 
-1. `~/.aws/credentials` (mode 600) with the `bridle-mail-vesta` key under `[default]`, and `region = us-east-1` in `~/.aws/config` (or rely on `region` in `[mail]`).
+1. AWS credentials with the `bridle-mail-vesta` key, by step 1a.
 2. Copy the whole `[mail]` section from dalek's `~/.bridle/config.toml` into vesta's, unchanged. Keep `bridle` first in `projects`, so that only dalek's bridge answers mail to unknown names.
 3. Per project:
    ```sh
@@ -78,7 +126,7 @@ On vesta:
 dalek's `[projects]` has no remus projects yet (ticket v7ug), so do only the machine-wide part now. Each project then gets its token and bridge from `bridle project start` when it starts or moves there.
 
 1. If `~/.bridle/mail.key` already exists on remus, compare it with dalek's (hash as above) before replacing it. Then copy dalek's key over (mode 600).
-2. `~/.aws/credentials` with the `bridle-mail-remus` key, as on vesta.
+2. AWS credentials with the `bridle-mail-remus` key, by step 1a.
 3. Copy the same `[mail]` section into remus's `~/.bridle/config.toml`.
 4. When a project first runs on remus: `bridle project preflight --to remus` checks the AWS credentials. `project start` installs and starts its bridge. For a project created fresh there rather than moved, run `bridle mail install --project <p>` and enable the unit as on vesta, after `token pair` has minted its mail token.
 
