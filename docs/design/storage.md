@@ -394,10 +394,12 @@ events/2026-09.jsonl      append-only transitions, for history and rebuild
   `### <kind> · <from> · <timestamp>` heading per entry and its body; this
   build writes `note`, `question` and `answer` entries, and `handoff`/
   `conflict`/`system` (coordination.md, Messages) reuse the same heading
-  shape later without a format change. Parsing this back is line/substring
-  based, not a real markdown parser: a body or thread entry containing the
-  literal text `"\n## Thread\n"` or `"\n### "` will confuse it. Known,
-  accepted for this build.
+  shape later without a format change. Parsing this back is line based: only a line
+  of exactly the entry-header shape (`### `, a known kind, author, an RFC 3339 time, joined by
+  ` · `) starts an entry, so a comment body may hold any markdown, `##` and `###` headings
+  included. A body containing the literal line `## Thread` still confuses the split (known,
+  accepted). A file that won't parse is reported with its path, the line and the line's text;
+  `bridle rebuild` reports every bad file in one pass.
 
 The alternative, task files in-tree under `.bridle/tasks/` on the main line, is
 easier to browse next to code but brings back the worktree-visibility and

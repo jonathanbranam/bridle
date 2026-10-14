@@ -768,15 +768,20 @@ impl StateBranch {
     /// A task that owns a ticket thread file takes its thread from there; the inline
     /// `## Thread` of a file written before the move is the fallback.
     fn overlay_thread(&self, task: &mut Ticket) {
+        let _ = self.overlay_thread_strict(task);
+    }
+
+    /// [`Self::overlay_thread`], reporting an unparseable thread file (named, with line) for
+    /// `bridle rebuild`; a missing file is not an error.
+    fn overlay_thread_strict(&self, task: &mut Ticket) -> Result<(), String> {
         if !owns_thread_file(task) {
-            return;
+            return Ok(());
         }
-        let path = self.dir.join(THREADS_DIR).join(format!("{}.md", task.id));
-        if let Ok(text) = std::fs::read_to_string(path)
-            && let Ok(thread) = parse_thread_file(&text)
-        {
-            task.thread = thread;
+        let name = format!("{}/{}.md", THREADS_DIR, task.id);
+        if let Ok(text) = std::fs::read_to_string(self.dir.join(&name)) {
+            task.thread = parse_thread_file(&text).map_err(|e| format!("{name}: {e}"))?;
         }
+        Ok(())
     }
 
     /// Whether the task's file has a watchers record: false for one written before watchers
@@ -817,16 +822,33 @@ impl StateBranch {
         }
         ids.sort();
         ids.dedup();
-        ids.into_iter()
-            .map(|id| {
-                let text = self.read_item_file(&id).ok_or_else(|| {
-                    std::io::Error::new(std::io::ErrorKind::NotFound, format!("{id}.md vanished"))
-                })?;
-                let mut task = parse_task(&text)?;
-                self.overlay_thread(&mut task);
-                Ok(task)
-            })
-            .collect()
+        // Every bad file is reported in one pass, each named with its path.
+        let mut tasks = Vec::new();
+        let mut errors = Vec::new();
+        for id in ids {
+            let text = self.read_item_file(&id).ok_or_else(|| {
+                std::io::Error::new(std::io::ErrorKind::NotFound, format!("{id}.md vanished"))
+            })?;
+            let parsed = parse_task(&text)
+                .map_err(|e| format!("tracking/{id}.md: {e}"))
+                .and_then(|mut task| {
+                    self.overlay_thread_strict(&mut task)?;
+                    Ok(task)
+                });
+            match parsed {
+                Ok(task) => tasks.push(task),
+                Err(e) => errors.push(e),
+            }
+        }
+        if errors.is_empty() {
+            Ok(tasks)
+        } else {
+            Err(StateBranchError::Parse(format!(
+                "{} unreadable file(s):\n{}",
+                errors.len(),
+                errors.join("\n")
+            )))
+        }
     }
 
     /// The current edge set from `edges.toml`, or empty if the file doesn't
@@ -1472,7 +1494,10 @@ fn render_thread_file(task: &Ticket) -> String {
 }
 
 fn parse_thread_file(text: &str) -> Result<Vec<ThreadEntry>, StateBranchError> {
-    parse_thread(text.split_once("\n## Thread\n").map_or("", |(_, t)| t))
+    match text.split_once("\n## Thread\n") {
+        Some((_, t)) => parse_thread(t, line_of(text, t)),
+        None => Ok(Vec::new()),
+    }
 }
 
 #[derive(Serialize)]
@@ -1542,10 +1567,9 @@ fn parse_edges(text: &str) -> Result<Vec<Edge>, StateBranchError> {
         .collect()
 }
 
-/// The inverse of [`render_task`]. A known limitation: the body or an
-/// entry's text containing the literal sequences `"\n## Thread\n"` or
-/// `"\n### "` confuses the split; not guarded against in this build (noted
-/// in docs/design/storage.md).
+/// The inverse of [`render_task`]. A known limitation: a body containing the
+/// literal line `## Thread` confuses the split (noted in docs/design/storage.md). Comment
+/// text may hold any heading: only an exact entry-header line starts an entry.
 fn parse_task(text: &str) -> Result<Ticket, StateBranchError> {
     let after_open = text
         .strip_prefix("+++\n")
@@ -1569,7 +1593,7 @@ fn parse_task(text: &str) -> Result<Ticket, StateBranchError> {
         None => (rest, ""),
     };
 
-    let thread = parse_thread(thread_str)?;
+    let thread = parse_thread(thread_str, line_of(text, thread_str))?;
 
     let created_by = fm
         .created_by
@@ -1610,37 +1634,56 @@ fn parse_task(text: &str) -> Result<Ticket, StateBranchError> {
     })
 }
 
-fn parse_thread(thread_str: &str) -> Result<Vec<ThreadEntry>, StateBranchError> {
-    let mut thread = Vec::new();
-    for chunk in thread_str.split("\n### ") {
-        if chunk.is_empty() {
-            continue;
+/// The 1-based line in `text` where `part`, a suffix slice of it, starts.
+fn line_of(text: &str, part: &str) -> usize {
+    text[..text.len() - part.len()].matches('\n').count() + 1
+}
+
+/// Whether `line` is an entry header exactly as [`render_thread`] writes it:
+/// `### <kind> \u{b7} <from> \u{b7} <rfc3339>`. Any other line, `##`/`###` headings included, is
+/// comment text: a body is free markdown.
+fn parse_entry_header(line: &str) -> Option<(ThreadEntryKind, &str, DateTime<Utc>)> {
+    let mut parts = line.strip_prefix("### ")?.split(" \u{b7} ");
+    let (kind_s, from, at_s) = (parts.next()?, parts.next()?, parts.next()?);
+    if parts.next().is_some() {
+        return None;
+    }
+    let kind = kind_s.parse().ok()?;
+    let at = DateTime::parse_from_rfc3339(at_s).ok()?.with_timezone(&Utc);
+    Some((kind, from, at))
+}
+
+/// `line_base` is the 1-based file line of the text's first line, for error messages.
+fn parse_thread(thread_str: &str, line_base: usize) -> Result<Vec<ThreadEntry>, StateBranchError> {
+    let mut thread: Vec<ThreadEntry> = Vec::new();
+    let mut body: Vec<&str> = Vec::new();
+    let finish = |thread: &mut Vec<ThreadEntry>, body: &mut Vec<&str>| {
+        if let Some(last) = thread.last_mut() {
+            last.body = body.join("\n").trim_end_matches('\n').to_string();
         }
-        let (header, entry_body) = chunk
-            .split_once('\n')
-            .ok_or_else(|| StateBranchError::Parse(format!("malformed thread entry: {chunk:?}")))?;
-        let mut parts = header.split(" \u{b7} ");
-        let (kind_s, from, at_s) = match (parts.next(), parts.next(), parts.next()) {
-            (Some(k), Some(f), Some(a)) => (k, f, a),
-            _ => {
+        body.clear();
+    };
+    for (i, line) in thread_str.lines().enumerate() {
+        if let Some((kind, from, at)) = parse_entry_header(line) {
+            finish(&mut thread, &mut body);
+            thread.push(ThreadEntry {
+                kind,
+                from: from.to_string(),
+                body: String::new(),
+                at,
+            });
+        } else if thread.is_empty() {
+            if !line.trim().is_empty() {
                 return Err(StateBranchError::Parse(format!(
-                    "malformed thread heading: {header:?}"
+                    "line {}: text before the first thread entry header: {line:?}",
+                    line_base + i
                 )));
             }
-        };
-        let kind: ThreadEntryKind = kind_s
-            .parse()
-            .map_err(|e: String| StateBranchError::Parse(e))?;
-        let at = DateTime::parse_from_rfc3339(at_s)
-            .map_err(|e| StateBranchError::Parse(format!("bad thread timestamp {at_s:?}: {e}")))?
-            .with_timezone(&Utc);
-        thread.push(ThreadEntry {
-            kind,
-            from: from.to_string(),
-            body: entry_body.trim_end_matches('\n').to_string(),
-            at,
-        });
+        } else {
+            body.push(line);
+        }
     }
+    finish(&mut thread, &mut body);
     Ok(thread)
 }
 
@@ -1848,6 +1891,59 @@ mod tests {
         assert_eq!(parsed.created_at, task.created_at);
         assert_eq!(parsed.updated_at, task.updated_at);
         assert_eq!(parsed.created_by, "human");
+    }
+
+    #[test]
+    fn comment_bodies_with_headings_round_trip() {
+        let mut task = sample_task("tw-7fa3");
+        let body = "## Implementation complete\n\n### Changes made\n- x\n\n### note \u{b7} fake";
+        task.thread = vec![
+            ThreadEntry {
+                kind: ThreadEntryKind::Note,
+                from: "agent-1".to_string(),
+                body: body.to_string(),
+                at: task.created_at,
+            },
+            ThreadEntry {
+                kind: ThreadEntryKind::Note,
+                from: "agent-2".to_string(),
+                body: "after".to_string(),
+                at: task.created_at,
+            },
+        ];
+        let parsed = parse_task(&render_task(&task).expect("render")).expect("parse");
+        assert_eq!(parsed.thread.len(), 2);
+        assert_eq!(parsed.thread[0].body, body);
+        assert_eq!(parsed.thread[1].from, "agent-2");
+    }
+
+    #[test]
+    fn a_bad_thread_names_the_line_and_its_text() {
+        let text = "+++\nid = \"tw-1\"\ntitle = \"T\"\nkind = \"feature\"\nstate = \"open\"\n\
+                    created_at = \"2026-01-01T00:00:00Z\"\nupdated_at = \"2026-01-01T00:00:00Z\"\n+++\n\nbody\n\
+                    \n## Thread\n\nstray text\n";
+        let err = parse_task(text).expect_err("bad").to_string();
+        assert!(
+            err.contains("line 14") && err.contains("stray text"),
+            "{err}"
+        );
+    }
+
+    #[tokio::test]
+    async fn rebuild_reports_every_bad_file_in_one_pass() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let repo = tmp.path().join("repo");
+        init_repo(&repo).await;
+        let dir = tmp.path().join("state");
+        let sb = StateBranch::open(&repo, &dir).await.expect("open");
+        sb.enqueue_task(&sample_task("tw-aaaa")).expect("enqueue");
+        sb.flush_now().await.expect("flush");
+        for id in ["tw-bad1", "tw-bad2"] {
+            std::fs::write(dir.join(format!("tracking/{id}.md")), "not a task\n").expect("write");
+        }
+        let err = sb.list_tasks().expect_err("bad files").to_string();
+        assert!(err.contains("tracking/tw-bad1.md"), "{err}");
+        assert!(err.contains("tracking/tw-bad2.md"), "{err}");
     }
 
     #[test]
