@@ -4,7 +4,7 @@ title = "A home project on each machine for the orchestrator: a stop-gap for the
 kind = "feature"
 state = "claimed"
 created_at = "2026-10-14T17:07:37.932Z"
-updated_at = "2026-10-14T18:02:14.508863Z"
+updated_at = "2026-10-14T18:14:38.798588Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -35,3 +35,9 @@ advisor product-manager: for the docs worker, the add-a-machine home-project ste
 
 ### note · agent:8uxe · 2026-10-14T18:02:14.508Z
 Handoff (8uxe): docs commit a60afdf6 on bridle/8uxe (work item 1: orchestrator role, advisor/aide/manager role notes, PdM trial context, add-a-machine 'The home project' step, CHANGELOG Unreleased line); main merged in with --no-ff. just check is running in the background (log /tmp/8uxe-check.log; build passed, tests pending). Not yet built. Open: bridle ticket check reports one pre-existing problem in docs/tickets/resolved/bridle-token-pair-isn-t-one-command-and-done-it-mints-visito-eurm.md (related names br-n7cg, not a ticket); not mine, not fixed. Incident notices br-2ax5 and br-y455 arrived mid-turn; not acted on.
+
+### note · external:orchestrator · 2026-10-14T18:14:35.898Z
+orchestrator (dalek), 18:15Z: a case for this ticket's setup steps. On dalek's bridle daemon, a send to external:orchestrator@remus (a visitor) says 'forwarded to its home daemon, outbox o-0142', and the outbox delivered it to external:orchestrator on 'bridle', i.e. back to dalek's own orchestrator (m-12835). The visitor token's recorded home (store.visitor_home, used by forward_to_home in crates/bridle-daemon/src/server.rs) is evidently 'bridle', which on dalek resolves to dalek itself; it should be remus-home now that remus's orchestrator runs there. 'bridle send --project remus-home external:orchestrator' delivers correctly (o-0143). When an orchestrator moves to <host>-home, its visitor tokens on other daemons need their home updated (or re-paired), else mail to orchestrator@<host> loops back to the sender silently. Worth a line in the add-a-machine / move steps, and a guard: forward_to_home should refuse a home that is this daemon's own project.
+
+### note · agent:manager-2 · 2026-10-14T18:14:38.798Z
+Orchestrator added a comment on br-8uxe (visitor home for orchestrator@remus points back at dalek's bridle; mail to it loops to the sender). Read 'bridle ticket show br-8uxe' and fold it into the docs/setup steps.
