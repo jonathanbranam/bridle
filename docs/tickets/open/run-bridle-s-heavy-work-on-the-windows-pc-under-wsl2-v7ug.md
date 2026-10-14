@@ -213,3 +213,22 @@ From the human's session with advisor wsl2, 2026-10-10 (times US Eastern).
   passphrase so daemons can use it), added to `~/.ssh/authorized_keys` on dalek and vesta. Works.
   Tailscale SSH on vesta was not used: its browser check would break dalek's unattended SSH.
   Interim, while ticket r2nr is part done: remus's `[machines]` says `nuc = "vesta"`.
+- 2026-10-13 (late, ET): remus upgraded to bridle 0.7.1 from the release script. The human's way
+  with installers (write future steps like this): `curl -O` into `~/installs/`, read it, then run
+  it from there. remus `~/.bridle/config.toml`: `[machine] name = "remus"`; the interim
+  `nuc = "vesta"` is gone.
+- `ssh <host> bridle` works on all three machines: the system zshenv (macOS `/etc/zshenv`, Ubuntu
+  `/etc/zsh/zshenv`) has `path=($HOME/.local/bin $HOME/.cargo/bin $path)`. Ticket 5cru (bridle
+  itself shouldn't need this) has a design waiting for the human's review.
+- vesta -> dalek SSH was failing: vesta's key was missing from dalek's `authorized_keys`, probably
+  overwritten when remus's key was added on Oct 12. The human fixed it.
+- `bridle projects sync` from dalek, vesta and remus: all "same" (dalek, vesta, remus in
+  `[machines]`; the projects are on dalek and vesta).
+- `bridle token pair --machines dalek,vesta,remus` (plain run): role tokens all kept (dalek 36,
+  remus 40, vesta 36); peer tokens kept 0, failed 16 (`conflict: peer:<machine> already exists`).
+  Ticket xqwy: the receiver now replaces on conflict (7fc14218, on main, in 0.7.2). "Kept 0" was
+  a wrong check (it matched the token name where the name is the bare machine; the held entries
+  were probably fine), fixed in 39b308e7 on `bridle/xqwy`, not on main yet. Next: once that's
+  released, rerun pair and expect failed 0 and kept peer entries on a second run.
+- Next: move a project to remus (`docs/context/move-a-project.md`, `bridle project preflight --to
+  remus` first). remus has no `bridle systemd install` and no daemon running yet.
