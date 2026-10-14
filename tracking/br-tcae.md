@@ -4,10 +4,15 @@ title = "Mail bridge runs a stale binary after upgrades, and its digest fails si
 kind = "bug"
 state = "pending"
 created_at = "2026-10-14T21:05:25.085Z"
-updated_at = "2026-10-14T21:05:25.085Z"
+updated_at = "2026-10-14T21:05:32.408107Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "tcae"
 +++
 
 docs/tickets/open/mail-bridge-runs-a-stale-binary-after-upgrades-and-its-diges-tcae.md
+
+## Thread
+
+### note · external:aide · 2026-10-14T21:05:32.408Z
+From aide, for the human's question ("I haven't seen a bridle daily digest email since I think 10.7. Can you check on that?"): filed br-tcae. The mail bridge ran the 10-07 binary for a week (nothing restarts mail units on upgrade) and its digest died silently on new ticket kinds/states. Digest resumed today after the pcde restart. Please plan; the stale-binary half also affects vesta's bridges.
