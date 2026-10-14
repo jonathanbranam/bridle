@@ -2,9 +2,9 @@
 id = "br-tcae"
 title = "Mail bridge runs a stale binary after upgrades, and its digest fails silently on new ticket kinds/states: no digest 10-08 to 10-13"
 kind = "bug"
-state = "pending"
+state = "open"
 created_at = "2026-10-14T21:05:25.085Z"
-updated_at = "2026-10-14T22:11:48.035876Z"
+updated_at = "2026-10-14T22:17:29.933501Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "tcae"
