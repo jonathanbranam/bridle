@@ -229,10 +229,10 @@ impl Outbox {
         self.resolve(project)?;
         if self.peer_token(project)?.is_none() {
             return Err(format!(
-                "no peer token for '{project}': its human runs `bridle token create --peer {}` \
-                 there and pastes the token under [peer] in {}",
-                self.machine_name(),
-                self.home.join("credentials.toml").display()
+                "no peer token for '{project}': run `bridle token pair --tokens peer` to make it \
+                 (it is the [peer] entry for '{project}' in {}; machine '{}' holds it)",
+                self.home.join("credentials.toml").display(),
+                self.machine_name()
             ));
         }
         Ok(())

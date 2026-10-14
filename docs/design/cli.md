@@ -155,7 +155,7 @@ bridle token pair [--machines m,..] [--projects p,..] [--roles r,..] [--tokens r
                                              other machines: `human@<machine>`). An entry that works (GET /v1/status) is kept, so a
                                              second run changes nothing; `--rotate` replaces working ones (a peer token too: the receiver's
                                              mint takes `replace`, one upsert, so the old token stops as the new one exists); `--dry-run` mints and
-                                             writes nothing. An unreachable machine is reported and skipped and the exit is non-zero.
+                                             writes nothing. An unreachable machine is reported and skipped and the exit is non-zero. Peer tokens are made first (a daemon checks it can forward to a visitor's home before minting the visitor's role token), and `--projects` narrows only the holders and the role entries: the peer entries point at every project, so a machine's first project pairs in one run.
                                              Tokens go only through ssh stdin/stdout, never argv or output. After adding a role (it
                                              joins `TOKEN_ROLES` in token_pair.rs) or a machine, run it once more. `--tokens peer` is
                                              the default also pairs `peer` tokens: the receiving daemon mints `peer:<sending machine>` and the sender's file gets

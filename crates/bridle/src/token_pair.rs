@@ -251,6 +251,9 @@ struct Plan {
     roles: Vec<&'static str>,
     /// machine -> its projects (name, port)
     up: BTreeMap<String, Vec<(String, u16)>>,
+    /// Every project on those machines, ignoring `--projects`: the receivers a peer entry may
+    /// point at (a new project's daemon forwards to visitors' homes outside the selection).
+    all_up: BTreeMap<String, Vec<(String, u16)>>,
     /// (machine, project) pairs that left peer tokens out (`[mail] peers = false`).
     no_peers: BTreeSet<(String, String)>,
     /// False when a machine was unreachable.
@@ -301,7 +304,7 @@ impl Plan {
         if senders.is_empty() {
             return v;
         }
-        for (daemon, projects) in &self.up {
+        for (daemon, projects) in &self.all_up {
             for (project, _) in projects {
                 if self.no_peers.contains(&(daemon.clone(), project.clone())) {
                     continue;
@@ -372,6 +375,7 @@ fn plan(
     // Each reachable machine and its projects (name, port).
     let mut ok = true;
     let mut up: BTreeMap<String, Vec<(String, u16)>> = BTreeMap::new();
+    let mut all_up: BTreeMap<String, Vec<(String, u16)>> = BTreeMap::new();
     let mut no_peers: BTreeSet<(String, String)> = BTreeSet::new();
     for m in &machines {
         let mut found: Vec<(String, u16)> = Vec::new();
@@ -400,6 +404,10 @@ fn plan(
                 found.push((p.clone(), *port));
             }
         }
+        all_up.insert(
+            m.clone(),
+            found.iter().filter(|(p, _)| plain(p)).cloned().collect(),
+        );
         found.retain(|(p, _)| opts.projects.is_empty() || opts.projects.contains(p));
         found.retain(|(p, _)| {
             let good = plain(p);
@@ -414,6 +422,7 @@ fn plan(
             good
         });
         found.sort();
+        all_up.entry(m.clone()).and_modify(|v| v.sort());
         up.insert(m.clone(), found);
     }
     for p in &opts.projects {
@@ -429,6 +438,7 @@ fn plan(
         do_peer,
         roles,
         up,
+        all_up,
         no_peers,
         ok,
     })
@@ -445,31 +455,9 @@ pub fn pair(
     let p = plan(opts, fleet, runner, out)?;
     let mut ok = p.ok;
     let up = &p.up;
-    for holder in up.keys().filter(|_| p.do_role) {
-        let mut t = Tally::default();
-        for e in p.role_entries(holder) {
-            let label = format!("{} -> {}/{}", e.role, e.daemon, e.project);
-            let home = (!e.same).then(|| home_for(&up[holder], e.project, e.role));
-            match one(opts, fleet, runner, holder, &e, home) {
-                Ok(Outcome::Kept) => t.kept += 1,
-                Ok(Outcome::Minted) => t.minted += 1,
-                Ok(Outcome::Would) => {
-                    t.would += 1;
-                    t.lines.push(format!("would mint: {label}"));
-                }
-                Err(e) => {
-                    t.failed += 1;
-                    t.lines.push(format!("failed: {label}: {e}"));
-                }
-            }
-        }
-        if t.failed > 0 {
-            ok = false;
-        }
-        report(out, opts, holder, "role", &t);
-    }
-
-    // Peer tokens: a daemon forwards mail with a token the receiving daemon minted for the
+    // Peer tokens go first: minting a visitor's role token on a daemon checks that the daemon
+    // can forward to the visitor's home, which needs the peer entries made here (br-g9qm).
+    // A daemon forwards mail with a token the receiving daemon minted for the
     // sending MACHINE, so each machine with a sending project needs one per receiving project.
     for holder in up.keys().filter(|_| p.do_peer) {
         let mut t = Tally::default();
@@ -500,6 +488,30 @@ pub fn pair(
             report(out, opts, holder, "peer", &t);
         }
     }
+    for holder in up.keys().filter(|_| p.do_role) {
+        let mut t = Tally::default();
+        for e in p.role_entries(holder) {
+            let label = format!("{} -> {}/{}", e.role, e.daemon, e.project);
+            let home = (!e.same).then(|| home_for(&up[holder], e.project, e.role));
+            match one(opts, fleet, runner, holder, &e, home) {
+                Ok(Outcome::Kept) => t.kept += 1,
+                Ok(Outcome::Minted) => t.minted += 1,
+                Ok(Outcome::Would) => {
+                    t.would += 1;
+                    t.lines.push(format!("would mint: {label}"));
+                }
+                Err(e) => {
+                    t.failed += 1;
+                    t.lines.push(format!("failed: {label}: {e}"));
+                }
+            }
+        }
+        if t.failed > 0 {
+            ok = false;
+        }
+        report(out, opts, holder, "role", &t);
+    }
+
     // The last word: every entry, checked from its holder against its daemon, whatever the
     // steps above believed (br-su62).
     if !opts.dry_run {
@@ -1361,6 +1373,36 @@ mod tests {
         );
         assert!(
             peer_entries(&s).contains(&("mbp".into(), "bridle".into())),
+            "{out}"
+        );
+    }
+
+    // br-g9qm: a new project's machine needs peer entries to projects outside --projects, made
+    // before the role tokens that depend on them
+    #[test]
+    fn projects_filter_still_makes_peer_entries_first() {
+        let mut s = sim();
+        s.projects
+            .get_mut("nuc")
+            .unwrap()
+            .push(("home".into(), 7403));
+        let only = Options {
+            projects: vec!["home".into()],
+            ..Default::default()
+        };
+        let (ok, out) = run(&s, &only);
+        assert!(ok, "{out}");
+        assert!(
+            peer_entries(&s).contains(&("nuc".into(), "bridle".into())),
+            "{out}"
+        );
+        let peer = out.find("(peer tokens)").expect("peer section");
+        let role = out.find("(role tokens)").expect("role section");
+        assert!(peer < role, "{out}");
+        let (ok, out) = run(&s, &only);
+        assert!(ok, "{out}");
+        assert!(
+            !out.contains("minted 1") && !out.contains("minted 2"),
             "{out}"
         );
     }
