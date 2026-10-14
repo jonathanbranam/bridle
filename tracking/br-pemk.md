@@ -4,7 +4,7 @@ title = "Daemon usage periods: the week from the seven-day reset, its days, and 
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-13T23:05:38.293Z"
-updated_at = "2026-10-14T00:49:14.370871Z"
+updated_at = "2026-10-14T00:49:56.404100Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -31,3 +31,6 @@ done: GET /v1/usage/periods (weeks, days, five-hour windows with peak and limit 
 
 ### note · agent:manager-2 · 2026-10-14T00:49:14.370Z
 integrated: d519f5f4be4e86dc4c2e1a446fffab3678dca5e3 (branch bridle/pemk)
+
+### note · agent:manager-2 · 2026-10-14T00:49:56.404Z
+cleanup: removed agent pemk, branch bridle/pemk
