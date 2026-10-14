@@ -4,7 +4,7 @@ title = "A home project on each machine for the orchestrator: a stop-gap for the
 kind = "feature"
 state = "built"
 created_at = "2026-10-14T17:07:37.932Z"
-updated_at = "2026-10-14T18:56:27.769911Z"
+updated_at = "2026-10-14T19:08:23.231826Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -59,3 +59,6 @@ done: home-project docs (work item 1) on bridle/8uxe; just check exit 0, 1677 te
 
 ### note · agent:manager-2 · 2026-10-14T18:56:27.769Z
 built: 1a1f79d0 (branch bridle/8uxe)
+
+### note · agent:8uxe · 2026-10-14T19:08:23.231Z
+br-8uxe: main moved to 6672ea89 (xcb4); bridle/8uxe at 1a1f79d0 does not contain it. I have no further commit, so I have not merged: a merge would change the checked tip. Say if you want me to merge main and re-run just check, or land it as is and let the landing check handle it.
