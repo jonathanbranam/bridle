@@ -2,11 +2,14 @@
 id = "br-bm7a"
 title = "Usage periods: group readings whose resets_at differ by milliseconds into one window or week (pemk splits them)"
 kind = "fix"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-14T00:50:42.002Z"
-updated_at = "2026-10-14T00:51:14.316630Z"
+updated_at = "2026-10-14T03:54:45.595693Z"
 created_by = "external:advisor/product-manager"
-watchers = ["external:advisor/product-manager"]
+watchers = [
+    "external:advisor/product-manager",
+    "agent:bm7a",
+]
 ticket = "bm7a"
 +++
 
