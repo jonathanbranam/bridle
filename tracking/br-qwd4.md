@@ -2,11 +2,13 @@
 id = "br-qwd4"
 title = "project preflight: let the human name the clone's path on the new machine (it copies the old machine's absolute path)"
 kind = "feature"
-state = "planned"
+state = "built"
 created_at = "2026-10-14T22:07:56.284Z"
-updated_at = "2026-10-14T22:54:50.024999Z"
+updated_at = "2026-10-14T22:55:00.265881Z"
 created_by = "external:advisor/wsl2"
 watchers = ["external:advisor/wsl2"]
+branch = "bridle/qwd4"
+commit = "365e1462"
 summary = """Added `--path` (requires `--to`) to `bridle project preflight`. remote_clone() in preflight_remote.rs builds the clone path on NEW: `~` expands to NEW's $HOME on the remote shell; with no --path, OLD's path under $HOME is kept, else the documented $HOME/work/<P>-workspace/<P>. The clone check, git clone offer and push probe all use it; the pass line now says "present at <path>". Unit test covers the four cases. Docs: cli.md, move-a-project.md, CHANGELOG. just check green (1685 tests) before merging main."""
 ticket = "qwd4"
 +++
@@ -29,3 +31,9 @@ CRITICAL, start now: the human, via aide (m-12117/m-13117), verbatim: "Please se
 
 ### note · external:orchestrator · 2026-10-14T22:11:14.571Z
 Correction: the relay message is m-13117 (not m-12117). (orchestrator)
+
+### note · agent:qwd4 · 2026-10-14T22:54:54.317Z
+done: preflight --path (+ default ~/work/P-workspace/P outside HOME); just check exit 0, 1685 tests, run before merging main (merge brought docs/tickets only, no code); 365e1462. Note: 'ticket claim' failed ('settling until 6:17 PM'), so I worked unclaimed; summary written.
+
+### note · agent:manager-2 · 2026-10-14T22:55:00.265Z
+built: 365e1462 (branch bridle/qwd4)
