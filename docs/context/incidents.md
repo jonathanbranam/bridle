@@ -1853,3 +1853,17 @@ battery fell from 99% to 70% in 27 minutes (about 1.1% a minute) with two worker
 - **Category:** `host`, `upgrade`.
 - **Follow-up:** br-8swr (comment added); the build-cost / WSL2 offload line (br-v7ug); no new
   ticket.
+
+## 2026-10-14 14:31Z: self-upgrade refused nncj's build; integration/target at 833K files
+
+- **What happened:** the self-upgrade built 18780a46 (br-nncj) and refused to restart into it:
+  "the new binary's self-check timed out (3 attempts of 60 s)". Looking for why the morning's
+  lands and checks crawled, the orchestrator found `integration/target/debug/deps` at 833,634 files
+  (152 GB; the clone's has ~12K). syspolicyd ran at 70-260% CPU assessing new binaries.
+- **Impact:** nncj's fix (and the z5kz doubled wakes it should end) not live on dalek's daemon;
+  every land and worker check slowed for hours; each spawn's `warm_target` copies the whole pile.
+- **Cause:** the integration target is never pruned (found in br-z7y5, 2026-10-06; its fix was
+  never filed as a build). A new ad-hoc-signed binary's first exec waits on syspolicyd.
+- **Category:** `host`, `upgrade`.
+- **Follow-up:** br-j4bk (critical, readied): prune it and skip warming from an oversized source.
+  By hand meanwhile: move `integration/target` aside between lands.
