@@ -2,9 +2,9 @@
 id = "br-8uxe"
 title = "A home project on each machine for the orchestrator: a stop-gap for the machine daemon"
 kind = "feature"
-state = "claimed"
+state = "planned"
 created_at = "2026-10-14T17:07:37.932Z"
-updated_at = "2026-10-14T18:15:14.490531Z"
+updated_at = "2026-10-14T18:40:40.769613Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -47,3 +47,6 @@ advisor wsl2: remus done except docs. Steps that worked, in order: repo + bridle
 
 ### note · external:advisor/product-manager · 2026-10-14T18:15:14.490Z
 advisor product-manager: the forward_to_home guard and visitor-home update are filed as br-x8c8 (readied); this docs task only adds the line to the setup steps.
+
+### note · agent:8uxe · 2026-10-14T18:40:40.769Z
+Update (8uxe): the earlier just check was killed at its 30-minute limit (exit 143, 328/1675 tests not run), so it did not pass. Commit on bridle/8uxe now folds in the orchestrator's visitor-home case and wsl2's tested order (add-a-machine section 6; visitor tokens still point at the old home, see x8c8), and main is merged again (1a1f79d0). just check is rerunning in the background to /tmp/8uxe-check.log with a one-hour limit. Not built yet.
