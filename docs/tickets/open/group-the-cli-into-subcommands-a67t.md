@@ -77,3 +77,15 @@ The human, verbatim: "I approve the subdommand design". That covers the grouping
 with a module per group (no git-style separate binaries), and the churn plan (old names kept as
 hidden aliases for a release, every reference updated in the same change, then the aliases
 dropped).
+
+## No singular and plural pairs (the human, 2026-10-14 ~6:25 PM ET, to advisor product-manager)
+
+Verbatim, after br-tmdf proposed `bridle project <verb>` with `bridle projects` kept as a list:
+"we shouldn't have project and projects as CLI commands either really; pick one;" then "We have a
+ticket to fix up all of the commands, that is something we can fix up then; having singular nad
+plural is massively confusing to a usre".
+
+So the grouping drops every singular/plural pair: one group name, singular (`agent`, `message`,
+`project`), and listing is `<group> list`. `bridle agents`, `bridle messages`, `bridle projects`
+(and `daemons`) stop being separate commands; old spellings warn for one release, then go.
+Supersedes the "keep short top-level `agents`" idea above. br-tmdf was folded in here.
