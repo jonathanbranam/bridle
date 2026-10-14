@@ -36,10 +36,10 @@ fn once(to: Option<&str>) -> ScheduleAddRequest {
 }
 
 #[tokio::test]
-async fn an_agent_schedules_only_to_itself_and_sees_only_its_own() {
+async fn an_agent_schedules_only_to_itself_and_sees_its_own_and_those_targeting_it() {
     let (daemon, _tmp) = start_daemon(Some(default_overrides())).await;
     let w1 = daemon.agent_client(&spawn_worker(&daemon, "w1").await);
-    spawn_worker(&daemon, "w2").await;
+    let w2 = daemon.agent_client(&spawn_worker(&daemon, "w2").await);
 
     let mine = w1.add_schedule(&once(None)).await.expect("to itself");
     assert_eq!(mine.target, "agent:w1");
@@ -57,7 +57,18 @@ async fn an_agent_schedules_only_to_itself_and_sees_only_its_own() {
 
     let own = w1.list_schedules(false).await.expect("list");
     assert_eq!(own.iter().map(|s| &s.id).collect::<Vec<_>>(), [&mine.id]);
+    assert_eq!(own[0].relation.as_deref(), Some("created"));
     assert_eq!(daemon.client.list_schedules(false).await.unwrap().len(), 2);
+
+    // A schedule the human set for w2 shows in w2's list, marked, but w2 cannot remove it.
+    let w2_sees = w2.list_schedules(false).await.expect("list");
+    assert_eq!(w2_sees.len(), 1);
+    assert_eq!(w2_sees[0].id, theirs.id);
+    assert_eq!(w2_sees[0].relation.as_deref(), Some("target"));
+    assert_eq!(w2_sees[0].created_by, "human");
+    w2.remove_schedule(&theirs.id)
+        .await
+        .expect_err("not the creator");
 
     // Another's schedule is not found, not forbidden.
     let err = w1.remove_schedule(&theirs.id).await.expect_err("not mine");

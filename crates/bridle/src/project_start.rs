@@ -592,6 +592,7 @@ mod tests {
             tz: "America/New_York".into(),
             next_fire_at: next,
             last_fired_at: None,
+            relation: None,
             state: "active".into(),
             created_at: Utc::now(),
         }

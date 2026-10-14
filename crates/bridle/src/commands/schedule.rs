@@ -63,14 +63,19 @@ pub(super) async fn run(cli: &Cli, args: &ScheduleArgs) -> Result<(), CliError> 
                         .as_deref()
                         .map_or("once".to_string(), |c| format!("cron {c}"));
                     let first = s.body.lines().next().unwrap_or("");
+                    let who = match s.relation.as_deref() {
+                        Some("target") => format!("  (set by {})", s.created_by),
+                        _ => String::new(),
+                    };
                     println!(
-                        "{}  {:<6} {:<24} {}  {}  {}",
+                        "{}  {:<6} {:<24} {}  {}  {}{}",
                         s.id,
                         s.state,
                         s.target,
                         when(s),
                         what,
-                        first
+                        first,
+                        who
                     );
                 }
             }

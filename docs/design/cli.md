@@ -98,7 +98,7 @@ bridle send    [--project <other>] <agent|human|role:NAME|external:NAME> [TEXT |
 bridle schedule add  [--to <principal>] (--at <time> | --cron "<expr>") [--tz <IANA>] (--message TEXT | --message-file FILE|-)
                      # the daemon sends the message to <principal> (default: me, an agent or external) at the time; --at is RFC 3339 or "YYYY-MM-DD HH:MM" in --tz (default [schedule] timezone, America/New_York);
                      # --cron is 5 fields in --tz (DST: a skipped local time is skipped that day, a repeated one fires once). Prints the id and the next fire time (schedule zone, and UTC). A past --at or a cron that never fires is refused
-bridle schedule list [--all]                # my schedules (the human sees everyone's); --all adds finished ones
+bridle schedule list [--all]                # my schedules, those I set and those others set that target me, the latter shown "(set by X)" (the human sees everyone's); --all adds finished ones
 bridle schedule rm   <id>                   # mine (the human: any; externals count as mine too)
 bridle message show <id>                    # how far a message got: `queued` (in my daemon's outbox), `arrived` (on the recipient's daemon, recipient not yet woken), `delivered` (received; also read, for now); an `o-` id from `send` to another daemon, or an `m-` id
 bridle recipients                           # who I can message here (human, agents, external principals, visitors) and which other daemons I can reach with `--project`

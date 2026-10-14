@@ -325,6 +325,7 @@ mod tests {
             tz: "America/New_York".to_string(),
             next_fire_at: Some(utc(due)),
             last_fired_at: None,
+            relation: None,
             state: String::new(),
             created_at: Utc::now(),
         }

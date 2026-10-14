@@ -1858,6 +1858,7 @@ async fn add_schedule(
             last_fired_at: None,
             state: String::new(),
             created_at: now,
+            relation: None,
         })
         .await?;
     Ok(Json(schedule))
@@ -1871,7 +1872,18 @@ async fn list_schedules(
 ) -> Result<Json<Vec<Schedule>>, ApiError> {
     schedule_actor_ok(&principal)?;
     let owner = (principal.kind != PrincipalKind::Human).then_some(principal.id.as_str());
-    Ok(Json(state.store.schedules_list(owner, q.all).await?))
+    let mut list = state.store.schedules_list(owner, q.all).await?;
+    if owner.is_some() {
+        for s in &mut list {
+            let rel = if s.created_by == principal.id {
+                "created"
+            } else {
+                "target"
+            };
+            s.relation = Some(rel.to_string());
+        }
+    }
+    Ok(Json(list))
 }
 
 /// `DELETE /v1/schedules/{id}`. Another agent's schedule reads as not found.

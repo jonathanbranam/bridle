@@ -417,14 +417,15 @@ impl Store {
         self.with_conn(move |c| sync::schedule_add(c, s)).await
     }
 
-    /// `created_by` limits to one creator; `all` includes `done` ones.
+    /// `involving` limits to schedules that principal created or that target it; `all`
+    /// includes `done` ones.
     pub async fn schedules_list(
         &self,
-        created_by: Option<&str>,
+        involving: Option<&str>,
         all: bool,
     ) -> Result<Vec<Schedule>, StoreError> {
-        let created_by = created_by.map(str::to_string);
-        self.with_conn(move |c| sync::schedules_list(c, created_by.as_deref(), all))
+        let involving = involving.map(str::to_string);
+        self.with_conn(move |c| sync::schedules_list(c, involving.as_deref(), all))
             .await
     }
 
@@ -2212,6 +2213,7 @@ mod sync {
             last_fired_at: parse_dt_opt(r.get(8)?)?,
             state: r.get(9)?,
             created_at: parse_dt(&r.get::<_, String>(10)?)?,
+            relation: None,
         })
     }
 
@@ -2243,16 +2245,20 @@ mod sync {
 
     pub(super) fn schedules_list(
         conn: &Connection,
-        created_by: Option<&str>,
+        involving: Option<&str>,
         all: bool,
     ) -> Result<Vec<Schedule>, StoreError> {
+        // Targets are stored as `agent:<name>` for agents, so match the bare name either way.
+        let bare = involving.map(|p| p.strip_prefix("agent:").unwrap_or(p).to_string());
+        let prefixed = bare.as_ref().map(|b| format!("agent:{b}"));
         let mut stmt = conn.prepare(&format!(
             "SELECT {SCHEDULE_COLS} FROM schedules
-             WHERE (?1 IS NULL OR created_by = ?1) AND (?2 OR state = 'active')
+             WHERE (?1 IS NULL OR created_by = ?1 OR target = ?1 OR target = ?3 OR target = ?4)
+               AND (?2 OR state = 'active')
              ORDER BY next_fire_at IS NULL, next_fire_at, created_at"
         ))?;
         Ok(stmt
-            .query_map(params![created_by, all], schedule_from)?
+            .query_map(params![involving, all, bare, prefixed], schedule_from)?
             .collect::<Result<_, _>>()?)
     }
 

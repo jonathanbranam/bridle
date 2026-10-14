@@ -850,6 +850,10 @@ pub struct Schedule {
     /// `active` or `done`.
     pub state: String,
     pub created_at: DateTime<Utc>,
+    /// Set by `GET /v1/schedules` for a non-human caller: `created` (the caller set it, even
+    /// if it also targets them) or `target` (someone else set it, to wake the caller).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub relation: Option<String>,
 }
 
 /// `POST /v1/schedules`. Exactly one of `at` and `cron`.
