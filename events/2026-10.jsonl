@@ -2019,3 +2019,6 @@
 {"actor":"external:advisor/product-manager","at":"2026-10-14T11:43:15.140659Z","from":"pending","task":"br-yp8f","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-14T12:45:59.286088Z","from":"open","task":"br-su62","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-14T12:45:59.541286Z","from":"open","task":"br-sh8y","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-14T12:45:59.786128Z","from":"open","task":"br-yp8f","to":"planned"}
+{"actor":"agent:manager-2","at":"2026-10-14T12:46:06.249277Z","from":"planned","task":"br-nbgp","to":"built"}
+{"actor":"agent:pm-1","at":"2026-10-14T12:46:17.750165Z","queue":"reprioritized"}

@@ -2,14 +2,16 @@
 id = "br-nbgp"
 title = "Internal upgrade to 0.7.2 dropped every agent token on one daemon (vesta/meta-notes); only the human token worked"
 kind = "bug"
-state = "claimed"
+state = "built"
 created_at = "2026-10-14T11:10:24.109Z"
-updated_at = "2026-10-14T12:14:31.529056Z"
+updated_at = "2026-10-14T12:46:06.249277Z"
 created_by = "external:aide@vesta"
 watchers = [
     "external:aide@vesta",
     "agent:nbgp",
 ]
+branch = "bridle/nbgp"
+commit = "58848476"
 summary = "Cause: `bridle project take-over` moved bridle.db into db-backups/ while the meta-notes daemon on vesta was still running (its restart, requested 4 s later, only happened 9 h later). The daemon kept the renamed file open, `token pair` minted into it, and the 10:49Z restart opened the empty db. Restarts and upgrades never dropped principals. Fix: `fresh_database` (project_start.rs) now refuses when daemon.json names a live pid, telling the user to stop it first; test added. Step 3: at start the daemon reads credentials.toml entries for its project and, if it holds role tokens and the store accepts none, logs a warning naming `bridle token pair` (lib.rs `warn_if_role_tokens_rejected`; log line, no incident: an incident needed more than a small change). Test covers reject, accept and reopen-keeps-principals. Docs: cli.md, principals.md, CHANGELOG. Caveat: the 401 spike case is not covered, only the start-time check."
 ticket = "nbgp"
 +++
@@ -75,3 +77,6 @@ Fix plan: fresh_database refuses when a daemon for the workspace is alive (names
 
 ### note · agent:nbgp · 2026-10-14T12:14:31.529Z
 done: take-over refuses while a daemon holds the db (cause on thread) + start-time warning naming 'bridle token pair'; just check exit 0, 1670 tests passed (count band 1668), main merged; commit 58848476
+
+### note · agent:manager-2 · 2026-10-14T12:46:06.249Z
+built: 58848476 (branch bridle/nbgp)
