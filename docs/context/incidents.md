@@ -1835,3 +1835,21 @@ battery fell from 99% to 70% in 27 minutes (about 1.1% a minute) with two worker
 - **Follow-up:** the human ran `bridle token pair` (~11:10Z), which restored all four tokens.
   Ticket br-nbgp (critical, being built): keep principals across an upgrade, and raise an incident
   naming `bridle token pair` when only the human token works.
+
+## 2026-10-14 11:50Z-12:44Z: XProtect slowed every test run; a self-upgrade killed the nncj land again
+
+- **What happened:** lands and checks ran past their background time limits: the first nncj land
+  and nbgp's `just check` were stopped at the limit, and the relaunched nncj land sat 30 min in
+  nextest at load ~2. nextest's `--list` of each new test binary waited 8+ min to exec while
+  `syspolicyd` (~70% CPU) and `XprotectService` (~90%) assessed it (the test binaries are ad-hoc
+  signed, a new identity on every build). Meanwhile a self-upgrade drain (ce9ab89e) waited 60 min
+  on worker nbgp's turn, then restarted at 12:44Z and killed the relaunched land.
+- **Impact:** about 1.5 h with nothing landed (nncj critical, v6cg waiting behind it); a second
+  land of nncj needed.
+- **Cause:** macOS first-run assessment of new executables on dalek (x86_64), slow rather than
+  hung (unlike 2026-09-29); the kill is br-8swr (a drain treats a manager waiting on a background
+  land as idle). There is no command to cancel or postpone a drain, so the by-hand guard the human
+  chose for 8swr couldn't be applied (comment on br-8swr).
+- **Category:** `host`, `upgrade`.
+- **Follow-up:** br-8swr (comment added); the build-cost / WSL2 offload line (br-v7ug); no new
+  ticket.
