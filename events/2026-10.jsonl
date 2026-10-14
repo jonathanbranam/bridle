@@ -1990,3 +1990,4 @@
 {"actor":"agent:drvx","at":"2026-10-14T07:04:26.102800Z","from":"claimed","task":"br-drvx","to":"built"}
 {"actor":"agent:manager-2","at":"2026-10-14T07:20:06.773851Z","from":"planned","task":"br-zn6s","to":"built"}
 {"actor":"agent:manager-2","at":"2026-10-14T07:39:32.154005Z","from":"built","task":"br-dtf6","to":"integrated"}
+{"actor":"agent:manager-2","at":"2026-10-14T08:36:12.912949Z","from":"built","task":"br-drvx","to":"integrated"}
