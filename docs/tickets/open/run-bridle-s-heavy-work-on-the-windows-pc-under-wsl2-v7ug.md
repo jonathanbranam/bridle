@@ -240,3 +240,16 @@ From the human's session with advisor wsl2, 2026-10-10 (times US Eastern).
   a new optional step 3a (Tailscale + OpenSSH on Windows, to reach `romulus` when WSL is down).
 - AWS CLI v2 (2.38.0) installed on remus and vesta from AWS's zip in `~/installs/`, for the mail
   setup (ticket n3kj; new guide `docs/context/mail-on-a-machine.md`).
+- 2026-10-14 afternoon: mail set up on remus and vesta (ticket n3kj, `docs/context/mail-on-a-machine.md`):
+  IAM users `bridle-mail-remus` / `bridle-mail-vesta`, `~/.aws` `[default]` on each (checked with
+  `aws sts get-caller-identity` and `aws s3 ls`), dalek's `mail.key` on remus (vesta already had
+  it), the same `[mail]` everywhere with all projects plus dalek-home, vesta-home, remus-home.
+  vesta's four bridges active; a test mail arrived.
+- remus upgraded to 0.7.2. Home project remus-home (ticket 8uxe) created in
+  `~/work/remus-home-work/remus-home`, port 7408, registered and synced. Order that worked:
+  `bridle serve` once (creates `bridle/state`, claims the owner; bug kf7t), `bridle project
+  start` (daemon unit), full `bridle token pair --machines dalek,vesta,remus` twice (bug g9qm),
+  `bridle mail install --project remus-home` + enable. Mail test to remus-home@ answered.
+  remus's orchestrator and aide run in remus-home.
+- vesta's network dropped 13:25-13:40 ET (Wi-Fi; the cable had no IPv4). Fixed with
+  `/etc/netplan/10-wired.yaml` (`enp0s25` `dhcp4: true`, route-metric 100); Wi-Fi is the fallback.
