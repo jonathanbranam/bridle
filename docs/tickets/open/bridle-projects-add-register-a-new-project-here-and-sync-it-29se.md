@@ -34,3 +34,11 @@ One command, e.g. `bridle projects add <name> [--machine M] [--port N]`:
 - Docs: `adding-a-project.md` step 1 and the home-project steps (8uxe) use it.
 
 Part of making a new project smooth, end to end: `projects add`, then `bridle project start` works on a brand-new project (kf7t) and its tokens finish with failed 0 (g9qm).
+
+## Decided (the human, 2026-10-14 ~6:20 PM ET, to advisor product-manager)
+
+Verbatim: "fine, yes then the project add can go in the queue now as well". Build it now, ahead
+of the br-dffz epic (which stays backlog; its `setup` will call this). The command is spelled
+`bridle project add` (br-tmdf: one group, `bridle project <verb>`). It is "register only", a
+different action from `setup`; say so in its help. Per the dffz design, it ends by naming the
+next step (`next: bridle project start`) when it can tell.
