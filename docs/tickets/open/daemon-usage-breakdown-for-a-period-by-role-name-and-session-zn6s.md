@@ -7,7 +7,7 @@ created_by: external:advisor/product-manager
 repos: [bridle]
 changes: []
 specs: []
-blocked_by: [br-pac3, br-pemk]
+blocked_by: [br-pac3, br-pemk, br-bm7a]
 related: [br-ktgd]
 theme: performance
 parent: br-rdkn
