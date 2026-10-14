@@ -81,7 +81,7 @@ fn pairs_over_ssh_and_no_token_is_in_argv_or_output() {
     assert!(!stdout.contains("tok-SECRET") && !stderr.contains("tok-SECRET"));
     let argv = read(r.fake.path(), "argv.log");
     assert!(
-        argv.contains("-o BatchMode=yes -o ConnectTimeout=10 nuc-host bridle"),
+        argv.contains("-o BatchMode=yes -o ConnectTimeout=10 nuc-host PATH=\"$PATH:$HOME/.local/bin:$HOME/.cargo/bin\"; exec bridle 'token'"),
         "{argv}"
     );
     assert!(!argv.contains("tok-SECRET"), "{argv}");
@@ -161,7 +161,7 @@ fn peer_tokens_over_ssh_with_an_opt_out_project() {
     assert!(!stdout.contains("quiet"), "{stdout}");
     assert!(!stdout.contains("tok-SECRET") && !stderr.contains("tok-SECRET"));
     let argv = read(r.fake.path(), "argv.log");
-    assert!(argv.contains("pair-peer-mint nuc"), "{argv}");
+    assert!(argv.contains("'pair-peer-mint' 'nuc'"), "{argv}");
     assert!(!argv.contains("tok-SECRET"), "{argv}");
     assert_eq!(
         read(r.fake.path(), "stored.log")

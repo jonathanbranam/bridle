@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Fix (br-sh8y): commands that run bridle on another machine over ssh (`token pair`, `project stop|start --machine`, `project preflight --to`) also look in `~/.local/bin` and `~/.cargo/bin`, and say "bridle not found on <host>" (shell exit 127) or "<host> unreachable" (ssh exit 255) instead of a bare shell error; preflight shows where bridle was found. Migration: none.
 - Fix (br-j4bk): the integration `target/` is pruned after each warm build once `debug/deps` passes 100,000 entries, and `warm_target` skips cloning a source that large, so a bloated target no longer stalls spawns, lands and self-upgrades. Migration: none.
 - Fix (br-nncj): a daemon no longer forwards its wakes (restarts, exits, usage, context, uptime) to a visiting orchestrator homed on another machine when it has an orchestrator of its own; before, dalek's wakes also reached vesta's orchestrator. Migration: none.
 - `bridle project take-over` no longer moves the database out from under a running daemon (which went on minting tokens into the moved file and lost them all at its next restart); it refuses and says to stop the daemon first. A daemon that starts with role tokens in `credentials.toml` that its database rejects logs a warning naming `bridle token pair` (br-nbgp).

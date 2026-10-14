@@ -23,6 +23,12 @@ pub trait Remote {
     fn run(&self, host: &str, script: &str) -> Ran;
 }
 
+/// The path bridle was found at, then its version; the PATH extension is `token_pair`'s.
+const VERSION_SNIPPET: &str = concat!(
+    r#"PATH="$PATH:$HOME/.local/bin:$HOME/.cargo/bin"; "#,
+    "command -v bridle; bridle --version"
+);
+
 pub struct Ssh;
 
 impl Remote for Ssh {
@@ -211,11 +217,20 @@ pub fn check_new(
         out.push(outcome("clone", true, "present".into()));
     }
 
-    let ver = remote.run(c.host, "bridle --version");
-    let theirs = (ver.code == 0).then(|| parse_version(&ver.text)).flatten();
+    let ver = remote.run(c.host, VERSION_SNIPPET);
+    // `command -v` prints the path first, then the version line.
+    let (path, vline) = ver.text.trim().split_once('\n').unwrap_or(("", ""));
+    let theirs = (ver.code == 0).then(|| parse_version(vline)).flatten();
     let ours = parse_version(c.version);
     out.push(match (theirs, ours) {
-        (Some(t), Some(o)) if t >= o => outcome("bridle version", true, ver.text.trim().into()),
+        (Some(t), Some(o)) if t >= o => outcome(
+            "bridle version",
+            true,
+            format!(
+                "{} at {path}",
+                vline.trim().trim_start_matches("bridle ").trim()
+            ),
+        ),
         (Some(_), _) => outcome(
             "bridle version",
             false,
@@ -225,10 +240,23 @@ pub fn check_new(
                 "bridle upgrade (or just install)",
             ),
         ),
+        _ if ver.code == 0 => outcome(
+            "bridle version",
+            false,
+            failure(
+                c,
+                &format!("cannot read the version of {path}"),
+                "bridle --version",
+            ),
+        ),
         _ => outcome(
             "bridle version",
             false,
-            failure(c, "bridle not found", "install bridle (just install)"),
+            failure(
+                c,
+                &format!("bridle not found on {}", c.host),
+                "install bridle (just install); looked on PATH, ~/.local/bin, ~/.cargo/bin",
+            ),
         ),
     });
 
@@ -405,10 +433,16 @@ mod tests {
                     text: "Connection refused".into(),
                 };
             }
-            if script == "bridle --version" {
+            if script == VERSION_SNIPPET {
+                if self.version.is_empty() {
+                    return Ran {
+                        code: 127,
+                        text: "bridle: not found".into(),
+                    };
+                }
                 return Ran {
                     code: 0,
-                    text: self.version.into(),
+                    text: format!("/home/u/.cargo/bin/bridle\n{}", self.version),
                 };
             }
             let code = i32::from(self.fail.iter().any(|f| script.contains(f)));
@@ -563,6 +597,12 @@ mod tests {
                 .message
                 .contains("older than 0.6.3")
         );
+        let o = go(&ok(), NEW, false);
+        assert!(
+            msg(&o, "bridle version")
+                .message
+                .contains("0.6.3 at /home/u/.cargo/bin/bridle")
+        );
         let o = go(
             &Fake {
                 version: "bridle 0.10.0",
@@ -574,7 +614,6 @@ mod tests {
         assert!(msg(&o, "bridle version").pass);
         let o = go(
             &Fake {
-                fail: vec!["bridle --version"],
                 version: "",
                 ..ok()
             },
@@ -582,6 +621,24 @@ mod tests {
             false,
         );
         assert!(!msg(&o, "bridle version").pass);
+        assert!(
+            msg(&o, "bridle version")
+                .message
+                .contains("bridle not found on")
+        );
+        let o = go(
+            &Fake {
+                version: "junk",
+                ..ok()
+            },
+            NEW,
+            false,
+        );
+        assert!(
+            msg(&o, "bridle version")
+                .message
+                .contains("cannot read the version")
+        );
     }
 
     #[test]

@@ -95,7 +95,35 @@ pub trait Runner {
     fn run(&self, at: &Where, args: &[String], stdin: Option<&str>) -> Result<String, String>;
 }
 
-/// The real runner: the running binary locally, plain `ssh <host> bridle ...` elsewhere.
+/// Appended to the remote PATH: a non-interactive ssh shell often lacks where `just install`
+/// and `cargo install` put bridle.
+const REMOTE_PATH: &str = r#"PATH="$PATH:$HOME/.local/bin:$HOME/.cargo/bin""#;
+
+/// Single-quote one word for a remote POSIX shell.
+fn sh_quote(s: &str) -> String {
+    format!("'{}'", s.replace('\'', r"'\''"))
+}
+
+/// The one remote command line that runs `bridle <args>` over ssh, finding bridle in
+/// `~/.local/bin` and `~/.cargo/bin` as well as the PATH.
+pub fn remote_bridle_cmd(args: &[String]) -> String {
+    let quoted: Vec<String> = args.iter().map(|a| sh_quote(a)).collect();
+    format!("{REMOTE_PATH}; exec bridle {}", quoted.join(" "))
+}
+
+/// The reason for a failed remote run: 127 is the shell not finding bridle, 255 is ssh itself.
+pub fn remote_failure(host: &str, code: i32, stderr: &str) -> String {
+    let last = stderr.trim().lines().last().unwrap_or("");
+    match code {
+        127 => format!("bridle not found on {host} (looked on PATH, ~/.local/bin, ~/.cargo/bin)"),
+        255 if last.is_empty() => format!("{host} unreachable: ssh failed"),
+        255 => format!("{host} unreachable: {last}"),
+        _ if last.is_empty() => format!("exit {code}"),
+        _ => last.to_string(),
+    }
+}
+
+/// The real runner: the running binary locally, `ssh <host> <remote_bridle_cmd>` elsewhere.
 pub struct Exec;
 
 impl Runner for Exec {
@@ -109,16 +137,20 @@ impl Runner for Exec {
                 "-o",
                 "ConnectTimeout=10",
                 host,
-                "bridle",
-            ])
-            .args(args);
+                &remote_bridle_cmd(args),
+            ]);
             let input = stdin.map(|t| format!("{t}\n"));
-            return crate::project_sync::run_timed(
+            let (code, out, err) = crate::project_sync::run_timed_raw(
                 c,
                 host,
                 input.as_deref(),
                 crate::project_sync::SSH_TIMEOUT,
-            );
+            )?;
+            return if code == 0 {
+                Ok(String::from_utf8_lossy(&out).into_owned())
+            } else {
+                Err(remote_failure(host, code, &String::from_utf8_lossy(&err)))
+            };
         }
         let mut cmd = match at {
             Where::Local => {
@@ -726,6 +758,28 @@ mod tests {
 
     // s-891b
     // s-89c3: the second run keeps every entry
+    #[test]
+    fn remote_command_extends_path_and_quotes_every_arg() {
+        let a = args(&["token", "pair-mint", "it's $HOME; rm"]);
+        assert_eq!(
+            remote_bridle_cmd(&a),
+            r#"PATH="$PATH:$HOME/.local/bin:$HOME/.cargo/bin"; exec bridle 'token' 'pair-mint' 'it'\''s $HOME; rm'"#
+        );
+    }
+
+    #[test]
+    fn remote_failures_tell_not_found_unreachable_and_bridles_own_error() {
+        let nf = remote_failure("nuc", 127, "sh: bridle: not found");
+        assert!(nf.starts_with("bridle not found on nuc"), "{nf}");
+        let un = remote_failure("nuc", 255, "ssh: connect: Connection refused\n");
+        assert_eq!(un, "nuc unreachable: ssh: connect: Connection refused");
+        assert_eq!(
+            remote_failure("nuc", 1, "warn\nerror: no such project"),
+            "error: no such project"
+        );
+        assert_eq!(remote_failure("nuc", 2, ""), "exit 2");
+    }
+
     #[test]
     fn defaults_pair_every_role_everywhere_and_a_second_run_changes_nothing() {
         let s = sim();
