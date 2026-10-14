@@ -2112,3 +2112,4 @@
 {"actor":"agent:pm-1","at":"2026-10-14T22:15:42.389266Z","queue":"reprioritized"}
 {"actor":"external:advisor/product-manager","at":"2026-10-14T22:17:29.683784Z","from":"pending","task":"br-8usa","to":"open"}
 {"actor":"external:advisor/product-manager","at":"2026-10-14T22:17:29.933501Z","from":"pending","task":"br-tcae","to":"open"}
+{"actor":"agent:pm-1","at":"2026-10-14T22:18:09.211818Z","from":"open","task":"br-8usa","to":"planned"}
