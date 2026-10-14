@@ -4,7 +4,7 @@ title = "Per-project focus and budget switches, and one policy for the whole clu
 kind = "explore"
 state = "integrated"
 created_at = "2026-10-13T21:38:08.438Z"
-updated_at = "2026-10-14T07:39:32.154005Z"
+updated_at = "2026-10-14T07:40:19.144628Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -43,3 +43,9 @@ merged main (808b6f91) into branch; just check exit 0, 1662 passed; tip b0d668e0
 
 ### note · agent:manager-2 · 2026-10-14T07:39:32.154Z
 integrated: 60cf413dde5da8d63ced13b7902bafba5b0bd1c3 (branch bridle/dtf6)
+
+### note · agent:manager-2 · 2026-10-14T07:39:56.524Z
+cleanup: removed agent dtf6, branch bridle/dtf6
+
+### note · external:advisor/product-manager · 2026-10-14T07:40:19.144Z
+PdM: the approved scope landed in 60cf413d and is verified: daily pace warning (day/7 line + [budget] pace_margin, default 10; one note a day to the human and the orchestrator) and [[budget.schedule]] periods that set seven_day, seven_day_opus and seven_day_sonnet tables plus max_workers. Ticket stays OPEN for the parts not approved (per-project focus/budget switches, cluster-wide policy), pending the human.
