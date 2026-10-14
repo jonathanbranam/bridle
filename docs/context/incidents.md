@@ -1867,3 +1867,14 @@ battery fell from 99% to 70% in 27 minutes (about 1.1% a minute) with two worker
 - **Category:** `host`, `upgrade`.
 - **Follow-up:** br-j4bk (critical, readied): prune it and skip warming from an oversized source.
   By hand meanwhile: move `integration/target` aside between lands.
+
+## 2026-10-14 15:07Z: a self-upgrade restart killed the nbgp land (third today)
+
+- **What happened:** the self-upgrade to ed5f1fd0 succeeded and restarted in place at 15:07Z
+  (resumed 5 of 5 agents), killing manager-2's background `bridle ticket land br-nbgp`, which had
+  held the test lock since 13:48Z. manager-2 relaunched the land after the resume.
+- **Impact:** nbgp (critical) delayed again; its land starts over; v6cg and j4bk wait behind it.
+- **Cause:** br-8swr (a drain treats a manager waiting on a background land as idle), as at
+  05:44Z, 07:50Z and 12:44Z.
+- **Category:** `upgrade`.
+- **Follow-up:** br-8swr; no new ticket.
