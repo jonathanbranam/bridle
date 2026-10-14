@@ -14,7 +14,7 @@ related: [br-kt25, br-kx5u]
 
 ## The ask
 
-The human, 2026-10-14 (to advisor wsl2), moving data-contracts from dalek to remus: "I should be able to specify the destination path when running preflight; please file that as feature request".
+The human, 2026-10-14 (to advisor wsl2), moving data-contracts from dalek to remus: "I should be able to specify the destination path when running preflight; please file that as feature request". Then, readying it: "yes, ready and get the --path".
 
 ## What happened (advisor wsl2)
 
@@ -33,6 +33,6 @@ The path on remus should be `~/work/data-contracts-workspace/data-contracts`, th
 
 ## What's wanted
 
-- A way to name the clone's path on NEW when running preflight, for example `bridle project preflight --to remus --path ~/work/data-contracts-workspace/data-contracts`. The clone prompt, the clone check and the git push probe all use it.
-- With no path given, a better default than copying OLD's absolute path: the documented `~/work/<P>-workspace/<P>` when OLD's path isn't under `$HOME`, or a clone that already exists on NEW. Up to the planner.
+- Must have: a `--path` option naming the clone's path on NEW when running preflight, for example `bridle project preflight --to remus --path ~/work/data-contracts-workspace/data-contracts`. The clone prompt, the clone check and the git push probe all use it.
+- Nice to have: with no `--path`, a better default than copying OLD's absolute path: the documented `~/work/<P>-workspace/<P>` when OLD's path isn't under `$HOME`, or a clone that already exists on NEW. Up to the planner.
 - docs/context/move-a-project.md step 1 and the CLI doc mention the option.
