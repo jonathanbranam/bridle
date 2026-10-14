@@ -53,8 +53,8 @@ Create users `bridle-mail-vesta` and `bridle-mail-remus` with that policy and on
 ```sh
 # from dalek: the shared key, before any bridge runs on vesta
 scp -p ~/.bridle/mail.key vesta:.bridle/mail.key
-ssh vesta 'chmod 600 ~/.bridle/mail.key; od -An -tx1 ~/.bridle/mail.key | md5sum'
-od -An -tx1 ~/.bridle/mail.key | md5sum          # same hash as vesta's
+ssh vesta 'chmod 600 ~/.bridle/mail.key; sha256sum < ~/.bridle/mail.key'
+shasum -a 256 < ~/.bridle/mail.key      # same hash as vesta's (hash the raw file: macOS and Linux od space their output differently)
 ```
 
 On vesta:
