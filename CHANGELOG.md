@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.7.2] - 2026-10-14
+
 - Budget pacing and sprint (br-dtf6): the governor sends the human and the orchestrator one note a day when `seven_day` is more than `[budget] pace_margin` (default 10) points over the day's pace line (day x 1/7 of the week, counted from the reset); it holds nothing. A `[[budget.schedule]]` period can now also set `seven_day`, `seven_day_opus` and `seven_day_sonnet` thresholds (an end-of-week sprint) and its `max_workers` applies while it matches by the clock. Migration: none (new optional keys).
 - `bridle statusline` now counts Claude Code sessions run outside any bridle project: they report to one daemon per machine (the first live project by name) as `external:unbridled/outside any project`, shown in that project's `bridle usage` external sessions (br-drvx). Migration: none.
 - New `GET /v1/usage/groups?since=&until=`: a period's cost, tokens and context growth grouped role -> name -> session, hosted and external together, each row labelled with project and machine, with each group's share of the period's seven_day points (an estimate: cost share x points gained) and the measured points per dollar (br-zn6s). Migration: none.
