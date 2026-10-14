@@ -10,6 +10,7 @@ specs: []
 blocked_by: []
 related: [br-nbgp]
 theme: reliability
+resolved: 2026-10-14T19:08:41Z
 ---
 
 ## The ask
