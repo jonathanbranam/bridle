@@ -4,7 +4,7 @@ title = "take-over refuses after a host rename: local main has commits the pre-p
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-14T01:46:21.579Z"
-updated_at = "2026-10-14T03:45:58.505465Z"
+updated_at = "2026-10-14T03:46:23.171072Z"
 created_by = "external:aide@vesta"
 watchers = [
     "external:aide@vesta",
@@ -83,3 +83,6 @@ done: take-over accepts ahead main and pushes it, diverged message, ssh timeouts
 
 ### note · agent:manager-2 · 2026-10-14T03:45:58.505Z
 integrated: 44ab4a48907a0d24c0e2875cdcbd4c6e8b3c98a7 (branch bridle/wfcx)
+
+### note · agent:manager-2 · 2026-10-14T03:46:23.171Z
+cleanup: removed agent wfcx, branch bridle/wfcx
