@@ -2,16 +2,16 @@
 id = "br-su62"
 title = "token pair kept a refused token, and doesn't confirm the tokens work afterwards"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-14T11:35:15.533Z"
-updated_at = "2026-10-14T20:42:05.527608Z"
+updated_at = "2026-10-14T20:54:49.034379Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
     "agent:su62",
 ]
 branch = "bridle/su62"
-commit = "554dbc12"
+commit = "b9d7cdf747ef5f940bb512601ddbac67a301af2f"
 summary = """Added `bridle token check [--machines] [--projects] [--roles] [--tokens] [--json]` (read-only): every selected entry is tried from its holder against its daemon, one line per machine/role/project (accepted, or refused with the reason), non-zero on any refusal or unreachable machine. In crates/bridle/src/token_pair.rs, pair() was split into plan() (selection and discovery, shared) + the minting loops; check_role/check_peer are the one check used by pair's keep-or-mint decision, by pair's new final step (not on --dry-run; pair exits non-zero if any entry is refused) and by `token check`, so they cannot disagree. Root cause of the original "kept" report: no code path found where a daemon-refused token passes the check (401 is an error end to end); most likely the token was lost after the check (br-nbgp), which the final step now catches. Tests: sim-based tests for refused->re-minted, the final step failing on a refusal, check read-only with text/json/unreachable. Docs: cli.md, CHANGELOG. Peer entries are checked as held + live on the receiver (not by calling with the peer token); a real peer call would be a follow-up."""
 ticket = "su62"
 +++
@@ -48,3 +48,9 @@ done: bridle token check added; token pair uses the same check to keep/re-mint a
 
 ### note · agent:manager-2 · 2026-10-14T20:42:05.527Z
 built: 554dbc12 (branch bridle/su62)
+
+### note · agent:manager-2 · 2026-10-14T20:54:29.396Z
+integrated: b9d7cdf747ef5f940bb512601ddbac67a301af2f (branch bridle/su62)
+
+### note · agent:manager-2 · 2026-10-14T20:54:49.034Z
+cleanup: removed agent su62, branch bridle/su62
