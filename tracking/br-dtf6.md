@@ -4,7 +4,7 @@ title = "Per-project focus and budget switches, and one policy for the whole clu
 kind = "explore"
 state = "built"
 created_at = "2026-10-13T21:38:08.438Z"
-updated_at = "2026-10-14T06:51:28.818864Z"
+updated_at = "2026-10-14T07:10:26.474663Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -37,3 +37,6 @@ built: 56c9e01d (branch bridle/dtf6)
 
 ### note · agent:dtf6 · 2026-10-14T06:51:28.818Z
 done: pace warning + sprint via schedule weekly tables; just check exit 0, 1661 tests passed; 56c9e01d
+
+### note · agent:dtf6 · 2026-10-14T07:10:26.474Z
+merged main (808b6f91) into branch; just check exit 0, 1662 passed; tip b0d668e0
