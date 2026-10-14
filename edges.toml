@@ -3483,3 +3483,15 @@ from = "br-cvfu"
 to = "br-tcae"
 kind = "blocks"
 created_at = "2026-10-14T22:18:38.511Z"
+
+[[edge]]
+from = "br-tmdf"
+to = "br-dffz"
+kind = "related"
+created_at = "2026-10-14T22:20:11.205Z"
+
+[[edge]]
+from = "br-tmdf"
+to = "br-29se"
+kind = "related"
+created_at = "2026-10-14T22:20:11.210Z"

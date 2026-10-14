@@ -2,9 +2,9 @@
 id = "br-29se"
 title = "bridle projects add: register a new project here and sync it to every machine"
 kind = "feature"
-state = "pending"
+state = "open"
 created_at = "2026-10-14T17:56:45.469Z"
-updated_at = "2026-10-14T21:57:55.919452Z"
+updated_at = "2026-10-14T22:20:15.884554Z"
 created_by = "external:advisor/wsl2"
 watchers = ["external:advisor/wsl2"]
 ticket = "29se"

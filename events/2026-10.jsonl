@@ -2115,3 +2115,6 @@
 {"actor":"agent:pm-1","at":"2026-10-14T22:18:09.211818Z","from":"open","task":"br-8usa","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-14T22:18:20.090623Z","from":"open","task":"br-tcae","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-14T22:18:25.438723Z","queue":"reprioritized"}
+{"actor":"human","at":"2026-10-14T22:20:02.633Z","from":"","task":"br-tmdf","to":"pending"}
+{"actor":"external:advisor/product-manager","at":"2026-10-14T22:20:15.633952Z","from":"pending","task":"br-tmdf","to":"open"}
+{"actor":"external:advisor/product-manager","at":"2026-10-14T22:20:15.884554Z","from":"pending","task":"br-29se","to":"open"}
