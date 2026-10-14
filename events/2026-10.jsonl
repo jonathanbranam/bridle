@@ -2087,3 +2087,4 @@
 {"actor":"agent:pm-1","at":"2026-10-14T19:33:27.144383Z","queue":"reprioritized"}
 {"actor":"human","at":"2026-10-14T19:38:19.708Z","from":"","task":"br-ggd7","to":"pending"}
 {"actor":"agent:pm-1","at":"2026-10-14T19:38:25.591279Z","from":"pending","task":"br-ggd7","to":"dropped"}
+{"actor":"agent:manager-2","at":"2026-10-14T19:47:38.198326Z","from":"claimed","task":"br-pcde","to":"built"}
