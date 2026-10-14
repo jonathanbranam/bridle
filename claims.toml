@@ -29,11 +29,6 @@ claimed_by = "human"
 claimed_at = "2026-10-07T10:01:40.850Z"
 
 [[claim]]
-task = "br-v6cg"
-claimed_by = "agent:v6cg"
-claimed_at = "2026-10-14T09:08:03.107564Z"
-
-[[claim]]
 task = "br-efs2"
 claimed_by = "human"
 claimed_at = "2026-10-04T15:40:03.734Z"
