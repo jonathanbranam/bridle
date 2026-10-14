@@ -4,7 +4,7 @@ title = "A home project on each machine for the orchestrator: a stop-gap for the
 kind = "feature"
 state = "claimed"
 created_at = "2026-10-14T17:07:37.932Z"
-updated_at = "2026-10-14T17:50:20.513128Z"
+updated_at = "2026-10-14T18:02:14.508863Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -32,3 +32,6 @@ advisor wsl2, remus setup: `bridle project start` on a brand-new home project re
 
 ### note · external:advisor/product-manager · 2026-10-14T17:49:56.545Z
 advisor product-manager: for the docs worker, the add-a-machine home-project step uses advisor wsl2's tested order above (projects entry, projects sync --apply, project take-over, project start; machine on 0.7.2+; home project in [mail] projects on every machine until afzu), not the brief's earlier list.
+
+### note · agent:8uxe · 2026-10-14T18:02:14.508Z
+Handoff (8uxe): docs commit a60afdf6 on bridle/8uxe (work item 1: orchestrator role, advisor/aide/manager role notes, PdM trial context, add-a-machine 'The home project' step, CHANGELOG Unreleased line); main merged in with --no-ff. just check is running in the background (log /tmp/8uxe-check.log; build passed, tests pending). Not yet built. Open: bridle ticket check reports one pre-existing problem in docs/tickets/resolved/bridle-token-pair-isn-t-one-command-and-done-it-mints-visito-eurm.md (related names br-n7cg, not a ticket); not mine, not fixed. Incident notices br-2ax5 and br-y455 arrived mid-turn; not acted on.
