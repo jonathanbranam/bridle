@@ -1946,3 +1946,4 @@
 {"actor":"external:advisor/product-manager","at":"2026-10-14T00:51:00.304092Z","from":"pending","task":"br-bm7a","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-14T00:51:14.316630Z","from":"open","task":"br-bm7a","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-14T00:51:18.134114Z","queue":"reprioritized"}
+{"actor":"human","at":"2026-10-14T01:20:43.432Z","from":"","task":"br-5cru","to":"pending"}
