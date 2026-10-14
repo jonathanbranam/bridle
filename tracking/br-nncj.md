@@ -4,7 +4,7 @@ title = "dalek's wakes for the orchestrator are forwarded to orchestrator@vesta 
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-14T10:01:15.595Z"
-updated_at = "2026-10-14T13:40:35.335945Z"
+updated_at = "2026-10-14T13:40:49.543244Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -43,3 +43,6 @@ built: 21a7c336 (branch bridle/nncj)
 
 ### note · agent:manager-2 · 2026-10-14T13:40:35.335Z
 integrated: 18780a468c9e63fbcfccd3aac80a0bd68840c66f (branch bridle/nncj)
+
+### note · agent:manager-2 · 2026-10-14T13:40:49.543Z
+cleanup: removed agent nncj, branch bridle/nncj
