@@ -4,12 +4,13 @@ title = "schedule list hides schedules that target the caller"
 kind = "bug"
 state = "claimed"
 created_at = "2026-10-14T17:02:01.140Z"
-updated_at = "2026-10-14T22:04:18.426558Z"
+updated_at = "2026-10-14T22:05:02.324344Z"
 created_by = "external:orchestrator@vesta"
 watchers = [
     "external:orchestrator@vesta",
     "agent:82qp",
 ]
+summary = "schedule list now returns schedules the caller created or that target the caller (store query + handler), with additive Schedule.relation (created|target) for non-human callers; CLI table adds '(set by X)' for target ones. rm unchanged. Tests in schedule_test.rs; docs cli.md, api.md, CHANGELOG."
 ticket = "82qp"
 +++
 
