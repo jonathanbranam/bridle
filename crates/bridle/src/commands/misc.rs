@@ -927,11 +927,7 @@ async fn token_pair(cli: &Cli, action: &TokenAction) -> Result<(), CliError> {
         TokenAction::PairPeerActive { sender } => {
             let client = client_for(cli).await?;
             let name = format!("peer:{sender}");
-            let live = client
-                .list_tokens()
-                .await?
-                .iter()
-                .any(|t| t.name == name && !t.revoked);
+            let live = peer_token_live(&client.list_tokens().await?, &name);
             if !live {
                 return Err(CliError::Other(anyhow::anyhow!("no live {name}")));
             }
@@ -950,6 +946,13 @@ async fn token_pair(cli: &Cli, action: &TokenAction) -> Result<(), CliError> {
         _ => unreachable!("not a pair action"),
     }
     Ok(())
+}
+
+/// A peer token's `name` is the bare machine; `peer:<machine>` is its principal id (br-378y).
+fn peer_token_live(tokens: &[bridle_api::types::TokenInfo], principal: &str) -> bool {
+    tokens
+        .iter()
+        .any(|t| t.principal == principal && !t.revoked)
 }
 
 pub(super) async fn token(cli: &Cli, args: &TokenArgs) -> Result<(), CliError> {
@@ -1348,5 +1351,31 @@ mod outbox_line_tests {
             "{line}"
         );
         assert!(line.ends_with("(connection refused)"), "{line}");
+    }
+}
+
+#[cfg(test)]
+mod peer_token_tests {
+    use super::peer_token_live;
+    use bridle_api::types::TokenInfo;
+
+    fn info(principal: &str, name: &str, revoked: bool) -> TokenInfo {
+        TokenInfo {
+            principal: principal.into(),
+            name: name.into(),
+            created_at: chrono::Utc::now(),
+            revoked,
+        }
+    }
+
+    #[test]
+    fn a_live_peer_token_is_found_by_principal_not_name() {
+        let t = [info("peer:dalek", "dalek", false)];
+        assert!(peer_token_live(&t, "peer:dalek"));
+        assert!(!peer_token_live(&t, "peer:vesta"));
+        assert!(!peer_token_live(
+            &[info("peer:dalek", "dalek", true)],
+            "peer:dalek"
+        ));
     }
 }
