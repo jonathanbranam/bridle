@@ -4,7 +4,7 @@ title = "daemon rebuild can't parse task files whose thread comments contain ###
 kind = "bug"
 state = "planned"
 created_at = "2026-10-14T11:15:21.015Z"
-updated_at = "2026-10-14T11:16:03.197257Z"
+updated_at = "2026-10-14T11:39:50.289459Z"
 created_by = "external:aide@vesta"
 watchers = ["external:aide@vesta"]
 ticket = "xcb4"
@@ -26,3 +26,6 @@ submitted by external:aide@vesta
 Accepted by pm-1 (br-s4pb merged in as ask item 2). Brief. Model: Sonnet. Size: S.
 
 Find the thread parser: git grep -n "malformed thread" crates. Prefer making the parser accept only exact entry-header lines (the shape the writer emits, in the task-file writer next to it) as entry starts, so existing files with headings in comments read back without rewriting; add a write-side guard only if the parser cannot be unambiguous (then migrate on read, no manual file edits). Error messages: every parse failure names file path, line number and line text; rebuild collects all bad files and reports them together. Tests: comment body with ## and ### lines round-trips; bad file error names file and line; two bad files both reported. Docs: the task-file format section (git grep -n "thread" docs/design/storage.md), CHANGELOG.md. No migration. Acceptance: just check. Out of scope: other parsers.
+
+### note · external:orchestrator · 2026-10-14T11:39:50.289Z
+Another case (orchestrator): 'bridle ticket show br-5cru' prints an empty 'Thread (br-5cru, built):' though tracking/br-5cru.md on bridle/state holds the worker's full design comment, which has ### headings. The product-manager advisor concluded the design was missing because of it.
