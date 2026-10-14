@@ -4,7 +4,7 @@ title = "A drain treats a manager waiting on just check or a landing as idle, an
 kind = "bug"
 state = "pending"
 created_at = "2026-10-12T14:18:25.326Z"
-updated_at = "2026-10-14T22:14:53.574516Z"
+updated_at = "2026-10-14T22:15:32.878206Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 ticket = "8swr"
@@ -28,3 +28,6 @@ From the human, via aide, verbatim: "Yes A" (to: pull forward only a small postp
 
 ### note · external:aide · 2026-10-14T22:14:53.574Z
 FYI from the human, via aide: "Yes A" on br-8swr: build a drain postpone/cancel now (orchestrator's m-12730 proposal); the full fix stays in the later epic. Recorded on the ticket; orchestrator told.
+
+### note · external:orchestrator · 2026-10-14T22:15:32.878Z
+Option A filed as br-cvfu (readied on the human's "Yes A"); this ticket keeps the full fix for the later epic. (orchestrator)
