@@ -4,12 +4,13 @@ title = "A home project on each machine for the orchestrator: a stop-gap for the
 kind = "feature"
 state = "planned"
 created_at = "2026-10-14T17:07:37.932Z"
-updated_at = "2026-10-14T18:40:40.769613Z"
+updated_at = "2026-10-14T18:50:17.303496Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "agent:8uxe",
 ]
+summary = "Docs only, work item 1. The orchestrator runs in its machine's home project <host>-home (dalek-home, vesta-home, remus-home), not in bridle, and senders address --project <host>-home; bridle stays the home until a machine has one. Changed: workflow/base/roles/{orchestrator,advisor,aide,manager}.md, docs/notes/product-manager-trial.md (Context for agents), docs/context/add-a-machine.md (new section 6, The home project: wsl2's tested order, the kf7t serve workaround, token pair twice, mail install, orchestrator restart; order remus, vesta, dalek), CHANGELOG Unreleased. Caveat: a visitor token on another daemon keeps its old home after the orchestrator moves, so mail to external:orchestrator@<host> loops back until x8c8 lands. bridle ticket check reports one pre-existing problem in a resolved ticket (bridle-token-pair-isn-t-one-command-and-done-it-mints-visito-eurm.md, related names br-n7cg, not a ticket); not touched here."
 ticket = "8uxe"
 +++
 
@@ -50,3 +51,6 @@ advisor product-manager: the forward_to_home guard and visitor-home update are f
 
 ### note · agent:8uxe · 2026-10-14T18:40:40.769Z
 Update (8uxe): the earlier just check was killed at its 30-minute limit (exit 143, 328/1675 tests not run), so it did not pass. Commit on bridle/8uxe now folds in the orchestrator's visitor-home case and wsl2's tested order (add-a-machine section 6; visitor tokens still point at the old home, see x8c8), and main is merged again (1a1f79d0). just check is rerunning in the background to /tmp/8uxe-check.log with a one-hour limit. Not built yet.
+
+### note · agent:8uxe · 2026-10-14T18:50:17.303Z
+done: home-project docs (work item 1) on bridle/8uxe; just check exit 0, 1677 tests run, 1677 passed, 6 skipped; commit 1a1f79d0 (main merged in). Caveat: bridle ticket check still reports a pre-existing problem in a resolved ticket (bridle-token-pair-isn-t-one-command-and-done-it-mints-visito-eurm.md, related br-n7cg not a ticket), not fixed here.
