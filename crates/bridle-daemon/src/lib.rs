@@ -57,6 +57,7 @@ mod tasks;
 mod ticket_links;
 mod upgrade;
 pub mod usage_http;
+pub mod usage_periods;
 mod wake;
 pub mod warm_build;
 pub mod workflow_checkout;

@@ -1253,6 +1253,64 @@ pub struct UsageHistoryQuery {
     pub since: Option<DateTime<Utc>>,
 }
 
+/// `GET /v1/usage/periods?since=`: the account's usage periods derived from the rate-limit
+/// history (br-pemk). Each period is a distinct `resets_at`, never a fixed grid.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct UsagePeriods {
+    /// The IANA zone the days are cut in (the daemon's `[schedule] timezone`).
+    pub timezone: String,
+    /// Oldest first.
+    pub weeks: Vec<UsageWeek>,
+    /// Every five-hour window seen, oldest first.
+    pub windows: Vec<UsageWindow>,
+    /// The raw readings, oldest first.
+    pub five_hour: Vec<RateLimitPoint>,
+    pub seven_day: Vec<RateLimitPoint>,
+}
+
+/// One seven-day period: it ends at the `seven_day` `resets_at`.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct UsageWeek {
+    pub starts_at: DateTime<Utc>,
+    pub resets_at: DateTime<Utc>,
+    /// Highest seven_day utilization read (0-1 fraction).
+    pub peak: f64,
+    pub hit_limit: bool,
+    /// The calendar days (in `timezone`) the week touches, clipped to the week.
+    pub days: Vec<UsageDay>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct UsageDay {
+    /// `YYYY-MM-DD` in the response's `timezone`.
+    pub date: String,
+    pub starts_at: DateTime<Utc>,
+    pub ends_at: DateTime<Utc>,
+    /// Highest seven_day / five_hour utilization read in the day; `None` with no reading.
+    pub peak_seven_day: Option<f64>,
+    pub peak_five_hour: Option<f64>,
+    /// A five_hour reading in the day reached the limit.
+    pub hit_five_hour: bool,
+}
+
+/// One real five-hour window: it ends at the `five_hour` `resets_at`.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct UsageWindow {
+    pub starts_at: DateTime<Utc>,
+    pub resets_at: DateTime<Utc>,
+    /// Highest utilization read (0-1 fraction).
+    pub peak: f64,
+    /// Utilization reached 1.0 (the history carries no status, so this is the test).
+    pub hit_limit: bool,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct UsagePeriodsQuery {
+    /// Only readings observed at or after this time.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub since: Option<DateTime<Utc>>,
+}
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
 pub struct TokenTotals {
     pub input: u64,

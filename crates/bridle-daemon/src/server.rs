@@ -26,8 +26,8 @@ use bridle_api::types::{
     SkipSettleRequest, SpawnRequest, Status, StatusLineReport, StopRequest, SubmitTicketRequest,
     Ticket, TicketQuery, TicketState, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine,
     TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery, UsageGroupBy, UsageHistoryQuery,
-    UsageInstance, UsageInstancesQuery, UsageSeries, UsageSeriesQuery, WakeResponse, When,
-    WindowStatus, WriteHandoverRequest, event_kind,
+    UsageInstance, UsageInstancesQuery, UsagePeriods, UsagePeriodsQuery, UsageSeries,
+    UsageSeriesQuery, WakeResponse, When, WindowStatus, WriteHandoverRequest, event_kind,
 };
 use bridle_api::types::{
     PeerWatchRequest, PrincipalId, RemoteWatchRequest, Schedule, ScheduleAddRequest,
@@ -149,6 +149,7 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/usage", get(usage))
         .route("/v1/usage/breakdown", get(usage_breakdown))
         .route("/v1/usage/history", get(usage_history))
+        .route("/v1/usage/periods", get(usage_periods))
         .route("/v1/usage/agents", get(usage_instances))
         .route("/v1/usage/agents/{agent_id}/series", get(usage_series))
         .route("/v1/statusline", post(report_statusline))
@@ -2490,6 +2491,25 @@ async fn usage_history(
     Ok(Json(
         state.store.rate_limit_history(q.window, q.since).await?,
     ))
+}
+
+async fn usage_periods(
+    State(state): State<AppState>,
+    Query(q): Query<UsagePeriodsQuery>,
+) -> Result<Json<UsagePeriods>, ApiError> {
+    let five = state
+        .store
+        .rate_limit_history("five_hour".to_string(), q.since)
+        .await?;
+    let seven = state
+        .store
+        .rate_limit_history("seven_day".to_string(), q.since)
+        .await?;
+    let tz = state
+        .schedule_timezone
+        .parse::<chrono_tz::Tz>()
+        .unwrap_or(chrono_tz::UTC);
+    Ok(Json(crate::usage_periods::periods(five, seven, tz)))
 }
 
 async fn usage_instances(

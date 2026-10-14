@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- `GET /v1/usage/periods` lists the weeks (from the seven_day reset), their days and each real five-hour window with its peak and whether it hit the limit, so "did we hit a five-hour limit last week?" has an answer (br-pemk). Migration: none.
 - An external session's first statusline report counts in full when its running totals are small (under $1 and 100,000 tokens), so a new session's startup cost shows; a larger first total (a resumed session) is still a baseline (br-mksa). Migration: none.
 - The web UI session cookie is re-issued with a fresh 30-day `Max-Age` when the session slides (at most hourly), so a daily-used login no longer drops 30 days after the first login (br-ry8z). Migration: none.
 - The web UI login survives a gateway restart or reboot: sessions are kept on disk (`<bridle home>/gateway-sessions.json`, hashed, mode 0600) and last 30 days, sliding, instead of 12 hours in memory (br-v56p). Migration: none; everyone logs in once after the upgrade.

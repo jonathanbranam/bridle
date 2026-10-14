@@ -97,6 +97,14 @@ least one turn has ended.
 Per-task wall time isn't built: there's no task/workflow-revision column on
 turns yet (below).
 
+`GET /v1/usage/periods?since=` (br-pemk) derives the periods from the `rate_limit_history`
+readings, with no schema change: a week is a distinct seven_day `resets_at` (never a hardcoded
+weekday), a five-hour window a distinct five_hour `resets_at`, each with its peak utilization and
+`hit_limit` (utilization >= 1.0; the history keeps no status). A week's days are calendar days in
+the daemon's `[schedule] timezone` (default America/New_York), clipped to the week, each with its
+peak seven_day and five_hour utilization and whether a five-hour reading hit the limit. Only
+changes are stored, so a peak is the highest stored reading.
+
 `bridle usage --by role|model|agent --since <duration>` (and
 `GET /v1/usage/breakdown?since=&by=`) aggregates the turns ledger instead:
 turns, tokens, cost, busy time and the cache hit ratio, grouped by role or

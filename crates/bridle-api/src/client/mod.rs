@@ -29,8 +29,8 @@ use crate::types::{
     SkipSettleRequest, SpawnRequest, Status, StatusLineReport, StopRequest, StopWakeRequest,
     StopWakeResponse, SubmitTicketRequest, Ticket, TicketQuery, TokenCreateRequest, TokenCreated,
     TokenInfo, TranscriptLine, TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery,
-    UsageHistoryQuery, UsageInstance, UsageInstancesQuery, UsageSeries, UsageSeriesQuery,
-    WakeResponse, WriteHandoverRequest,
+    UsageHistoryQuery, UsageInstance, UsageInstancesQuery, UsagePeriods, UsagePeriodsQuery,
+    UsageSeries, UsageSeriesQuery, WakeResponse, WriteHandoverRequest,
 };
 
 pub use bridle_docs::documents::{
@@ -478,6 +478,15 @@ impl Client {
         query: &UsageHistoryQuery,
     ) -> Result<Vec<RateLimitPoint>, ClientError> {
         self.get_json_query(&["v1", "usage", "history"], query)
+            .await
+    }
+
+    /// `GET /v1/usage/periods`: the weeks, days and five-hour windows of the rate-limit history.
+    pub async fn usage_periods(
+        &self,
+        query: &UsagePeriodsQuery,
+    ) -> Result<UsagePeriods, ClientError> {
+        self.get_json_query(&["v1", "usage", "periods"], query)
             .await
     }
 
