@@ -256,3 +256,54 @@ async fn many_concurrent_crossings_each_renew_exactly_once() {
         );
     }
 }
+
+/// br-2kam: a renewal shows as one session ending (renewal, at N tokens) and the next starting
+/// (renewal), each carrying the renewal limit in force.
+#[allow(clippy::type_complexity)]
+#[tokio::test]
+async fn renewal_is_recorded_as_one_session_ending_and_the_next_starting() {
+    let config = format!("[context.wind_down_at]\ndefault = {THRESHOLD}\n");
+    let (daemon, _tmp) = start_daemon_with_config(Some(fast_overrides()), Some(&config)).await;
+    let c = &daemon.client;
+    let agent = c
+        .spawn(&SpawnRequest {
+            components: Vec::new(),
+            role: "worker".to_string(),
+            name: Some("w1".to_string()),
+            prompt: Some("SLEEP 1".to_string()),
+            workdir: Some(Workdir::Worktree { base: None }),
+            model: None,
+            extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
+            ignore_budget: false,
+        })
+        .await
+        .expect("spawn");
+    write_high_context_usage(&agent.cwd);
+    wait_for_event(c, "agent.renewed", Some(&agent.id), |_| true).await;
+    let renewed = c.get_agent(&agent.id).await.expect("get renewed agent");
+
+    let db = rusqlite::Connection::open(daemon.workspace.join(".bridle/bridle.db")).expect("db");
+    let rows: Vec<(String, String, Option<String>, Option<i64>, f64)> = db
+        .prepare(
+            "SELECT session_id, start_reason, end_reason, end_tokens, renewal_limit
+             FROM agent_sessions WHERE agent_id = ?1 ORDER BY id",
+        )
+        .expect("prepare")
+        .query_map([&agent.id], |r| {
+            Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?))
+        })
+        .expect("query")
+        .collect::<Result<_, _>>()
+        .expect("rows");
+    assert_eq!(rows.len(), 2, "{rows:?}");
+    assert_eq!(rows[0].0, agent.session_id);
+    assert_eq!(rows[0].1, "spawn");
+    assert_eq!(rows[0].2.as_deref(), Some("renewal"));
+    // The context size at the end of the last turn (the handoff turn re-reads it), not the crossing.
+    assert!(rows[0].3.is_some_and(|t| t > 0), "{rows:?}");
+    assert_eq!(rows[0].4, THRESHOLD as f64);
+    assert_eq!(rows[1].0, renewed.session_id);
+    assert_eq!(rows[1].1, "renewal");
+    assert_eq!(rows[1].4, THRESHOLD as f64);
+}

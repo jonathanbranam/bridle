@@ -295,6 +295,8 @@ struct StartingAgent<'a> {
     session_id: &'a str,
     turns_so_far: u32,
     resuming: bool,
+    /// Why this session began: `spawn`, `resume` or `renewal` (agent_sessions.start_reason).
+    start_reason: &'static str,
 }
 
 impl AgentManager {
@@ -1319,6 +1321,7 @@ impl AgentManager {
                     session_id: &agent.session_id,
                     turns_so_far: agent.turns,
                     resuming: false,
+                    start_reason: "spawn",
                 },
                 spawned,
                 principal,
@@ -1420,8 +1423,16 @@ impl AgentManager {
             session_id,
             turns_so_far,
             resuming,
+            start_reason,
         } = start;
         let session_cost = self.0.store.session_cost(agent_id).await?;
+        if let Some(a) = self.0.store.get_agent(agent_id).await? {
+            let limit = self.0.config.context.wind_down_at.get(&a.role);
+            self.0
+                .store
+                .session_start(agent_id, session_id, start_reason, limit)
+                .await?;
+        }
         let pid = spawned.handle.pid();
         let start = tokio::task::spawn_blocking(move || containment::start_time(pid))
             .await
@@ -2023,6 +2034,18 @@ impl AgentManager {
             exit.reason = "budget_paused".to_string();
         }
         let _ = self.0.store.set_agent_exit(id, exit.clone()).await;
+        let end_reason = if stop_requested {
+            "stop"
+        } else if shutdown_requested {
+            "shutdown"
+        } else {
+            exit.reason.as_str()
+        };
+        let end_tokens = match self.0.store.get_agent(id).await {
+            Ok(Some(a)) => a.context_tokens.map(|t| t as i64),
+            _ => None,
+        };
+        let _ = self.0.store.session_end(id, end_reason, end_tokens).await;
         let _ = self.0.store.release_agent_ports(id).await;
         self.transition_state(id, runtime, state).await;
         let _ = self
@@ -2792,6 +2815,7 @@ impl AgentManager {
                 session_id: &session_id,
                 turns_so_far: agent.turns,
                 resuming,
+                start_reason: "resume",
             },
             spawned,
             principal,
@@ -2883,6 +2907,11 @@ impl AgentManager {
             .await?
             .ok_or_else(|| SupervisorError::NotFound(id_or_name.to_string()))?;
         let from_state = agent.state;
+        let _ = self
+            .0
+            .store
+            .session_end(&agent.id, "renewal", agent.context_tokens.map(|t| t as i64))
+            .await;
         // No hold check: a renew replaces a session rather than adding load,
         // so it never waits on the governor (r3nh). That also makes the
         // stop below safe: nothing after it can be refused for budget.
@@ -2985,6 +3014,7 @@ impl AgentManager {
                 session_id: &session_id.to_string(),
                 turns_so_far: agent.turns,
                 resuming: false,
+                start_reason: "renewal",
             },
             spawned,
             principal,

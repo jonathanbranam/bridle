@@ -693,6 +693,36 @@ impl Store {
             .await
     }
 
+    /// Records a hosted session starting (`reason`: spawn, resume or renewal) with the context
+    /// renewal limit in force.
+    pub async fn session_start(
+        &self,
+        agent_id: &str,
+        session_id: &str,
+        reason: &str,
+        renewal_limit: f64,
+    ) -> Result<(), StoreError> {
+        let (a, s, r) = (
+            agent_id.to_string(),
+            session_id.to_string(),
+            reason.to_string(),
+        );
+        self.with_conn(move |c| sync::session_start(c, &a, &s, &r, renewal_limit))
+            .await
+    }
+
+    /// Records the agent's open session ending, with its context size at the time.
+    pub async fn session_end(
+        &self,
+        agent_id: &str,
+        reason: &str,
+        tokens: Option<i64>,
+    ) -> Result<(), StoreError> {
+        let (a, r) = (agent_id.to_string(), reason.to_string());
+        self.with_conn(move |c| sync::session_end(c, &a, &r, tokens))
+            .await
+    }
+
     /// The claude session's own running `total_cost_usd` as of its last turn (0 for a fresh
     /// session): the baseline the next turn's cost delta is taken against.
     pub async fn session_cost(&self, id: &str) -> Result<f64, StoreError> {
@@ -1717,6 +1747,21 @@ mod sync {
         ALTER TABLE turns ADD COLUMN context_tokens INTEGER;
     "#;
 
+    pub(super) const SCHEMA_V30: &str = r#"
+        CREATE TABLE agent_sessions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            agent_id TEXT NOT NULL,
+            session_id TEXT NOT NULL,
+            started_at TEXT NOT NULL,
+            start_reason TEXT NOT NULL,
+            ended_at TEXT,
+            end_reason TEXT,
+            end_tokens INTEGER,
+            renewal_limit REAL
+        );
+        CREATE INDEX agent_sessions_agent ON agent_sessions(agent_id, id);
+    "#;
+
     pub(super) const RATE_LIMIT_HISTORY_DAYS: i64 = 90;
 
     pub(super) const MIGRATIONS: &[&str] = &[
@@ -1724,6 +1769,7 @@ mod sync {
         SCHEMA_V9, SCHEMA_V10, SCHEMA_V11, SCHEMA_V12, SCHEMA_V13, SCHEMA_V14, SCHEMA_V15,
         SCHEMA_V16, SCHEMA_V17, SCHEMA_V18, SCHEMA_V19, SCHEMA_V20, SCHEMA_V21, SCHEMA_V22,
         SCHEMA_V23, SCHEMA_V24, SCHEMA_V25, SCHEMA_V26, SCHEMA_V27, SCHEMA_V28, SCHEMA_V29,
+        SCHEMA_V30,
     ];
 
     pub(super) fn open(path: &Path) -> Result<Connection, StoreError> {
@@ -2848,6 +2894,37 @@ mod sync {
         if n == 0 {
             return Err(StoreError::NotFound(id.to_string()));
         }
+        Ok(())
+    }
+
+    pub(super) fn session_start(
+        conn: &Connection,
+        agent_id: &str,
+        session_id: &str,
+        reason: &str,
+        renewal_limit: f64,
+    ) -> Result<(), StoreError> {
+        conn.execute(
+            "INSERT INTO agent_sessions (agent_id, session_id, started_at, start_reason, renewal_limit)
+             VALUES (?1, ?2, ?3, ?4, ?5)",
+            params![agent_id, session_id, fmt_dt(Utc::now()), reason, renewal_limit],
+        )?;
+        Ok(())
+    }
+
+    /// Closes the agent's open session row, if any: the first ender wins, so a renewal that
+    /// ends it before the process exits isn't overwritten by the exit's own reason.
+    pub(super) fn session_end(
+        conn: &Connection,
+        agent_id: &str,
+        reason: &str,
+        tokens: Option<i64>,
+    ) -> Result<(), StoreError> {
+        conn.execute(
+            "UPDATE agent_sessions SET ended_at = ?2, end_reason = ?3, end_tokens = ?4
+             WHERE agent_id = ?1 AND ended_at IS NULL",
+            params![agent_id, fmt_dt(Utc::now()), reason, tokens],
+        )?;
         Ok(())
     }
 

@@ -33,6 +33,11 @@ turns(agent_id, agent_name, role, model,           -- no FK: turns outlive rm
                                                      -- in, and its context size at the end; NULL on
                                                      -- rows from before (unknown, not zero)
       PRIMARY KEY(agent_id, n))
+agent_sessions(id INTEGER PK AUTOINCREMENT,         -- SCHEMA_V30: one row per hosted session start
+               agent_id, session_id,                 -- no FK, like turns; a resume reuses the session_id
+               started_at, start_reason,             -- spawn | resume | renewal
+               ended_at, end_reason, end_tokens,     -- NULL while open; renewal | stop | shutdown | exit reason
+               renewal_limit)                        -- [context] wind_down_at for the role at start
 messages(seq INTEGER PK AUTOINCREMENT, id UNIQUE,    -- id = m-0042 from seq
          from_principal, to_kind, to_id, kind, body, reply_to,
          when_mode, state, created_at, written_at, delivered_at, read_at,

@@ -181,6 +181,13 @@ out or its response doesn't parse.
 `bridle agents`, `bridle show` and the TUI's agents list show it as
 `CONTEXT`/`context`, `-` when unknown.
 
+**Sessions** (br-2kam, ktgd decision 7): each hosted session is a row in `agent_sessions`: when
+it started and why (`spawn`, `resume`, `renewal`), when it ended and why (`renewal`, `stop`,
+`shutdown`, or the exit reason), its context size at the end (`end_tokens`), and the
+`[context] wind_down_at` limit in force when it started (`renewal_limit`). Written by the
+supervisor's start and exit paths, so a week at one limit can be compared with a week at another
+by joining `turns.session_id` to it. No report is built on it yet.
+
 ## The budget governor
 
 **Bridle never takes the account to a limit.** Hitting one blocks the human's
