@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.7.3] - 2026-10-14
+
 - Feature (br-qwd4): `bridle project preflight --to M --path <clone path on M>` names the clone's path on the new machine (`~` is M's home); the clone check, the `git clone` offer and the git push probe use it. Without it a project outside `$HOME` defaults to `~/work/<project>-workspace/<project>` instead of copying OLD's absolute path. Migration: none.
 - Fix (br-82qp): `bridle schedule list` also shows schedules others set that target the caller (it listed only ones the caller created, so an aide could not see the schedule that wakes it). Each entry carries `relation` (`created` or `target`), and the table adds "(set by X)" for the latter. `schedule rm` is unchanged (creator or human). Migration: none.
 - Fix (br-g9qm): `bridle token pair` makes the peer tokens before the role tokens, and with `--projects P` still makes the peer entries a machine needs to forward to projects outside P, so `bridle project start` on a machine's first project ends with failed 0 (the visitor-token mint needs `[peer]` entries the run made only afterwards, or never). The daemon's "no peer token" error now says to run `bridle token pair --tokens peer`. Migration: none.
