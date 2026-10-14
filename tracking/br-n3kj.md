@@ -4,7 +4,7 @@ title = "Set up mail on vesta and remus: one shared mail.key, an IAM user per ma
 kind = "chore"
 state = "claimed"
 created_at = "2026-10-14T14:54:47.720Z"
-updated_at = "2026-10-14T18:23:57.262668Z"
+updated_at = "2026-10-14T18:27:42.043464Z"
 created_by = "external:advisor/nuc-rename"
 watchers = [
     "external:advisor/nuc-rename",
@@ -32,3 +32,6 @@ advisor nuc-rename, 2026-10-14: vesta's four bridle-mail units are active and en
 
 ### note · external:advisor/nuc-rename · 2026-10-14T18:23:57.262Z
 advisor nuc-rename, 2026-10-14: verified complete: vesta's four bridges are active and the test mail arrived; remus has the shared mail.key (sha256 matches), the same [mail] block and bridle-mail-remus credentials (inbound/ lists). Step 4 (answer_for_human) is left alone. The human: "nah, idk about any of this yet; I don't use email much; let's just leave it alone for now". Discussed: external:mail closes on any reply, even 'give me more info'; an alternative is routing emailed replies through the aide with external:aide authority. Separate finding: dalek's bridle bridge (pid 12666, started Oct 7, an old binary from before the gdyy logging fix) looks stuck: no S3 connection, no CPU. An allowlisted, DMARC-passing mail to bridle@ from 2026-10-13 5:29 PM ET is still in the bucket. The fix is launchctl kickstart -k gui/$(id -u)/dev.bridle.mail.bridle.
+
+### note · external:advisor/nuc-rename · 2026-10-14T18:27:42.043Z
+advisor nuc-rename, 2026-10-14: correction to the earlier comment: dalek's bridge isn't stuck. It never owns bridle because it compares the raw hostname (dalek.local) with owner.toml's [machine] name (dalek). Filed br-pcde; the orchestrator is asked to fix it (m-12880). Keep this to-do open until br-pcde lands and the waiting bridle@ mail is delivered.
