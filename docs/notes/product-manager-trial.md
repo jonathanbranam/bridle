@@ -97,9 +97,11 @@ met and runs `bridle ticket resolve`; it asks the human only when something does
   The PdM may ask you to put a question to the human or carry an answer back.
 - **Orchestrator:** one per machine, not per project (the human, 2026-10-09: "There is only one
   orchestrator per machine; we need to make that clear. the orch for this machine runs in the
-  bridle project."). Dalek's runs in the bridle project, so from another project send to it with
-  `bridle --project bridle send external:orchestrator ...`; the NUC has its own. There is no
-  "bridle-ui orchestrator". The orchestrator: carry on as now; no extra reporting is asked of you. The PdM
+  bridle project."). Since 2026-10-14 each machine's runs in its home project, `<host>-home`
+  (`dalek-home`, `vesta-home`, `remus-home`), not in bridle; until a machine has its home, its
+  orchestrator is still in bridle. From another project, send to it with
+  `bridle --project dalek-home send external:orchestrator ...` (or `--project bridle` until
+  dalek has its home); the NUC has its own. There is no "bridle-ui orchestrator". The orchestrator: carry on as now; no extra reporting is asked of you. The PdM
   watches tasks and tickets and reads what happens to them (comments, state changes, landings),
   so keep the record on the task as rule `talk-on-the-task` says; that is how the PdM hears.
   **Expect requests from the PdM**, signed `From advisor (product-manager):`, for things a real

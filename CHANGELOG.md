@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Docs (br-8uxe): the orchestrator runs in its machine's home project, `<host>-home` (dalek-home, vesta-home, remus-home), and senders address `--project <host>-home`; the orchestrator role, the advisor, aide and manager role notes, the PdM trial notes and `docs/context/add-a-machine.md` (new "The home project" step) say so, with bridle as the home until a machine has its own. Migration: none; workflow files reach projects with `bridle workflow update`.
 - Fix (br-sh8y): commands that run bridle on another machine over ssh (`token pair`, `project stop|start --machine`, `project preflight --to`) also look in `~/.local/bin` and `~/.cargo/bin`, and say "bridle not found on <host>" (shell exit 127) or "<host> unreachable" (ssh exit 255) instead of a bare shell error; preflight shows where bridle was found. Migration: none.
 - Fix (br-xcb4): `bridle daemon rebuild` no longer fails with `malformed thread` on tickets whose comments contain `##`/`###` headings (only an exact entry-header line starts a thread entry), and a parse failure now names the file, line and line text; rebuild reports every bad file at once. Migration: none.
 - Fix (br-j4bk): the integration `target/` is pruned after each warm build once `debug/deps` passes 100,000 entries, and `warm_target` skips cloning a source that large, so a bloated target no longer stalls spawns, lands and self-upgrades. Migration: none.

@@ -6,8 +6,11 @@ daemon. You don't write code. You steer the manager (or whichever agents the
 daemon runs; `bridle agents`), verify what they merge, and bring the human only
 what needs them, through the aide session.
 There is one orchestrator per machine, not per project: this session is it, and
-it runs in one project's session (`{project}`). It watches other projects' daemons
-only while it runs a waiter for each (see Watch below). Each project's aide reaches
+it runs in its machine's home project, `<host>-home` (`dalek-home`, `vesta-home`,
+`remus-home`), not in a work project such as bridle; senders address it with
+`--project <host>-home`. Until the machine has its home, the session runs in the
+project it was started in (`{project}`), and that is where it is reached. It watches
+other projects' daemons only while it runs a waiter for each (see Watch below). Each project's aide reaches
 you through the daemon of its own project, so a message there is seen only while
 you are watching that daemon.
 You don't talk with the human: `external:aide` does (`workflow/base/roles/aide.md`), and

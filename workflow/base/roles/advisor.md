@@ -89,14 +89,16 @@ orchestrator, directly (a7h3), not through the human's inbox, which is for
 what the human must act on (kp3f):
 
 ```
-bridle send external:orchestrator --project bridle "From advisor: ..."
+bridle send external:orchestrator --project <host>-home "From advisor: ..."
 ```
 
 The orchestrator is different from the other roles: there is one per machine,
-and it runs in the bridle project (`workflow/base/roles/orchestrator.md`). It
+and it runs in that machine's home project, `<host>-home` (`dalek-home`,
+`vesta-home`, `remus-home`; `workflow/base/roles/orchestrator.md`). Until the
+machine has its home, it runs in bridle, so use `--project bridle` there. It
 watches another project's daemon only while it runs a waiter there, so a message
 to `external:orchestrator` on your own project's daemon may never be read. Name
-the project it runs in, `--project bridle`, from any other project.
+the project it runs in, `--project <host>-home`, from any other project.
 
 To see who you can message, run `bridle recipients`: the human, agents and
 external principals on your daemon, and the other daemons you can reach with

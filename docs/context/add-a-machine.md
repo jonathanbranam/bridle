@@ -363,6 +363,54 @@ that minted them. Inbox messages do not move.
 Automated project transfer between machines is a later feature (workstream "machine setup",
 `docs/notes/roadmap.md`). It is not available; everything above is manual.
 
+## 6. The home project
+
+Each machine that runs an orchestrator runs it in that machine's **home project**, `<host>-home`
+(`dalek-home`, `vesta-home`, `remus-home`), not in a work project such as bridle. The home holds
+the orchestrator, its schedules, waiters, handovers and incidents, and the machine-level services
+that only exist where a project lives: the daemon and its self-upgrade, token pair, and mail
+(`<host>-home@` is "mail this machine", read by the orchestrator). It has no workers or managers
+configured, so the daemon stays light. It is a stop-gap: when the machine daemon (ticket kuw2) is
+built, it takes this project's place.
+
+Senders address the orchestrator with `--project <host>-home`. Until a machine has its home
+project, its orchestrator is still in bridle, so use `--project bridle` there.
+
+Set the home project up after steps 1 to 5, in this order. It is the order advisor wsl2 ran on
+remus, 2026-10-14, and it is not yet a one-command setup. Every machine must be on bridle 0.7.2
+or later first (the token pair fix).
+
+1. **Repo:** a git repository with a private remote (GitHub). State push is on by default, so
+   tickets about the machine's setup can live in it. Run `bridle init` in the clone.
+2. **Enrol it on every machine:** add `<host>-home` to `[projects]` in `~/.bridle/config.toml`
+   (the `machine` is this machine), then `bridle projects sync --apply` on any machine. Add it to
+   `[mail] projects` on every machine by hand too: `projects sync` does not spread `[mail]` until
+   ticket afzu.
+3. **Start the bridle state:** in the new clone, run `bridle serve` once and stop it with Ctrl-C.
+   A brand-new project has no owner on `bridle/state` yet, and `bridle project take-over` and
+   `bridle project start` both refuse it (ticket kf7t). This is a workaround, not the design.
+4. **Start:** `bridle project start`. It installs the daemon as a service and enables it. Its
+   token pair can fail on some visitor tokens (ticket g9qm); that is fine for now, see step 5.
+5. **Tokens:** run `bridle token pair --machines dalek,vesta,remus` twice, so every machine has the
+   tokens for `<host>-home`.
+6. **Mail:** `bridle mail install --project <host>-home`, then enable its unit (`systemctl --user
+   enable --now` on Linux; `start` can stop before its mail step).
+7. **Check:** `bridle --project <host>-home status --json` answers, and a test mail to
+   `<host>-home@` gets a reply.
+8. **Restart the orchestrator there:** the human stops the orchestrator session in its old project
+   and starts it in the home project with `bridle session orchestrator --project <host>-home`, and
+   starts the aide there too.
+
+**Visitor tokens follow the home, and they don't yet.** A visitor token on another daemon (for
+example `orchestrator@remus` on dalek) records the daemon it was minted for as its home. After the
+orchestrator moves to `<host>-home`, that record still names the old project, and a send to
+`external:orchestrator@<host>` loops back to the sender: dalek's daemon forwards it to `bridle`,
+which on dalek is dalek itself. Until ticket x8c8 lands, re-pair the visitor tokens (`bridle token
+pair`, step 5) or update the home, and check with a test mail that it does not loop.
+
+Order the machines: remus first (data-contracts stops being its home), then vesta, and dalek last,
+because dalek's orchestrator is the one everything else addresses today.
+
 ## Is it working? Ten checks
 
 Run them from a machine other than the new one where it says so.
