@@ -251,3 +251,13 @@ gap, so `--check` is the tool to trust-but-verify); the "next:" hook in four com
 - Whether setup may run for a project owned by another machine (`--machine`, over ssh as
   `project start` does) or only on the owning one. Recommend only on the owner at first.
 - Whether `bridle projects` or `bridle project` is the spelling to document. Both work today.
+
+## Design approved (the human, 2026-10-14 ~4:15 PM ET)
+
+Verbatim: "that looks really good. And yes, my standard is `$WORK_ROOT/<proj-name>-work/<proj-name>`"
+
+- Option C approved as the direction. Still backlog: no planning or build until the human picks
+  it up ("we'll learn more as I create more new projects and refine it as we go").
+- Workspace layout is the human's standard: `$WORK_ROOT/<proj-name>-work/<proj-name>`. Where
+  `$WORK_ROOT` comes from on each machine (an environment variable, inferred from this machine's
+  projects as the design proposes, or a setting) is for planning.
