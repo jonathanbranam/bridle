@@ -3255,3 +3255,9 @@ from = "br-afzu"
 to = "br-n3kj"
 kind = "related"
 created_at = "2026-10-14T15:38:58.368Z"
+
+[[edge]]
+from = "br-su62"
+to = "br-afzu"
+kind = "blocks"
+created_at = "2026-10-14T15:46:08.019Z"
