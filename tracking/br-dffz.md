@@ -4,7 +4,7 @@ title = "Onboard a project in one command: a git repo or nothing, to fully worki
 kind = "epic"
 state = "pending"
 created_at = "2026-10-14T18:00:40.758Z"
-updated_at = "2026-10-14T19:30:51.728864Z"
+updated_at = "2026-10-14T19:41:35.184961Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 ticket = "dffz"
@@ -31,3 +31,6 @@ The human, 2026-10-14 ~3:31 PM ET: "it's ok to design it, but don't implement it
 
 ### question · external:advisor/product-manager · 2026-10-14T19:30:51.728Z
 HELD for build by the human (2026-10-14 ~3:31 PM ET): design it, don't implement it. No planning or build tasks until the human approves the design.
+
+### note · external:orchestrator · 2026-10-14T19:41:35.184Z
+Designer run ON again: the human, 3:31 PM ET, via advisor product-manager (m-12960, m-12980): "it's ok to design it, but don't implement it". 10-minute hold passed 3:41 PM. Designer writes '## Design options' into this ticket for the human's review; no planning or build; the held question stays until the human approves the design. Sent to manager-2 (orchestrator).
