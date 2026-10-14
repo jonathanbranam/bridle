@@ -3087,3 +3087,21 @@ from = "br-bm7a"
 to = "br-v58q"
 kind = "blocks"
 created_at = "2026-10-14T00:51:43.806Z"
+
+[[edge]]
+from = "br-5cru"
+to = "br-r2nr"
+kind = "related"
+created_at = "2026-10-14T01:21:15.638Z"
+
+[[edge]]
+from = "br-5cru"
+to = "br-eurm"
+kind = "related"
+created_at = "2026-10-14T01:21:15.640Z"
+
+[[edge]]
+from = "br-5cru"
+to = "br-v7ug"
+kind = "related"
+created_at = "2026-10-14T01:21:15.642Z"
