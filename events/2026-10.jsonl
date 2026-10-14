@@ -2094,3 +2094,4 @@
 {"actor":"agent:manager-2","at":"2026-10-14T20:42:05.527608Z","from":"claimed","task":"br-su62","to":"built"}
 {"actor":"agent:manager-2","at":"2026-10-14T20:49:34.021141Z","from":"built","task":"br-kf7t","to":"integrated"}
 {"actor":"agent:manager-2","at":"2026-10-14T20:54:29.396578Z","from":"built","task":"br-su62","to":"integrated"}
+{"actor":"human","at":"2026-10-14T21:05:25.085Z","from":"","task":"br-tcae","to":"pending"}
