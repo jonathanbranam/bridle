@@ -140,6 +140,124 @@ async fn usage_agent_series(
     Ok(())
 }
 
+fn pct(u: Option<f64>) -> String {
+    format_utilization(u)
+}
+
+/// `--week`: the latest week from the reset, its days and the five-hour windows inside it.
+async fn usage_week(
+    cli: &Cli,
+    client: &Client,
+    since: Option<chrono::DateTime<Utc>>,
+) -> Result<(), CliError> {
+    let periods = client.usage_periods(&UsagePeriodsQuery { since }).await?;
+    if cli.json {
+        return Ok(render::print_json(&periods)?);
+    }
+    let Some(week) = periods.weeks.last() else {
+        println!("no seven_day readings yet");
+        return Ok(());
+    };
+    println!(
+        "week {} to {} ({}): peak {}{}",
+        week.starts_at.format("%Y-%m-%d %H:%M"),
+        week.resets_at.format("%Y-%m-%d %H:%M"),
+        periods.timezone,
+        pct(Some(week.peak)),
+        if week.hit_limit {
+            ", hit the limit"
+        } else {
+            ""
+        }
+    );
+    println!("{:<12} {:>9} {:>9}  HIT", "DAY", "7-DAY", "5-HOUR");
+    for d in &week.days {
+        println!(
+            "{:<12} {:>9} {:>9}  {}",
+            d.date,
+            pct(d.peak_seven_day),
+            pct(d.peak_five_hour),
+            if d.hit_five_hour { "5h limit" } else { "" }
+        );
+    }
+    println!("{:<18} {:>6}  HIT", "5-HOUR WINDOW ENDS", "PEAK");
+    for w in periods
+        .windows
+        .iter()
+        .filter(|w| w.resets_at > week.starts_at && w.starts_at < week.resets_at)
+    {
+        println!(
+            "{:<18} {:>6}  {}",
+            w.resets_at.format("%Y-%m-%d %H:%M"),
+            pct(Some(w.peak)),
+            if w.hit_limit { "limit" } else { "" }
+        );
+    }
+    Ok(())
+}
+
+/// `--by name|session`: the daemon's role -> name -> session tree, flattened to indented rows.
+async fn usage_groups(
+    cli: &Cli,
+    client: &Client,
+    since: Option<chrono::DateTime<Utc>>,
+    with_sessions: bool,
+) -> Result<(), CliError> {
+    let groups = client
+        .usage_groups(&UsageGroupsQuery { since, until: None })
+        .await?;
+    if cli.json {
+        return Ok(render::print_json(&groups)?);
+    }
+    println!(
+        "{:<30} {:>5} {:>9} {:>9} {:>8}",
+        "KEY", "TURNS", "COST", "GROWTH", "SHARE"
+    );
+    for role in &groups.roles {
+        print_group(role, 0);
+        for name in &role.children {
+            print_group(name, 1);
+            if with_sessions {
+                for s in &name.children {
+                    print_group(s, 2);
+                }
+            }
+        }
+    }
+    println!("total: ${}", format_cost_dollars(groups.total_cost_usd));
+    println!(
+        "seven_day points gained: {:.1}{}",
+        groups.seven_day_points,
+        groups
+            .points_per_dollar
+            .map(|p| format!(", {p:.2} points per dollar"))
+            .unwrap_or_default()
+    );
+    println!("{}", groups.share_note);
+    Ok(())
+}
+
+fn print_group(g: &UsageShareGroup, depth: usize) {
+    let key = if g.key.is_empty() {
+        "(no session)"
+    } else {
+        &g.key
+    };
+    let key = format!(
+        "{}{key}{}",
+        "  ".repeat(depth),
+        if g.external { " (ext)" } else { "" }
+    );
+    println!(
+        "{:<30} {:>5} {:>9} {:>9} {:>7.1}",
+        key,
+        g.turns.map_or("-".to_string(), |t| t.to_string()),
+        format_cost_dollars(g.cost_usd),
+        g.context_growth,
+        g.share_points
+    );
+}
+
 pub(super) async fn usage(cli: &Cli, args: &UsageArgs) -> Result<(), CliError> {
     let client = client_for_read(cli).await?;
 
@@ -155,6 +273,15 @@ pub(super) async fn usage(cli: &Cli, args: &UsageArgs) -> Result<(), CliError> {
 
     if let Some(who) = &args.agent {
         return usage_agent_series(cli, &client, who, since, args.bucket).await;
+    }
+
+    if args.week {
+        return usage_week(cli, &client, since).await;
+    }
+
+    if matches!(args.by, Some(UsageByArg::Name) | Some(UsageByArg::Session)) {
+        let with_sessions = matches!(args.by, Some(UsageByArg::Session));
+        return usage_groups(cli, &client, since, with_sessions).await;
     }
 
     if let Some(window) = &args.history {
@@ -191,7 +318,9 @@ pub(super) async fn usage(cli: &Cli, args: &UsageArgs) -> Result<(), CliError> {
         let by = match args.by {
             Some(UsageByArg::Role) => UsageGroupBy::Role,
             Some(UsageByArg::Model) => UsageGroupBy::Model,
-            Some(UsageByArg::Agent) | None => UsageGroupBy::Agent,
+            Some(UsageByArg::Agent | UsageByArg::Name | UsageByArg::Session) | None => {
+                UsageGroupBy::Agent
+            }
         };
         let breakdown = client
             .usage_breakdown(&UsageBreakdownQuery {

@@ -1510,7 +1510,7 @@ pub struct WaitArgs {
 pub struct UsageArgs {
     #[command(subcommand)]
     pub sub: Option<UsageSub>,
-    /// Group by role, model, or agent instead of the default per-agent breakdown.
+    /// Group by role, model, agent, name or session instead of the default per-agent breakdown.
     #[arg(long)]
     pub by: Option<UsageByArg>,
     /// Only turns started within this long, e.g. `30d`, `12h`, `45m`.
@@ -1519,6 +1519,9 @@ pub struct UsageArgs {
     /// Show the rate-limit history of this window (`five_hour`, `seven_day`, ...) instead.
     #[arg(long, value_name = "WINDOW")]
     pub history: Option<String>,
+    /// Show the current week from the reset: its days and five-hour windows, with peaks and hits.
+    #[arg(long, conflicts_with_all = ["history", "agent"])]
+    pub week: bool,
     /// Show one agent instance's usage over time (name or id; removed agents too) instead.
     #[arg(long, value_name = "NAME|ID")]
     pub agent: Option<String>,
@@ -1540,6 +1543,10 @@ pub enum UsageByArg {
     Role,
     Model,
     Agent,
+    /// Role -> name tree, hosted and external together, with share-of-week estimates.
+    Name,
+    /// Role -> name -> session tree, as `name` with every session.
+    Session,
 }
 
 #[derive(Debug, Args)]
