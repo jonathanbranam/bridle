@@ -3183,3 +3183,15 @@ from = "br-xcb4"
 to = "br-nbgp"
 kind = "related"
 created_at = "2026-10-14T11:16:11.796Z"
+
+[[edge]]
+from = "br-su62"
+to = "br-nbgp"
+kind = "related"
+created_at = "2026-10-14T11:35:42.074Z"
+
+[[edge]]
+from = "br-su62"
+to = "br-378y"
+kind = "related"
+created_at = "2026-10-14T11:35:42.082Z"
