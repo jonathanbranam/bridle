@@ -98,8 +98,10 @@ Per-task wall time isn't built: there's no task/workflow-revision column on
 turns yet (below).
 
 `GET /v1/usage/periods?since=` (br-pemk) derives the periods from the `rate_limit_history`
-readings, with no schema change: a week is a distinct seven_day `resets_at` (never a hardcoded
-weekday), a five-hour window a distinct five_hour `resets_at`, each with its peak utilization and
+readings, with no schema change: a week is a cluster of seven_day `resets_at` values (never a hardcoded
+weekday), a five-hour window a cluster of five_hour `resets_at` values: readings sorted by
+`resets_at` share a period while each is within 10 minutes of the last (Claude Code jitters the
+value by milliseconds and across minute edges), and the period reports the latest. Each with its peak utilization and
 `hit_limit` (utilization >= 1.0; the history keeps no status). A week's days are calendar days in
 the daemon's `[schedule] timezone` (default America/New_York), clipped to the week, each with its
 peak seven_day and five_hour utilization and whether a five-hour reading hit the limit. Only

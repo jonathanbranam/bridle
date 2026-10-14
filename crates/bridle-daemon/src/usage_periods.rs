@@ -1,6 +1,6 @@
 //! Weeks, days and five-hour windows from the rate-limit history (br-pemk). Pure functions
-//! over the readings: a period is a distinct `resets_at`, so the real boundaries show, not a
-//! fixed grid.
+//! over the readings: a period is a cluster of near-equal `resets_at` values, so the real
+//! boundaries show, not a fixed grid.
 
 use bridle_api::types::{RateLimitPoint, UsageDay, UsagePeriods, UsageWeek, UsageWindow};
 use chrono::{DateTime, Duration, TimeZone, Utc};
@@ -13,20 +13,29 @@ fn peak(points: impl Iterator<Item = f64>) -> Option<f64> {
     points.fold(None, |m, u| Some(m.map_or(u, |m: f64| m.max(u))))
 }
 
-/// Points (oldest first) grouped by `resets_at`: (resets_at, peak). Readings with no
+/// Claude Code reports `resets_at` with millisecond jitter, and it drifts over a minute edge.
+/// Readings whose `resets_at` lie within this of the previous one share a period. Well under
+/// the five-hour window (and the week), well over any jitter seen.
+const RESET_TOLERANCE: Duration = Duration::minutes(10);
+
+/// Points grouped into periods by `resets_at`: (latest resets_at, peak). Readings with no
 /// `resets_at` or utilization belong to no period.
 fn by_reset(points: &[RateLimitPoint]) -> Vec<(DateTime<Utc>, f64)> {
+    let mut rs: Vec<(DateTime<Utc>, f64)> = points
+        .iter()
+        .filter_map(|p| Some((p.resets_at?, p.utilization?)))
+        .collect();
+    rs.sort_by_key(|(r, _)| *r);
     let mut out: Vec<(DateTime<Utc>, f64)> = Vec::new();
-    for p in points {
-        let (Some(r), Some(u)) = (p.resets_at, p.utilization) else {
-            continue;
-        };
-        match out.iter_mut().find(|(r2, _)| *r2 == r) {
-            Some((_, m)) => *m = m.max(u),
-            None => out.push((r, u)),
+    for (r, u) in rs {
+        match out.last_mut() {
+            Some((last, m)) if r - *last <= RESET_TOLERANCE => {
+                *last = r;
+                *m = m.max(u);
+            }
+            _ => out.push((r, u)),
         }
     }
-    out.sort_by_key(|(r, _)| *r);
     out
 }
 
@@ -173,6 +182,63 @@ mod tests {
         assert!(oct7.hit_five_hour);
         assert_eq!(days[0].peak_seven_day, None);
         assert!(!days[0].hit_five_hour);
+    }
+
+    #[test]
+    fn jittered_resets_make_one_period() {
+        let five = vec![
+            pt(
+                "five_hour",
+                0.2,
+                "2026-10-13T22:49:59.900Z",
+                "2026-10-13T20:00:00Z",
+            ),
+            pt(
+                "five_hour",
+                0.5,
+                "2026-10-13T22:50:00.100Z",
+                "2026-10-13T21:00:00Z",
+            ),
+            pt(
+                "five_hour",
+                0.3,
+                "2026-10-13T22:49:59.950Z",
+                "2026-10-13T21:30:00Z",
+            ),
+            pt(
+                "five_hour",
+                0.1,
+                "2026-10-14T03:50:00.200Z",
+                "2026-10-14T00:00:00Z",
+            ),
+        ];
+        let seven = vec![
+            pt(
+                "seven_day",
+                0.4,
+                "2026-10-15T07:59:59.990Z",
+                "2026-10-10T00:00:00Z",
+            ),
+            pt(
+                "seven_day",
+                0.6,
+                "2026-10-15T08:00:00.010Z",
+                "2026-10-11T00:00:00Z",
+            ),
+            pt(
+                "seven_day",
+                0.0,
+                "2026-10-22T08:00:00.005Z",
+                "2026-10-16T00:00:00Z",
+            ),
+        ];
+        let p = periods(five, seven, chrono_tz::UTC);
+        assert_eq!(p.windows.len(), 2);
+        assert_eq!(p.windows[0].resets_at, at("2026-10-13T22:50:00.100Z"));
+        assert_eq!(p.windows[0].peak, 0.5);
+        assert_eq!(p.weeks.len(), 2);
+        assert_eq!(p.weeks[0].resets_at, at("2026-10-15T08:00:00.010Z"));
+        assert_eq!(p.weeks[0].peak, 0.6);
     }
 
     #[test]

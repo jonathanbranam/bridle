@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Usage periods group readings whose `resets_at` differ by milliseconds (or across a minute edge) into one five-hour window or week, instead of one per distinct value; `GET /v1/usage/periods` now lists the real windows and weeks (br-bm7a). Migration: none.
 - `bridle token pair --rotate` now replaces peer tokens that already exist (before, every one failed with "peer:<machine> already exists"); the receiver swaps the token in one step, so the old one stops working as the new one is minted (br-xqwy). Migration: none.
 - `project take-over` no longer deadlocks after a host rename: a local integration branch that is ahead of origin (commits the pre-push hook held back) is accepted and pushed once the claim is on origin; only real divergence is refused, and the message says so. The ssh calls that move `[projects]` time out (10 s connect, 60 s overall) and name the machine instead of hanging on Tailscale SSH check mode (br-wfcx). Migration: none; after renaming a machine, run `take-over` in every project.
 - The orchestrator's usage wake fires once per crossing: a reading jittering around the limit (84.9%/85%) no longer re-wakes every poll; it re-arms after a fall 3 points below the limit or a new window (br-63nr). Migration: none.
