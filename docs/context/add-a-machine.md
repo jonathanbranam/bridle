@@ -386,14 +386,13 @@ or later first (the token pair fix).
    (the `machine` is this machine), then `bridle projects sync --apply` on any machine. Add it to
    `[mail] projects` on every machine by hand too: `projects sync` does not spread `[mail]` until
    ticket afzu.
-3. **Start the bridle state:** in the new clone, run `bridle serve` once and stop it with Ctrl-C.
-   A brand-new project has no owner on `bridle/state` yet, and `bridle project take-over` and
-   `bridle project start` both refuse it (ticket kf7t). This is a workaround, not the design.
-4. **Start:** `bridle project start`. It installs the daemon as a service and enables it. Its
-   token pair can fail on some visitor tokens (ticket g9qm); that is fine for now, see step 5.
-5. **Tokens:** run `bridle token pair --machines dalek,vesta,remus` twice, so every machine has the
+3. **Start:** `bridle project start`. On a brand-new project (no `bridle/state` here or on
+   origin) it needs no `take-over` first: the daemon it starts creates the branch and records this
+   machine as owner (ticket kf7t). It installs the daemon as a service and enables it. Its
+   token pair can fail on some visitor tokens (ticket g9qm); that is fine for now, see step 4.
+4. **Tokens:** run `bridle token pair --machines dalek,vesta,remus` twice, so every machine has the
    tokens for `<host>-home`.
-6. **Mail:** `bridle mail install --project <host>-home`, then enable its unit (`systemctl --user
+5. **Mail:** `bridle mail install --project <host>-home`, then enable its unit (`systemctl --user
    enable --now` on Linux; `start` can stop before its mail step).
 7. **Check:** `bridle --project <host>-home status --json` answers, and a test mail to
    `<host>-home@` gets a reply.

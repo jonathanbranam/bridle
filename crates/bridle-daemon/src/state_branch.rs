@@ -544,7 +544,14 @@ impl StateBranch {
         .await;
         match fetched {
             Err(_) => return Ok(FetchOutcome::Failed("fetch timed out".into())),
-            Ok(Err(_)) => return Ok(FetchOutcome::NoRemoteBranch),
+            // A failed fetch is "no such branch" only if origin answers and lacks it.
+            Ok(Err(e)) => {
+                return Ok(match origin_has_state_branch(dir).await {
+                    Ok(false) => FetchOutcome::NoRemoteBranch,
+                    Ok(true) => FetchOutcome::Failed(e.to_string()),
+                    Err(reason) => FetchOutcome::Failed(reason),
+                });
+            }
             Ok(Ok(_)) => {}
         }
         let remote = worktree::run_git(dir, &["rev-parse", "FETCH_HEAD"]).await?;
@@ -969,8 +976,45 @@ pub enum TakeOverError {
          `{host}` first; if that machine is dead, run this again with --force"
     )]
     NotReleased { project: String, host: String },
+    #[error(
+        "take-over has nothing to take over: `{branch}` is not on origin (local {local}); this \
+         is a new project: run `bridle project start`"
+    )]
+    NewProject { branch: String, local: String },
     #[error("take-over refused: {0}")]
     Git(#[from] WorktreeError),
+}
+
+/// Asks origin whether it has `bridle/state`. `Err` means origin could not be asked (no remote,
+/// unreachable, timed out), which is not the same as "no".
+pub async fn origin_has_state_branch(dir: &Path) -> Result<bool, String> {
+    let asked = tokio::time::timeout(
+        PUSH_TIMEOUT,
+        worktree::run_git(
+            dir,
+            &[
+                "ls-remote",
+                "--heads",
+                REMOTE,
+                &format!("refs/heads/{BRANCH}"),
+            ],
+        ),
+    )
+    .await;
+    match asked {
+        Ok(Ok(out)) => Ok(!out.trim().is_empty()),
+        Ok(Err(e)) => Err(format!("origin unreachable: {e}")),
+        Err(_) => Err("origin unreachable: ls-remote timed out".into()),
+    }
+}
+
+/// A brand-new project: `bridle/state` exists neither here nor on a reachable origin. The first
+/// `serve` creates it and claims the owner, so `project start` may go ahead.
+pub async fn is_new_project(repo: &Path) -> Result<bool, String> {
+    if local_sha(repo, BRANCH).await != "none" {
+        return Ok(false);
+    }
+    origin_has_state_branch(repo).await.map(|has| !has)
 }
 
 async fn local_sha(dir: &Path, branch: &str) -> String {
@@ -1182,7 +1226,12 @@ pub async fn require_state_synced(dir: &Path, outcome: &FetchOutcome) -> Result<
                     "no `origin` remote is configured; a take-over needs one".into()
                 }
                 FetchOutcome::Failed(e) => format!("origin unreachable: {e}"),
-                _ => "origin is unreachable or has no bridle/state branch".into(),
+                _ => {
+                    return Err(TakeOverError::NewProject {
+                        branch,
+                        local: local_sha(dir, BRANCH).await,
+                    });
+                }
             };
             Err(TakeOverError::NotFetched {
                 local: local_sha(dir, BRANCH).await,
@@ -2996,11 +3045,22 @@ mod tests {
         // Origin exists but has no bridle/state.
         let (_sb, repo, origin, dir) = pushing(tmp.path(), None).await;
         let err = state_verdict(&repo, &dir).await.expect_err("no branch");
-        assert!(matches!(err, TakeOverError::NotFetched { .. }), "{err}");
+        assert!(matches!(err, TakeOverError::NewProject { .. }), "{err}");
+        assert!(err.to_string().contains("bridle project start"), "{err}");
+        // It has a local state branch, so it is not new; a fresh clone of the same origin is.
+        assert!(!is_new_project(&repo).await.expect("reachable"));
+        let fresh = tmp.path().join("fresh");
+        git(
+            tmp.path(),
+            &["clone", "-q", origin.to_str().expect("utf8"), "fresh"],
+        )
+        .await;
+        assert!(is_new_project(&fresh).await.expect("reachable"));
         // Unreachable origin.
         std::fs::remove_dir_all(&origin).expect("rm origin");
         let err = state_verdict(&repo, &dir).await.expect_err("unreachable");
         assert!(matches!(err, TakeOverError::NotFetched { .. }), "{err}");
+        assert!(is_new_project(&fresh).await.is_err());
         assert!(sync_integration_for_take_over(&repo, "main").await.is_err());
         // No origin configured at all.
         let lone = tmp.path().join("lone");

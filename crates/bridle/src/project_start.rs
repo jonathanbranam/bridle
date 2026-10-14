@@ -334,6 +334,8 @@ async fn local(
             )
             .into());
         }
+        // A brand-new project: `serve` makes `bridle/state` and claims the owner on its first run.
+        None if bridle_daemon::state_branch::is_new_project(&repo).await == Ok(true) => {}
         None => {
             return Err(anyhow::anyhow!(
                 "{project} has no owner recorded on bridle/state in {}: run `bridle project take-over` here first",
