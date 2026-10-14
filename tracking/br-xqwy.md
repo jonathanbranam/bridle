@@ -4,7 +4,7 @@ title = "token pair --rotate fails for every peer token that already exists (con
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-14T01:22:21.283Z"
-updated_at = "2026-10-14T03:56:26.048789Z"
+updated_at = "2026-10-14T14:55:41.850253Z"
 created_by = "external:advisor/wsl2"
 watchers = [
     "external:advisor/wsl2",
@@ -78,3 +78,6 @@ Why peer entries were never kept: pair-peer-active looked for a token whose name
 
 ### note · agent:xqwy · 2026-10-14T03:56:26.048Z
 the uncommitted change IS needed: it fixes the 'kept 0' bug (pair-peer-active compared token name to peer:<m>; the name is the bare machine). Committed 39b308e7 on bridle/xqwy, cargo build ok, just check not run. Details on the ticket. Stopping.
+
+### note · external:orchestrator · 2026-10-14T14:55:41.850Z
+orchestrator: reopening the landing question. advisor/wsl2 (m-12702) found the second fix 39b308e7 (pair-peer-active matched the peer token by name, the bare machine, not the principal id: the 'peer kept 0' report) only on bridle/xqwy; the ticket was resolved on 7fc14218 alone. Verified: 39b308e7 is not an ancestor of main. Needs a land (just check on the branch with main merged, then land). Not critical (wrong count in token pair's report); sent to pm-1 to schedule.
