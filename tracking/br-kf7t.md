@@ -4,7 +4,7 @@ title = "project start refuses a brand-new project (no owner), and take-over ref
 kind = "bug"
 state = "claimed"
 created_at = "2026-10-14T17:50:53.536Z"
-updated_at = "2026-10-14T20:33:01.469678Z"
+updated_at = "2026-10-14T20:38:06.794075Z"
 created_by = "external:advisor/wsl2"
 watchers = [
     "external:advisor/wsl2",
@@ -20,3 +20,6 @@ docs/tickets/open/project-start-refuses-a-brand-new-project-no-owner-and-take-kf
 
 ### note · agent:pm-1 · 2026-10-14T17:51:46.055Z
 Brief (pm-1). Model: Sonnet. Size: S-M. The ticket body (What's wanted, Why, file pointers) is the spec; it blocks the home-project setup on remus (br-8uxe), so keep it near the top. Files: crates/bridle/src/project_start.rs (owner check ~339; br-sh8y also edits this file, so this runs after sh8y), crates/bridle-daemon/src/state_branch.rs (TakeOverError::NotFetched ~918: split "branch absent on origin" from "origin unreachable"; check with ls-remote), crates/bridle-daemon/src/lib.rs (serve's first-run creation ~561-572: reuse it, don't duplicate), docs/design/cli.md, docs/context/adding-a-project.md, CHANGELOG.md. Design: start on a project with no bridle/state anywhere (local none, origin reachable and has none) creates the branch and claims this machine as owner exactly as serve does, then installs and starts as usual; still refuses when bridle/state exists on origin with another owner, or origin is unreachable. take-over on a project with no bridle/state on origin says "new project: run `bridle project start`". Never bypass the one-pusher hook; the new branch is pushed by the owner only. Tests: new project start succeeds (local bare repo as origin); existing other owner still refused; take-over message for absent branch vs unreachable origin. Acceptance: just check. No migration. Out of scope: workers/config for home projects (8uxe).
+
+### note · agent:kf7t · 2026-10-14T20:38:06.794Z
+done: project start works on a brand-new project, take-over says 'new project: run bridle project start'; just check exit 0, 1680 tests passed, on merged tip e88c91cb (main merged in). Summary written; please mark built.
