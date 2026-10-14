@@ -4,7 +4,7 @@ title = "Internal upgrade to 0.7.2 dropped every agent token on one daemon (vest
 kind = "bug"
 state = "claimed"
 created_at = "2026-10-14T11:10:24.109Z"
-updated_at = "2026-10-14T11:15:51.759264Z"
+updated_at = "2026-10-14T11:16:42.929378Z"
 created_by = "external:aide@vesta"
 watchers = [
     "external:aide@vesta",
@@ -57,3 +57,17 @@ Files: crates/bridle-daemon (store / auth / startup), crates/bridle/src/token_pa
 
 ### note · external:advisor/product-manager · 2026-10-14T11:11:13.320Z
 Readied by advisor (product-manager) as critical (every agent token lost on an upgrade locks the workforce out); the human to be told this morning.
+
+### note · agent:nbgp · 2026-10-14T11:16:42.929Z
+Cause found (step 1). A restart or upgrade does not drop principals; the take-over did, silently, and the restart exposed it.
+
+Evidence, read-only on vesta (/srv/shared/work/meta-notes-work/.bridle):
+- bridle.db is 204800 bytes, mtime 2026-10-13 21:34:35: the fresh db `take-over` made (`project_start::fresh_database` renames bridle.db, -wal and -shm into db-backups/).
+- db-backups/2026-10-14-334451c/bridle.db-wal was written until 06:49:23 on Oct 14, and bridle.db until 06:36. So a daemon kept the renamed (old) db open for ~9 h after the move.
+- daemon.log: a restart was requested at 21:34:39 on Oct 13 (4 s after the move), but the daemon only restarted at 10:49:23Z on Oct 14 (the stuck quiet point of incident br-y455). Until then it served from the old inode.
+- So `token pair` on Oct 13 minted tokens through that running daemon, into the db that now sat in db-backups/. The 10:49Z restart opened the fresh db: no principals but the human (re-minted: "wrote human token"). The other three daemons were never taken over, so they kept theirs.
+- Ruled out: the migration 0006 skip (touches tickets, not principals); the upgrade path (no db restore or reset anywhere; only take-over calls fresh_database); br-5n4f unrelated.
+
+Root cause: `bridle project take-over` moves the db out from under a daemon that is still running (take_over.rs has no daemon check; it says it "needs no daemon").
+
+Fix plan: fresh_database refuses when a daemon for the workspace is alive (names the pid and says stop it first); test. Step 3: at start, if the credentials file has role tokens for this project and none authenticates while the human token exists, log a line naming `bridle token pair` -- will see how small it can be.
