@@ -423,10 +423,11 @@ or later first (the token pair fix).
 
 **Visitor tokens follow the home, and they don't yet.** A visitor token on another daemon (for
 example `orchestrator@remus` on dalek) records the daemon it was minted for as its home. After the
-orchestrator moves to `<host>-home`, that record still names the old project, and a send to
-`external:orchestrator@<host>` loops back to the sender: dalek's daemon forwards it to `bridle`,
-which on dalek is dalek itself. Until ticket x8c8 lands, re-pair the visitor tokens (`bridle token
-pair`, step 5) or update the home, and check with a test mail that it does not loop.
+orchestrator moves to `<host>-home`, that record still names the old project. A send to
+`external:orchestrator@<host>` whose recorded home is the sending daemon's own project is now
+refused with an error (x8c8); it used to loop back to the local orchestrator. `bridle token pair`
+keeps a token that still works, with its recorded home, so re-pairing does not move the home yet
+(follow-up ticket). Until then address the home directly with `--project <host>-home`.
 
 Order the machines: remus first (data-contracts stops being its home), then vesta, and dalek last,
 because dalek's orchestrator is the one everything else addresses today.

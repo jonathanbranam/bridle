@@ -451,6 +451,62 @@ async fn mail_for_a_visitor_is_forwarded_to_its_home_daemon() {
     assert_eq!(inbox_bodies(&p.b, "external:old@m1").await.len(), 1);
 }
 
+/// x8c8: a visitor whose recorded home is this daemon's own project is refused, not delivered to
+/// the local principal of the same name.
+#[tokio::test]
+async fn mail_for_a_visitor_whose_home_is_this_project_is_refused() {
+    let p = pair().await;
+    let b_project = p.b.running.info.project.clone();
+    let b_peer =
+        p.b.client
+            .create_peer_token(&PeerTokenCreateRequest {
+                machine: "m2".to_string(),
+                replace: false,
+            })
+            .await
+            .expect("peer token")
+            .token;
+    let b_home = machine_home_dir(p._tmp_b.path());
+    std::fs::create_dir_all(&b_home).expect("home");
+    let b_port = p.b.running.url.rsplit(':').next().expect("port");
+    std::fs::write(
+        b_home.join("config.toml"),
+        format!(
+            "[machine]\nname = \"m2\"\n[machines]\nm1 = \"127.0.0.1\"\nm2 = \"127.0.0.1\"\n\
+             [projects]\n{b_project} = {{ machine = \"m1\", port = {b_port} }}\n"
+        ),
+    )
+    .expect("config");
+    store_credential(
+        &b_home.join("credentials.toml"),
+        "peer",
+        &b_project,
+        &b_peer,
+    )
+    .expect("credentials");
+    p.b.client
+        .create_token(&TokenCreateRequest {
+            name: "orchestrator".to_string(),
+            machine: Some("m1".to_string()),
+            home: Some(b_project),
+        })
+        .await
+        .expect("visitor");
+    let local = p.b.external_client("orchestrator").await;
+    let advisor = p.b.external_client("advisor").await;
+    let err = advisor
+        .send(&bridle_api::types::SendRequest {
+            to: Some("external:orchestrator@m1".to_string()),
+            body: "must not loop".to_string(),
+            ..Default::default()
+        })
+        .await
+        .expect_err("refused");
+    assert!(err.to_string().contains("own project"), "{err}");
+    drop(local);
+    assert!(inbox_bodies(&p.b, "external:orchestrator").await.is_empty());
+}
+
 /// B holds a visitor `external:orchestrator@m1` whose home is A, and can reach A.
 async fn visiting_orchestrator_on_b(p: &Pair) {
     let a_project = p.a.running.info.project.clone();

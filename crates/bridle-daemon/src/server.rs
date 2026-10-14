@@ -1655,6 +1655,14 @@ async fn forward_to_home(
     let Some(home) = state.store.visitor_home(id).await? else {
         return Ok(None);
     };
+    // A home that is this very project would deliver to the local principal of the same name
+    // (the visitor's old home, before it moved): refuse rather than loop the mail back (x8c8).
+    if home == state.project {
+        return Err(ApiError::bad_request(format!(
+            "{id}'s recorded home is this daemon's own project ('{home}'), so it would loop back \
+             to the local {to}: re-pair it with `bridle token pair` against its current home"
+        )));
+    }
     if let Err(why) = state.outbox.check_destination(&home) {
         tracing::warn!(visitor = %id, home, why, "visitor's home unreachable: keeping the mail here");
         return Ok(None);

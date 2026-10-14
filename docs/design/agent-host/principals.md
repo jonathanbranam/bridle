@@ -180,7 +180,9 @@ token, like `task ready --project`; the outbox is for a project with no such tok
   such a token with a home on its next run, br-eurm); so does one whose home can no
   longer be forwarded to (no peer token), with a warning in the log. A home is only for visitors.
   Every principal's home is its own machine's daemon, so a visitor token with a home is the
-  only record needed; `external:orchestrator` itself stays local.
+  only record needed; `external:orchestrator` itself stays local. A visitor whose recorded home is
+  this daemon's own project is refused with an error (x8c8): forwarding would deliver to the
+  local principal of the same name, a different one.
 - **Exactly once, in order.** Each forward carries its origin (machine, daemon, outbox id); the
   receiver records it in `forwarded_in` and answers a repeat with the same message ids without
   delivering again, so a try whose acknowledgement was lost is safe to repeat. Per destination
