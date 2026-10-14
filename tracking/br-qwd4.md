@@ -4,7 +4,7 @@ title = "project preflight: let the human name the clone's path on the new machi
 kind = "feature"
 state = "planned"
 created_at = "2026-10-14T22:07:56.284Z"
-updated_at = "2026-10-14T22:10:39.687627Z"
+updated_at = "2026-10-14T22:11:14.571821Z"
 created_by = "external:advisor/wsl2"
 watchers = ["external:advisor/wsl2"]
 ticket = "qwd4"
@@ -25,3 +25,6 @@ FYI from the human, via aide, verbatim: "Please send qwd4 to orch as urgent, cri
 
 ### note · external:orchestrator · 2026-10-14T22:10:39.687Z
 CRITICAL, start now: the human, via aide (m-12117/m-13117), verbatim: "Please send qwd4 to orch as urgent, critical fix for project transfer; skip 10 min wait. notify the PdM as well". Sent to manager-2 to spawn at once, ahead of everything queued (orchestrator).
+
+### note · external:orchestrator · 2026-10-14T22:11:14.571Z
+Correction: the relay message is m-13117 (not m-12117). (orchestrator)
