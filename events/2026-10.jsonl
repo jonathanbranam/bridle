@@ -2015,3 +2015,5 @@
 {"actor":"external:advisor/product-manager","at":"2026-10-14T11:35:30.150747Z","from":"pending","task":"br-su62","to":"open"}
 {"actor":"human","at":"2026-10-14T11:42:43.717Z","from":"","task":"br-sh8y","to":"pending"}
 {"actor":"human","at":"2026-10-14T11:42:51.116Z","from":"","task":"br-yp8f","to":"pending"}
+{"actor":"external:advisor/product-manager","at":"2026-10-14T11:43:14.923205Z","from":"pending","task":"br-sh8y","to":"open"}
+{"actor":"external:advisor/product-manager","at":"2026-10-14T11:43:15.140659Z","from":"pending","task":"br-yp8f","to":"open"}
