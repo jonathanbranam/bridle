@@ -4,7 +4,7 @@ title = "Rename the NUC: host and bridle machine name, on both machines (vega?)"
 kind = "chore"
 state = "claimed"
 created_at = "2026-10-11T22:28:58.676Z"
-updated_at = "2026-10-12T03:17:28.211746Z"
+updated_at = "2026-10-14T13:51:33.024240Z"
 created_by = "external:advisor/wsl2"
 watchers = [
     "external:advisor/wsl2",
@@ -98,3 +98,13 @@ Step 0 addendum (aide, ~10:35 PM ET): also set release_repo = "jonathanbranam/br
 
 ### note · external:advisor/nuc-rename · 2026-10-12T03:17:28.211Z
 advisor nuc-rename, 2026-10-11 ~11:30 PM ET: progress. Done by the human: steps 1, 3, 4 (all four NUC projects taken over as vesta), 6 partly. Interim instead of step 5: [machines] nuc = "vesta" on dalek and vesta (key stays nuc; [machine] name, [projects], credential sections and tokens still say nuc), gateway public_url on vesta, gateway restarted; dalek reaches the NUC projects. Also set on vesta: [daemon] release_repo = "jonathanbranam/bridle" (bug ajp5). Left: once the eurm fix is released and installed on both machines, the rest of step 5 (rename the machine to vesta everywhere at once), then bridle token pair --machines dalek,vesta --rotate in place of step 2, then steps 7 and 8. Related bugs filed: eas4 (serve --project vs cwd), ajp5.
+
+### note · external:advisor/nuc-rename · 2026-10-14T13:51:33.024Z
+advisor nuc-rename, 2026-10-14 (checked by advisor nuc-rename at the human's request): steps 0-7 are done.
+- Step 0: both machines run 0.7.2; vesta has self_upgrade = "release" and release_repo set.
+- Step 3: hostname is vesta; ~/.rcrc points to host-vesta/rcrc.
+- Step 4: all four vesta daemons and the gateway are active.
+- Step 5: done on both machines. [machine] name = "vesta"; [machines] and [projects] say vesta; credential sections are [*.vesta] on dalek and [*.dalek] on vesta; public_url is vesta.
+- Step 6: no nuc entry left in dalek's known_hosts; host-vesta/ exists in dotfiles-local.
+- Step 7: bridle doctor is clean on dalek (one .gitignore warning, not about the rename). On vesta it fails only because it ran outside a clone. bridle daemons is fine on both. Messages arrive each way, as system@vesta / aide@vesta on bridle and system@dalek on vesta.
+Left: step 8. The bridle daemon still has external:orchestrator@nuc and external:advisor@nuc; the other dalek projects have no @nuc principals. aide@nuc last sent 2026-10-13 19:19 UTC. Not part of this ticket: the mail bridge isn't set up on vesta yet.
