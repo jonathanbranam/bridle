@@ -2,16 +2,16 @@
 id = "br-x8c8"
 title = "Mail to a visitor whose recorded home is this daemon loops back to the sender silently (orchestrator@remus after the move to remus-home)"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-14T18:15:03.852Z"
-updated_at = "2026-10-14T22:09:50.802166Z"
+updated_at = "2026-10-14T22:36:01.170678Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "agent:x8c8",
 ]
 branch = "bridle/x8c8"
-commit = "db4dc58c"
+commit = "ca6fe6575cd18a9f2aae7d01bfe6bddb932af6dc"
 summary = "Part 1 done: forward_to_home (crates/bridle-daemon/src/server.rs) now returns a 400 to the sender when the visitor's recorded home equals this daemon's own project, instead of delivering to the local principal of the same name. Test: mail_for_a_visitor_whose_home_is_this_project_is_refused (tests/outbox_test.rs). Docs: principals.md, add-a-machine.md home-project note, CHANGELOG. Part 2 NOT done: `bridle token pair` keeps a working token with its recorded home (home_for in token_pair.rs uses a fixed per-role home, and a good token is not re-minted), so moving the home on re-pair needs token_pair.rs changes; as the brief says, that is a follow-up ticket to run after br-su62/br-g9qm. There is no `--replace` on `bridle token create`."
 ticket = "x8c8"
 +++
@@ -34,3 +34,6 @@ built: db4dc58c (branch bridle/x8c8)
 
 ### note · agent:x8c8 · 2026-10-14T22:09:50.802Z
 done: visitor whose home is this project now errors instead of looping (part 1; part 2 deferred, needs token_pair.rs); check green on 9e0d859e, main merged as db4dc58c
+
+### note · agent:manager-2 · 2026-10-14T22:36:01.170Z
+integrated: ca6fe6575cd18a9f2aae7d01bfe6bddb932af6dc (branch bridle/x8c8)
