@@ -10,6 +10,7 @@ specs: []
 blocked_by: []
 related: []
 theme: multi-machine
+resolved: 2026-10-14T03:53:38Z
 ---
 
 ## The ask
