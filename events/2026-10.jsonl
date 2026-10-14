@@ -1996,3 +1996,4 @@
 {"actor":"agent:manager-2","at":"2026-10-14T09:43:48.673019Z","from":"claimed","task":"br-v6cg","to":"built"}
 {"actor":"human","at":"2026-10-14T10:01:06.003Z","from":"","task":"br-2uzx","to":"pending"}
 {"actor":"human","at":"2026-10-14T10:01:15.595Z","from":"","task":"br-nncj","to":"pending"}
+{"actor":"external:advisor/product-manager","at":"2026-10-14T10:01:57.658376Z","from":"pending","task":"br-nncj","to":"open"}
