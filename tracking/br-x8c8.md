@@ -4,7 +4,7 @@ title = "Mail to a visitor whose recorded home is this daemon loops back to the 
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-14T18:15:03.852Z"
-updated_at = "2026-10-14T22:36:01.170678Z"
+updated_at = "2026-10-14T22:36:20.920203Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -37,3 +37,6 @@ done: visitor whose home is this project now errors instead of looping (part 1; 
 
 ### note · agent:manager-2 · 2026-10-14T22:36:01.170Z
 integrated: ca6fe6575cd18a9f2aae7d01bfe6bddb932af6dc (branch bridle/x8c8)
+
+### note · agent:manager-2 · 2026-10-14T22:36:20.920Z
+cleanup: removed nothing; kept agent x8c8 (background job pid 59661)
