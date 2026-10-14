@@ -748,3 +748,8 @@ Newest first. One line per item: what happened, who did it, what it says about r
   lands, moved the 152 GB `integration/target` aside between two lands (16:42Z) and deleted it,
   then released the queue with j4bk (the automatic prune) first. Host housekeeping (build caches,
   disk) has no owner; an admin role, or j4bk's prune, should take it.
+- **2026-10-14: the orchestrator restarts the mail bridge and does the designer's merge by hand.**
+  After pcde's upgrade it waited for the installed binary to change and ran `launchctl kickstart`
+  on `dev.bridle.mail.bridle` (br-tcae makes that automatic). It also fast-forwarded the dffz
+  designer's branch into `main`, because `bridle ticket land` would resolve the epic and manager-2
+  can't merge by hand. A designer's output has no land path; the manager role should get one.
