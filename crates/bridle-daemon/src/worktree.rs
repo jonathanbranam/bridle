@@ -149,6 +149,19 @@ fn mtime(p: &Path) -> Option<std::time::SystemTime> {
 /// near-instant, no extra disk. macOS only; elsewhere a no-op. Best effort: a missing `target/`
 /// or a failed copy is logged and never fails the spawn. Never writes to the source.
 pub async fn warm_target(repo: &Path, integration: &Path, worktree: &Path) {
+    warm_target_capped(
+        repo,
+        integration,
+        worktree,
+        crate::warm_build::BLOAT_ENTRIES,
+    )
+    .await;
+}
+
+/// `warm_target` with the bloat threshold explicit: a source whose `debug/deps` holds more than
+/// `max_entries` is not cloned (the spawn continues cold), since copying it stalls the spawn
+/// (ticket j4bk).
+async fn warm_target_capped(repo: &Path, integration: &Path, worktree: &Path, max_entries: usize) {
     if !cfg!(target_os = "macos") {
         return;
     }
@@ -159,6 +172,11 @@ pub async fn warm_target(repo: &Path, integration: &Path, worktree: &Path) {
     tracing::info!(source = %src.display(), ?age_secs, "warming worktree target/");
     let dst = worktree.join("target");
     if !src.is_dir() || dst.exists() {
+        return;
+    }
+    let entries = crate::warm_build::deps_entries(&src);
+    if entries > max_entries {
+        tracing::warn!(entries, source = %src.display(), "warm source target/ is bloated; continuing cold");
         return;
     }
     match Command::new("cp")
@@ -666,6 +684,22 @@ mod tests {
             cfg!(target_os = "macos")
         );
         assert!(repo.join("target/debug/dep").exists());
+    }
+
+    #[tokio::test]
+    async fn warm_target_skips_a_bloated_source() {
+        let tmp = tempfile::tempdir().expect("tmp");
+        let (repo, wt) = (tmp.path().join("repo"), tmp.path().join("wt"));
+        std::fs::create_dir_all(&wt).expect("mk");
+        std::fs::create_dir_all(repo.join("target/debug/deps")).expect("mk");
+        for n in 0..3 {
+            std::fs::write(repo.join(format!("target/debug/deps/d{n}")), "x").expect("w");
+        }
+        let integ = tmp.path().join("integration");
+        warm_target_capped(&repo, &integ, &wt, 2).await;
+        assert!(!wt.join("target").exists());
+        warm_target_capped(&repo, &integ, &wt, 3).await;
+        assert_eq!(wt.join("target").exists(), cfg!(target_os = "macos"));
     }
 
     #[test]

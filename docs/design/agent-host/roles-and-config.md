@@ -378,6 +378,13 @@ command, niced, in `<workspace>/integration`, in the background. Land returns fi
 one build runs at a time and landings during a build queue exactly one more; a failure is
 logged and never fails a land. This repo sets `cargo build --workspace --all-targets`.
 
+Bounding the source (j4bk): `target/debug/deps` grows by every changed dependency hash, and an
+unbounded pile (833K files, 152 GB) stalls syspolicyd, which assesses each new binary. After a
+successful warm build, if `deps` holds over 100,000 entries, the daemon deletes the entries of
+`debug/{deps,build,incremental}` older than that build's start (what it reused is rebuilt next
+time, once). `warm_target` also skips the clone, logs a warning and continues cold when the
+source is over that threshold, so a bloated source cannot hold a spawn.
+
 ## Worktree setup command
 
 `[worktrees] setup = "<shell command>"` (optional, unset = nothing runs): after `git worktree

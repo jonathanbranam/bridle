@@ -17,6 +17,56 @@ pub fn building() -> bool {
     BUILDING.load(Ordering::SeqCst)
 }
 
+/// `target/debug` subdirectories that grow without bound as dependency hashes change.
+const GROWING: [&str; 3] = ["deps", "build", "incremental"];
+
+/// Entries in `target/debug/deps` past which the warm source is pruned after a build, and
+/// `worktree::warm_target` refuses to clone it (a clone of a bloated target stalls the spawn and
+/// feeds syspolicyd one assessment per binary; ticket j4bk). A healthy target has ~12K.
+pub const BLOAT_ENTRIES: usize = 100_000;
+
+/// How many entries `target/debug/deps` holds (flat, so cheap to count).
+pub fn deps_entries(target: &std::path::Path) -> usize {
+    std::fs::read_dir(target.join("debug/deps")).map_or(0, |d| d.count())
+}
+
+/// Removes entries of `target/debug/{deps,build,incremental}` last modified before `cutoff`,
+/// when `deps` holds more than `max_entries`. Run with the start of a build as the cutoff, so
+/// what that build produced survives; what it merely reused is rebuilt next time, a one-off cost
+/// that keeps the directory bounded. Returns how many entries were removed.
+pub fn prune_stale(
+    target: &std::path::Path,
+    cutoff: std::time::SystemTime,
+    max_entries: usize,
+) -> usize {
+    if deps_entries(target) <= max_entries {
+        return 0;
+    }
+    let mut removed = 0;
+    for sub in GROWING {
+        let Ok(rd) = std::fs::read_dir(target.join("debug").join(sub)) else {
+            continue;
+        };
+        for e in rd.flatten() {
+            let stale = e
+                .metadata()
+                .and_then(|m| m.modified())
+                .is_ok_and(|m| m < cutoff);
+            if !stale {
+                continue;
+            }
+            let p = e.path();
+            let ok = if p.is_dir() {
+                std::fs::remove_dir_all(&p)
+            } else {
+                std::fs::remove_file(&p)
+            };
+            removed += usize::from(ok.is_ok());
+        }
+    }
+    removed
+}
+
 #[derive(Default)]
 struct Phase {
     running: bool,
@@ -80,6 +130,7 @@ async fn run(cmd: &str, dir: &std::path::Path) {
         return;
     }
     let started = std::time::Instant::now();
+    let started_at = std::time::SystemTime::now();
     let out = Command::new("nice")
         .args(["-n", "10", "sh", "-c", cmd])
         .current_dir(dir)
@@ -89,6 +140,15 @@ async fn run(cmd: &str, dir: &std::path::Path) {
     match out {
         Ok(o) if o.status.success() => {
             tracing::info!(secs = started.elapsed().as_secs(), "warm build finished");
+            let target = dir.join("target");
+            let removed = tokio::task::spawn_blocking(move || {
+                prune_stale(&target, started_at, BLOAT_ENTRIES)
+            })
+            .await
+            .unwrap_or(0);
+            if removed > 0 {
+                tracing::info!(removed, "warm build: pruned stale target/ artifacts");
+            }
         }
         Ok(o) => tracing::warn!(
             status = %o.status,
@@ -119,6 +179,31 @@ mod tests {
         std::fs::read_to_string(dir.join("runs"))
             .map(|s| s.lines().count())
             .unwrap_or(0)
+    }
+
+    #[test]
+    fn prune_removes_stale_artifacts_and_keeps_current_ones() {
+        let tmp = tempfile::tempdir().expect("tmp");
+        let target = tmp.path();
+        let deps = target.join("debug/deps");
+        std::fs::create_dir_all(target.join("debug/build/old-crate")).expect("mk");
+        std::fs::create_dir_all(&deps).expect("mk");
+        std::fs::write(deps.join("old"), "x").expect("w");
+        std::fs::write(target.join("debug/build/old-crate/out"), "x").expect("w");
+        std::thread::sleep(Duration::from_millis(50));
+        let cutoff = std::time::SystemTime::now();
+        std::thread::sleep(Duration::from_millis(50));
+        std::fs::write(deps.join("new"), "x").expect("w");
+
+        // Under the threshold nothing is touched.
+        assert_eq!(prune_stale(target, cutoff, 10), 0);
+        assert!(deps.join("old").exists());
+
+        // Over it, the artifact older than the run goes and the current one stays.
+        assert_eq!(prune_stale(target, cutoff, 1), 2);
+        assert!(!deps.join("old").exists());
+        assert!(!target.join("debug/build/old-crate").exists());
+        assert!(deps.join("new").exists());
     }
 
     #[tokio::test]
