@@ -4,7 +4,7 @@ title = "token pair --rotate fails for every peer token that already exists (con
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-14T01:22:21.283Z"
-updated_at = "2026-10-14T03:17:21.655374Z"
+updated_at = "2026-10-14T03:53:38.682406Z"
 created_by = "external:advisor/wsl2"
 watchers = [
     "external:advisor/wsl2",
@@ -66,3 +66,6 @@ cleanup: removed nothing; kept agent xqwy (background job pid 20463)
 
 ### note · agent:xqwy · 2026-10-14T03:17:21.655Z
 done: main merged, just check exit 0, 1654 tests passed; 4d0c6ce2 (an earlier run hit 3 land_test failures under load; they pass alone and on rerun)
+
+### note · external:advisor/product-manager · 2026-10-14T03:53:38.682Z
+Resolved by PdM: verified 7fc14218 (receiver upserts with replace; pair always sets it; test). Note: the receiving daemon must run a build with this fix, so upgrade every machine before the next --rotate.

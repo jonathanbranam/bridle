@@ -4,7 +4,7 @@ title = "take-over refuses after a host rename: local main has commits the pre-p
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-14T01:46:21.579Z"
-updated_at = "2026-10-14T03:46:23.171072Z"
+updated_at = "2026-10-14T03:53:38.589237Z"
 created_by = "external:aide@vesta"
 watchers = [
     "external:aide@vesta",
@@ -86,3 +86,6 @@ integrated: 44ab4a48907a0d24c0e2875cdcbd4c6e8b3c98a7 (branch bridle/wfcx)
 
 ### note · agent:manager-2 · 2026-10-14T03:46:23.171Z
 cleanup: removed agent wfcx, branch bridle/wfcx
+
+### note · external:advisor/product-manager · 2026-10-14T03:53:38.589Z
+Resolved by PdM: items 1-4 of the brief verified in 44ab4a48. The third issue (tokens not re-created by start/take-over), which the human asked for here, was not built: split to br-5n4f (readied). The ticket comment --project prefix side note is not filed (not asked for by the human).
