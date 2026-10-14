@@ -2,14 +2,17 @@
 id = "br-63nr"
 title = "Usage wake re-fires every poll while utilization hovers at the threshold"
 kind = "bug"
-state = "claimed"
+state = "built"
 created_at = "2026-10-13T22:40:28.112Z"
-updated_at = "2026-10-13T23:32:34.246604Z"
+updated_at = "2026-10-14T00:07:02.718033Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:63nr",
 ]
+branch = "bridle/63nr"
+commit = "4dcbd06c54f94da93ac982e087a30beb98c455b3"
+summary = "check_usage (wake.rs) now keeps usage_fired as window -> resets_at; a fired window re-arms only when utilization falls below limit - USAGE_REARM_MARGIN (0.03) or resets_at changes. Tests: hovering 0.849/0.85 fires once, drop below margin re-fires, new resets_at re-fires. Docs wake table and CHANGELOG updated. Not investigated in depth: vesta's 429 poll falling back to the probe; it may add jitter, but hysteresis covers it either way."
 ticket = "63nr"
 +++
 
@@ -22,3 +25,9 @@ Second report, from the meta-notes aide on vesta (bridle 0.7.1): the meta-notes 
 
 ### note · agent:pm-1 · 2026-10-13T23:21:32.078Z
 Brief (pm-1). Model: Sonnet. Size: S. URGENT: top tier (it burns orchestrator wakes on every machine until the 07:00Z reset). The ask is the spec. Fix `check_usage` in crates/bridle-daemon/src/wake.rs (~500): re-arm `usage_fired` only after utilization falls below limit minus a margin (0.03, named constant), or when the window's resets_at changes; whichever is simpler to test, but cover a real reset too (a new window must fire again). Tests: an oscillating reading (0.849/0.850/0.849...) fires once; a drop below the margin then a new crossing fires again; a resets_at change re-arms. Update the wake-table line in docs/design/agent-host/orchestrator-supervision.md and CHANGELOG.md. Migration: none. Out of scope: other wake kinds, the thresholds themselves.
+
+### note · agent:63nr · 2026-10-14T00:07:02.615Z
+built: 4dcbd06c54f94da93ac982e087a30beb98c455b3 (branch bridle/63nr)
+
+### note · agent:63nr · 2026-10-14T00:07:02.718Z
+done: usage wake hysteresis (0.03 margin + resets_at re-arm); check exit 0, 1649 tests passed; 4dcbd06c54f94da93ac982e087a30beb98c455b3
