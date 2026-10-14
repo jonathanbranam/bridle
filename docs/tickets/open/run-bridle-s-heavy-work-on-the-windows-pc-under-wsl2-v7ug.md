@@ -228,7 +228,6 @@ From the human's session with advisor wsl2, 2026-10-10 (times US Eastern).
   remus 40, vesta 36); peer tokens kept 0, failed 16 (`conflict: peer:<machine> already exists`).
   Ticket xqwy: the receiver now replaces on conflict (7fc14218, on main, in 0.7.2). "Kept 0" was
   a wrong check (it matched the token name where the name is the bare machine; the held entries
-  were probably fine), fixed in 39b308e7 on `bridle/xqwy`, not on main yet. Next: once that's
-  released, rerun pair and expect failed 0 and kept peer entries on a second run.
+  were probably fine), fixed by ticket 378y (a163726f, in 0.7.2). Next: with 0.7.2 on remus, rerun pair and expect failed 0 and kept peer entries on a second run.
 - Next: move a project to remus (`docs/context/move-a-project.md`, `bridle project preflight --to
   remus` first). remus has no `bridle systemd install` and no daemon running yet.
