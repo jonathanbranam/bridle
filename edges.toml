@@ -3495,3 +3495,9 @@ from = "br-tmdf"
 to = "br-29se"
 kind = "related"
 created_at = "2026-10-14T22:20:11.210Z"
+
+[[edge]]
+from = "br-afzu"
+to = "br-29se"
+kind = "blocks"
+created_at = "2026-10-14T22:21:42.108Z"
