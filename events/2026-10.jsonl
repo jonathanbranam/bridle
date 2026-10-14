@@ -2017,3 +2017,5 @@
 {"actor":"human","at":"2026-10-14T11:42:51.116Z","from":"","task":"br-yp8f","to":"pending"}
 {"actor":"external:advisor/product-manager","at":"2026-10-14T11:43:14.923205Z","from":"pending","task":"br-sh8y","to":"open"}
 {"actor":"external:advisor/product-manager","at":"2026-10-14T11:43:15.140659Z","from":"pending","task":"br-yp8f","to":"open"}
+{"actor":"agent:pm-1","at":"2026-10-14T12:45:59.286088Z","from":"open","task":"br-su62","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-14T12:45:59.541286Z","from":"open","task":"br-sh8y","to":"planned"}

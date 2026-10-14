@@ -2,9 +2,9 @@
 id = "br-sh8y"
 title = "Remote bridle over ssh: also try ~/.local/bin and ~/.cargo/bin, and say 'bridle not found on <host>'"
 kind = "fix"
-state = "open"
+state = "planned"
 created_at = "2026-10-14T11:42:43.717Z"
-updated_at = "2026-10-14T11:43:14.923205Z"
+updated_at = "2026-10-14T12:45:59.541286Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "sh8y"
