@@ -1706,13 +1706,20 @@ mod sync {
         ALTER TABLE interactive_usage ADD COLUMN output_delta INTEGER;
     "#;
 
+    // Which Claude session each turn ran in, and the context size it ended at (br-pac3).
+    // NULL on old rows: unknown, never zero.
+    pub(super) const SCHEMA_V29: &str = r#"
+        ALTER TABLE turns ADD COLUMN session_id TEXT;
+        ALTER TABLE turns ADD COLUMN context_tokens INTEGER;
+    "#;
+
     pub(super) const RATE_LIMIT_HISTORY_DAYS: i64 = 90;
 
     pub(super) const MIGRATIONS: &[&str] = &[
         SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6, SCHEMA_V7, SCHEMA_V8,
         SCHEMA_V9, SCHEMA_V10, SCHEMA_V11, SCHEMA_V12, SCHEMA_V13, SCHEMA_V14, SCHEMA_V15,
         SCHEMA_V16, SCHEMA_V17, SCHEMA_V18, SCHEMA_V19, SCHEMA_V20, SCHEMA_V21, SCHEMA_V22,
-        SCHEMA_V23, SCHEMA_V24, SCHEMA_V25, SCHEMA_V26, SCHEMA_V27, SCHEMA_V28,
+        SCHEMA_V23, SCHEMA_V24, SCHEMA_V25, SCHEMA_V26, SCHEMA_V27, SCHEMA_V28, SCHEMA_V29,
     ];
 
     pub(super) fn open(path: &Path) -> Result<Connection, StoreError> {
@@ -2868,8 +2875,8 @@ mod sync {
         at: DateTime<Utc>,
     ) -> Result<(), StoreError> {
         conn.execute(
-            "INSERT INTO turns(agent_id, agent_name, role, model, n, started_at)
-             SELECT id, name, role, model, ?2, ?3 FROM agents WHERE id = ?1",
+            "INSERT INTO turns(agent_id, agent_name, role, model, n, started_at, session_id)
+             SELECT id, name, role, model, ?2, ?3, session_id FROM agents WHERE id = ?1",
             params![id, n, fmt_dt(at)],
         )?;
         let updated = conn.execute(
@@ -2891,8 +2898,9 @@ mod sync {
         let now = Utc::now();
         let updated_turn = conn.execute(
             "UPDATE turns SET ended_at = ?1, subtype = ?2, is_error = ?3, terminal_reason = ?4,
-                input_tokens = ?5, output_tokens = ?6, cache_read = ?7, cache_write = ?8, cost_total = ?9
-             WHERE agent_id = ?10 AND n = ?11",
+                input_tokens = ?5, output_tokens = ?6, cache_read = ?7, cache_write = ?8, cost_total = ?9,
+                context_tokens = ?10
+             WHERE agent_id = ?11 AND n = ?12",
             params![
                 fmt_dt(now),
                 turn.subtype,
@@ -2903,6 +2911,7 @@ mod sync {
                 turn.cache_read as i64,
                 turn.cache_write as i64,
                 turn.cost_total,
+                turn.context_tokens as i64,
                 id,
                 n,
             ],
@@ -5621,6 +5630,53 @@ mod tests {
             .expect("sonnet group");
         assert_eq!(sonnet.turns, 2);
         assert!((sonnet.cost_usd_total - 0.15).abs() < 1e-9);
+    }
+
+    /// A renewed agent's turns carry the session they ran in, and each its context size;
+    /// rows from before the migration stay NULL.
+    #[tokio::test]
+    async fn turns_record_session_id_and_context_tokens() {
+        let (store, _tmp) = store().await;
+        let a = store.insert_agent(new_agent("w1")).await.expect("insert");
+        for (n, session) in [(1, None), (2, Some("s-new"))] {
+            if let Some(s) = session {
+                store.set_agent_session(&a.id, s).await.expect("renew");
+            }
+            store
+                .add_turn_start(&a.id, n, Utc::now())
+                .await
+                .expect("start");
+            store
+                .end_turn(
+                    &a.id,
+                    n,
+                    TurnEnd {
+                        subtype: "success".to_string(),
+                        is_error: false,
+                        terminal_reason: None,
+                        input_tokens: 10,
+                        output_tokens: 1,
+                        cache_read: 5,
+                        cache_write: 2,
+                        cost_total: 0.1,
+                        context_tokens: 100 * n as u64,
+                    },
+                )
+                .await
+                .expect("end");
+        }
+        let conn = store.conn.lock().expect("lock");
+        let rows: Vec<(String, i64)> = conn
+            .prepare("SELECT session_id, context_tokens FROM turns WHERE agent_id = ?1 ORDER BY n")
+            .expect("prep")
+            .query_map([&a.id], |r| Ok((r.get(0)?, r.get(1)?)))
+            .expect("query")
+            .collect::<Result<_, _>>()
+            .expect("rows");
+        assert_eq!(rows.len(), 2);
+        assert_ne!(rows[0].0, rows[1].0);
+        assert_eq!(rows[1], ("s-new".to_string(), 200));
+        assert_eq!(rows[0].1, 100);
     }
 
     /// A removed agent is still listed and charted, and the buckets add up to the breakdown.

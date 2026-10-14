@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 - The orchestrator's usage wake fires once per crossing: a reading jittering around the limit (84.9%/85%) no longer re-wakes every poll; it re-arms after a fall 3 points below the limit or a new window (br-63nr). Migration: none.
+- Each turn in the ledger records the Claude session it ran in and its context size (`turns.session_id`, `turns.context_tokens`), so a renewed agent's history splits into sessions (br-pac3). Migration: automatic; old turns stay NULL.
 - `GET /v1/usage/periods` lists the weeks (from the seven_day reset), their days and each real five-hour window with its peak and whether it hit the limit, so "did we hit a five-hour limit last week?" has an answer (br-pemk). Migration: none.
 - An external session's first statusline report counts in full when its running totals are small (under $1 and 100,000 tokens), so a new session's startup cost shows; a larger first total (a resumed session) is still a baseline (br-mksa). Migration: none.
 - The web UI session cookie is re-issued with a fresh 30-day `Max-Age` when the session slides (at most hourly), so a daily-used login no longer drops 30 days after the first login (br-ry8z). Migration: none.

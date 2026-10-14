@@ -29,6 +29,9 @@ turns(agent_id, agent_name, role, model,           -- no FK: turns outlive rm
       n, started_at, ended_at, subtype, is_error, terminal_reason,
       input_tokens, output_tokens, cache_read, cache_write,
       cost_total,                                    -- this turn's cost
+      session_id, context_tokens,                    -- SCHEMA_V29: the Claude session the turn ran
+                                                     -- in, and its context size at the end; NULL on
+                                                     -- rows from before (unknown, not zero)
       PRIMARY KEY(agent_id, n))
 messages(seq INTEGER PK AUTOINCREMENT, id UNIQUE,    -- id = m-0042 from seq
          from_principal, to_kind, to_id, kind, body, reply_to,
