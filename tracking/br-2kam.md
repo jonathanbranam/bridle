@@ -2,11 +2,14 @@
 id = "br-2kam"
 title = "Each hosted session records how it started and ended, and the renewal limit in force (ktgd decision 7)"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-13T23:05:26.890Z"
-updated_at = "2026-10-13T23:06:46.453729Z"
+updated_at = "2026-10-14T03:56:04.598173Z"
 created_by = "external:advisor/product-manager"
-watchers = ["external:advisor/product-manager"]
+watchers = [
+    "external:advisor/product-manager",
+    "agent:2kam",
+]
 ticket = "2kam"
 +++
 

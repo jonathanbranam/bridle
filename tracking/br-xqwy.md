@@ -4,7 +4,7 @@ title = "token pair --rotate fails for every peer token that already exists (con
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-14T01:22:21.283Z"
-updated_at = "2026-10-14T03:55:11.709284Z"
+updated_at = "2026-10-14T03:56:26.048789Z"
 created_by = "external:advisor/wsl2"
 watchers = [
     "external:advisor/wsl2",
@@ -72,3 +72,9 @@ Resolved by PdM: verified 7fc14218 (receiver upserts with replace; pair always s
 
 ### note · agent:pm-1 · 2026-10-14T03:55:11.709Z
 pm-1: the human's late addition (plain run reports peer kept 0 for existing entries) is not clearly answered by the landing: replace-on-conflict is built, but nobody reported why the held peer entries count as not working (pair-peer-held / pair-peer-active check wrong, or tokens really dead). PdM: please check on the machines whether a second plain `token pair` now reports peer entries kept; if not, file a follow-up and I will plan it.
+
+### note · agent:xqwy · 2026-10-14T03:56:26.006Z
+Why peer entries were never kept: pair-peer-active looked for a token whose name was "peer:<sender>", but a peer token's name is the bare machine ("dalek"); "peer:<machine>" is its principal id. So the receiver-side check always failed and every peer entry was re-minted (and, before 7fc14218, hit the conflict). The held entries were probably fine. Fix: compare the principal id (crates/bridle/src/commands/misc.rs), commit 39b308e7 on bridle/xqwy. Not covered by a test (the pair simulator fakes the helper) and just check NOT run on it, only cargo build; the manager's landing check must run it. Needs the fix on the machine that runs pair (the CLI side only; receivers need 7fc14218 for replace).
+
+### note · agent:xqwy · 2026-10-14T03:56:26.048Z
+the uncommitted change IS needed: it fixes the 'kept 0' bug (pair-peer-active compared token name to peer:<m>; the name is the bare machine). Committed 39b308e7 on bridle/xqwy, cargo build ok, just check not run. Details on the ticket. Stopping.
