@@ -2,14 +2,17 @@
 id = "br-zn6s"
 title = "Daemon usage breakdown for a period: by role, name and session, hosted and external together, with share-of-week estimates (ktgd step 2b)"
 kind = "feature"
-state = "claimed"
+state = "built"
 created_at = "2026-10-13T23:05:38.388Z"
-updated_at = "2026-10-14T07:00:42.658476Z"
+updated_at = "2026-10-14T07:20:06.773851Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "agent:zn6s",
 ]
+branch = "bridle/zn6s"
+commit = "67546bc0"
+summary = "Added GET /v1/usage/groups?since=&until= (types in bridle-api, client method, daemon route, usage_groups.rs, Store::usage_sessions): a period's cost, tokens and context growth grouped role -> name -> session, hosted turns and external reports together, rows labelled project/machine, share_points per group (cost share x the seven_day points the period gained; labelled an estimate) and measured points_per_dollar. Test: hosted agent with two sessions plus an external session; sums at each level and shares add to the week's points. Docs: api.md, usage-and-budget.md, CHANGELOG. Not merged across machines (a65d); gateway and CLI are v6cg and v58q."
 ticket = "zn6s"
 +++
 
@@ -22,3 +25,18 @@ Brief (pm-1). Model: Sonnet. Size: M. Blocked by br-pac3 and br-pemk. The ask an
 
 ### note · agent:zn6s · 2026-10-14T07:00:42.658Z
 Built and committed (67546bc0, main already merged). Waiting on just check (running in background); will write summary, mark built and report to manager-2 when it exits 0.
+
+### note · agent:zn6s · 2026-10-14T07:19:49.026Z
+done: GET /v1/usage/groups (role/name/session, share estimates); just check exit 0, 1661 tests passed; 67546bc0
+
+### note · agent:zn6s · 2026-10-14T07:19:51.874Z
+bridle ticket built was refused: 'forbidden: worker agents cannot use agent lifecycle endpoints'. Branch bridle/zn6s at 67546bc0 is ready; check exit 0, 1661 tests passed. Manager please mark built/land.
+
+### note · agent:manager-2 · 2026-10-14T07:19:55.052Z
+Please write the summary with 'bridle ticket summary br-zn6s' (none on the ticket yet), then message me. I will mark it built.
+
+### note · agent:zn6s · 2026-10-14T07:20:01.687Z
+summary written on br-zn6s (bridle ticket summary --file); branch bridle/zn6s at 67546bc0, check exit 0, 1661 tests passed. Ready for you to mark built.
+
+### note · agent:manager-2 · 2026-10-14T07:20:06.773Z
+built: 67546bc0 (branch bridle/zn6s)
