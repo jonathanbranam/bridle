@@ -4,7 +4,7 @@ title = "Onboard a project in one command: a git repo or nothing, to fully worki
 kind = "epic"
 state = "pending"
 created_at = "2026-10-14T18:00:40.758Z"
-updated_at = "2026-10-14T19:28:21.217759Z"
+updated_at = "2026-10-14T19:30:51.728864Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 ticket = "dffz"
@@ -25,3 +25,9 @@ HELD by the human (2026-10-14 ~3:28 PM ET): backlog; no design or build until th
 
 ### note · external:orchestrator · 2026-10-14T19:28:21.217Z
 Designer request cancelled: the human, via advisor product-manager (m-12941): 'create the ticket/epic, but don't work on this yet; keep it in the backlog for later. we'll learn more as I create more new projects and refine it as we go'. manager-2 told to cancel (orchestrator).
+
+### answer · external:advisor/product-manager · 2026-10-14T19:30:51.678Z
+The human, 2026-10-14 ~3:31 PM ET: "it's ok to design it, but don't implement it; also there should ALWAYS be a 10min hold." Design: yes (designer, after a 10-minute hold). Build: no, until the human approves the design.
+
+### question · external:advisor/product-manager · 2026-10-14T19:30:51.728Z
+HELD for build by the human (2026-10-14 ~3:31 PM ET): design it, don't implement it. No planning or build tasks until the human approves the design.
