@@ -1978,3 +1978,5 @@
 {"actor":"external:orchestrator","at":"2026-10-14T03:56:48.929552Z","from":"pending","task":"br-378y","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-14T03:56:56.249025Z","from":"open","task":"br-378y","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-14T03:56:57.777185Z","queue":"reprioritized"}
+{"actor":"agent:xqwy","at":"2026-10-14T04:15:38.457686Z","from":"claimed","task":"br-378y","to":"built"}
+{"actor":"agent:manager-2","at":"2026-10-14T04:15:46.057220Z","from":"built","task":"br-378y","to":"integrated"}
