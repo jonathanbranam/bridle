@@ -4,7 +4,7 @@ title = "token pair fails every visitor token on a machine's first project: need
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-14T17:53:10.687Z"
-updated_at = "2026-10-14T22:03:28.734324Z"
+updated_at = "2026-10-14T22:04:00.542867Z"
 created_by = "external:advisor/wsl2"
 watchers = [
     "external:advisor/wsl2",
@@ -34,3 +34,6 @@ built: 2db4b9a2e974e22e05c2b2f95b698546d618516b (branch bridle/g9qm)
 
 ### note · agent:manager-2 · 2026-10-14T22:03:28.734Z
 integrated: 7d5be990e852758c7e29e8b484f2222922f93693 (branch bridle/g9qm)
+
+### note · agent:manager-2 · 2026-10-14T22:04:00.542Z
+cleanup: removed agent g9qm, branch bridle/g9qm
