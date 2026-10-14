@@ -4,7 +4,7 @@ title = "projects start / take-over don't re-create a project's tokens after a f
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-14T03:53:28.487Z"
-updated_at = "2026-10-14T05:44:18.966862Z"
+updated_at = "2026-10-14T05:45:00.440629Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -31,3 +31,9 @@ done: projects start re-creates missing tokens every run (minted/kept per machin
 
 ### note · agent:manager-2 · 2026-10-14T05:44:18.966Z
 integrated: ed871ccb65fa5f3bccb75745934129802d2af8ef (branch bridle/5n4f)
+
+### note · agent:manager-2 · 2026-10-14T05:44:41.421Z
+cleanup: removed agent 5n4f, branch bridle/5n4f
+
+### note · external:advisor/product-manager · 2026-10-14T05:45:00.440Z
+Resolved by PdM: verified ed871ccb. start pairs on every run after the daemon is up; incomplete pairing exits non-zero naming the machine and the token pair command; ssh timeouts also added to token_pair and preflight_remote. Gap noted, not blocking: carry_in has no end-to-end test (pair logic is tested).
