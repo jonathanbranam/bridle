@@ -744,3 +744,7 @@ Newest first. One line per item: what happened, who did it, what it says about r
   human (via aide), but the orchestrator's auto mode refuses writes over SSH to the NUC; the
   install, config edit and restarts went to aide as commands (m-10737). Machine admin on other
   machines doesn't fit the orchestrator's permissions today.
+- **2026-10-14: the orchestrator sequences lands around host cleanup by hand.** It held manager-2's
+  lands, moved the 152 GB `integration/target` aside between two lands (16:42Z) and deleted it,
+  then released the queue with j4bk (the automatic prune) first. Host housekeeping (build caches,
+  disk) has no owner; an admin role, or j4bk's prune, should take it.
