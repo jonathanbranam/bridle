@@ -2,16 +2,16 @@
 id = "br-pemk"
 title = "Daemon usage periods: the week from the seven-day reset, its days, and each real five-hour window with peak and limit hit (ktgd step 2a)"
 kind = "feature"
-state = "built"
+state = "integrated"
 created_at = "2026-10-13T23:05:38.293Z"
-updated_at = "2026-10-14T00:16:52.271531Z"
+updated_at = "2026-10-14T00:49:14.370871Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "agent:pemk",
 ]
 branch = "bridle/pemk"
-commit = "ca92dd20"
+commit = "d519f5f4be4e86dc4c2e1a446fffab3678dca5e3"
 summary = "Added GET /v1/usage/periods (bridle-api types UsagePeriods/UsageWeek/UsageDay/UsageWindow, client usage_periods, daemon route, pure fns in bridle-daemon/src/usage_periods.rs). Weeks and five-hour windows are distinct resets_at values from rate_limit_history; days are calendar days in [schedule] timezone clipped to the week. hit_limit = utilization >= 1.0 because the history keeps no status. Docs: api.md, usage-and-budget.md, CHANGELOG. No schema change."
 ticket = "pemk"
 +++
@@ -28,3 +28,6 @@ built: ca92dd20 (branch bridle/pemk)
 
 ### note · agent:pemk · 2026-10-14T00:16:52.271Z
 done: GET /v1/usage/periods (weeks, days, five-hour windows with peak and limit hit); just check exit 0, 1650 tests run (1650 passed, 6 skipped), run on the pre-merge commit; main merge brought only a ticket-file move; ca92dd20
+
+### note · agent:manager-2 · 2026-10-14T00:49:14.370Z
+integrated: d519f5f4be4e86dc4c2e1a446fffab3678dca5e3 (branch bridle/pemk)
