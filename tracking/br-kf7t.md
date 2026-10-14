@@ -4,12 +4,13 @@ title = "project start refuses a brand-new project (no owner), and take-over ref
 kind = "bug"
 state = "claimed"
 created_at = "2026-10-14T17:50:53.536Z"
-updated_at = "2026-10-14T19:30:21.723558Z"
+updated_at = "2026-10-14T20:33:01.469678Z"
 created_by = "external:advisor/wsl2"
 watchers = [
     "external:advisor/wsl2",
     "agent:kf7t",
 ]
+summary = """project start now works on a brand-new project: when bridle/state is absent locally and a reachable origin lacks it (new state_branch::is_new_project, via ls-remote), the owner check passes and the daemon's first run (serve) creates the branch and claims the owner, reusing serve's existing path. Other owner or unreachable origin still refuse. take-over on that case now errors with TakeOverError::NewProject ("new project: run `bridle project start`"); the fetch step distinguishes absent branch from unreachable origin with ls-remote (origin_has_state_branch). Docs: add-a-machine home-project steps (serve workaround removed), cli.md, CHANGELOG. Tests extend state_branch take-over test (absent vs unreachable, is_new_project); project_start itself is not unit-tested end to end. just check exit 0, 1680 tests."""
 ticket = "kf7t"
 +++
 
