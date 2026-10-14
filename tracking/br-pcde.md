@@ -2,11 +2,14 @@
 id = "br-pcde"
 title = "Mail bridge never owns a project when hostname differs from [machine] name: dalek's bridle mail is stuck"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-14T18:27:25.943Z"
-updated_at = "2026-10-14T18:56:31.171246Z"
+updated_at = "2026-10-14T19:05:22.529988Z"
 created_by = "external:advisor/nuc-rename"
-watchers = ["external:advisor/nuc-rename"]
+watchers = [
+    "external:advisor/nuc-rename",
+    "agent:pcde",
+]
 ticket = "pcde"
 +++
 
