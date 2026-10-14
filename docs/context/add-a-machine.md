@@ -143,6 +143,27 @@ Without the `[machines]` line a project on `newpc` can't be reached. A listed pr
 `[machine] name` on the machine that reads it is an error. Check the file loads: `bridle doctor`
 warns about unknown sections and keys (`--strict` fails on them).
 
+### Remote PATH: bridle over ssh
+
+Commands that run bridle on another machine over ssh (`bridle token pair`, `bridle project stop|start
+--machine`, `bridle project preflight --to`) run it in a non-interactive shell. That shell reads the
+system zshenv, not your login or interactive dotfiles, so bridle is found only if its directory is on
+the remote's PATH there. Since br-sh8y those commands also look in `~/.local/bin` and `~/.cargo/bin`,
+so a release or `just install` into either directory needs nothing more. Put the directory on the
+system PATH anyway when bridle lives elsewhere, or when you type `ssh <host> bridle ...` by hand. On
+each machine, once:
+
+```bash
+# macOS (dalek)
+echo 'path=($HOME/.local/bin $HOME/.cargo/bin $path)' | sudo tee -a /etc/zshenv
+# Ubuntu and WSL2 (Debian's zsh reads /etc/zsh/zshenv, not /etc/zshenv)
+echo 'path=($HOME/.local/bin $HOME/.cargo/bin $path)' | sudo tee -a /etc/zsh/zshenv
+```
+
+Check from each other machine: `ssh <host> 'command -v bridle'` prints a path. If it prints nothing,
+bridle is not found there, and the commands above say "bridle not found on <host>" instead of
+"unreachable".
+
 ## 3. Tokens
 
 All token commands are human-only: run them in a plain terminal, not inside Claude Code. A token

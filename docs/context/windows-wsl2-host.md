@@ -288,6 +288,12 @@ bridle --version
 mkdir -p ~/.bridle && printf '[daemon]\nself_upgrade = "release"\n' >> ~/.bridle/config.toml
 ```
 
+That `export` fixes only the interactive shell you run it in. It does not reach the non-interactive
+shell that bridle uses for commands run over ssh from another machine (`bridle token pair`,
+`project stop|start --machine`, `project preflight --to`). For those, add the directory to the system
+zshenv, as in [[docs/context/add-a-machine|add-a-machine]] "Remote PATH". Since br-sh8y those
+commands also find bridle in `~/.local/bin`, so this matters only when bridle is installed elsewhere.
+
 The last line makes the daemon keep itself current from releases; if `~/.bridle/config.toml`
 already has a `[daemon]` table, add the key there instead. No `release_repo` is needed: it defaults to
 bridle's own repo (br-ajp5). Unverified: the script on WSL2 (it
