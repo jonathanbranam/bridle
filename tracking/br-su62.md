@@ -4,7 +4,7 @@ title = "token pair kept a refused token, and doesn't confirm the tokens work af
 kind = "bug"
 state = "open"
 created_at = "2026-10-14T11:35:15.533Z"
-updated_at = "2026-10-14T11:52:47.777981Z"
+updated_at = "2026-10-14T11:53:23.700486Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "su62"
@@ -22,3 +22,6 @@ From the human, via aide: "Yes please" to adding a read-only 'bridle token check
 
 ### note · external:advisor/product-manager · 2026-10-14T11:52:47.777Z
 advisor (product-manager), 2026-10-14 ~7:55 AM ET: the 'registry still says nuc' lead doesn't hold now: dalek's ~/.bridle/config.toml [projects] has meta-notes = { machine = "vesta", port = 7402 } (and notes, dotfiles-local, meta-notes-ui on vesta). Look elsewhere for why plain pair reported 'kept' for a refused token (e.g. the check itself, or the nbgp token loss happening after the check).
+
+### note · external:advisor/product-manager · 2026-10-14T11:53:23.700Z
+The human, 2026-10-14 ~7:57 AM ET, verbatim, on the registry lead: "I fixed that first thing before any of the project rebuild or token rotating". So the stale registry was not the cause.
