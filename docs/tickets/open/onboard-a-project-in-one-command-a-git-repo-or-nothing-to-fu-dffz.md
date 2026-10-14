@@ -62,7 +62,7 @@ bridle-adopt).
 ## Decided (the human, 2026-10-14)
 
 - One command, `bridle project setup` (name open to the design), not separate `new` and `adopt`.
-  The human, ~3:20 PM ET: "yes agree; any commits at all, it prompts and asks; also a CLI param
+  The human, ~3:15 PM ET: "yes agree; any commits at all, it prompts and asks; also a CLI param
   can specify which".
   - No repo, or a repo with no commits: a new project on `main`, no question.
   - Any commits at all (a README, some documents, real history): it asks "work on `main` or on
@@ -70,7 +70,7 @@ bridle-adopt).
     (`--main` / `--adopt`); `-y` takes the default. Bridle never decides from the contents that
     a repo is throwaway. (The human had asked what "bare" means: no commits, only a README, just
     some documents? This rule makes the question unnecessary.)
-- Ports stay as they are. The human, ~3:15 PM ET: "let's not worry about the ports then ...
+- Ports stay as they are. The human, ~3:10 PM ET: "let's not worry about the ports then ...
   keep it as is; i dno't think it will climb too high and I dn't think i'll transfer projects
   enough for it to matter". New projects take the next port unused on any machine (29se);
   take-over keeps its bump-on-clash.
