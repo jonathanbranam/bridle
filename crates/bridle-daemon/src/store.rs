@@ -46,6 +46,24 @@ pub enum StoreError {
     SchemaTooNew { found: usize, known: usize },
 }
 
+/// One session's usage in a period (`Store::usage_sessions`): the base rows of the
+/// role/name/session grouping. A hosted session is `(agent_id, session_id)`; an external one
+/// has no `agent_id` and its name is its identity.
+#[derive(Debug, Clone, PartialEq)]
+pub struct SessionUsage {
+    pub role: String,
+    pub name: String,
+    /// Empty for turns from before sessions were recorded, and for an external report with none.
+    pub session_id: String,
+    pub agent_id: Option<String>,
+    /// `None` for an external session.
+    pub turns: Option<u32>,
+    pub tokens: TokenTotals,
+    pub cost_usd: f64,
+    pub first_context: Option<i64>,
+    pub last_context: Option<i64>,
+}
+
 /// What a `project stop` leaves in this machine's database (53gy B): the database does not move.
 #[derive(Debug, Default, PartialEq, Eq)]
 pub struct LeftBehind {
@@ -1256,6 +1274,16 @@ impl Store {
         bucket: UsageBucket,
     ) -> Result<UsageSeries, StoreError> {
         self.with_conn(move |c| sync::usage_series(c, &agent_id, since, bucket))
+            .await
+    }
+
+    /// One row per session with usage in `[since, until)`, hosted and external (br-zn6s).
+    pub async fn usage_sessions(
+        &self,
+        since: Option<DateTime<Utc>>,
+        until: Option<DateTime<Utc>>,
+    ) -> Result<Vec<SessionUsage>, StoreError> {
+        self.with_conn(move |c| sync::usage_sessions(c, since, until))
             .await
     }
 
@@ -4406,6 +4434,126 @@ mod sync {
         Ok(by_id.into_values().collect())
     }
 
+    pub(super) fn usage_sessions(
+        conn: &Connection,
+        since: Option<DateTime<Utc>>,
+        until: Option<DateTime<Utc>>,
+    ) -> Result<Vec<SessionUsage>, StoreError> {
+        let (since, until) = (since.map(fmt_dt), until.map(fmt_dt));
+        let mut out: Vec<SessionUsage> = Vec::new();
+        // Oldest first, so a session's first and last context size are the first and last rows
+        // that carry one.
+        let mut stmt = conn.prepare(
+            "SELECT agent_id, agent_name, role, COALESCE(session_id, ''),
+                    input_tokens, output_tokens, cache_read, cache_write, cost_total, context_tokens
+             FROM turns
+             WHERE (?1 IS NULL OR started_at >= ?1) AND (?2 IS NULL OR started_at < ?2)
+             ORDER BY started_at",
+        )?;
+        let rows = stmt.query_map(params![since, until], |r| {
+            Ok((
+                r.get::<_, String>(0)?,
+                r.get::<_, String>(1)?,
+                r.get::<_, String>(2)?,
+                r.get::<_, String>(3)?,
+                [4, 5, 6, 7].map(|i| r.get::<_, Option<i64>>(i).ok().flatten().unwrap_or(0) as u64),
+                r.get::<_, Option<f64>>(8)?.unwrap_or(0.0),
+                r.get::<_, Option<i64>>(9)?,
+            ))
+        })?;
+        for row in rows {
+            let (agent_id, name, role, session_id, t, cost, ctx) = row?;
+            let at = match out.iter().position(|s| {
+                s.agent_id.as_deref() == Some(&agent_id) && s.session_id == session_id
+            }) {
+                Some(i) => i,
+                None => {
+                    out.push(SessionUsage {
+                        role,
+                        name,
+                        session_id,
+                        agent_id: Some(agent_id),
+                        turns: Some(0),
+                        tokens: TokenTotals::default(),
+                        cost_usd: 0.0,
+                        first_context: None,
+                        last_context: None,
+                    });
+                    out.len() - 1
+                }
+            };
+            let s = &mut out[at];
+            *s.turns.get_or_insert(0) += 1;
+            s.tokens.input += t[0];
+            s.tokens.output += t[1];
+            s.tokens.cache_read += t[2];
+            s.tokens.cache_write += t[3];
+            s.cost_usd += cost;
+            if let Some(c) = ctx {
+                s.first_context.get_or_insert(c);
+                s.last_context = Some(c);
+            }
+        }
+        let mut stmt = conn.prepare(
+            "SELECT COALESCE(identity, ?3), session_id, cost_delta, input_delta, output_delta,
+                    context_used_tokens
+             FROM interactive_usage
+             WHERE (?1 IS NULL OR observed_at >= ?1) AND (?2 IS NULL OR observed_at < ?2)
+               AND (cost_delta IS NOT NULL OR input_delta IS NOT NULL OR output_delta IS NOT NULL)
+             ORDER BY observed_at, id",
+        )?;
+        let rows = stmt.query_map(params![since, until, UNBRIDLED], |r| {
+            Ok((
+                r.get::<_, String>(0)?,
+                r.get::<_, Option<String>>(1)?,
+                r.get::<_, Option<f64>>(2)?,
+                r.get::<_, Option<i64>>(3)?,
+                r.get::<_, Option<i64>>(4)?,
+                r.get::<_, Option<i64>>(5)?,
+            ))
+        })?;
+        let first_ext = out.len();
+        for row in rows {
+            let (identity, session, cost, input, output, ctx) = row?;
+            let session_id = session.unwrap_or_default();
+            let at = match out[first_ext..]
+                .iter()
+                .position(|s| s.name == identity && s.session_id == session_id)
+            {
+                Some(i) => first_ext + i,
+                None => {
+                    out.push(SessionUsage {
+                        role: identity
+                            .strip_prefix(EXTERNAL_PREFIX)
+                            .unwrap_or(&identity)
+                            .split('/')
+                            .next()
+                            .unwrap_or_default()
+                            .to_string(),
+                        name: identity,
+                        session_id,
+                        agent_id: None,
+                        turns: None,
+                        tokens: TokenTotals::default(),
+                        cost_usd: 0.0,
+                        first_context: None,
+                        last_context: None,
+                    });
+                    out.len() - 1
+                }
+            };
+            let s = &mut out[at];
+            s.cost_usd += cost.unwrap_or(0.0);
+            s.tokens.input += input.unwrap_or(0).max(0) as u64;
+            s.tokens.output += output.unwrap_or(0).max(0) as u64;
+            if let Some(c) = ctx {
+                s.first_context.get_or_insert(c);
+                s.last_context = Some(c);
+            }
+        }
+        Ok(out)
+    }
+
     pub(super) fn usage_instances(
         conn: &Connection,
         since: Option<DateTime<Utc>>,
@@ -5820,6 +5968,132 @@ mod tests {
         assert_ne!(rows[0].0, rows[1].0);
         assert_eq!(rows[1], ("s-new".to_string(), 200));
         assert_eq!(rows[0].1, 100);
+    }
+
+    /// A hosted agent with two sessions and an external session: the sums are right at each
+    /// level and the shares add up to the week's seven_day percentage (br-zn6s).
+    #[tokio::test]
+    async fn usage_groups_sum_at_each_level_and_shares_add_up() {
+        use crate::usage_groups::{build, seven_day_points};
+        let (store, _tmp) = store().await;
+        let a = store.insert_agent(new_agent("w1")).await.expect("insert");
+        let t0 = DateTime::parse_from_rfc3339("2026-10-10T10:00:00Z")
+            .expect("ts")
+            .with_timezone(&Utc);
+        let m = chrono::Duration::minutes;
+        for (n, session, cost, ctx) in [
+            (1, None, 1.0, 100),
+            (2, None, 2.0, 400),
+            (3, Some("s-new"), 4.0, 50),
+        ] {
+            if let Some(s) = session {
+                store.set_agent_session(&a.id, s).await.expect("renew");
+            }
+            store
+                .add_turn_start(&a.id, n, t0 + m(n as i64))
+                .await
+                .expect("start");
+            store
+                .end_turn(
+                    &a.id,
+                    n,
+                    TurnEnd {
+                        subtype: "success".to_string(),
+                        is_error: false,
+                        terminal_reason: None,
+                        input_tokens: 10,
+                        output_tokens: 1,
+                        cache_read: 5,
+                        cache_write: 2,
+                        cost_total: cost,
+                        context_tokens: ctx,
+                    },
+                )
+                .await
+                .expect("end");
+        }
+        // The first report is a baseline (its totals are above the fresh limits); the second
+        // adds $3 and 1000 input tokens.
+        for (cost, input, at) in [(50.0, 200_000, t0 + m(10)), (53.0, 201_000, t0 + m(20))] {
+            store
+                .record_interactive_usage(InteractiveUsageRow {
+                    observed_at: at,
+                    session_id: Some("ext-1".to_string()),
+                    model: None,
+                    cost_usd: Some(cost),
+                    context_used_percentage: None,
+                    context_used_tokens: Some(input),
+                    context_max_tokens: None,
+                    identity: Some("external:advisor/pm".to_string()),
+                    total_input_tokens: Some(input),
+                    total_output_tokens: Some(0),
+                })
+                .await
+                .expect("record");
+        }
+        let mk = |u, at| RateLimit {
+            window: "seven_day".to_string(),
+            status: None,
+            utilization: Some(u),
+            resets_at: Some(t0 + chrono::Duration::days(3)),
+            observed_at: at,
+        };
+        store
+            .upsert_rate_limit(mk(0.10, t0 - m(30)))
+            .await
+            .expect("rl");
+        store
+            .upsert_rate_limit(mk(0.35, t0 + m(30)))
+            .await
+            .expect("rl");
+
+        let sessions = store
+            .usage_sessions(Some(t0), None)
+            .await
+            .expect("sessions");
+        let hist = store
+            .rate_limit_history("seven_day".to_string(), None)
+            .await
+            .expect("history");
+        let points = seven_day_points(&hist, Some(t0), None);
+        assert!(
+            (points - 25.0).abs() < 1e-9,
+            "35% - 10% before the period: {points}"
+        );
+        let g = build(sessions, points, "p", "m", Some(t0), None);
+
+        assert!((g.total_cost_usd - 10.0).abs() < 1e-9);
+        let roles: Vec<(&str, f64)> = g
+            .roles
+            .iter()
+            .map(|r| (r.key.as_str(), r.cost_usd))
+            .collect();
+        assert_eq!(roles, [("advisor", 3.0), ("worker", 7.0)]);
+        let worker = &g.roles[1];
+        assert_eq!(worker.turns, Some(3));
+        assert_eq!(worker.tokens.input, 30);
+        assert_eq!(worker.children.len(), 1);
+        let name = &worker.children[0];
+        assert_eq!((name.key.as_str(), name.children.len()), ("w1", 2));
+        let (s1, s2) = (&name.children[0], &name.children[1]);
+        assert!((s1.cost_usd - 3.0).abs() < 1e-9 && (s2.cost_usd - 4.0).abs() < 1e-9);
+        assert_eq!((s1.context_growth, s2.context_growth), (300, 0));
+        assert_eq!(s2.key, "s-new");
+        let ext = &g.roles[0].children[0].children[0];
+        assert!(ext.external && ext.agent_id.is_none());
+        assert_eq!((ext.tokens.input, ext.context_growth), (1000, 1000));
+        assert!(g.roles.iter().all(|r| r.project == "p" && r.machine == "m"));
+        let sum: f64 = g.roles.iter().map(|r| r.share_points).sum();
+        assert!((sum - 25.0).abs() < 1e-9);
+        let leaves: f64 = g
+            .roles
+            .iter()
+            .flat_map(|r| &r.children)
+            .flat_map(|n| &n.children)
+            .map(|s| s.share_points)
+            .sum();
+        assert!((leaves - 25.0).abs() < 1e-9);
+        assert!((g.points_per_dollar.expect("ppd") - 2.5).abs() < 1e-9);
     }
 
     /// A removed agent is still listed and charted, and the buckets add up to the breakdown.

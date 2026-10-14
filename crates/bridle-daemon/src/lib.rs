@@ -56,6 +56,7 @@ pub mod sync;
 mod tasks;
 mod ticket_links;
 mod upgrade;
+pub mod usage_groups;
 pub mod usage_http;
 pub mod usage_periods;
 mod wake;

@@ -1502,6 +1502,65 @@ pub struct UsageInstance {
     pub last_turn_at: DateTime<Utc>,
 }
 
+/// `GET /v1/usage/groups?since=&until=`.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct UsageGroupsQuery {
+    /// Only turns and reports at or after this time.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub since: Option<DateTime<Utc>>,
+    /// Only turns and reports before this time.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub until: Option<DateTime<Utc>>,
+}
+
+/// A period's usage grouped role -> name -> session, hosted and external together
+/// (br-zn6s, br-ktgd decision 4). This daemon's own project and machine only.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct UsageGroups {
+    pub project: String,
+    pub machine: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub since: Option<DateTime<Utc>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub until: Option<DateTime<Utc>>,
+    pub total_cost_usd: f64,
+    /// The seven_day percentage points the period gained (0-100), from the rate-limit history;
+    /// summed over the weeks the period touches.
+    pub seven_day_points: f64,
+    /// Measured: `seven_day_points / total_cost_usd`; `None` with no cost or no points.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub points_per_dollar: Option<f64>,
+    /// Says that every `share_points` is an estimate (cost share x `seven_day_points`).
+    pub share_note: String,
+    pub roles: Vec<UsageShareGroup>,
+}
+
+/// One group at any level. `children` are the role's names, then the name's sessions; a
+/// session has none.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct UsageShareGroup {
+    /// The role, the name, or the session id (empty for a turn from before sessions were kept).
+    pub key: String,
+    pub project: String,
+    pub machine: String,
+    /// `None` when no row of the group counts turns (external sessions).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub turns: Option<u32>,
+    pub tokens: TokenTotals,
+    pub cost_usd: f64,
+    /// Last context size minus first, tokens (a name or role: the sum over its sessions).
+    pub context_growth: i64,
+    /// Estimated seven_day percentage points: this group's share of the cost x the period's points.
+    pub share_points: f64,
+    /// A session only: its hosted agent id; `None` for an external session.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub agent_id: Option<String>,
+    #[serde(default)]
+    pub external: bool,
+    #[serde(default)]
+    pub children: Vec<UsageShareGroup>,
+}
+
 // ---------- interactions ----------
 
 /// One line of the machine's `~/.bridle/prompts.jsonl` (written by `bridle focus gate`,

@@ -111,6 +111,17 @@ the daemon's `[schedule] timezone` (default America/New_York), clipped to the we
 peak seven_day and five_hour utilization and whether a five-hour reading hit the limit. Only
 changes are stored, so a peak is the highest stored reading.
 
+`GET /v1/usage/groups?since=&until=` (br-zn6s) groups a period's usage role -> name -> session, hosted
+turns (`turns`, keyed by `agent_id` and `session_id`) and external reports (`interactive_usage`
+deltas, keyed by session; the identity's first path part is the role, `unbridled` for the human's own)
+together. Each row has cost, tokens, context growth (last minus first context size in the period) and
+the project and machine it came from. `seven_day_points` is what the period gained of the seven_day
+percentage (per week: the highest reading in range minus the last one before `since`); each group's
+`share_points` is its share of the period's cost times those points, so the roles, the names in a
+role and the sessions in a name each add up to it. That is an estimate: Anthropic does not publish the
+limit's weights. `points_per_dollar` is the measured ratio, to check the estimate from week to week.
+Other machines' data is not merged here (br-ktgd's a65d).
+
 `bridle usage --by role|model|agent --since <duration>` (and
 `GET /v1/usage/breakdown?since=&by=`) aggregates the turns ledger instead:
 turns, tokens, cost, busy time and the cache hit ratio, grouped by role or

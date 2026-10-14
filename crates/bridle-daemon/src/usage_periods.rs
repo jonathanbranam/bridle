@@ -16,7 +16,7 @@ fn peak(points: impl Iterator<Item = f64>) -> Option<f64> {
 /// Claude Code reports `resets_at` with millisecond jitter, and it drifts over a minute edge.
 /// Readings whose `resets_at` lie within this of the previous one share a period. Well under
 /// the five-hour window (and the week), well over any jitter seen.
-const RESET_TOLERANCE: Duration = Duration::minutes(10);
+pub(crate) const RESET_TOLERANCE: Duration = Duration::minutes(10);
 
 /// Points grouped into periods by `resets_at`: (latest resets_at, peak). Readings with no
 /// `resets_at` or utilization belong to no period.
