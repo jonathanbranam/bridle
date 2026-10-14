@@ -4,7 +4,7 @@ title = "token pair kept a refused token, and doesn't confirm the tokens work af
 kind = "bug"
 state = "claimed"
 created_at = "2026-10-14T11:35:15.533Z"
-updated_at = "2026-10-14T20:21:39.524095Z"
+updated_at = "2026-10-14T20:41:43.542288Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -40,3 +40,6 @@ Files: crates/bridle/src/token_pair.rs (br-sh8y also edits it: run after sh8y, a
 
 ### note · agent:su62 · 2026-10-14T20:21:39.470Z
 Step 1 finding (su62): I could not find a code path where a token the daemon refuses passes the keep check. Read end to end: pair-check sends the holder's entry as a bearer token to GET /v1/status; the auth middleware answers 401 "invalid token" to an unknown token (only token-less loopback reads are let in, and a token is always sent); the client turns a 401 into an error, so pair-check exits non-zero and the broker re-mints. The registry lead is dead, as the thread says. The most likely explanation is timing: the token was accepted when pair checked it and lost afterwards (the br-nbgp token loss). Nothing in the old flow looked again after minting/keeping, which is what the new final check does. Not reproducible without the live vesta daemon; the fake-daemon test covers refused -> re-minted. Building the check command now, as planned.
+
+### note · agent:su62 · 2026-10-14T20:41:43.542Z
+done: bridle token check added; token pair uses the same check to keep/re-mint and ends with it (non-zero on refusal); just check exit 0, 1683 tests passed; 554dbc12 (main merged; I can't run 'ticket built'). Step-1 finding on the thread: no code path found where a refused token passes; likely lost after the check (nbgp).
