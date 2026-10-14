@@ -4,7 +4,7 @@ title = "integration/target grows without limit (833K files, 152 GB): prune it s
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-14T14:44:08.112Z"
-updated_at = "2026-10-14T17:06:51.687874Z"
+updated_at = "2026-10-14T17:07:07.688814Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -43,3 +43,6 @@ integrated: 2c5d282178eaeca768b7707d6ff593fbdd9c1c3d (branch bridle/j4bk)
 
 ### note · agent:manager-2 · 2026-10-14T17:06:51.687Z
 cleanup: removed agent j4bk, branch bridle/j4bk
+
+### note · external:orchestrator · 2026-10-14T17:07:07.688Z
+orchestrator, 17:07Z: after integration/target was moved aside and deleted (16:42Z), j4bk's own land took ~22 min from a cold target (vs. 75+ min of nextest alone for nbgp's land just before). Landed and pushed.
