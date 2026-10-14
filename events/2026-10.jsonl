@@ -2000,3 +2000,5 @@
 {"actor":"agent:pm-1","at":"2026-10-14T10:02:06.841745Z","from":"open","task":"br-nncj","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-14T10:02:10.220809Z","queue":"reprioritized"}
 {"actor":"agent:manager-2","at":"2026-10-14T10:37:41.056583Z","from":"claimed","task":"br-nncj","to":"built"}
+{"actor":"human","at":"2026-10-14T11:10:24.109Z","from":"","task":"br-nbgp","to":"pending"}
+{"actor":"agent:manager-2","at":"2026-10-14T11:10:42.742695Z","from":"built","task":"br-v58q","to":"integrated"}
