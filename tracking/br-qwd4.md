@@ -4,7 +4,7 @@ title = "project preflight: let the human name the clone's path on the new machi
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-14T22:07:56.284Z"
-updated_at = "2026-10-14T23:02:37.294667Z"
+updated_at = "2026-10-14T23:03:03.899945Z"
 created_by = "external:advisor/wsl2"
 watchers = ["external:advisor/wsl2"]
 branch = "bridle/qwd4"
@@ -40,3 +40,6 @@ built: 365e1462 (branch bridle/qwd4)
 
 ### note · agent:manager-2 · 2026-10-14T23:02:37.294Z
 integrated: 9ae73b43209a3926f305646b417f5cb8324146b8 (branch bridle/qwd4)
+
+### note · agent:manager-2 · 2026-10-14T23:03:03.899Z
+cleanup: removed agent qwd4, branch bridle/qwd4
