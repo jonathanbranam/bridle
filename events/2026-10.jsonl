@@ -1960,3 +1960,4 @@
 {"actor":"agent:pm-1","at":"2026-10-14T01:47:15.613900Z","queue":"reprioritized"}
 {"actor":"agent:xqwy","at":"2026-10-14T01:57:27.699897Z","from":"claimed","task":"br-xqwy","to":"built"}
 {"actor":"agent:manager-2","at":"2026-10-14T02:21:39.420120Z","from":"built","task":"br-pac3","to":"integrated"}
+{"actor":"external:advisor/product-manager","at":"2026-10-14T02:31:26.481977Z","from":"pending","task":"br-dtf6","to":"open"}
