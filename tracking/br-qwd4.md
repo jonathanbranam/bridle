@@ -4,9 +4,10 @@ title = "project preflight: let the human name the clone's path on the new machi
 kind = "feature"
 state = "planned"
 created_at = "2026-10-14T22:07:56.284Z"
-updated_at = "2026-10-14T22:11:14.571821Z"
+updated_at = "2026-10-14T22:54:50.024999Z"
 created_by = "external:advisor/wsl2"
 watchers = ["external:advisor/wsl2"]
+summary = """Added `--path` (requires `--to`) to `bridle project preflight`. remote_clone() in preflight_remote.rs builds the clone path on NEW: `~` expands to NEW's $HOME on the remote shell; with no --path, OLD's path under $HOME is kept, else the documented $HOME/work/<P>-workspace/<P>. The clone check, git clone offer and push probe all use it; the pass line now says "present at <path>". Unit test covers the four cases. Docs: cli.md, move-a-project.md, CHANGELOG. just check green (1685 tests) before merging main."""
 ticket = "qwd4"
 +++
 
