@@ -528,6 +528,12 @@ async fn start_inner(
 
     let store = Store::open(ws.db()).await.context("opening the store")?;
     ensure_human_token(&store, &ws).await?;
+    warn_if_role_tokens_rejected(
+        &store,
+        &project,
+        &discovery::credentials_for_project(&discovery::credentials_path(), &project),
+    )
+    .await;
 
     // Fetch before anything is written, so a clone on a new machine adopts origin's state
     // rather than diverging from it, and so a project another host owns is refused (hw6c).
@@ -1291,6 +1297,41 @@ fn refuse_if_already_running(project: &str, ws: &Workspace) -> anyhow::Result<()
     Ok(())
 }
 
+/// br-nbgp: the credentials file holds role tokens for this project and the store accepts none of
+/// them (a database replaced or rebuilt under a running daemon). Every role would fail with a bare
+/// 401, so say what fixes it.
+async fn warn_if_role_tokens_rejected(store: &Store, project: &str, held: &[(String, String)]) {
+    if let Some(roles) = rejected_roles(store, held).await {
+        tracing::warn!(
+            project,
+            roles = %roles,
+            "none of the role tokens in credentials.toml is accepted by this database; \
+             run `bridle token pair` to mint them again"
+        );
+    }
+}
+
+/// The roles held, comma-joined, when there are some and the store rejects all of them.
+async fn rejected_roles(store: &Store, held: &[(String, String)]) -> Option<String> {
+    let roles: Vec<&(String, String)> = held.iter().filter(|(who, _)| who != "human").collect();
+    if roles.is_empty() {
+        return None;
+    }
+    for (_, token) in &roles {
+        // A store error is not evidence of a lost token.
+        if !matches!(store.authenticate(token).await, Ok(None)) {
+            return None;
+        }
+    }
+    Some(
+        roles
+            .iter()
+            .map(|(who, _)| who.as_str())
+            .collect::<Vec<_>>()
+            .join(", "),
+    )
+}
+
 async fn ensure_human_token(store: &Store, ws: &Workspace) -> anyhow::Result<()> {
     match store.ensure_human_token().await? {
         Some(token) => {
@@ -1629,5 +1670,42 @@ mod bind_tests {
         assert_eq!(this_machine_port(&m, "here"), Some(7401));
         assert_eq!(this_machine_port(&m, "there"), None);
         assert_eq!(this_machine_port(&m, "other"), None);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn role_tokens_the_store_lost_are_reported_and_a_restart_keeps_them() {
+        let tmp = tempfile::tempdir().expect("tmp");
+        let db = tmp.path().join("bridle.db");
+        let store = Store::open(&db).await.expect("store");
+        let token = store
+            .create_external_token("aide", None)
+            .await
+            .expect("mint")
+            .token;
+        let held = vec![
+            ("aide".to_string(), token),
+            ("advisor".to_string(), "not-a-token".to_string()),
+        ];
+        assert_eq!(rejected_roles(&store, &held).await, None, "one is accepted");
+        drop(store);
+
+        // Reopening the same database (a restart) keeps the principal.
+        let store = Store::open(&db).await.expect("reopen");
+        assert_eq!(rejected_roles(&store, &held).await, None);
+
+        // A database built fresh under the same credentials file accepts none.
+        let fresh = Store::open(tmp.path().join("fresh.db"))
+            .await
+            .expect("fresh");
+        assert_eq!(
+            rejected_roles(&fresh, &held).await.as_deref(),
+            Some("aide, advisor")
+        );
+        assert_eq!(rejected_roles(&fresh, &[]).await, None);
     }
 }

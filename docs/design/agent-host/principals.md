@@ -239,3 +239,7 @@ authentication. Remote deployments should also put bridle behind SSH port
 forwarding, a VPN or TLS termination ([[docs/design/agent-host/api#Running the workforce remotely|running remotely]]).
 Whether provenance should be stronger is open:
 [[how-strong-agent-provenance-should-be-2bzw|how strong provenance should be]].
+
+A daemon that starts holding role tokens in `credentials.toml` for its own project, none of which
+its database accepts, logs a warning naming `bridle token pair` (br-nbgp). The usual cause is a
+database replaced under a running daemon; `project take-over` therefore refuses while one runs.

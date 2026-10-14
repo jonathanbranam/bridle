@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 - Fix (br-nncj): a daemon no longer forwards its wakes (restarts, exits, usage, context, uptime) to a visiting orchestrator homed on another machine when it has an orchestrator of its own; before, dalek's wakes also reached vesta's orchestrator. Migration: none.
+- `bridle project take-over` no longer moves the database out from under a running daemon (which went on minting tokens into the moved file and lost them all at its next restart); it refuses and says to stop the daemon first. A daemon that starts with role tokens in `credentials.toml` that its database rejects logs a warning naming `bridle token pair` (br-nbgp).
 
 ## [0.7.2] - 2026-10-14
 

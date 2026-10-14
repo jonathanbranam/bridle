@@ -68,6 +68,18 @@ pub fn note_moved_in(ws: &Workspace, from: Option<&str>) -> anyhow::Result<()> {
 /// reused. Returns where the old database went, if there was one.
 pub async fn fresh_database(ws: &Workspace) -> anyhow::Result<Option<PathBuf>> {
     let db = ws.db();
+    // A running daemon keeps the renamed file open and goes on serving (and minting tokens) from
+    // it until its next restart, which then opens the empty one (br-nbgp).
+    if let Ok(d) = bridle_api::discovery::read_daemon_json(&ws.workspace)
+        && bridle_api::discovery::pid_alive(d.pid)
+    {
+        anyhow::bail!(
+            "the daemon for {} is running (pid {}) and has the database open; \
+             stop it first (`bridle project stop`), then run `bridle project take-over` again",
+            d.project,
+            d.pid
+        );
+    }
     let mut seed = std::fs::read_to_string(ws.state_branch_dir().join(OUTBOX_SEQ_FILE))
         .ok()
         .and_then(|t| t.trim().parse::<i64>().ok())
@@ -684,6 +696,32 @@ mod tests {
         assert!(backup.join("bridle.db").exists(), "old database kept");
         let fresh = Store::open(ws.db()).await.expect("fresh db");
         assert_eq!(send(&fresh).await, "o-0004", "above OLD's last id");
+    }
+
+    #[tokio::test]
+    async fn a_running_daemon_blocks_setting_the_database_aside() {
+        let tmp = tempfile::tempdir().expect("tmp");
+        let ws = Workspace::new(tmp.path().join("repo"), Some(tmp.path().to_path_buf()));
+        std::fs::create_dir_all(ws.state_branch_dir()).expect("state dir");
+        drop(Store::open(ws.db()).await.expect("old db"));
+        let info = bridle_api::types::DaemonInfo {
+            project: "p".into(),
+            workspace: ws.workspace.display().to_string(),
+            repo: ws.repo.display().to_string(),
+            url: "http://127.0.0.1:1".into(),
+            pid: std::process::id() as i32,
+            started_at: Utc::now(),
+            version: "t".into(),
+            task_prefix: None,
+        };
+        bridle_api::discovery::write_daemon_json(&ws.workspace, &info).expect("daemon.json");
+
+        let err = fresh_database(&ws).await.expect_err("refused");
+        assert!(err.to_string().contains("stop it first"), "{err}");
+        assert!(
+            ws.db().exists(),
+            "the database stays where the daemon has it"
+        );
     }
 
     #[tokio::test]

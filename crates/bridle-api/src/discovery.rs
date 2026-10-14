@@ -251,7 +251,7 @@ fn machine_fallback_daemon_in(dir: &Path) -> Option<DaemonInfo> {
 
 /// `kill(pid, 0)`: `ESRCH` means gone, `EPERM` means it exists but is owned
 /// by someone else (treated as alive), anything else is treated as dead.
-fn pid_alive(pid: i32) -> bool {
+pub fn pid_alive(pid: i32) -> bool {
     match kill(Pid::from_raw(pid), None) {
         Ok(()) => true,
         Err(Errno::EPERM) => true,
@@ -468,6 +468,19 @@ pub fn credential(
         .and_then(|v| v.get(project))
         .and_then(|v| v.as_str())
         .map(str::to_string))
+}
+
+/// Every `(principal, token)` the credentials file holds for `project` on this machine (plain
+/// `[principal] project = token` entries, not `[principal.<machine>]` ones). An unreadable file
+/// is empty: callers use this to warn, not to fail.
+pub fn credentials_for_project(path: &Path, project: &str) -> Vec<(String, String)> {
+    let Ok(table) = read_credentials(path) else {
+        return Vec::new();
+    };
+    table
+        .iter()
+        .filter_map(|(who, v)| Some((who.clone(), v.get(project)?.as_str()?.to_string())))
+        .collect()
 }
 
 /// The URL and token to reach `project`'s daemon on this machine directly: the daemon is in
