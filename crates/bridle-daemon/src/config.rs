@@ -666,9 +666,21 @@ pub struct SchedulePeriod {
     pub hold_at: f64,
     pub wind_down_at: f64,
     pub stop_at: f64,
-    /// Applied through the live `max_workers` override while a
-    /// `bridle budget override` of this period is in force.
+    /// Applied through the live `max_workers` override while this period
+    /// matches by the clock or a `bridle budget override` of it is in force.
     pub max_workers: Option<u32>,
+    /// Thresholds this period sets for the weekly windows (`seven_day`,
+    /// `seven_day_opus`, `seven_day_sonnet`); a window not listed keeps the
+    /// plain `[budget]` thresholds. This is what makes an end-of-week sprint.
+    pub weekly: BTreeMap<String, PeriodThresholds>,
+}
+
+/// A `[[budget.schedule]]` period's hold/wind-down/stop for one weekly window.
+#[derive(Debug, Clone, Copy, PartialEq, Deserialize)]
+pub struct PeriodThresholds {
+    pub hold_at: f64,
+    pub wind_down_at: f64,
+    pub stop_at: f64,
 }
 
 impl SchedulePeriod {
@@ -933,6 +945,9 @@ pub struct BudgetConfig {
     /// `seven_day` and every other window are never affected. Walked in
     /// order; the first match wins. Empty by default.
     pub schedule: Vec<SchedulePeriod>,
+    /// Points over the daily pace line (day x 1/7 of the week) at which
+    /// the governor sends one warning. Warning only: it holds nothing.
+    pub pace_margin: f64,
 }
 
 impl Default for BudgetConfig {
@@ -950,6 +965,7 @@ impl Default for BudgetConfig {
             wind_down_grace: Duration::from_secs(5 * 60),
             max_staleness: Duration::from_secs(10 * 60),
             schedule: Vec::new(),
+            pace_margin: 10.0,
         }
     }
 }
@@ -977,6 +993,9 @@ impl BudgetConfig {
         }
         if let Some(s) = &raw.max_staleness {
             self.max_staleness = parse_duration(s)?;
+        }
+        if let Some(v) = raw.pace_margin {
+            self.pace_margin = v;
         }
         if let Some(list) = raw.schedule {
             self.schedule = list
@@ -1043,6 +1062,25 @@ impl BudgetConfig {
                     "stop_at",
                     path,
                 )?;
+                for (window, t) in &period.weekly {
+                    for (kind, value, machine) in [
+                        ("hold_at", t.hold_at, self.hold_at.get(window)),
+                        (
+                            "wind_down_at",
+                            t.wind_down_at,
+                            self.wind_down_at.get(window),
+                        ),
+                        ("stop_at", t.stop_at, self.stop_at.get(window)),
+                    ] {
+                        check_schedule_ceiling(
+                            value,
+                            machine,
+                            &period.name,
+                            &format!("{window}.{kind}"),
+                            path,
+                        )?;
+                    }
+                }
             }
             self.schedule = periods;
         }
@@ -2295,7 +2333,7 @@ fn check_schedule_ceiling(
     value: f64,
     machine_value: f64,
     period_name: &str,
-    kind: &'static str,
+    kind: &str,
     path: &Path,
 ) -> Result<(), ConfigError> {
     if value > machine_value {
@@ -2981,6 +3019,8 @@ struct RawBudget {
     max_staleness: Option<String>,
     #[serde(default)]
     schedule: Option<Vec<RawSchedulePeriod>>,
+    #[serde(default)]
+    pace_margin: Option<f64>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -2998,6 +3038,12 @@ struct RawSchedulePeriod {
     stop_at: f64,
     #[serde(default)]
     max_workers: Option<u32>,
+    #[serde(default)]
+    seven_day: Option<PeriodThresholds>,
+    #[serde(default)]
+    seven_day_opus: Option<PeriodThresholds>,
+    #[serde(default)]
+    seven_day_sonnet: Option<PeriodThresholds>,
 }
 
 impl RawSchedulePeriod {
@@ -3044,7 +3090,16 @@ impl RawSchedulePeriod {
             .map(|t| parse_time_of_day(&t, &self.name))
             .transpose()?;
         let end = end.map(|t| parse_time_of_day(&t, &self.name)).transpose()?;
+        let weekly = [
+            ("seven_day", self.seven_day),
+            ("seven_day_opus", self.seven_day_opus),
+            ("seven_day_sonnet", self.seven_day_sonnet),
+        ]
+        .into_iter()
+        .filter_map(|(w, t)| t.map(|t| (w.to_string(), t)))
+        .collect();
         Ok(SchedulePeriod {
+            weekly,
             start,
             end,
             name: self.name,
@@ -4006,6 +4061,7 @@ mod tests {
 
     fn sched(days: Vec<Weekday>, start: NaiveTime, end: NaiveTime) -> SchedulePeriod {
         SchedulePeriod {
+            weekly: Default::default(),
             name: "s".to_string(),
             days,
             start: Some(start),
@@ -4175,6 +4231,7 @@ mod tests {
         };
 
         let workday = SchedulePeriod {
+            weekly: Default::default(),
             name: "workday".to_string(),
             days: vec![
                 Weekday::Mon,
@@ -4195,6 +4252,7 @@ mod tests {
         assert!(!workday.matches(at(17, 0)));
 
         let night = SchedulePeriod {
+            weekly: Default::default(),
             name: "night".to_string(),
             days: vec![
                 Weekday::Mon,

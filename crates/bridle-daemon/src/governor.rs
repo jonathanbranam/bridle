@@ -108,6 +108,16 @@ struct Inner {
     /// period's `max_workers` (so ending the override reverts it, and a
     /// value the human set by hand isn't clobbered).
     preset_cap_applied: AtomicBool,
+    /// The clock-matched `[[budget.schedule]]` period whose `max_workers` was
+    /// last acted on, so the cap is applied when a period starts and
+    /// reverted when it ends, not re-asserted every tick over a value the
+    /// human set by hand.
+    clock_period: Mutex<Option<String>>,
+    /// The (week, day) a pace warning was last sent for: one per day.
+    pace_warned: Mutex<Option<(i64, u32)>>,
+    /// The week (reset rounded to the hour) the sprint-period check last
+    /// ran for, so its log line is once a week, not every tick.
+    sprint_checked: Mutex<Option<i64>>,
     /// When this governor started; substitutes for "no reading yet" in the
     /// staleness check below, so a daemon that hasn't had time for its
     /// first `get_usage` poll to land doesn't hold on its own age (Unknown
@@ -148,6 +158,9 @@ impl Governor {
             human_hold: Mutex::new(None),
             schedule_override: Mutex::new(None),
             preset_cap_applied: AtomicBool::new(false),
+            clock_period: Mutex::new(None),
+            pace_warned: Mutex::new(None),
+            sprint_checked: Mutex::new(None),
             started_at: Instant::now(),
         }))
     }
@@ -422,6 +435,121 @@ impl Governor {
         // every window has dropped back below `resume_below`.
         self.0.manager.expire_wind_downs().await;
         self.maybe_resume(&rate_limits).await;
+        self.apply_clock_cap();
+        self.check_pace(&rate_limits).await;
+    }
+
+    /// A schedule period's `max_workers` applies while it matches by the
+    /// clock, not only through `bridle budget override`. Acts only when the
+    /// matching period changes; an override in force owns the cap instead.
+    fn apply_clock_cap(&self) {
+        if self.schedule_override_status().is_some() {
+            return;
+        }
+        let period = self
+            .0
+            .config
+            .schedule
+            .iter()
+            .find(|p| p.matches(Local::now()));
+        let name = period.map(|p| p.name.clone());
+        let mut last = self.0.clock_period.lock().expect("governor mutex poisoned");
+        if *last == name {
+            return;
+        }
+        *last = name;
+        match period.and_then(|p| p.max_workers) {
+            Some(n) => {
+                self.0.manager.set_max_workers_override(Some(n));
+                self.0.preset_cap_applied.store(true, Ordering::SeqCst);
+            }
+            None => self.revert_preset_cap(),
+        }
+    }
+
+    /// A period that sets weekly thresholds is a sprint; it should end at the
+    /// real `seven_day` reset. Logs once a week when none of them covers the
+    /// minute before `resets_at` (the human changed the reset day, or typed
+    /// the wrong one).
+    fn warn_if_sprint_misses_reset(&self, resets_at: DateTime<Utc>) {
+        let sprints: Vec<_> = self
+            .0
+            .config
+            .schedule
+            .iter()
+            .filter(|p| !p.weekly.is_empty())
+            .collect();
+        if sprints.is_empty() {
+            return;
+        }
+        let week = (resets_at.timestamp() + 1800) / 3600;
+        let mut checked = self
+            .0
+            .sprint_checked
+            .lock()
+            .expect("governor mutex poisoned");
+        if *checked == Some(week) {
+            return;
+        }
+        *checked = Some(week);
+        let last_minute = (resets_at - chrono::Duration::minutes(1)).with_timezone(&Local);
+        if !sprints.iter().any(|p| p.matches(last_minute)) {
+            tracing::warn!(
+                resets_at = %resets_at,
+                periods = ?sprints.iter().map(|p| p.name.as_str()).collect::<Vec<_>>(),
+                "no [[budget.schedule]] period with weekly thresholds covers the minute before the seven_day reset; a sprint would not run at the end of the week"
+            );
+        }
+    }
+
+    /// Pace warning (usage-and-budget.md, Pacing): one note to the human and
+    /// the orchestrator per day when `seven_day` is more than `pace_margin`
+    /// points over the day's line. Warning only; it holds nothing.
+    async fn check_pace(&self, rate_limits: &[RateLimit]) {
+        let Some(rl) = rate_limits.iter().find(|r| r.window == "seven_day") else {
+            return;
+        };
+        let (Some(u), Some(resets_at)) = (rl.utilization, rl.resets_at) else {
+            return;
+        };
+        self.warn_if_sprint_misses_reset(resets_at);
+        let pct = u * 100.0;
+        let Some((day, line)) = pace_over(pct, resets_at, Utc::now(), self.0.config.pace_margin)
+        else {
+            return;
+        };
+        // Keyed by the reset rounded to the hour: the reading's `resets_at`
+        // jitters by milliseconds (bm7a) and must not re-arm the warning.
+        let key = ((resets_at.timestamp() + 1800) / 3600, day);
+        {
+            let mut warned = self.0.pace_warned.lock().expect("governor mutex poisoned");
+            if *warned == Some(key) {
+                return;
+            }
+            *warned = Some(key);
+        }
+        let body = format!(
+            "Budget pace: seven_day is at {pct:.0}%, more than {:.0} points over today's pace \
+             line of {line:.0}% (day {day} of 7). Just letting you know; nothing is held.",
+            self.0.config.pace_margin
+        );
+        for to in [
+            ToTarget::Human,
+            ToTarget::External(crate::wake::ORCHESTRATOR.to_string()),
+        ] {
+            let _ = self
+                .0
+                .manager
+                .send(
+                    "system".to_string(),
+                    to,
+                    MessageKind::Note,
+                    body.clone(),
+                    When::Now,
+                    None,
+                )
+                .await;
+        }
     }
 
     /// Every `idle`/`working` agent, all of them for the default scope
@@ -664,14 +792,6 @@ impl Governor {
             .await;
     }
 
-    /// The `five_hour` thresholds in effect for `now`: an unexpired
-    /// `bridle budget override` (usage-and-budget.md, Schedule override)
-    /// wins over the time-based `[[budget.schedule]]` lookup, which wins
-    /// over the plain `[budget]` defaults.
-    fn effective_five_hour_thresholds(&self, now: DateTime<Local>) -> (f64, f64, f64) {
-        effective_five_hour_thresholds_for(&self.0.config, now, self.schedule_override_status())
-    }
-
     /// The `five_hour` thresholds in force right now with their source, the
     /// current period's span and the schedule's next change, for
     /// `GET /v1/budget`. Uses the same resolution as the governor.
@@ -736,21 +856,22 @@ impl Governor {
             .collect()
     }
 
+    /// (hold, wind-down, stop) for `window` right now, schedule included.
+    fn effective_thresholds(&self, window: &str) -> (f64, f64, f64) {
+        effective_thresholds_for(
+            &self.0.config,
+            window,
+            Local::now(),
+            self.schedule_override_status(),
+        )
+    }
+
     fn evaluate_window(&self, rate_limits: &[RateLimit], window: &str) -> WindowBlock {
-        let cfg = &self.0.config;
         let rl = rate_limits.iter().find(|r| r.window == window);
         let Some(rl) = rl else {
             return WindowBlock::default();
         };
-        let (hold_at, wind_down_at, stop_at) = if window == "five_hour" {
-            self.effective_five_hour_thresholds(Local::now())
-        } else {
-            (
-                cfg.hold_at.get(window),
-                cfg.wind_down_at.get(window),
-                cfg.stop_at.get(window),
-            )
-        };
+        let (hold_at, wind_down_at, stop_at) = self.effective_thresholds(window);
         let state = window_state(rl, hold_at, wind_down_at, stop_at);
         WindowBlock {
             state,
@@ -782,11 +903,7 @@ impl Governor {
             let Some(u) = rl.utilization else {
                 return 1.0;
             };
-            let hold_at = if *window == "five_hour" {
-                self.effective_five_hour_thresholds(Local::now()).0
-            } else {
-                self.0.config.hold_at.get(window)
-            };
+            let hold_at = self.effective_thresholds(window).0;
             worst = worst.max(u * 100.0 / hold_at.max(1.0));
         }
         worst
@@ -944,7 +1061,7 @@ fn sliding_staleness(max_staleness: Duration, ratio: f64) -> Duration {
 /// [`crate::config::SchedulePeriod`]): the first `[[budget.schedule]]`
 /// period whose days and time-of-day window contain it, else the plain
 /// `[budget]` `five_hour` thresholds unchanged (usage-and-budget.md,
-/// Schedule). `seven_day` and every other window never consult this.
+/// Schedule). Weekly windows use [`effective_thresholds_for`].
 fn resolve_five_hour_thresholds(cfg: &BudgetConfig, now: DateTime<Local>) -> (f64, f64, f64) {
     for period in &cfg.schedule {
         if period.matches(now) {
@@ -976,6 +1093,50 @@ fn effective_five_hour_thresholds_for(
         Some((None, _)) => default_five_hour_thresholds(cfg),
         None => resolve_five_hour_thresholds(cfg, now),
     }
+}
+
+/// Thresholds for any window given the schedule override state: `five_hour`
+/// as [`effective_five_hour_thresholds_for`]; a weekly window takes the
+/// in-force period's `weekly` entry for it when there is one, else the plain
+/// `[budget]` value.
+fn effective_thresholds_for(
+    cfg: &BudgetConfig,
+    window: &str,
+    now: DateTime<Local>,
+    override_state: Option<ScheduleOverrideState>,
+) -> (f64, f64, f64) {
+    if window == "five_hour" {
+        return effective_five_hour_thresholds_for(cfg, now, override_state);
+    }
+    let period = match override_state {
+        Some((Some(name), _)) => cfg.schedule.iter().find(|p| p.name == name),
+        Some((None, _)) => None,
+        None => cfg.schedule.iter().find(|p| p.matches(now)),
+    };
+    match period.and_then(|p| p.weekly.get(window)) {
+        Some(t) => (t.hold_at, t.wind_down_at, t.stop_at),
+        None => (
+            cfg.hold_at.get(window),
+            cfg.wind_down_at.get(window),
+            cfg.stop_at.get(window),
+        ),
+    }
+}
+
+/// The 7-day pace line: day `d` (1..=7, whole days since the window began,
+/// `resets_at` minus 7 days) is granted `d/7` of the budget in full when it
+/// starts. `Some((day, line_pct))` when `pct` exceeds the line by more than
+/// `margin` points.
+fn pace_over(
+    pct: f64,
+    resets_at: DateTime<Utc>,
+    now: DateTime<Utc>,
+    margin: f64,
+) -> Option<(u32, f64)> {
+    let elapsed = now - (resets_at - chrono::Duration::days(7));
+    let day = (elapsed.num_days() + 1).clamp(1, 7) as u32;
+    let line = f64::from(day) / 7.0 * 100.0;
+    (pct > line + margin).then_some((day, line))
 }
 
 /// The plain `[budget]` `five_hour` thresholds, ignoring the schedule
@@ -1240,6 +1401,7 @@ mod tests {
 
     fn night_period() -> crate::config::SchedulePeriod {
         crate::config::SchedulePeriod {
+            weekly: Default::default(),
             name: "night".to_string(),
             days: vec![
                 chrono::Weekday::Mon,
@@ -1257,6 +1419,56 @@ mod tests {
             stop_at: 95.0,
             max_workers: None,
         }
+    }
+
+    #[test]
+    fn a_period_sets_weekly_thresholds_only_inside_its_window() {
+        let (_rt, mut cfg) = test_governor();
+        let mut sprint = night_period();
+        let all = crate::config::PeriodThresholds {
+            hold_at: 100.0,
+            wind_down_at: 100.0,
+            stop_at: 100.0,
+        };
+        sprint.weekly.insert("seven_day".into(), all);
+        sprint.weekly.insert("seven_day_opus".into(), all);
+        cfg.schedule = vec![sprint];
+        for window in ["seven_day", "seven_day_opus"] {
+            assert_eq!(
+                effective_thresholds_for(&cfg, window, local_at(23, 30), None),
+                (100.0, 100.0, 100.0),
+                "{window} inside"
+            );
+            assert_eq!(
+                effective_thresholds_for(&cfg, window, local_at(12, 0), None),
+                (
+                    cfg.hold_at.get(window),
+                    cfg.wind_down_at.get(window),
+                    cfg.stop_at.get(window)
+                ),
+                "{window} outside"
+            );
+        }
+        // A window the period doesn't list keeps the plain value.
+        assert_eq!(
+            effective_thresholds_for(&cfg, "seven_day_sonnet", local_at(23, 30), None).0,
+            cfg.hold_at.get("seven_day_sonnet")
+        );
+    }
+
+    #[test]
+    fn pace_warns_only_past_the_line_plus_margin() {
+        let resets = Utc::now() + chrono::Duration::days(7) - chrono::Duration::hours(1);
+        // Day 1 (just under 1 day in): line 14.3, margin 10.
+        let now = Utc::now();
+        assert_eq!(pace_over(24.0, resets, now, 10.0), None);
+        let (day, line) = pace_over(25.0, resets, now, 10.0).expect("over");
+        assert_eq!(day, 1);
+        assert!((line - 100.0 / 7.0).abs() < 1e-9);
+        // Three days in: the line has stepped up to day 4's 57%.
+        let later = now + chrono::Duration::days(3);
+        assert_eq!(pace_over(60.0, resets, later, 10.0).map(|x| x.0), None);
+        assert_eq!(pace_over(68.0, resets, later, 10.0).map(|x| x.0), Some(4));
     }
 
     #[test]

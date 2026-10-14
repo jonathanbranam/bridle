@@ -9,7 +9,9 @@ only lower its four percentage thresholds, never raise them — see
 full shape and merge rule. `[budget]` can also carry `[[budget.schedule]]`:
 named periods, in host-local days and `HH:MM` time-of-day (the daemon's own
 `chrono::Local`, not a configured timezone), that replace the `five_hour`
-thresholds while they're in effect — see
+thresholds while they're in effect (and, with `seven_day`/`seven_day_opus`/
+`seven_day_sonnet` tables, the weekly ones: a sprint; `[budget] pace_margin`
+sets the daily pace warning) — see
 [[../usage-and-budget#Schedule|Schedule]]. The same lower-only rule applies
 to a project's own schedule periods. Everything else below is
 project-scoped, as usual:

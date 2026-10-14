@@ -283,8 +283,13 @@ stop_at      = 95
   `[[budget.schedule]]` at all, falls back to the plain `[budget]` thresholds
   unchanged.
   **When a window crosses midnight, the part after midnight is matched against the next day's `days` entry.** To cover an overnight block like "Sunday–Thursday nights," split it into two: `sun..thu 23:00–00:00` (or `23:00–23:59`, leaving the last minute uncovered) and `mon..fri 00:00–07:00`.
-- **`seven_day` (and every other window) is never affected** — only
-  `five_hour` has a schedule.
+- **Weekly windows are changed only by an explicit entry.** A period may
+  also carry `seven_day`, `seven_day_opus` and `seven_day_sonnet` tables with
+  their own `hold_at`/`wind_down_at`/`stop_at`; a weekly window the period
+  doesn't list keeps the plain `[budget]` thresholds. This is the
+  end-of-week **sprint**: one period just before the reset with everything at
+  100, so the last hours of the week are used up (below). Under a project
+  config the same lower-only rule applies to these values.
 - Schedule periods live under `[budget]`, so the same machine-wide/project
   split and lower-only rule applies: a project's `.bridle/config.toml` may
   give a period's `hold_at`/`wind_down_at`/`stop_at` lower than the
@@ -294,13 +299,47 @@ stop_at      = 95
   clock, so it is reachable only through `bridle budget override <name>`:
   e.g. a `burst` or `low` period. `bridle budget --schedule` lists it as
   "override only".
-- **`max_workers`** (optional, any period): while `bridle budget override
-  <name>` is in force, the period's value is applied through the live
-  max-workers override below (no second mechanism), and reverts when the
-  override is cleared, expires, or is replaced by a period without one. A cap
+- **`max_workers`** (optional, any period): while the period matches by the
+  clock, or `bridle budget override <name>` is in force, its value is applied
+  through the live max-workers override below (no second mechanism), and
+  reverts when the period ends, the override is cleared, expires, or is
+  replaced by a period without one. A cap
   the human sets by hand with `bridle budget max-workers` is never reverted
   by this. Expiry is noticed on the governor's next read (each poll tick, or
   any `bridle budget`), not at the instant.
+
+### Sprint and pacing
+
+The week's budget is meant to last, and the last hours are meant to be used.
+
+- **Sprint**: a schedule period with weekly tables, e.g. the human's reset is
+  Wednesday 03:00 local:
+
+  ```toml
+  [[budget.schedule]]
+  name = "sprint"
+  days = ["wed"]
+  start = "00:00"
+  end = "03:00"
+  hold_at = 100
+  wind_down_at = 100
+  stop_at = 100
+  max_workers = 4
+  seven_day      = { hold_at = 100, wind_down_at = 100, stop_at = 100 }
+  seven_day_opus = { hold_at = 100, wind_down_at = 100, stop_at = 100 }
+  ```
+
+  The governor logs a warning (once a week) when no period with weekly tables
+  covers the minute before the `seven_day` `resets_at` it reads, so a changed
+  reset day doesn't silently leave the sprint on the wrong hours.
+- **Pace warning**: the 7-day window (its `resets_at` minus 7 days) is split
+  into whole days; day `d` (1..7) has a line of `d/7` of the budget (14%,
+  28%, ... 100%), granted in full when the day starts. When `seven_day`
+  utilization is more than `pace_margin` points (`[budget]`, default 10) over
+  the line, the governor sends one note to the human and the orchestrator,
+  once per day. It holds nothing; the thresholds above are unchanged. Not yet:
+  wind-down or stop margins on the line, hourly accrual (rejected: the human
+  wants whole days, like PTO).
 
 ```toml
 [[budget.schedule]]
