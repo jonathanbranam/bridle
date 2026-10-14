@@ -2056,3 +2056,4 @@
 {"actor":"agent:pm-1","at":"2026-10-14T17:54:02.799056Z","queue":"reprioritized"}
 {"actor":"human","at":"2026-10-14T17:56:45.469Z","from":"","task":"br-29se","to":"pending"}
 {"actor":"external:advisor/wsl2","at":"2026-10-14T17:56:52.639586Z","from":"pending","task":"br-29se","to":"open"}
+{"actor":"agent:manager-2","at":"2026-10-14T17:58:17.664476Z","from":"claimed","task":"br-sh8y","to":"built"}
