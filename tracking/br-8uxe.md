@@ -2,11 +2,14 @@
 id = "br-8uxe"
 title = "A home project on each machine for the orchestrator: a stop-gap for the machine daemon"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-14T17:07:37.932Z"
-updated_at = "2026-10-14T17:49:56.545562Z"
+updated_at = "2026-10-14T17:50:20.513128Z"
 created_by = "external:advisor/product-manager"
-watchers = ["external:advisor/product-manager"]
+watchers = [
+    "external:advisor/product-manager",
+    "agent:8uxe",
+]
 ticket = "8uxe"
 +++
 
