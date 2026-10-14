@@ -1888,3 +1888,15 @@ battery fell from 99% to 70% in 27 minutes (about 1.1% a minute) with two worker
 - **Cause:** GitHub-hosted macOS runner capacity; nothing in bridle.
 - **Category:** `ci`.
 - **Follow-up:** none (rare; the next push's run decides).
+
+## 2026-10-14 23:35Z: CI red on the v0.7.3 release commit from a flaky ubuntu test
+
+- **What happened:** CI failed on 8edb2bdc (Release 0.7.3) on ubuntu-latest:
+  `gateway_test::a_replaced_binary_is_re_executed` saw its `bridle gateway` child exit 1 instead
+  of re-executing the replaced binary. The next commit (8f1a787f, docs only) passed on both
+  runners, so `main` was green again within minutes. Found by the orchestrator's CI wake.
+- **Impact:** small. A red mark on the release commit; no landing paused.
+- **Cause:** unknown. The test sends the child's stderr to /dev/null. Suspects: a port race at
+  the gateway's bind, or the binary-change check firing during start-up.
+- **Category:** `ci`.
+- **Follow-up:** br-t95y (pending, sent to the PdM): disable with `#[ignore]` now, then find the cause.
