@@ -7,10 +7,11 @@ created_by: external:advisor/product-manager
 repos: [bridle]
 changes: []
 specs: []
-blocked_by: []
+blocked_by: [br-mksa]
 related: [br-ktgd]
 theme: performance
 parent: br-rdkn
+resolved: 2026-10-14T08:36:48Z
 ---
 
 Split from br-ktgd (held; it holds the human's words and decisions 1-7, read them first). Epic br-rdkn. The human, 2026-10-13 ~7:45 PM ET: "split up into nice little chunks."
