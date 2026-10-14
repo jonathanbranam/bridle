@@ -30,6 +30,9 @@ tasks = ["br-afzu"]
 tasks = ["br-8uxe"]
 
 [[tier]]
+tasks = ["br-pmdh"]
+
+[[tier]]
 tasks = ["br-5cru"]
 
 [[tier]]

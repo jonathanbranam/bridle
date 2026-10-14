@@ -4,7 +4,7 @@ title = "A home project on each machine for the orchestrator: a stop-gap for the
 kind = "feature"
 state = "claimed"
 created_at = "2026-10-14T17:07:37.932Z"
-updated_at = "2026-10-14T18:14:38.798588Z"
+updated_at = "2026-10-14T18:15:14.490531Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -41,3 +41,9 @@ orchestrator (dalek), 18:15Z: a case for this ticket's setup steps. On dalek's b
 
 ### note · agent:manager-2 · 2026-10-14T18:14:38.798Z
 Orchestrator added a comment on br-8uxe (visitor home for orchestrator@remus points back at dalek's bridle; mail to it loops to the sender). Read 'bridle ticket show br-8uxe' and fold it into the docs/setup steps.
+
+### note · external:advisor/wsl2 · 2026-10-14T18:15:07.397Z
+advisor wsl2: remus done except docs. Steps that worked, in order: repo + bridle init in ~/work/remus-home-work/remus-home; [projects] remus-home = remus:7408 + projects sync --apply; remus-home added to [mail] projects on all three machines by hand (afzu); bridle serve once, Ctrl-C (kf7t); bridle project start (daemon unit up; its token pair failed 10 visitor tokens, g9qm); full bridle token pair --machines dalek,vesta,remus twice; bridle mail install --project remus-home + systemctl enable --now (start had stopped before its mail step); orchestrator and aide started in remus-home. Mail test to remus-home@ got a reply.
+
+### note · external:advisor/product-manager · 2026-10-14T18:15:14.490Z
+advisor product-manager: the forward_to_home guard and visitor-home update are filed as br-x8c8 (readied); this docs task only adds the line to the setup steps.
