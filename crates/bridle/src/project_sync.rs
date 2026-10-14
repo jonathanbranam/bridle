@@ -5,9 +5,10 @@
 //! alone. Remote files are read and written over plain ssh (write to a temp file, then rename).
 
 use std::collections::BTreeMap;
-use std::io::Write;
+use std::io::{Read, Write};
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
+use std::time::{Duration, Instant};
 
 use toml_edit::{DocumentMut, InlineTable, Item, Table, Value};
 
@@ -26,10 +27,31 @@ pub struct Real {
 
 const REMOTE_FILE: &str = "$HOME/.bridle/config.toml";
 
+/// How long one ssh call may take in all. Tailscale SSH in "check" mode waits for a browser
+/// login that BatchMode does not stop, and ConnectTimeout only covers the connect.
+const SSH_TIMEOUT: Duration = Duration::from_secs(60);
+
 pub(crate) fn ssh(host: &str, script: &str, stdin: Option<&str>) -> Result<String, String> {
-    let mut child = Command::new("ssh")
+    ssh_with("ssh", host, script, stdin, SSH_TIMEOUT)
+}
+
+fn ssh_with(
+    program: &str,
+    host: &str,
+    script: &str,
+    stdin: Option<&str>,
+    timeout: Duration,
+) -> Result<String, String> {
+    let mut child = Command::new(program)
         // No prompt can be answered here: fail rather than hang.
-        .args(["-o", "BatchMode=yes", host, script])
+        .args([
+            "-o",
+            "BatchMode=yes",
+            "-o",
+            "ConnectTimeout=10",
+            host,
+            script,
+        ])
         .stdin(if stdin.is_some() {
             Stdio::piped()
         } else {
@@ -43,11 +65,52 @@ pub(crate) fn ssh(host: &str, script: &str, stdin: Option<&str>) -> Result<Strin
         pipe.write_all(text.as_bytes())
             .map_err(|e| format!("write to ssh: {e}"))?;
     }
-    let out = child.wait_with_output().map_err(|e| format!("ssh: {e}"))?;
-    if out.status.success() {
-        Ok(String::from_utf8_lossy(&out.stdout).into_owned())
+    let readers: Vec<_> = [
+        child
+            .stdout
+            .take()
+            .map(|p| Box::new(p) as Box<dyn Read + Send>),
+        child
+            .stderr
+            .take()
+            .map(|p| Box::new(p) as Box<dyn Read + Send>),
+    ]
+    .into_iter()
+    .map(|p| {
+        std::thread::spawn(move || {
+            let mut buf = Vec::new();
+            if let Some(mut p) = p {
+                let _ = p.read_to_end(&mut buf);
+            }
+            buf
+        })
+    })
+    .collect();
+    let deadline = Instant::now() + timeout;
+    let status = loop {
+        match child.try_wait().map_err(|e| format!("ssh: {e}"))? {
+            Some(status) => break status,
+            None if Instant::now() >= deadline => {
+                let _ = child.kill();
+                let _ = child.wait();
+                return Err(format!(
+                    "no answer from `{host}` after {}s (ssh may be waiting for a login, e.g. \
+                     Tailscale SSH check mode); try `ssh {host}` by hand",
+                    timeout.as_secs()
+                ));
+            }
+            None => std::thread::sleep(Duration::from_millis(50)),
+        }
+    };
+    let mut bufs = readers.into_iter().map(|h| h.join().unwrap_or_default());
+    let (stdout, stderr) = (
+        bufs.next().unwrap_or_default(),
+        bufs.next().unwrap_or_default(),
+    );
+    if status.success() {
+        Ok(String::from_utf8_lossy(&stdout).into_owned())
     } else {
-        let err = String::from_utf8_lossy(&out.stderr);
+        let err = String::from_utf8_lossy(&stderr);
         Err(err
             .trim()
             .lines()
@@ -368,6 +431,29 @@ pub fn sync(fleet: &Fleet, files: &dyn Files, apply: bool, out: &mut dyn Write) 
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn ssh_that_never_answers_times_out_naming_the_machine() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let fake = dir.path().join("ssh");
+        std::fs::write(&fake, "#!/bin/sh\nexec sleep 30\n").expect("write");
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(&fake, std::fs::Permissions::from_mode(0o755)).expect("chmod");
+        }
+        let err = ssh_with(
+            fake.to_str().expect("utf8"),
+            "remus",
+            "true",
+            None,
+            Duration::from_millis(300),
+        )
+        .expect_err("timeout");
+        assert!(
+            err.contains("`remus`") && err.contains("no answer"),
+            "{err}"
+        );
+    }
+
     use super::*;
     use std::cell::RefCell;
     use std::collections::HashMap;

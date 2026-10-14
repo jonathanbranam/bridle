@@ -924,8 +924,9 @@ pub enum TakeOverError {
         reason: String,
     },
     #[error(
-        "take-over refused: local `{branch}` ({local}) is not an ancestor of origin's \
-         ({origin}); sort it out by hand, bridle never rebases or forces"
+        "take-over refused: local `{branch}` ({local}) and origin's ({origin}) have diverged: \
+         each has commits the other lacks. Merge or rebase by hand so one contains the other \
+         (bridle never rebases or forces), then run take-over again"
     )]
     NotAncestor {
         branch: String,
@@ -971,7 +972,22 @@ pub enum TakeOverOutcome {
     /// `owner.toml` already names this machine; nothing was written.
     AlreadyOwner,
     /// This machine is now the owner, and origin has it.
-    Claimed { from: Option<String> },
+    Claimed {
+        from: Option<String>,
+        main_push: MainPush,
+    },
+}
+
+/// What a take-over did about local commits on the integration branch that origin lacks (they
+/// could not be pushed before the claim: the pre-push hook refuses a non-owner).
+#[derive(Debug, PartialEq, Eq)]
+pub enum MainPush {
+    /// Local was level with, or behind, origin: nothing to push.
+    NotNeeded,
+    /// Local was ahead; pushed after the claim and origin confirmed it.
+    Pushed,
+    /// Local was ahead and the push failed; ownership moved anyway, push by hand.
+    Failed(String),
 }
 
 /// The scheduled messages a released project carries on `bridle/state`.
@@ -998,7 +1014,7 @@ pub async fn take_over_project(
     };
     let outcome = StateBranch::fetch_and_check_owner(repo, state_dir, project, names, true).await?;
     require_state_synced(dir, &outcome).await?;
-    sync_integration_for_take_over(repo, integration).await?;
+    let ahead = sync_integration_for_take_over(repo, integration).await?;
     let sb = StateBranch::open(repo, state_dir).await?;
     let owner = read_owner_file(&sb.dir);
     let from = owner.as_ref().map(|o| o.host.clone());
@@ -1017,7 +1033,16 @@ pub async fn take_over_project(
     sb.push_confirmed()
         .await
         .map_err(|e| anyhow::anyhow!("claimed locally but origin does not have it: {e}"))?;
-    Ok(TakeOverOutcome::Claimed { from })
+    // Only now may this clone push (the hook reads the claim); never forced.
+    let main_push = if ahead {
+        match push_integration_confirmed(repo, integration).await {
+            Ok(()) => MainPush::Pushed,
+            Err(e) => MainPush::Failed(e),
+        }
+    } else {
+        MainPush::NotNeeded
+    };
+    Ok(TakeOverOutcome::Claimed { from, main_push })
 }
 
 /// The owner `owner.toml` records on the local `bridle/state` branch, if any. Read-only.
@@ -1149,11 +1174,13 @@ pub async fn require_state_synced(dir: &Path, outcome: &FetchOutcome) -> Result<
 /// Fetches `origin`'s integration branch for a take-over and fast-forwards the local one to
 /// it. Refuses unless origin is reached and the local branch is an ancestor of (or equal to)
 /// origin's; moving a branch that is checked out in `repo` also needs a clean checkout, never
-/// a stash. Fast-forward only: no rebase, no reset, no force.
+/// a stash. Fast-forward only: no rebase, no reset, no force. A local branch that is ahead of
+/// origin's (commits a refused push held back) is left alone and reported as `true`: the caller
+/// pushes it once ownership has moved. Only real divergence is refused.
 pub async fn sync_integration_for_take_over(
     repo: &Path,
     branch: &str,
-) -> Result<(), TakeOverError> {
+) -> Result<bool, TakeOverError> {
     let local = local_sha(repo, branch).await;
     let fetched = tokio::time::timeout(
         PUSH_TIMEOUT,
@@ -1180,7 +1207,14 @@ pub async fn sync_integration_for_take_over(
         .trim()
         .to_string();
     if local == origin {
-        return Ok(());
+        return Ok(false);
+    }
+    let ahead = local != "none"
+        && worktree::run_git(repo, &["merge-base", "--is-ancestor", &origin, &local])
+            .await
+            .is_ok();
+    if ahead {
+        return Ok(true);
     }
     let ancestor = local != "none"
         && worktree::run_git(repo, &["merge-base", "--is-ancestor", &local, &origin])
@@ -1211,7 +1245,7 @@ pub async fn sync_integration_for_take_over(
     } else {
         worktree::run_git(repo, &["branch", "-f", branch, &origin]).await?;
     }
-    Ok(())
+    Ok(false)
 }
 
 /// What [`StateBranch::fetch_from_origin`] did, for `bridle rebuild --from-origin` to say.
@@ -2897,13 +2931,33 @@ mod tests {
         assert!(matches!(err, TakeOverError::Dirty { .. }), "{err}");
         assert_eq!(git(&repo2, &["rev-parse", "main"]).await, before);
         git(&repo2, &["reset", "-q", "--hard"]).await;
-        // Diverged: a local commit origin doesn't have.
+        // Level with origin after a fast-forward, then ahead: a local commit origin lacks is
+        // accepted (and left for the caller to push).
+        assert!(
+            !sync_integration_for_take_over(&repo2, "main")
+                .await
+                .expect("behind is fast-forwarded")
+        );
         commit_on(&repo2, "local").await;
-        let local = git(&repo2, &["rev-parse", "main"]).await;
+        let ahead = git(&repo2, &["rev-parse", "main"]).await;
+        assert!(
+            sync_integration_for_take_over(&repo2, "main")
+                .await
+                .expect("ahead is accepted")
+        );
+        assert_eq!(git(&repo2, &["rev-parse", "main"]).await, ahead);
+        // Diverged: origin gains a commit local lacks.
+        commit_on(&repo, "origin side").await;
+        git(&repo, &["push", "-q", "origin", "main"]).await;
+        let local = ahead;
         let err = sync_integration_for_take_over(&repo2, "main")
             .await
             .expect_err("diverged");
         assert!(matches!(err, TakeOverError::NotAncestor { .. }), "{err}");
-        assert!(err.to_string().contains(local.trim()));
+        let msg = err.to_string();
+        assert!(
+            msg.contains(local.trim()) && msg.contains("diverged"),
+            "{msg}"
+        );
     }
 }

@@ -11,7 +11,7 @@ use bridle_api::discovery::bridle_home;
 use bridle_api::machines::{MachineMap, owner_names};
 use bridle_daemon::config::Config;
 use bridle_daemon::paths::Workspace;
-use bridle_daemon::state_branch::{TakeOverOutcome, take_over_project};
+use bridle_daemon::state_branch::{MainPush, TakeOverOutcome, take_over_project};
 
 use crate::cli::{Cli, TakeOverArgs};
 use crate::error::CliError;
@@ -66,13 +66,29 @@ pub async fn run(cli: &Cli, args: &TakeOverArgs) -> Result<(), CliError> {
                 names[0]
             );
         }
-        TakeOverOutcome::Claimed { from } => {
+        TakeOverOutcome::Claimed { from, main_push } => {
             let _ = writeln!(
                 out,
                 "{project}: now owned by {} (was {}); origin has it",
                 names[0],
                 from.as_deref().unwrap_or("no one")
             );
+            match main_push {
+                MainPush::NotNeeded => {}
+                MainPush::Pushed => {
+                    let _ = writeln!(
+                        out,
+                        "{project}: local {integration} had commits origin lacked; pushed them"
+                    );
+                }
+                MainPush::Failed(e) => {
+                    let _ = writeln!(
+                        out,
+                        "{project}: local {integration} has commits origin lacks and the push \
+                         failed ({e}); run `git push origin {integration}` here"
+                    );
+                }
+            }
             // Tokens and scheduled messages are made by the new daemon, so `project start`
             // finishes the move once it is up.
             crate::project_start::note_moved_in(&ws, from.as_deref()).map_err(|e| {
