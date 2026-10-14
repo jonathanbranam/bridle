@@ -1973,3 +1973,4 @@
 {"actor":"agent:pm-1","at":"2026-10-14T03:55:05.701003Z","from":"open","task":"br-eapt","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-14T03:55:05.869807Z","from":"open","task":"br-5n4f","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-14T03:55:07.874865Z","queue":"reprioritized"}
+{"actor":"agent:5cru","at":"2026-10-14T03:55:48.849960Z","from":"claimed","task":"br-5cru","to":"built"}
