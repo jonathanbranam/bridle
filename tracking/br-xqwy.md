@@ -2,11 +2,14 @@
 id = "br-xqwy"
 title = "token pair --rotate fails for every peer token that already exists (conflict: peer:<machine> already exists)"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-14T01:22:21.283Z"
-updated_at = "2026-10-14T01:25:33.335124Z"
+updated_at = "2026-10-14T01:28:00.809143Z"
 created_by = "external:advisor/wsl2"
-watchers = ["external:advisor/wsl2"]
+watchers = [
+    "external:advisor/wsl2",
+    "agent:xqwy",
+]
 ticket = "xqwy"
 +++
 
