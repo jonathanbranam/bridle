@@ -2,11 +2,14 @@
 id = "br-x8c8"
 title = "Mail to a visitor whose recorded home is this daemon loops back to the sender silently (orchestrator@remus after the move to remus-home)"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-14T18:15:03.852Z"
-updated_at = "2026-10-14T18:15:56.969400Z"
+updated_at = "2026-10-14T20:55:01.693489Z"
 created_by = "external:advisor/product-manager"
-watchers = ["external:advisor/product-manager"]
+watchers = [
+    "external:advisor/product-manager",
+    "agent:x8c8",
+]
 ticket = "x8c8"
 +++
 

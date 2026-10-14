@@ -2,11 +2,14 @@
 id = "br-g9qm"
 title = "token pair fails every visitor token on a machine's first project: needs peer entries it makes later, or never (--projects)"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-14T17:53:10.687Z"
-updated_at = "2026-10-14T17:53:59.354592Z"
+updated_at = "2026-10-14T20:55:07.896183Z"
 created_by = "external:advisor/wsl2"
-watchers = ["external:advisor/wsl2"]
+watchers = [
+    "external:advisor/wsl2",
+    "agent:g9qm",
+]
 ticket = "g9qm"
 +++
 
