@@ -1958,3 +1958,4 @@
 {"actor":"external:advisor/product-manager","at":"2026-10-14T01:47:06.635884Z","from":"pending","task":"br-wfcx","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-14T01:47:13.177354Z","from":"open","task":"br-wfcx","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-14T01:47:15.613900Z","queue":"reprioritized"}
+{"actor":"agent:xqwy","at":"2026-10-14T01:57:27.699897Z","from":"claimed","task":"br-xqwy","to":"built"}
