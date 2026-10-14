@@ -63,6 +63,25 @@ pub struct RestartRequest {
     pub upgrade: bool,
 }
 
+/// `POST /v1/restart/hold`: cancel a pending drain, or postpone any restart or self-upgrade.
+/// Exactly one of the two.
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
+pub struct RestartHoldRequest {
+    /// End a pending drain (a requested restart or an upgrade waiting for its quiet point); the
+    /// daemon keeps running and no agent is touched.
+    #[serde(default)]
+    pub cancel: bool,
+    /// Start no drain, self-upgrade or restart, and let a pending drain reach its quiet point
+    /// no sooner than this many seconds from now.
+    #[serde(default)]
+    pub postpone_secs: Option<u64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct RestartHoldResponse {
+    pub message: String,
+}
+
 fn yes() -> bool {
     true
 }
@@ -153,6 +172,9 @@ pub struct Status {
     /// While draining, the agents still mid-turn (what the restart waits on).
     #[serde(default)]
     pub draining_on: Vec<String>,
+    /// Restarts and self-upgrades are postponed until then (`bridle daemon restart --postpone`).
+    #[serde(default)]
+    pub postponed_until: Option<DateTime<Utc>>,
     /// The project is held for a move (`bridle project drain`): no spawns or claims; running
     /// agents carry on.
     #[serde(default)]

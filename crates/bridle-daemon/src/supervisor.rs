@@ -228,6 +228,12 @@ struct Inner {
     /// A restart is draining the daemon (daemon.md, "Restart in place"): no spawns, no claims and
     /// no new turns; messages are stored held until after the restart's resume.
     draining: std::sync::atomic::AtomicBool,
+    /// `bridle daemon restart --postpone`: no drain or self-upgrade starts, and a pending drain
+    /// waits, until then. In memory: a restart is what ends it anyway.
+    postponed_until: std::sync::Mutex<Option<chrono::DateTime<chrono::Utc>>>,
+    /// `bridle daemon restart --cancel`: the pending drain loop sees it, ends the drain and
+    /// clears it.
+    cancel_drain: std::sync::atomic::AtomicBool,
     /// `bridle project drain` (kx5u K4): this project is moving, so no spawns and no claims; unlike
     /// `draining`, running agents keep their turns and messages flow. In memory: the drain command
     /// sets it again if a restart lost it.
@@ -326,6 +332,8 @@ impl AgentManager {
             load: std::sync::Mutex::new(None),
             upgrade_waiting: std::sync::Mutex::new(None),
             draining: std::sync::atomic::AtomicBool::new(false),
+            postponed_until: std::sync::Mutex::new(None),
+            cancel_drain: std::sync::atomic::AtomicBool::new(false),
             held: std::sync::atomic::AtomicBool::new(false),
             governor,
             max_workers_override: std::sync::Mutex::new(None),
@@ -947,6 +955,32 @@ impl AgentManager {
 
     pub fn draining(&self) -> bool {
         self.0.draining.load(std::sync::atomic::Ordering::SeqCst)
+    }
+
+    pub fn postpone_until(&self, at: chrono::DateTime<chrono::Utc>) {
+        *self.0.postponed_until.lock().expect("postponed_until lock") = Some(at);
+    }
+
+    /// The postponement, if it hasn't expired.
+    pub fn postponed_until(&self) -> Option<chrono::DateTime<chrono::Utc>> {
+        let mut g = self.0.postponed_until.lock().expect("postponed_until lock");
+        if g.is_some_and(|t| t <= chrono::Utc::now()) {
+            *g = None;
+        }
+        *g
+    }
+
+    pub fn request_cancel_drain(&self) {
+        self.0
+            .cancel_drain
+            .store(true, std::sync::atomic::Ordering::SeqCst);
+    }
+
+    /// True once (and clears it) if a cancel was requested.
+    pub fn take_cancel_drain(&self) -> bool {
+        self.0
+            .cancel_drain
+            .swap(false, std::sync::atomic::Ordering::SeqCst)
     }
 
     /// The built commit's short sha, for the status line of an upgrade's drain.

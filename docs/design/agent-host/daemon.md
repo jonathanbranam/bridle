@@ -305,6 +305,19 @@ daemon restarted for an upgrade, to carry on and to re-run any background job it
 none are lost or duplicated. It wakes the orchestrator (`restart`: commit, who
 resumed, who failed); the human's inbox gets a message only if some agent failed to resume.
 
+**Cancel and postpone** (br-cvfu). A drain's quiet point counts a manager waiting on a background
+`bridle ticket land` as idle (br-8swr, the full fix is later), so a restart or self-upgrade can kill
+a land mid-check. `POST /v1/restart/hold` (`bridle daemon restart --cancel` / `--postpone <dur>`; the
+human, `external:orchestrator` and managers) is the manual guard. `cancel` ends a pending drain
+(requested restart or an upgrade waiting for its quiet point; 409 if none): the drain loop sees the
+flag, lifts the drain like a failed restart, the waiting `POST /v1/restart` gets a `cancelled`
+conflict, and an upgrade ends quietly (an `upgrade.cancelled` event, no failure wake, the commit is
+not recorded as built, so the next cycle rebuilds). `postpone` sets an in-memory expiry (capped at 7 days;
+a restart ends it): the self-upgrade tick starts nothing, a new `POST /v1/restart` (plain or
+`--upgrade`) is refused with 409, and a drain already pending does not take its quiet point until the
+expiry. Status shows it as `postponed_until` (`upgrade    postponed until HH:MM`). It does not
+lift a drain: claims and spawns stay refused while one is pending, so postpone before the drain.
+
 #### Upgrade
 
 `bridle restart --upgrade` (`upgrade: true` in the request) builds before it restarts. The daemon

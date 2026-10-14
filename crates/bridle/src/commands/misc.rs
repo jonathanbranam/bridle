@@ -90,6 +90,12 @@ pub(super) async fn status(cli: &Cli) -> Result<(), CliError> {
                 drain_line(status.upgrade_waiting.as_deref(), &status.draining_on)
             );
         }
+        if let Some(until) = status.postponed_until {
+            println!(
+                "upgrade    postponed until {}",
+                until.with_timezone(&chrono::Local).format("%H:%M")
+            );
+        }
         for inc in &status.incidents {
             println!(
                 "incident   {} {} ({}m)",

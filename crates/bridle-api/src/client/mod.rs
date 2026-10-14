@@ -21,17 +21,17 @@ use crate::types::{
     OpenQuestion, OrchestratorWakeQuery, OutboxEntry, OutboxSendRequest, PeerTokenCreateRequest,
     PeerWatchRequest, PortAllocation, PrincipalWakeQuery, PrincipalWakeResponse, ProbeRequest,
     ProbeResult, PushResult, Queue, Queued, RateLimitPoint, Recipient, RemoteWatchRequest,
-    RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest, RestartRequest,
-    RestartResponse, ResumeRequest, ReviewAddRequest, ReviewAddResponse, ReviewNowRequest,
-    ReviewNowResponse, Schedule, ScheduleAddRequest, ScheduleListQuery, SendBackTicketRequest,
-    SendRequest, SessionEnd, SessionInfo, SessionKeep, SessionRegister, SetImpactRequest,
-    SetKindRequest, SetPriorityRequest, SetQueueRequest, SetSummaryRequest, ShutdownResponse,
-    SkipSettleRequest, SpawnRequest, Status, StatusLineReport, StopRequest, StopWakeRequest,
-    StopWakeResponse, SubmitTicketRequest, Ticket, TicketQuery, TokenCreateRequest, TokenCreated,
-    TokenInfo, TranscriptLine, TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery,
-    UsageGroups, UsageGroupsQuery, UsageHistoryQuery, UsageInstance, UsageInstancesQuery,
-    UsagePeriods, UsagePeriodsQuery, UsageSeries, UsageSeriesQuery, WakeResponse,
-    WriteHandoverRequest,
+    RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest, RestartHoldRequest,
+    RestartHoldResponse, RestartRequest, RestartResponse, ResumeRequest, ReviewAddRequest,
+    ReviewAddResponse, ReviewNowRequest, ReviewNowResponse, Schedule, ScheduleAddRequest,
+    ScheduleListQuery, SendBackTicketRequest, SendRequest, SessionEnd, SessionInfo, SessionKeep,
+    SessionRegister, SetImpactRequest, SetKindRequest, SetPriorityRequest, SetQueueRequest,
+    SetSummaryRequest, ShutdownResponse, SkipSettleRequest, SpawnRequest, Status, StatusLineReport,
+    StopRequest, StopWakeRequest, StopWakeResponse, SubmitTicketRequest, Ticket, TicketQuery,
+    TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
+    UsageBreakdown, UsageBreakdownQuery, UsageGroups, UsageGroupsQuery, UsageHistoryQuery,
+    UsageInstance, UsageInstancesQuery, UsagePeriods, UsagePeriodsQuery, UsageSeries,
+    UsageSeriesQuery, WakeResponse, WriteHandoverRequest,
 };
 
 pub use bridle_docs::documents::{
@@ -1066,6 +1066,13 @@ impl Client {
     /// long as the running turns; use a client with no timeout.
     pub async fn restart(&self, req: &RestartRequest) -> Result<RestartResponse, ClientError> {
         self.post_json(&["v1", "restart"], req).await
+    }
+
+    pub async fn restart_hold(
+        &self,
+        req: &RestartHoldRequest,
+    ) -> Result<RestartHoldResponse, ClientError> {
+        self.post_json(&["v1", "restart", "hold"], req).await
     }
 
     /// `None` when the daemon is older than the reply body and answered 204.

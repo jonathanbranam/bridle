@@ -1111,6 +1111,13 @@ pub struct RestartArgs {
     /// background), then restart into it; does nothing if none is newer than the last upgrade.
     #[arg(long)]
     pub upgrade: bool,
+    /// Cancel a pending restart or upgrade drain instead of restarting: the daemon keeps running.
+    #[arg(long, conflicts_with_all = ["upgrade", "postpone"])]
+    pub cancel: bool,
+    /// Don't start a restart or self-upgrade, and let a pending drain wait, for this long
+    /// (`30m`, `2h`), e.g. while a land runs. Orchestrator, managers and the human.
+    #[arg(long, value_name = "DUR", conflicts_with_all = ["upgrade", "cancel"])]
+    pub postpone: Option<String>,
 }
 
 #[derive(Debug, Args)]

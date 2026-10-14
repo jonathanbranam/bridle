@@ -229,6 +229,7 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/rebuild", post(rebuild))
         .route("/v1/shutdown", post(shutdown))
         .route("/v1/restart", post(restart))
+        .route("/v1/restart/hold", post(restart_hold))
         .route("/v1/project/hold", post(project_hold))
         .layer(middleware::from_fn_with_state(
             state.clone(),
@@ -1113,6 +1114,7 @@ async fn status(
         upgrade_waiting: state.manager.upgrade_waiting(),
         draining,
         draining_on,
+        postponed_until: state.manager.postponed_until(),
         held: state.manager.held(),
         sessions: state.sessions.list(),
         outbox: state.store.outbox_peers().await?,
@@ -4572,6 +4574,69 @@ async fn project_hold(
     Ok(Json(req))
 }
 
+/// `POST /v1/restart/hold`: `--cancel` ends a pending drain, `--postpone` holds off drains and
+/// self-upgrades for a while (a land in progress is not an idle agent: br-8swr). The human, the
+/// orchestrator and managers may ask.
+async fn restart_hold(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Json(req): Json<bridle_api::types::RestartHoldRequest>,
+) -> Result<Json<bridle_api::types::RestartHoldResponse>, ApiError> {
+    let allowed = match principal.kind {
+        PrincipalKind::Human => true,
+        PrincipalKind::Agent => {
+            let name = principal.id.strip_prefix("agent:").unwrap_or(&principal.id);
+            state
+                .store
+                .get_agent(name)
+                .await?
+                .map(|a| a.role)
+                .as_deref()
+                == Some("manager")
+        }
+        _ => principal.id == crate::wake::ORCHESTRATOR,
+    };
+    if !allowed {
+        return Err(ApiError::forbidden(
+            "only the human, the orchestrator and managers may cancel or postpone a restart",
+        ));
+    }
+    let message = match (req.cancel, req.postpone_secs) {
+        (true, None) => {
+            if !state.manager.draining()
+                || state
+                    .restart_requested
+                    .load(std::sync::atomic::Ordering::SeqCst)
+            {
+                return Err(ApiError::new(
+                    StatusCode::CONFLICT,
+                    "conflict",
+                    "no restart is pending",
+                ));
+            }
+            state.manager.request_cancel_drain();
+            "cancelling the pending restart; the daemon keeps running".to_string()
+        }
+        (false, Some(secs)) => {
+            let until = Utc::now() + chrono::Duration::seconds(secs.min(7 * 86_400) as i64);
+            state.manager.postpone_until(until);
+            format!(
+                "restarts and self-upgrades postponed until {}",
+                until.format("%Y-%m-%d %H:%M UTC")
+            )
+        }
+        _ => {
+            return Err(ApiError::new(
+                StatusCode::BAD_REQUEST,
+                "bad_request",
+                "give exactly one of cancel and postpone_secs",
+            ));
+        }
+    };
+    tracing::warn!(principal = %principal.id, %message, "restart hold");
+    Ok(Json(bridle_api::types::RestartHoldResponse { message }))
+}
+
 async fn restart(
     State(state): State<AppState>,
     Extension(principal): Extension<Principal>,
@@ -4591,6 +4656,16 @@ async fn restart(
             StatusCode::CONFLICT,
             "conflict",
             "a restart is already under way",
+        ));
+    }
+    if let Some(until) = state.manager.postponed_until() {
+        return Err(ApiError::new(
+            StatusCode::CONFLICT,
+            "conflict",
+            format!(
+                "restarts are postponed until {}",
+                until.format("%Y-%m-%d %H:%M UTC")
+            ),
         ));
     }
     if !req.upgrade {
@@ -4656,6 +4731,7 @@ pub async fn self_upgrade_tick_at(state: &AppState, now: DateTime<Utc>) {
             .restart_requested
             .load(std::sync::atomic::Ordering::SeqCst)
         || state.manager.draining()
+        || state.manager.postponed_until().is_some()
     {
         return;
     }
@@ -4885,6 +4961,8 @@ async fn upgrade_in_background(state: AppState, who: String, sha: String) {
 /// The shared end of an upgrade: with the new binary in place (`built`), restart at a quiet
 /// point; any failure leaves the running daemon as it was, wakes the orchestrator and tells the
 /// human if `tell_human`. `sha` is what's recorded as built (a commit, or a release tag).
+const CANCELLED: &str = "cancelled";
+
 async fn restart_after_install(
     state: &AppState,
     who: &str,
@@ -4915,12 +4993,29 @@ async fn restart_after_install(
             perform_restart(state, who, Some(sha))
                 .await
                 .map(|_| ())
-                .map_err(|e| format!("built {short} but did not restart: {}", e.message))
+                .map_err(|e| {
+                    if e.code == "cancelled" {
+                        CANCELLED.to_string()
+                    } else {
+                        format!("built {short} but did not restart: {}", e.message)
+                    }
+                })
         }
         Err(e) => Err(e),
     };
     state.upgrader.release();
     let Err(text) = outcome else { return };
+    if text.ends_with(CANCELLED) {
+        // Cancelled on purpose: not a failure, and the built binary stays for the next cycle.
+        upgrade_event(
+            state,
+            "upgrade.cancelled",
+            who,
+            serde_json::json!({"commit": sha}),
+        )
+        .await;
+        return;
+    }
     state.upgrader.note_failed(sha);
     tracing::warn!(%text, "upgrade failed");
     upgrade_event(
@@ -4997,6 +5092,13 @@ async fn drain_and_restart(
     let started = tokio::time::Instant::now();
     let mut woke = false;
     let running = loop {
+        if state.manager.take_cancel_drain() {
+            return Err(ApiError::new(
+                StatusCode::CONFLICT,
+                "cancelled",
+                "the pending restart was cancelled",
+            ));
+        }
         // A spawn past the timeout is stuck (its own timeout should have ended it); it doesn't
         // hold the restart. Busy agents are still waited for.
         let limit = state.manager.spawn_timeout();
@@ -5014,7 +5116,7 @@ async fn drain_and_restart(
             .filter(|a| a.state != bridle_api::types::AgentState::Idle)
             .map(|a| a.name.clone())
             .collect();
-        if busy.is_empty() && !spawning {
+        if busy.is_empty() && !spawning && state.manager.postponed_until().is_none() {
             for h in &holders {
                 tracing::error!(agent = %h.name, secs = h.started.elapsed().as_secs(), "restart: not waiting on a stuck spawn");
                 let _ = state

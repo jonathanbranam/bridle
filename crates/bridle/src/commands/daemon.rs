@@ -1,11 +1,34 @@
 //! Daemon lifecycle commands: restart, stop-daemon, rebuild, daemons.
 
 use super::*;
+use crate::cli::RestartArgs;
 
 /// The daemon drains (no new turns, no timeout) and answers once it has decided to go, then execs
 /// itself with the new binary, so wait for it to go and return (possibly on a new port).
-pub(super) async fn restart(cli: &Cli, upgrade: bool) -> Result<(), CliError> {
+pub(super) async fn restart(cli: &Cli, args: &RestartArgs) -> Result<(), CliError> {
+    let upgrade = args.upgrade;
     let client = client_for(cli).await?;
+    if args.cancel || args.postpone.is_some() {
+        let postpone_secs = match &args.postpone {
+            Some(s) => Some(
+                super::usage::parse_duration(s)
+                    .filter(|d| d.num_seconds() > 0)
+                    .ok_or_else(|| {
+                        CliError::Other(anyhow::anyhow!("bad --postpone duration: {s:?} (try 30m)"))
+                    })?
+                    .num_seconds() as u64,
+            ),
+            None => None,
+        };
+        let reply = client
+            .restart_hold(&bridle_api::types::RestartHoldRequest {
+                cancel: args.cancel,
+                postpone_secs,
+            })
+            .await?;
+        println!("{}", reply.message);
+        return Ok(());
+    }
     let reply = client
         .restart(&bridle_api::types::RestartRequest { upgrade })
         .await?;

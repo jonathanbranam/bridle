@@ -443,6 +443,7 @@ mod tests {
             upgrade_waiting: None,
             draining: false,
             draining_on: Vec::new(),
+            postponed_until: None,
             held: false,
             sessions: Vec::new(),
             pending_tasks: Vec::new(),
