@@ -359,7 +359,7 @@ pub(super) async fn mail_run(cli: &Cli) -> Result<(), CliError> {
     .with_local(std::sync::Arc::new(bridle_mail::FileLocal {
         owner_file: state.join("state").join("owner.toml"),
         client: aide_client,
-        host: local_hostname(),
+        hosts: bridle_api::machines::owner_names(&discovery::bridle_home()),
     }))
     .with_outbound(bridle_mail::Outbound {
         mailer: std::sync::Arc::new(mailer),
@@ -370,17 +370,6 @@ pub(super) async fn mail_run(cli: &Cli) -> Result<(), CliError> {
     .run()
     .await?;
     Ok(())
-}
-
-/// This machine's name as `bridle serve` records it in `owner.toml`.
-pub(super) fn local_hostname() -> String {
-    std::process::Command::new("hostname")
-        .output()
-        .ok()
-        .and_then(|o| String::from_utf8(o.stdout).ok())
-        .map(|s| s.trim().to_string())
-        .filter(|s| !s.is_empty())
-        .unwrap_or_else(|| "unknown".to_string())
 }
 
 async fn fetch_wakes(

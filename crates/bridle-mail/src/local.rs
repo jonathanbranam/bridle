@@ -36,8 +36,9 @@ pub struct FileLocal {
     pub owner_file: PathBuf,
     /// The project's daemon, which lists the live sessions.
     pub client: bridle_api::Client,
-    /// This machine's name, as `bridle serve` writes it to `owner.toml`.
-    pub host: String,
+    /// The names this machine answers to in `owner.toml` (`bridle_api::machines::owner_names`:
+    /// `[machine] name`, then `hostname`), the same set `bridle serve` checks.
+    pub hosts: Vec<String>,
 }
 
 #[async_trait]
@@ -46,7 +47,7 @@ impl Local for FileLocal {
         // No record (a single machine with no origin, or a first serve) means nobody else does.
         match std::fs::read_to_string(&self.owner_file) {
             Err(_) => true,
-            Ok(text) => owner_host(&text).is_none_or(|h| h == self.host),
+            Ok(text) => owner_host(&text).is_none_or(|h| self.hosts.contains(&h)),
         }
     }
 
@@ -95,17 +96,20 @@ mod tests {
     async fn owner_record_decides() {
         let dir = tempfile::tempdir().unwrap();
         let file = dir.path().join("owner.toml");
-        let local = |host: &str| FileLocal {
+        let local = |hosts: &[&str]| FileLocal {
             owner_file: file.clone(),
             client: bridle_api::Client::new("http://127.0.0.1:1", None),
-            host: host.to_string(),
+            hosts: hosts.iter().map(|h| h.to_string()).collect(),
         };
         assert!(
-            local("a").owns_project().await,
+            local(&["a"]).owns_project().await,
             "no record: nobody else owns it"
         );
         std::fs::write(&file, "host = \"a\"\nsince = \"2026-09-30T00:00:00Z\"\n").unwrap();
-        assert!(local("a").owns_project().await);
-        assert!(!local("b").owns_project().await);
+        assert!(local(&["a"]).owns_project().await);
+        assert!(!local(&["b"]).owns_project().await);
+        // `[machine] name` differing from `hostname` (br-pcde): either name is this machine.
+        assert!(local(&["a", "a.local"]).owns_project().await);
+        assert!(local(&["dalek.local", "a"]).owns_project().await);
     }
 }

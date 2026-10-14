@@ -105,8 +105,8 @@ answer from `external:mail` with the SES message id, i.e. the audit trail of the
 Every machine may run a bridge for the projects it has; all read the same bucket.
 
 - **Ownership.** A bridge takes its project's mail only while this machine owns the project: the
-  host in `<workspace>/.bridle/state/owner.toml` (hw6c) is this machine's `hostname`, or there is
-  no record. Otherwise the mail is left in the bucket for the owner.
+  host in `<workspace>/.bridle/state/owner.toml` (hw6c) is one of this machine's names (`[machine] name`, then `hostname`: the
+  daemon's `owner_names`), or there is no record. Otherwise the mail is left in the bucket for the owner.
 - **Waiting mail.** Mail this bridge can't deliver (not the owner, or the daemon won't take it)
   is timed from when the bridge first saw it (in memory, so a restart restarts the clock). After
   `not_delivered_after_secs` the allowlisted sender gets one reply, `not delivered yet: no machine
