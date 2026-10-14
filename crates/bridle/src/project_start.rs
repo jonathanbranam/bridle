@@ -414,9 +414,11 @@ async fn wait_for_daemon(project: &str, limit: Duration) -> Result<(), CliError>
     }
 }
 
-/// What `take-over` left for the new daemon: tokens first (the schedules are added as the human,
-/// with the token the daemon just made), then the schedules. The note is removed only when both
-/// went through, so a failed start can simply be run again.
+/// Tokens, then what `take-over` left for the new daemon. The tokens are re-created on every
+/// start (`token pair` keeps the working ones and says so), not only after a take-over: a fresh
+/// database has none, whatever the note says. The schedules are added as the human, with the
+/// token the daemon just made. The note is removed only when everything went through, so a
+/// failed start can simply be run again.
 async fn carry_in(
     cli: &Cli,
     home: &Path,
@@ -426,21 +428,38 @@ async fn carry_in(
     out: &mut dyn Write,
 ) -> Result<(), CliError> {
     let note = ws.state_dir().join(MOVED_IN);
-    let Ok(text) = std::fs::read_to_string(&note) else {
-        return Ok(());
+    let moved: Option<MovedIn> = match std::fs::read_to_string(&note) {
+        Ok(text) => Some(serde_json::from_str(&text).context("reading moved-in.json")?),
+        Err(_) => None,
     };
-    let moved: MovedIn = serde_json::from_str(&text).context("reading moved-in.json")?;
     let fleet = Fleet::from_config(&MachineMap::load(home).map_err(|e| anyhow::anyhow!(e))?);
     let opts = Options {
         projects: vec![project.to_string()],
         ..Default::default()
     };
     // The same code as `bridle token pair`, narrowed to this project: no second minting path.
-    let paired =
-        tokio::task::spawn_blocking(move || pair(&opts, &fleet, &Exec, &mut std::io::stdout()))
-            .await
-            .map_err(|e| CliError::Other(e.into()))?
-            .map_err(|e| anyhow::anyhow!(e))?;
+    // It prints minted/kept per machine, and "unreachable" naming the machine.
+    let paired = tokio::task::spawn_blocking(move || {
+        let mut buf = Vec::new();
+        let r = pair(&opts, &fleet, &Exec, &mut buf);
+        (r, buf)
+    })
+    .await
+    .map_err(|e| CliError::Other(e.into()))?;
+    let (paired, report) = paired;
+    let _ = out.write_all(&report);
+    let paired = paired.map_err(|e| anyhow::anyhow!(e))?;
+    if !paired {
+        return Err(anyhow::anyhow!(
+            "{project} is running, but its tokens were not all re-created (see above; \
+             a machine marked unreachable was skipped): fix it and run \
+             `bridle token pair --projects {project}`"
+        )
+        .into());
+    }
+    let Some(moved) = moved else {
+        return Ok(());
+    };
 
     let client = client_for(cli).await?;
     let (sent, problems) = carry_schedules(&moved.schedules, Utc::now(), |req| {
@@ -458,14 +477,9 @@ async fn carry_in(
     for p in &problems {
         let _ = writeln!(out, "  not carried: {p}");
     }
-    if !paired || !problems.is_empty() {
+    if !problems.is_empty() {
         return Err(anyhow::anyhow!(
-            "{project} is running, but {}: fix it and run `bridle project start` again",
-            if paired {
-                "some scheduled messages were not carried"
-            } else {
-                "some tokens were not re-created (see above; `bridle token pair` retries them)"
-            }
+            "{project} is running, but some scheduled messages were not carried: fix it and run `bridle project start` again"
         )
         .into());
     }

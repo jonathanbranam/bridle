@@ -2579,9 +2579,10 @@ pub enum ProjectsAction {
     Stop(ProjectStopArgs),
     /// Start the project's daemon here and keep it running: installs the launchd or systemd
     /// unit if it is missing, enables it (starts at boot, restarts after a crash) and starts it,
-    /// and re-enables the mail bridge unit if one is installed. Safe to run again. After a
-    /// `take-over` it also re-creates the project's tokens on every machine (the `token pair`
-    /// code) and carries over its scheduled messages from the old owner's stop. Step 4 of a
+    /// and re-enables the mail bridge unit if one is installed. Safe to run again. Every run
+    /// re-creates the project's missing tokens on every machine (the `token pair` code; it
+    /// prints minted/kept per machine and fails naming an unreachable machine), and after a
+    /// `take-over` carries over its scheduled messages from the old owner's stop. Step 4 of a
     /// transfer; this machine must already own the project. `--machine` runs it over ssh.
     Start(ProjectStartArgs),
     /// Read-only checks that the project can move to another machine; exits non-zero and says

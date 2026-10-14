@@ -4,7 +4,7 @@
 //! and are compared here. The ssh runner is a trait so tests never touch a network.
 
 use std::path::Path;
-use std::process::{Command, Stdio};
+use std::process::Command;
 
 use bridle_api::machines::MachineMap;
 
@@ -28,28 +28,30 @@ pub struct Ssh;
 impl Remote for Ssh {
     fn run(&self, host: &str, script: &str) -> Ran {
         // BatchMode: no prompt can be answered here, so fail rather than hang.
-        let out = Command::new("ssh")
-            .args(["-o", "BatchMode=yes", host, script])
-            .stdin(Stdio::null())
-            .output();
-        match out {
-            Ok(o) if o.status.success() => Ran {
+        let mut c = Command::new("ssh");
+        c.args([
+            "-o",
+            "BatchMode=yes",
+            "-o",
+            "ConnectTimeout=10",
+            host,
+            script,
+        ]);
+        match project_sync::run_timed_raw(c, host, None, project_sync::SSH_TIMEOUT) {
+            Ok((0, out, _)) => Ran {
                 code: 0,
-                text: String::from_utf8_lossy(&o.stdout).into_owned(),
+                text: String::from_utf8_lossy(&out).into_owned(),
             },
-            Ok(o) => Ran {
-                code: o.status.code().unwrap_or(255),
-                text: String::from_utf8_lossy(&o.stderr)
+            Ok((code, _, err)) => Ran {
+                code,
+                text: String::from_utf8_lossy(&err)
                     .trim()
                     .lines()
                     .last()
                     .unwrap_or("ssh failed")
                     .to_string(),
             },
-            Err(e) => Ran {
-                code: 255,
-                text: format!("cannot start ssh: {e}"),
-            },
+            Err(e) => Ran { code: 255, text: e },
         }
     }
 }

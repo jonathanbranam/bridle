@@ -100,6 +100,26 @@ pub struct Exec;
 
 impl Runner for Exec {
     fn run(&self, at: &Where, args: &[String], stdin: Option<&str>) -> Result<String, String> {
+        if let Where::Ssh(host) = at {
+            // Bounded: Tailscale SSH check mode would otherwise wait for a browser login.
+            let mut c = Command::new("ssh");
+            c.args([
+                "-o",
+                "BatchMode=yes",
+                "-o",
+                "ConnectTimeout=10",
+                host,
+                "bridle",
+            ])
+            .args(args);
+            let input = stdin.map(|t| format!("{t}\n"));
+            return crate::project_sync::run_timed(
+                c,
+                host,
+                input.as_deref(),
+                crate::project_sync::SSH_TIMEOUT,
+            );
+        }
         let mut cmd = match at {
             Where::Local => {
                 let exe = std::env::current_exe().map_err(|e| e.to_string())?;
@@ -107,12 +127,7 @@ impl Runner for Exec {
                 c.args(args);
                 c
             }
-            Where::Ssh(host) => {
-                let mut c = Command::new("ssh");
-                // No prompt can be answered here: fail rather than hang.
-                c.args(["-o", "BatchMode=yes", host, "bridle"]).args(args);
-                c
-            }
+            Where::Ssh(_) => unreachable!("returned above"),
         };
         cmd.stdin(if stdin.is_some() {
             Stdio::piped()

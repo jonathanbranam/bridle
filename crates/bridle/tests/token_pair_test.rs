@@ -80,7 +80,10 @@ fn pairs_over_ssh_and_no_token_is_in_argv_or_output() {
     );
     assert!(!stdout.contains("tok-SECRET") && !stderr.contains("tok-SECRET"));
     let argv = read(r.fake.path(), "argv.log");
-    assert!(argv.contains("-o BatchMode=yes nuc-host bridle"), "{argv}");
+    assert!(
+        argv.contains("-o BatchMode=yes -o ConnectTimeout=10 nuc-host bridle"),
+        "{argv}"
+    );
     assert!(!argv.contains("tok-SECRET"), "{argv}");
     assert_eq!(
         read(r.fake.path(), "stored.log")

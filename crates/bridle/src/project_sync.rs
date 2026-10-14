@@ -29,7 +29,7 @@ const REMOTE_FILE: &str = "$HOME/.bridle/config.toml";
 
 /// How long one ssh call may take in all. Tailscale SSH in "check" mode waits for a browser
 /// login that BatchMode does not stop, and ConnectTimeout only covers the connect.
-const SSH_TIMEOUT: Duration = Duration::from_secs(60);
+pub(crate) const SSH_TIMEOUT: Duration = Duration::from_secs(60);
 
 pub(crate) fn ssh(host: &str, script: &str, stdin: Option<&str>) -> Result<String, String> {
     ssh_with("ssh", host, script, stdin, SSH_TIMEOUT)
@@ -42,16 +42,48 @@ fn ssh_with(
     stdin: Option<&str>,
     timeout: Duration,
 ) -> Result<String, String> {
-    let mut child = Command::new(program)
-        // No prompt can be answered here: fail rather than hang.
-        .args([
-            "-o",
-            "BatchMode=yes",
-            "-o",
-            "ConnectTimeout=10",
-            host,
-            script,
-        ])
+    let mut cmd = Command::new(program);
+    // No prompt can be answered here: fail rather than hang.
+    cmd.args([
+        "-o",
+        "BatchMode=yes",
+        "-o",
+        "ConnectTimeout=10",
+        host,
+        script,
+    ]);
+    run_timed(cmd, host, stdin, timeout)
+}
+
+/// Runs an ssh command with `stdin`, killing it after `timeout`. The error names `host`.
+pub(crate) fn run_timed(
+    cmd: Command,
+    host: &str,
+    stdin: Option<&str>,
+    timeout: Duration,
+) -> Result<String, String> {
+    let (code, stdout, stderr) = run_timed_raw(cmd, host, stdin, timeout)?;
+    if code == 0 {
+        Ok(String::from_utf8_lossy(&stdout).into_owned())
+    } else {
+        let err = String::from_utf8_lossy(&stderr);
+        let err = err.trim();
+        Err(match err.lines().last() {
+            Some(l) => l.to_string(),
+            None => format!("ssh failed (exit {code})"),
+        })
+    }
+}
+
+/// `run_timed` for callers that need the exit code and both streams. Err is only a start
+/// failure or the timeout.
+pub(crate) fn run_timed_raw(
+    mut cmd: Command,
+    host: &str,
+    stdin: Option<&str>,
+    timeout: Duration,
+) -> Result<(i32, Vec<u8>, Vec<u8>), String> {
+    let mut child = cmd
         .stdin(if stdin.is_some() {
             Stdio::piped()
         } else {
@@ -107,17 +139,7 @@ fn ssh_with(
         bufs.next().unwrap_or_default(),
         bufs.next().unwrap_or_default(),
     );
-    if status.success() {
-        Ok(String::from_utf8_lossy(&stdout).into_owned())
-    } else {
-        let err = String::from_utf8_lossy(&stderr);
-        Err(err
-            .trim()
-            .lines()
-            .last()
-            .unwrap_or("ssh failed")
-            .to_string())
-    }
+    Ok((status.code().unwrap_or(255), stdout, stderr))
 }
 
 impl Files for Real {
@@ -457,6 +479,17 @@ mod tests {
     use super::*;
     use std::cell::RefCell;
     use std::collections::HashMap;
+
+    #[test]
+    fn a_command_that_never_answers_is_killed_naming_the_host() {
+        let mut c = Command::new("sleep");
+        c.arg("30");
+        let err = run_timed(c, "remus", None, Duration::from_millis(200)).expect_err("timeout");
+        assert!(
+            err.contains("`remus`") && err.contains("no answer"),
+            "{err}"
+        );
+    }
 
     struct Fake(RefCell<HashMap<String, String>>);
 
