@@ -135,6 +135,7 @@ pub fn run(cli: &Cli, args: &PreflightArgs) -> Result<(), CliError> {
         let remote = crate::preflight_remote::run_to(
             &repo,
             machine,
+            args.path.as_deref(),
             &map,
             &crate::preflight_remote::Ssh,
             &files,

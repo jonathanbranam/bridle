@@ -2649,6 +2649,10 @@ pub struct PreflightArgs {
     /// before cloning) and a `projects sync` comparison. Each failure says what to run there.
     #[arg(long)]
     pub to: Option<String>,
+    /// The clone's path on the `--to` machine (`~` is that machine's home). Defaults to the same
+    /// path under `$HOME`, else `~/work/<project>-workspace/<project>`.
+    #[arg(long, requires = "to")]
+    pub path: Option<String>,
     /// Checkout paths that may stay dirty through the stable-project check; they are listed as LEFT.
     #[arg(long)]
     pub leave: Vec<String>,

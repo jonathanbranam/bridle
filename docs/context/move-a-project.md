@@ -13,8 +13,11 @@ from anywhere; `--machine M` on `stop` and `start` runs them over ssh.
 ## 1. Preflight (read-only; changes nothing)
 
 ```bash
-bridle project preflight --to NEW
+bridle project preflight --to NEW [--path ~/work/P-workspace/P]
 ```
+
+`--path` is where the clone is (or will be cloned) on NEW; without it preflight uses OLD's path under
+`$HOME`, else `~/work/<project>-workspace/<project>`.
 
 Each check prints `pass` or `FAIL` with what to run; exit is non-zero on any FAIL. It covers:
 

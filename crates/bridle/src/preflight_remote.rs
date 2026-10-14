@@ -214,7 +214,7 @@ pub fn check_new(
         }
     }
     if have_clone {
-        out.push(outcome("clone", true, "present".into()));
+        out.push(outcome("clone", true, format!("present at {}", c.clone)));
     }
 
     let ver = remote.run(c.host, VERSION_SNIPPET);
@@ -352,10 +352,32 @@ fn sync_compare(c: &Ctx, files: &dyn Files) -> Outcome {
     }
 }
 
-/// Builds the context from the repo and runs the checks.
+/// The clone's path on NEW as the remote shell should see it: `~` becomes `$HOME`; else the
+/// given path; else OLD's path under `$HOME` kept relative to it; else (outside `$HOME`, where
+/// OLD's absolute path means nothing on NEW) the documented `$HOME/work/<P>-workspace/<P>`.
+fn remote_clone(abs: &Path, home: Option<&Path>, path: Option<&str>) -> String {
+    if let Some(p) = path {
+        return match p.strip_prefix('~') {
+            Some(rest) if rest.is_empty() || rest.starts_with('/') => format!("$HOME{rest}"),
+            _ => p.to_string(),
+        };
+    }
+    match home.and_then(|h| abs.strip_prefix(h).ok()) {
+        Some(rest) => format!("$HOME/{}", rest.display()),
+        None => {
+            let p = abs
+                .file_name()
+                .map_or_else(String::new, |n| n.to_string_lossy().into());
+            format!("$HOME/work/{p}-workspace/{p}")
+        }
+    }
+}
+
+/// Builds the context from the repo and runs the checks. `path` names the clone on NEW.
 pub fn run_to(
     repo: &Path,
     machine: &str,
+    path: Option<&str>,
     map: &MachineMap,
     remote: &dyn Remote,
     files: &dyn Files,
@@ -382,13 +404,8 @@ pub fn run_to(
         .and_then(|c| c.get("commands")?.get("check")?.as_str().map(String::from))
         .unwrap_or_else(|| "just check".into());
     let abs = repo.canonicalize().unwrap_or_else(|_| repo.to_path_buf());
-    let clone = match std::env::var_os("HOME").map(std::path::PathBuf::from) {
-        Some(h) => match abs.strip_prefix(&h) {
-            Ok(rest) => format!("$HOME/{}", rest.display()),
-            Err(_) => abs.display().to_string(),
-        },
-        None => abs.display().to_string(),
-    };
+    let home = std::env::var_os("HOME").map(std::path::PathBuf::from);
+    let clone = remote_clone(&abs, home.as_deref(), path);
     let offset = Command::new("date")
         .arg("+%z")
         .output()
@@ -658,6 +675,16 @@ mod tests {
         );
         let x = msg(&o, "projects sync");
         assert!(!x.pass && x.message.contains("bridle projects sync --apply"));
+    }
+
+    #[test]
+    fn remote_clone_paths() {
+        let h = Path::new("/home/me");
+        let rc = |abs, p| remote_clone(Path::new(abs), Some(h), p);
+        assert_eq!(rc("/home/me/x/p", None), "$HOME/x/p");
+        assert_eq!(rc("/Volumes/Data/work/p", None), "$HOME/work/p-workspace/p");
+        assert_eq!(rc("/Volumes/Data/p", Some("~/w/p")), "$HOME/w/p");
+        assert_eq!(rc("/Volumes/Data/p", Some("/srv/p")), "/srv/p");
     }
 
     #[test]
