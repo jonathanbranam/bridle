@@ -50,6 +50,9 @@ Create users `bridle-mail-vesta` and `bridle-mail-remus` with that policy and on
 
 ### 1a. AWS credentials on a machine (vesta and remus)
 
+The permanent version of these steps, for any machine: [[docs/context/mail-on-a-machine|set up
+mail on a machine]].
+
 Background: [[docs/context/add-a-machine|add a machine]], step 2 (`[mail]` and "AWS credentials
 from the standard chain"); [[docs/design/mail|mail design]], Config; the original AWS setup (bucket,
 SES, IAM) is section 3 of [[email-and-texting-for-bridle-and-track-web-rs7p|rs7p]]. There is no
@@ -85,7 +88,7 @@ longer guide yet. Why it is done this way:
    it stays out of shell history.
 3. **Don't copy dalek's `~/.aws`**: each machine has its own user, so one can be revoked
    (IAM > the user > deactivate the key) without touching the others.
-4. **Check the key works**, with the AWS CLI if installed (`sudo apt install awscli`, or
+4. **Check the key works**, with the AWS CLI if installed (on Linux from AWS's zip, not apt: see the doc, step 2;
    `brew install awscli` on macOS):
 
    ```sh

@@ -125,6 +125,44 @@ From dalek: `ping <pc-name>` and `ssh <pc-name>` both work (SSH keys only, as on
 Unverified: SSH server in Ubuntu (`sudo apt install openssh-server`, then `sudo systemctl enable --now ssh`)
 and `ufw` rules matching the NUC's (deny inbound except SSH on `tailscale0`).
 
+### 3a. Optional: reach Windows itself when WSL is down
+
+With Tailscale only inside WSL, a stopped WSL takes the PC off the tailnet: no ssh, no way to see
+why or start it again without walking to the PC (it happened 2026-10-14: Windows logged in, Ubuntu
+gone). The fix is a second way in that lives on Windows. It needs both parts: Tailscale gives the
+route, sshd gives a shell on it.
+
+1. **Tailscale on Windows**, as its own machine (`romulus`; WSL stays `remus`): install from
+   `winget install tailscale.tailscale`, sign in as the human. Unverified risk: with
+   `networkingMode=mirrored` Windows and WSL share one network stack, so two Tailscale clients
+   share it; no source found either way. **Check** from dalek that both `remus` and `romulus`
+   answer `ping`; if remus breaks, disconnect Windows' Tailscale or leave mirrored mode.
+2. **OpenSSH Server on Windows**, in an admin PowerShell:
+
+   ```powershell
+   Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0
+   Set-Service sshd -StartupType Automatic; Start-Service sshd
+   # land in PowerShell, not cmd:
+   New-ItemProperty -Path "HKLM:\SOFTWARE\OpenSSH" -Name DefaultShell -PropertyType String -Force `
+     -Value "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"
+   ```
+
+   Keys: for a Windows user in the Administrators group, sshd reads
+   `C:\ProgramData\ssh\administrators_authorized_keys`, not `~\.ssh\authorized_keys`. Put dalek's
+   (and vesta's) public key there, readable only by Administrators and SYSTEM
+   (`icacls C:\ProgramData\ssh\administrators_authorized_keys /inheritance:r /grant
+   "Administrators:F" /grant "SYSTEM:F"`). Unverified on this PC.
+
+**Check:** from dalek, `ssh micro@romulus` gives a PowerShell prompt. From there, when WSL is down:
+
+```powershell
+wsl -l -v                                                    # Ubuntu Stopped or Running
+Get-ScheduledTaskInfo -TaskName "bridle WSL start" | Format-List LastRunTime,LastTaskResult
+Start-ScheduledTask -TaskName "bridle WSL start"             # bring WSL (and remus) back
+```
+
+The alternative, Remote Desktop over Tailscale, shows the Windows screen but needs Windows Pro.
+
 ### 4. Start at boot, and the big green and red buttons
 
 WSL starts when someone opens Ubuntu, and systemd only runs once WSL is up. So a Task Scheduler task
@@ -134,7 +172,13 @@ starts it at boot.
 
 - General: name `bridle WSL start`; "Run whether user is logged on or not"; "Run with highest
   privileges". Unverified on Home: Windows may ask for the account password here.
-- Triggers: New, "At startup".
+- Triggers: New, "At startup". And a second one, so WSL comes back after an update: New, "On a
+  schedule", Daily, "Repeat task every: 5 minutes" for "Indefinitely". Settings keeps the default
+  "If the task is already running: Do not start a new instance", so the repeat only acts when WSL
+  is down. Why (2026-10-14, remus): an automatic WSL update (kernel 6.18.40.1 to 6.18.54.1) shut
+  WSL down at 10:39 ET; with only the startup trigger nothing started it again, and the PC was off
+  the tailnet until the human opened Ubuntu. Then run the task once by hand (`Start-ScheduledTask
+  -TaskName "bridle WSL start"`): the startup trigger alone doesn't run it until the next reboot.
 - Actions: New, Program `C:\Windows\System32\wsl.exe`, arguments `-d Ubuntu --exec sleep infinity`.
   This keeps the distro up. Unverified: a long-running `--exec` may be needed because
   `vmIdleTimeout` alone is not always enough.

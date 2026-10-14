@@ -113,12 +113,13 @@ meta-notes = { machine = "nuc",   port = 7402 }
 max_workers = 2          # a PC that also games: keep it low; see usage-and-budget.md
 ```
 
-Add `[gateway]` and `[mail]` only on the machine that runs the human's web UI and email bridge.
-Those are normally dalek's, not every box's. If the new machine should have them, copy the shapes
-from dalek's file; generate the hash with `bridle gateway hash-password` and set `bind` to the
-machine's own Tailscale IP (`tailscale ip -4`). `[mail]` needs `bucket`, `region`, `allow`,
-`projects`, `to` and AWS credentials from the standard chain (design:
-[[docs/design/mail|mail]]).
+Add `[gateway]` only on the machine that serves the human's web UI (normally dalek). If the new
+machine should have it, copy the shape from dalek's file; generate the hash with `bridle gateway
+hash-password` and set `bind` to the machine's own Tailscale IP (`tailscale ip -4`).
+
+**Optional, if you want mail** for the projects on this machine: `[mail]` (copied from dalek's,
+unchanged), an IAM user and AWS credentials of its own, and dalek's `mail.key`, all before any
+bridge runs here. Steps: [[docs/context/mail-on-a-machine|set up mail on a machine]].
 
 ### On every other machine (dalek and the NUC)
 
@@ -292,8 +293,9 @@ bridle launchd install --project P       # writes ~/Library/LaunchAgents/dev.bri
 bridle gateway install                   # launchd plist or systemd user unit; run what it prints
 ```
 
-**The mail bridge** (only the machine that runs the email bridge; needs `[mail]` and a `mail`
-token for the project, step 3c):
+**The mail bridge** (optional, if you want mail; one per project on each machine that has its
+mail set up by [[docs/context/mail-on-a-machine|set up mail on a machine]]; needs `[mail]` and a
+`mail` token for the project, step 3c; a moved project gets it from `project start`):
 
 ```bash
 bridle mail install --project P          # one per project it bridges

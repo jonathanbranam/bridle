@@ -115,6 +115,7 @@ done
 | the Windows PC as a bridle host under WSL2 (setup steps, planned) | `docs/context/windows-wsl2-host.md` |
 | permissions, tools | `docs/design/agent-host/principals.md` |
 | email bridge (`bridle mail run`) | `docs/design/mail.md` |
+| setting up mail on a machine (IAM user, AWS credentials, mail.key, bridges) | `docs/context/mail-on-a-machine.md` |
 | human web UI (gateway built; the UI is a separate project) | `docs/design/human-web-ui.md` |
 | throwaway dev site for verifying UI work (planned) | `docs/design/dev-site.md` |
 

@@ -231,3 +231,12 @@ From the human's session with advisor wsl2, 2026-10-10 (times US Eastern).
   were probably fine), fixed by ticket 378y (a163726f, in 0.7.2). Next: with 0.7.2 on remus, rerun pair and expect failed 0 and kept peer entries on a second run.
 - Next: move a project to remus (`docs/context/move-a-project.md`, `bridle project preflight --to
   remus` first). remus has no `bridle systemd install` and no daemon running yet.
+- 2026-10-14: remus dropped off the tailnet at 10:39 ET: an automatic WSL update (kernel
+  6.18.40.1 to 6.18.54.1) shut WSL down, and the `bridle WSL start` task had never run (startup
+  trigger only, no reboot since it was made; LastTaskResult 0x41303). Fixed: a second trigger,
+  daily from midnight, repeating every 5 minutes indefinitely ("do not start a new instance"
+  keeps it a no-op while WSL is up). Reboot test passed: Windows up 11:15:29, task 11:15:35, ssh
+  from dalek about 75 s after the restart, nobody logged in. Guide: windows-wsl2-host step 4, and
+  a new optional step 3a (Tailscale + OpenSSH on Windows, to reach `romulus` when WSL is down).
+- AWS CLI v2 (2.38.0) installed on remus and vesta from AWS's zip in `~/installs/`, for the mail
+  setup (ticket n3kj; new guide `docs/context/mail-on-a-machine.md`).
