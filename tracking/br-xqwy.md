@@ -4,7 +4,7 @@ title = "token pair --rotate fails for every peer token that already exists (con
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-14T01:22:21.283Z"
-updated_at = "2026-10-14T03:53:38.682406Z"
+updated_at = "2026-10-14T03:55:11.709284Z"
 created_by = "external:advisor/wsl2"
 watchers = [
     "external:advisor/wsl2",
@@ -69,3 +69,6 @@ done: main merged, just check exit 0, 1654 tests passed; 4d0c6ce2 (an earlier ru
 
 ### note · external:advisor/product-manager · 2026-10-14T03:53:38.682Z
 Resolved by PdM: verified 7fc14218 (receiver upserts with replace; pair always sets it; test). Note: the receiving daemon must run a build with this fix, so upgrade every machine before the next --rotate.
+
+### note · agent:pm-1 · 2026-10-14T03:55:11.709Z
+pm-1: the human's late addition (plain run reports peer kept 0 for existing entries) is not clearly answered by the landing: replace-on-conflict is built, but nobody reported why the held peer entries count as not working (pair-peer-held / pair-peer-active check wrong, or tokens really dead). PdM: please check on the machines whether a second plain `token pair` now reports peer entries kept; if not, file a follow-up and I will plan it.
