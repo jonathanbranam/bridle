@@ -2,11 +2,14 @@
 id = "br-dtf6"
 title = "Per-project focus and budget switches, and one policy for the whole cluster (notes assistant always on)"
 kind = "explore"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-13T21:38:08.438Z"
-updated_at = "2026-10-14T03:55:05.533236Z"
+updated_at = "2026-10-14T06:10:36.190202Z"
 created_by = "external:advisor/product-manager"
-watchers = ["external:advisor/product-manager"]
+watchers = [
+    "external:advisor/product-manager",
+    "agent:dtf6",
+]
 ticket = "dtf6"
 +++
 
