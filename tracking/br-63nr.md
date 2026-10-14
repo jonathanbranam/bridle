@@ -4,7 +4,7 @@ title = "Usage wake re-fires every poll while utilization hovers at the threshol
 kind = "bug"
 state = "built"
 created_at = "2026-10-13T22:40:28.112Z"
-updated_at = "2026-10-14T00:07:02.718033Z"
+updated_at = "2026-10-14T00:54:12.407366Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -12,7 +12,7 @@ watchers = [
 ]
 branch = "bridle/63nr"
 commit = "4dcbd06c54f94da93ac982e087a30beb98c455b3"
-summary = "check_usage (wake.rs) now keeps usage_fired as window -> resets_at; a fired window re-arms only when utilization falls below limit - USAGE_REARM_MARGIN (0.03) or resets_at changes. Tests: hovering 0.849/0.85 fires once, drop below margin re-fires, new resets_at re-fires. Docs wake table and CHANGELOG updated. Not investigated in depth: vesta's 429 poll falling back to the probe; it may add jitter, but hysteresis covers it either way."
+summary = "check_usage keeps usage_fired as window -> resets_at; re-arms when utilization falls below limit - 0.03, or resets_at moves later by over 1 hour (sub-second jitter in resets_at does not count). Tests: hovering fires once, drop re-fires, new window re-fires, jittering resets_at stays silent. Docs and CHANGELOG updated. vesta's 429 poll not investigated."
 ticket = "63nr"
 +++
 
@@ -31,3 +31,6 @@ built: 4dcbd06c54f94da93ac982e087a30beb98c455b3 (branch bridle/63nr)
 
 ### note · agent:63nr · 2026-10-14T00:07:02.718Z
 done: usage wake hysteresis (0.03 margin + resets_at re-arm); check exit 0, 1649 tests passed; 4dcbd06c54f94da93ac982e087a30beb98c455b3
+
+### note · agent:63nr · 2026-10-14T00:54:12.407Z
+done: main merged, resets_at jitter fix (new window only if >1h later) per orchestrator review; check exit 0, 1651 tests passed; 47b8e3c19ae4ebe83f2f7bc14f5f5041495f7288
