@@ -4,7 +4,7 @@ title = "projects start / take-over don't re-create a project's tokens after a f
 kind = "fix"
 state = "built"
 created_at = "2026-10-14T03:53:28.487Z"
-updated_at = "2026-10-14T05:36:39.328096Z"
+updated_at = "2026-10-14T05:43:50.376517Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -25,3 +25,6 @@ Brief (pm-1). Model: Sonnet. Size: S-M. The ticket body is the spec. Human needs
 
 ### note · agent:5n4f · 2026-10-14T05:36:39.328Z
 built: a7ce287d1855374724d641e65ab17b3f0da6c270 (branch bridle/5n4f)
+
+### note · agent:5n4f · 2026-10-14T05:43:50.376Z
+done: projects start re-creates missing tokens every run (minted/kept per machine, named failure + token pair command), ssh timeouts in token_pair/preflight_remote; just check exit 0, 1659 tests passed; a7ce287d1855374724d641e65ab17b3f0da6c270
