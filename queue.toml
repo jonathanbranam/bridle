@@ -1,4 +1,7 @@
 [[tier]]
+tasks = ["br-j4bk"]
+
+[[tier]]
 tasks = [
     "br-nncj",
     "br-nbgp",

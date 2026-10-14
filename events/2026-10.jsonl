@@ -2024,3 +2024,6 @@
 {"actor":"agent:pm-1","at":"2026-10-14T12:46:17.750165Z","queue":"reprioritized"}
 {"actor":"agent:manager-2","at":"2026-10-14T13:40:35.335945Z","from":"built","task":"br-nncj","to":"integrated"}
 {"actor":"human","at":"2026-10-14T14:44:08.112Z","from":"","task":"br-j4bk","to":"pending"}
+{"actor":"external:orchestrator","at":"2026-10-14T14:44:22.145916Z","from":"pending","task":"br-j4bk","to":"open"}
+{"actor":"agent:pm-1","at":"2026-10-14T14:44:35.650492Z","from":"open","task":"br-j4bk","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-14T14:44:37.066446Z","queue":"reprioritized"}
