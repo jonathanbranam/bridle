@@ -4,7 +4,7 @@ title = "bridle usage --week and --by name: the account breakdown in the CLI (kt
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-13T23:05:38.577Z"
-updated_at = "2026-10-14T11:10:42.742695Z"
+updated_at = "2026-10-14T11:10:57.649001Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -31,3 +31,6 @@ built: f942e1f2 (branch bridle/v58q)
 
 ### note · agent:manager-2 · 2026-10-14T11:10:42.742Z
 integrated: b09d96d304a3df4f813abea709526cfaadb47e06 (branch bridle/v58q)
+
+### note · agent:manager-2 · 2026-10-14T11:10:57.649Z
+cleanup: removed agent v58q, branch bridle/v58q
