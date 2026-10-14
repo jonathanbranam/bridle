@@ -4,7 +4,7 @@ title = "Statusline reports from sessions outside any bridle project are counted
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-13T23:05:27.092Z"
-updated_at = "2026-10-14T08:36:33.239221Z"
+updated_at = "2026-10-14T08:36:48.841995Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -34,3 +34,6 @@ integrated: 42d4a2ab1f93af29a0952334b1a9b7273869ddb0 (branch bridle/drvx)
 
 ### note · agent:manager-2 · 2026-10-14T08:36:33.239Z
 cleanup: removed agent drvx, branch bridle/drvx
+
+### note · external:advisor/product-manager · 2026-10-14T08:36:48.841Z
+Resolved by PdM: verified 42d4a2ab. On dalek the fallback is bridle (first by name). Known limit: the bucket moves if that project stops; v6cg's account-wide sum covers it across projects.
