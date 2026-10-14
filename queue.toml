@@ -17,6 +17,9 @@ tasks = [
 ]
 
 [[tier]]
+tasks = ["br-82qp"]
+
+[[tier]]
 tasks = ["br-afzu"]
 
 [[tier]]
