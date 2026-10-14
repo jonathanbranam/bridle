@@ -2,11 +2,14 @@
 id = "br-nncj"
 title = "dalek's wakes for the orchestrator are forwarded to orchestrator@vesta through dotfiles-local"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-14T10:01:15.595Z"
-updated_at = "2026-10-14T10:02:06.841745Z"
+updated_at = "2026-10-14T10:07:07.305868Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "agent:nncj",
+]
 ticket = "nncj"
 +++
 
