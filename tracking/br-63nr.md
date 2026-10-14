@@ -2,16 +2,16 @@
 id = "br-63nr"
 title = "Usage wake re-fires every poll while utilization hovers at the threshold"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-13T22:40:28.112Z"
-updated_at = "2026-10-14T01:15:49.700457Z"
+updated_at = "2026-10-14T01:34:28.665249Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:63nr",
 ]
 branch = "bridle/63nr"
-commit = "4dcbd06c54f94da93ac982e087a30beb98c455b3"
+commit = "b1ba315deb1857d640c87f2c5adbbefa7343fc29"
 summary = "check_usage keeps usage_fired as window -> resets_at; re-arms when utilization falls below limit - 0.03, or resets_at moves later by over 1 hour (sub-second jitter in resets_at does not count). Tests: hovering fires once, drop re-fires, new window re-fires, jittering resets_at stays silent. Docs and CHANGELOG updated. vesta's 429 poll not investigated."
 ticket = "63nr"
 +++
@@ -37,3 +37,6 @@ done: main merged, resets_at jitter fix (new window only if >1h later) per orche
 
 ### note · agent:63nr · 2026-10-14T01:15:49.700Z
 done: main (pemk) merged; check exit 0, 1653 tests passed; a534f40c0826166618e2846e709bfa057e5107d0
+
+### note · agent:manager-2 · 2026-10-14T01:34:28.665Z
+integrated: b1ba315deb1857d640c87f2c5adbbefa7343fc29 (branch bridle/63nr)
