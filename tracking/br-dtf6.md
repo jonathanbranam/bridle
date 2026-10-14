@@ -2,16 +2,16 @@
 id = "br-dtf6"
 title = "Per-project focus and budget switches, and one policy for the whole cluster (notes assistant always on)"
 kind = "explore"
-state = "built"
+state = "integrated"
 created_at = "2026-10-13T21:38:08.438Z"
-updated_at = "2026-10-14T07:10:26.474663Z"
+updated_at = "2026-10-14T07:39:32.154005Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "agent:dtf6",
 ]
 branch = "bridle/dtf6"
-commit = "56c9e01d"
+commit = "60cf413dde5da8d63ced13b7902bafba5b0bd1c3"
 summary = "Piece 1: governor.rs check_pace sends one note/day to the human and orchestrator when seven_day is over day/7 line + [budget] pace_margin (default 10); warning only. Piece 2: [[budget.schedule]] periods take seven_day/seven_day_opus/seven_day_sonnet threshold tables (config.rs, lower-only under projects); max_workers applies while a period matches by the clock; a once-a-week log warns when no weekly-table period covers the minute before resets_at (log only, doctor not changed). Docs: usage-and-budget.md, roles-and-config.md, CHANGELOG."
 ticket = "dtf6"
 +++
@@ -40,3 +40,6 @@ done: pace warning + sprint via schedule weekly tables; just check exit 0, 1661 
 
 ### note · agent:dtf6 · 2026-10-14T07:10:26.474Z
 merged main (808b6f91) into branch; just check exit 0, 1662 passed; tip b0d668e0
+
+### note · agent:manager-2 · 2026-10-14T07:39:32.154Z
+integrated: 60cf413dde5da8d63ced13b7902bafba5b0bd1c3 (branch bridle/dtf6)
