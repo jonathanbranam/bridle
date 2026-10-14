@@ -2,11 +2,14 @@
 id = "br-82qp"
 title = "schedule list hides schedules that target the caller"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-14T17:02:01.140Z"
-updated_at = "2026-10-14T19:38:25.208307Z"
+updated_at = "2026-10-14T22:04:18.426558Z"
 created_by = "external:orchestrator@vesta"
-watchers = ["external:orchestrator@vesta"]
+watchers = [
+    "external:orchestrator@vesta",
+    "agent:82qp",
+]
 ticket = "82qp"
 +++
 
