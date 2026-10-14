@@ -43,8 +43,9 @@ The human, 2026-10-14 ~1:15 PM ET, verbatim: "yes, unify. remus, vesta, dalek al
   plain `<host>`, which reads the same as the machine in `--project` and `@<host>` principals.
 - The machine's orchestrator runs in its home project, so dalek's moves out of bridle.
 - Machine-level mail on: `<host>-home@` is "mail this machine", read by the orchestrator.
-- Repo: local-only git repo with `[state] push = false` (advisor's default; change if the human
-  wants it backed up). No workers or managers configured.
+- Repo: a git repo with a remote (a private GitHub repo), state push on (the default). The human,
+  ~1:20 PM ET: "we can state push, yes, definitely. some tickets may end up here for machine
+  setup". So it can hold tickets about its machine's setup. No workers or managers configured.
 
 ## Work
 
