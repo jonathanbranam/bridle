@@ -2080,3 +2080,4 @@
 {"actor":"agent:pm-1","at":"2026-10-14T18:56:31.171246Z","from":"open","task":"br-pcde","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-14T18:56:35.211446Z","queue":"reprioritized"}
 {"actor":"agent:manager-2","at":"2026-10-14T19:08:15.030627Z","from":"built","task":"br-xcb4","to":"integrated"}
+{"actor":"agent:manager-2","at":"2026-10-14T19:15:02.508327Z","from":"built","task":"br-8uxe","to":"integrated"}

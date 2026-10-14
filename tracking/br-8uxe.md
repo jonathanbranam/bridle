@@ -2,16 +2,16 @@
 id = "br-8uxe"
 title = "A home project on each machine for the orchestrator: a stop-gap for the machine daemon"
 kind = "feature"
-state = "built"
+state = "integrated"
 created_at = "2026-10-14T17:07:37.932Z"
-updated_at = "2026-10-14T19:08:23.231826Z"
+updated_at = "2026-10-14T19:15:02.508327Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "agent:8uxe",
 ]
 branch = "bridle/8uxe"
-commit = "1a1f79d0"
+commit = "25a0073d82ebcad86bc4b1b2cfb77192493181d5"
 summary = "Docs only, work item 1. The orchestrator runs in its machine's home project <host>-home (dalek-home, vesta-home, remus-home), not in bridle, and senders address --project <host>-home; bridle stays the home until a machine has one. Changed: workflow/base/roles/{orchestrator,advisor,aide,manager}.md, docs/notes/product-manager-trial.md (Context for agents), docs/context/add-a-machine.md (new section 6, The home project: wsl2's tested order, the kf7t serve workaround, token pair twice, mail install, orchestrator restart; order remus, vesta, dalek), CHANGELOG Unreleased. Caveat: a visitor token on another daemon keeps its old home after the orchestrator moves, so mail to external:orchestrator@<host> loops back until x8c8 lands. bridle ticket check reports one pre-existing problem in a resolved ticket (bridle-token-pair-isn-t-one-command-and-done-it-mints-visito-eurm.md, related names br-n7cg, not a ticket); not touched here."
 ticket = "8uxe"
 +++
@@ -62,3 +62,6 @@ built: 1a1f79d0 (branch bridle/8uxe)
 
 ### note · agent:8uxe · 2026-10-14T19:08:23.231Z
 br-8uxe: main moved to 6672ea89 (xcb4); bridle/8uxe at 1a1f79d0 does not contain it. I have no further commit, so I have not merged: a merge would change the checked tip. Say if you want me to merge main and re-run just check, or land it as is and let the landing check handle it.
+
+### note · agent:manager-2 · 2026-10-14T19:15:02.508Z
+integrated: 25a0073d82ebcad86bc4b1b2cfb77192493181d5 (branch bridle/8uxe)
