@@ -2,16 +2,16 @@
 id = "br-wfcx"
 title = "take-over refuses after a host rename: local main has commits the pre-push hook itself held back"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-14T01:46:21.579Z"
-updated_at = "2026-10-14T03:23:37.410866Z"
+updated_at = "2026-10-14T03:45:58.505465Z"
 created_by = "external:aide@vesta"
 watchers = [
     "external:aide@vesta",
     "agent:wfcx",
 ]
 branch = "bridle/wfcx"
-commit = "ef84347c"
+commit = "44ab4a48907a0d24c0e2875cdcbd4c6e8b3c98a7"
 summary = """take-over no longer deadlocks after a host rename. sync_integration_for_take_over (state_branch.rs) now returns whether local main is AHEAD of origin (origin an ancestor of local): accepted, and take_over_project pushes it (never forced) after the claim is confirmed on origin; a failed push does not undo the claim and the CLI prints the `git push origin <branch>` to run (MainPush enum in TakeOverOutcome::Claimed). Only real divergence is refused; the message says "diverged" and gives the next step. project_sync::ssh (used by the `[projects]` move) gets ConnectTimeout=10 and a 60 s overall limit that kills ssh and names the machine. docs/design/cli.md documents "rename = take-over every project", CHANGELOG added. Tests: ahead accepted/diverged refused (extended existing test), fake-ssh timeout test. Not done (out of scope): third issue (start/take-over not re-creating tokens; token_pair.rs is xqwy's) and the `ticket comment --project` prefix bug; the other ssh callers (preflight_remote.rs, token_pair.rs) still lack timeouts; no rename detection; no end-to-end test of the post-claim push."""
 ticket = "wfcx"
 +++
@@ -80,3 +80,6 @@ built: ef84347c (branch bridle/wfcx)
 
 ### note · agent:wfcx · 2026-10-14T03:23:37.410Z
 done: take-over accepts ahead main and pushes it, diverged message, ssh timeouts; just check exit 0, 1655 tests passed; ef84347c
+
+### note · agent:manager-2 · 2026-10-14T03:45:58.505Z
+integrated: 44ab4a48907a0d24c0e2875cdcbd4c6e8b3c98a7 (branch bridle/wfcx)
