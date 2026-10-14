@@ -2,13 +2,13 @@
 id = "br-qwd4"
 title = "project preflight: let the human name the clone's path on the new machine (it copies the old machine's absolute path)"
 kind = "feature"
-state = "built"
+state = "integrated"
 created_at = "2026-10-14T22:07:56.284Z"
-updated_at = "2026-10-14T22:55:00.265881Z"
+updated_at = "2026-10-14T23:02:37.294667Z"
 created_by = "external:advisor/wsl2"
 watchers = ["external:advisor/wsl2"]
 branch = "bridle/qwd4"
-commit = "365e1462"
+commit = "9ae73b43209a3926f305646b417f5cb8324146b8"
 summary = """Added `--path` (requires `--to`) to `bridle project preflight`. remote_clone() in preflight_remote.rs builds the clone path on NEW: `~` expands to NEW's $HOME on the remote shell; with no --path, OLD's path under $HOME is kept, else the documented $HOME/work/<P>-workspace/<P>. The clone check, git clone offer and push probe all use it; the pass line now says "present at <path>". Unit test covers the four cases. Docs: cli.md, move-a-project.md, CHANGELOG. just check green (1685 tests) before merging main."""
 ticket = "qwd4"
 +++
@@ -37,3 +37,6 @@ done: preflight --path (+ default ~/work/P-workspace/P outside HOME); just check
 
 ### note · agent:manager-2 · 2026-10-14T22:55:00.265Z
 built: 365e1462 (branch bridle/qwd4)
+
+### note · agent:manager-2 · 2026-10-14T23:02:37.294Z
+integrated: 9ae73b43209a3926f305646b417f5cb8324146b8 (branch bridle/qwd4)
