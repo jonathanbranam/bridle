@@ -2,16 +2,16 @@
 id = "br-5n4f"
 title = "projects start / take-over don't re-create a project's tokens after a fresh database, and say nothing (split from wfcx)"
 kind = "fix"
-state = "built"
+state = "integrated"
 created_at = "2026-10-14T03:53:28.487Z"
-updated_at = "2026-10-14T05:43:50.376517Z"
+updated_at = "2026-10-14T05:44:18.966862Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "agent:5n4f",
 ]
 branch = "bridle/5n4f"
-commit = "a7ce287d1855374724d641e65ab17b3f0da6c270"
+commit = "ed871ccb65fa5f3bccb75745934129802d2af8ef"
 summary = "`bridle project start` now runs `token pair --projects P` on every run (project_start.rs carry_in), not only when take-over left moved-in.json, so a fresh database gets its role tokens back; pair already prints minted/kept per machine and names an unreachable one. If pairing is incomplete, start fails with the `bridle token pair --projects P` command to finish. Schedules/mail are carried only when the note exists. ssh timeouts (10 s connect, 60 s total) added via shared project_sync::run_timed(_raw), used by token_pair Exec and preflight_remote Ssh. Tests: existing token_pair fresh-mint and unreachable tests cover the logic; new run_timed timeout test; token_pair_test argv updated. Caveat: carry_in itself (needs a live daemon) has no unit test; pair output is buffered and shown after it finishes. Docs: cli.md, cli.rs help, CHANGELOG."
 ticket = "5n4f"
 +++
@@ -28,3 +28,6 @@ built: a7ce287d1855374724d641e65ab17b3f0da6c270 (branch bridle/5n4f)
 
 ### note · agent:5n4f · 2026-10-14T05:43:50.376Z
 done: projects start re-creates missing tokens every run (minted/kept per machine, named failure + token pair command), ssh timeouts in token_pair/preflight_remote; just check exit 0, 1659 tests passed; a7ce287d1855374724d641e65ab17b3f0da6c270
+
+### note · agent:manager-2 · 2026-10-14T05:44:18.966Z
+integrated: ed871ccb65fa5f3bccb75745934129802d2af8ef (branch bridle/5n4f)

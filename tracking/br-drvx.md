@@ -2,11 +2,14 @@
 id = "br-drvx"
 title = "Statusline reports from sessions outside any bridle project are counted in a machine-level bucket (ktgd decision 2)"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-13T23:05:27.092Z"
-updated_at = "2026-10-13T23:06:47.050026Z"
+updated_at = "2026-10-14T05:44:16.381919Z"
 created_by = "external:advisor/product-manager"
-watchers = ["external:advisor/product-manager"]
+watchers = [
+    "external:advisor/product-manager",
+    "agent:drvx",
+]
 ticket = "drvx"
 +++
 
