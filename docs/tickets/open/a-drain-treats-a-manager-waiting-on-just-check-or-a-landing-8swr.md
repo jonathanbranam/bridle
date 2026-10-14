@@ -33,3 +33,16 @@ The ask: the daemon can tell that an agent is waiting on work it started (a chec
 - Later epic (drain behaviour review). Not on kx5u's path: during MVP moves the orchestrator watches the drain and makes sure no landing is in flight, by hand.
 - Related: br-y55w (a landing's integration check has no timeout).
 - Needs a design pass first; no build until the human reviews.
+
+## Decision: pull forward the manual guard (2026-10-14)
+
+The orchestrator (m-12730): this ticket killed a running land four times on 2026-10-14 (05:44Z,
+07:50Z, 12:44Z, 15:07Z; ~30-45 min each), and the manual guard can't be applied because
+nothing cancels or postpones a drain while self-upgrade runs every 3 h.
+
+Aide's options to the human: A, add now only a small command so the orchestrator can postpone or
+cancel a pending restart while a land runs (e.g. `bridle daemon restart --cancel`/`--postpone`),
+the full fix staying in the later epic; B, self-upgrade less often; C, leave it.
+
+The human, 2026-10-14 ~6:25 PM ET (to aide), verbatim: "Yes A". So: build the postpone/cancel
+now; the full fix (the daemon sees an agent's background work as busy) stays in the later epic.
