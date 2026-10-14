@@ -4468,7 +4468,12 @@ async fn create_peer_token(
             "a machine name is non-empty and has no '@' or ':'",
         ));
     }
-    Ok(Json(state.store.create_peer_token(&req.machine).await?))
+    Ok(Json(
+        state
+            .store
+            .create_peer_token(&req.machine, req.replace)
+            .await?,
+    ))
 }
 
 async fn list_tokens(

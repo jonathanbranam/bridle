@@ -1835,6 +1835,10 @@ pub struct TokenCreateRequest {
 pub struct PeerTokenCreateRequest {
     /// The sending machine, as named in `[machine] name` there.
     pub machine: String,
+    /// Replace a live `peer:<machine>` token (one upsert on the receiver) instead of
+    /// refusing with a conflict; `bridle token pair` sets it.
+    #[serde(default)]
+    pub replace: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

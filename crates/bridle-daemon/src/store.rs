@@ -384,9 +384,13 @@ impl Store {
     }
 
     /// Mints `peer:<machine>`; a name already in use is a conflict, like any token.
-    pub async fn create_peer_token(&self, machine: &str) -> Result<TokenCreated, StoreError> {
+    pub async fn create_peer_token(
+        &self,
+        machine: &str,
+        replace: bool,
+    ) -> Result<TokenCreated, StoreError> {
         let machine = machine.to_string();
-        self.with_conn(move |c| sync::create_peer_token(c, &machine))
+        self.with_conn(move |c| sync::create_peer_token(c, &machine, replace))
             .await
     }
 
@@ -1993,6 +1997,30 @@ mod sync {
         Ok(Some(token))
     }
 
+    /// Creates a principal, or replaces the token of an active one.
+    fn create_principal_replacing(
+        conn: &Connection,
+        id: &str,
+        kind: PrincipalKind,
+        name: &str,
+    ) -> Result<String, StoreError> {
+        let token = random_token();
+        conn.execute(
+            "INSERT INTO principals(id, kind, name, token_hash, created_at, revoked_at)
+             VALUES (?1, ?2, ?3, ?4, ?5, NULL)
+             ON CONFLICT(id) DO UPDATE SET kind=excluded.kind, name=excluded.name,
+                 token_hash=excluded.token_hash, created_at=excluded.created_at, revoked_at=NULL",
+            params![
+                id,
+                principal_kind_str(kind),
+                name,
+                hash_token(&token),
+                fmt_dt(Utc::now())
+            ],
+        )?;
+        Ok(token)
+    }
+
     /// Creates a principal, failing with `Conflict` if one with this id is
     /// already active (409 if the name is taken).
     fn create_principal_active_only(
@@ -2078,9 +2106,16 @@ mod sync {
     pub(super) fn create_peer_token(
         conn: &Connection,
         machine: &str,
+        replace: bool,
     ) -> Result<TokenCreated, StoreError> {
         let id = format!("peer:{machine}");
-        let token = create_principal_active_only(conn, &id, PrincipalKind::Peer, machine)?;
+        let token = if replace {
+            // The upsert swaps the hash in one statement: the old token stops working
+            // exactly when the new one exists.
+            create_principal_replacing(conn, &id, PrincipalKind::Peer, machine)?
+        } else {
+            create_principal_active_only(conn, &id, PrincipalKind::Peer, machine)?
+        };
         Ok(TokenCreated {
             principal: id,
             token,
@@ -5143,15 +5178,46 @@ mod tests {
     #[tokio::test]
     async fn duplicate_peer_token_error_names_the_sending_machine() {
         let (store, _tmp) = store().await;
-        store.create_peer_token("dalek").await.expect("first");
+        store
+            .create_peer_token("dalek", false)
+            .await
+            .expect("first");
         let err = store
-            .create_peer_token("dalek")
+            .create_peer_token("dalek", false)
             .await
             .expect_err("duplicate");
         let msg = err.to_string();
         assert!(msg.contains("peer:dalek already exists"), "{msg}");
         assert!(msg.contains("SENDS"), "{msg}");
         assert!(msg.contains("bridle token revoke peer:dalek"), "{msg}");
+    }
+
+    #[tokio::test]
+    async fn replacing_a_peer_token_swaps_it_in_one_step() {
+        let (store, _tmp) = store().await;
+        let old = store
+            .create_peer_token("dalek", false)
+            .await
+            .expect("first");
+        let new = store
+            .create_peer_token("dalek", true)
+            .await
+            .expect("replace");
+        assert_ne!(old.token, new.token);
+        assert!(
+            store
+                .authenticate(&old.token)
+                .await
+                .expect("auth")
+                .is_none()
+        );
+        assert!(
+            store
+                .authenticate(&new.token)
+                .await
+                .expect("auth")
+                .is_some()
+        );
     }
 
     #[tokio::test]

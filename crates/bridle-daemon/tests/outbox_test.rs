@@ -58,6 +58,7 @@ async fn pair() -> Pair {
         .client
         .create_peer_token(&PeerTokenCreateRequest {
             machine: "m1".to_string(),
+            replace: false,
         })
         .await
         .expect("peer token")
@@ -313,6 +314,7 @@ async fn a_peer_saying_hello_gets_its_queue_flushed_at_once() {
         p.a.client
             .create_peer_token(&PeerTokenCreateRequest {
                 machine: "m2".to_string(),
+                replace: false,
             })
             .await
             .expect("peer token")
@@ -376,6 +378,7 @@ async fn mail_for_a_visitor_is_forwarded_to_its_home_daemon() {
         p.a.client
             .create_peer_token(&PeerTokenCreateRequest {
                 machine: "m2".to_string(),
+                replace: false,
             })
             .await
             .expect("peer token")
@@ -459,6 +462,7 @@ async fn a_wake_on_a_remote_project_is_forwarded_home_once_as_a_system_message()
         p.a.client
             .create_peer_token(&PeerTokenCreateRequest {
                 machine: "m2".to_string(),
+                replace: false,
             })
             .await
             .expect("peer token")
@@ -564,6 +568,7 @@ async fn the_sender_sees_a_message_queued_then_arrived_then_delivered() {
         p.a.client
             .create_peer_token(&PeerTokenCreateRequest {
                 machine: "m2".to_string(),
+                replace: false,
             })
             .await
             .expect("peer token")
@@ -607,6 +612,7 @@ async fn point_b_at_a(p: &Pair) -> String {
         p.a.client
             .create_peer_token(&PeerTokenCreateRequest {
                 machine: "m2".to_string(),
+                replace: false,
             })
             .await
             .expect("peer token")

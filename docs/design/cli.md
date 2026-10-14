@@ -150,7 +150,8 @@ bridle token pair [--machines m,..] [--projects p,..] [--roles r,..] [--tokens r
                                              naming some narrows to exactly those, and there is no exclude. Writes `[<role>] <project>`
                                              for a daemon on the same machine, `[<role>.<machine>]` for another's (`human` only for
                                              other machines: `human@<machine>`). An entry that works (GET /v1/status) is kept, so a
-                                             second run changes nothing; `--rotate` replaces working ones; `--dry-run` mints and
+                                             second run changes nothing; `--rotate` replaces working ones (a peer token too: the receiver's
+                                             mint takes `replace`, one upsert, so the old token stops as the new one exists); `--dry-run` mints and
                                              writes nothing. An unreachable machine is reported and skipped and the exit is non-zero.
                                              Tokens go only through ssh stdin/stdout, never argv or output. After adding a role (it
                                              joins `TOKEN_ROLES` in token_pair.rs) or a machine, run it once more. `--tokens peer` is

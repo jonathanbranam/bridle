@@ -941,6 +941,8 @@ async fn token_pair(cli: &Cli, action: &TokenAction) -> Result<(), CliError> {
             let created = client
                 .create_peer_token(&bridle_api::types::PeerTokenCreateRequest {
                     machine: sender.clone(),
+                    // Pair only mints when the entry is missing, broken or being rotated.
+                    replace: true,
                 })
                 .await?;
             println!("{}", created.token);
@@ -978,6 +980,7 @@ pub(super) async fn token(cli: &Cli, args: &TokenArgs) -> Result<(), CliError> {
             let created = client
                 .create_peer_token(&bridle_api::types::PeerTokenCreateRequest {
                     machine: machine.clone(),
+                    replace: false,
                 })
                 .await?;
             if cli.json {
