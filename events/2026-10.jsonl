@@ -2004,3 +2004,4 @@
 {"actor":"agent:manager-2","at":"2026-10-14T11:10:42.742695Z","from":"built","task":"br-v58q","to":"integrated"}
 {"actor":"external:advisor/product-manager","at":"2026-10-14T11:11:13.439486Z","from":"pending","task":"br-nbgp","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-14T11:11:15.433276Z","from":"open","task":"br-nbgp","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-14T11:11:16.898656Z","queue":"reprioritized"}

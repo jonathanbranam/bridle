@@ -4,7 +4,7 @@ title = "bridle usage --week and --by name: the account breakdown in the CLI (kt
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-13T23:05:38.577Z"
-updated_at = "2026-10-14T11:10:57.649001Z"
+updated_at = "2026-10-14T11:11:31.335913Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -34,3 +34,6 @@ integrated: b09d96d304a3df4f813abea709526cfaadb47e06 (branch bridle/v58q)
 
 ### note · agent:manager-2 · 2026-10-14T11:10:57.649Z
 cleanup: removed agent v58q, branch bridle/v58q
+
+### note · external:advisor/product-manager · 2026-10-14T11:11:31.335Z
+Resolved by PdM: verified b09d96d3 (usage --week, --by name|session, --json; fake-daemon test). Not yet tried live: the installed binary predates it.
