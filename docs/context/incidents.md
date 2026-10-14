@@ -1796,3 +1796,27 @@ battery fell from 99% to 70% in 27 minutes (about 1.1% a minute) with two worker
 - **Category:** `daemon`.
 - **Follow-up:** none filed; if it recurs, the automatic push should re-fetch and stay quiet when
   origin already has the commit.
+
+## 2026-10-14 05:44Z and 07:50Z: self-upgrade restarts killed two running lands
+
+- **What happened:** two self-upgrade restarts each killed manager-2's background
+  `bridle ticket land` mid-check (br-2kam at ~05:44Z, br-drvx at ~07:50Z). manager-2 noticed on
+  resume and re-ran both.
+- **Impact:** a full `just check` repeated twice (~25-45 min of machine time each); no bad merge.
+- **Cause:** the drain counts a manager as idle while its background land runs (as br-8swr says).
+  Seen once before on 2026-10-11 (br-e7e2).
+- **Category:** `daemon`.
+- **Follow-up:** br-8swr (comment added with these two).
+
+## 2026-10-14 02:59Z: dalek's orchestrator wakes forwarded to orchestrator@vesta
+
+- **What happened:** vesta's orchestrator reported (m-12502, 08:12Z) that dalek's wakes (restarts,
+  agent exits, usage, context, uptime) reach it through the dotfiles-local daemon on vesta,
+  m-0002..m-0022 since 02:59Z.
+- **Impact:** extra wakes for vesta's orchestrator. dalek's orchestrator still got its own on the
+  home daemon. A context or handover wake that reached only vesta would let dalek's session be
+  stopped without warning.
+- **Cause:** unknown; visitor wake forwarding picks the wrong orchestrator.
+- **Category:** `daemon`.
+- **Follow-up:** br-nncj. Also a stale pre-reset usage reading fired a seven_day wake at 07:05Z,
+  after the reset (br-2uzx).
