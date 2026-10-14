@@ -2,10 +2,7 @@
 tasks = ["br-j4bk"]
 
 [[tier]]
-tasks = [
-    "br-nncj",
-    "br-nbgp",
-]
+tasks = ["br-nbgp"]
 
 [[tier]]
 tasks = [
@@ -18,6 +15,9 @@ tasks = [
     "br-yp8f",
     "br-su62",
 ]
+
+[[tier]]
+tasks = ["br-afzu"]
 
 [[tier]]
 tasks = ["br-5cru"]

@@ -2033,3 +2033,5 @@
 {"actor":"agent:manager-2","at":"2026-10-14T15:22:44.199087Z","from":"planned","task":"br-j4bk","to":"built"}
 {"actor":"human","at":"2026-10-14T15:38:37.264Z","from":"","task":"br-afzu","to":"pending"}
 {"actor":"external:advisor/wsl2","at":"2026-10-14T15:45:02.863103Z","from":"pending","task":"br-afzu","to":"open"}
+{"actor":"agent:pm-1","at":"2026-10-14T15:45:45.294613Z","from":"open","task":"br-afzu","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-14T15:45:48.839315Z","queue":"reprioritized"}
