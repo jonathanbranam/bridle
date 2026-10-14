@@ -33,10 +33,27 @@ and brings the machine-level services that only exist where a project lives (dae
 self-upgrade, token pair, mail). No workers by default, so the daemon stays light. A stop-gap for
 the machine daemon (kuw2): when kuw2 is built it takes this project's place.
 
-Open points (for the human):
+## Decided
 
-- Name (see the thread): remus-home, remus-machine, remus-global, or plain remus.
-- Dalek too, moving its orchestrator out of the bridle project (the trial context and role docs
-  say it runs there), or remus first?
-- What the repo is: local-only git repo or one with a remote (state push).
-- Mail to the machine project: "mail this machine" or ignored.
+The human, 2026-10-14 ~1:15 PM ET, verbatim: "yes, unify. remus, vesta, dalek all get a home. orch runs there; machine-level mail also good."
+
+- Every machine with an orchestrator gets one: dalek, vesta, remus.
+- Name `<host>-home` (dalek-home, vesta-home, remus-home), the advisor's recommendation, not
+  objected to: the host in the name because the project registry is shared across machines; not
+  plain `<host>`, which reads the same as the machine in `--project` and `@<host>` principals.
+- The machine's orchestrator runs in its home project, so dalek's moves out of bridle.
+- Machine-level mail on: `<host>-home@` is "mail this machine", read by the orchestrator.
+- Repo: local-only git repo with `[state] push = false` (advisor's default; change if the human
+  wants it backed up). No workers or managers configured.
+
+## Work
+
+1. Docs: say the orchestrator runs in its machine's home project, not in bridle (the orchestrator
+   role, `bridle prime orchestrator`, docs/context/add-a-machine.md with a "home project" step,
+   the PdM trial's "Context for agents", and anything that says `--project bridle send
+   external:orchestrator`). Senders then address `--project <host>-home`.
+2. Setup on each machine (the human's to-dos, or the orchestrator's with the human): repo,
+   `[projects]` entry and `bridle projects sync --apply`, daemon as a service, `bridle token pair`,
+   `bridle mail install --project <host>-home`, then the orchestrator restarts there. Order:
+   remus first (data-contracts stops being its home), then vesta, dalek last (its orchestrator
+   is the one everything else addresses today).
