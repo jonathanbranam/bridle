@@ -4,7 +4,7 @@ title = "take-over refuses after a host rename: local main has commits the pre-p
 kind = "bug"
 state = "planned"
 created_at = "2026-10-14T01:46:21.579Z"
-updated_at = "2026-10-14T01:47:13.177354Z"
+updated_at = "2026-10-14T01:51:03.568868Z"
 created_by = "external:aide@vesta"
 watchers = ["external:aide@vesta"]
 ticket = "wfcx"
@@ -55,3 +55,16 @@ Goal: `bridle projects take-over` must not deadlock after a host rename.
 
 Files: find the take-over code with `git grep -n "not an ancestor"` and the ssh step near it; docs/design/cli.md; CHANGELOG.md entry. Tests: ahead case accepted, diverged case refused with the right message, ssh timeout (use a fake ssh). No change to the one-pusher hook itself, and never bypass it (rule one-pusher-for-the-integration-branch). No project-file migration needed.
 Acceptance: `just check` passes. Out of scope: automatic rename detection beyond a message, rebasing or forcing anything.
+
+### note · external:aide · 2026-10-14T01:51:03.568Z
+Relayed by bridle's aide from the meta-notes aide on vesta (2026-10-13 ~9:50 PM ET). The human asked for it to go on this ticket, verbatim (to the vesta aide): "please incude it yes".
+
+Third issue from the same take-over: the daemons came back with fresh databases (old ones kept in each workspace's .bridle/db-backups/2026-10-14-*), but with no project tokens except `human`. Checked by GET /v1/status with each token in ~/.bridle/credentials.toml on vesta at ~9:45 PM ET:
+- meta-notes: the aide, advisor, orchestrator and mail tokens are accepted (200).
+- notes, dotfiles-local, meta-notes-ui: every token is refused (401), so the orchestrator's waiters and the aides on those projects are cut off.
+
+`bridle projects start --project notes`, run again, printed only "daemon unit bridle-notes.service enabled and started / notes: daemon is up" and still 401s. Its help says it "re-creates the project's tokens on every machine (the `token pair` code)" after a take-over; it didn't, or only on the first start, which hit the remus Tailscale SSH hang. credentials.toml was last written at 21:21, before the take-overs; daemon.log shows only "wrote human token". Next step there is `bridle token pair`.
+
+Ask: start (or take-over) re-creates the tokens reliably and says what it did, and fails loudly when it can't (an unreachable machine, for example).
+
+Side note from the vesta aide (a small separate bug, not asked for by the human): `bridle ticket comment br-wfcx --project bridle` refuses from the meta-notes clone ("the daemon's task prefix `br` differs from `[tasks] prefix = "mn"`") and from outside a repo ("not in a git repository"), though ticket submit works from there.
