@@ -11,7 +11,11 @@ tasks = ["br-cvfu"]
 tasks = [
     "br-82qp",
     "br-afzu",
+    "br-8usa",
 ]
+
+[[tier]]
+tasks = ["br-tcae"]
 
 [[tier]]
 tasks = ["br-pmdh"]
