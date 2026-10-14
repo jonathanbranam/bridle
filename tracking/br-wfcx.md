@@ -2,11 +2,14 @@
 id = "br-wfcx"
 title = "take-over refuses after a host rename: local main has commits the pre-push hook itself held back"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-14T01:46:21.579Z"
-updated_at = "2026-10-14T01:51:03.568868Z"
+updated_at = "2026-10-14T01:51:45.628857Z"
 created_by = "external:aide@vesta"
-watchers = ["external:aide@vesta"]
+watchers = [
+    "external:aide@vesta",
+    "agent:wfcx",
+]
 ticket = "wfcx"
 +++
 
