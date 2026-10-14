@@ -34,3 +34,25 @@ holder's entry against the daemon the holder talks to. Find which.
 2. After minting and storing, token pair checks every entry it wrote or kept, from the machine
    that holds it, against the daemon it's for, and prints the result per role and project
    (accepted / refused, with the reason). Exit non-zero if any is refused.
+
+## Design: a direct check command (the human's go)
+
+The human, 2026-10-14 ~8:00 AM ET (to aide), verbatim: "What test request is used? Should we
+just have a command to directly check whether a token is valid?" After aide proposed the
+command below: "Yes please".
+
+How the check works today: token pair runs the hidden `bridle token pair-check --role R
+[--machine M]` over ssh on the holder's machine. It reads the holder's credentials entry,
+resolves the project's daemon URL from the holder's own registry, and calls `GET /v1/status`
+(a visitor token must also report a `visitor_home`). Lead to check: dalek's registry still says
+`meta-notes = { machine = "nuc", ... }` (rename leftover, br-r2nr), so the URL it resolves for
+a vesta project may not be the daemon that refuses the token.
+
+- **`bridle token check [--machines m,..] [--projects p,..] [--roles r,..]`**: read-only (mints
+  and writes nothing). For every credentials entry selected (default all), it checks the entry
+  from the machine that holds it, against the daemon it's for, and prints one line per machine,
+  role and project: accepted, or refused with the reason (invalid token, no home, unreachable,
+  no entry). Exit non-zero if any is refused. `--json` for agents.
+- **token pair uses the same code**: for its keep-or-mint decision, and as its final step (check
+  everything it wrote or kept, print the same lines, exit non-zero on any refusal). One check,
+  so the two can't disagree.
