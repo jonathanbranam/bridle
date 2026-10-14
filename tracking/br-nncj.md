@@ -2,16 +2,16 @@
 id = "br-nncj"
 title = "dalek's wakes for the orchestrator are forwarded to orchestrator@vesta through dotfiles-local"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-14T10:01:15.595Z"
-updated_at = "2026-10-14T10:37:41.056583Z"
+updated_at = "2026-10-14T13:40:35.335945Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:nncj",
 ]
 branch = "bridle/nncj"
-commit = "21a7c336"
+commit = "18780a468c9e63fbcfccd3aac80a0bd68840c66f"
 summary = "The forwarding is Wakes::forward_home in crates/bridle-daemon/src/wake.rs (3haz slice 5, br-rhba): every non-message wake was mailed as a system message to the home of every visitor token external:orchestrator@<machine>. Vesta's orchestrator holds such a visitor token on dalek's daemon, so dalek's wakes were copied to it. Fix: forward_home returns early when the daemon has an active local external:orchestrator; the local wake path is untouched, so dalek's orchestrator still gets its own wakes. The remote-supervision case (no local orchestrator) still forwards. Test added in outbox_test.rs; docs (orchestrator-supervision.md) and CHANGELOG updated. Not touched: br-z5kz (system@ duplicate), a separate path."
 ticket = "nncj"
 +++
@@ -40,3 +40,6 @@ Found: forwarding lives in Wakes::forward_home (wake.rs), via visitor_homes_name
 
 ### note · agent:manager-2 · 2026-10-14T10:37:41.056Z
 built: 21a7c336 (branch bridle/nncj)
+
+### note · agent:manager-2 · 2026-10-14T13:40:35.335Z
+integrated: 18780a468c9e63fbcfccd3aac80a0bd68840c66f (branch bridle/nncj)

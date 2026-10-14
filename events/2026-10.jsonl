@@ -2022,3 +2022,4 @@
 {"actor":"agent:pm-1","at":"2026-10-14T12:45:59.786128Z","from":"open","task":"br-yp8f","to":"planned"}
 {"actor":"agent:manager-2","at":"2026-10-14T12:46:06.249277Z","from":"planned","task":"br-nbgp","to":"built"}
 {"actor":"agent:pm-1","at":"2026-10-14T12:46:17.750165Z","queue":"reprioritized"}
+{"actor":"agent:manager-2","at":"2026-10-14T13:40:35.335945Z","from":"built","task":"br-nncj","to":"integrated"}
