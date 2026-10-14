@@ -2,16 +2,16 @@
 id = "br-2kam"
 title = "Each hosted session records how it started and ended, and the renewal limit in force (ktgd decision 7)"
 kind = "feature"
-state = "built"
+state = "integrated"
 created_at = "2026-10-13T23:05:26.890Z"
-updated_at = "2026-10-14T05:26:50.514722Z"
+updated_at = "2026-10-14T06:22:49.836932Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "agent:2kam",
 ]
 branch = "bridle/2kam"
-commit = "247f8966e90e39deb5413980af8a396ef16bf7c2"
+commit = "808b6f916e7aa7d7f0bfb8bab458dc4de41677e8"
 summary = "New agent_sessions table (SCHEMA_V30): one row per hosted session start (spawn/resume/renewal) with ended_at/end_reason (renewal, stop, shutdown or exit reason), end_tokens (context size at the end of the last turn, so the handoff turn's reading, not the crossing) and renewal_limit (wind_down_at for the role at start). Written from register_and_start, renew_inner and the exit handler; first ender wins so renew's 'renewal' is not overwritten by the process exit. No handover-specific end reason (handover does not end a session; the renewal that follows does). Docs: storage.md, usage-and-budget.md, CHANGELOG. Test in context_governor_test.rs."
 ticket = "2kam"
 +++
@@ -28,3 +28,6 @@ built: 247f8966e90e39deb5413980af8a396ef16bf7c2 (branch bridle/2kam)
 
 ### note · agent:2kam · 2026-10-14T05:26:50.514Z
 done: agent_sessions table + writes on start/renew/exit; just check exit 0, 1659 tests passed, on merged tip 247f8966e90e39deb5413980af8a396ef16bf7c2
+
+### note · agent:manager-2 · 2026-10-14T06:22:49.836Z
+integrated: 808b6f916e7aa7d7f0bfb8bab458dc4de41677e8 (branch bridle/2kam)
