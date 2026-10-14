@@ -1999,3 +1999,4 @@
 {"actor":"external:advisor/product-manager","at":"2026-10-14T10:01:57.658376Z","from":"pending","task":"br-nncj","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-14T10:02:06.841745Z","from":"open","task":"br-nncj","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-14T10:02:10.220809Z","queue":"reprioritized"}
+{"actor":"agent:manager-2","at":"2026-10-14T10:37:41.056583Z","from":"claimed","task":"br-nncj","to":"built"}

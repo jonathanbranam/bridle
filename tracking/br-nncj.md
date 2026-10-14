@@ -2,14 +2,17 @@
 id = "br-nncj"
 title = "dalek's wakes for the orchestrator are forwarded to orchestrator@vesta through dotfiles-local"
 kind = "bug"
-state = "claimed"
+state = "built"
 created_at = "2026-10-14T10:01:15.595Z"
-updated_at = "2026-10-14T10:07:07.305868Z"
+updated_at = "2026-10-14T10:37:41.056583Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:nncj",
 ]
+branch = "bridle/nncj"
+commit = "21a7c336"
+summary = "The forwarding is Wakes::forward_home in crates/bridle-daemon/src/wake.rs (3haz slice 5, br-rhba): every non-message wake was mailed as a system message to the home of every visitor token external:orchestrator@<machine>. Vesta's orchestrator holds such a visitor token on dalek's daemon, so dalek's wakes were copied to it. Fix: forward_home returns early when the daemon has an active local external:orchestrator; the local wake path is untouched, so dalek's orchestrator still gets its own wakes. The remote-supervision case (no local orchestrator) still forwards. Test added in outbox_test.rs; docs (orchestrator-supervision.md) and CHANGELOG updated. Not touched: br-z5kz (system@ duplicate), a separate path."
 ticket = "nncj"
 +++
 
@@ -28,3 +31,12 @@ Goal: a wake about a machine's orchestrator reaches only that machine's orchestr
 Start: find where wakes (restart, agent exit, usage, context, handover, uptime) are forwarded to visiting/external principals: git grep -n "visitor" crates/bridle-daemon (wake forwarding, the "@dalek"/"@machine" principal handling), and the notes in br-z5kz and br-2ax5 (related). Decide which daemon owns each wake: a wake is delivered by the daemon it is about, to principals registered on it; a visitor (a principal homed on another machine) must not receive wakes that belong to its home daemon, unless it explicitly waits on this daemon. Check first that dalek's orchestrator still gets all its own wakes on its home daemon (it does tonight); do not break that.
 
 Tests: a visitor principal homed elsewhere does not get this daemon's system wakes; the home principal still does; context/handover wakes reach the home orchestrator. Docs: the wake/visitor section of docs/design/agent-host (find with git grep -n "visitor" docs/design), CHANGELOG.md. No migration. Out of scope: br-z5kz (system@dalek duplicate), unless it is the same line of code. Acceptance: just check. Report on the thread what you found about where the forwarding lives.
+
+### note · agent:nncj · 2026-10-14T10:37:38.608Z
+done: wakes not forwarded to visiting orchestrators when a local one exists; just check exit 0 (1666 passed); 21a7c336
+
+### note · agent:nncj · 2026-10-14T10:37:40.461Z
+Found: forwarding lives in Wakes::forward_home (wake.rs), via visitor_homes_named('orchestrator'). Fixed by skipping it when a local external:orchestrator exists. just check exit 0, 1666 tests passed, commit 21a7c336.
+
+### note · agent:manager-2 · 2026-10-14T10:37:41.056Z
+built: 21a7c336 (branch bridle/nncj)
