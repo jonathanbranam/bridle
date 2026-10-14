@@ -4,12 +4,13 @@ title = "Statusline reports from sessions outside any bridle project are counted
 kind = "feature"
 state = "claimed"
 created_at = "2026-10-13T23:05:27.092Z"
-updated_at = "2026-10-14T05:44:16.381919Z"
+updated_at = "2026-10-14T06:37:40.808958Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "agent:drvx",
 ]
+summary = "Statusline reports from a session with no bridle project (no daemon for its cwd, no BRIDLE_URL/BRIDLE_PROJECT) now post to one fallback daemon per machine: the first live project in the registry by name (discovery::machine_fallback_daemon), no new setting so existing machines need no edit. An unbridled session is recorded as identity 'external:unbridled/outside any project', its own bucket in that project's 'bridle usage' external sessions. Counts on the line still skip the fallback; the 2 s timeout and silent failure are unchanged. Tests: fallback pick (discovery) and a post to a fake server (orchestrator.rs). Docs: usage-and-budget.md, cli.md, CHANGELOG. Caveat: the bucket lands in whichever project sorts first, so it moves if that project stops; no machine-wide sum was added."
 ticket = "drvx"
 +++
 
