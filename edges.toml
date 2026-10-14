@@ -3261,3 +3261,27 @@ from = "br-su62"
 to = "br-afzu"
 kind = "blocks"
 created_at = "2026-10-14T15:46:08.019Z"
+
+[[edge]]
+from = "br-8uxe"
+to = "br-j6d3"
+kind = "related"
+created_at = "2026-10-14T17:07:57.200Z"
+
+[[edge]]
+from = "br-8uxe"
+to = "br-gb97"
+kind = "related"
+created_at = "2026-10-14T17:07:57.202Z"
+
+[[edge]]
+from = "br-8uxe"
+to = "br-afzu"
+kind = "related"
+created_at = "2026-10-14T17:07:57.204Z"
+
+[[edge]]
+from = "br-8uxe"
+to = "br-jw75"
+kind = "related"
+created_at = "2026-10-14T17:07:57.206Z"
