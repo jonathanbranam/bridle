@@ -8,16 +8,18 @@ use std::path::Path;
 use std::process::{Command, Output};
 
 /// Answers the helpers the way a remote bridle would. Records every ssh argv in `argv.log` and
-/// every token it was asked to store in `stored.log`.
+/// every token it was asked to store in `stored.log`. A check fails the first time (nothing is
+/// paired yet) and passes when asked again: pair's last step looks at what it wrote.
 const FAKE_SSH: &str = r#"#!/bin/sh
 dir=$(dirname "$0")
 echo "$@" >> "$dir/argv.log"
 if [ -f "$dir/down" ]; then echo "ssh: connect to host refused" >&2; exit 255; fi
 case "$*" in
   *pair-projects*) echo "notes 7402"; [ -f "$dir/two" ] && echo "zeta 7403 true"; [ -f "$dir/optout" ] && echo "quiet 7404 false"; exit 0 ;;
-  *pair-peer-held*|*pair-peer-active*) exit 1 ;;
+  *pair-peer-active*) [ -s "$dir/stored.log" ]; exit $? ;;
+  *pair-peer-held*) [ "$(grep -cxF -- "$*" "$dir/argv.log")" -ge 2 ]; exit $? ;;
   *pair-peer-mint*) echo "tok-SECRET-$$" ;;
-  *pair-check*) exit 1 ;;
+  *pair-check*) [ "$(grep -cxF -- "$*" "$dir/argv.log")" -ge 2 ]; exit $? ;;
   *pair-mint*) echo "tok-SECRET-$$" ;;
   *pair-store*) cat >> "$dir/stored.log" ;;
   *) echo "unexpected: $*" >&2; exit 2 ;;

@@ -167,8 +167,19 @@ bridle token pair [--machines m,..] [--projects p,..] [--roles r,..] [--tokens r
                                              (`GET /v1/status` carries `visitor_home`), so a plain run re-mints it and replaces the
                                              holder's entry: no revoke and `token create --home` by hand. `bridle init` runs it for the new project when its daemon is already up, and
                                              otherwise lists it as a next step. Spec: design/specs/token-pairing.md.
+                                             Its last step (not on `--dry-run`) is `token check` over everything selected: one
+                                             `check <machine> <role> -> <daemon>/<project>: accepted|refused: <reason>` line each, and
+                                             the exit is non-zero if any is refused (br-su62).
                                              Hidden helpers it runs: `token pair-projects|pair-check|pair-mint|pair-store|
                                              pair-peer-held|pair-peer-active|pair-peer-mint`.
+bridle token check [--machines m,..] [--projects p,..] [--roles r,..] [--tokens role,peer] [--json]
+                                             read-only (mints and writes nothing). Tries every selected credentials entry from the machine
+                                             that holds it against the daemon it is for (the same `pair-check` helper and selectors as
+                                             `token pair`, so the two cannot disagree; a peer entry is held plus a live `peer:<machine>`
+                                             on the receiver). One line per machine, role and project: `accepted`, or `refused: <reason>`
+                                             (invalid token, visitor token has no home, unreachable, no entry). Non-zero if any is refused
+                                             or a machine is unreachable. `--json` prints an array of
+                                             `{machine, role, daemon, project, accepted, reason}`.
 bridle token create --peer <m>              a peer token, `peer:<m>`, for the daemons of machine <m> to forward mail here: always
                                              printed once; paste it under `[peer]` in the sender's credentials.toml, keyed by this project.
                                              <m> is the machine that SENDS here, not this one; one per receiving project per

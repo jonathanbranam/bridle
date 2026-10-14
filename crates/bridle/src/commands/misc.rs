@@ -835,6 +835,36 @@ async fn token_pair(cli: &Cli, action: &TokenAction) -> Result<(), CliError> {
                 )));
             }
         }
+        TokenAction::Check {
+            machines,
+            projects,
+            roles,
+            tokens,
+            json,
+        } => {
+            let map = bridle_api::machines::MachineMap::load(&discovery::bridle_home())
+                .map_err(|e| CliError::Other(e.into()))?;
+            let fleet = tp::Fleet::from_config(&map);
+            let opts = tp::Options {
+                machines: machines.clone(),
+                projects: projects.clone(),
+                roles: roles.clone(),
+                tokens: tokens.clone(),
+                ..Default::default()
+            };
+            let json = *json;
+            let ok = tokio::task::spawn_blocking(move || {
+                tp::check(&opts, &fleet, &tp::Exec, &mut std::io::stdout(), json)
+            })
+            .await
+            .map_err(|e| CliError::Other(e.into()))?
+            .map_err(|e| CliError::Other(anyhow::anyhow!(e)))?;
+            if !ok {
+                return Err(CliError::Other(anyhow::anyhow!(
+                    "some tokens are refused or could not be checked (see above)"
+                )));
+            }
+        }
         TokenAction::PairProjects => {
             for d in discovery::list_registry() {
                 if let Some(port) = d
@@ -959,6 +989,7 @@ pub(super) async fn token(cli: &Cli, args: &TokenArgs) -> Result<(), CliError> {
     if matches!(
         args.action,
         TokenAction::Pair { .. }
+            | TokenAction::Check { .. }
             | TokenAction::PairProjects
             | TokenAction::PairCheck { .. }
             | TokenAction::PairMint { .. }
@@ -1089,6 +1120,7 @@ pub(super) async fn token(cli: &Cli, args: &TokenArgs) -> Result<(), CliError> {
             }
         }
         TokenAction::Pair { .. }
+        | TokenAction::Check { .. }
         | TokenAction::PairProjects
         | TokenAction::PairCheck { .. }
         | TokenAction::PairMint { .. }

@@ -1729,6 +1729,27 @@ pub enum TokenAction {
         #[arg(long)]
         dry_run: bool,
     },
+    /// Check that every token entry is accepted, read-only: each entry is tried from the machine
+    /// that holds it against the daemon it is for. One line per machine, role and project:
+    /// accepted, or refused with the reason. Exits non-zero if any is refused. `token pair`
+    /// runs the same check as its last step. With no options it checks everything.
+    Check {
+        /// Machines holding the entries (default: this one and every `[machines]` entry).
+        #[arg(long, value_delimiter = ',')]
+        machines: Vec<String>,
+        /// Projects to check (default: every project on a selected machine).
+        #[arg(long, value_delimiter = ',')]
+        projects: Vec<String>,
+        /// Roles to check (default: every token role). For role tokens only.
+        #[arg(long, value_delimiter = ',')]
+        roles: Vec<String>,
+        /// Token types: `role`, `peer` (default: both).
+        #[arg(long, value_delimiter = ',')]
+        tokens: Vec<crate::token_pair::TokenType>,
+        /// Print the results as a JSON array.
+        #[arg(long)]
+        json: bool,
+    },
     /// Helper for `token pair`: list this machine's project daemons as `<project> <port>`.
     #[command(hide = true)]
     PairProjects,

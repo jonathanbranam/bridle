@@ -243,14 +243,86 @@ struct Tally {
     lines: Vec<String>,
 }
 
-/// Runs the pairing. Returns whether everything went through (the exit code is non-zero
-/// otherwise). Err is a usage problem found before anything ran.
-pub fn pair(
+/// What the options select: the reachable machines with their project daemons. Shared by
+/// `pair` and `check`, so the two walk the same entries.
+struct Plan {
+    do_role: bool,
+    do_peer: bool,
+    roles: Vec<&'static str>,
+    /// machine -> its projects (name, port)
+    up: BTreeMap<String, Vec<(String, u16)>>,
+    /// (machine, project) pairs that left peer tokens out (`[mail] peers = false`).
+    no_peers: BTreeSet<(String, String)>,
+    /// False when a machine was unreachable.
+    ok: bool,
+}
+
+/// A role entry a holder keeps for one project's daemon.
+struct RoleEntry<'a> {
+    daemon: &'a str,
+    project: &'a str,
+    port: u16,
+    role: &'static str,
+    same: bool,
+}
+
+impl Plan {
+    fn role_entries(&self, holder: &str) -> Vec<RoleEntry<'_>> {
+        let mut v = Vec::new();
+        for (daemon, projects) in &self.up {
+            for (project, port) in projects {
+                for role in &self.roles {
+                    let remote_only = TOKEN_ROLES.iter().any(|r| r.name == *role && r.remote_only);
+                    let same = holder == daemon;
+                    if remote_only && same {
+                        continue;
+                    }
+                    v.push(RoleEntry {
+                        daemon,
+                        project,
+                        port: *port,
+                        role,
+                        same,
+                    });
+                }
+            }
+        }
+        v
+    }
+
+    /// The (daemon, project) pairs `holder` needs a peer token for.
+    fn peer_entries(&self, holder: &str) -> Vec<(&str, &str)> {
+        let senders: Vec<&String> = self.up[holder]
+            .iter()
+            .map(|(p, _)| p)
+            .filter(|p| !self.no_peers.contains(&(holder.to_string(), (*p).clone())))
+            .collect();
+        let mut v = Vec::new();
+        if senders.is_empty() {
+            return v;
+        }
+        for (daemon, projects) in &self.up {
+            for (project, _) in projects {
+                if self.no_peers.contains(&(daemon.clone(), project.clone())) {
+                    continue;
+                }
+                // A project's only sender being itself needs no token.
+                if daemon == holder && senders.len() == 1 && senders[0] == project {
+                    continue;
+                }
+                v.push((daemon.as_str(), project.as_str()));
+            }
+        }
+        v
+    }
+}
+
+fn plan(
     opts: &Options,
     fleet: &Fleet,
     runner: &dyn Runner,
     out: &mut dyn Write,
-) -> Result<bool, String> {
+) -> Result<Plan, String> {
     let tokens: Vec<TokenType> = if opts.tokens.is_empty() {
         vec![TokenType::Role, TokenType::Peer]
     } else {
@@ -291,7 +363,7 @@ pub fn pair(
             return Err(format!("host '{host}' in [machines] is not a plain name"));
         }
     }
-    let roles: Vec<&str> = TOKEN_ROLES
+    let roles: Vec<&'static str> = TOKEN_ROLES
         .iter()
         .map(|t| t.name)
         .filter(|n| opts.roles.is_empty() || opts.roles.iter().any(|r| r == n))
@@ -300,7 +372,6 @@ pub fn pair(
     // Each reachable machine and its projects (name, port).
     let mut ok = true;
     let mut up: BTreeMap<String, Vec<(String, u16)>> = BTreeMap::new();
-    // (machine, project) pairs that left peer tokens out (`[mail] peers = false`).
     let mut no_peers: BTreeSet<(String, String)> = BTreeSet::new();
     for m in &machines {
         let mut found: Vec<(String, u16)> = Vec::new();
@@ -330,6 +401,18 @@ pub fn pair(
             }
         }
         found.retain(|(p, _)| opts.projects.is_empty() || opts.projects.contains(p));
+        found.retain(|(p, _)| {
+            let good = plain(p);
+            if !good {
+                writeln!(
+                    out,
+                    "machine {m}: project '{p}' is not a plain name, skipped"
+                )
+                .ok();
+                ok = false;
+            }
+            good
+        });
         found.sort();
         up.insert(m.clone(), found);
     }
@@ -341,38 +424,42 @@ pub fn pair(
         }
     }
 
-    for holder in up.keys().filter(|_| do_role) {
+    Ok(Plan {
+        do_role,
+        do_peer,
+        roles,
+        up,
+        no_peers,
+        ok,
+    })
+}
+
+/// Runs the pairing. Returns whether everything went through (the exit code is non-zero
+/// otherwise). Err is a usage problem found before anything ran.
+pub fn pair(
+    opts: &Options,
+    fleet: &Fleet,
+    runner: &dyn Runner,
+    out: &mut dyn Write,
+) -> Result<bool, String> {
+    let p = plan(opts, fleet, runner, out)?;
+    let mut ok = p.ok;
+    let up = &p.up;
+    for holder in up.keys().filter(|_| p.do_role) {
         let mut t = Tally::default();
-        for (daemon, projects) in &up {
-            for (project, port) in projects {
-                if !plain(project) {
-                    t.failed += 1;
-                    t.lines
-                        .push(format!("project '{project}' is not a plain name"));
-                    continue;
+        for e in p.role_entries(holder) {
+            let label = format!("{} -> {}/{}", e.role, e.daemon, e.project);
+            let home = (!e.same).then(|| home_for(&up[holder], e.project, e.role));
+            match one(opts, fleet, runner, holder, &e, home) {
+                Ok(Outcome::Kept) => t.kept += 1,
+                Ok(Outcome::Minted) => t.minted += 1,
+                Ok(Outcome::Would) => {
+                    t.would += 1;
+                    t.lines.push(format!("would mint: {label}"));
                 }
-                for role in &roles {
-                    let remote_only = TOKEN_ROLES.iter().any(|r| r.name == *role && r.remote_only);
-                    let same = holder == daemon;
-                    if remote_only && same {
-                        continue;
-                    }
-                    let label = format!("{role} -> {daemon}/{project}");
-                    let home = (!same).then(|| home_for(&up[holder], project, role));
-                    match one(
-                        opts, fleet, runner, holder, daemon, project, *port, role, home,
-                    ) {
-                        Ok(Outcome::Kept) => t.kept += 1,
-                        Ok(Outcome::Minted) => t.minted += 1,
-                        Ok(Outcome::Would) => {
-                            t.would += 1;
-                            t.lines.push(format!("would mint: {label}"));
-                        }
-                        Err(e) => {
-                            t.failed += 1;
-                            t.lines.push(format!("failed: {label}: {e}"));
-                        }
-                    }
+                Err(e) => {
+                    t.failed += 1;
+                    t.lines.push(format!("failed: {label}: {e}"));
                 }
             }
         }
@@ -384,48 +471,25 @@ pub fn pair(
 
     // Peer tokens: a daemon forwards mail with a token the receiving daemon minted for the
     // sending MACHINE, so each machine with a sending project needs one per receiving project.
-    for holder in up.keys().filter(|_| do_peer) {
-        let senders: Vec<&String> = up[holder]
-            .iter()
-            .map(|(p, _)| p)
-            .filter(|p| !no_peers.contains(&(holder.clone(), (*p).clone())))
-            .collect();
+    for holder in up.keys().filter(|_| p.do_peer) {
         let mut t = Tally::default();
-        for (daemon, projects) in &up {
-            for (project, _) in projects {
-                if no_peers.contains(&(daemon.clone(), project.clone())) {
-                    continue;
-                }
-                // A project's only sender being itself needs no token.
-                if daemon == holder && senders.len() == 1 && senders[0] == project {
-                    continue;
-                }
-                if senders.is_empty() {
-                    continue;
-                }
-                if !plain(project) {
-                    t.failed += 1;
+        for (daemon, project) in p.peer_entries(holder) {
+            let label = format!("{holder} -> {daemon}/{project}");
+            match peer_one(opts, fleet, runner, holder, daemon, project) {
+                Ok(Outcome::Kept) => t.kept += 1,
+                Ok(Outcome::Minted) => {
+                    t.minted += 1;
                     t.lines
-                        .push(format!("project '{project}' is not a plain name"));
-                    continue;
+                        .push(format!("peer: minted on the receiver for {label}"));
                 }
-                let label = format!("{holder} -> {daemon}/{project}");
-                match peer_one(opts, fleet, runner, holder, daemon, project) {
-                    Ok(Outcome::Kept) => t.kept += 1,
-                    Ok(Outcome::Minted) => {
-                        t.minted += 1;
-                        t.lines
-                            .push(format!("peer: minted on the receiver for {label}"));
-                    }
-                    Ok(Outcome::Would) => {
-                        t.would += 1;
-                        t.lines
-                            .push(format!("peer: would mint on the receiver for {label}"));
-                    }
-                    Err(e) => {
-                        t.failed += 1;
-                        t.lines.push(format!("failed: peer {label}: {e}"));
-                    }
+                Ok(Outcome::Would) => {
+                    t.would += 1;
+                    t.lines
+                        .push(format!("peer: would mint on the receiver for {label}"));
+                }
+                Err(e) => {
+                    t.failed += 1;
+                    t.lines.push(format!("failed: peer {label}: {e}"));
                 }
             }
         }
@@ -435,6 +499,13 @@ pub fn pair(
         if t.minted + t.kept + t.would + t.failed > 0 {
             report(out, opts, holder, "peer", &t);
         }
+    }
+    // The last word: every entry, checked from its holder against its daemon, whatever the
+    // steps above believed (br-su62).
+    if !opts.dry_run {
+        let results = check_entries(&p, fleet, runner);
+        write_check(out, &results, false);
+        ok &= results.iter().all(|r| r.refused.is_none());
     }
     Ok(ok)
 }
@@ -467,25 +538,8 @@ fn peer_one(
 ) -> Result<Outcome, String> {
     let holder_at = fleet.at(holder);
     let daemon_at = fleet.at(daemon);
-    if !opts.rotate {
-        let held = runner
-            .run(
-                &holder_at,
-                &args(&["--project", project, "token", "pair-peer-held"]),
-                None,
-            )
-            .is_ok();
-        let live = held
-            && runner
-                .run(
-                    &daemon_at,
-                    &args(&["--project", project, "token", "pair-peer-active", holder]),
-                    None,
-                )
-                .is_ok();
-        if live {
-            return Ok(Outcome::Kept);
-        }
+    if !opts.rotate && check_peer(fleet, runner, holder, daemon, project).is_ok() {
+        return Ok(Outcome::Kept);
     }
     if opts.dry_run {
         return Ok(Outcome::Would);
@@ -537,39 +591,159 @@ enum Outcome {
     Would,
 }
 
-#[allow(clippy::too_many_arguments)]
-fn one(
-    opts: &Options,
+/// Asks `holder` whether its entry for the role works against the daemon it is for. The
+/// holder judges its own entry, so no token leaves it. The error is the reason it is refused.
+fn check_role(
+    fleet: &Fleet,
+    runner: &dyn Runner,
+    holder: &str,
+    e: &RoleEntry,
+) -> Result<(), String> {
+    let mut a = args(&["--project", e.project]);
+    // A token held for another machine's daemon is a visitor there, and has a home.
+    if !e.same {
+        let host = fleet
+            .hosts
+            .get(e.daemon)
+            .ok_or_else(|| format!("machine {} has no host in [machines]", e.daemon))?;
+        a.extend(args(&["--url", &format!("http://{host}:{}", e.port)]));
+    }
+    a.extend(args(&["token", "pair-check", e.role]));
+    if !e.same {
+        a.extend(args(&["--machine", e.daemon]));
+    }
+    runner.run(&fleet.at(holder), &a, None).map(|_| ())
+}
+
+/// Whether `holder` holds a peer entry for `project` and `daemon` has a live token for it.
+fn check_peer(
     fleet: &Fleet,
     runner: &dyn Runner,
     holder: &str,
     daemon: &str,
     project: &str,
-    port: u16,
-    role: &str,
+) -> Result<(), String> {
+    runner
+        .run(
+            &fleet.at(holder),
+            &args(&["--project", project, "token", "pair-peer-held"]),
+            None,
+        )
+        .map_err(|e| format!("holder: {e}"))?;
+    runner
+        .run(
+            &fleet.at(daemon),
+            &args(&["--project", project, "token", "pair-peer-active", holder]),
+            None,
+        )
+        .map(|_| ())
+        .map_err(|e| format!("daemon: {e}"))
+}
+
+/// One checked entry; `refused` holds the reason.
+struct Checked {
+    holder: String,
+    /// A role name, or `peer`.
+    kind: String,
+    daemon: String,
+    project: String,
+    refused: Option<String>,
+}
+
+fn check_entries(p: &Plan, fleet: &Fleet, runner: &dyn Runner) -> Vec<Checked> {
+    let mut v = Vec::new();
+    for holder in p.up.keys() {
+        if p.do_role {
+            for e in p.role_entries(holder) {
+                v.push(Checked {
+                    holder: holder.clone(),
+                    kind: e.role.to_string(),
+                    daemon: e.daemon.to_string(),
+                    project: e.project.to_string(),
+                    refused: check_role(fleet, runner, holder, &e).err(),
+                });
+            }
+        }
+        if p.do_peer {
+            for (daemon, project) in p.peer_entries(holder) {
+                v.push(Checked {
+                    holder: holder.clone(),
+                    kind: "peer".into(),
+                    daemon: daemon.to_string(),
+                    project: project.to_string(),
+                    refused: check_peer(fleet, runner, holder, daemon, project).err(),
+                });
+            }
+        }
+    }
+    v
+}
+
+fn write_check(out: &mut dyn Write, results: &[Checked], json: bool) {
+    if json {
+        let v: Vec<serde_json::Value> = results
+            .iter()
+            .map(|r| {
+                serde_json::json!({
+                    "machine": r.holder,
+                    "role": r.kind,
+                    "daemon": r.daemon,
+                    "project": r.project,
+                    "accepted": r.refused.is_none(),
+                    "reason": r.refused,
+                })
+            })
+            .collect();
+        writeln!(out, "{}", serde_json::Value::Array(v)).ok();
+        return;
+    }
+    for r in results {
+        let verdict = match &r.refused {
+            None => "accepted".to_string(),
+            Some(why) => format!("refused: {}", why.trim()),
+        };
+        writeln!(
+            out,
+            "check {} {} -> {}/{}: {verdict}",
+            r.holder, r.kind, r.daemon, r.project
+        )
+        .ok();
+    }
+}
+
+/// `bridle token check`: read-only. Returns whether every selected entry is accepted.
+pub fn check(
+    opts: &Options,
+    fleet: &Fleet,
+    runner: &dyn Runner,
+    out: &mut dyn Write,
+    json: bool,
+) -> Result<bool, String> {
+    // In JSON mode the plan's own notes (an unreachable machine) go to stderr, not the document.
+    let p = if json {
+        plan(opts, fleet, runner, &mut std::io::stderr())?
+    } else {
+        plan(opts, fleet, runner, out)?
+    };
+    let results = check_entries(&p, fleet, runner);
+    write_check(out, &results, json);
+    Ok(p.ok && results.iter().all(|r| r.refused.is_none()))
+}
+
+fn one(
+    opts: &Options,
+    fleet: &Fleet,
+    runner: &dyn Runner,
+    holder: &str,
+    e: &RoleEntry,
     home: Option<String>,
 ) -> Result<Outcome, String> {
+    let (daemon, project, role) = (e.daemon, e.project, e.role);
     let holder_at = fleet.at(holder);
     let daemon_at = fleet.at(daemon);
-    // A token held for another machine's daemon is a visitor there, and has a home.
-    let same = home.is_none();
-    if !opts.rotate {
-        // The holder judges its own entry against the daemon, so no token leaves it.
-        let mut a = args(&["--project", project]);
-        if !same {
-            let host = fleet
-                .hosts
-                .get(daemon)
-                .ok_or_else(|| format!("machine {daemon} has no host in [machines]"))?;
-            a.extend(args(&["--url", &format!("http://{host}:{port}")]));
-        }
-        a.extend(args(&["token", "pair-check", role]));
-        if !same {
-            a.extend(args(&["--machine", daemon]));
-        }
-        if runner.run(&holder_at, &a, None).is_ok() {
-            return Ok(Outcome::Kept);
-        }
+    let same = e.same;
+    if !opts.rotate && check_role(fleet, runner, holder, e).is_ok() {
+        return Ok(Outcome::Kept);
     }
     if opts.dry_run {
         return Ok(Outcome::Would);
@@ -622,6 +796,8 @@ mod tests {
         /// (daemon machine, receiving project, sending machine) -> live peer token
         peer: RefCell<HashMap<(String, String, String), String>>,
         n: RefCell<u32>,
+        /// The daemon turns the orchestrator's token away although it minted it (br-nbgp).
+        refuse_after_mint: bool,
         /// token -> the home it was minted with (visitor tokens only)
         homes: RefCell<HashMap<String, Option<String>>>,
     }
@@ -677,6 +853,7 @@ mod tests {
                     let visitor_ok = !val("--machine").is_some()
                         || self.homes.borrow().get(tok).is_some_and(Option::is_some);
                     if visitor_ok
+                        && !(self.refuse_after_mint && a[i + 2] == ORCHESTRATOR)
                         && valid
                             .get(&(daemon, project))
                             .is_some_and(|s| s.contains(tok))
@@ -947,6 +1124,101 @@ mod tests {
             },
         );
         assert!(out.contains("minted 9, kept 0"), "{out}");
+    }
+
+    // br-su62
+    #[test]
+    fn pair_ends_by_checking_every_entry_and_fails_on_a_refusal() {
+        let s = sim();
+        let (ok, out) = run(&s, &Options::default());
+        assert!(ok, "{out}");
+        assert!(
+            out.contains("check mbp orchestrator -> nuc/notes: accepted"),
+            "{out}"
+        );
+        assert!(
+            out.contains("check nuc peer -> mbp/bridle: accepted"),
+            "{out}"
+        );
+        // A refused token the keep check cannot see (the daemon turns it away later): the
+        // final check names it and the run fails.
+        let mut s2 = sim();
+        s2.refuse_after_mint = true;
+        let (ok, out) = run(&s2, &Options::default());
+        assert!(!ok, "{out}");
+        assert!(
+            out.contains("check mbp orchestrator -> nuc/notes: refused: rejected"),
+            "{out}"
+        );
+    }
+
+    #[test]
+    fn a_refused_token_is_reminted_by_a_plain_run() {
+        let s = sim();
+        run(&s, &Options::default());
+        let before = s.creds.borrow()[&(
+            "mbp".into(),
+            "orchestrator".into(),
+            Some("nuc".into()),
+            "notes".into(),
+        )]
+            .clone();
+        s.valid
+            .borrow_mut()
+            .get_mut(&("nuc".into(), "notes".into()))
+            .unwrap()
+            .remove(&before);
+        let (ok, out) = run(&s, &Options::default());
+        assert!(ok, "{out}");
+        let after = s.creds.borrow()[&(
+            "mbp".into(),
+            "orchestrator".into(),
+            Some("nuc".into()),
+            "notes".into(),
+        )]
+            .clone();
+        assert_ne!(before, after);
+    }
+
+    #[test]
+    fn check_is_read_only_and_reports_accepted_refused_and_unreachable() {
+        let s = sim();
+        run(&s, &Options::default());
+        let calls = s.calls.borrow().len();
+        let mut out = Vec::new();
+        assert!(check(&Options::default(), &fleet(), &s, &mut out, false).unwrap());
+        assert!(!String::from_utf8(out).unwrap().contains("refused"));
+        s.valid.borrow_mut().clear();
+        let mut out = Vec::new();
+        assert!(!check(&Options::default(), &fleet(), &s, &mut out, false).unwrap());
+        let text = String::from_utf8(out).unwrap();
+        assert!(
+            text.contains("check mbp advisor -> nuc/notes: refused: rejected"),
+            "{text}"
+        );
+        let mut out = Vec::new();
+        check(&Options::default(), &fleet(), &s, &mut out, true).unwrap();
+        let v: serde_json::Value = serde_json::from_slice(&out).unwrap();
+        assert!(
+            v.as_array()
+                .unwrap()
+                .iter()
+                .any(|e| e["accepted"] == false && e["reason"] == "rejected")
+        );
+        // Nothing but checks ran after the first pairing.
+        assert!(!s.calls.borrow()[calls..].iter().any(|c| {
+            c.iter()
+                .any(|x| x == "pair-mint" || x == "pair-store" || x == "pair-peer-mint")
+        }));
+        let mut s2 = sim();
+        s2.down.push("nuc".into());
+        let mut out = Vec::new();
+        assert!(!check(&Options::default(), &fleet(), &s2, &mut out, false).unwrap());
+        assert!(
+            String::from_utf8(out)
+                .unwrap()
+                .contains("machine nuc: unreachable")
+        );
     }
 
     // s-d9c0

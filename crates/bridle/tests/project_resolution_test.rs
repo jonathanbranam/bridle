@@ -183,6 +183,11 @@ const CLASSES: &[(&str, Kind, &str)] = &[
         Skip,
         "pairs every project on the machines in config.toml; --project is not its input",
     ),
+    (
+        "token check",
+        Skip,
+        "checks every project on the machines in config.toml; --project is not its input",
+    ),
     ("ticket", Daemon, ""),
     ("probe", Daemon, ""),
     ("push", Daemon, ""),
