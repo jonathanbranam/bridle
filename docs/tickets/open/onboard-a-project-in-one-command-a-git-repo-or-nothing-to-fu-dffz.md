@@ -75,8 +75,31 @@ bridle-adopt).
   enough for it to matter". New projects take the next port unused on any machine (29se);
   take-over keeps its bump-on-clash.
 
-## Open for the design
+## For the design (the human, 2026-10-14 ~3:20 PM ET)
 
-- Where the repo comes from for "nothing": `gh repo create`, a given remote, or local only.
-- What else it asks when interactive (aide token, mail; rjd5's "[Y/n]" prompts), `-y` for all.
-- How it reports a step it could not finish, and resumes on the second run.
+Verbatim:
+
+> I don't have gh repo create permissions on my PAT tokens RN, so I think we provide the remote; and yes things to specify or somehow decide:
+>
+> 1. what is the workspace root folder? I prefer slightly shorter so 'my-proj' goes in '~work/my-proj-work/my-proj' is this asked or assumed from the cwd/pwd?
+> 2. the remote (if a brand new project)
+> 3. picking up after a failed step may be difficult, but a goal; it should inspect the state of the system at each point as much as possible
+> 4. I don't mind if there are several commands to run, but they should be sequenced in a meaningful way and should indicate the next command in their output: "to continue setting up, run bridle mail install" or something; IDK; we need a thoughtful design, but in general, if there is an existing bridle setup on the machine, most things should be answered by that setup.
+
+So the design settles:
+
+- **No `gh repo create`**: the human provides the remote for a brand-new project (their PAT
+  can't create repos).
+- **Workspace root**: the human's preferred layout is `~/work/<p>-work/<p>`. Asked, or taken from
+  the current directory, or from this machine's existing projects?
+- **Resuming**: each step inspects the system's real state (config, `bridle/state`, daemon, tokens,
+  mail) and does only what is missing; a second run picks up where the first stopped.
+- **One command or a sequence**: several commands are fine if sequenced meaningfully, each
+  ending with the next one to run ("to continue setting up, run `bridle mail install ...`"). This
+  softens the earlier "one command": `bridle project setup` may be the entry point that runs or
+  names the rest.
+- **Defaults from the machine**: when the machine already has a bridle setup, most answers
+  (workspace root, machine name, peers, mail, ports) come from it; ask only what it can't infer.
+
+Also open: what else it asks when interactive (aide token, mail; rjd5's "[Y/n]" prompts), `-y`
+for all.
