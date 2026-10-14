@@ -2103,3 +2103,4 @@
 {"actor":"system","at":"2026-10-14T21:57:55.919452Z","from":"open","task":"br-29se","to":"pending"}
 {"actor":"agent:manager-2","at":"2026-10-14T22:03:28.734324Z","from":"built","task":"br-g9qm","to":"integrated"}
 {"actor":"human","at":"2026-10-14T22:07:56.284Z","from":"","task":"br-qwd4","to":"pending"}
+{"actor":"external:advisor/wsl2","at":"2026-10-14T22:08:55.945315Z","from":"pending","task":"br-qwd4","to":"open"}
