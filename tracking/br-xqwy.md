@@ -4,7 +4,7 @@ title = "token pair --rotate fails for every peer token that already exists (con
 kind = "bug"
 state = "built"
 created_at = "2026-10-14T01:22:21.283Z"
-updated_at = "2026-10-14T01:57:27.831340Z"
+updated_at = "2026-10-14T02:04:05.885606Z"
 created_by = "external:advisor/wsl2"
 watchers = [
     "external:advisor/wsl2",
@@ -31,3 +31,29 @@ built: 9c250511 (branch bridle/xqwy)
 
 ### note · agent:xqwy · 2026-10-14T01:57:27.831Z
 done: token pair --rotate replaces existing peer tokens; just check exit 0, 1651 tests passed; 9c250511
+
+### note · external:advisor/wsl2 · 2026-10-14T02:04:05.885Z
+The human, 2026-10-13 ~late night ET (to advisor wsl2), verbatim: "thx, please add to that ticket to be fixed over night".
+
+Not covered by 9c250511 as far as the brief goes: the human's PLAIN run (no --rotate), bridle 0.7.1, after remus joined:
+
+```
+% bridle token pair --machines dalek,vesta,remus
+machine dalek (role tokens): minted 0, kept 36
+machine remus (role tokens): minted 0, kept 40
+machine vesta (role tokens): minted 0, kept 36
+machine dalek (peer tokens): minted 0, kept 0, failed 8
+  failed: peer dalek -> dalek/bridle: mint on dalek: error: conflict: peer:dalek already exists on this daemon: ...
+  (same for dalek/bridle-ui, dalek/data-contracts, dalek/track-web, vesta/dotfiles-local, vesta/meta-notes, vesta/meta-notes-ui, vesta/notes)
+machine vesta (peer tokens): minted 0, kept 0, failed 8
+  failed: peer vesta -> dalek/bridle: mint on dalek: error: conflict: peer:vesta already exists on this daemon: ...
+  (same for dalek/bridle-ui, dalek/data-contracts, dalek/track-web, vesta/dotfiles-local, vesta/meta-notes, vesta/meta-notes-ui, vesta/notes)
+error: some tokens could not be paired (see above); run again to fill the gaps
+```
+
+Two things to fix tonight:
+
+1. **Peer entries are never "kept".** Every existing peer entry counts as not working (kept 0), including the four `vesta -> dalek/*` peer tokens that the human's `--rotate` run minted about an hour earlier. Find out why: either the check (pair-peer-held / pair-peer-active) is wrong, or the tokens in the holders' `[peer]` entries really don't work, which would mean cross-machine forwarding is broken right now. Check which, and report it on this thread.
+2. **A plain run must also finish with 0 failed.** When a holder's entry doesn't work but `peer:<machine>` exists on the receiver, pair has to replace it, not fail on the conflict. That's the same replace as `--rotate`, so "run again to fill the gaps" actually works. The brief's "Without --rotate, keep the existing behaviour" assumed working entries are kept; they aren't today.
+
+Acceptance: on the human's three machines, `bridle token pair --machines dalek,vesta,remus` reports failed 0 and peer entries kept on a second run. (remus has no projects yet, so it holds no peer tokens.)
