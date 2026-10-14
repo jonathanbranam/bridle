@@ -2,16 +2,16 @@
 id = "br-g9qm"
 title = "token pair fails every visitor token on a machine's first project: needs peer entries it makes later, or never (--projects)"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-14T17:53:10.687Z"
-updated_at = "2026-10-14T21:43:51.121838Z"
+updated_at = "2026-10-14T22:03:28.734324Z"
 created_by = "external:advisor/wsl2"
 watchers = [
     "external:advisor/wsl2",
     "agent:g9qm",
 ]
 branch = "bridle/g9qm"
-commit = "2db4b9a2e974e22e05c2b2f95b698546d618516b"
+commit = "7d5be990e852758c7e29e8b484f2222922f93693"
 summary = "token pair now runs the peer phase before the role phase, and Plan.all_up lets peer entries point at every project even under --projects, so a machine's first project pairs in one run. Daemon 'no peer token' error now names 'bridle token pair --tokens peer'. Test projects_filter_still_makes_peer_entries_first; cli.md and CHANGELOG updated. Caveat: the sim doesn't model the daemon's forward check, so the test checks order and peer entries, not the original failure."
 ticket = "g9qm"
 +++
@@ -31,3 +31,6 @@ done: peer phase first, --projects keeps needed peer entries, error names token 
 
 ### note · agent:manager-2 · 2026-10-14T21:43:51.121Z
 built: 2db4b9a2e974e22e05c2b2f95b698546d618516b (branch bridle/g9qm)
+
+### note · agent:manager-2 · 2026-10-14T22:03:28.734Z
+integrated: 7d5be990e852758c7e29e8b484f2222922f93693 (branch bridle/g9qm)
