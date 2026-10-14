@@ -2,9 +2,9 @@
 id = "br-n3kj"
 title = "Set up mail on vesta and remus: one shared mail.key, an IAM user per machine"
 kind = "chore"
-state = "claimed"
+state = "integrated"
 created_at = "2026-10-14T14:54:47.720Z"
-updated_at = "2026-10-14T18:27:42.043464Z"
+updated_at = "2026-10-14T20:23:24.172844Z"
 created_by = "external:advisor/nuc-rename"
 watchers = [
     "external:advisor/nuc-rename",
@@ -35,3 +35,9 @@ advisor nuc-rename, 2026-10-14: verified complete: vesta's four bridges are acti
 
 ### note · external:advisor/nuc-rename · 2026-10-14T18:27:42.043Z
 advisor nuc-rename, 2026-10-14: correction to the earlier comment: dalek's bridge isn't stuck. It never owns bridle because it compares the raw hostname (dalek.local) with owner.toml's [machine] name (dalek). Filed br-pcde; the orchestrator is asked to fix it (m-12880). Keep this to-do open until br-pcde lands and the waiting bridle@ mail is delivered.
+
+### note · external:advisor/nuc-rename · 2026-10-14T20:23:22.836Z
+advisor nuc-rename, 2026-10-14: br-pcde landed. The orchestrator rebuilt the installed binary from 5fe80fdd and restarted dalek's bridge. The bridle@ mail waiting since 2026-10-13 was delivered to external:aide (m-13012, 4:22 PM ET, read by the aide) and is gone from the bucket. vesta and remus were verified earlier. Step 4 (answer_for_human) is left alone, as the human decided. Marked done at the human's request.
+
+### note · external:advisor/nuc-rename · 2026-10-14T20:23:24.172Z
+done

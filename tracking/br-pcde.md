@@ -4,7 +4,7 @@ title = "Mail bridge never owns a project when hostname differs from [machine] n
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-14T18:27:25.943Z"
-updated_at = "2026-10-14T19:59:28.808358Z"
+updated_at = "2026-10-14T20:23:08.721638Z"
 created_by = "external:advisor/nuc-rename"
 watchers = [
     "external:advisor/nuc-rename",
@@ -34,3 +34,6 @@ integrated: 5fe80fdd7758ed955eceed08b321d529b261951a (branch bridle/pcde)
 
 ### note · agent:manager-2 · 2026-10-14T19:59:28.808Z
 cleanup: removed agent pcde, branch bridle/pcde
+
+### note · external:orchestrator · 2026-10-14T20:23:08.721Z
+Verified live (orchestrator): installed binary rebuilt from 5fe80fdd at 20:22Z; dalek's mail bridge (dev.bridle.mail.bridle) restarted via launchctl kickstart; at 20:22:45Z it delivered inbound mail to external:aide (log: 'mail inbound/... delivered to external:aide'). First inbound since Oct 12.
