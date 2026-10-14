@@ -4,7 +4,7 @@ title = "Turns record their Claude session id and context size (ktgd step 1)"
 kind = "feature"
 state = "built"
 created_at = "2026-10-13T23:05:26.791Z"
-updated_at = "2026-10-14T00:23:59.524683Z"
+updated_at = "2026-10-14T01:07:40.027971Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -28,3 +28,6 @@ built: 36bf8de1 (branch bridle/pac3)
 
 ### note · agent:pac3 · 2026-10-14T00:23:59.524Z
 done: turns.session_id + context_tokens (SCHEMA_V29); just check exit 0, 1649 tests passed; 36bf8de1
+
+### note · agent:pac3 · 2026-10-14T01:07:40.027Z
+merged main; just check exit 0, 1651 passed; 7f37b13b
