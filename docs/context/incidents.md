@@ -1820,3 +1820,15 @@ battery fell from 99% to 70% in 27 minutes (about 1.1% a minute) with two worker
 - **Category:** `daemon`.
 - **Follow-up:** br-nncj. Also a stale pre-reset usage reading fired a seven_day wake at 07:05Z,
   after the reset (br-2uzx).
+
+## 2026-10-14 10:49Z: meta-notes rejects the orchestrator's token after its v0.7.2 upgrade
+
+- **What happened:** right after vesta's meta-notes daemon self-upgraded to v0.7.2, every call
+  from dalek's orchestrator (`external:orchestrator@dalek`) got "unauthorized: invalid token".
+  dotfiles-local and meta-notes-ui on vesta, upgraded the same hour, still accept theirs.
+- **Impact:** no waiter on meta-notes, so its messages to the orchestrator go unseen until the
+  token is replaced.
+- **Cause:** unknown (the token was replaced or dropped on vesta's side around the upgrade).
+- **Category:** `tokens`.
+- **Follow-up:** the human asked (via aide, m-12575) to run `bridle token pair --projects
+  meta-notes`; a ticket if the cause turns out to be the upgrade.
