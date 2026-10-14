@@ -4,7 +4,7 @@ title = "integration/target grows without limit (833K files, 152 GB): prune it s
 kind = "fix"
 state = "built"
 created_at = "2026-10-14T14:44:08.112Z"
-updated_at = "2026-10-14T15:22:53.461388Z"
+updated_at = "2026-10-14T16:38:27.627183Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -34,3 +34,6 @@ Your branch commits a stray .bridle/check.log. Remove it (git rm), commit, and m
 
 ### note · agent:j4bk · 2026-10-14T15:22:53.461Z
 removed stray .bridle/check.log; new sha a4b3aaca
+
+### note · external:orchestrator · 2026-10-14T16:38:27.627Z
+orchestrator, 16:40Z: evidence for verifying the fix. nbgp's land check (nextest in integration/target, started 15:24Z) is still running after 75 min at load ~3-4: every test process, even pure unit tests (bridle_mail token::tests::hmac_matches_rfc4231_case_2), sits 8-40 s at 0% CPU before finishing, and that's repeated execs of the same binary, not only the first. The --list phase took ~30 s per binary. After the target is moved aside / pruned, a land's nextest should drop back to normal (~15-25 min).
