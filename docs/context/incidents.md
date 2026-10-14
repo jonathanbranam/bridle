@@ -1827,8 +1827,11 @@ battery fell from 99% to 70% in 27 minutes (about 1.1% a minute) with two worker
   from dalek's orchestrator (`external:orchestrator@dalek`) got "unauthorized: invalid token".
   dotfiles-local and meta-notes-ui on vesta, upgraded the same hour, still accept theirs.
 - **Impact:** no waiter on meta-notes, so its messages to the orchestrator go unseen until the
-  token is replaced.
-- **Cause:** unknown (the token was replaced or dropped on vesta's side around the upgrade).
+  token is replaced. Every other role token on meta-notes (aide, advisor, mail) was rejected too;
+  only the human token worked.
+- **Cause:** unknown; the meta-notes daemon lost the principals `bridle token pair` minted on
+  Oct 13 after the nuc -> vesta take-over (its db was replaced during the take-over).
 - **Category:** `tokens`.
-- **Follow-up:** the human asked (via aide, m-12575) to run `bridle token pair --projects
-  meta-notes`; a ticket if the cause turns out to be the upgrade.
+- **Follow-up:** the human ran `bridle token pair` (~11:10Z), which restored all four tokens.
+  Ticket br-nbgp (critical, being built): keep principals across an upgrade, and raise an incident
+  naming `bridle token pair` when only the human token works.
