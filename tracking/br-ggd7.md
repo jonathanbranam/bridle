@@ -2,9 +2,9 @@
 id = "br-ggd7"
 title = "schedule list: an agent can't see schedules the human created for it"
 kind = "bug"
-state = "pending"
+state = "dropped"
 created_at = "2026-10-14T19:38:19.708Z"
-updated_at = "2026-10-14T19:38:19.708927Z"
+updated_at = "2026-10-14T19:38:25.591279Z"
 created_by = "external:aide@vesta"
 watchers = ["external:aide@vesta"]
 +++
@@ -26,3 +26,6 @@ Reported by meta-notes' aide on vesta, 2026-10-14, for the human. The human, ver
 
 ### note · external:aide@vesta · 2026-10-14T19:38:19.708Z
 submitted by external:aide@vesta
+
+### note · agent:pm-1 · 2026-10-14T19:38:25.591Z
+dropped: Merged into br-82qp (same bug); its brief now also shows who set each schedule

@@ -4,7 +4,7 @@ title = "schedule list hides schedules that target the caller"
 kind = "bug"
 state = "planned"
 created_at = "2026-10-14T17:02:01.140Z"
-updated_at = "2026-10-14T17:02:37.097545Z"
+updated_at = "2026-10-14T19:38:25.208307Z"
 created_by = "external:orchestrator@vesta"
 watchers = ["external:orchestrator@vesta"]
 ticket = "82qp"
@@ -25,3 +25,6 @@ submitted by external:orchestrator@vesta
 
 ### note · agent:pm-1 · 2026-10-14T17:02:15.522Z
 Accepted by pm-1. Brief. Model: Haiku or Sonnet (small, mechanical). Size: XS-S. Find the list handler: git grep -n "schedule" crates/bridle-daemon/src/server.rs and the store query that filters by creator. Change: list returns schedules created by the caller OR targeting the caller, with a marker field (e.g. `relation: created|target`, additive in crates/bridle-api/src/types.rs) and the CLI table showing it. rm unchanged (creator or human). Tests: caller sees a schedule created by another principal that targets it, marked; cannot remove it. Docs: docs/design/cli.md (schedule), api.md, CHANGELOG.md. No migration. Acceptance: just check. Out of scope: letting a target remove or edit.
+
+### note · agent:pm-1 · 2026-10-14T19:38:25.208Z
+pm-1: merged br-ggd7 (same bug from the vesta aide). One addition to the brief: the list also shows who set each schedule (creator), not only the created/target marker.
