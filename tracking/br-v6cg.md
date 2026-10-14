@@ -2,11 +2,14 @@
 id = "br-v6cg"
 title = "Gateway: account usage summed over every project it reaches (ktgd step 3; takes over br-qhsa's merged route)"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-13T23:05:38.482Z"
-updated_at = "2026-10-13T23:06:47.621722Z"
+updated_at = "2026-10-14T09:08:03.107564Z"
 created_by = "external:advisor/product-manager"
-watchers = ["external:advisor/product-manager"]
+watchers = [
+    "external:advisor/product-manager",
+    "agent:v6cg",
+]
 ticket = "v6cg"
 +++
 

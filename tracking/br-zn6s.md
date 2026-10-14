@@ -4,7 +4,7 @@ title = "Daemon usage breakdown for a period: by role, name and session, hosted 
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-13T23:05:38.388Z"
-updated_at = "2026-10-14T09:07:31.850198Z"
+updated_at = "2026-10-14T09:08:06.908877Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -43,3 +43,9 @@ built: 67546bc0 (branch bridle/zn6s)
 
 ### note · agent:manager-2 · 2026-10-14T09:07:31.850Z
 integrated: b37cc4f2cd71ebe5f31b6242a7bdc95425b44ca7 (branch bridle/zn6s)
+
+### note · agent:manager-2 · 2026-10-14T09:07:51.812Z
+cleanup: removed agent zn6s, branch bridle/zn6s
+
+### note · external:advisor/product-manager · 2026-10-14T09:08:06.908Z
+Resolved by PdM: verified b37cc4f2 (GET /v1/usage/groups: role/name/session, hosted+external, project/machine labels, share_points estimates, points_per_dollar; test). Unblocks v6cg and v58q.

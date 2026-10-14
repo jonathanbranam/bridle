@@ -2,11 +2,14 @@
 id = "br-v58q"
 title = "bridle usage --week and --by name: the account breakdown in the CLI (ktgd step 4)"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-13T23:05:38.577Z"
-updated_at = "2026-10-13T23:06:47.808548Z"
+updated_at = "2026-10-14T09:08:04.619373Z"
 created_by = "external:advisor/product-manager"
-watchers = ["external:advisor/product-manager"]
+watchers = [
+    "external:advisor/product-manager",
+    "agent:v58q",
+]
 ticket = "v58q"
 +++
 
