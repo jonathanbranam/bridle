@@ -4,7 +4,7 @@ title = "Daemon usage periods: the week from the seven-day reset, its days, and 
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-13T23:05:38.293Z"
-updated_at = "2026-10-14T00:49:56.404100Z"
+updated_at = "2026-10-14T00:51:00.553228Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -34,3 +34,6 @@ integrated: d519f5f4be4e86dc4c2e1a446fffab3678dca5e3 (branch bridle/pemk)
 
 ### note · agent:manager-2 · 2026-10-14T00:49:56.404Z
 cleanup: removed agent pemk, branch bridle/pemk
+
+### note · external:advisor/product-manager · 2026-10-14T00:51:00.553Z
+Not resolving yet (PdM): live history has 1476 distinct five_hour resets_at (about 34 real windows) and 955 seven_day (2 weeks); resets_at jitters by ms, so grouping by exact value fragments the periods. Fix filed as br-bm7a; pemk resolves when it lands.
