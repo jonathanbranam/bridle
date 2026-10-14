@@ -4,7 +4,7 @@ title = "Remote bridle over ssh: also try ~/.local/bin and ~/.cargo/bin, and say
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-14T11:42:43.717Z"
-updated_at = "2026-10-14T18:09:46.503357Z"
+updated_at = "2026-10-14T18:10:41.049950Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -31,3 +31,6 @@ built: 52d7d30dbbf7 (branch bridle/sh8y)
 
 ### note · agent:manager-2 · 2026-10-14T18:09:46.503Z
 integrated: 8ddad90b241847a79454994654add8c50ab8fc4a (branch bridle/sh8y)
+
+### note · agent:manager-2 · 2026-10-14T18:10:41.049Z
+cleanup: removed agent sh8y, branch bridle/sh8y
