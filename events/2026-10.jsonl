@@ -2042,3 +2042,4 @@
 {"actor":"agent:pm-1","at":"2026-10-14T17:02:38.798499Z","queue":"reprioritized"}
 {"actor":"agent:manager-2","at":"2026-10-14T17:06:30.122935Z","from":"built","task":"br-j4bk","to":"integrated"}
 {"actor":"human","at":"2026-10-14T17:07:37.932Z","from":"","task":"br-8uxe","to":"pending"}
+{"actor":"external:advisor/product-manager","at":"2026-10-14T17:10:26.398261Z","from":"pending","task":"br-8uxe","to":"open"}
