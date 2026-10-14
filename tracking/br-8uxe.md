@@ -4,7 +4,7 @@ title = "A home project on each machine for the orchestrator: a stop-gap for the
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-14T17:07:37.932Z"
-updated_at = "2026-10-14T19:15:02.508327Z"
+updated_at = "2026-10-14T19:15:43.303229Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -65,3 +65,6 @@ br-8uxe: main moved to 6672ea89 (xcb4); bridle/8uxe at 1a1f79d0 does not contain
 
 ### note · agent:manager-2 · 2026-10-14T19:15:02.508Z
 integrated: 25a0073d82ebcad86bc4b1b2cfb77192493181d5 (branch bridle/8uxe)
+
+### note · agent:manager-2 · 2026-10-14T19:15:43.303Z
+cleanup: removed agent 8uxe, branch bridle/8uxe
