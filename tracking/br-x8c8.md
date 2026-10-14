@@ -4,7 +4,7 @@ title = "Mail to a visitor whose recorded home is this daemon loops back to the 
 kind = "bug"
 state = "built"
 created_at = "2026-10-14T18:15:03.852Z"
-updated_at = "2026-10-14T21:56:23.777433Z"
+updated_at = "2026-10-14T22:09:50.802166Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -31,3 +31,6 @@ done (part 1 only): visitor whose home is this project now gets an error, not a 
 
 ### note · agent:manager-2 · 2026-10-14T21:56:23.777Z
 built: db4dc58c (branch bridle/x8c8)
+
+### note · agent:x8c8 · 2026-10-14T22:09:50.802Z
+done: visitor whose home is this project now errors instead of looping (part 1; part 2 deferred, needs token_pair.rs); check green on 9e0d859e, main merged as db4dc58c
