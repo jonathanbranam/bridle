@@ -1954,3 +1954,4 @@
 {"actor":"agent:pm-1","at":"2026-10-14T01:25:33.564407Z","from":"open","task":"br-5cru","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-14T01:25:35.397817Z","queue":"reprioritized"}
 {"actor":"agent:manager-2","at":"2026-10-14T01:34:28.665249Z","from":"built","task":"br-63nr","to":"integrated"}
+{"actor":"human","at":"2026-10-14T01:46:21.579Z","from":"","task":"br-wfcx","to":"pending"}
