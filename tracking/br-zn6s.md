@@ -2,16 +2,16 @@
 id = "br-zn6s"
 title = "Daemon usage breakdown for a period: by role, name and session, hosted and external together, with share-of-week estimates (ktgd step 2b)"
 kind = "feature"
-state = "built"
+state = "integrated"
 created_at = "2026-10-13T23:05:38.388Z"
-updated_at = "2026-10-14T07:20:06.773851Z"
+updated_at = "2026-10-14T09:07:31.850198Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "agent:zn6s",
 ]
 branch = "bridle/zn6s"
-commit = "67546bc0"
+commit = "b37cc4f2cd71ebe5f31b6242a7bdc95425b44ca7"
 summary = "Added GET /v1/usage/groups?since=&until= (types in bridle-api, client method, daemon route, usage_groups.rs, Store::usage_sessions): a period's cost, tokens and context growth grouped role -> name -> session, hosted turns and external reports together, rows labelled project/machine, share_points per group (cost share x the seven_day points the period gained; labelled an estimate) and measured points_per_dollar. Test: hosted agent with two sessions plus an external session; sums at each level and shares add to the week's points. Docs: api.md, usage-and-budget.md, CHANGELOG. Not merged across machines (a65d); gateway and CLI are v6cg and v58q."
 ticket = "zn6s"
 +++
@@ -40,3 +40,6 @@ summary written on br-zn6s (bridle ticket summary --file); branch bridle/zn6s at
 
 ### note · agent:manager-2 · 2026-10-14T07:20:06.773Z
 built: 67546bc0 (branch bridle/zn6s)
+
+### note · agent:manager-2 · 2026-10-14T09:07:31.850Z
+integrated: b37cc4f2cd71ebe5f31b6242a7bdc95425b44ca7 (branch bridle/zn6s)
