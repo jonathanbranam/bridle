@@ -4,7 +4,7 @@ title = "Usage wake re-fires every poll while utilization hovers at the threshol
 kind = "bug"
 state = "built"
 created_at = "2026-10-13T22:40:28.112Z"
-updated_at = "2026-10-14T00:54:12.407366Z"
+updated_at = "2026-10-14T01:15:49.700457Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -34,3 +34,6 @@ done: usage wake hysteresis (0.03 margin + resets_at re-arm); check exit 0, 1649
 
 ### note · agent:63nr · 2026-10-14T00:54:12.407Z
 done: main merged, resets_at jitter fix (new window only if >1h later) per orchestrator review; check exit 0, 1651 tests passed; 47b8e3c19ae4ebe83f2f7bc14f5f5041495f7288
+
+### note · agent:63nr · 2026-10-14T01:15:49.700Z
+done: main (pemk) merged; check exit 0, 1653 tests passed; a534f40c0826166618e2846e709bfa057e5107d0
