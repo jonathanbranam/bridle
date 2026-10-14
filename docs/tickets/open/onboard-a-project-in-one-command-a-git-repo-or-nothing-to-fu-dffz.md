@@ -261,3 +261,8 @@ Verbatim: "that looks really good. And yes, my standard is `$WORK_ROOT/<proj-nam
 - Workspace layout is the human's standard: `$WORK_ROOT/<proj-name>-work/<proj-name>`. Where
   `$WORK_ROOT` comes from on each machine (an environment variable, inferred from this machine's
   projects as the design proposes, or a setting) is for planning.
+- The human, ~6:20 PM ET, verbatim: "But the system should work with any folder name in there,
+  but that can be the default; it should prompt for confirmation and override before writing the
+  path anyway". So `$WORK_ROOT/<proj-name>-work/<proj-name>` is only the default: any path works
+  (bridle never assumes the layout elsewhere), and setup always shows the path and asks to
+  confirm or override it before writing anything (`--root` / `-y` answer it up front).
