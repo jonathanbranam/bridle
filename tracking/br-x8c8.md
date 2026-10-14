@@ -2,14 +2,16 @@
 id = "br-x8c8"
 title = "Mail to a visitor whose recorded home is this daemon loops back to the sender silently (orchestrator@remus after the move to remus-home)"
 kind = "bug"
-state = "claimed"
+state = "built"
 created_at = "2026-10-14T18:15:03.852Z"
-updated_at = "2026-10-14T21:48:35.428452Z"
+updated_at = "2026-10-14T21:56:23.777433Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "agent:x8c8",
 ]
+branch = "bridle/x8c8"
+commit = "db4dc58c"
 summary = "Part 1 done: forward_to_home (crates/bridle-daemon/src/server.rs) now returns a 400 to the sender when the visitor's recorded home equals this daemon's own project, instead of delivering to the local principal of the same name. Test: mail_for_a_visitor_whose_home_is_this_project_is_refused (tests/outbox_test.rs). Docs: principals.md, add-a-machine.md home-project note, CHANGELOG. Part 2 NOT done: `bridle token pair` keeps a working token with its recorded home (home_for in token_pair.rs uses a fixed per-role home, and a good token is not re-minted), so moving the home on re-pair needs token_pair.rs changes; as the brief says, that is a follow-up ticket to run after br-su62/br-g9qm. There is no `--replace` on `bridle token create`."
 ticket = "x8c8"
 +++
@@ -23,3 +25,9 @@ Brief (pm-1). Model: Sonnet. Size: S-M. The ticket body is the spec. Part 1 (do 
 
 ### note · agent:x8c8 · 2026-10-14T21:48:35.428Z
 Part 1 committed on bridle/x8c8 (guard + test + docs + CHANGELOG, main merged). just check is running, queued behind the machine test lock; will report sha and result to manager-2 when it exits. Part 2 (move home on re-pair) needs token_pair.rs changes: follow-up ticket after br-su62/br-g9qm.
+
+### note · agent:x8c8 · 2026-10-14T21:56:14.321Z
+done (part 1 only): visitor whose home is this project now gets an error, not a loop; test + docs + CHANGELOG + summary written. just check exit 0, 1684 tests run, 0 failed, on 9e0d859e. Then merged main (docs-only, clean, no conflicts) as db4dc58c, not re-checked. Part 2 (move home on re-pair) needs token_pair.rs changes: follow-up ticket after br-su62/br-g9qm.
+
+### note · agent:manager-2 · 2026-10-14T21:56:23.777Z
+built: db4dc58c (branch bridle/x8c8)
