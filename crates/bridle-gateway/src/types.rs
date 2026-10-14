@@ -6,6 +6,7 @@ use std::path::Path;
 
 use ts_rs::{Config, TS};
 
+use crate::account_usage::AccountUsage;
 use crate::actions::{ActionRequest, ActionResult, ReviewRequest, ReviewResult};
 use crate::auth::{Credentials, SessionInfo};
 use crate::discovery::{ProjectStatus, Projects};
@@ -57,6 +58,7 @@ pub fn export_all(dir: &Path) -> Result<(), ts_rs::ExportError> {
     ClaimAgent::export_all(&config)?;
     SystemView::export_all(&config)?;
     AgentList::export_all(&config)?;
+    AccountUsage::export_all(&config)?;
     UsageHistory::export_all(&config)?;
     UsageInstances::export_all(&config)?;
     UsageSeriesView::export_all(&config)?;

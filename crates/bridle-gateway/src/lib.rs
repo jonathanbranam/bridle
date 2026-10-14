@@ -1,6 +1,7 @@
 //! The bridle gateway: one versioned HTTP API (`/api/v1`) for the human's web UI.
 //! See docs/design/human-web-ui.md. It never touches a daemon's start-up path.
 
+pub mod account_usage;
 pub mod actions;
 pub mod auth;
 pub mod collect;
@@ -67,6 +68,7 @@ pub fn router(
             "/projects/{project}/links/resolve",
             post(documents::resolve_links_route),
         )
+        .route("/usage/account", get(account_usage::account_usage_route))
         .route("/projects/{project}/specs", get(specs::specs_route))
         .route("/projects/{project}/review", post(actions::review_route))
         .route("/projects/{project}/system", get(system::system_route))

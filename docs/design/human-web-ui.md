@@ -248,7 +248,19 @@ The limits are account-wide, so the project only picks the daemon.
 `GET .../usage/agents?since=` returns `UsageInstances {project, instances}` (the instances with
 usage, live and removed, latest first) and `GET .../usage/agents/{agent_id}/series?since=&bucket=hour|day`
 returns `UsageSeriesView {project, agent_id, bucket, points}`, each point the usage of one
-bucket (`start`, turns, the four token counts, `cost_usd`, `busy_seconds`; empty buckets absent) (br-xfy7). External sessions are instances too (br-njjt): `external: true`, `agent_id` the identity, and `turns` / `busy_seconds` null (not measured). An unknown project is 404. **Dropped, by building the wire types from an
+bucket (`start`, turns, the four token counts, `cost_usd`, `busy_seconds`; empty buckets absent) (br-xfy7). External sessions are instances too (br-njjt): `external: true`, `agent_id` the identity, and `turns` / `busy_seconds` null (not measured). `GET /api/v1/usage/account?since=&until=` (br-v6cg, ktgd step 3) is the one account-wide usage route (not under a project):
+the gateway asks every daemon it reaches for `/v1/usage/groups` and `/v1/usage/periods` and returns
+`AccountUsage {projects, since, until, total_cost_usd, seven_day_points, points_per_dollar, share_note, roles, periods}`.
+`projects` lists every daemon asked with `reachable` and a `reason`; an unreachable one is listed, never counted
+as zero, and the totals cover the reachable ones only. `roles` is role -> name -> session (`AccountGroup`: `key`,
+`project` and `machine` (null on a rolled-up row that spans several), `turns`, `tokens`, `cost_usd`,
+`context_growth`, `agent_id`, `external`, `children`), summed by key across projects. `share_points` is
+re-estimated over the account's cost (an estimate: cost share x `seven_day_points`), so the shares add up to the
+points. The rate limits are account-wide, so `seven_day_points` (the highest any daemon read) and `periods`
+(weeks with days, real five-hour windows, raw readings; from the first daemon that answers, `null` if none)
+come once, not per project. It always answers 200. The per-project `usage/history` route stays. br-qhsa left
+no merged route in the tree, so this is the first.
+An unknown project is 404. **Dropped, by building the wire types from an
 allow-list:** the principal; the daemon's workspace, repo and URL; an agent's session id, pid,
 cwd, worktree, created_by and message counts; a session's pid, pane and Claude session id. No
 token or credential path is in the daemon's status or agent records. Not built: servers and ports
