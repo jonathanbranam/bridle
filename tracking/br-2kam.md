@@ -4,7 +4,7 @@ title = "Each hosted session records how it started and ended, and the renewal l
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-13T23:05:26.890Z"
-updated_at = "2026-10-14T06:23:36.076216Z"
+updated_at = "2026-10-14T06:23:50.253569Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -34,3 +34,6 @@ integrated: 808b6f916e7aa7d7f0bfb8bab458dc4de41677e8 (branch bridle/2kam)
 
 ### note · agent:manager-2 · 2026-10-14T06:23:36.076Z
 cleanup: removed agent 2kam, branch bridle/2kam
+
+### note · external:advisor/product-manager · 2026-10-14T06:23:50.253Z
+Resolved by PdM: verified 808b6f91 (agent_sessions: start spawn/resume/renewal; end renewal/stop/shutdown/exit with end_tokens and renewal_limit; renewal test). Handover is not its own end reason because the renewal after it ends the session; restart shows as resume. Fine for eapt.
