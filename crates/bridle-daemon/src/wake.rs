@@ -7,7 +7,7 @@
 //! re-derives whatever was queued and undelivered. The rest are states (usage) kept in
 //! memory; each fires once per crossing. `main` moving is not a wake: it needs no decision.
 
-use std::collections::HashSet;
+use std::collections::HashMap;
 use std::sync::{Arc, Mutex as StdMutex};
 use std::time::Duration;
 
@@ -23,6 +23,12 @@ const CURSOR_KEY: &str = "orchestrator_wake_cursor";
 /// The principal the orchestrator's CLI calls act as, and the recipient of its messages.
 pub const ORCHESTRATOR: &str = "external:orchestrator";
 const FIVE_HOUR_WAKE: f64 = 0.93;
+/// `resets_at` jitters by sub-seconds between polls of one window; it counts as a new window only
+/// when it moves later by more than this (windows are 5 h and 7 d).
+const USAGE_NEW_WINDOW_SHIFT: chrono::Duration = chrono::Duration::hours(1);
+/// A fired usage wake re-arms only once utilization falls this far below its limit (or the window
+/// resets), so a reading jittering around the limit is one crossing, not one per poll.
+const USAGE_REARM_MARGIN: f64 = 0.03;
 const SEVEN_DAY_WAKE: f64 = 0.85;
 /// A poll nothing wakes is answered empty after this long.
 pub const POLL_TIMEOUT: Duration = Duration::from_secs(25 * 60);
@@ -271,7 +277,8 @@ struct State {
     pending: Vec<WakeReason>,
     /// Wakes queued since the last tick that haven't been sent home yet.
     unforwarded: Vec<WakeReason>,
-    usage_fired: HashSet<String>,
+    /// Windows whose usage wake has fired, with the `resets_at` of the window it fired in.
+    usage_fired: HashMap<String, Option<DateTime<Utc>>>,
 }
 
 pub struct Wakes {
@@ -505,9 +512,18 @@ impl Wakes {
                 _ => continue,
             };
             let util = rl.utilization.unwrap_or(0.0);
-            if util < limit {
+            if util < limit - USAGE_REARM_MARGIN {
                 st.usage_fired.remove(&rl.window);
-            } else if st.usage_fired.insert(rl.window.clone()) {
+            }
+            let new_window = match (st.usage_fired.get(&rl.window), rl.resets_at) {
+                (Some(Some(fired_in)), Some(now)) => now - *fired_in > USAGE_NEW_WINDOW_SHIFT,
+                _ => false,
+            };
+            if new_window {
+                st.usage_fired.remove(&rl.window);
+            }
+            if util >= limit && !st.usage_fired.contains_key(&rl.window) {
+                st.usage_fired.insert(rl.window.clone(), rl.resets_at);
                 let wake = WakeReason {
                     reason: "usage".to_string(),
                     text: format!("{} usage at {:.0}%", rl.window, util * 100.0),
@@ -802,6 +818,67 @@ mod tests {
         r.reasons(Utc::now()).await;
         r.store.upsert_rate_limit(set(0.95)).await.expect("rl");
         assert_eq!(r.reasons(Utc::now()).await, ["usage"]);
+    }
+
+    #[tokio::test]
+    async fn usage_hovering_at_the_limit_fires_once() {
+        let r = rig().await;
+        let set = |u: f64| RateLimit {
+            window: "seven_day".into(),
+            status: None,
+            utilization: Some(u),
+            resets_at: None,
+            observed_at: Utc::now(),
+        };
+        r.store.upsert_rate_limit(set(0.85)).await.expect("rl");
+        assert_eq!(r.reasons(Utc::now()).await, ["usage"]);
+        for u in [0.849, 0.85, 0.849, 0.85, 0.83] {
+            r.store.upsert_rate_limit(set(u)).await.expect("rl");
+            assert!(r.reasons(Utc::now()).await.is_empty(), "{u}");
+        }
+        // Well below the limit re-arms; the next crossing fires.
+        r.store.upsert_rate_limit(set(0.80)).await.expect("rl");
+        assert!(r.reasons(Utc::now()).await.is_empty());
+        r.store.upsert_rate_limit(set(0.86)).await.expect("rl");
+        assert_eq!(r.reasons(Utc::now()).await, ["usage"]);
+    }
+
+    #[tokio::test]
+    async fn usage_fires_again_in_a_new_window() {
+        let r = rig().await;
+        let set = |u: f64, day: i64| RateLimit {
+            window: "seven_day".into(),
+            status: None,
+            utilization: Some(u),
+            resets_at: Some(Utc::now() + chrono::Duration::days(day)),
+            observed_at: Utc::now(),
+        };
+        let first = set(0.86, 1);
+        r.store.upsert_rate_limit(first.clone()).await.expect("rl");
+        assert_eq!(r.reasons(Utc::now()).await, ["usage"]);
+        r.store.upsert_rate_limit(first).await.expect("rl");
+        assert!(r.reasons(Utc::now()).await.is_empty());
+        r.store.upsert_rate_limit(set(0.86, 8)).await.expect("rl");
+        assert_eq!(r.reasons(Utc::now()).await, ["usage"]);
+    }
+
+    #[tokio::test]
+    async fn usage_stays_silent_when_resets_at_jitters() {
+        let r = rig().await;
+        let base = Utc::now() + chrono::Duration::days(1);
+        let set = |u: f64, ms: i64| RateLimit {
+            window: "seven_day".into(),
+            status: None,
+            utilization: Some(u),
+            resets_at: Some(base + chrono::Duration::milliseconds(ms)),
+            observed_at: Utc::now(),
+        };
+        r.store.upsert_rate_limit(set(0.85, 0)).await.expect("rl");
+        assert_eq!(r.reasons(Utc::now()).await, ["usage"]);
+        for (u, ms) in [(0.849, 484), (0.85, -313), (0.849, 258), (0.85, 441)] {
+            r.store.upsert_rate_limit(set(u, ms)).await.expect("rl");
+            assert!(r.reasons(Utc::now()).await.is_empty(), "{u} {ms}");
+        }
     }
 
     #[tokio::test]

@@ -159,7 +159,7 @@ The conditions in `scripts/orchestrator-watch.sh` move into the daemon:
 | an agent exited unexpectedly, crashed or stalled (events) | the event log, from a per-orchestrator cursor |
 | a question to the human not yet reported | messages, from a cursor of the last reported message |
 | a message to the orchestrator | its inbox: any message with seq past the cursor (no dependence on `--mark-read`) |
-| `five_hour` >= 93% or `seven_day` >= 85% | the usage the governor already polls |
+| `five_hour` >= 93% or `seven_day` >= 85% | the usage the governor already polls; fires once per crossing, re-armed only after a fall 3 points below the limit or a new window (`resets_at` changes) |
 | a budget hold begins | the governor's state change |
 | a failed CI run on main | the `[ci]` watcher's records (no `gh` polling from the session) |
 | context past `CONTEXT_WAKE` | new: 6 below |
