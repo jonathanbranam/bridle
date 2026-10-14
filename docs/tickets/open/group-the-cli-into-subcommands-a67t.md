@@ -78,7 +78,7 @@ with a module per group (no git-style separate binaries), and the churn plan (ol
 hidden aliases for a release, every reference updated in the same change, then the aliases
 dropped).
 
-## No singular and plural pairs (the human, 2026-10-14 ~6:25 PM ET, to advisor product-manager)
+## No singular and plural pairs (the human, 2026-10-14 ~6:20 PM ET, to advisor product-manager)
 
 Verbatim, after br-tmdf proposed `bridle project <verb>` with `bridle projects` kept as a list:
 "we shouldn't have project and projects as CLI commands either really; pick one;" then "We have a
