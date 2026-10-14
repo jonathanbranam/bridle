@@ -2027,3 +2027,6 @@
 {"actor":"external:orchestrator","at":"2026-10-14T14:44:22.145916Z","from":"pending","task":"br-j4bk","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-14T14:44:35.650492Z","from":"open","task":"br-j4bk","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-14T14:44:37.066446Z","queue":"reprioritized"}
+{"actor":"human","at":"2026-10-14T14:54:47.720Z","from":"","task":"br-n3kj","to":"pending"}
+{"actor":"external:advisor/nuc-rename","at":"2026-10-14T14:54:47.846164Z","from":"pending","task":"br-n3kj","to":"open"}
+{"actor":"external:advisor/nuc-rename","at":"2026-10-14T14:54:47.881236Z","from":"open","task":"br-n3kj","to":"planned"}
