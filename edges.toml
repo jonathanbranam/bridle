@@ -3243,3 +3243,15 @@ from = "br-n3kj"
 to = "br-r2nr"
 kind = "related"
 created_at = "2026-10-14T14:55:08.698Z"
+
+[[edge]]
+from = "br-afzu"
+to = "br-3pc2"
+kind = "related"
+created_at = "2026-10-14T15:38:58.292Z"
+
+[[edge]]
+from = "br-afzu"
+to = "br-n3kj"
+kind = "related"
+created_at = "2026-10-14T15:38:58.368Z"
