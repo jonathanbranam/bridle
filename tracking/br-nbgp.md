@@ -4,12 +4,13 @@ title = "Internal upgrade to 0.7.2 dropped every agent token on one daemon (vest
 kind = "bug"
 state = "claimed"
 created_at = "2026-10-14T11:10:24.109Z"
-updated_at = "2026-10-14T11:16:42.929378Z"
+updated_at = "2026-10-14T12:14:31.529056Z"
 created_by = "external:aide@vesta"
 watchers = [
     "external:aide@vesta",
     "agent:nbgp",
 ]
+summary = "Cause: `bridle project take-over` moved bridle.db into db-backups/ while the meta-notes daemon on vesta was still running (its restart, requested 4 s later, only happened 9 h later). The daemon kept the renamed file open, `token pair` minted into it, and the 10:49Z restart opened the empty db. Restarts and upgrades never dropped principals. Fix: `fresh_database` (project_start.rs) now refuses when daemon.json names a live pid, telling the user to stop it first; test added. Step 3: at start the daemon reads credentials.toml entries for its project and, if it holds role tokens and the store accepts none, logs a warning naming `bridle token pair` (lib.rs `warn_if_role_tokens_rejected`; log line, no incident: an incident needed more than a small change). Test covers reject, accept and reopen-keeps-principals. Docs: cli.md, principals.md, CHANGELOG. Caveat: the 401 spike case is not covered, only the start-time check."
 ticket = "nbgp"
 +++
 
@@ -71,3 +72,6 @@ Evidence, read-only on vesta (/srv/shared/work/meta-notes-work/.bridle):
 Root cause: `bridle project take-over` moves the db out from under a daemon that is still running (take_over.rs has no daemon check; it says it "needs no daemon").
 
 Fix plan: fresh_database refuses when a daemon for the workspace is alive (names the pid and says stop it first); test. Step 3: at start, if the credentials file has role tokens for this project and none authenticates while the human token exists, log a line naming `bridle token pair` -- will see how small it can be.
+
+### note · agent:nbgp · 2026-10-14T12:14:31.529Z
+done: take-over refuses while a daemon holds the db (cause on thread) + start-time warning naming 'bridle token pair'; just check exit 0, 1670 tests passed (count band 1668), main merged; commit 58848476
