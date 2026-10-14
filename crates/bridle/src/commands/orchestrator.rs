@@ -255,28 +255,60 @@ pub(super) async fn post_statusline_report(
     token_path: &Path,
     report: &bridle_api::types::StatusLineReport,
 ) {
-    let Some(client) = statusline_client(cwd, env, token_path) else {
-        return;
+    post_statusline_report_via(
+        cwd,
+        env,
+        token_path,
+        report,
+        discovery::machine_fallback_daemon,
+    )
+    .await
+}
+
+/// A session whose cwd is in no bridle project (and no `$BRIDLE_URL`/`$BRIDLE_PROJECT`)
+/// reports to the machine's fallback daemon instead of being dropped (drvx), under an
+/// identity marking it as outside any project. The line's counts never use that daemon.
+async fn post_statusline_report_via(
+    cwd: &Path,
+    env: &impl Env,
+    token_path: &Path,
+    report: &bridle_api::types::StatusLineReport,
+    fallback: impl FnOnce() -> Option<bridle_api::types::DaemonInfo>,
+) {
+    let mut report = report.clone();
+    let client = match statusline_client(cwd, env, token_path) {
+        Some(c) => c,
+        None => {
+            let Some(token) = read_statusline_token(token_path) else {
+                return;
+            };
+            let Some(info) = fallback() else {
+                tracing::debug!("statusline: no bridle daemon to count an outside session");
+                return;
+            };
+            if report.identity.as_deref() == Some("external:unbridled") {
+                report.identity = Some(crate::statusline::OUTSIDE_IDENTITY.to_string());
+            }
+            Client::new_with_timeout(info.url, Some(token), std::time::Duration::from_secs(2))
+        }
     };
-    if let Err(e) = client.report_statusline(report).await {
+    if let Err(e) = client.report_statusline(&report).await {
         tracing::debug!("statusline: posting the session's usage failed: {e}");
     }
 }
 
-fn statusline_client(cwd: &Path, env: &impl Env, token_path: &Path) -> Option<Client> {
-    let token = match std::fs::read_to_string(token_path) {
-        Ok(s) => {
-            let Some(token) = token_from_file(&s) else {
-                tracing::debug!("statusline: token file {} is empty", token_path.display());
-                return None;
-            };
-            token.to_string()
-        }
+fn read_statusline_token(token_path: &Path) -> Option<String> {
+    match std::fs::read_to_string(token_path) {
+        Ok(s) => token_from_file(&s).map(str::to_string),
         Err(e) => {
             tracing::debug!("statusline: no token at {}: {e}", token_path.display());
-            return None;
+            None
         }
-    };
+    }
+}
+
+fn statusline_client(cwd: &Path, env: &impl Env, token_path: &Path) -> Option<Client> {
+    let token = read_statusline_token(token_path)?;
     let endpoint = match discovery::resolve_endpoint(None, None, cwd, env) {
         Ok(e) => e,
         Err(e) => {
@@ -490,7 +522,7 @@ pub(super) async fn handover(cli: &Cli, args: &HandoverArgs) -> Result<(), CliEr
 
 #[cfg(test)]
 mod bridle_counts_tests {
-    use super::{bridle_counts, token_from_file};
+    use super::{bridle_counts, post_statusline_report_via, token_from_file};
 
     #[test]
     fn token_file_with_one_line() {
@@ -539,6 +571,46 @@ mod bridle_counts_tests {
         std::fs::write(&token_path, "tok\n").unwrap();
         let env = |_key: &str| None;
         assert_eq!(bridle_counts(dir.path(), &env, &token_path).await, None);
+    }
+
+    /// drvx: a session outside any project posts to the fallback daemon, as its own bucket.
+    #[tokio::test]
+    async fn outside_session_posts_to_the_fallback_daemon() {
+        use tokio::io::{AsyncReadExt, AsyncWriteExt};
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let url = format!("http://{}", listener.local_addr().unwrap());
+        let server = tokio::spawn(async move {
+            let (mut sock, _) = listener.accept().await.unwrap();
+            let mut buf = vec![0u8; 8192];
+            let n = sock.read(&mut buf).await.unwrap();
+            let _ = sock
+                .write_all(b"HTTP/1.1 200 OK\r\ncontent-length: 2\r\ncontent-type: application/json\r\n\r\n{}")
+                .await;
+            String::from_utf8_lossy(&buf[..n]).into_owned()
+        });
+        let dir = tempfile::tempdir().unwrap();
+        let token_path = dir.path().join("statusline.token");
+        std::fs::write(&token_path, "tok\n").unwrap();
+        let env = |_key: &str| None;
+        let report = bridle_api::types::StatusLineReport {
+            session_id: Some("s1".into()),
+            identity: Some("external:unbridled".into()),
+            ..Default::default()
+        };
+        let info = bridle_api::types::DaemonInfo {
+            project: "p".into(),
+            workspace: "/ws".into(),
+            repo: "/repo".into(),
+            url,
+            pid: 1,
+            started_at: chrono::Utc::now(),
+            version: "0".into(),
+            task_prefix: None,
+        };
+        post_statusline_report_via(dir.path(), &env, &token_path, &report, || Some(info)).await;
+        let request = server.await.unwrap();
+        assert!(request.contains("POST /v1/statusline"), "{request}");
+        assert!(request.contains("outside any project"), "{request}");
     }
 
     #[tokio::test]

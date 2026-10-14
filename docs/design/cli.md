@@ -900,6 +900,8 @@ bridle ticket comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain com
   identity, hd28) are best effort with a 2 s timeout and never fail the line. `bridle usage` lists
   those sessions as "external sessions", apart from the hosted totals, "not measured" where nothing
   was reported ([[docs/design/usage-and-budget#Where bridle can see usage|usage and budget]]).
+  Outside any bridle project the post goes to the machine's fallback daemon (the first live
+  project by name) as `external:unbridled/outside any project`; the counts are skipped there.
 
   If `~/.bridle/statusline.token` holds a token, it also appends a short "N working · M for
   you" from `GET /v1/status` (agents in `working`/`starting`, and `unread_human_messages`) —

@@ -77,7 +77,11 @@ in their own section (grouped by identity, or by role/model with `--by`, and `--
 added to the hosted totals. Scope: each project has its own daemon and database, so this covers
 the sessions whose statusline reached *this* daemon (the project the session works in, found
 from its cwd); a machine-wide or account-wide sum needs every project's `bridle usage`
-added up. Rate-limit windows still go through the same path. Reading Claude Code's own session
+added up. A session outside any bridle project (no daemon found for its cwd, no `$BRIDLE_URL` or
+`$BRIDLE_PROJECT`) is not dropped (drvx): it posts to the machine's fallback daemon, the first
+live project in the registry by name (no setting, so existing machines need no edit), as
+`external:unbridled/outside any project`, its own bucket in that project's `bridle usage`. The
+desktop app and claude.ai stay uncounted. Rate-limit windows still go through the same path. Reading Claude Code's own session
 files is not done.
 
 `bridle usage` (and `GET /v1/usage`) shows per-agent turns, tokens, cost,

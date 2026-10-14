@@ -236,6 +236,19 @@ fn list_registry_in(dir: &Path) -> Vec<DaemonInfo> {
     out
 }
 
+/// The one daemon that counts sessions working outside any bridle project (drvx): the
+/// first live registered project by name, so every such session on the machine reaches the
+/// same database. `None` when no daemon is running.
+pub fn machine_fallback_daemon() -> Option<DaemonInfo> {
+    machine_fallback_daemon_in(&registry_dir())
+}
+
+fn machine_fallback_daemon_in(dir: &Path) -> Option<DaemonInfo> {
+    list_registry_in(dir)
+        .into_iter()
+        .min_by(|a, b| a.project.cmp(&b.project))
+}
+
 /// `kill(pid, 0)`: `ESRCH` means gone, `EPERM` means it exists but is owned
 /// by someone else (treated as alive), anything else is treated as dead.
 fn pid_alive(pid: i32) -> bool {
@@ -712,6 +725,27 @@ mod tests {
         assert_eq!(listed[0].project, "alive-project");
         assert!(!dir.path().join("dead-project.json").exists());
         assert!(dir.path().join("alive-project.json").exists());
+    }
+
+    #[test]
+    fn machine_fallback_is_the_first_live_project_by_name() {
+        let dir = tempdir().unwrap();
+        assert!(machine_fallback_daemon_in(dir.path()).is_none());
+        let pid = std::process::id() as i32;
+        for name in ["zeta", "alpha", "mid"] {
+            write_registry_in(dir.path(), &sample_daemon_info(name, Path::new("/ws"), pid))
+                .unwrap();
+        }
+        // A dead daemon sorting first is skipped.
+        write_registry_in(
+            dir.path(),
+            &sample_daemon_info("aaa-dead", Path::new("/ws"), 999_999),
+        )
+        .unwrap();
+        assert_eq!(
+            machine_fallback_daemon_in(dir.path()).unwrap().project,
+            "alpha"
+        );
     }
 
     #[test]

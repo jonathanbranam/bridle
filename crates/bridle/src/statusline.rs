@@ -86,6 +86,10 @@ pub fn session_identity(bridle_as: Option<&str>, advisor_name: Option<&str>) -> 
     }
 }
 
+/// The identity of an unbridled session whose directory is in no bridle project; its report
+/// goes to the machine's fallback daemon (drvx). Shown as its own bucket in `bridle usage`.
+pub const OUTSIDE_IDENTITY: &str = "external:unbridled/outside any project";
+
 /// `context_window` "describes the live context window from the most recent
 /// API response" (Claude Code's docs, quoted in s8kn): `used_percentage` is
 /// precomputed and already what's wanted for display, so it's used directly
