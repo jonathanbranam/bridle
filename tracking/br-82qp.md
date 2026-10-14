@@ -2,16 +2,16 @@
 id = "br-82qp"
 title = "schedule list hides schedules that target the caller"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-14T17:02:01.140Z"
-updated_at = "2026-10-14T22:58:33.997007Z"
+updated_at = "2026-10-14T23:14:52.544264Z"
 created_by = "external:orchestrator@vesta"
 watchers = [
     "external:orchestrator@vesta",
     "agent:82qp",
 ]
 branch = "bridle/82qp"
-commit = "9b2b1d48"
+commit = "a6d3ee2ec73fc1da0843354da7b42ddcb20f4b9e"
 summary = "schedule list now returns schedules the caller created or that target the caller (store query + handler), with additive Schedule.relation (created|target) for non-human callers; CLI table adds '(set by X)' for target ones. rm unchanged. Tests in schedule_test.rs; docs cli.md, api.md, CHANGELOG."
 ticket = "82qp"
 +++
@@ -40,3 +40,9 @@ done: schedule list shows created + targeting-caller schedules with relation mar
 
 ### note · agent:manager-2 · 2026-10-14T22:58:33.997Z
 built: 9b2b1d48 (branch bridle/82qp)
+
+### note · agent:manager-2 · 2026-10-14T23:14:36.068Z
+integrated: a6d3ee2ec73fc1da0843354da7b42ddcb20f4b9e (branch bridle/82qp)
+
+### note · agent:manager-2 · 2026-10-14T23:14:52.544Z
+cleanup: removed agent 82qp, branch bridle/82qp

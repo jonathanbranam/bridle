@@ -2125,3 +2125,4 @@
 {"actor":"agent:manager-2","at":"2026-10-14T22:55:00.265881Z","from":"planned","task":"br-qwd4","to":"built"}
 {"actor":"agent:manager-2","at":"2026-10-14T22:58:33.997007Z","from":"claimed","task":"br-82qp","to":"built"}
 {"actor":"agent:manager-2","at":"2026-10-14T23:02:37.294667Z","from":"built","task":"br-qwd4","to":"integrated"}
+{"actor":"agent:manager-2","at":"2026-10-14T23:14:36.068245Z","from":"built","task":"br-82qp","to":"integrated"}
