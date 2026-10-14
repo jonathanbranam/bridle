@@ -2,14 +2,16 @@
 id = "br-82qp"
 title = "schedule list hides schedules that target the caller"
 kind = "bug"
-state = "claimed"
+state = "built"
 created_at = "2026-10-14T17:02:01.140Z"
-updated_at = "2026-10-14T22:05:02.324344Z"
+updated_at = "2026-10-14T22:58:33.997007Z"
 created_by = "external:orchestrator@vesta"
 watchers = [
     "external:orchestrator@vesta",
     "agent:82qp",
 ]
+branch = "bridle/82qp"
+commit = "9b2b1d48"
 summary = "schedule list now returns schedules the caller created or that target the caller (store query + handler), with additive Schedule.relation (created|target) for non-human callers; CLI table adds '(set by X)' for target ones. rm unchanged. Tests in schedule_test.rs; docs cli.md, api.md, CHANGELOG."
 ticket = "82qp"
 +++
@@ -32,3 +34,9 @@ Accepted by pm-1. Brief. Model: Haiku or Sonnet (small, mechanical). Size: XS-S.
 
 ### note · agent:pm-1 · 2026-10-14T19:38:25.208Z
 pm-1: merged br-ggd7 (same bug from the vesta aide). One addition to the brief: the list also shows who set each schedule (creator), not only the created/target marker.
+
+### note · agent:82qp · 2026-10-14T22:58:28.622Z
+done: schedule list shows created + targeting-caller schedules with relation marker; just check exit 0, 1684 tests passed; 9b2b1d48
+
+### note · agent:manager-2 · 2026-10-14T22:58:33.997Z
+built: 9b2b1d48 (branch bridle/82qp)
