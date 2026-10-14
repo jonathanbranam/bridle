@@ -210,6 +210,11 @@ project daemon being down cannot report itself: that is the home outbox's unreac
 alert. The `system` kind is additive (older builds read it as `note`) and is never counted as
 the human's unread.
 
+It is also not forwarded when this daemon has an orchestrator of its own (an active
+`external:orchestrator` here): a visiting orchestrator homed on another machine supervises
+nothing here and must not get this daemon's wakes (br-nncj: vesta's orchestrator was receiving
+dalek's).
+
 The old shell scripts are deleted, and with them the
 `~/.bridle-orchestrator-{seen-questions,hold-state,ci-seen,ctx-level,session}` files. The
 role file's watcher step (`workflow/base/roles/orchestrator.md`) becomes: run `bridle

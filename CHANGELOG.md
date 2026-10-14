@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Fix (br-nncj): a daemon no longer forwards its wakes (restarts, exits, usage, context, uptime) to a visiting orchestrator homed on another machine when it has an orchestrator of its own; before, dalek's wakes also reached vesta's orchestrator. Migration: none.
+
 ## [0.7.2] - 2026-10-14
 
 - `bridle usage --week` prints the current week from the reset (days, five-hour windows, peaks, hits), and `bridle usage --by name|session` the role -> name -> session cost tree with share-of-week estimates, hosted and external together; both take `--json` (br-v58q).

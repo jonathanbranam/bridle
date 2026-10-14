@@ -451,12 +451,8 @@ async fn mail_for_a_visitor_is_forwarded_to_its_home_daemon() {
     assert_eq!(inbox_bodies(&p.b, "external:old@m1").await.len(), 1);
 }
 
-/// Slice 5: a wake B raises for the orchestrator (an incident here) is sent home to A as one
-/// `system` message, where the orchestrator's single waiter hears it; B's own wake path still
-/// works.
-#[tokio::test]
-async fn a_wake_on_a_remote_project_is_forwarded_home_once_as_a_system_message() {
-    let p = pair().await;
+/// B holds a visitor `external:orchestrator@m1` whose home is A, and can reach A.
+async fn visiting_orchestrator_on_b(p: &Pair) {
     let a_project = p.a.running.info.project.clone();
     let a_peer =
         p.a.client
@@ -493,6 +489,15 @@ async fn a_wake_on_a_remote_project_is_forwarded_home_once_as_a_system_message()
         })
         .await
         .expect("visitor");
+}
+
+/// Slice 5: a wake B raises for the orchestrator (an incident here) is sent home to A as one
+/// `system` message, where the orchestrator's single waiter hears it; B's own wake path still
+/// works.
+#[tokio::test]
+async fn a_wake_on_a_remote_project_is_forwarded_home_once_as_a_system_message() {
+    let p = pair().await;
+    visiting_orchestrator_on_b(&p).await;
     let orch = p.a.external_client("orchestrator").await;
 
     p.b.client
@@ -542,6 +547,41 @@ async fn a_wake_on_a_remote_project_is_forwarded_home_once_as_a_system_message()
     assert_eq!(again.len(), 1, "{again:?}");
 }
 
+/// br-nncj: a daemon with its own orchestrator keeps its wakes for it; a visiting orchestrator
+/// homed on another machine gets no copy.
+#[tokio::test]
+async fn a_wake_is_not_forwarded_to_a_visiting_orchestrator_when_there_is_a_local_one() {
+    let p = pair().await;
+    visiting_orchestrator_on_b(&p).await;
+    p.b.external_client("orchestrator").await;
+    let orch = p.a.external_client("orchestrator").await;
+
+    p.b.client
+        .new_task(&NewTicketRequest {
+            ticket: None,
+            parent: None,
+            for_human: false,
+            priority: None,
+            components: Vec::new(),
+            title: "the build is red".to_string(),
+            kind: TicketKind::Incident,
+            body: "red".to_string(),
+            size: None,
+        })
+        .await
+        .expect("incident");
+
+    // The wake loop ticks every 10 s; the forwarding test above sees its copy within that.
+    tokio::time::sleep(std::time::Duration::from_secs(15)).await;
+    let got = orch
+        .list_messages(&MessageQuery {
+            to: Some("external:orchestrator".to_string()),
+            ..Default::default()
+        })
+        .await
+        .expect("messages");
+    assert!(got.is_empty(), "{got:?}");
+}
 #[tokio::test]
 async fn the_sender_sees_a_message_queued_then_arrived_then_delivered() {
     let p = pair().await;
