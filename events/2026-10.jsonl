@@ -2072,3 +2072,4 @@
 {"actor":"agent:pm-1","at":"2026-10-14T18:15:16.569444Z","queue":"reprioritized"}
 {"actor":"agent:pm-1","at":"2026-10-14T18:15:56.969400Z","from":"open","task":"br-x8c8","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-14T18:15:59.542093Z","queue":"reprioritized"}
+{"actor":"external:advisor/nuc-rename","at":"2026-10-14T18:19:12.665033Z","from":"claimed","task":"br-r2nr","to":"integrated"}

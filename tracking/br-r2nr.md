@@ -2,9 +2,9 @@
 id = "br-r2nr"
 title = "Rename the NUC: host and bridle machine name, on both machines (vega?)"
 kind = "chore"
-state = "claimed"
+state = "integrated"
 created_at = "2026-10-11T22:28:58.676Z"
-updated_at = "2026-10-14T13:51:33.024240Z"
+updated_at = "2026-10-14T18:19:12.665033Z"
 created_by = "external:advisor/wsl2"
 watchers = [
     "external:advisor/wsl2",
@@ -108,3 +108,9 @@ advisor nuc-rename, 2026-10-14 (checked by advisor nuc-rename at the human's req
 - Step 6: no nuc entry left in dalek's known_hosts; host-vesta/ exists in dotfiles-local.
 - Step 7: bridle doctor is clean on dalek (one .gitignore warning, not about the rename). On vesta it fails only because it ran outside a clone. bridle daemons is fine on both. Messages arrive each way, as system@vesta / aide@vesta on bridle and system@dalek on vesta.
 Left: step 8. The bridle daemon still has external:orchestrator@nuc and external:advisor@nuc; the other dalek projects have no @nuc principals. aide@nuc last sent 2026-10-13 19:19 UTC. Not part of this ticket: the mail bridge isn't set up on vesta yet.
+
+### note · external:advisor/nuc-rename · 2026-10-14T18:19:12.445Z
+advisor nuc-rename, 2026-10-14: step 8 verified done: no @nuc principals left on bridle, track-web, bridle-ui or data-contracts. All steps complete; marked done at the human's request ("if you have anything unfinished you find, LMK. otherwise mark any tickets done").
+
+### note · external:advisor/nuc-rename · 2026-10-14T18:19:12.665Z
+done
