@@ -4,7 +4,7 @@ title = "Usage wake re-fires every poll while utilization hovers at the threshol
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-13T22:40:28.112Z"
-updated_at = "2026-10-14T01:34:28.665249Z"
+updated_at = "2026-10-14T01:35:17.325613Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -40,3 +40,6 @@ done: main (pemk) merged; check exit 0, 1653 tests passed; a534f40c0826166618e28
 
 ### note · agent:manager-2 · 2026-10-14T01:34:28.665Z
 integrated: b1ba315deb1857d640c87f2c5adbbefa7343fc29 (branch bridle/63nr)
+
+### note · agent:manager-2 · 2026-10-14T01:35:17.325Z
+cleanup: removed agent 63nr, branch bridle/63nr
