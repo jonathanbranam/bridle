@@ -4,7 +4,7 @@ title = "Gateway: account usage summed over every project it reaches (ktgd step 
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-13T23:05:38.482Z"
-updated_at = "2026-10-14T17:21:32.395678Z"
+updated_at = "2026-10-14T17:22:22.054287Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -34,3 +34,6 @@ Route for ui-h79b: GET /api/v1/usage/account?since=&until= (RFC 3339). Response 
 
 ### note · agent:manager-2 · 2026-10-14T17:21:32.395Z
 integrated: 8c9a15abc625a6770e1e989c941e0d295345f819 (branch bridle/v6cg)
+
+### note · agent:manager-2 · 2026-10-14T17:22:22.054Z
+cleanup: removed agent v6cg, branch bridle/v6cg
