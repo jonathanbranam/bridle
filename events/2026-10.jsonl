@@ -1966,3 +1966,4 @@
 {"actor":"agent:manager-2","at":"2026-10-14T03:13:36.403520Z","from":"built","task":"br-xqwy","to":"integrated"}
 {"actor":"agent:wfcx","at":"2026-10-14T03:23:37.358459Z","from":"claimed","task":"br-wfcx","to":"built"}
 {"actor":"agent:manager-2","at":"2026-10-14T03:45:58.505465Z","from":"built","task":"br-wfcx","to":"integrated"}
+{"actor":"human","at":"2026-10-14T03:53:28.487Z","from":"","task":"br-5n4f","to":"pending"}
