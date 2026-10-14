@@ -1959,3 +1959,4 @@
 {"actor":"agent:pm-1","at":"2026-10-14T01:47:13.177354Z","from":"open","task":"br-wfcx","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-14T01:47:15.613900Z","queue":"reprioritized"}
 {"actor":"agent:xqwy","at":"2026-10-14T01:57:27.699897Z","from":"claimed","task":"br-xqwy","to":"built"}
+{"actor":"agent:manager-2","at":"2026-10-14T02:21:39.420120Z","from":"built","task":"br-pac3","to":"integrated"}

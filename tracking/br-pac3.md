@@ -2,16 +2,16 @@
 id = "br-pac3"
 title = "Turns record their Claude session id and context size (ktgd step 1)"
 kind = "feature"
-state = "built"
+state = "integrated"
 created_at = "2026-10-13T23:05:26.791Z"
-updated_at = "2026-10-14T01:07:40.027971Z"
+updated_at = "2026-10-14T02:21:39.420120Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "agent:pac3",
 ]
 branch = "bridle/pac3"
-commit = "36bf8de1"
+commit = "acff302c3ea25727b946ec98fa164666878e09ea"
 summary = "Migration SCHEMA_V29 adds nullable turns.session_id and turns.context_tokens (old rows NULL). add_turn_start copies agents.session_id (so a renewed agent's turns split by session); end_turn stores the turn's already-reported context_tokens. No agent is woken. Store test covers two sessions plus context; docs: storage.md, CHANGELOG."
 ticket = "pac3"
 +++
@@ -31,3 +31,6 @@ done: turns.session_id + context_tokens (SCHEMA_V29); just check exit 0, 1649 te
 
 ### note · agent:pac3 · 2026-10-14T01:07:40.027Z
 merged main; just check exit 0, 1651 passed; 7f37b13b
+
+### note · agent:manager-2 · 2026-10-14T02:21:39.420Z
+integrated: acff302c3ea25727b946ec98fa164666878e09ea (branch bridle/pac3)
