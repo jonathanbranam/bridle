@@ -28,7 +28,7 @@ The human, 2026-10-14 (to advisor wsl2), on `[mail] projects`: "this needs to be
 - **`bridle projects sync` spreads `[mail]`** like `[machines]` and `[projects]`: it compares, and with `--apply` fixes, the `[mail]` section, including `projects` (so a project added to `[projects]` is enrolled by the same sync).
 - **A machine without mail is fine.** The opt-out is per machine, not per project: a machine that isn't set up for mail (no AWS credentials, no `mail.key`; `docs/context/mail-on-a-machine.md`) runs no bridges and is not an error. Its projects' mail waits in the bucket and the sender gets the usual "not delivered yet" (`docs/design/mail.md`, "Following the owner").
 
-## Proposal: how a machine says "no mail" (advisor wsl2, for the human's review)
+## Proposal: how a machine says "no mail" (advisor wsl2; the human agreed, below)
 
 `[machine] mail = false` in that machine's `~/.bridle/config.toml`. Default (unset) is `true`.
 
@@ -51,11 +51,18 @@ With mail on but the machine not set up yet (no AWS credentials), `project start
 bridge with the same warning instead of failing the start, matching "if a machine isn't configured
 for mail, that is OK". The warning is what tells the human to either finish the setup or turn it off.
 
+The human, 2026-10-14, on this proposal: "I prefer explicity opt-out. if the machine is set up for
+mail by default, but someone forgot the aws config, that should warn somewhere (but don't overwhelm
+with tons of messages!)". So `[machine] mail = false` is the only opt-out, and the missing-setup
+warning is quiet: one line from `project start` when it skips the bridge, and `bridle doctor`'s
+warning. Nothing in the human's inbox, no message per project or per poll, no repeat on every
+daemon start beyond that one line.
+
 Not proposed: guessing "no mail" from missing AWS credentials alone. It would work, but a
 half-set-up machine and a machine meant to have no mail would look the same, and nothing would
 point at the gap.
 
 Open for the designer:
 
-- (Proposed above, pending the human's review.) How a machine says "no mail" once sync spreads `[mail]` everywhere: the human suggests either "the local machine doesn't have mail configured", "a [mail] option to disable it", or "b/c the aws creds aren't configured". Note that sync would copy `[mail]` onto such a machine, so "no `[mail]` section" alone can't be the signal; a machine-level key (e.g. `[mail] enabled = false`, kept local and not synced) or a check for credentials at `project start` / `mail install` time are the candidates.
+- (Decided above.) How a machine says "no mail" once sync spreads `[mail]` everywhere: the human suggests either "the local machine doesn't have mail configured", "a [mail] option to disable it", or "b/c the aws creds aren't configured". Note that sync would copy `[mail]` onto such a machine, so "no `[mail]` section" alone can't be the signal; a machine-level key (e.g. `[mail] enabled = false`, kept local and not synced) or a check for credentials at `project start` / `mail install` time are the candidates.
 - What `project start` and `mail install` do on such a machine: skip the bridge with a note, not fail the start.
