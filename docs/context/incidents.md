@@ -1878,3 +1878,13 @@ battery fell from 99% to 70% in 27 minutes (about 1.1% a minute) with two worker
   05:44Z, 07:50Z and 12:44Z.
 - **Category:** `upgrade`.
 - **Follow-up:** br-8swr; no new ticket.
+
+## 2026-10-14 19:42Z: CI red on main from a macOS runner that never started
+
+- **What happened:** run 38623812415 on a8f1d5f6 (a ticket-only commit) failed: the macOS job
+  "was not acquired by Runner of type hosted even after multiple attempts" (GitHub arm64 capacity);
+  ubuntu passed. The ci_failed wake fired, and manager-2 (which can't read CI logs) held landing.
+- **Impact:** a false red `main`; landing held a few minutes until the orchestrator read the log.
+- **Cause:** GitHub-hosted macOS runner capacity; nothing in bridle.
+- **Category:** `ci`.
+- **Follow-up:** none (rare; the next push's run decides).
