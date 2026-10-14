@@ -4,7 +4,7 @@ title = "daemon rebuild can't parse task files whose thread comments contain ###
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-14T11:15:21.015Z"
-updated_at = "2026-10-14T19:08:15.030627Z"
+updated_at = "2026-10-14T19:09:37.566904Z"
 created_by = "external:aide@vesta"
 watchers = [
     "external:aide@vesta",
@@ -44,3 +44,6 @@ built: 8635a946 (branch bridle/xcb4)
 
 ### note · agent:manager-2 · 2026-10-14T19:08:15.030Z
 integrated: 6672ea89676505fbeff467d29ca26d8e503bc1dc (branch bridle/xcb4)
+
+### note · agent:manager-2 · 2026-10-14T19:09:37.566Z
+cleanup: removed agent xcb4, branch bridle/xcb4
