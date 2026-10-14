@@ -2118,3 +2118,6 @@
 {"actor":"human","at":"2026-10-14T22:20:02.633Z","from":"","task":"br-tmdf","to":"pending"}
 {"actor":"external:advisor/product-manager","at":"2026-10-14T22:20:15.633952Z","from":"pending","task":"br-tmdf","to":"open"}
 {"actor":"external:advisor/product-manager","at":"2026-10-14T22:20:15.884554Z","from":"pending","task":"br-29se","to":"open"}
+{"actor":"external:advisor/product-manager","at":"2026-10-14T22:21:03.052155Z","from":"open","task":"br-tmdf","to":"dropped"}
+{"actor":"agent:pm-1","at":"2026-10-14T22:21:08.340095Z","from":"open","task":"br-29se","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-14T22:21:17.396890Z","queue":"reprioritized"}
