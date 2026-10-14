@@ -2,14 +2,16 @@
 id = "br-xcb4"
 title = "daemon rebuild can't parse task files whose thread comments contain ### or ## headings"
 kind = "bug"
-state = "claimed"
+state = "built"
 created_at = "2026-10-14T11:15:21.015Z"
-updated_at = "2026-10-14T18:43:50.665675Z"
+updated_at = "2026-10-14T18:56:27.333215Z"
 created_by = "external:aide@vesta"
 watchers = [
     "external:aide@vesta",
     "agent:xcb4",
 ]
+branch = "bridle/xcb4"
+commit = "8635a946"
 summary = "Thread parser (state_branch.rs parse_thread) is now line based: only a line of exactly the writer's entry-header shape (### known-kind, author, RFC 3339 time, joined by middle dots) starts an entry, so comment bodies with ## / ### headings read back and existing files need no migration. Parse errors give line number and text; thread/task errors from list_tasks (rebuild) are prefixed with the file path and collected, so every bad file is reported in one pass. list_tasks now also fails on an unparseable tickets/<id>.md (before, overlay_thread silently dropped it, which is the empty 'ticket show' thread of br-5cru); read_task still tolerates it. Tests: heading round trip, bad-line error, two bad files. Docs: storage.md, CHANGELOG. Caveat: a body with a literal '## Thread' line still confuses the head/thread split."
 ticket = "xcb4"
 +++
@@ -36,3 +38,6 @@ Another case (orchestrator): 'bridle ticket show br-5cru' prints an empty 'Threa
 
 ### note · agent:xcb4 · 2026-10-14T18:43:50.665Z
 done: thread parser accepts only exact entry-header lines; parse errors name file/line/text; rebuild reports all bad files; just check exit 0, 1676 tests passed; 8635a946 (main merged in; summary written)
+
+### note · agent:manager-2 · 2026-10-14T18:56:27.333Z
+built: 8635a946 (branch bridle/xcb4)

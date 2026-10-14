@@ -2,14 +2,16 @@
 id = "br-8uxe"
 title = "A home project on each machine for the orchestrator: a stop-gap for the machine daemon"
 kind = "feature"
-state = "planned"
+state = "built"
 created_at = "2026-10-14T17:07:37.932Z"
-updated_at = "2026-10-14T18:50:17.303496Z"
+updated_at = "2026-10-14T18:56:27.769911Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "agent:8uxe",
 ]
+branch = "bridle/8uxe"
+commit = "1a1f79d0"
 summary = "Docs only, work item 1. The orchestrator runs in its machine's home project <host>-home (dalek-home, vesta-home, remus-home), not in bridle, and senders address --project <host>-home; bridle stays the home until a machine has one. Changed: workflow/base/roles/{orchestrator,advisor,aide,manager}.md, docs/notes/product-manager-trial.md (Context for agents), docs/context/add-a-machine.md (new section 6, The home project: wsl2's tested order, the kf7t serve workaround, token pair twice, mail install, orchestrator restart; order remus, vesta, dalek), CHANGELOG Unreleased. Caveat: a visitor token on another daemon keeps its old home after the orchestrator moves, so mail to external:orchestrator@<host> loops back until x8c8 lands. bridle ticket check reports one pre-existing problem in a resolved ticket (bridle-token-pair-isn-t-one-command-and-done-it-mints-visito-eurm.md, related names br-n7cg, not a ticket); not touched here."
 ticket = "8uxe"
 +++
@@ -54,3 +56,6 @@ Update (8uxe): the earlier just check was killed at its 30-minute limit (exit 14
 
 ### note · agent:8uxe · 2026-10-14T18:50:17.303Z
 done: home-project docs (work item 1) on bridle/8uxe; just check exit 0, 1677 tests run, 1677 passed, 6 skipped; commit 1a1f79d0 (main merged in). Caveat: bridle ticket check still reports a pre-existing problem in a resolved ticket (bridle-token-pair-isn-t-one-command-and-done-it-mints-visito-eurm.md, related br-n7cg not a ticket), not fixed here.
+
+### note · agent:manager-2 · 2026-10-14T18:56:27.769Z
+built: 1a1f79d0 (branch bridle/8uxe)

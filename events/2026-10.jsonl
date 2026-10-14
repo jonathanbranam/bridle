@@ -2075,3 +2075,7 @@
 {"actor":"external:advisor/nuc-rename","at":"2026-10-14T18:19:12.665033Z","from":"claimed","task":"br-r2nr","to":"integrated"}
 {"actor":"human","at":"2026-10-14T18:27:25.943Z","from":"","task":"br-pcde","to":"pending"}
 {"actor":"external:advisor/nuc-rename","at":"2026-10-14T18:27:34.068963Z","from":"pending","task":"br-pcde","to":"open"}
+{"actor":"agent:manager-2","at":"2026-10-14T18:56:27.333215Z","from":"planned","task":"br-xcb4","to":"built"}
+{"actor":"agent:manager-2","at":"2026-10-14T18:56:27.769911Z","from":"planned","task":"br-8uxe","to":"built"}
+{"actor":"agent:pm-1","at":"2026-10-14T18:56:31.171246Z","from":"open","task":"br-pcde","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-14T18:56:35.211446Z","queue":"reprioritized"}
