@@ -3177,3 +3177,9 @@ from = "br-2uzx"
 to = "br-63nr"
 kind = "related"
 created_at = "2026-10-14T10:01:31.070Z"
+
+[[edge]]
+from = "br-xcb4"
+to = "br-nbgp"
+kind = "related"
+created_at = "2026-10-14T11:16:11.796Z"

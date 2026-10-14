@@ -2,9 +2,9 @@
 id = "br-xcb4"
 title = "daemon rebuild can't parse task files whose thread comments contain ### or ## headings"
 kind = "bug"
-state = "pending"
+state = "planned"
 created_at = "2026-10-14T11:15:21.015Z"
-updated_at = "2026-10-14T11:15:34.570599Z"
+updated_at = "2026-10-14T11:16:03.197257Z"
 created_by = "external:aide@vesta"
 watchers = ["external:aide@vesta"]
 ticket = "xcb4"

@@ -2,11 +2,14 @@
 id = "br-nbgp"
 title = "Internal upgrade to 0.7.2 dropped every agent token on one daemon (vesta/meta-notes); only the human token worked"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-14T11:10:24.109Z"
-updated_at = "2026-10-14T11:11:15.433276Z"
+updated_at = "2026-10-14T11:15:51.759264Z"
 created_by = "external:aide@vesta"
-watchers = ["external:aide@vesta"]
+watchers = [
+    "external:aide@vesta",
+    "agent:nbgp",
+]
 ticket = "nbgp"
 +++
 

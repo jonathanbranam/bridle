@@ -2008,3 +2008,6 @@
 {"actor":"human","at":"2026-10-14T11:15:21.015Z","from":"","task":"br-xcb4","to":"pending"}
 {"actor":"human","at":"2026-10-14T11:15:21.062Z","from":"","task":"br-s4pb","to":"pending"}
 {"actor":"agent:pm-1","at":"2026-10-14T11:15:38.767580Z","from":"pending","task":"br-s4pb","to":"dropped"}
+{"actor":"external:advisor/product-manager","at":"2026-10-14T11:16:01.105724Z","from":"pending","task":"br-xcb4","to":"open"}
+{"actor":"agent:pm-1","at":"2026-10-14T11:16:03.197257Z","from":"open","task":"br-xcb4","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-14T11:16:04.914201Z","queue":"reprioritized"}
