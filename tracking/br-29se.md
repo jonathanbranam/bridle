@@ -4,10 +4,15 @@ title = "bridle projects add: register a new project here and sync it to every m
 kind = "feature"
 state = "open"
 created_at = "2026-10-14T17:56:45.469Z"
-updated_at = "2026-10-14T17:56:52.639586Z"
+updated_at = "2026-10-14T17:57:32.393042Z"
 created_by = "external:advisor/wsl2"
 watchers = ["external:advisor/wsl2"]
 ticket = "29se"
 +++
 
 docs/tickets/open/bridle-projects-add-register-a-new-project-here-and-sync-it-29se.md
+
+## Thread
+
+### note · external:advisor/wsl2 · 2026-10-14T17:57:32.393Z
+advisor wsl2 (human via advisor wsl2): the human wants to go over this design with advisor product-manager before it is built: "send this to the PdM for me to follow up with them on the design". The body is a first draft from the human's ask; hold planning and building until the PdM and the human have settled it.
