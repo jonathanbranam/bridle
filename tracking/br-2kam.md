@@ -4,7 +4,7 @@ title = "Each hosted session records how it started and ended, and the renewal l
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-13T23:05:26.890Z"
-updated_at = "2026-10-14T06:22:49.836932Z"
+updated_at = "2026-10-14T06:23:36.076216Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -31,3 +31,6 @@ done: agent_sessions table + writes on start/renew/exit; just check exit 0, 1659
 
 ### note · agent:manager-2 · 2026-10-14T06:22:49.836Z
 integrated: 808b6f916e7aa7d7f0bfb8bab458dc4de41677e8 (branch bridle/2kam)
+
+### note · agent:manager-2 · 2026-10-14T06:23:36.076Z
+cleanup: removed agent 2kam, branch bridle/2kam
