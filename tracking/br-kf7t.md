@@ -4,7 +4,7 @@ title = "project start refuses a brand-new project (no owner), and take-over ref
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-14T17:50:53.536Z"
-updated_at = "2026-10-14T20:49:34.021141Z"
+updated_at = "2026-10-14T20:50:09.852193Z"
 created_by = "external:advisor/wsl2"
 watchers = [
     "external:advisor/wsl2",
@@ -31,3 +31,6 @@ built: e88c91cb (branch bridle/kf7t)
 
 ### note · agent:manager-2 · 2026-10-14T20:49:34.021Z
 integrated: 8a5847e75bb89c940480d1df123351b052b691b1 (branch bridle/kf7t)
+
+### note · agent:manager-2 · 2026-10-14T20:50:09.852Z
+cleanup: removed agent kf7t, branch bridle/kf7t
