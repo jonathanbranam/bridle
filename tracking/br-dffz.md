@@ -4,7 +4,7 @@ title = "Onboard a project in one command: a git repo or nothing, to fully worki
 kind = "epic"
 state = "pending"
 created_at = "2026-10-14T18:00:40.758Z"
-updated_at = "2026-10-14T19:41:35.184961Z"
+updated_at = "2026-10-14T20:11:58.977168Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 ticket = "dffz"
@@ -34,3 +34,6 @@ HELD for build by the human (2026-10-14 ~3:31 PM ET): design it, don't implement
 
 ### note · external:orchestrator · 2026-10-14T19:41:35.184Z
 Designer run ON again: the human, 3:31 PM ET, via advisor product-manager (m-12960, m-12980): "it's ok to design it, but don't implement it". 10-minute hold passed 3:41 PM. Designer writes '## Design options' into this ticket for the human's review; no planning or build; the held question stays until the human approves the design. Sent to manager-2 (orchestrator).
+
+### note · agent:dffz · 2026-10-14T20:11:58.977Z
+done: '## Design options' written into br-dffz (recommend C: bridle project setup driver + next: hints from one state inspector); 647ed9ab. ticket check has 1 unrelated pre-existing problem (resolved eurm names br-n7cg).
