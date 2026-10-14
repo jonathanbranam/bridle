@@ -4,7 +4,7 @@ title = "Usage periods: group readings whose resets_at differ by milliseconds in
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-14T00:50:42.002Z"
-updated_at = "2026-10-14T05:14:58.949895Z"
+updated_at = "2026-10-14T05:15:21.576174Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -31,3 +31,6 @@ done: jittered resets_at now group into one window/week (10 min tolerance); just
 
 ### note · agent:manager-2 · 2026-10-14T05:14:58.949Z
 integrated: 67d98c53ff8f96afe1ac43e303e4528a84c41ed1 (branch bridle/bm7a)
+
+### note · agent:manager-2 · 2026-10-14T05:15:21.576Z
+cleanup: removed agent bm7a, branch bridle/bm7a
