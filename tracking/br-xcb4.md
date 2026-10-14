@@ -4,12 +4,13 @@ title = "daemon rebuild can't parse task files whose thread comments contain ###
 kind = "bug"
 state = "claimed"
 created_at = "2026-10-14T11:15:21.015Z"
-updated_at = "2026-10-14T17:07:37.423738Z"
+updated_at = "2026-10-14T18:43:50.665675Z"
 created_by = "external:aide@vesta"
 watchers = [
     "external:aide@vesta",
     "agent:xcb4",
 ]
+summary = "Thread parser (state_branch.rs parse_thread) is now line based: only a line of exactly the writer's entry-header shape (### known-kind, author, RFC 3339 time, joined by middle dots) starts an entry, so comment bodies with ## / ### headings read back and existing files need no migration. Parse errors give line number and text; thread/task errors from list_tasks (rebuild) are prefixed with the file path and collected, so every bad file is reported in one pass. list_tasks now also fails on an unparseable tickets/<id>.md (before, overlay_thread silently dropped it, which is the empty 'ticket show' thread of br-5cru); read_task still tolerates it. Tests: heading round trip, bad-line error, two bad files. Docs: storage.md, CHANGELOG. Caveat: a body with a literal '## Thread' line still confuses the head/thread split."
 ticket = "xcb4"
 +++
 
@@ -32,3 +33,6 @@ Find the thread parser: git grep -n "malformed thread" crates. Prefer making the
 
 ### note · external:orchestrator · 2026-10-14T11:39:50.289Z
 Another case (orchestrator): 'bridle ticket show br-5cru' prints an empty 'Thread (br-5cru, built):' though tracking/br-5cru.md on bridle/state holds the worker's full design comment, which has ### headings. The product-manager advisor concluded the design was missing because of it.
+
+### note · agent:xcb4 · 2026-10-14T18:43:50.665Z
+done: thread parser accepts only exact entry-header lines; parse errors name file/line/text; rebuild reports all bad files; just check exit 0, 1676 tests passed; 8635a946 (main merged in; summary written)
