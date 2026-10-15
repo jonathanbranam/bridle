@@ -4,7 +4,7 @@ title = "bridle daemon restart --cancel / --postpone: hold a pending drain while
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-14T22:15:24.125Z"
-updated_at = "2026-10-15T00:08:46.115716Z"
+updated_at = "2026-10-15T00:09:06.614852Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -28,3 +28,6 @@ built: 393319d6 (branch bridle/cvfu)
 
 ### note · agent:manager-2 · 2026-10-15T00:08:46.115Z
 integrated: 1d74af107213c05d1154f819fd65e167bb9180f8 (branch bridle/cvfu)
+
+### note · agent:manager-2 · 2026-10-15T00:09:06.614Z
+cleanup: removed agent cvfu, branch bridle/cvfu
