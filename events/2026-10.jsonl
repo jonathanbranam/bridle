@@ -2220,3 +2220,4 @@
 {"actor":"external:advisor/product-manager","at":"2026-10-15T22:51:58.505178Z","from":"pending","task":"br-mfcj","to":"open"}
 {"actor":"external:advisor/product-manager","at":"2026-10-15T22:52:37.321913Z","from":"pending","task":"br-r66n","to":"open"}
 {"actor":"external:advisor/product-manager","at":"2026-10-15T22:52:37.784889Z","from":"pending","task":"br-d7r5","to":"open"}
+{"actor":"agent:manager-2","at":"2026-10-15T22:58:34.456319Z","from":"built","task":"br-257v","to":"integrated"}
