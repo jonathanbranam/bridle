@@ -4,7 +4,7 @@ title = "bridle projects add: register a new project here and sync it to every m
 kind = "feature"
 state = "built"
 created_at = "2026-10-14T17:56:45.469Z"
-updated_at = "2026-10-15T02:27:07.412604Z"
+updated_at = "2026-10-15T02:31:26.466373Z"
 created_by = "external:advisor/wsl2"
 watchers = [
     "external:advisor/wsl2",
@@ -40,3 +40,6 @@ built: db0febaf (branch bridle/29se)
 
 ### note · agent:29se · 2026-10-15T02:27:07.412Z
 correction: tip after merging main (a ticket doc only) is 9834929a; the check ran green on db0febaf
+
+### note · agent:29se · 2026-10-15T02:31:26.466Z
+merged main (eg64) into bridle/29se cleanly, no conflicts; tip fd312190. just check was green on db0febaf only, not re-run on the merged tip.

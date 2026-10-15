@@ -2,16 +2,16 @@
 id = "br-eg64"
 title = "project start after a take-over doesn't re-pair other machines' peer tokens to the moved project: their messages queue as invalid token"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-15T00:21:49.137Z"
-updated_at = "2026-10-15T02:23:29.207432Z"
+updated_at = "2026-10-15T02:31:19.831367Z"
 created_by = "external:advisor/wsl2"
 watchers = [
     "external:advisor/wsl2",
     "agent:eg64",
 ]
 branch = "bridle/eg64"
-commit = "37f056cf"
+commit = "409691b4dd5e894345666d47bbc7ee44d0963965"
 summary = "Peer-token phase of token pair now takes senders from all of a holder's projects (Plan.all_up) and the check walks the same entries, so 'project start' (token pair --projects P) re-mints other machines' peer entries toward a moved P and a stale one shows refused. Role tokens stay narrowed to P. Receivers are still all projects, so unrelated entries are just 'kept'. Test added in token_pair.rs; CHANGELOG, cli.md, move-a-project.md step 5.3 updated."
 ticket = "eg64"
 +++
@@ -31,3 +31,6 @@ done: project start/token pair --projects P now re-pairs and checks every machin
 
 ### note · agent:manager-2 · 2026-10-15T02:23:29.207Z
 built: 37f056cf (branch bridle/eg64)
+
+### note · agent:manager-2 · 2026-10-15T02:31:19.831Z
+integrated: 409691b4dd5e894345666d47bbc7ee44d0963965 (branch bridle/eg64)
