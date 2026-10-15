@@ -2,16 +2,16 @@
 id = "br-tcae"
 title = "Mail bridge runs a stale binary after upgrades, and its digest fails silently on new ticket kinds/states: no digest 10-08 to 10-13"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-14T21:05:25.085Z"
-updated_at = "2026-10-15T01:25:15.242747Z"
+updated_at = "2026-10-15T01:37:40.240272Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
     "agent:tcae",
 ]
 branch = "bridle/tcae"
-commit = "43a2c383"
+commit = "63fa9cc41c8a097975001a7f85ebc8711fd49b37"
 summary = """`bridle mail run` now watches the bridle binary (bridle_gateway::binary_changed, every 30 s): under its launchd/systemd unit it exits non-zero so the unit restarts it onto the new binary, run by hand it execs in place. This covers just install, the build self-upgrade and the release self-upgrade without the daemon touching units (decision: same mechanism as the gateway, not launchctl/systemctl calls from the daemon; the brief's "out of scope: re-exec" was set aside because the ticket allows it and it also covers just install). Digest: a failed tasks() decode no longer aborts the digest; it is sent without tasks and logged once at warn ("mail digest tasks"). Test added in outbound_test.rs. Docs: mail.md, CHANGELOG. Caveat: existing mail units must be restarted once to get the watcher."""
 ticket = "tcae"
 +++
@@ -34,3 +34,9 @@ done: mail run exits/execs onto a replaced binary (covers install + both self-up
 
 ### note · agent:manager-2 · 2026-10-15T01:25:15.242Z
 built: 43a2c383 (branch bridle/tcae)
+
+### note · agent:manager-2 · 2026-10-15T01:37:36.196Z
+integrated: 63fa9cc41c8a097975001a7f85ebc8711fd49b37 (branch bridle/tcae)
+
+### note · agent:manager-2 · 2026-10-15T01:37:40.240Z
+cleanup: removed nothing; kept agent tcae (background job pid 60892)
