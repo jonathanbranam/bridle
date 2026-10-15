@@ -1037,6 +1037,9 @@ async fn local_sha(dir: &Path, branch: &str) -> String {
 pub enum TakeOverOutcome {
     /// `owner.toml` already names this machine; nothing was written.
     AlreadyOwner,
+    /// `owner.toml` names this machine but marks it released (`released`, an RFC 3339 time);
+    /// nothing was written. Not owned now: only the wording differs from `AlreadyOwner`.
+    ReleasedByThisMachine { released: String },
     /// This machine is now the owner, and origin has it.
     Claimed {
         from: Option<String>,
@@ -1085,7 +1088,10 @@ pub async fn take_over_project(
     let owner = read_owner_file(&sb.dir);
     let from = owner.as_ref().map(|o| o.host.clone());
     if from.as_ref().is_some_and(|h| names.contains(h)) {
-        return Ok(TakeOverOutcome::AlreadyOwner);
+        return Ok(match owner.and_then(|o| o.released) {
+            Some(released) => TakeOverOutcome::ReleasedByThisMachine { released },
+            None => TakeOverOutcome::AlreadyOwner,
+        });
     }
     if let Some(o) = owner.filter(|o| o.released.is_none() && !force) {
         return Err(TakeOverError::NotReleased {

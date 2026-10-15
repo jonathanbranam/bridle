@@ -153,6 +153,25 @@ fn a_second_take_over_changes_nothing() {
 }
 
 #[test]
+fn take_over_on_the_machine_that_released_says_released_not_owned() {
+    let w = world();
+    fs::write(
+        w.home.join("config.toml"),
+        "[machine]\nname = \"old-box\"\n\n[projects]\nclone = { machine = \"old-box\", port = 7500 }\n",
+    )
+    .unwrap();
+    let tip = ok(git(&w.origin, &["rev-parse", "bridle/state"]));
+    let out = ok(bridle(&w.home, &w.clone, &["project", "take-over"]));
+    assert!(
+        out.contains("released by this machine (old-box) at 2026-10-09T15:00:00Z"),
+        "{out}"
+    );
+    assert!(out.contains("bridle project start"), "{out}");
+    assert!(!out.contains("already owned"), "{out}");
+    assert_eq!(ok(git(&w.origin, &["rev-parse", "bridle/state"])), tip);
+}
+
+#[test]
 fn a_port_in_use_here_moves_up() {
     let w = world();
     fs::write(

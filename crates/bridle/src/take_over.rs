@@ -66,6 +66,15 @@ pub async fn run(cli: &Cli, args: &TakeOverArgs) -> Result<(), CliError> {
                 names[0]
             );
         }
+        TakeOverOutcome::ReleasedByThisMachine { released } => {
+            let _ = writeln!(
+                out,
+                "{project}: released by this machine ({}) at {released}; it is not owned now. \
+                 To take it back, run `bridle project start` here; to move it, run take-over \
+                 on the new machine.",
+                names[0]
+            );
+        }
         TakeOverOutcome::Claimed { from, main_push } => {
             let _ = writeln!(
                 out,

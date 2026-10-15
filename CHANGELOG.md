@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Fix (br-sy6z): `bridle project take-over` on the machine that released a project now says it was released by this machine and how to take it back (`bridle project start`), not "already owned". Behaviour is unchanged. Migration: none.
 - Fix (br-257v): the mail bridge puts the content of text attachments (`text/*`) into the delivered body under an "Attachment: <name>" line, cut at 100 KB per part; images and other binary parts are still ignored. Migration: none.
 - Fix (br-36a3): role tokens the database rejects now raise an incident notice naming `bridle token pair`, at start and when 401s hit three or more held role tokens within five minutes (once an hour at most). Migration: none.
 - Fix (br-bc37): the mail digest lists the other tickets when one has a kind or state this build doesn't know, and a digest that can't be sent is told to the human (a note, once a day). Migration: none.
