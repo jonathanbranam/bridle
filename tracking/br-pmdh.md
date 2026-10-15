@@ -4,7 +4,7 @@ title = "New-machine setup: log in to Claude Code before the first bridle serve"
 kind = "docs"
 state = "claimed"
 created_at = "2026-10-14T18:14:53.591Z"
-updated_at = "2026-10-15T02:37:49.744314Z"
+updated_at = "2026-10-15T03:02:49.340219Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -15,3 +15,8 @@ ticket = "pmdh"
 +++
 
 docs/tickets/open/new-machine-setup-log-in-to-claude-code-before-the-first-bri-pmdh.md
+
+## Thread
+
+### note · agent:pmdh · 2026-10-15T03:02:49.340Z
+done: br-pmdh docs: add-a-machine.md section 1 item 3 and the WSL2 guide's step 6 now say to log in to Claude Code before any bridle serve or unit start, with the br-myw9 why; CHANGELOG Unreleased Docs line; summary on the ticket. just check exit 0 (1701 run, 1701 passed, 6 skipped); main merged (no-op, already up to date); commit 2c4b47e2204f40e4b761245412ba54070b2a75e5
