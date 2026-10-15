@@ -2,14 +2,17 @@
 id = "br-m38a"
 title = "Mail bridge drops the forwarded part of a forwarded email"
 kind = "bug"
-state = "claimed"
+state = "built"
 created_at = "2026-10-15T13:52:07.944Z"
-updated_at = "2026-10-15T14:04:01.194265Z"
+updated_at = "2026-10-15T14:22:22.613574Z"
 created_by = "external:orchestrator@vesta"
 watchers = [
     "external:orchestrator@vesta",
     "agent:m38a",
 ]
+branch = "bridle/m38a"
+commit = "456dcdaf"
+summary = 'Mail bridge keeps forwards (crates/bridle-mail/src/parse.rs). Root cause for inline forwards: strip_quoted cut at the forwarded "From:/Date:" header block; it now keeps everything from a "Begin forwarded message" / "---------- Forwarded message" line on. All inline text parts are joined (was body_text(0) only). message/rfc822 parts are appended under "---------- Forwarded message ----------" with From/Date/Subject/To and text, and no longer listed as dropped. Tests: 3 new in tests/mail_test.rs. Docs: design/mail.md, CHANGELOG. Not done: text attachments inlined into the body; they already land as files under .bridle/inbox/mail/<id>/ and are listed by path, so inlining is a design change for a follow-up if wanted.'
 ticket = "m38a"
 +++
 
@@ -38,3 +41,9 @@ Scope from the human (via notes' aide on vesta, relayed by orchestrator@vesta), 
 "That attachment, or that forward, looked like a plain forward with an attachment to me ... Should get all forwards and regular email attachments and things that are not images. I understand maybe images don't work right now ... but text-based, text attachments, and forwards should be picked up."
 
 So: all forwards and text attachments; images can wait. Related: br-6gkv (BCC'd mail ignored).
+
+### note · agent:m38a · 2026-10-15T14:22:17.905Z
+done: mail bridge keeps inline + message/rfc822 forwards (just check exit 0, 1711 tests, main already merged); text attachments already land as files, not inlined (see summary); 456dcdaf
+
+### note · agent:manager-2 · 2026-10-15T14:22:22.613Z
+built: 456dcdaf (branch bridle/m38a)
