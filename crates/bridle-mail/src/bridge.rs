@@ -241,7 +241,18 @@ impl Bridge {
         }
         if digest_due(now, self.cfg.digest_time()?, out.sent.last_digest()) {
             let open = out.feed.open_questions().await?;
-            let tasks = out.feed.tasks().await?;
+            // A task list this build can't read (a newer daemon's ticket kind or state) must not
+            // cost the day's digest: send it without the tasks and say why (br-tcae).
+            let tasks = match out.feed.tasks().await {
+                Ok(t) => {
+                    self.failures.ok("mail digest tasks");
+                    t
+                }
+                Err(e) => {
+                    self.failures.failed("mail digest tasks", &e);
+                    Vec::new()
+                }
+            };
             out.mailer
                 .send(digest_mail(
                     &self.project,

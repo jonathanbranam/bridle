@@ -21,6 +21,8 @@ Linux, `sudo loginctl enable-linger <user>`) and never runs them; it refuses to 
 `--force`, and refuses when `[mail]` is missing or invalid or the `mail` token for the project is
 not in `credentials.toml`. `bridle mail uninstall` removes the file and prints the unload command.
 
+Upgrades: `bridle mail run` checks every 30 s whether the `bridle` binary file changed (a `just install`, the daemon's build self-upgrade, or the release self-upgrade all replace it). Under its launchd or systemd unit it then exits non-zero so the unit restarts it onto the new binary; run by hand it execs the new binary in place. The same mechanism as the gateway's. A digest whose task list can't be decoded (a ticket kind or state this build doesn't know) is still sent, without the tasks, and the failure logs once at warn (`mail digest tasks`).
+
 Logging: `bridle mail run` logs to stderr (the service log above) with the `RUST_LOG` filter, info by default. A failure that repeats every poll (`mail poll`, `mail outbound`, or one object) logs once at warn, repeats at debug, and one info line when it clears.
 
 ## Config

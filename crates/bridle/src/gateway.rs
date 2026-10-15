@@ -140,7 +140,7 @@ fn check_interval() -> Duration {
 }
 
 /// Linux appends " (deleted)" to the path of a replaced binary; the new file is at the plain path.
-fn current_exe_path() -> anyhow::Result<PathBuf> {
+pub(crate) fn current_exe_path() -> anyhow::Result<PathBuf> {
     let p = std::env::current_exe().context("locating the bridle binary")?;
     Ok(
         match p.to_str().and_then(|s| s.strip_suffix(" (deleted)")) {

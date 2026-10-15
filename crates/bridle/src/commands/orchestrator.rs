@@ -349,7 +349,7 @@ pub(super) async fn mail_run(cli: &Cli) -> Result<(), CliError> {
     let sent = bridle_mail::Sent::open(&state.join("mail"))?;
     let aide_client = client.clone();
     let sink = std::sync::Arc::new(bridle_mail::ClientSink(client));
-    bridle_mail::Bridge::new(
+    let bridge = bridle_mail::Bridge::new(
         std::sync::Arc::new(store),
         sink.clone(),
         cfg,
@@ -366,10 +366,38 @@ pub(super) async fn mail_run(cli: &Cli) -> Result<(), CliError> {
         feed: sink,
         tokens,
         sent,
-    })
-    .run()
-    .await?;
+    });
+    let exe = crate::gateway::current_exe_path()?;
+    tokio::select! {
+        r = bridge.run() => r?,
+        () = bridle_gateway::binary_changed(&exe, std::time::Duration::from_secs(30)) => {
+            tracing::info!(exe = %exe.display(), "the bridle binary changed; restarting onto it");
+            // Under a unit, exit non-zero so launchd / systemd restart it (the unit restarts
+            // only on a crash); exec in place would leave the new image outside its supervision.
+            if mail_supervised() {
+                return Err(anyhow::anyhow!(
+                    "the bridle binary changed; exiting so the service manager restarts it"
+                )
+                .into());
+            }
+            use std::os::unix::process::CommandExt;
+            let err = std::process::Command::new(&exe)
+                .args(std::env::args_os().skip(1))
+                .exec();
+            return Err(anyhow::anyhow!("exec {} failed: {err}", exe.display()).into());
+        }
+    }
     Ok(())
+}
+
+/// True when this process is a mail unit's own child (launchd label `dev.bridle.mail.*`, or a
+/// systemd `bridle-mail-*.service` cgroup), so exiting non-zero gets it restarted.
+fn mail_supervised() -> bool {
+    std::env::var("XPC_SERVICE_NAME").is_ok_and(|v| v.starts_with("dev.bridle.mail."))
+        || (cfg!(target_os = "linux")
+            && std::env::var_os("INVOCATION_ID").is_some()
+            && std::fs::read_to_string("/proc/self/cgroup")
+                .is_ok_and(|c| c.lines().any(|l| l.contains("/bridle-mail-"))))
 }
 
 async fn fetch_wakes(

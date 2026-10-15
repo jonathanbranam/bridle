@@ -40,6 +40,7 @@ fn task(id: &str, state: &str, claimed_by: Option<&str>) -> Ticket {
 struct FakeFeed {
     messages: Mutex<Vec<Message>>,
     tasks: Mutex<Vec<Ticket>>,
+    tasks_fail: std::sync::atomic::AtomicBool,
 }
 
 #[async_trait]
@@ -51,6 +52,9 @@ impl Feed for FakeFeed {
         Ok(Vec::new())
     }
     async fn tasks(&self) -> anyhow::Result<Vec<Ticket>> {
+        if self.tasks_fail.load(std::sync::atomic::Ordering::SeqCst) {
+            anyhow::bail!("unknown variant `newkind`");
+        }
         Ok(self.tasks.lock().expect("lock").clone())
     }
     async fn open_questions(&self) -> anyhow::Result<Vec<OpenQuestion>> {
@@ -259,6 +263,18 @@ async fn the_digest_goes_once_a_day_at_its_time() {
     ] {
         assert!(digest.body.contains(want), "{want} in {}", digest.body);
     }
+}
+
+#[tokio::test]
+async fn a_task_list_that_fails_to_decode_still_gets_the_digest() {
+    let r = rig();
+    r.feed
+        .tasks_fail
+        .store(true, std::sync::atomic::Ordering::SeqCst);
+    r.bridge.poll_outbound(at(6, 30)).await.expect("poll");
+    let sent = r.mailer.sent();
+    assert_eq!(sent.len(), 1, "the digest went anyway");
+    assert!(sent[0].subject.contains("digest"));
 }
 
 #[test]
