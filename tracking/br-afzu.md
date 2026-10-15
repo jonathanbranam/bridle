@@ -4,7 +4,7 @@ title = "New projects join [mail] projects on every machine by default (opt-out)
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-14T15:38:37.264Z"
-updated_at = "2026-10-15T01:21:02.327296Z"
+updated_at = "2026-10-15T01:21:32.590937Z"
 created_by = "external:advisor/wsl2"
 watchers = [
     "external:advisor/wsl2",
@@ -39,3 +39,6 @@ built: 22130f79 (branch bridle/afzu)
 
 ### note · agent:manager-2 · 2026-10-15T01:21:02.327Z
 integrated: 1a73fd3757675ec615913a55c462f6451594fc73 (branch bridle/afzu)
+
+### note · agent:manager-2 · 2026-10-15T01:21:32.590Z
+cleanup: removed agent afzu, branch bridle/afzu
