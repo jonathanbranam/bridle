@@ -4,12 +4,13 @@ title = "daemon restart --upgrade ignores self_upgrade = release and looks for a
 kind = "bug"
 state = "claimed"
 created_at = "2026-10-15T21:01:32.908Z"
-updated_at = "2026-10-15T22:59:01.778281Z"
+updated_at = "2026-10-15T23:06:35.579451Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:9a7b",
 ]
+summary = "Fix: restart --upgrade under self_upgrade = release now uses the same release lookup as the automatic upgrade (newest_release in server.rs, shared by both) and starts release_upgrade_in_background; the nothing-to-upgrade text names releases. Commit mode unchanged. Tests in upgrade_test.rs; docs: daemon.md, cli.md, CHANGELOG. br-mtdg (manual upgrade builds the project's repo) has no row on this daemon, so I could not check its state; it touches the same commit-mode handler lines."
 ticket = "9a7b"
 +++
 
