@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.7.4] - 2026-10-15
+
 - Fix (br-6gkv): the mail bridge routes a BCC: the project address is also read from the `for <addr>` of `Received` headers, and mail that matches no project is logged (key, from, subject) instead of skipped silently. The stuck object `inbound/lf07te0vv2hu4tvpo8e1pnaqfieg1c5b9kc8ld01` is delivered by running the bridge once after this lands. Migration: none.
 - Fix (br-m38a): the mail bridge keeps forwarded mail: an inline forward ("Begin forwarded message:", "---------- Forwarded message") is no longer cut as quoted history, every inline text part is used, and an attached `message/rfc822` forward is appended to the body with its headers. Text attachments were already saved as files. Migration: none.
 - Docs (br-37hz): the manager role and skill spawn workers and researchers with `--ticket <id>`, so the 10-minute settle hold (br-85hs) applies to them. Migration: none.
