@@ -2,9 +2,9 @@
 id = "br-f8f9"
 title = "The NUC recovers everything on boot (4r3k)"
 kind = "feature"
-state = "pending"
+state = "open"
 created_at = "2026-09-30T12:20:01.124Z"
-updated_at = "2026-10-09T11:04:36.626973Z"
+updated_at = "2026-10-15T01:02:06.008514Z"
 created_by = "external:advisor"
 watchers = [
     "external:advisor",
