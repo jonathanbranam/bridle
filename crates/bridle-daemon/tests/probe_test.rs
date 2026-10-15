@@ -22,6 +22,7 @@ async fn probe_reports_clean_then_the_conflicting_paths() {
     let a = d
         .client
         .spawn(&SpawnRequest {
+            ticket: None,
             components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),

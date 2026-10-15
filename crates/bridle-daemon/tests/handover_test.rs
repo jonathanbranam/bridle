@@ -90,6 +90,7 @@ async fn each_identity_has_its_own_notes() {
     let w = daemon
         .client
         .spawn(&SpawnRequest {
+            ticket: None,
             components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),

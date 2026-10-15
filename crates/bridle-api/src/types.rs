@@ -654,6 +654,10 @@ pub struct SpawnRequest {
     /// (if the spawner has one), else repo-wide.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub components: Vec<String>,
+    /// The ticket this agent is spawned for. The spawn is refused while the
+    /// ticket is inside its settle hold (br-85hs).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ticket: Option<String>,
 }
 
 /// `POST /v1/agents/{id}/resume`.

@@ -85,7 +85,7 @@ fn normalize(cmd: Command) -> Command {
             D::List => Command::Daemons,
         },
         Command::Agent(AgentArgs { action }) => match action {
-            A::Spawn(a) => Command::Spawn(a),
+            A::Spawn(a) => Command::Spawn(*a),
             A::List(a) => Command::Agents(a),
             A::Show(a) => Command::Show(a),
             A::Interrupt(a) => Command::Interrupt(a),

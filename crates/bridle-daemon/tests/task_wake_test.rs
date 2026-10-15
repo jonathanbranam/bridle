@@ -16,6 +16,7 @@ async fn spawn_role(daemon: &support::TestDaemon, role: &str, name: &str) -> Str
     let a = daemon
         .client
         .spawn(&SpawnRequest {
+            ticket: None,
             components: Vec::new(),
             role: role.to_string(),
             name: Some(name.to_string()),

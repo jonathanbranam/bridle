@@ -56,6 +56,7 @@ async fn a_visitor_submits_a_pending_task_and_cannot_ready_plan_or_claim_it() {
     let pm = daemon
         .client
         .spawn(&SpawnRequest {
+            ticket: None,
             components: Vec::new(),
             role: "project-manager".to_string(),
             name: Some("pm".to_string()),

@@ -15,6 +15,7 @@ use support::{
 
 fn spawn_req(name: &str, prompt: Option<&str>, workdir: Workdir) -> SpawnRequest {
     SpawnRequest {
+        ticket: None,
         components: Vec::new(),
         role: "worker".to_string(),
         name: Some(name.to_string()),

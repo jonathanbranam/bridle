@@ -10,6 +10,7 @@ use support::{start_daemon, wait_for_state};
 
 fn req(name: &str, workdir: Workdir) -> SpawnRequest {
     SpawnRequest {
+        ticket: None,
         components: Vec::new(),
         role: "worker".to_string(),
         name: Some(name.to_string()),

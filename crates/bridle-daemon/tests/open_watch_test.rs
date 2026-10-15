@@ -71,6 +71,7 @@ async fn spawn_pm(daemon: &support::TestDaemon) -> String {
     let a = daemon
         .client
         .spawn(&SpawnRequest {
+            ticket: None,
             components: Vec::new(),
             role: "project-manager".to_string(),
             name: Some("pm".to_string()),

@@ -13,6 +13,7 @@ use bridle_daemon::ci::{Gh, Run};
 
 fn worker(prompt: &str) -> SpawnRequest {
     SpawnRequest {
+        ticket: None,
         components: Vec::new(),
         role: "worker".to_string(),
         name: Some("busy".to_string()),

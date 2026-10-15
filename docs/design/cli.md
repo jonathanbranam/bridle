@@ -92,7 +92,7 @@ bridle status                               # daemon, agents, an `outbox <projec
 bridle agent spawn   <role> [--name N] [--prompt TEXT | --prompt-file FILE]
                [--worktree [--base REF] | --in-repo | --cwd PATH] [--model M]
                [--allow-tool TOOL ...] [--env KEY=VALUE ...] [--ignore-budget]
-               [--component ID ...]
+               [--component ID ...] [--ticket ID]   # --ticket: refused while the ticket is settling (br-85hs)
 bridle agents  [--all]
 bridle agent show    <agent>
 bridle send    [--project <other>] <agent|human|role:NAME|external:NAME> [TEXT | --text-file FILE] [--question] [--when now|idle] [--reply-to ID] [--task ID]

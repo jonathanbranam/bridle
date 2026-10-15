@@ -15,6 +15,7 @@ use bridle_api::types::{RestartRequest, SpawnRequest, StopRequest, Workdir};
 async fn a_stop_during_spawn_leaves_no_spawning_flag() {
     let (daemon, _tmp) = support::start_daemon(None).await;
     let req = SpawnRequest {
+        ticket: None,
         components: Vec::new(),
         role: "worker".to_string(),
         name: Some("stopped-early".to_string()),

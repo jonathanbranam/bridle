@@ -43,6 +43,7 @@ async fn spawn_manager(daemon: &support::TestDaemon) -> String {
     let a = daemon
         .client
         .spawn(&SpawnRequest {
+            ticket: None,
             components: Vec::new(),
             role: "manager".to_string(),
             name: Some("mgr".to_string()),

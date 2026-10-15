@@ -1295,6 +1295,11 @@ async fn spawn_agent(
     Json(req): Json<SpawnRequest>,
 ) -> Result<Json<Agent>, ApiError> {
     require_not_worker(&state, &principal).await?;
+    if let Some(ticket) = &req.ticket
+        && principal.id != "human"
+    {
+        state.tasks.require_settled(ticket)?;
+    }
     let mut req = req;
     req.components = if req.components.is_empty() {
         // Default to the spawner's claimed task's scope (components.md).
@@ -2879,6 +2884,9 @@ async fn plan_task(
 ) -> Result<Json<Ticket>, ApiError> {
     require_not_visitor(&principal)?;
     require_incident_owner(&state, &principal, &id)?;
+    if principal.id != "human" {
+        state.tasks.require_settled(&id)?;
+    }
     let from = state.tasks.get_task(&id).map(|t| t.state);
     let task = state.tasks.plan_task(&id, &principal.id).await?;
     if task.kind == bridle_api::types::TicketKind::Incident {

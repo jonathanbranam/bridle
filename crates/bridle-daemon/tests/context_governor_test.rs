@@ -70,6 +70,7 @@ async fn crossing_wind_down_at_sends_handoff_and_renews_once() {
 
     let agent = c
         .spawn(&SpawnRequest {
+            ticket: None,
             components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),
@@ -144,6 +145,7 @@ async fn renew_keeps_turn_costs_non_negative_and_the_total_summing() {
 
     let agent = c
         .spawn(&SpawnRequest {
+            ticket: None,
             components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),
@@ -202,6 +204,7 @@ async fn many_concurrent_crossings_each_renew_exactly_once() {
     for i in 0..N {
         let agent = c
             .spawn(&SpawnRequest {
+                ticket: None,
                 components: Vec::new(),
                 role: "worker".to_string(),
                 name: Some(format!("w{i}")),
@@ -267,6 +270,7 @@ async fn renewal_is_recorded_as_one_session_ending_and_the_next_starting() {
     let c = &daemon.client;
     let agent = c
         .spawn(&SpawnRequest {
+            ticket: None,
             components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),

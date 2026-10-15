@@ -37,6 +37,7 @@ pub(super) async fn spawn(cli: &Cli, args: &SpawnArgs) -> Result<(), CliError> {
         extra_env: args.env.clone(),
         ignore_budget: args.ignore_budget,
         components: args.component.clone(),
+        ticket: args.ticket.clone(),
     };
     let agent = client.spawn(&req).await?;
     print_agent(cli, &agent)

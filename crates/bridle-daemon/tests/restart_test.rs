@@ -148,6 +148,7 @@ async fn resume_on_restart_role_comes_back_after_a_clean_shutdown_then_restart()
     let agent = daemon
         .client
         .spawn(&SpawnRequest {
+            ticket: None,
             components: Vec::new(),
             role: "manager".to_string(),
             name: Some("mgr".to_string()),

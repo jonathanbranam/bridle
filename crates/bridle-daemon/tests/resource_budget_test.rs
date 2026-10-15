@@ -43,6 +43,7 @@ async fn tracker_with_a_live_agent_stays_within_its_interval() {
     daemon
         .client
         .spawn(&SpawnRequest {
+            ticket: None,
             components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),

@@ -155,6 +155,7 @@ const SELF_UPGRADE: &str = "[daemon]\nself_upgrade = true\n";
 
 fn worker(prompt: &str) -> bridle_api::types::SpawnRequest {
     bridle_api::types::SpawnRequest {
+        ticket: None,
         components: Vec::new(),
         role: "worker".to_string(),
         name: Some("w".to_string()),

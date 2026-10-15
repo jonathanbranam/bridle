@@ -12,6 +12,7 @@ async fn spawn(d: &TestDaemon, name: &str) -> String {
     let a = d
         .client
         .spawn(&SpawnRequest {
+            ticket: None,
             components: Vec::new(),
             role: "worker".to_string(),
             name: Some(name.to_string()),

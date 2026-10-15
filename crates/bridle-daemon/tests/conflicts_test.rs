@@ -56,6 +56,7 @@ async fn conflict_opens_once_notifies_the_manager_and_resolves_each_way() {
     let c = &d.client;
     let mgr = c
         .spawn(&SpawnRequest {
+            ticket: None,
             components: Vec::new(),
             role: "manager".to_string(),
             name: Some("mgr".to_string()),

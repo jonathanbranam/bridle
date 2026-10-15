@@ -25,9 +25,13 @@ kinds are recorded but not yet acted on (`parent` doesn't yet close a parent
 when its children close). `ready [--all] [--role]` is built too; `--role` is
 presently a no-op, since tasks don't carry a role field yet.
 
-**Settling.** Every task settles before anyone can start it: `ready`, the queue's startable flag
-and `claim` also require `now >= max(created_at, the human's latest thread entry) + [tasks] settle`
-(default 5m, `0` off), unless a settle-skip note is in the thread. Computed from existing data (no
+**Settling.** Every ticket settles before anyone starts work on it: `ready`, the queue's startable flag,
+`claim`, `plan` and spawning an agent for it (`bridle agent spawn --ticket <id>`: a designer, planner or worker),
+in any state (pending included), require `now >= max(created_at, the human's latest thread entry) + [tasks] settle`
+(default 10m, `0` off), unless a settle-skip note is in the thread. The human's own plan and spawn are not
+held. A refusal, not a queue. The human's "latest thread entry" includes a relay of their words by an agent: a
+comment starting "From the human" or containing "human via " (rule human-via-agent); a plain text match, so a
+heuristic (br-85hs). Computed from existing data (no
 schema change), so old tasks are settled. A human comment, question/answer or title/body edit
 restarts the clock (an edit records a human thread note). The PM can still plan a settling task;
 the human's own to-dos (`--for-human`, claimed at creation) are exempt. `bridle task skip-settle

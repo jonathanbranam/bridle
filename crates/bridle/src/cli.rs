@@ -331,7 +331,7 @@ pub struct AgentArgs {
 #[derive(Debug, Subcommand)]
 pub enum AgentAction {
     /// Spawn a new agent.
-    Spawn(SpawnArgs),
+    Spawn(Box<SpawnArgs>),
     /// List agents.
     List(AgentsArgs),
     /// Show one agent's detail.
@@ -1272,6 +1272,9 @@ pub struct SpawnArgs {
     /// Default: the spawner's claimed task's list.
     #[arg(long = "component", value_name = "ID")]
     pub component: Vec<String>,
+    /// The ticket this agent is for; refused while the ticket is in its settle hold.
+    #[arg(long, value_name = "ID")]
+    pub ticket: Option<String>,
 }
 
 fn parse_env_kv(s: &str) -> Result<(String, String), String> {

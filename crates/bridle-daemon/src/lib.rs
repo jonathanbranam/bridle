@@ -1435,6 +1435,7 @@ async fn run_autostart_and_resume(store: &Store, config: &Config, manager: &Agen
         // By role, not name: a manager named `manager-2` still counts.
         if role.autostart && !agents.iter().any(|a| &a.role == name) {
             let req = SpawnRequest {
+                ticket: None,
                 role: name.clone(),
                 name: Some(name.clone()),
                 prompt: None, // the role's start_prompt

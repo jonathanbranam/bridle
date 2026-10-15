@@ -64,6 +64,7 @@ async fn a_differently_named_manager_suppresses_autostart() {
     let workspace = daemon.workspace.clone();
     let repo = daemon.repo.clone();
     let req = bridle_api::types::SpawnRequest {
+        ticket: None,
         role: "manager".to_string(),
         name: Some("manager-2".to_string()),
         prompt: None,

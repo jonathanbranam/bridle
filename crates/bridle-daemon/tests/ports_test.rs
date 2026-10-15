@@ -103,6 +103,7 @@ async fn an_agents_ports_are_freed_when_it_exits() {
     c.plan_task(&t.id).await.expect("plan");
     let w = c
         .spawn(&SpawnRequest {
+            ticket: None,
             components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),

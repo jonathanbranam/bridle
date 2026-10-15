@@ -84,6 +84,7 @@ async fn spawns_by_role_name_with_no_config() {
     let a = daemon
         .client
         .spawn(&SpawnRequest {
+            ticket: None,
             components: Vec::new(),
             role: "prototyper".to_string(),
             name: Some("proto".to_string()),

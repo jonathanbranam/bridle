@@ -10,6 +10,7 @@ async fn spawn_worker(daemon: &support::TestDaemon, name: &str) -> String {
     let a = daemon
         .client
         .spawn(&SpawnRequest {
+            ticket: None,
             components: Vec::new(),
             role: "worker".to_string(),
             name: Some(name.to_string()),

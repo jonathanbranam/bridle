@@ -9,6 +9,7 @@ use bridle_api::types::{AgentState, MessageQuery, RestartRequest, SpawnRequest, 
 
 fn spawn_req(name: &str, prompt: Option<&str>) -> SpawnRequest {
     SpawnRequest {
+        ticket: None,
         components: Vec::new(),
         role: "worker".to_string(),
         name: Some(name.to_string()),

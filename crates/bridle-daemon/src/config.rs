@@ -2487,7 +2487,7 @@ pub fn restart_entries(home: &Path) -> Result<Vec<RestartEntry>, ConfigError> {
 }
 
 /// The settle period when `[tasks] settle` is unset or invalid.
-const DEFAULT_SETTLE: Duration = Duration::from_secs(5 * 60);
+const DEFAULT_SETTLE: Duration = Duration::from_secs(10 * 60);
 
 /// `[tasks] settle`: a duration string ("5m", "0s") or the integer 0.
 fn parse_settle(v: &toml::Value) -> Result<Duration, String> {
@@ -4589,13 +4589,13 @@ mod tests {
     #[test]
     fn tasks_settle_parses_defaults_and_falls_back_on_a_bad_value() {
         let secs = |t: &str| Config::parse(t).expect("parse").tasks_settle.as_secs();
-        assert_eq!(secs(""), 300);
-        assert_eq!(secs("[tasks]\nsettle = \"10m\"\n"), 600);
+        assert_eq!(secs(""), 600);
+        assert_eq!(secs("[tasks]\nsettle = \"5m\"\n"), 300);
         assert_eq!(secs("[tasks]\nsettle = 0\n"), 0);
         assert_eq!(secs("[tasks]\nsettle = \"0\"\n"), 0);
         for bad in ["\"soon\"", "7", "true"] {
             let cfg = Config::parse(&format!("[tasks]\nsettle = {bad}\n")).expect("still loads");
-            assert_eq!(cfg.tasks_settle.as_secs(), 300);
+            assert_eq!(cfg.tasks_settle.as_secs(), 600);
             let problem = cfg.tasks_settle_problem.expect("problem recorded");
             assert!(problem.contains("[tasks] settle"), "{problem}");
         }

@@ -345,6 +345,7 @@ async fn mail_to_agent_colon_name_reaches_the_agent_across_daemons() {
     let p = pair().await;
     p.b.client
         .spawn(&bridle_api::types::SpawnRequest {
+            ticket: None,
             components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),

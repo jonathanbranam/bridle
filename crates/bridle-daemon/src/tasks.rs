@@ -45,6 +45,14 @@ const HUMAN: &str = "human";
 
 use bridle_api::types::settle_clock_text;
 
+/// A heuristic: an agent's thread entry that carries the human's words
+/// ("From the human, via ..." or "human via <agent>", rule human-via-agent)
+/// restarts the settle clock like the human's own entry. A plain text match.
+fn is_relayed_human_word(body: &str) -> bool {
+    let b = body.to_lowercase();
+    b.starts_with("from the human") || b.contains("human via ")
+}
+
 /// Shape check only: `r-`/`s-`/`g-`/`a-` plus hex digits.
 fn valid_spec_id(id: &str) -> bool {
     id.split_once('-').is_some_and(|(p, hex)| {
@@ -441,13 +449,14 @@ impl TicketManager {
         task
     }
 
-    /// When `task` becomes startable on the settle clock, if that's after
-    /// `now`: `max(created_at, the human's latest thread entry) + settle`,
-    /// unless a skip note is in the thread. Computed from the thread alone,
+    /// When work on `task` (claim, plan, spawn) may start on the settle clock,
+    /// if that's after `now`: `max(created_at, the human's latest thread
+    /// entry) + settle`, unless a skip note is in the thread. The human's
+    /// entries include relays of their words (see [`is_relayed_human_word`]).
+    /// Any state, pending included (br-85hs). Computed from the thread alone,
     /// so old tasks need no migration (ny9u).
     pub fn settle_until(&self, task: &Ticket, now: DateTime<Utc>) -> Option<DateTime<Utc>> {
-        if self.settle.is_zero() || !matches!(task.state, TicketState::Open | TicketState::Planned)
-        {
+        if self.settle.is_zero() {
             return None;
         }
         if task
@@ -460,10 +469,25 @@ impl TicketManager {
         let start = task
             .thread
             .iter()
-            .filter(|e| e.from == HUMAN)
+            .filter(|e| e.from == HUMAN || is_relayed_human_word(&e.body))
             .map(|e| e.at)
             .fold(task.created_at, DateTime::max);
         Some(start + self.settle).filter(|until| *until > now)
+    }
+
+    /// Refuses with the time the hold ends if `id` is still settling: the
+    /// check for work that isn't a claim (planning, spawning an agent for it).
+    pub fn require_settled(&self, id: &str) -> Result<(), TicketError> {
+        let task = self
+            .get_task(id)
+            .ok_or_else(|| TicketError::NotFound(format!("no such task: {id}")))?;
+        match task.settle_until {
+            Some(until) => Err(TicketError::Conflict(format!(
+                "task {id} is settling until {}",
+                settle_clock_text(until)
+            ))),
+            None => Ok(()),
+        }
     }
 
     /// Records that the settle period was skipped, so the task counts as
@@ -3938,6 +3962,27 @@ mod tests {
         let (tm, t, _tmp) = settling(6).await;
         assert!(ready(&tm, &t.id));
         assert!(tm.get_task(&t.id).expect("task").settle_until.is_none());
+    }
+
+    #[tokio::test]
+    async fn a_relayed_human_word_restarts_the_clock_and_a_plain_agent_note_does_not() {
+        let (tm, t, _tmp) = settling(6).await;
+        tm.require_settled(&t.id).expect("settled");
+        tm.note_task(&t.id, &agent(), "fyi, tests pass")
+            .await
+            .expect("agent note");
+        tm.require_settled(&t.id).expect("still settled");
+        tm.note_task(&t.id, &agent(), "human via advisor: keep it in the backlog")
+            .await
+            .expect("relay");
+        let err = tm.require_settled(&t.id).expect_err("held");
+        assert!(err.to_string().contains("settling until"), "{err}");
+
+        let (tm, t, _tmp) = settling(6).await;
+        tm.note_task(&t.id, &agent(), "From the human, via advisor: wait")
+            .await
+            .expect("relay");
+        assert!(tm.require_settled(&t.id).is_err());
     }
 
     #[tokio::test]

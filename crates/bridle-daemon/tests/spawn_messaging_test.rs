@@ -30,6 +30,7 @@ async fn spawn_extra_allowed_tools_grants_a_tool_the_role_lacks() {
     let agent = daemon
         .client
         .spawn(&SpawnRequest {
+            ticket: None,
             components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),
@@ -91,6 +92,7 @@ async fn spawn_extra_env_reaches_only_that_one_process() {
     let agent1 = daemon
         .client
         .spawn(&SpawnRequest {
+            ticket: None,
             components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),
@@ -130,6 +132,7 @@ async fn spawn_extra_env_reaches_only_that_one_process() {
     let agent2 = daemon
         .client
         .spawn(&SpawnRequest {
+            ticket: None,
             components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w2".to_string()),
@@ -170,6 +173,7 @@ async fn spawn_with_prompt_runs_a_turn_and_creates_a_worktree() {
     let agent = daemon
         .client
         .spawn(&SpawnRequest {
+            ticket: None,
             components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),
@@ -245,6 +249,7 @@ async fn spawn_with_prompt_waits_for_the_turn_to_start_before_returning() {
     let agent = daemon
         .client
         .spawn(&SpawnRequest {
+            ticket: None,
             components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),
@@ -286,6 +291,7 @@ async fn spawn_without_a_prompt_returns_promptly_and_stays_idle() {
     let agent = tokio::time::timeout(
         support::HANG_GUARD_TIMEOUT,
         daemon.client.spawn(&SpawnRequest {
+            ticket: None,
             components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),
@@ -316,6 +322,7 @@ async fn spawn_with_a_crashing_first_message_reaches_crashed_state() {
     daemon
         .client
         .spawn(&SpawnRequest {
+            ticket: None,
             components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),
@@ -338,6 +345,7 @@ async fn message_now_mid_turn_folds_into_the_running_turn() {
     let agent = daemon
         .client
         .spawn(&SpawnRequest {
+            ticket: None,
             components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),
@@ -388,6 +396,7 @@ async fn context_tokens_comes_from_get_context_usage_not_turn_usage_sum() {
     let agent = daemon
         .client
         .spawn(&SpawnRequest {
+            ticket: None,
             components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),
@@ -422,6 +431,7 @@ async fn message_idle_is_held_until_the_turn_ends_then_starts_its_own_turn() {
     let agent = daemon
         .client
         .spawn(&SpawnRequest {
+            ticket: None,
             components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),
@@ -472,6 +482,7 @@ async fn human_inbox_receives_agent_messages_and_mark_read_works() {
     let agent = daemon
         .client
         .spawn(&SpawnRequest {
+            ticket: None,
             components: Vec::new(),
             role: "worker".to_string(),
             name: Some("w1".to_string()),
@@ -578,6 +589,7 @@ async fn send_to_role_delivers_to_every_live_agent_with_that_role() {
         let agent = daemon
             .client
             .spawn(&SpawnRequest {
+                ticket: None,
                 components: Vec::new(),
                 role: role.to_string(),
                 name: Some(name.to_string()),

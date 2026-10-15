@@ -8,6 +8,7 @@ use support::start_daemon_verbatim_config;
 
 fn spawn_req(name: &str) -> SpawnRequest {
     SpawnRequest {
+        ticket: None,
         role: "worker".to_string(),
         name: Some(name.to_string()),
         prompt: None,

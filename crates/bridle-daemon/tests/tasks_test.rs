@@ -664,6 +664,7 @@ async fn only_pm_or_human_may_write_the_queue() {
     let manager = daemon
         .client
         .spawn(&SpawnRequest {
+            ticket: None,
             components: Vec::new(),
             role: "manager".to_string(),
             name: Some("mgr".to_string()),
@@ -1111,6 +1112,7 @@ async fn spawn_worker_with_commit_and_prompt(
     let agent = daemon
         .client
         .spawn(&SpawnRequest {
+            ticket: None,
             components: Vec::new(),
             role: "worker".to_string(),
             name: Some(name.to_string()),
@@ -1346,6 +1348,7 @@ async fn status_lists_stopped_agents_whose_branch_has_merged() {
     // No commit of its own: "no work", not "merged", though it is an ancestor of HEAD.
     let empty = c
         .spawn(&SpawnRequest {
+            ticket: None,
             name: Some("empty".to_string()),
             workdir: Some(Workdir::Worktree { base: None }),
             ..spawn_req("empty")
@@ -1364,6 +1367,7 @@ async fn status_lists_stopped_agents_whose_branch_has_merged() {
 
 fn spawn_req(name: &str) -> SpawnRequest {
     SpawnRequest {
+        ticket: None,
         components: Vec::new(),
         role: "worker".to_string(),
         name: Some(name.to_string()),
