@@ -2,9 +2,9 @@
 id = "br-sy6z"
 title = "take-over on the machine that released a project says 'already owned by this machine': say it is released and how to take it back"
 kind = "fix"
-state = "open"
+state = "planned"
 created_at = "2026-10-15T00:24:52.488Z"
-updated_at = "2026-10-15T21:56:50.006162Z"
+updated_at = "2026-10-15T22:07:09.018609Z"
 created_by = "external:advisor/wsl2"
 watchers = ["external:advisor/wsl2"]
 ticket = "sy6z"
