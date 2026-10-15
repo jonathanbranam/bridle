@@ -792,3 +792,53 @@ async fn a_restart_stops_waiting_on_a_stuck_spawn() {
     drop(guard);
     assert!(!manager.spawning());
 }
+
+/// A release source that names one tag and has nothing to download.
+struct FakeReleases(&'static str);
+
+impl bridle_daemon::release::ReleaseSource for FakeReleases {
+    fn latest(&self, _: &str) -> Result<bridle_daemon::release::Release, String> {
+        Ok(bridle_daemon::release::Release {
+            tag: self.0.to_string(),
+            assets: Vec::new(),
+        })
+    }
+    fn download(&self, url: &str) -> Result<Vec<u8>, String> {
+        Err(format!("404 {url}"))
+    }
+}
+
+fn release_hooks(tag: &'static str) -> bridle_daemon::Overrides {
+    let mut o = hooks("failure", "true");
+    o.upgrade.releases = Some(Arc::new(FakeReleases(tag)));
+    o
+}
+
+const RELEASE_CONFIG: &str = "[daemon]\nself_upgrade = \"release\"\nrelease_repo = \"o/r\"\n";
+
+/// br-9a7b: in release mode `restart --upgrade` asks the release source, not CI.
+#[tokio::test]
+async fn release_mode_restart_upgrade_looks_for_a_release_not_a_green_commit() {
+    let (daemon, _tmp) =
+        support::start_daemon_with_config(Some(release_hooks("v0.0.1")), Some(RELEASE_CONFIG))
+            .await;
+    let reply = daemon.client.restart(&upgrade()).await.expect("reply");
+    assert!(!reply.restarting);
+    let message = reply.message.unwrap();
+    assert!(message.contains("no release of o/r"), "{message}");
+    assert!(!message.contains("green"), "{message}");
+    daemon.running.shutdown();
+    daemon.running.join().await.expect("join");
+}
+
+#[tokio::test]
+async fn release_mode_restart_upgrade_installs_a_newer_release() {
+    let (daemon, _tmp) =
+        support::start_daemon_with_config(Some(release_hooks("v999.0.0")), Some(RELEASE_CONFIG))
+            .await;
+    let reply = daemon.client.restart(&upgrade()).await.expect("reply");
+    let message = reply.message.unwrap();
+    assert!(message.contains("installing release v999.0.0"), "{message}");
+    daemon.running.shutdown();
+    daemon.running.join().await.expect("join");
+}

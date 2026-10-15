@@ -4752,6 +4752,9 @@ async fn restart(
             "an upgrade is already under way",
         ));
     }
+    if state.self_upgrade == crate::config::SelfUpgrade::Release {
+        return restart_upgrade_release(&state).await.map(Json);
+    }
     let found = state
         .upgrader
         .newest_green(&state.store, &state.workspace.repo, &state.integration)
@@ -4786,6 +4789,54 @@ async fn restart(
         upgrade_in_background(bg, who, sha).await;
     });
     Ok(Json(reply))
+}
+
+/// `restart --upgrade` under `self_upgrade = "release"`, with the upgrade slot claimed: the same
+/// lookup as the automatic path (a release newer than the running binary), install started in
+/// the background. No poll interval or failed-before check: the human asked.
+async fn restart_upgrade_release(
+    state: &AppState,
+) -> Result<bridle_api::types::RestartResponse, ApiError> {
+    let release = match newest_release(state).await {
+        Ok(Some(r)) => r,
+        Ok(None) => {
+            state.upgrader.release();
+            let message = format!(
+                "nothing to upgrade to: no release of {} is newer than the running binary (v{})",
+                crate::release::release_repo(state.release_repo.as_deref()),
+                env!("CARGO_PKG_VERSION")
+            );
+            return Ok(upgrade_reply(state, false, message).await);
+        }
+        Err(e) => {
+            state.upgrader.release();
+            return Err(ApiError::new(
+                StatusCode::BAD_GATEWAY,
+                "upgrade_failed",
+                format!("could not find a release: {e}"),
+            ));
+        }
+    };
+    let message = format!(
+        "installing release {}; the daemon restarts itself when it's installed",
+        release.tag
+    );
+    let reply = upgrade_reply(state, false, message).await;
+    let bg = state.clone();
+    tokio::spawn(async move {
+        release_upgrade_in_background(bg, release).await;
+    });
+    Ok(reply)
+}
+
+/// The newest release of `release_repo` if it is newer than the running binary.
+async fn newest_release(state: &AppState) -> Result<Option<crate::release::Release>, String> {
+    let repo = crate::release::release_repo(state.release_repo.as_deref());
+    let src = state.upgrader.releases();
+    let latest = tokio::task::spawn_blocking(move || src.latest(&repo))
+        .await
+        .map_err(|e| e.to_string())??;
+    Ok(crate::release::is_newer(&latest.tag, env!("CARGO_PKG_VERSION")).then_some(latest))
 }
 
 /// The automatic upgrade (`[daemon] self_upgrade`), run on the CI watcher's tick: with a newer
@@ -4854,22 +4905,14 @@ async fn release_upgrade_tick(state: &AppState) {
         state.upgrader.release();
         return;
     }
-    let repo = crate::release::release_repo(state.release_repo.as_deref());
-    let src = state.upgrader.releases();
-    let latest = tokio::task::spawn_blocking(move || src.latest(&repo)).await;
-    let release = match latest {
-        Ok(Ok(r)) if crate::release::is_newer(&r.tag, env!("CARGO_PKG_VERSION")) => r,
-        Ok(Ok(_)) => {
-            state.upgrader.release();
-            return;
-        }
-        Ok(Err(e)) => {
-            tracing::debug!(error = %e, "self-upgrade: no release found");
+    let release = match newest_release(state).await {
+        Ok(Some(r)) => r,
+        Ok(None) => {
             state.upgrader.release();
             return;
         }
         Err(e) => {
-            tracing::debug!(error = %e, "self-upgrade: release lookup failed");
+            tracing::debug!(error = %e, "self-upgrade: no release found");
             state.upgrader.release();
             return;
         }

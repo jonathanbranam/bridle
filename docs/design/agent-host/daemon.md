@@ -320,6 +320,8 @@ lift a drain: claims and spawns stay refused while one is pending, so postpone b
 
 #### Upgrade
 
+With `[daemon] self_upgrade = "release"`, `restart --upgrade` does not look at CI: it asks `release_repo` for its newest release and, if that is newer than the running binary, installs it as the automatic path does (reply `installing release <tag> ...`); otherwise the reply says no release is newer (br-9a7b). The rest of this section is the commit mode.
+
 `bridle restart --upgrade` (`upgrade: true` in the request) builds before it restarts. The daemon
 walks the integration branch's first-parent history (30 commits back) for the newest commit whose
 GitHub Actions runs (the CI watcher's `gh` calls, `Gh::runs`) have all finished green; unpushed
