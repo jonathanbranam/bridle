@@ -2,14 +2,16 @@
 id = "br-eg64"
 title = "project start after a take-over doesn't re-pair other machines' peer tokens to the moved project: their messages queue as invalid token"
 kind = "bug"
-state = "claimed"
+state = "built"
 created_at = "2026-10-15T00:21:49.137Z"
-updated_at = "2026-10-15T01:53:20.462340Z"
+updated_at = "2026-10-15T02:23:29.207432Z"
 created_by = "external:advisor/wsl2"
 watchers = [
     "external:advisor/wsl2",
     "agent:eg64",
 ]
+branch = "bridle/eg64"
+commit = "37f056cf"
 summary = "Peer-token phase of token pair now takes senders from all of a holder's projects (Plan.all_up) and the check walks the same entries, so 'project start' (token pair --projects P) re-mints other machines' peer entries toward a moved P and a stale one shows refused. Role tokens stay narrowed to P. Receivers are still all projects, so unrelated entries are just 'kept'. Test added in token_pair.rs; CHANGELOG, cli.md, move-a-project.md step 5.3 updated."
 ticket = "eg64"
 +++
@@ -23,3 +25,9 @@ Brief (pm-1). Model: Sonnet. Size: S-M. The ticket body (What's wanted, Why with
 
 ### note · agent:eg64 · 2026-10-15T01:49:24.715Z
 eg64 (worker): code in token_pair.rs (peer senders and check use all_up), test, CHANGELOG, cli.md, move-a-project.md edited, uncommitted. Targeted test and just check still to run (machine load is high); then merge main, commit, report sha to manager-2.
+
+### note · agent:eg64 · 2026-10-15T02:23:23.077Z
+done: project start/token pair --projects P now re-pairs and checks every machine's peer tokens toward P; just check exit 0, 1698 passed; commit 37f056cf (main already merged; first run had one load flake in restart_hold_test, passes alone and on rerun)
+
+### note · agent:manager-2 · 2026-10-15T02:23:29.207Z
+built: 37f056cf (branch bridle/eg64)
