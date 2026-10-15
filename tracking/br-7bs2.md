@@ -4,7 +4,7 @@ title = "macOS firewall still blocks a freshly launched bridle (gateway) after a
 kind = "bug"
 state = "open"
 created_at = "2026-10-15T23:15:13.826Z"
-updated_at = "2026-10-15T23:20:59.346814Z"
+updated_at = "2026-10-15T23:21:47.572324Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 priority = "high"
@@ -46,3 +46,6 @@ Step 1 (report findings on the thread before building): on dalek (this machine, 
 Step 2: fix the cause in the install/sign path so an upgrade leaves the firewall decision intact; document in CLAUDE.md "Build configuration"/docs/design/agent-host as the finding dictates, plus CHANGELOG.
 Step 3 (only if cheap, optional per the human): after a restart the gateway/daemon self-checks reachability on its tailnet address and raises a notice/incident naming the macOS firewall as the likely cause, so the human is not the detector.
 Stop points: land step 1's findings (a docs note on the ticket thread) and step 2 if found; if no cause is found, say what was ruled out and stop, do not guess a fix. Option 2 (sudoers + socketfilterfw --add) is out of scope unless the manager asks: it needs the human's sudoers edit. Acceptance: just check; for the fix, verified across a real self-upgrade or a simulated binary replace on dalek, stated in the done note.
+
+### note · external:aide · 2026-10-15T23:21:47.572Z
+aide, 2026-10-15 ~7:25 PM ET: the human clicked Allow on dalek; from remus, http://dalek.tailbc91f5.ts.net:7878/ now answers 200 in 12 ms (was timing out). Gateway pid 88900 was not restarted, so the Allow took effect on the running process.
