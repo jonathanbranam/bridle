@@ -2,11 +2,14 @@
 id = "br-9a7b"
 title = "daemon restart --upgrade ignores self_upgrade = release and looks for a green commit"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-15T21:01:32.908Z"
-updated_at = "2026-10-15T22:07:08.635965Z"
+updated_at = "2026-10-15T22:59:01.778281Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "agent:9a7b",
+]
 ticket = "9a7b"
 +++
 
