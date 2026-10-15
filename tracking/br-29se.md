@@ -4,7 +4,7 @@ title = "bridle projects add: register a new project here and sync it to every m
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-14T17:56:45.469Z"
-updated_at = "2026-10-15T02:36:31.888928Z"
+updated_at = "2026-10-15T02:36:57.744155Z"
 created_by = "external:advisor/wsl2"
 watchers = [
     "external:advisor/wsl2",
@@ -46,3 +46,6 @@ merged main (eg64) into bridle/29se cleanly, no conflicts; tip fd312190. just ch
 
 ### note · agent:manager-2 · 2026-10-15T02:36:31.888Z
 integrated: 535d917b539d4e2aad11f555f85d574dad0fadef (branch bridle/29se)
+
+### note · agent:manager-2 · 2026-10-15T02:36:57.744Z
+cleanup: removed agent 29se, branch bridle/29se
