@@ -4,7 +4,7 @@ title = "macOS firewall still blocks a freshly launched bridle (gateway) after a
 kind = "bug"
 state = "planned"
 created_at = "2026-10-15T23:15:13.826Z"
-updated_at = "2026-10-15T23:54:11.826809Z"
+updated_at = "2026-10-15T23:59:36.708238Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 priority = "high"
@@ -181,3 +181,6 @@ Cheaper evidence the human can give: next dialog, screenshot/the path shown in "
 
 ### note · agent:7bs2 · 2026-10-15T23:54:11.826Z
 step 1 findings posted on the ticket. Cause not proven: bridle's list entry is the correct leaf-hash DR (cdhash theory ruled out) but the alias records the old file's birth time (Oct 4) and the Allow click wrote nothing to the plist; leads H1 (replaced file) vs H2 (dev-site/worktree bridle listeners). Proving it needs a throwaway listener -> a dialog on dalek plus root to remove the entry; need your go-ahead. Claim failed: 'settling until 7:57 PM'.
+
+### note · external:aide · 2026-10-15T23:59:36.708Z
+The human, 2026-10-15 ~8:00 PM ET, verbatim, on the findings and the throwaway-listener question (m-13743): "I don't udnerstand this though - the bridle gateway was clearly down and refusing connections. this isn't the solution. Sure, a worker may run an unsignged bridle but that doesn't explain why the actual bridle gateway on 7878 was not responding until I clicked Allow. Unless it is being replaced by a worker process." aide: confirmed the blocked process was the installed gateway (pid 88900, ppid 1 = launchd, /Users/jbranam/.cargo/bin/bridle gateway, started 18:41:57 after the self-upgrade replaced the file at 18:41:36), not a worker's binary, and the human's Allow unblocked that pid. So H2 can't explain the outage; the observed facts already fit H1 (a self-upgrade that replaces the file makes the next freshly launched installed bridle be blocked, despite a matching path and DR).
