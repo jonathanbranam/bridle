@@ -2,16 +2,16 @@
 id = "br-bc37"
 title = "Mail digest: a failed digest raises an event, and one unknown ticket kind/state no longer empties the task section (follow-up to tcae)"
 kind = "fix"
-state = "built"
+state = "integrated"
 created_at = "2026-10-15T20:52:58.094Z"
-updated_at = "2026-10-15T22:12:01.376714Z"
+updated_at = "2026-10-15T22:30:23.450352Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "agent:bc37",
 ]
 branch = "bridle/bc37"
-commit = "10d825c6"
+commit = "2ccea1ce79e36db552cdeabe214e446e9dff563d"
 summary = "Mail digest now tolerates unknown ticket kinds/states and reports a failed digest. ClientSink::tasks decodes tickets one by one (bridge.rs decode_tickets; Client::list_tasks_raw added), skipping an unreadable one with a warn naming it; chosen over serde(other) Unknown variants because TicketKind/TicketState are matched exhaustively across the workspace and the wire contract stays untouched. A digest send failure sends a note to human from external:mail, at most once a day (Bridge.digest_failure_told), then still returns the error so it retries. bridle-mail serde_json moved to regular deps. Tests in outbound_test.rs; docs/design/mail.md and CHANGELOG updated."
 ticket = "bc37"
 +++
@@ -28,3 +28,9 @@ done: mail digest skips tickets of unknown kind/state (per-item decode) and tell
 
 ### note · agent:manager-2 · 2026-10-15T22:12:01.376Z
 built: 10d825c6 (branch bridle/bc37)
+
+### note · agent:manager-2 · 2026-10-15T22:30:20.827Z
+integrated: 2ccea1ce79e36db552cdeabe214e446e9dff563d (branch bridle/bc37)
+
+### note · agent:manager-2 · 2026-10-15T22:30:23.450Z
+cleanup: removed nothing; kept agent bc37 (background job pid 31189)
