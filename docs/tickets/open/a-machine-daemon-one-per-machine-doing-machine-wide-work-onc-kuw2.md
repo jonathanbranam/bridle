@@ -98,3 +98,19 @@ until the human has reviewed the design in detail.**
 - [[daemons-deliver-mail-to-each-other-across-machines-store-and-3haz|3haz]] and the seats ticket
   (gtzx), both waiting on the human's review, may change shape if this exists. Worth reading
   together before either is planned.
+
+## A machine project, not projectless (the human, 2026-10-15)
+
+Idea from the human, 2026-10-15 (chat with remus-home's aide, relayed to advisor product-manager as m-13719; human asked not to file a new ticket), verbatim:
+
+1. "would it be useful to keep remus-home as a \"bridle project\" and use the repo for storing information and logs about the machine itself? Otherwise... when we move to running the orchestrator per-machine, I'm not sure where it lives and gets its bridle config from."
+2. "don't file it - send it to the advisor/product-manager on bridle @dalek with your notes. There is a future epic there to \"make the orchestrator a machine-wide role, not tied to a project\" but this idea puts a different spin on it"
+
+The spin: the <host>-home project (8uxe, today a stop-gap) becomes the machine's deliberate project, not a placeholder. It would hold:
+- the machine's record: docs/machine.md (host, networking, Tailscale names/addresses, gateway, where config lives) and a dated docs/log.md of changes (today remus's and vesta's setup history sits inside bridle ticket v7ug, mixed with bridle work);
+- machine to-dos as tickets;
+- the orchestrator's machine-level config and role overrides (.bridle/roles/orchestrator.md), all with git history.
+
+Open question for this design: does "machine-wide" mean (a) lives in the machine's home project (config, handover, log in a repo; it gets a daemon, inbox, tickets and repo for free) or (b) no project at all (config only in ~/.bridle; needs somewhere new for all of those)?
+
+advisor product-manager's view: (a). It's what already runs (8uxe), it needs nothing new, and the machine daemon here could serve the home project rather than replace it. Not decided; for the human's review of kuw2 (efs2).
