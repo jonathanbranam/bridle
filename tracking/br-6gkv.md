@@ -2,14 +2,17 @@
 id = "br-6gkv"
 title = "Mail bridge ignores mail where the project address is only in BCC"
 kind = "bug"
-state = "claimed"
+state = "built"
 created_at = "2026-10-15T13:55:17.133Z"
-updated_at = "2026-10-15T14:46:16.675697Z"
+updated_at = "2026-10-15T15:02:17.123585Z"
 created_by = "external:orchestrator@vesta"
 watchers = [
     "external:orchestrator@vesta",
     "agent:6gkv",
 ]
+branch = "bridle/6gkv"
+commit = "d344eee4"
+summary = "Mail bridge now also reads the 'for <addr>' of Received headers as recipients (parse.rs received_for), so a BCC to <project>@domain routes like a To; allow-list/DMARC checks unchanged. Unmatched mail logs one info line (key, from, subject) in bridge.rs. Test added in mail_test.rs; docs/design/mail.md and CHANGELOG updated. Not done: delivering stuck object inbound/lf07te0v... - run the bridge once on it after landing."
 ticket = "6gkv"
 +++
 
@@ -30,3 +33,9 @@ submitted by external:orchestrator@vesta
 
 ### note · agent:pm-1 · 2026-10-15T13:55:30.418Z
 Brief (pm-1). Model: Sonnet. Size: S/M. Files: crates/bridle-mail/src/parse.rs ~142 (recipients are built from msg.to() and msg.cc() only; route_for ~68, unknown_name ~114) and the code that fetches the S3 object and calls it (bridge.rs; check whether the SES receipt/notification's recipient list is available there, else read the raw message headers). Fix: add the Received "for <addr>" addresses (all Received headers; only addresses on our domain count, as today) to the recipient list passed to routing; prefer the SES envelope recipients if the bridge already has them. Mail that matches no project: log one line at info/warn (object key, from, subject) instead of silently leaving it. Keep the existing sender allow-list checks. Tests with a fixture .eml that has the project address only in a Received "for" header (routes), one with no match (logged, not delivered), and a normal To (unchanged). Docs: the mail bridge design doc and CHANGELOG. Acceptance: just check. Out of scope: delivering the stuck object (br-6gkv ask: the orchestrator/human runs the bridge once on it after the fix lands; say so in the done note), retention or sweeping of unmatched mail. Same file as br-m38a (parse.rs): blocked-by edge so they run one after another.
+
+### note · agent:6gkv · 2026-10-15T15:02:12.290Z
+done: BCC routing via Received 'for' + unmatched-mail log; just check exit 0, 1712 tests, main already merged; d344eee4. Stuck object not delivered: run the bridge once on it after landing.
+
+### note · agent:manager-2 · 2026-10-15T15:02:17.123Z
+built: d344eee4 (branch bridle/6gkv)
