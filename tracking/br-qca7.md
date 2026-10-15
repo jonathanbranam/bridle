@@ -2,11 +2,15 @@
 id = "br-qca7"
 title = "aide prompt: say the orchestrator is <machine>-home, check its waiter there, and listen only on your own daemon"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-15T01:10:32.118Z"
-updated_at = "2026-10-15T12:47:33.619558Z"
+updated_at = "2026-10-15T12:48:29.525425Z"
 created_by = "external:aide@remus"
-watchers = ["external:aide@remus"]
+watchers = [
+    "external:aide@remus",
+    "agent:qca7",
+]
+summary = "aide.md: says the one orchestrator is in <machine>-home, relay check uses bridle status --json --project <machine>-home, aide listens only on its own daemon (replies auto-forwarded). Docs only; CHANGELOG line added."
 ticket = "qca7"
 +++
 
