@@ -2,9 +2,9 @@
 id = "br-f8f9"
 title = "The NUC recovers everything on boot (4r3k)"
 kind = "feature"
-state = "claimed"
+state = "built"
 created_at = "2026-09-30T12:20:01.124Z"
-updated_at = "2026-10-15T03:14:41.046394Z"
+updated_at = "2026-10-15T03:15:05.340203Z"
 created_by = "external:advisor"
 watchers = [
     "external:advisor",
@@ -12,6 +12,8 @@ watchers = [
     "agent:f8f9",
 ]
 size = "M"
+branch = "bridle/f8f9"
+commit = "06268581"
 summary = "Slice 1 only. New `bridle up` (crates/bridle/src/up.rs, `UpArgs` in cli.rs): finds the pane tagged `@bridle=orchestrator`, else creates a detached tmux session `bridle` (no server) or a window (server running) running `bridle session orchestrator` and tags its pane; second run starts nothing. `~/.bridle/no-autostart` starts nothing, exit 0. `--install [--force]` writes a launchd plist / systemd oneshot user unit (opt-in, prints load + enable-linger commands, runs nothing). `--print-tmux-hooks` prints the two tmux-resurrect hooks (tags saved to ~/.bridle/pane-tags); no tmux config touched. Tests use a fake tmux script (reuse, create+tag, second-run no-op, window when server has no tag, kill switch). Docs: cli.md, add-a-machine.md, windows-wsl2-host.md, nuc-host.md (linger), CHANGELOG. Not built (need follow-up tickets, PdM readies): per-project [boot] sessions, startup cap/stagger beyond the kill switch, orchestrator starting aides. Not installed into `project start` (separate `up --install`). The reboot drill is the human's."
 ticket = "4r3k"
 +++
@@ -38,3 +40,6 @@ Docs: docs/design/cli.md, docs/context/add-a-machine.md and windows-wsl2-host.md
 
 ### note · agent:f8f9 · 2026-10-15T03:14:41.046Z
 done: bridle up (slice 1: orchestrator at boot in a tagged tmux pane, no-autostart kill switch, --install unit/plist, --print-tmux-hooks) + docs + CHANGELOG; just check exit 0, 1706 tests passed; 06268581. Not built, need follow-up tickets (PdM readies): per-project [boot] sessions, startup cap/stagger, orchestrator starting aides. Not wired into project start (separate 'up --install'). Reboot drill is the human's.
+
+### note · agent:manager-2 · 2026-10-15T03:15:05.340Z
+built: 06268581 (branch bridle/f8f9)
