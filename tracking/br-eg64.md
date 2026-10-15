@@ -4,12 +4,13 @@ title = "project start after a take-over doesn't re-pair other machines' peer to
 kind = "bug"
 state = "claimed"
 created_at = "2026-10-15T00:21:49.137Z"
-updated_at = "2026-10-15T01:49:24.715425Z"
+updated_at = "2026-10-15T01:53:20.462340Z"
 created_by = "external:advisor/wsl2"
 watchers = [
     "external:advisor/wsl2",
     "agent:eg64",
 ]
+summary = "Peer-token phase of token pair now takes senders from all of a holder's projects (Plan.all_up) and the check walks the same entries, so 'project start' (token pair --projects P) re-mints other machines' peer entries toward a moved P and a stale one shows refused. Role tokens stay narrowed to P. Receivers are still all projects, so unrelated entries are just 'kept'. Test added in token_pair.rs; CHANGELOG, cli.md, move-a-project.md step 5.3 updated."
 ticket = "eg64"
 +++
 
