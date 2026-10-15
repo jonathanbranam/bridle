@@ -256,6 +256,7 @@ pub async fn run(mut cli: Cli) -> Result<(), CliError> {
         Command::Machine(args) => crate::tools_only::run(&args.action),
         Command::Projects(args) => match &args.action {
             crate::cli::ProjectsAction::TakeOver(a) => crate::take_over::run(&cli, a).await,
+            crate::cli::ProjectsAction::Add(a) => crate::project_sync::add(a),
             crate::cli::ProjectsAction::Stop(a) => crate::project_stop::run(&cli, a).await,
             crate::cli::ProjectsAction::Start(a) => crate::project_start::run(&cli, a).await,
             crate::cli::ProjectsAction::Preflight(a) => crate::preflight::run(&cli, a),

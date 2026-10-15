@@ -134,6 +134,8 @@ newpc = "newpc"
 # my-project = { machine = "newpc", port = 7407 }
 ```
 
+(For a new project, `bridle project add my-project --machine newpc` writes that line and syncs it.)
+
 Once this machine's `[machines]` and `[projects]` are right, `bridle projects sync` compares the
 `[machines]` and `[projects]` lists with every `[machines]` entry over ssh, and `bridle projects sync --apply` copies
 this machine's entries to the others (adds missing, fixes differing, never deletes), and notes any

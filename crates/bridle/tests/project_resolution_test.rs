@@ -100,6 +100,11 @@ const CLASSES: &[(&str, Kind, &str)] = &[
         "reads and writes config.toml on the machines; no project",
     ),
     (
+        "projects add",
+        Skip,
+        "edits config.toml on the machines; no project, covered by project_sync's unit tests",
+    ),
+    (
         "projects take-over",
         Skip,
         "works on the clone in the cwd or --repo; no daemon, covered by take_over_test",

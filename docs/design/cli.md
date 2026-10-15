@@ -255,6 +255,7 @@ bridle pane tag <name>                       set the @bridle tmux pane option to
                                              if not in a tmux pane); used by launcher scripts
 bridle pane untag                            clear the @bridle tmux pane option (errors if not in a
                                              tmux pane)
+bridle project add NAME [--machine M] [--port N]   register a new project (register only: no repo, no daemon; not `setup`). Writes `NAME = { machine, port }` to this machine's `[projects]` (toml_edit, comments kept), then runs `projects sync --apply` so every machine has it and `[mail] projects` follows. `--machine` defaults to `[machine] name` and must be a key of `[machines]`; no `--port` takes one above the highest port in `[projects]` on any machine (7401 if none). Refuses a name already listed. Ends with `next: bridle project start`
 bridle projects sync [--apply]               compare the [machines] and [projects] lists of ~/.bridle/config.toml
                                              here and on every [machines] entry over ssh, print the differences
                                              (exit 1 only if a machine can't be read or written). --apply makes

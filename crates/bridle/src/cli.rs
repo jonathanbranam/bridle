@@ -2603,6 +2603,13 @@ pub enum ProjectsAction {
         #[arg(long)]
         apply: bool,
     },
+    /// Register a new project (register only; it creates no repo, starts no daemon and is not
+    /// `setup`): adds `NAME = { machine, port }` to `[projects]` in ~/.bridle/config.toml
+    /// (comments and other tables kept), then runs `projects sync --apply` so every machine has
+    /// it, and `[mail] projects` follows (when `[mail]` is set). Refuses a name already listed.
+    /// With no `--port` it takes one above the highest port in `[projects]` on any machine, so a
+    /// later move never clashes (7401 for the first).
+    Add(ProjectAddArgs),
     /// Make this machine the project's owner and exit: commits `owner.toml` on `bridle/state`,
     /// confirms origin has it, then moves the project's `[projects]` entry to this machine on
     /// every machine. It never serves and needs no daemon. Ownership by step of a transfer:
@@ -2636,6 +2643,18 @@ pub enum ProjectsAction {
     /// and to the human through aide. `--undo` lifts the hold. The hold lives in the daemon, so
     /// a restart loses it; a running drain takes it again.
     Drain(ProjectDrainArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct ProjectAddArgs {
+    /// The project's name (letters, digits, `.`, `_`, `-`).
+    pub name: String,
+    /// The machine that runs it: a key of `[machines]`. Defaults to this machine.
+    #[arg(long)]
+    pub machine: Option<String>,
+    /// The daemon's port. Defaults to one above the highest port in `[projects]`.
+    #[arg(long)]
+    pub port: Option<u16>,
 }
 
 #[derive(Debug, Args)]

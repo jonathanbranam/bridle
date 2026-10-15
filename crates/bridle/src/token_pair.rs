@@ -192,6 +192,7 @@ impl Runner for Exec {
 }
 
 /// The machine config the plan needs (`~/.bridle/config.toml`).
+#[derive(Clone)]
 pub struct Fleet {
     /// This machine's `[machine] name` (`local` if unnamed).
     pub local: String,

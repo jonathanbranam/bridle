@@ -391,6 +391,79 @@ pub fn run(action: &crate::cli::ProjectsAction) -> Result<(), crate::error::CliE
     }
 }
 
+/// `bridle project add`: list the project in this machine's `[projects]`, then `sync` it (and
+/// `[mail] projects`, which follows `[projects]`) to every machine.
+pub fn add(args: &crate::cli::ProjectAddArgs) -> Result<(), crate::error::CliError> {
+    let home = bridle_api::discovery::bridle_home();
+    let map = bridle_api::machines::MachineMap::load(&home)
+        .map_err(|e| crate::error::CliError::Other(e.into()))?;
+    let fleet = Fleet::from_config(&map);
+    let files = Real { home };
+    let mut out = std::io::stdout();
+    add_with(&fleet, &files, args, &mut out).map_err(crate::error::CliError::Other)
+}
+
+/// The first port above every port in `[projects]` (any machine; 7405 may be listed twice), or
+/// 7401 when none is listed.
+fn next_port(fleet: &Fleet) -> Result<u16, String> {
+    match fleet.placed.values().map(|(_, p)| *p).max() {
+        None => Ok(7401),
+        Some(p) => p
+            .checked_add(1)
+            .ok_or("no port above the highest in use".into()),
+    }
+}
+
+fn add_with(
+    fleet: &Fleet,
+    files: &dyn Files,
+    args: &crate::cli::ProjectAddArgs,
+    out: &mut dyn Write,
+) -> Result<(), anyhow::Error> {
+    let name = &args.name;
+    if name.is_empty()
+        || !name
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || matches!(c, '.' | '_' | '-'))
+    {
+        anyhow::bail!("`{name}` is not a project name: use letters, digits, `.`, `_` and `-`");
+    }
+    if let Some((m, p)) = fleet.placed.get(name) {
+        anyhow::bail!("{name} is already in [projects] ({m}:{p}); nothing changed");
+    }
+    let machine = args.machine.clone().unwrap_or_else(|| fleet.local.clone());
+    if !fleet.hosts.contains_key(&machine) {
+        let known: Vec<&str> = fleet.hosts.keys().map(String::as_str).collect();
+        anyhow::bail!(
+            "`{machine}` is not a key of [machines] (known: {}); add it there first",
+            known.join(", ")
+        );
+    }
+    let port = match args.port {
+        Some(p) => p,
+        None => next_port(fleet).map_err(anyhow::Error::msg)?,
+    };
+    let entry = Entry::Place(machine.clone(), port);
+    let diff = Diff::Missing(format!("[projects] {name}"), entry);
+    let text = files.read(&Where::Local).map_err(anyhow::Error::msg)?;
+    let text =
+        apply_text(&text, &[(("projects", name.clone()), diff)]).map_err(anyhow::Error::msg)?;
+    files
+        .write(&Where::Local, &text)
+        .map_err(anyhow::Error::msg)?;
+    let _ = writeln!(out, "added [projects] {name} = {machine}:{port}");
+    let mut fleet = fleet.clone();
+    fleet.placed.insert(name.clone(), (machine, port));
+    if !sync(&fleet, files, true, out) {
+        anyhow::bail!(
+            "{name} is listed here, but some machines could not be read or written; fix it, \
+             then run `bridle projects sync --apply`"
+        );
+    }
+    let _ = writeln!(out, "next: `bridle project start`");
+    Ok(())
+}
+
 /// Compares (and with `apply`, updates) every machine. Returns whether every machine could be
 /// read and, when applying, written.
 pub fn sync(fleet: &Fleet, files: &dyn Files, apply: bool, out: &mut dyn Write) -> bool {
@@ -755,5 +828,72 @@ mod tests {
             "{now}"
         );
         assert!(!run(&f, true).contains("differs [mail]"));
+    }
+    fn add_args(
+        name: &str,
+        machine: Option<&str>,
+        port: Option<u16>,
+    ) -> crate::cli::ProjectAddArgs {
+        crate::cli::ProjectAddArgs {
+            name: name.into(),
+            machine: machine.map(Into::into),
+            port,
+        }
+    }
+
+    #[test]
+    fn add_picks_the_port_above_the_highest_and_syncs_keeping_comments() {
+        let src = format!("# mine\n{SRC}[mail]\nprojects = [\"bridle\"]\n");
+        let files = Fake::new(&[("mbp", &src), ("nuc.lan", "[machine]\nname = \"nuc\"\n")]);
+        let mut out = Vec::new();
+        add_with(&fleet(), &files, &add_args("c", None, None), &mut out).unwrap();
+        let mine = files.read(&Where::Local).unwrap();
+        assert!(mine.starts_with("# mine\n"), "{mine}");
+        assert!(
+            mine.contains("c = { machine = \"mbp\", port = 7403 }"),
+            "{mine}"
+        );
+        let there = files.read(&Where::Ssh("nuc.lan".into())).unwrap();
+        assert!(
+            there.contains("c = { machine = \"mbp\", port = 7403 }"),
+            "{there}"
+        );
+        assert!(there.contains("\"c\""), "mail follows [projects]: {there}");
+        assert!(String::from_utf8_lossy(&out).contains("next: `bridle project start`"));
+    }
+
+    #[test]
+    fn add_refuses_a_listed_name_and_an_unknown_machine() {
+        let files = Fake::new(&[("mbp", SRC), ("nuc.lan", "")]);
+        let mut out = Vec::new();
+        let e = add_with(&fleet(), &files, &add_args("a", None, None), &mut out).unwrap_err();
+        assert!(e.to_string().contains("already in [projects]"), "{e}");
+        let e = add_with(
+            &fleet(),
+            &files,
+            &add_args("c", Some("zed"), None),
+            &mut out,
+        )
+        .unwrap_err();
+        assert!(e.to_string().contains("not a key of [machines]"), "{e}");
+        assert_eq!(files.read(&Where::Local).unwrap(), SRC);
+    }
+
+    #[test]
+    fn add_takes_a_given_machine_and_port() {
+        let files = Fake::new(&[("mbp", SRC), ("nuc.lan", "")]);
+        let mut out = Vec::new();
+        add_with(
+            &fleet(),
+            &files,
+            &add_args("c", Some("nuc"), Some(7500)),
+            &mut out,
+        )
+        .unwrap();
+        let mine = files.read(&Where::Local).unwrap();
+        assert!(
+            mine.contains("c = { machine = \"nuc\", port = 7500 }"),
+            "{mine}"
+        );
     }
 }

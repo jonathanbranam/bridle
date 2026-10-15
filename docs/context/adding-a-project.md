@@ -49,16 +49,16 @@ Pick the next free port: bridle uses 7401 and meta-notes 7402, so the next is 74
 project is `P`. **The clone's directory name is the project name**: bridle takes the name from
 the directory.
 
-1. **Both machines, `~/.bridle/config.toml`**: add the project under `[projects]`, the same line
-   on each box.
+1. **Any one machine**: `bridle project add P [--machine nuc] [--port N]`. It adds the line to
+   this machine's `~/.bridle/config.toml` (comments kept), picks the next free port (one above the
+   highest in `[projects]`) when you give none, and runs `bridle projects sync --apply`, so every
+   machine has it and P is in `[mail] projects` everywhere (every project takes mail; a machine
+   without mail sets `[machine] mail = false`). It is register only: no repo, no daemon.
 
    ```toml
    [projects]
-   P = { machine = "nuc", port = 7403 }     # or machine = "dalek"
+   P = { machine = "nuc", port = 7403 }     # what it writes; --machine defaults to this machine
    ```
-
-   `bridle projects sync --apply` does the second box, and it also puts P in `[mail] projects`
-   everywhere (every project takes mail; a machine without mail sets `[machine] mail = false`).
 
 2. **The project's machine, clone it into its own workspace.** The workspace is the clone's
    parent, and the worktrees go there as well (`wt/`).
