@@ -2201,3 +2201,4 @@
 {"actor":"agent:pm-1","at":"2026-10-15T21:08:14.757742Z","queue":"reprioritized"}
 {"actor":"agent:pm-1","at":"2026-10-15T21:08:17.485937Z","queue":"reprioritized"}
 {"actor":"agent:pm-1","at":"2026-10-15T21:08:19.797665Z","queue":"reprioritized"}
+{"actor":"agent:manager-2","at":"2026-10-15T21:39:38.950524Z","from":"planned","task":"br-4p4m","to":"built"}
