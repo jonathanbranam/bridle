@@ -72,9 +72,12 @@ the directory.
    For an **existing** project, also run `git switch -c bridle-adopt` so the trial has its own
    branch (see below).
 
-3. **Start the daemon** in the clone: `bridle serve --detach`. It listens on the port from
-   `[projects]`, on 127.0.0.1 and the machine's Tailscale address. It runs without
-   `.bridle/config.toml`, and picks the config up on the next restart.
+3. **Start the daemon** in the clone: `bridle project start`. On a brand-new project it creates
+   `bridle/state` and records this machine as owner (what `serve` does on a first run), then
+   installs and starts the daemon's unit and waits for it. Safe to run again. The daemon listens
+   on the port from `[projects]`, on 127.0.0.1 and the machine's Tailscale address. It runs
+   without `.bridle/config.toml`, and picks the config up on the next restart. Don't use
+   `bridle serve --detach` for setup: `start` is the step.
 4. **Make the orchestrator's token**, in a plain terminal and not inside Claude Code. It's
    human-only, and it's saved to `~/.bridle/credentials.toml` under `[orchestrator]`:
    `bridle token create orchestrator --project P`. Add `advisor` too if you'll use one.
@@ -95,7 +98,7 @@ the directory.
   `systemctl --user` and `loginctl enable-linger` commands it prints. It doesn't run them for
   you. Always give `--project`. Without it, one unit is written per NUC project, all with the
   same `--projects-dir` as their shared workspace, which only suits clones that sit side by side.
-  Stop a `serve --detach` daemon before you enable the unit. Until you decide bridle is stable
+  Stop a daemon you started by hand before you enable the unit. Until you decide bridle is stable
   enough for that ([[docs/context/nuc-host|nuc host]], "How bridle is run for now"), running
   it by hand is fine.
 
