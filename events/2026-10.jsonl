@@ -2158,3 +2158,4 @@
 {"actor":"human","at":"2026-10-15T03:25:37.135Z","from":"","task":"br-mru4","to":"pending"}
 {"actor":"external:orchestrator","at":"2026-10-15T03:25:37.138169Z","from":"pending","task":"br-mru4","to":"open"}
 {"actor":"external:orchestrator","at":"2026-10-15T03:25:37.139135Z","from":"open","task":"br-mru4","to":"planned"}
+{"actor":"agent:manager-2","at":"2026-10-15T03:50:28.803453Z","from":"claimed","task":"br-eapt","to":"built"}
