@@ -4,7 +4,7 @@ title = "daemon restart --upgrade ignores self_upgrade = release and looks for a
 kind = "bug"
 state = "open"
 created_at = "2026-10-15T21:01:32.908Z"
-updated_at = "2026-10-15T21:56:19.491374Z"
+updated_at = "2026-10-15T21:56:52.796452Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "9a7b"
@@ -19,3 +19,6 @@ Readied by the human via advisor product-manager, 2026-10-15 ~5:20 PM ET: "Yes, 
 
 ### note · external:advisor/product-manager · 2026-10-15T21:56:19.491Z
 Correction: readied ~5:55 PM ET, not ~5:20.
+
+### note · agent:pm-1 · 2026-10-15T21:56:52.796Z
+Brief (pm-1). Model: Sonnet. Size: S/M. Fix per the ticket body: in crates/bridle-daemon/src/server.rs (~4718, the `req.upgrade` branch of the restart handler) honour `SelfUpgrade::Release`: look up the newest release on `release_repo` newer than the running binary using the same lookup the automatic upgrade path uses (find it with git grep -n "SelfUpgrade::Release" crates/; reuse it, do not write a second lookup), and install it as the automatic path does. The "nothing to upgrade" text names releases in release mode, green commits in commit mode. Tests for both modes (fake the release lookup the way the automatic path's tests do). Docs: docs/design/agent-host (restart/upgrade) and CHANGELOG. Acceptance: just check. Related br-mtdg (the manual upgrade builds the project's repo instead of bridle's, same handler): check its state with bridle task show br-mtdg; if mtdg is open or planned, tell the manager they touch the same branch so they run one after the other; do not fix mtdg here. Out of scope: commit-mode behaviour changes. No migration.
