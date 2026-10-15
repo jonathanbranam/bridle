@@ -2,14 +2,16 @@
 id = "br-qca7"
 title = "aide prompt: say the orchestrator is <machine>-home, check its waiter there, and listen only on your own daemon"
 kind = "bug"
-state = "claimed"
+state = "built"
 created_at = "2026-10-15T01:10:32.118Z"
-updated_at = "2026-10-15T12:48:29.525425Z"
+updated_at = "2026-10-15T13:03:49.416336Z"
 created_by = "external:aide@remus"
 watchers = [
     "external:aide@remus",
     "agent:qca7",
 ]
+branch = "bridle/qca7"
+commit = "26f422b0"
 summary = "aide.md: says the one orchestrator is in <machine>-home, relay check uses bridle status --json --project <machine>-home, aide listens only on its own daemon (replies auto-forwarded). Docs only; CHANGELOG line added."
 ticket = "qca7"
 +++
@@ -30,3 +32,9 @@ submitted by external:aide@remus
 
 ### note · agent:pm-1 · 2026-10-15T01:10:42.276Z
 Brief (Haiku, docs only). Edit workflow/base/roles/aide.md only: the three points in the ask, in the "Relaying to the orchestrator" section and the relay bullet. Keep ASCII, short. If the project's workflow copy of the role must be kept in step (check for a duplicate under .bridle/ or a role-prompt test), update it too. Acceptance: just check passes. Out of scope: other roles (br-f2yd edits the roles for ticket submit --project; if it lands first, rebase on it, they may touch aide.md too).
+
+### note · agent:qca7 · 2026-10-15T13:03:42.310Z
+done: aide.md says orchestrator is <machine>-home, relay checks waiter there, aide listens only on own daemon; CHANGELOG added; just check exit 0, 1708 tests; 26f422b0
+
+### note · agent:manager-2 · 2026-10-15T13:03:49.416Z
+built: 26f422b0 (branch bridle/qca7)
