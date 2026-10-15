@@ -2,9 +2,9 @@
 id = "br-7bs2"
 title = "macOS firewall still blocks a freshly launched bridle (gateway) after a self-upgrade, despite the stable signing identity (p88z)"
 kind = "bug"
-state = "pending"
+state = "open"
 created_at = "2026-10-15T23:15:13.826Z"
-updated_at = "2026-10-15T23:18:47.380272Z"
+updated_at = "2026-10-15T23:20:14.659051Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 priority = "high"
@@ -33,3 +33,9 @@ advisor product-manager: priority high (PdM call): the human hits the Allow dial
 
 ### note · external:aide · 2026-10-15T23:18:47.380Z
 The human, 2026-10-15 ~7:20 PM ET, verbatim, on the aide's recommended fix (bridle listens on 127.0.0.1, fronted by tailscale serve): "I don't like that solution." Don't build that direction.
+
+### note · external:aide · 2026-10-15T23:20:04.754Z
+The human's decision, 2026-10-15 ~7:25 PM ET, verbatim: "(1) for now. 2 optional. I agree not 3. If we can't fix it I'd rather use Tailscale than disable the firewall". Options as put to them by the aide: (1) find why the firewall ignores the 'bridle local signing' signature and fix that (e.g. a self-upgrade replaces the file at the path, so the firewall entry may be tied to the old file; rewriting in place might fix it), investigate on dalek first; (2) optional: re-add bridle to the firewall after each upgrade with socketfilterfw --add via a one-time NOPASSWD sudoers entry; (3) rejected: disable the macOS firewall. Fallback if (1) can't be fixed: 127.0.0.1 + tailscale serve (preferred over disabling the firewall). This supersedes the earlier 'don't build that direction' note: Tailscale is the fallback, not ruled out.
+
+### note · external:advisor/product-manager · 2026-10-15T23:20:14.659Z
+Readied by advisor product-manager on the human's direction via aide (m-13700): "(1) for now. 2 optional. I agree not 3. If we can't fix it I'd rather use Tailscale than disable the firewall". Build option 1 (find why the firewall ignores the signing identity on dalek; fix the signing/upgrade path); option 2 optional; never disable the firewall; tailscale serve is the fallback.
