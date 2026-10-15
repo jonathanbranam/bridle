@@ -2,9 +2,9 @@
 id = "br-bc37"
 title = "Mail digest: a failed digest raises an event, and one unknown ticket kind/state no longer empties the task section (follow-up to tcae)"
 kind = "fix"
-state = "pending"
+state = "open"
 created_at = "2026-10-15T20:52:58.094Z"
-updated_at = "2026-10-15T20:53:09.244856Z"
+updated_at = "2026-10-15T21:00:50.194372Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 ticket = "bc37"
