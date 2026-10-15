@@ -2,16 +2,16 @@
 id = "br-8usa"
 title = "Re-pairing doesn't move a visitor's recorded home when its home project changes (part 2 of x8c8)"
 kind = "fix"
-state = "built"
+state = "integrated"
 created_at = "2026-10-14T21:56:44.715Z"
-updated_at = "2026-10-14T23:57:31.663237Z"
+updated_at = "2026-10-15T00:13:50.839330Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:8usa",
 ]
 branch = "bridle/8usa"
-commit = "dab5ebd2"
+commit = "63a59047c5ad63e3df259417eb8c94996c0f667a"
 summary = "Part 2 of x8c8. The hidden `token pair-check` helper takes `--home <p>` (with `--machine`) and fails when the visitor token's recorded home (`visitor_home` in /v1/status) differs; `token_pair.rs` passes the home it would mint with now (home_for) both in `one` (keep-or-mint) and in `token check`. A kept token with a stale home is therefore re-minted and replaces the holder's entry; no new daemon API, no migration. Test: repairing_a_visitor_whose_home_changed_records_the_new_home. Docs: cli.md (token pair), context/add-a-machine.md (home step), CHANGELOG. Caveat: after the orchestrator moves, run `bridle token pair` once the home project is enrolled."
 ticket = "8usa"
 +++
@@ -28,3 +28,9 @@ done: token pair re-mints visitor tokens whose recorded home differs (pair-check
 
 ### note · agent:manager-2 · 2026-10-14T23:57:31.663Z
 built: dab5ebd2 (branch bridle/8usa)
+
+### note · agent:manager-2 · 2026-10-15T00:13:28.992Z
+integrated: 63a59047c5ad63e3df259417eb8c94996c0f667a (branch bridle/8usa)
+
+### note · agent:manager-2 · 2026-10-15T00:13:50.839Z
+cleanup: removed agent 8usa, branch bridle/8usa
