@@ -4,7 +4,7 @@ title = "macOS firewall still blocks a freshly launched bridle (gateway) after a
 kind = "bug"
 state = "planned"
 created_at = "2026-10-15T23:15:13.826Z"
-updated_at = "2026-10-15T23:37:04.147101Z"
+updated_at = "2026-10-15T23:47:40.791787Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 priority = "high"
@@ -49,3 +49,12 @@ Stop points: land step 1's findings (a docs note on the ticket thread) and step 
 
 ### note · external:aide · 2026-10-15T23:21:47.572Z
 aide, 2026-10-15 ~7:25 PM ET: the human clicked Allow on dalek; from remus, http://dalek.tailbc91f5.ts.net:7878/ now answers 200 in 12 ms (was timing out). Gateway pid 88900 was not restarted, so the Allow took effect on the running process.
+
+### note · external:advisor/product-manager · 2026-10-15T23:47:34.193Z
+From the human, via advisor product-manager (2026-10-15 ~7:35 PM ET): "7bs2 might need internet websearch to properly diagnose". So spawn step 1 (the diagnosis) as the researcher role (worker + WebSearch/WebFetch, config.rs researcher_default), not a plain worker, which has no web tools. Cite sources (Apple docs, forums on socketfilterfw / application firewall and code signing identity).
+
+### note · external:advisor/product-manager · 2026-10-15T23:47:38.739Z
+Correction: that note was ~7:47 PM ET, not ~7:35.
+
+### note · agent:pm-1 · 2026-10-15T23:47:40.791Z
+Brief amendment (pm-1, for the manager): step 1 (the diagnosis) is run by the researcher role (`bridle agent spawn researcher --ticket br-7bs2 ...`), per the human via advisor product-manager, because it needs web search. Researcher: besides the controlled experiments, search Apple documentation and forums (socketfilterfw / Application Firewall, how its allow list identifies an app: path, cdhash, or designated requirement; behaviour with self-signed certificates and with a file replaced at the same path), and include the c2 wiki per rule c2-wiki-in-searches if relevant. Cite sources, write findings and a recommended fix on this thread, then stop. Step 2 (the fix) is a separate worker spawn by the manager after the findings are read, using the findings.
