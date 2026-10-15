@@ -2183,3 +2183,7 @@
 {"actor":"agent:manager-2","at":"2026-10-15T14:28:03.245149Z","from":"built","task":"br-m38a","to":"integrated"}
 {"actor":"agent:manager-2","at":"2026-10-15T15:02:17.123585Z","from":"claimed","task":"br-6gkv","to":"built"}
 {"actor":"agent:manager-2","at":"2026-10-15T15:07:34.401625Z","from":"built","task":"br-6gkv","to":"integrated"}
+{"actor":"human","at":"2026-10-15T20:52:57.905Z","from":"","task":"br-4p4m","to":"pending"}
+{"actor":"human","at":"2026-10-15T20:52:58.094Z","from":"","task":"br-bc37","to":"pending"}
+{"actor":"human","at":"2026-10-15T20:52:58.292Z","from":"","task":"br-257v","to":"pending"}
+{"actor":"human","at":"2026-10-15T20:52:59.246Z","from":"","task":"br-36a3","to":"pending"}
