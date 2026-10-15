@@ -195,12 +195,29 @@ pub fn evaluate(raw: &[u8], cfg: &MailConfig, project: &str) -> Result<Accepted,
         });
     };
 
-    let body = msg.body_text(0).map(|c| c.into_owned()).unwrap_or_default();
-    let text = cap(&strip_quoted(&body), cfg.max_body_chars);
+    // Every inline text part, not just the first: some clients split a forward into parts.
+    let body = (0..msg.text_body_count())
+        .filter_map(|i| msg.body_text(i))
+        .map(|c| c.into_owned())
+        .collect::<Vec<_>>()
+        .join("\n\n");
+    let mut text = strip_quoted(&body);
+    // A forward attached as message/rfc822 is not an "attachment" to keep as a file: its
+    // headers and text are what the sender wants read.
+    for part in msg.parts.iter() {
+        if let mail_parser::PartType::Message(inner) = &part.body {
+            text.push_str("\n\n");
+            text.push_str(&forwarded_block(inner));
+        }
+    }
+    let text = cap(text.trim(), cfg.max_body_chars);
 
     let mut attachments = Vec::new();
     let mut dropped = Vec::new();
     for part in msg.attachments() {
+        if matches!(part.body, mail_parser::PartType::Message(_)) {
+            continue;
+        }
         let name = safe_name(part.attachment_name().unwrap_or("attachment"));
         let ctype = part.content_type();
         let is_text = ctype.is_some_and(|c| c.ctype().eq_ignore_ascii_case("text"));
@@ -225,6 +242,33 @@ pub fn evaluate(raw: &[u8], cfg: &MailConfig, project: &str) -> Result<Accepted,
         attachments,
         dropped,
     })
+}
+
+const FORWARD_SEPARATOR: &str = "---------- Forwarded message ----------";
+
+/// An attached message as text: its From/Date/Subject/To headers, then its body.
+fn forwarded_block(inner: &mail_parser::Message<'_>) -> String {
+    let mut out = format!("{FORWARD_SEPARATOR}\n");
+    let from = addresses(inner.from()).join(", ");
+    let to = addresses(inner.to()).join(", ");
+    let date = inner.date().map(|d| d.to_rfc822()).unwrap_or_default();
+    for (name, value) in [
+        ("From", from.as_str()),
+        ("Date", date.as_str()),
+        ("Subject", inner.subject().unwrap_or("")),
+        ("To", to.as_str()),
+    ] {
+        if !value.is_empty() {
+            out.push_str(&format!("{name}: {value}\n"));
+        }
+    }
+    let body = inner
+        .body_text(0)
+        .map(|c| c.into_owned())
+        .unwrap_or_default();
+    out.push('\n');
+    out.push_str(body.trim());
+    out
 }
 
 /// A part's bytes as the sender wrote them (transfer encoding undone, no charset decoding).
@@ -332,6 +376,14 @@ pub fn strip_quoted(text: &str) -> String {
     let mut keep = Vec::new();
     for (i, line) in lines.iter().enumerate() {
         let t = line.trim();
+        // A forward is the content, not history: keep it whole, headers included.
+        if t.starts_with("Begin forwarded message")
+            || t.starts_with("---------- Forwarded message")
+            || t.starts_with("-------- Forwarded Message")
+        {
+            keep.extend_from_slice(&lines[i..]);
+            break;
+        }
         let next = lines.get(i + 1).map(|l| l.trim()).unwrap_or("");
         let wrote = |s: &str| s.starts_with("On ") && s.ends_with("wrote:");
         let header_block = t.starts_with("From:")

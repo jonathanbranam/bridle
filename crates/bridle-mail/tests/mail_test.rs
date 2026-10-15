@@ -468,3 +468,70 @@ fn config_reads_the_mail_table() {
         "empty allow"
     );
 }
+
+fn multipart(ctype: &str, parts: &str) -> Vec<u8> {
+    let head = String::from_utf8(Spec::default().raw())
+        .expect("utf8")
+        .replace(
+            "Content-Type: text/plain; charset=utf-8\r\n\r\nPlease do the thing.\r\n",
+            "",
+        );
+    format!("{head}Content-Type: {ctype}; boundary=B\r\n\r\n{parts}--B--\r\n").into_bytes()
+}
+
+#[test]
+fn an_inline_forward_keeps_its_headers_and_text() {
+    let body = "See below.\r\n\r\nBegin forwarded message:\r\n\r\nFrom: Bob <b@x.y>\r\nSubject: Cancel 10/22 session\r\nDate: Mon, 12 Oct 2026 09:00:00 -0400\r\nTo: me@example.com\r\n\r\nThe session is cancelled.\r\n";
+    let m = eval(&Spec {
+        body,
+        ..Spec::default()
+    })
+    .expect("ok");
+    assert!(m.text.starts_with("See below."), "{}", m.text);
+    assert!(
+        m.text.contains("Subject: Cancel 10/22 session"),
+        "{}",
+        m.text
+    );
+    assert!(m.text.contains("The session is cancelled."), "{}", m.text);
+}
+
+#[test]
+fn a_forward_split_into_text_parts_keeps_every_part() {
+    let raw = multipart(
+        "multipart/mixed",
+        "--B\r\nContent-Type: text/plain\r\n\r\nSee below.\r\n\
+         --B\r\nContent-Type: text/plain\r\n\r\nFrom: Bob\r\nSubject: Hi\r\n\r\nForwarded words.\r\n",
+    );
+    let m = evaluate(&raw, &cfg(), "proj").expect("ok");
+    assert!(m.text.contains("See below."), "{}", m.text);
+    assert!(m.text.contains("Forwarded words."), "{}", m.text);
+}
+
+#[test]
+fn an_attached_message_is_appended_to_the_body() {
+    let raw = multipart(
+        "multipart/mixed",
+        "--B\r\nContent-Type: text/plain\r\n\r\nSee attached.\r\n\
+         --B\r\nContent-Type: message/rfc822\r\nContent-Disposition: attachment; filename=\"fwd.eml\"\r\n\r\n\
+         From: Bob <b@x.y>\r\nTo: me@example.com\r\nSubject: Cancel 10/22 session\r\nDate: Mon, 12 Oct 2026 09:00:00 -0400\r\nContent-Type: text/plain\r\n\r\nThe session is cancelled.\r\n",
+    );
+    let m = evaluate(&raw, &cfg(), "proj").expect("ok");
+    assert!(m.text.starts_with("See attached."), "{}", m.text);
+    assert!(
+        m.text.contains("---------- Forwarded message ----------"),
+        "{}",
+        m.text
+    );
+    assert!(
+        m.text.contains("Subject: Cancel 10/22 session"),
+        "{}",
+        m.text
+    );
+    assert!(m.text.contains("The session is cancelled."), "{}", m.text);
+    assert!(
+        m.attachments.is_empty() && m.dropped.is_empty(),
+        "{:?}",
+        m.dropped
+    );
+}

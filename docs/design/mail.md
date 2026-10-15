@@ -62,6 +62,10 @@ lists the prefix and, per object:
    history and signature stripped, HTML converted to text, capped). `.md`, `.txt` and `text/*`
    attachments up to the cap are written to `<workspace>/.bridle/inbox/mail/<id>/<name>` and listed
    by path; others are dropped and listed as dropped.
+   Forwards are kept whole (m38a): every inline text part is used; text from a "Begin forwarded
+   message:" or "---------- Forwarded message" line on is not stripped; an attached `message/rfc822`
+   part is appended under a "---------- Forwarded message ----------" line with its From, Date,
+   Subject and To and its text (not saved as a file).
 4. Sent to `external:aide` while the project's aide is running (below), else `external:orchestrator`; with a task address, as a note on that
    task's thread (`task`). The object is deleted only after the daemon accepted it, so a down
    daemon just means a retry on the next poll.
