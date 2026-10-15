@@ -3519,3 +3519,9 @@ from = "br-eg64"
 to = "br-g9qm"
 kind = "related"
 created_at = "2026-10-15T00:21:59.797Z"
+
+[[edge]]
+from = "br-8usa"
+to = "br-eg64"
+kind = "blocks"
+created_at = "2026-10-15T00:24:32.541Z"
