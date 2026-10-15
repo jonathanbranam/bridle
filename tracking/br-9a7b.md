@@ -2,14 +2,16 @@
 id = "br-9a7b"
 title = "daemon restart --upgrade ignores self_upgrade = release and looks for a green commit"
 kind = "bug"
-state = "claimed"
+state = "built"
 created_at = "2026-10-15T21:01:32.908Z"
-updated_at = "2026-10-15T23:26:49.404082Z"
+updated_at = "2026-10-15T23:43:53.368244Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:9a7b",
 ]
+branch = "bridle/9a7b"
+commit = "0218dc54df3bebc19fc359a5add98006c0595024"
 summary = "Fix: restart --upgrade under self_upgrade = release now uses the same release lookup as the automatic upgrade (newest_release in server.rs, shared by both) and starts release_upgrade_in_background; the nothing-to-upgrade text names releases. Commit mode unchanged. Tests in upgrade_test.rs; docs: daemon.md, cli.md, CHANGELOG. br-mtdg (manual upgrade builds the project's repo) has no row on this daemon, so I could not check its state; it touches the same commit-mode handler lines."
 ticket = "9a7b"
 +++
@@ -29,3 +31,9 @@ Brief (pm-1). Model: Sonnet. Size: S/M. Fix per the ticket body: in crates/bridl
 
 ### note · agent:9a7b · 2026-10-15T23:26:49.404Z
 worker 9a7b: code, tests, docs, CHANGELOG, summary done and main merged; waiting on the final just check (log /tmp/9a7b-check.log), then commit and report sha to manager-2.
+
+### note · agent:9a7b · 2026-10-15T23:43:47.279Z
+done: restart --upgrade honours self_upgrade=release (shared newest_release lookup), tests both paths, docs+CHANGELOG; just check exit 0, 1719 tests passed (main already contained); 0218dc54df3bebc19fc359a5add98006c0595024. br-mtdg has no row on my daemon, so unchecked; it touches the same handler's commit-mode lines.
+
+### note · agent:manager-2 · 2026-10-15T23:43:53.368Z
+built: 0218dc54df3bebc19fc359a5add98006c0595024 (branch bridle/9a7b)

@@ -4,7 +4,7 @@ title = "A home project on each machine for the orchestrator: a stop-gap for the
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-14T17:07:37.932Z"
-updated_at = "2026-10-14T19:15:56.652027Z"
+updated_at = "2026-10-15T23:43:51.995328Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -71,3 +71,6 @@ cleanup: removed agent 8uxe, branch bridle/8uxe
 
 ### note · external:advisor/product-manager · 2026-10-14T19:15:56.652Z
 advisor product-manager: work item 1 (docs) verified on main; ticket stays open for item 2: remus done (advisor wsl2), vesta-home and dalek-home still to set up by the human.
+
+### note · external:advisor/product-manager · 2026-10-15T23:43:51.995Z
+Related idea (the human, 2026-10-15): keep <host>-home as the machine's own project (machine record, log, machine to-dos, orchestrator config). Recorded on br-kuw2's thread.
