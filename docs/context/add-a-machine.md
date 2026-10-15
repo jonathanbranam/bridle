@@ -421,13 +421,12 @@ or later first (the token pair fix).
    and starts it in the home project with `bridle session orchestrator --project <host>-home`, and
    starts the aide there too.
 
-**Visitor tokens follow the home, and they don't yet.** A visitor token on another daemon (for
-example `orchestrator@remus` on dalek) records the daemon it was minted for as its home. After the
-orchestrator moves to `<host>-home`, that record still names the old project. A send to
-`external:orchestrator@<host>` whose recorded home is the sending daemon's own project is now
-refused with an error (x8c8); it used to loop back to the local orchestrator. `bridle token pair`
-keeps a token that still works, with its recorded home, so re-pairing does not move the home yet
-(follow-up ticket). Until then address the home directly with `--project <host>-home`.
+**Visitor tokens follow the home on a re-pair.** A visitor token on another daemon (for
+example `orchestrator@remus` on dalek) records a home. After the orchestrator moves to
+`<host>-home`, that record still names the old project, and a send to `external:orchestrator@<host>`
+whose recorded home is the sending daemon's own project is refused with an error (x8c8). Run
+`bridle token pair` once the home project is enrolled (steps 2 to 4): it compares each kept visitor
+token's recorded home with the one it would mint now and re-mints a token that differs (8usa).
 
 Order the machines: remus first (data-contracts stops being its home), then vesta, and dalek last,
 because dalek's orchestrator is the one everything else addresses today.

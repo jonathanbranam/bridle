@@ -610,6 +610,7 @@ fn check_role(
     runner: &dyn Runner,
     holder: &str,
     e: &RoleEntry,
+    home: Option<&str>,
 ) -> Result<(), String> {
     let mut a = args(&["--project", e.project]);
     // A token held for another machine's daemon is a visitor there, and has a home.
@@ -623,6 +624,10 @@ fn check_role(
     a.extend(args(&["token", "pair-check", e.role]));
     if !e.same {
         a.extend(args(&["--machine", e.daemon]));
+        // A kept visitor token must have the home it would be minted with now (br-8usa).
+        if let Some(home) = home {
+            a.extend(args(&["--home", home]));
+        }
     }
     runner.run(&fleet.at(holder), &a, None).map(|_| ())
 }
@@ -672,7 +677,16 @@ fn check_entries(p: &Plan, fleet: &Fleet, runner: &dyn Runner) -> Vec<Checked> {
                     kind: e.role.to_string(),
                     daemon: e.daemon.to_string(),
                     project: e.project.to_string(),
-                    refused: check_role(fleet, runner, holder, &e).err(),
+                    refused: check_role(
+                        fleet,
+                        runner,
+                        holder,
+                        &e,
+                        (!e.same)
+                            .then(|| home_for(&p.up[holder], e.project, e.role))
+                            .as_deref(),
+                    )
+                    .err(),
                 });
             }
         }
@@ -754,7 +768,7 @@ fn one(
     let holder_at = fleet.at(holder);
     let daemon_at = fleet.at(daemon);
     let same = e.same;
-    if !opts.rotate && check_role(fleet, runner, holder, e).is_ok() {
+    if !opts.rotate && check_role(fleet, runner, holder, e, home.as_deref()).is_ok() {
         return Ok(Outcome::Kept);
     }
     if opts.dry_run {
@@ -862,8 +876,11 @@ mod tests {
                     let creds = self.creds.borrow();
                     let tok = creds.get(&key).ok_or("no entry")?;
                     let valid = self.valid.borrow();
-                    let visitor_ok = !val("--machine").is_some()
-                        || self.homes.borrow().get(tok).is_some_and(Option::is_some);
+                    let visitor_ok = val("--machine").is_none() || {
+                        let homes = self.homes.borrow();
+                        let have = homes.get(tok).and_then(Option::as_ref);
+                        have.is_some() && val("--home").is_none_or(|h| have == Some(&h))
+                    };
                     if visitor_ok
                         && !(self.refuse_after_mint && a[i + 2] == ORCHESTRATOR)
                         && valid
@@ -1054,6 +1071,39 @@ mod tests {
         assert_eq!(out.matches("(role tokens): minted 0").count(), 2, "{out}");
         let after: BTreeMap<_, _> = s.creds.borrow().clone().into_iter().collect();
         assert_eq!(before, after);
+    }
+
+    // br-8usa
+    #[test]
+    fn repairing_a_visitor_whose_home_changed_records_the_new_home() {
+        let s = sim();
+        run(&s, &Options::default());
+        // The visitors' recorded homes were right; now the principal's home moved on.
+        for h in s.homes.borrow_mut().values_mut() {
+            if h.is_some() {
+                *h = Some("old-home".into());
+            }
+        }
+        let (ok, out) = run(&s, &Options::default());
+        assert!(ok, "{out}");
+        assert!(!out.contains("(role tokens): minted 0"), "{out}");
+        // Every visitor now has the home it would be minted with, and a further run is a no-op.
+        let homes = s.homes.borrow();
+        let held: Vec<_> = s
+            .creds
+            .borrow()
+            .iter()
+            .filter(|(k, _)| k.2.is_some())
+            .map(|(_, t)| homes[t].clone())
+            .collect();
+        assert!(!held.is_empty());
+        assert!(
+            held.iter()
+                .all(|h| h.is_some() && h.as_deref() != Some("old-home"))
+        );
+        drop(homes);
+        let (_, out) = run(&s, &Options::default());
+        assert_eq!(out.matches("(role tokens): minted 0").count(), 2, "{out}");
     }
 
     // s-7504

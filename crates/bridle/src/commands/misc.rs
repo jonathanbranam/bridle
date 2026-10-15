@@ -887,7 +887,11 @@ async fn token_pair(cli: &Cli, action: &TokenAction) -> Result<(), CliError> {
                 }
             }
         }
-        TokenAction::PairCheck { role, machine } => {
+        TokenAction::PairCheck {
+            role,
+            machine,
+            home,
+        } => {
             let project = project()?;
             let token = discovery::credential(
                 &discovery::credentials_path(),
@@ -911,6 +915,14 @@ async fn token_pair(cli: &Cli, action: &TokenAction) -> Result<(), CliError> {
             if machine.is_some() && status.visitor_home.is_none() {
                 return Err(CliError::Other(anyhow::anyhow!(
                     "visitor token has no home"
+                )));
+            }
+            if let Some(want) = home
+                && status.visitor_home.as_deref() != Some(want.as_str())
+            {
+                return Err(CliError::Other(anyhow::anyhow!(
+                    "visitor token's home is {:?}, not {want}",
+                    status.visitor_home
                 )));
             }
         }

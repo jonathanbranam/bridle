@@ -1767,6 +1767,9 @@ pub enum TokenAction {
         /// The machine the daemon is on, when not this one.
         #[arg(long)]
         machine: Option<String>,
+        /// With `--machine`: the home the visitor token should have recorded (else it is not working).
+        #[arg(long, requires = "machine")]
+        home: Option<String>,
     },
     /// Helper for `token pair`: print a fresh token for the role on `--project`'s daemon.
     #[command(hide = true)]
