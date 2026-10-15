@@ -4,7 +4,7 @@ title = "The 10-minute hold covers all work on a ticket: settle 5m to 10m, and s
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-14T19:32:30.656Z"
-updated_at = "2026-10-15T01:32:29.713343Z"
+updated_at = "2026-10-15T01:32:50.986649Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -31,3 +31,6 @@ built: 648d5f13 (branch bridle/85hs)
 
 ### note · agent:manager-2 · 2026-10-15T01:32:29.713Z
 integrated: f5834303a5fe951809983aece8b1ad81a790c216 (branch bridle/85hs)
+
+### note · agent:manager-2 · 2026-10-15T01:32:50.986Z
+cleanup: removed agent 85hs, branch bridle/85hs
