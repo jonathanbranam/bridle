@@ -2,9 +2,9 @@
 id = "br-7bs2"
 title = "macOS firewall still blocks a freshly launched bridle (gateway) after a self-upgrade, despite the stable signing identity (p88z)"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-10-15T23:15:13.826Z"
-updated_at = "2026-10-15T23:21:47.572324Z"
+updated_at = "2026-10-15T23:37:04.147101Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 priority = "high"

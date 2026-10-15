@@ -1,51 +1,5 @@
 [[tier]]
-tasks = ["br-afzu"]
-
-[[tier]]
-tasks = [
-    "br-eg64",
-    "br-29se",
-    "br-tcae",
-]
-
-[[tier]]
-tasks = ["br-f8f9"]
-
-[[tier]]
-tasks = ["br-pmdh"]
-
-[[tier]]
-tasks = ["br-85hs"]
-
-[[tier]]
 tasks = ["br-5cru"]
-
-[[tier]]
-tasks = ["br-eapt"]
-
-[[tier]]
-tasks = ["br-qca7"]
-
-[[tier]]
-tasks = ["br-37hz"]
-
-[[tier]]
-tasks = ["br-m38a"]
-
-[[tier]]
-tasks = ["br-6gkv"]
-
-[[tier]]
-tasks = ["br-36a3"]
-
-[[tier]]
-tasks = ["br-bc37"]
-
-[[tier]]
-tasks = ["br-257v"]
-
-[[tier]]
-tasks = ["br-4p4m"]
 
 [[tier]]
 tasks = ["br-9a7b"]
@@ -55,6 +9,9 @@ tasks = ["br-sy6z"]
 
 [[tier]]
 tasks = ["br-mfcj"]
+
+[[tier]]
+tasks = ["br-7bs2"]
 
 [[tier]]
 tasks = ["br-d7r5"]
