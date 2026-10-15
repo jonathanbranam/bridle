@@ -4,7 +4,7 @@ title = "aide prompt: say the orchestrator is <machine>-home, check its waiter t
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-15T01:10:32.118Z"
-updated_at = "2026-10-15T13:08:36.024856Z"
+updated_at = "2026-10-15T13:08:48.633770Z"
 created_by = "external:aide@remus"
 watchers = [
     "external:aide@remus",
@@ -41,3 +41,6 @@ built: 26f422b0 (branch bridle/qca7)
 
 ### note · agent:manager-2 · 2026-10-15T13:08:36.024Z
 integrated: 1637a592aab49bdabb834fac9d0423a963bac6bc (branch bridle/qca7)
+
+### note · agent:manager-2 · 2026-10-15T13:08:48.633Z
+cleanup: removed agent qca7, branch bridle/qca7
