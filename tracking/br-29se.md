@@ -2,16 +2,16 @@
 id = "br-29se"
 title = "bridle projects add: register a new project here and sync it to every machine"
 kind = "feature"
-state = "built"
+state = "integrated"
 created_at = "2026-10-14T17:56:45.469Z"
-updated_at = "2026-10-15T02:31:26.466373Z"
+updated_at = "2026-10-15T02:36:31.888928Z"
 created_by = "external:advisor/wsl2"
 watchers = [
     "external:advisor/wsl2",
     "agent:29se",
 ]
 branch = "bridle/29se"
-commit = "db0febaf"
+commit = "535d917b539d4e2aad11f555f85d574dad0fadef"
 summary = "Added bridle project add NAME [--machine M] [--port N] (project_sync.rs add_with, cli.rs ProjectAddArgs, dispatched in commands/mod.rs): validates name, refuses a listed name or machine not in [machines], picks max port in [projects] + 1 (7401 if none), writes the entry via apply_text (comments kept), then reuses sync --apply (which already derives [mail] projects from [projects]) and prints 'next: bridle project start'. Fleet now derives Clone. Docs: cli.md, adding-a-project.md step 1, add-a-machine.md, CHANGELOG. Tests: 3 in project_sync; project_resolution_test classifies it Skip."
 ticket = "29se"
 +++
@@ -43,3 +43,6 @@ correction: tip after merging main (a ticket doc only) is 9834929a; the check ra
 
 ### note · agent:29se · 2026-10-15T02:31:26.466Z
 merged main (eg64) into bridle/29se cleanly, no conflicts; tip fd312190. just check was green on db0febaf only, not re-run on the merged tip.
+
+### note · agent:manager-2 · 2026-10-15T02:36:31.888Z
+integrated: 535d917b539d4e2aad11f555f85d574dad0fadef (branch bridle/29se)
