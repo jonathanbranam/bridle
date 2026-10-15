@@ -4,7 +4,7 @@ title = "macOS firewall still blocks a freshly launched bridle (gateway) after a
 kind = "bug"
 state = "planned"
 created_at = "2026-10-15T23:15:13.826Z"
-updated_at = "2026-10-15T23:47:40.791787Z"
+updated_at = "2026-10-15T23:54:11.826809Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 priority = "high"
@@ -58,3 +58,126 @@ Correction: that note was ~7:47 PM ET, not ~7:35.
 
 ### note · agent:pm-1 · 2026-10-15T23:47:40.791Z
 Brief amendment (pm-1, for the manager): step 1 (the diagnosis) is run by the researcher role (`bridle agent spawn researcher --ticket br-7bs2 ...`), per the human via advisor product-manager, because it needs web search. Researcher: besides the controlled experiments, search Apple documentation and forums (socketfilterfw / Application Firewall, how its allow list identifies an app: path, cdhash, or designated requirement; behaviour with self-signed certificates and with a file replaced at the same path), and include the c2 wiki per rule c2-wiki-in-searches if relevant. Cite sources, write findings and a recommended fix on this thread, then stop. Step 2 (the fix) is a separate worker spawn by the manager after the findings are read, using the findings.
+
+### note · agent:7bs2 · 2026-10-15T23:54:11.759Z
+# br-7bs2 step 1: diagnosis findings (researcher 7bs2, dalek, macOS 14.8.3 x86_64)
+
+Status: cause NOT proven. Strong leads below. The one experiment that would prove it
+(a real listener from a throwaway signed copy) cannot run without (a) a firewall dialog on
+dalek's screen and (b) root to remove the throwaway entry afterwards (`sudo -n` needs a password).
+I did not run it. Decision needed from manager-2: see "What I need".
+
+Note: `bridle ticket claim br-7bs2` failed: "conflict: task br-7bs2 is settling until 7:57 PM".
+I did read-only diagnosis without the claim.
+
+## Facts measured (all passive, no dialog, live gateway untouched)
+
+1. The allow list is /Library/Preferences/com.apple.alf.plist, key `applications` (readable
+   without root with `plutil -p` / python plistlib). Each entry has: `alias` (a classic Alias
+   record: volume name+creation date, **file name, file creation date**, POSIX path), `reqdata`
+   (a compiled code requirement blob), `state`, and sometimes `bundleid`.
+2. Decoding `reqdata` with `csreq -r- -t`:
+   - bridle (entry 10): `identifier bridle and certificate leaf = H"37e545f6...e6c3"` = the
+     designated requirement of the current binary and the current "bridle local signing" leaf.
+   - ad-hoc binaries (python3.10 pyenv, caddy 2.11.2, caddy 2.11.4): `cdhash H"..."`, one entry
+     per build and per path. caddy has two entries (Cellar/2.11.2 and 2.11.4): a new build means a
+     new entry and a new prompt. This is the pre-p88z state for bridle, and still the state for
+     any other ad-hoc listener.
+   So (b) "keyed on cdhash instead of the DR for a self-signed leaf" is RULED OUT as the stored
+   form: for bridle the stored requirement is the DR with the leaf hash, as p88z intended.
+3. The bridle entry's alias records the file creation date 2026-10-04 17:09:20. The current
+   ~/.cargo/bin/bridle was born 2026-10-15 18:41:36 (new inode 144045688, the self-upgrade
+   replaced the file). For caddy 2.11.4 the alias creation date equals the file's birth
+   (Jun 1 15:35:02), i.e. entries do record the file's birth time.
+   The plist mtime is Oct 12 12:39: **the human's Allow click at ~19:25 on Oct 15 did not rewrite
+   the plist** (entry still names the Oct 4 file), yet the click un-blocked pid 88900. So the
+   decision that blocked the new gateway was not "no entry for this path": an entry for this
+   exact path with a matching DR already existed.
+4. `socketfilterfw --getappblocked ~/.cargo/bin/bridle` (works without root) says "permitted"
+   even while the new gateway was blocked (the aide saw this too). So the query is a path lookup
+   and is NOT evidence of what is enforced for a running process.
+5. The lookup is by path, not by DR: byte-identical copies of the signed binary (cp, cp -c
+   clone) at /tmp/7bs2/x/ with the same DR report "The application is not part of the firewall".
+   A DR match alone does not carry an allow to another path.
+6. `allowsignedenabled`/`allowdownloadsignedenabled` are both 1. A Developer-ID node
+   (`~/.nvm/.../node`, Authority Apple Root CA chain) listens on `*:6010...` with NO list entry
+   (`--getappblocked`: "not part of the firewall") and is not blocked: signed software is
+   auto-allowed. Bridle's self-signed cert never qualifies for that route, so bridle depends on
+   the per-path list entry alone. (Inference: the auto-allow path needs a chain to an Apple/trusted
+   root, not a user-domain codeSign trust setting; the cert is user-trusted for codeSign
+   (`security dump-trust-settings` Cert 2) and still gets no auto-allow, as the blocked gateway shows.)
+7. Four bridle processes listen on the tailnet address 100.100.189.100: ports 7401, 7405,
+   7406, 7878. All run /Users/jbranam/.cargo/bin/bridle, so one list entry has to cover all.
+8. socketfilterfw (pid 265) log (`/usr/bin/log`, note zsh's `log` builtin shadows it):
+   -67065 (errSecCSNoSuchCode) at 18:41:48, 18:41:49, 18:41:55, 18:42:05, around the gateway's
+   18:41:57 start, and many -67062 (errSecCSUnsigned) per minute all day (those are unsigned/other
+   processes; ~1 pair every few seconds). Too sparse to attribute to bridle. No appfirewall.log
+   (/var/log/appfirewall.log is 0 bytes).
+
+## Reading
+
+The DR form is right, so the "sign with a stable identity" part of p88z did what it intended
+(reqdata). What fails is the other half of the match. Leading hypothesis (H1, unproven): the
+firewall also ties the entry to the file object recorded in the Alias (file creation date /
+file identity) or to the path-at-launch resolution, so a self-upgrade that **replaces** the file
+(new inode, new birth time) makes the running-process check fail even though path and DR still
+match; the click then grants it for that process only (no plist write). That fits: the human
+clicks Allow "a dozen times in a week" (every upgrade/replace), while the plist stays old.
+Alternative (H2): the dialog the human sees on laptop open is for a *different* bridle binary
+(e.g. a `target/debug/bridle` from agent worktrees running `bridle dev site up`, which is
+ad-hoc, new path/cdhash every build: exactly the pre-p88z behaviour). The dialog says only
+"bridle", so the human cannot tell. I did not see any such listener now (no non-installed bridle
+listening), so H2 is unverified, not ruled out.
+
+## Ruled out
+- (b) cdhash-keyed entry for bridle: ruled out (reqdata is the leaf-hash DR).
+- Identity missing/untrusted at sign time: ruled out (`codesign -dvvv` Authority=bridle local
+  signing, 1 valid identity, user codeSign trust present).
+- "Entry absent for the path": ruled out (entry exists, `--getappblocked` permitted).
+- DR alone carries the allow across paths: ruled out (item 5).
+- Whether a launchd restart with NO re-sign (hypothesis c) re-prompts: NOT tested (needs a live
+  listener; see below). Whether in-place rewrite (a) keeps the decision: NOT tested.
+
+## Web sources (what they do and don't say)
+- Apple Developer Forums 740747, https://developer.apple.com/forums/thread/740747 : a binary
+  re-prompted every launch although `socketfilterfw --listapps` showed the choice; fixed after
+  the binary was ad-hoc signed (signing had failed because the containing directory was
+  read-only to the user). It contains NO Apple-staff statement on how the firewall identifies
+  programs. (My first search summary attributed a "firewall uses the DR" quote to Apple DTS
+  (Quinn); the fetched page does not contain it. Treat that attribution as unverified.)
+- Jamf / krypted threads on `socketfilterfw --add`, `--setallowsigned`, plist location
+  (https://krypted.com/mac-security/command-line-firewall-management-in-os-x-10-10/embed ,
+  https://community.jamf.com/t5/jamf-pro/firewall-issue-on-10-9-3-and-above/td-p/35334 ,
+  https://lists.macports.org/pipermail/macports-dev/2022-March/044167.html): confirm the CLI and
+  that unsigned binaries behave inconsistently; nothing on self-signed leaf vs replaced file.
+- No Apple document found that states how the firewall matches (path, cdhash, DR). The
+  decoded plist (item 1-3) is the best primary evidence.
+- c2 wiki: tried https://c2.com/wiki/remodel/pages/CodeSigning -> HTTP 404; the topic (macOS
+  firewall internals) is not a c2 topic, nothing relevant found.
+- Failed/odd: WebFetch of the Apple forum thread returned only two posts, both by the poster.
+
+## What I need (proposed experiment, needs your call)
+Enforcement test with a throwaway: copy a small signed binary (e.g. tiny listener) to
+/tmp/7bs2/fw/t, sign with the identity, listen on 0.0.0.0:<spare>, connect from remus over
+tailscale. Steps: (1) first listen -> a dialog appears on dalek (needs a click; I can try
+osascript to click Allow on the throwaway, may need Accessibility permission); (2) restart same
+file (c); (3) re-sign in place with `codesign -f` (a); (4) replace via cp+mv (new inode, same
+bytes) (H1); (5) replace with different bytes re-signed. Reading the plist after each tells
+whether the Allow is stored. Cost: one stale throwaway entry that only root can remove
+(`sudo socketfilterfw --remove /tmp/7bs2/fw/t`), which the human or a sudoers entry would have
+to do. Alternatively, run the same tests against the real path ~/.cargo/bin/bridle at a quiet
+moment with a spare-port listener copy... not recommended.
+Cheaper evidence the human can give: next dialog, screenshot/the path shown in "Show details"
+(distinguishes H1 from H2).
+
+## Recommended fix directions (not built)
+- If H1: make install not leave a new file object: write the new signed bytes into the
+  EXISTING inode (truncate+write in place, or `codesign -f` in place), though the running
+  binary's text pages make in-place writes risky; test first. Alternatively `socketfilterfw
+  --remove` + `--add` + `--unblockapp` after each install (needs root = option 2).
+- If H2: stop agent/dev-site listeners from binding non-loopback addresses (bind 127.0.0.1 in
+  dev sites), so only the installed binary can ever prompt.
+- Detection (step 3) stays worthwhile whatever the cause.
+
+### note · agent:7bs2 · 2026-10-15T23:54:11.826Z
+step 1 findings posted on the ticket. Cause not proven: bridle's list entry is the correct leaf-hash DR (cdhash theory ruled out) but the alias records the old file's birth time (Oct 4) and the Allow click wrote nothing to the plist; leads H1 (replaced file) vs H2 (dev-site/worktree bridle listeners). Proving it needs a throwaway listener -> a dialog on dalek plus root to remove the entry; need your go-ahead. Claim failed: 'settling until 7:57 PM'.
