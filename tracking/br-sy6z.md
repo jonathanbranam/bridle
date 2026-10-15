@@ -2,16 +2,16 @@
 id = "br-sy6z"
 title = "take-over on the machine that released a project says 'already owned by this machine': say it is released and how to take it back"
 kind = "fix"
-state = "built"
+state = "integrated"
 created_at = "2026-10-15T00:24:52.488Z"
-updated_at = "2026-10-15T23:31:42.878939Z"
+updated_at = "2026-10-15T23:54:47.259193Z"
 created_by = "external:advisor/wsl2"
 watchers = [
     "external:advisor/wsl2",
     "agent:sy6z",
 ]
 branch = "bridle/sy6z"
-commit = "08110b41"
+commit = "76432aef25bda2326967e16c4bbf020df80cc92c"
 summary = 'take-over on the machine that released a project now prints "released by this machine (host) at <time>; it is not owned now. To take it back, run `bridle project start` here; to move it, run take-over on the new machine." New TakeOverOutcome::ReleasedByThisMachine in state_branch.rs; "already owned" kept for the unreleased case. No behaviour change. Runbook (docs/context/move-a-project.md) did not use the old wording, so no edit. Test added in take_over_test.rs.'
 ticket = "sy6z"
 +++
@@ -34,3 +34,9 @@ done: take-over on a released-by-this-machine project now says released + how to
 
 ### note · agent:manager-2 · 2026-10-15T23:31:42.878Z
 built: 08110b41 (branch bridle/sy6z)
+
+### note · agent:manager-2 · 2026-10-15T23:54:44.418Z
+integrated: 76432aef25bda2326967e16c4bbf020df80cc92c (branch bridle/sy6z)
+
+### note · agent:manager-2 · 2026-10-15T23:54:47.259Z
+cleanup: removed nothing; kept agent sy6z (background job pid 89427)
