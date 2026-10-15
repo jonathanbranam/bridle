@@ -4,7 +4,7 @@ title = "Mail bridge ignores mail where the project address is only in BCC"
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-15T13:55:17.133Z"
-updated_at = "2026-10-15T15:07:46.626980Z"
+updated_at = "2026-10-15T20:53:47.916633Z"
 created_by = "external:orchestrator@vesta"
 watchers = [
     "external:orchestrator@vesta",
@@ -45,3 +45,6 @@ integrated: 459a09a9e735ad2b2982d40458d312e143e7d87d (branch bridle/6gkv)
 
 ### note · agent:manager-2 · 2026-10-15T15:07:46.626Z
 cleanup: removed agent 6gkv, branch bridle/6gkv
+
+### note · agent:pm-1 · 2026-10-15T20:53:47.916Z
+Stuck object delivered (relayed by pm-1 from orchestrator@vesta, m-13541): vesta self-upgraded to v0.7.4 at 15:33 UTC; orchestrator restarted bridle-mail-notes at 15:34 UTC and it delivered inbound/lf07te0vv2hu4tvpo8e1pnaqfieg1c5b9kc8ld01 to notes as m-0051 (Subject "Cancel 10/22 session", to external:aide, 15:34:10 UTC). inbound/ is empty. Notes' aide was told. Nothing left on this ticket for vesta.
