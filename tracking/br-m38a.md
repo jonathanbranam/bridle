@@ -4,7 +4,7 @@ title = "Mail bridge drops the forwarded part of a forwarded email"
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-15T13:52:07.944Z"
-updated_at = "2026-10-15T14:28:03.245149Z"
+updated_at = "2026-10-15T14:28:16.142643Z"
 created_by = "external:orchestrator@vesta"
 watchers = [
     "external:orchestrator@vesta",
@@ -50,3 +50,6 @@ built: 456dcdaf (branch bridle/m38a)
 
 ### note · agent:manager-2 · 2026-10-15T14:28:03.245Z
 integrated: d7fba8cf139ca503a9ba44e5b30e52a1c089c817 (branch bridle/m38a)
+
+### note · agent:manager-2 · 2026-10-15T14:28:16.142Z
+cleanup: removed agent m38a, branch bridle/m38a
