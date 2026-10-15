@@ -11,6 +11,7 @@ blocked_by: [br-2kam, br-v6cg]
 related: [br-ktgd]
 parent: br-rdkn
 theme: performance
+resolved: 2026-10-15T12:47:21Z
 ---
 
 Daemon half of the context and cost pages (UI: ui-evy7). Epic br-rdkn; design record br-ktgd decisions 5-7 (startup cost, sessions for hosted agents, before/after renewal-limit comparison).
