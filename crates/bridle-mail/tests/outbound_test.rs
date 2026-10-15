@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use bridle_api::types::{Agent, Message, MessageKind, OpenQuestion, SendRequest, Ticket};
 use bridle_mail::{
     Bridge, FakeMailer, FakeStore, Feed, MailConfig, Outbound, Outcome, Rejection, Sent, Sink,
-    Tokens, digest_due,
+    Tokens, decode_tickets, digest_due,
 };
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use serde_json::json;
@@ -275,6 +275,58 @@ async fn a_task_list_that_fails_to_decode_still_gets_the_digest() {
     let sent = r.mailer.sent();
     assert_eq!(sent.len(), 1, "the digest went anyway");
     assert!(sent[0].subject.contains("digest"));
+}
+
+#[test]
+fn one_unknown_kind_or_state_skips_only_that_ticket() {
+    let ok = |id: &str| {
+        json!({
+            "id": id, "title": "t", "kind": "feature", "state": "planned",
+            "body": "", "thread": [], "created_at": "2026-09-30T10:00:00Z",
+            "updated_at": "2026-09-30T10:00:00Z",
+        })
+    };
+    let mut new_kind = ok("t-2");
+    new_kind["kind"] = json!("brand-new-kind");
+    let mut new_state = ok("t-3");
+    new_state["state"] = json!("brand_new_state");
+    let got = decode_tickets(vec![ok("t-1"), new_kind, new_state, ok("t-4")]);
+    let ids: Vec<_> = got.iter().map(|t| t.id.as_str()).collect();
+    assert_eq!(ids, ["t-1", "t-4"]);
+}
+
+struct DownMailer;
+
+#[async_trait]
+impl bridle_mail::Mailer for DownMailer {
+    async fn send(&self, _: bridle_mail::OutMail) -> anyhow::Result<()> {
+        anyhow::bail!("ses refused")
+    }
+}
+
+#[tokio::test]
+async fn a_digest_that_cannot_be_sent_is_told_to_the_human_once_a_day() {
+    let dir = tempfile::tempdir().expect("tempdir");
+    let sink = Arc::new(Recorder::default());
+    let bridge = Bridge::new(
+        Arc::new(FakeStore::default()),
+        sink.clone(),
+        cfg(),
+        "proj".into(),
+        dir.path().join("attachments"),
+    )
+    .with_outbound(Outbound {
+        mailer: Arc::new(DownMailer),
+        feed: Arc::new(FakeFeed::default()),
+        tokens: Tokens::new(b"a machine key of some length".to_vec()),
+        sent: Sent::open(&dir.path().join("mail")).expect("sent"),
+    });
+    assert!(bridge.poll_outbound(at(6, 30)).await.is_err());
+    assert!(bridge.poll_outbound(at(6, 31)).await.is_err());
+    let told = sink.0.lock().expect("lock").clone();
+    assert_eq!(told.len(), 1, "once for the day");
+    assert_eq!(told[0].to.as_deref(), Some("human"));
+    assert!(told[0].body.contains("ses refused"), "{}", told[0].body);
 }
 
 #[test]

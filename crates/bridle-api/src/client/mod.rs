@@ -732,6 +732,12 @@ impl Client {
         self.get_json(&["v1", "tickets"]).await
     }
 
+    /// `GET /v1/tickets` undecoded, for a caller that must survive a ticket kind or state this
+    /// build doesn't know (the mail digest): decode each item itself.
+    pub async fn list_tasks_raw(&self) -> Result<Vec<serde_json::Value>, ClientError> {
+        self.get_json(&["v1", "tickets"]).await
+    }
+
     /// `GET /v1/tickets?ready=true` (roles-and-lifecycle.md, "ready is computed").
     pub async fn ready_tasks(&self) -> Result<Vec<Ticket>, ClientError> {
         let query = TicketQuery {

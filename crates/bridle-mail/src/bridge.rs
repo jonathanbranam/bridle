@@ -81,12 +81,27 @@ impl Feed for ClientSink {
     }
 
     async fn tasks(&self) -> anyhow::Result<Vec<Ticket>> {
-        Ok(self.0.list_tasks().await?)
+        Ok(decode_tickets(self.0.list_tasks_raw().await?))
     }
 
     async fn open_questions(&self) -> anyhow::Result<Vec<OpenQuestion>> {
         Ok(self.0.list_open_questions().await?)
     }
+}
+
+/// Decodes each ticket on its own, so one with a kind or state this build doesn't know is
+/// skipped (with a warn naming it) instead of emptying the whole list (br-bc37).
+pub fn decode_tickets(raw: Vec<serde_json::Value>) -> Vec<Ticket> {
+    raw.into_iter()
+        .filter_map(|v| match serde_json::from_value::<Ticket>(v.clone()) {
+            Ok(t) => Some(t),
+            Err(e) => {
+                let id = v.get("id").and_then(|i| i.as_str()).unwrap_or("?");
+                tracing::warn!("digest skips ticket {id}: {e}");
+                None
+            }
+        })
+        .collect()
 }
 
 /// Everything the outbound half needs; without it the bridge is inbound-only.
@@ -127,6 +142,8 @@ pub struct Bridge {
     waiting_since: Mutex<HashMap<String, DateTime<Utc>>>,
     local: Arc<dyn Local>,
     outbound: Option<Outbound>,
+    /// The day a failed digest was last reported to the human, so a stuck one says so once a day.
+    digest_failure_told: Mutex<Option<chrono::NaiveDate>>,
 }
 
 impl Bridge {
@@ -151,6 +168,7 @@ impl Bridge {
                 aide: false,
             }),
             outbound: None,
+            digest_failure_told: Mutex::new(None),
         }
     }
 
@@ -253,7 +271,8 @@ impl Bridge {
                     Vec::new()
                 }
             };
-            out.mailer
+            if let Err(e) = out
+                .mailer
                 .send(digest_mail(
                     &self.project,
                     &self.cfg,
@@ -263,11 +282,40 @@ impl Bridge {
                     now,
                 ))
                 .await
-                .context("mailing the digest")?;
+            {
+                self.tell_digest_failed(now.date(), &e).await;
+                return Err(e).context("mailing the digest");
+            }
             out.sent.mark_digest(now.date())?;
             tracing::info!("digest mailed");
         }
         Ok(())
+    }
+
+    /// A digest that can't be mailed is told to the human as a message, at most once a day.
+    async fn tell_digest_failed(&self, day: chrono::NaiveDate, err: &anyhow::Error) {
+        {
+            let mut told = self
+                .digest_failure_told
+                .lock()
+                .expect("digest failure lock");
+            if *told == Some(day) {
+                return;
+            }
+            *told = Some(day);
+        }
+        let req = SendRequest {
+            to: Some("human".to_string()),
+            body: format!(
+                "The mail digest for {day} could not be sent: {err:#}. It retries each poll."
+            ),
+            kind: MessageKind::Note,
+            when: When::Idle,
+            ..SendRequest::default()
+        };
+        if let Err(e) = self.sink.send(req).await {
+            tracing::warn!("could not tell the human the digest failed: {e:#}");
+        }
     }
 
     /// A recipient's reply to a delivered mail ("got it: ...") goes back to its sender.

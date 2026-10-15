@@ -12,7 +12,7 @@ mod parse;
 mod store;
 mod token;
 
-pub use bridge::{Bridge, ClientSink, Outbound, Outcome, Sink};
+pub use bridge::{Bridge, ClientSink, Outbound, Outcome, Sink, decode_tickets};
 pub use config::MailConfig;
 pub use local::{FileLocal, FixedLocal, Local};
 pub use outbound::{
