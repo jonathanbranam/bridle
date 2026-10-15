@@ -37,3 +37,8 @@ claimed_at = "2026-10-03T11:04:49.804Z"
 task = "br-da2b"
 claimed_by = "human"
 claimed_at = "2026-10-03T11:04:49.780Z"
+
+[[claim]]
+task = "br-eapt"
+claimed_by = "agent:eapt"
+claimed_at = "2026-10-15T03:24:42.616677Z"

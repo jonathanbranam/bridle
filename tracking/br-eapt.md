@@ -2,11 +2,14 @@
 id = "br-eapt"
 title = "Daemon usage sessions: each hosted session's start/end reason, renewal limit, startup cost and context over turns (for the context and cost pages)"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-14T02:32:28.538Z"
-updated_at = "2026-10-14T03:55:05.701003Z"
+updated_at = "2026-10-15T03:24:42.616677Z"
 created_by = "external:advisor/product-manager"
-watchers = ["external:advisor/product-manager"]
+watchers = [
+    "external:advisor/product-manager",
+    "agent:eapt",
+]
 ticket = "eapt"
 +++
 

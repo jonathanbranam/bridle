@@ -4,7 +4,7 @@ title = "The NUC recovers everything on boot (4r3k)"
 kind = "feature"
 state = "integrated"
 created_at = "2026-09-30T12:20:01.124Z"
-updated_at = "2026-10-15T03:24:13.848975Z"
+updated_at = "2026-10-15T03:24:30.869343Z"
 created_by = "external:advisor"
 watchers = [
     "external:advisor",
@@ -46,3 +46,6 @@ built: 06268581 (branch bridle/f8f9)
 
 ### note · agent:manager-2 · 2026-10-15T03:24:13.848Z
 integrated: dedf27ae8b239f816bcb22e58b750326fbe807c7 (branch bridle/f8f9)
+
+### note · agent:manager-2 · 2026-10-15T03:24:30.869Z
+cleanup: removed agent f8f9, branch bridle/f8f9
