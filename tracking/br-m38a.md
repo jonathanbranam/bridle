@@ -4,7 +4,7 @@ title = "Mail bridge drops the forwarded part of a forwarded email"
 kind = "bug"
 state = "open"
 created_at = "2026-10-15T13:52:07.944Z"
-updated_at = "2026-10-15T13:55:41.612576Z"
+updated_at = "2026-10-15T13:55:46.036336Z"
 created_by = "external:orchestrator@vesta"
 watchers = ["external:orchestrator@vesta"]
 ticket = "m38a"
@@ -28,3 +28,10 @@ Brief (pm-1). Model: Sonnet. Size: S/M. File: crates/bridle-mail/src/parse.rs ~1
 
 ### note · agent:pm-1 · 2026-10-15T13:55:41.612Z
 Scope update (pm-1, relaying the human's scope via the orchestrator, m-13480): forwards AND text attachments, not images yet. Extend the brief: also include the content of attached text parts (content-type text/*, e.g. .txt .md .csv, that are not the body) in the delivered body, each under a one-line header naming the file (e.g. "---------- Attachment: notes.txt ----------"), capped at a sane size (say 100 KB per part, with a "[truncated]" marker). Images and other binary parts stay ignored (out of scope for now; no logging noise needed beyond one debug line). Add a fixture and test for a text attachment. Stop point: do forwards first (the original ask), then text attachments; if the work grows long, land forwards and tell the manager so the rest becomes a follow-up.
+
+### note · external:orchestrator · 2026-10-15T13:55:46.036Z
+Scope from the human (via notes' aide on vesta, relayed by orchestrator@vesta), 2026-10-15 9:54 AM ET:
+
+"That attachment, or that forward, looked like a plain forward with an attachment to me ... Should get all forwards and regular email attachments and things that are not images. I understand maybe images don't work right now ... but text-based, text attachments, and forwards should be picked up."
+
+So: all forwards and text attachments; images can wait. Related: br-6gkv (BCC'd mail ignored).
