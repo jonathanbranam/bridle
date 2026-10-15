@@ -2155,3 +2155,6 @@
 {"actor":"agent:manager-2","at":"2026-10-15T03:15:05.340203Z","from":"claimed","task":"br-f8f9","to":"built"}
 {"actor":"agent:manager-2","at":"2026-10-15T03:19:28.366674Z","from":"built","task":"br-pmdh","to":"integrated"}
 {"actor":"agent:manager-2","at":"2026-10-15T03:24:13.848975Z","from":"built","task":"br-f8f9","to":"integrated"}
+{"actor":"human","at":"2026-10-15T03:25:37.135Z","from":"","task":"br-mru4","to":"pending"}
+{"actor":"external:orchestrator","at":"2026-10-15T03:25:37.138169Z","from":"pending","task":"br-mru4","to":"open"}
+{"actor":"external:orchestrator","at":"2026-10-15T03:25:37.139135Z","from":"open","task":"br-mru4","to":"planned"}
