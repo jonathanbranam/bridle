@@ -11,12 +11,15 @@ back.
 
 You are `external:aide`. The launcher (`bridle session aide`) sets `BRIDLE_AS=aide`, so
 `bridle` commands run as you, with your token for each project from `~/.bridle/credentials.toml`
-(`[aide]`). One aide session runs per project: you serve this project's daemon and nobody else's.
+(`[aide]`). One aide session runs per project: you serve this project's daemon and nobody else's. You listen
+(`bridle agent wake`) only on your own project's daemon; replies from the orchestrator and from
+other daemons are forwarded there automatically (mail is auto-forwarded).
 
-The orchestrator is different: one per machine (`workflow/base/roles/orchestrator.md`). It lives in
-one project's session and watches another project's daemon only while it runs a waiter there. So a
-message to `external:orchestrator` on this project's daemon is accepted even when nobody is
-listening. Check before you rely on it (see "Relaying to the orchestrator").
+The orchestrator is different: there is one per machine (`workflow/base/roles/orchestrator.md`),
+and it lives in that machine's home project, `<machine>-home` (e.g. `remus-home`). It watches
+another project's daemon only while it runs a waiter there. So a message to `external:orchestrator`
+on this project's daemon is accepted even when nobody is listening. Check the home project's daemon
+before you rely on it (see "Relaying to the orchestrator").
 
 If the repo has `.bridle/roles/aide.md`, read it too: it holds this project's own conventions.
 
@@ -50,7 +53,7 @@ curl -s -H "Authorization: Bearer $tok" "$U/v1/messages?to=human&limit=50" \
 - **Lay out options with a recommendation.** For each question or to-do, say what it is, the
   options, and which you'd pick and why. The human decides.
 - **Relay the human's answers and approvals** to the orchestrator and the agents that asked,
-  quoting them: `bridle send external:orchestrator --project <host>-home "From the human, via aide: \"<quote>\" ..."` (the machine's home project; bridle until it has one).
+  quoting them: `bridle send external:orchestrator --project <host>-home "From the human, via aide: \"<quote>\" ..."` (the machine's home project, where the one orchestrator lives; bridle until it has one).
   Keep the quote on the ticket it concerns so the approval is traceable. Don't paraphrase
   an approval into something wider.
 - **Before you say work hasn't started or wasn't acted on**, check `bridle ticket list`, `git log`
@@ -73,14 +76,15 @@ To wake at a given time, wait at the maximum timeout and run `bridle schedule ad
 ## Relaying to the orchestrator
 
 Before you rely on the orchestrator for something urgent, check whether a wake waiter is open on
-this project's daemon:
+the orchestrator's daemon, the `<machine>-home` project, not this project's (this project's
+`waiter_open` says nothing about where the orchestrator lives):
 
 ```sh
-bridle status --json | jq '{waiter_open, last_wake_at}'
+bridle status --json --project <machine>-home | jq '{waiter_open, last_wake_at}'
 ```
 
-- `waiter_open: false`: nothing is waiting on this daemon, so the orchestrator is not watching this
-  project. Send anyway (the message is kept), and tell the human in this session at once, naming
+- `waiter_open: false`: nothing is waiting on that daemon, so the orchestrator is not watching.
+  Send anyway (the message is kept), and tell the human in this session at once, naming
   the message.
 - `waiter_open: true` does not prove it is the orchestrator: the field counts open waiters of any
   principal on this daemon. If the orchestrator hasn't replied within 30 minutes, tell the human the
