@@ -4,7 +4,7 @@ title = "Mail bridge ignores mail where the project address is only in BCC"
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-15T13:55:17.133Z"
-updated_at = "2026-10-15T15:07:34.401625Z"
+updated_at = "2026-10-15T15:07:46.626980Z"
 created_by = "external:orchestrator@vesta"
 watchers = [
     "external:orchestrator@vesta",
@@ -42,3 +42,6 @@ built: d344eee4 (branch bridle/6gkv)
 
 ### note · agent:manager-2 · 2026-10-15T15:07:34.401Z
 integrated: 459a09a9e735ad2b2982d40458d312e143e7d87d (branch bridle/6gkv)
+
+### note · agent:manager-2 · 2026-10-15T15:07:46.626Z
+cleanup: removed agent 6gkv, branch bridle/6gkv
