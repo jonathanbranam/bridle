@@ -4,12 +4,13 @@ title = "take-over on the machine that released a project says 'already owned by
 kind = "fix"
 state = "claimed"
 created_at = "2026-10-15T00:24:52.488Z"
-updated_at = "2026-10-15T22:59:03.502509Z"
+updated_at = "2026-10-15T22:59:24.821781Z"
 created_by = "external:advisor/wsl2"
 watchers = [
     "external:advisor/wsl2",
     "agent:sy6z",
 ]
+summary = 'take-over on the machine that released a project now prints "released by this machine (host) at <time>; it is not owned now. To take it back, run `bridle project start` here; to move it, run take-over on the new machine." New TakeOverOutcome::ReleasedByThisMachine in state_branch.rs; "already owned" kept for the unreleased case. No behaviour change. Runbook (docs/context/move-a-project.md) did not use the old wording, so no edit. Test added in take_over_test.rs.'
 ticket = "sy6z"
 +++
 
