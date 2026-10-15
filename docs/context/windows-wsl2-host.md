@@ -279,6 +279,10 @@ curl -fsSL https://claude.ai/install.sh | bash     # unverified
 claude --version
 ```
 
+Log in to Claude Code now, before any daemon starts: run `claude`, then `/login` (or `claude login`).
+A daemon started before the login reports "claude is not logged in in this daemon's session", and
+its agents crash until the daemon is restarted after a login (br-myw9).
+
 Then install bridle from a release (no clone, no Rust toolchain):
 
 ```bash

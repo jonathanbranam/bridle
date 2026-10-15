@@ -68,7 +68,11 @@ On the new machine:
    environment) (unverified on a machine).
 2. **`gh auth login`.** Needed where a project sets `[ci] github = true` (the daemon asks `gh` for
    CI results to wake you when CI fails). Choose SSH as the protocol. Check with `gh auth status`.
-3. **A distinct git identity per machine** (postmortem
+3. **Log in to Claude Code, before any `bridle serve`, unit start or `bridle project start`.** Run
+   `claude`, then `/login` (or `claude login`), and check with `claude --version`. Why first: a
+   daemon started before the login reports "claude is not logged in in this daemon's session", and
+   its agents crash until the daemon is restarted after a login (br-myw9: remus needed two logins).
+4. **A distinct git identity per machine** (postmortem
    [[docs/tickets/open/postmortem-git-push-to-origin-rejected-because-two-machines-j7r4|j7r4]],
    recommendation 6), so a log shows which box made a commit:
 

@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Docs (br-pmdh): the new-machine guides (`docs/context/add-a-machine.md`, the WSL2 guide) say to log in to Claude Code before the first `bridle serve`, unit start or `bridle project start`, and why (a daemon started before the login has agents that crash until it is restarted). Migration: none.
 - Feature (br-29se): `bridle project add NAME [--machine M] [--port N]` registers a new project: writes the `[projects]` entry here (next free port above the highest if none given), then `projects sync --apply` so every machine and `[mail] projects` have it. Register only; no repo, no daemon. Migration: none.
 
 - Fix (br-eg64): `bridle project start` (and `token pair --projects P`) re-pairs every machine's peer tokens, not only the machines that have P, and its check covers them, so after a take-over the other machines' mail to the moved project no longer queues as `invalid token` and a stale entry shows as refused. Migration: none.
