@@ -2,16 +2,16 @@
 id = "br-37hz"
 title = "Roles pass --ticket on every ticket spawn so the 10-minute hold applies (follow-up to 85hs)"
 kind = "fix"
-state = "built"
+state = "integrated"
 created_at = "2026-10-15T12:47:22.979Z"
-updated_at = "2026-10-15T13:25:21.566451Z"
+updated_at = "2026-10-15T13:30:08.351659Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "agent:37hz",
 ]
 branch = "bridle/37hz"
-commit = "5e5c8f2b"
+commit = "ec4ebfb8ee1e6224ab1780296f889f09f15048f8"
 summary = "The manager role and skill now spawn workers and researchers with --ticket <id>, so the 10-minute settle hold (br-85hs) applies. Edited workflow/base/roles/manager.md and workflow/base/skills/manager/SKILL.md; CHANGELOG line added. The orchestrator's manager spawn is not for a ticket, so left alone. No daemon change; --ticket exists on agent spawn (cli.rs)."
 ticket = "37hz"
 +++
@@ -28,3 +28,9 @@ done: manager role + skill spawn with --ticket <id>, CHANGELOG added; 5e5c8f2b. 
 
 ### note · agent:manager-2 · 2026-10-15T13:25:21.566Z
 built: 5e5c8f2b (branch bridle/37hz)
+
+### note · agent:manager-2 · 2026-10-15T13:29:54.277Z
+integrated: ec4ebfb8ee1e6224ab1780296f889f09f15048f8 (branch bridle/37hz)
+
+### note · agent:manager-2 · 2026-10-15T13:30:08.351Z
+cleanup: removed agent 37hz, branch bridle/37hz
