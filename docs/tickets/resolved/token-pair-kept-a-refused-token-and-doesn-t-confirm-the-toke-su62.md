@@ -7,8 +7,9 @@ created_by: external:aide
 repos: [bridle]
 changes: []
 specs: []
-blocked_by: []
+blocked_by: [br-sh8y]
 related: [br-nbgp, br-378y]
+resolved: 2026-10-15T20:52:32Z
 ---
 
 The human, 2026-10-14 ~7:45 AM ET (to aide), verbatim: "Can we improve token pair to actually check and see if the tokens are accepted?"

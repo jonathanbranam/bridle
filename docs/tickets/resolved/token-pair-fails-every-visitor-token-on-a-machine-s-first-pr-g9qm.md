@@ -8,8 +8,9 @@ theme: multi-machine
 repos: [bridle]
 changes: []
 specs: []
-blocked_by: []
+blocked_by: [br-su62]
 related: [br-8uxe, br-kf7t, br-xqwy]
+resolved: 2026-10-15T20:52:32Z
 ---
 
 ## The ask

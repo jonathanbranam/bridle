@@ -9,6 +9,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-5cru]
+resolved: 2026-10-15T20:52:32Z
 ---
 
 Step 1 of br-5cru's design (option B). The human approved B, 2026-10-14 ~7:42 AM ET, via advisor product-manager: "That sounds ok." The full design is the worker's comment on br-5cru's thread (tracking/br-5cru.md on bridle/state; `bridle ticket show` may print it empty, bug br-xcb4).

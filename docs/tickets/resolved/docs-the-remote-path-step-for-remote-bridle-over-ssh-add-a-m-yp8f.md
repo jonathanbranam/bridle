@@ -9,6 +9,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-5cru, br-sh8y]
+resolved: 2026-10-15T20:52:33Z
 ---
 
 Step 2 of br-5cru's design (option B). The human approved B, 2026-10-14 ~7:42 AM ET, via advisor product-manager: "That sounds ok." Can go now, ahead of br-sh8y (the code).
