@@ -3549,3 +3549,9 @@ from = "br-6gkv"
 to = "br-257v"
 kind = "blocks"
 created_at = "2026-10-15T20:53:17.121Z"
+
+[[edge]]
+from = "br-9a7b"
+to = "br-fv86"
+kind = "related"
+created_at = "2026-10-15T21:01:48.411Z"
