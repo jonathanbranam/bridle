@@ -2,16 +2,16 @@
 id = "br-afzu"
 title = "New projects join [mail] projects on every machine by default (opt-out)"
 kind = "feature"
-state = "built"
+state = "integrated"
 created_at = "2026-10-14T15:38:37.264Z"
-updated_at = "2026-10-15T01:07:13.081685Z"
+updated_at = "2026-10-15T01:21:02.327296Z"
 created_by = "external:advisor/wsl2"
 watchers = [
     "external:advisor/wsl2",
     "agent:afzu",
 ]
 branch = "bridle/afzu"
-commit = "22130f79"
+commit = "1a73fd3757675ec615913a55c462f6451594fc73"
 summary = "projects sync now spreads this machine's [mail] section key by key (project_sync.rs, Entry::Mail), with [mail] projects derived as bridle first then every [projects] name; --apply fixes this machine's own file too. [machine] mail = false (config.rs machine_mail_on, never synced) makes project start skip the bridge with one line, mail install refuse, and preflight --to skip the AWS check (remote grep for mail = false). Mail on but no AWS credentials: project start skips with one warning; doctor warns once (AWS or mail.key). Caveat: project start checks AWS only, not mail.key (a fresh machine legitimately has none until first use). Docs: mail.md, cli.md, mail-on-a-machine.md, adding-a-project.md, CHANGELOG. Items 1-5 all done in this ticket."
 ticket = "afzu"
 +++
@@ -36,3 +36,6 @@ done: projects sync spreads [mail] (projects derived), [machine] mail = false op
 
 ### note · agent:manager-2 · 2026-10-15T01:07:13.081Z
 built: 22130f79 (branch bridle/afzu)
+
+### note · agent:manager-2 · 2026-10-15T01:21:02.327Z
+integrated: 1a73fd3757675ec615913a55c462f6451594fc73 (branch bridle/afzu)
