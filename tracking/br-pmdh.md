@@ -2,16 +2,16 @@
 id = "br-pmdh"
 title = "New-machine setup: log in to Claude Code before the first bridle serve"
 kind = "docs"
-state = "built"
+state = "integrated"
 created_at = "2026-10-14T18:14:53.591Z"
-updated_at = "2026-10-15T03:15:02.586791Z"
+updated_at = "2026-10-15T03:19:44.240563Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:pmdh",
 ]
 branch = "bridle/pmdh"
-commit = "2c4b47e2204f40e4b761245412ba54070b2a75e5"
+commit = "51a0badab6ba88c157e08d90a769e2265400dbe9"
 summary = """Docs only. `docs/context/add-a-machine.md` gets a new section 1 item 3, "Log in to Claude Code, before any `bridle serve`, unit start or `bridle project start`" (after `gh auth login`; the git identity item moves to 4). `docs/context/windows-wsl2-host.md` gets the same login paragraph right after `claude --version` in step 6, before the daemon's units are installed. Both give the one-line why: a daemon started before the login reports "claude is not logged in in this daemon's session" and its agents crash until it is restarted after a login (br-myw9). CHANGELOG Unreleased has a Docs line. No behaviour change; no migration."""
 ticket = "pmdh"
 +++
@@ -25,3 +25,9 @@ done: br-pmdh docs: add-a-machine.md section 1 item 3 and the WSL2 guide's step 
 
 ### note · agent:manager-2 · 2026-10-15T03:15:02.586Z
 built: 2c4b47e2204f40e4b761245412ba54070b2a75e5 (branch bridle/pmdh)
+
+### note · agent:manager-2 · 2026-10-15T03:19:28.366Z
+integrated: 51a0badab6ba88c157e08d90a769e2265400dbe9 (branch bridle/pmdh)
+
+### note · agent:manager-2 · 2026-10-15T03:19:44.240Z
+cleanup: removed agent pmdh, branch bridle/pmdh
