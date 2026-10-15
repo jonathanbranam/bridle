@@ -293,9 +293,11 @@ impl Plan {
         v
     }
 
-    /// The (daemon, project) pairs `holder` needs a peer token for.
+    /// The (daemon, project) pairs `holder` needs a peer token for. Senders are all the
+    /// holder's projects, ignoring `--projects`: after a take-over the other machines' entries
+    /// toward the moved project are the stale ones (br-eg64).
     fn peer_entries(&self, holder: &str) -> Vec<(&str, &str)> {
-        let senders: Vec<&String> = self.up[holder]
+        let senders: Vec<&String> = self.all_up[holder]
             .iter()
             .map(|(p, _)| p)
             .filter(|p| !self.no_peers.contains(&(holder.to_string(), (*p).clone())))
@@ -459,7 +461,7 @@ pub fn pair(
     // can forward to the visitor's home, which needs the peer entries made here (br-g9qm).
     // A daemon forwards mail with a token the receiving daemon minted for the
     // sending MACHINE, so each machine with a sending project needs one per receiving project.
-    for holder in up.keys().filter(|_| p.do_peer) {
+    for holder in p.all_up.keys().filter(|_| p.do_peer) {
         let mut t = Tally::default();
         for (daemon, project) in p.peer_entries(holder) {
             let label = format!("{holder} -> {daemon}/{project}");
@@ -669,37 +671,35 @@ struct Checked {
 
 fn check_entries(p: &Plan, fleet: &Fleet, runner: &dyn Runner) -> Vec<Checked> {
     let mut v = Vec::new();
-    for holder in p.up.keys() {
-        if p.do_role {
-            for e in p.role_entries(holder) {
-                v.push(Checked {
-                    holder: holder.clone(),
-                    kind: e.role.to_string(),
-                    daemon: e.daemon.to_string(),
-                    project: e.project.to_string(),
-                    refused: check_role(
-                        fleet,
-                        runner,
-                        holder,
-                        &e,
-                        (!e.same)
-                            .then(|| home_for(&p.up[holder], e.project, e.role))
-                            .as_deref(),
-                    )
-                    .err(),
-                });
-            }
+    for holder in p.up.keys().filter(|_| p.do_role) {
+        for e in p.role_entries(holder) {
+            v.push(Checked {
+                holder: holder.clone(),
+                kind: e.role.to_string(),
+                daemon: e.daemon.to_string(),
+                project: e.project.to_string(),
+                refused: check_role(
+                    fleet,
+                    runner,
+                    holder,
+                    &e,
+                    (!e.same)
+                        .then(|| home_for(&p.up[holder], e.project, e.role))
+                        .as_deref(),
+                )
+                .err(),
+            });
         }
-        if p.do_peer {
-            for (daemon, project) in p.peer_entries(holder) {
-                v.push(Checked {
-                    holder: holder.clone(),
-                    kind: "peer".into(),
-                    daemon: daemon.to_string(),
-                    project: project.to_string(),
-                    refused: check_peer(fleet, runner, holder, daemon, project).err(),
-                });
-            }
+    }
+    for holder in p.all_up.keys().filter(|_| p.do_peer) {
+        for (daemon, project) in p.peer_entries(holder) {
+            v.push(Checked {
+                holder: holder.clone(),
+                kind: "peer".into(),
+                daemon: daemon.to_string(),
+                project: project.to_string(),
+                refused: check_peer(fleet, runner, holder, daemon, project).err(),
+            });
         }
     }
     v
@@ -1455,6 +1455,37 @@ mod tests {
             !out.contains("minted 1") && !out.contains("minted 2"),
             "{out}"
         );
+    }
+
+    // br-eg64: after a take-over the receiver's database is fresh, so the OTHER machines' peer
+    // entries toward the moved project are stale; a run narrowed to it re-mints them
+    #[test]
+    fn projects_filter_repairs_other_machines_peer_entries_toward_it() {
+        let s = sim();
+        let (ok, out) = run(&s, &Options::default());
+        assert!(ok, "{out}");
+        // notes moves: nuc's daemon starts over with no tokens
+        s.peer.borrow_mut().retain(|k, _| k.0 != "nuc");
+        s.valid.borrow_mut().retain(|k, _| k.0 != "nuc");
+        let only = Options {
+            projects: vec!["notes".into()],
+            ..Default::default()
+        };
+        let mut out = Vec::new();
+        assert!(!check(&only, &fleet(), &s, &mut out, false).unwrap());
+        assert!(
+            String::from_utf8(out)
+                .unwrap()
+                .contains("check mbp peer -> nuc/notes: refused"),
+        );
+        let (ok, out) = run(&s, &only);
+        assert!(ok, "{out}");
+        assert!(
+            out.contains("peer: minted on the receiver for mbp -> nuc/notes"),
+            "{out}"
+        );
+        let mut out = Vec::new();
+        assert!(check(&only, &fleet(), &s, &mut out, false).unwrap());
     }
 
     // s-f12f
