@@ -2,11 +2,14 @@
 id = "br-m38a"
 title = "Mail bridge drops the forwarded part of a forwarded email"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-15T13:52:07.944Z"
-updated_at = "2026-10-15T14:03:15.970441Z"
+updated_at = "2026-10-15T14:04:01.194265Z"
 created_by = "external:orchestrator@vesta"
-watchers = ["external:orchestrator@vesta"]
+watchers = [
+    "external:orchestrator@vesta",
+    "agent:m38a",
+]
 ticket = "m38a"
 +++
 
