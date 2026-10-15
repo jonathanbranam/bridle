@@ -57,6 +57,9 @@ the directory.
    P = { machine = "nuc", port = 7403 }     # or machine = "dalek"
    ```
 
+   `bridle projects sync --apply` does the second box, and it also puts P in `[mail] projects`
+   everywhere (every project takes mail; a machine without mail sets `[machine] mail = false`).
+
 2. **The project's machine, clone it into its own workspace.** The workspace is the clone's
    parent, and the worktrees go there as well (`wt/`).
 

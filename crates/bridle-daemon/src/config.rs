@@ -2763,6 +2763,26 @@ struct RawMachine {
     load_quiet_below: Option<String>,
     #[serde(default)]
     load_note_gap: Option<String>,
+    /// `mail = false`: this machine runs no mail bridges (afzu). Never copied by `projects sync`.
+    #[serde(default)]
+    mail: Option<bool>,
+}
+
+/// Whether this machine takes part in mail: false only with `[machine] mail = false` in
+/// `<home>/config.toml`. A missing file or key means yes.
+pub fn machine_mail_on(home: &Path) -> Result<bool, ConfigError> {
+    let path = home.join("config.toml");
+    let text = match std::fs::read_to_string(&path) {
+        Ok(t) => t,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(true),
+        Err(source) => return Err(ConfigError::Read { path, source }),
+    };
+    let raw: RawConfig = bridle_api::config_warn::parse(&text, &path.display().to_string())
+        .map_err(|source| ConfigError::Parse {
+            path: path.clone(),
+            source: Box::new(source),
+        })?;
+    Ok(raw.machine.unwrap_or_default().mail.unwrap_or(true))
 }
 
 /// Whether `repo` is listed in `[machine] tools_only` of `<home>/config.toml` (hw6c): a clone

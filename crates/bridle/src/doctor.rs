@@ -73,6 +73,7 @@ pub fn run(cli: &Cli, args: &DoctorArgs) -> Result<(), CliError> {
     if std::env::consts::OS == "linux" {
         checks.extend(linux_checks(&LinuxHost::detect(&repo)));
     }
+    checks.extend(mail_check());
     checks.extend(config_warning_checks());
 
     let failed = failed(&checks, args.strict);
@@ -118,6 +119,17 @@ fn origin_check(repo: &Path, config: Option<&Config>) -> Option<Check> {
             format!("git fetch origin failed: {e}"),
             "fix the remote or network, then re-run doctor",
         )),
+    }
+}
+
+/// Mail on this machine: one line when it is off, or on but not set up (afzu).
+fn mail_check() -> Option<Check> {
+    use crate::mail_install::{MAIL_OFF, MailState, SET_UP_MAIL, mail_state};
+    let user_home = std::env::var_os("HOME").map(std::path::PathBuf::from)?;
+    match mail_state(&bridle_api::discovery::bridle_home(), &user_home, true) {
+        MailState::Off => Some(Check::ok("mail", MAIL_OFF)),
+        MailState::NotSetUp(why) => Some(Check::warn("mail", why, SET_UP_MAIL)),
+        MailState::NotConfigured | MailState::Ready => None,
     }
 }
 

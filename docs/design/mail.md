@@ -35,7 +35,7 @@ the standard AWS chain, never from bridle's files.
 | `region` | AWS default | |
 | `domain` | `dev.branam.us` | only recipients on this domain count |
 | `allow` | required | addresses and `@domains`; a domain entry still needs DMARC pass for that domain |
-| `projects` | none | every project name mail may go to, on any machine; the bridge of the first one answers mail to any other name |
+| `projects` | none | every project name mail may go to, on any machine; the bridge of the first one answers mail to any other name. Derived, not hand-kept: `bridle projects sync` sets it to `bridle` plus every `[projects]` name, the same on every machine (no per-project opt-out). A machine opts out as a whole with `[machine] mail = false` (never synced): it runs no bridges, and its projects' mail waits in the bucket ("Following the owner") |
 | `not_delivered_after_secs` | 3600 | how long mail may wait for its project's owner before the sender is told |
 | `max_body_chars` | 20000 | longer bodies are cut and marked |
 | `max_attachment_bytes` | 1048576 | per attachment |

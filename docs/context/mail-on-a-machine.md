@@ -127,10 +127,15 @@ shasum -a 256 < ~/.bridle/mail.key      # same hash (hash the raw file, not od o
 
 ## 4. `[mail]` in `~/.bridle/config.toml`
 
-Copy the whole `[mail]` section from dalek's `~/.bridle/config.toml`, unchanged. Keep `bridle`
-first in `projects`: only the bridge of the first name answers mail to unknown names, so several
-bridges don't each reply. A new project that should take mail is added to `projects` on every
-machine.
+Run `bridle projects sync --apply` on the machine that has `[mail]` (dalek): it copies the whole
+section here, and keeps `projects` as `bridle` first, then every `[projects]` name (only the bridge
+of the first name answers mail to unknown names, so several bridges don't each reply). Every
+project is enrolled; a new project reaches this list through the same sync.
+
+To run no mail on this machine, set `[machine] mail = false` (sync never copies `[machine]`).
+`project start` then skips the bridge with one line and `mail install` refuses. With mail on but
+AWS credentials missing, `project start` skips the bridge with a warning and `bridle doctor`
+warns once, until you finish steps 1-3 or turn mail off.
 
 ## 5. Per project: token and bridge
 

@@ -187,6 +187,8 @@ pub enum Entry {
     Host(String),
     /// `[projects]`: project -> (machine, port)
     Place(String, u16),
+    /// `[mail]`: key -> its TOML value, normalised (no comments or line breaks).
+    Mail(String),
 }
 
 impl Entry {
@@ -194,6 +196,7 @@ impl Entry {
         match self {
             Entry::Host(h) => h.clone(),
             Entry::Place(m, p) => format!("{m}:{p}"),
+            Entry::Mail(v) => v.clone(),
         }
     }
 }
@@ -253,6 +256,46 @@ pub fn parse(text: &str) -> Result<(List, Option<String>), String> {
     Ok((out, name))
 }
 
+fn normalise(v: &Value) -> Value {
+    match v {
+        Value::Array(a) => Value::Array(a.iter().map(normalise).collect()),
+        other => {
+            let mut v = other.clone();
+            v.decor_mut().clear();
+            v
+        }
+    }
+}
+
+/// The `[mail]` section of a config.toml text, key -> value. Empty when there is none.
+pub fn parse_mail(text: &str) -> Result<List, String> {
+    let doc: DocumentMut = text
+        .parse()
+        .map_err(|e| format!("invalid config.toml: {e}"))?;
+    let mut out = List::new();
+    if let Some(mail) = doc.get("mail").and_then(Item::as_table_like) {
+        for (key, item) in mail.iter() {
+            let v = item
+                .as_value()
+                .ok_or(format!("[mail] {key}: want a plain value"))?;
+            out.insert(
+                ("mail", key.to_string()),
+                Entry::Mail(normalise(v).to_string()),
+            );
+        }
+    }
+    Ok(out)
+}
+
+/// What `[mail] projects` must be on every machine (kx5u K6, afzu): every `[projects]` name,
+/// `bridle` first, so the same bridge answers mail to unknown names everywhere.
+pub fn mail_projects(fleet: &Fleet) -> Entry {
+    let mut names = vec!["bridle".to_string()];
+    names.extend(fleet.placed.keys().filter(|p| *p != "bridle").cloned());
+    let arr: toml_edit::Array = names.iter().map(String::as_str).collect();
+    Entry::Mail(normalise(&Value::Array(arr)).to_string())
+}
+
 /// One difference between the source list and a target's.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Diff {
@@ -303,6 +346,12 @@ pub fn apply_text(text: &str, diffs: &[((&'static str, String), Diff)]) -> Resul
             Entry::Host(h) => {
                 table.insert(name, toml_edit::value(h.as_str()));
             }
+            Entry::Mail(v) => {
+                let value: Value = v
+                    .parse()
+                    .map_err(|e| format!("[mail] {name}: bad value {v}: {e}"))?;
+                table.insert(name, Item::Value(value));
+            }
             Entry::Place(machine, port) => {
                 if let Some(t) = table.get_mut(name).and_then(Item::as_table_like_mut) {
                     // Keep the entry's own formatting; only the two values change.
@@ -346,7 +395,16 @@ pub fn run(action: &crate::cli::ProjectsAction) -> Result<(), crate::error::CliE
 /// read and, when applying, written.
 pub fn sync(fleet: &Fleet, files: &dyn Files, apply: bool, out: &mut dyn Write) -> bool {
     let mut ok = true;
-    let source = list_of(fleet);
+    let mut source = list_of(fleet);
+    // This machine's [mail] is spread too, with `projects` derived from [projects] (afzu). With
+    // no [mail] here there is nothing to spread.
+    let local_text = files.read(&Where::Local).unwrap_or_default();
+    let local_mail = parse_mail(&local_text).unwrap_or_default();
+    let mut mail_source = local_mail.clone();
+    if !mail_source.is_empty() {
+        mail_source.insert(("mail", "projects".into()), mail_projects(fleet));
+    }
+    source.extend(mail_source.clone());
     let mut names: Vec<String> = vec![fleet.local.clone()];
     let mut lists: Vec<Option<List>> = vec![Some(source.clone())];
     let mut texts: Vec<String> = vec![String::new()];
@@ -356,9 +414,11 @@ pub fn sync(fleet: &Fleet, files: &dyn Files, apply: bool, out: &mut dyn Write) 
             continue;
         }
         names.push(name.clone());
-        let got = files
-            .read(&Where::Ssh(host.clone()))
-            .and_then(|t| parse(&t).map(|(l, n)| (t, l, n)));
+        let got = files.read(&Where::Ssh(host.clone())).and_then(|t| {
+            let mut l = parse(&t)?;
+            l.0.extend(parse_mail(&t)?);
+            Ok((t, l.0, l.1))
+        });
         match got {
             Ok((t, l, n)) => {
                 texts.push(t);
@@ -441,6 +501,36 @@ pub fn sync(fleet: &Fleet, files: &dyn Files, apply: bool, out: &mut dyn Write) 
             );
         }
     }
+    // This machine's own `[mail] projects` is derived too; the other keys here are the source.
+    let want = mail_source.get(&("mail", "projects".into()));
+    if let Some(want) = want
+        && local_mail.get(&("mail", "projects".into())) != Some(want)
+    {
+        let have = local_mail.get(&("mail", "projects".into()));
+        let _ = writeln!(
+            out,
+            "{}: differs [mail] projects (derived {}, here {})",
+            fleet.local,
+            cell(Some(want)),
+            cell(have)
+        );
+        if apply {
+            let d = [(
+                ("mail", "projects".to_string()),
+                Diff::Missing(String::new(), want.clone()),
+            )];
+            let done = apply_text(&local_text, &d).and_then(|t| files.write(&Where::Local, &t));
+            match done {
+                Ok(()) => {
+                    let _ = writeln!(out, "{}: updated 1 entries", fleet.local);
+                }
+                Err(e) => {
+                    let _ = writeln!(out, "{}: cannot write config ({e})", fleet.local);
+                    ok = false;
+                }
+            }
+        }
+    }
     if !source.contains_key(&("machines", fleet.local.clone())) && fleet.local != "local" {
         let _ = writeln!(
             out,
@@ -506,8 +596,9 @@ mod tests {
 
     impl Files for Fake {
         fn read(&self, at: &Where) -> Result<String, String> {
-            let Where::Ssh(h) = at else {
-                return Ok(String::new());
+            let h = match at {
+                Where::Ssh(h) => h.as_str(),
+                Where::Local => return Ok(self.0.borrow().get("mbp").cloned().unwrap_or_default()),
             };
             self.0
                 .borrow()
@@ -516,8 +607,11 @@ mod tests {
                 .ok_or("ssh: connection refused".into())
         }
         fn write(&self, at: &Where, text: &str) -> Result<(), String> {
-            let Where::Ssh(h) = at else { return Ok(()) };
-            self.0.borrow_mut().insert(h.clone(), text.to_string());
+            let h = match at {
+                Where::Ssh(h) => h.clone(),
+                Where::Local => "mbp".to_string(),
+            };
+            self.0.borrow_mut().insert(h, text.to_string());
             Ok(())
         }
     }
@@ -636,5 +730,30 @@ mod tests {
                 .unwrap()
                 .contains("nuc: cannot read config")
         );
+    }
+
+    #[test]
+    fn mail_is_spread_with_projects_derived_and_machine_left_alone() {
+        let local = format!(
+            "{SRC}[mail]\nbucket = \"b\"\nallow = [\"me@example.com\"]\nprojects = [\"b\", \"a\"]\n"
+        );
+        let there = "[machine]\nname = \"nuc\"\nmail = false\n[mail]\nprojects = [\"a\"]\n";
+        let f = Fake::new(&[("mbp", &local), ("nuc.lan", there)]);
+        let out = run(&f, false);
+        assert!(out.contains("nuc: missing [mail] bucket"), "{out}");
+        assert!(out.contains("nuc: differs [mail] projects"), "{out}");
+        assert!(out.contains("mbp: differs [mail] projects"), "{out}");
+        run(&f, true);
+        let want = "projects = [\"bridle\", \"a\", \"b\"]";
+        for h in ["nuc.lan", "mbp"] {
+            let now = f.0.borrow()[h].clone();
+            assert!(now.contains(want), "{h}: {now}");
+        }
+        let now = f.0.borrow()["nuc.lan"].clone();
+        assert!(
+            now.contains("mail = false") && now.contains("bucket = \"b\""),
+            "{now}"
+        );
+        assert!(!run(&f, true).contains("differs [mail]"));
     }
 }

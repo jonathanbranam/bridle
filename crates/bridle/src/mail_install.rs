@@ -48,6 +48,52 @@ fn unit_path(os: &str, home: &Path, project: &str) -> Result<PathBuf, CliError> 
     }
 }
 
+/// What this machine can do about mail (afzu).
+#[derive(Debug, PartialEq, Eq)]
+pub enum MailState {
+    /// `[machine] mail = false`.
+    Off,
+    /// No usable `[mail]` here: nothing to run, nothing to warn about.
+    NotConfigured,
+    /// `[mail]` is set but the machine lacks what a bridge needs; the text names it.
+    NotSetUp(String),
+    Ready,
+}
+
+pub const MAIL_OFF: &str = "mail off on this machine ([machine] mail = false)";
+pub const SET_UP_MAIL: &str =
+    "set up mail (docs/context/mail-on-a-machine.md) or set [machine] mail = false";
+
+fn has_aws_credentials(user_home: &Path) -> bool {
+    std::env::var_os("AWS_ACCESS_KEY_ID").is_some_and(|v| !v.is_empty())
+        || user_home.join(".aws/credentials").is_file()
+        || user_home.join(".aws/config").is_file()
+}
+
+/// `bridle_home` holds `config.toml` and `mail.key`; `user_home` is `$HOME` (for `~/.aws`).
+/// `need_key` adds the `mail.key` check (doctor's; `project start` only needs AWS).
+pub fn mail_state(bridle_home: &Path, user_home: &Path, need_key: bool) -> MailState {
+    if !bridle_daemon::config::machine_mail_on(bridle_home).unwrap_or(true) {
+        return MailState::Off;
+    }
+    let text = std::fs::read_to_string(bridle_home.join("config.toml")).unwrap_or_default();
+    if bridle_mail::MailConfig::parse(&text).is_err() {
+        return MailState::NotConfigured;
+    }
+    let mut missing = Vec::new();
+    if !has_aws_credentials(user_home) {
+        missing.push("AWS credentials");
+    }
+    if need_key && !bridle_home.join("mail.key").is_file() {
+        missing.push("mail.key");
+    }
+    if missing.is_empty() {
+        MailState::Ready
+    } else {
+        MailState::NotSetUp(format!("missing {}", missing.join(" and ")))
+    }
+}
+
 /// Refuses, naming the fix, when `bridle mail run` could not start: no usable `[mail]` in the
 /// config text, or no `mail` token for the project in the credentials file.
 fn check_ready(config: &str, credentials: &Path, project: &str) -> Result<(), CliError> {
@@ -84,6 +130,12 @@ pub fn install_at(
 ) -> Result<(), CliError> {
     let home = PathBuf::from(std::env::var_os("HOME").ok_or_else(|| anyhow!("$HOME is not set"))?);
     let os = std::env::consts::OS;
+    if mail_state(&discovery::bridle_home(), &home, false) == MailState::Off {
+        return Err(anyhow!(
+            "{MAIL_OFF}: remove that key from ~/.bridle/config.toml to install a bridge here"
+        )
+        .into());
+    }
     let path = unit_path(os, &home, &project)?;
     let config_path = discovery::bridle_home().join("config.toml");
     let config = std::fs::read_to_string(&config_path).map_err(|e| {
@@ -271,6 +323,35 @@ fn render_systemd(env: &ServiceEnv) -> String {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn mail_state_off_unset_up_and_ready() {
+        let home = tempfile::tempdir().unwrap();
+        let user = tempfile::tempdir().unwrap();
+        let cfg = home.path().join("config.toml");
+        let mail = "[mail]\nbucket = \"b\"\nallow = [\"me@example.com\"]\n";
+        std::fs::write(&cfg, mail).unwrap();
+        // The env var would make a machine look set up.
+        if std::env::var_os("AWS_ACCESS_KEY_ID").is_none() {
+            let s = mail_state(home.path(), user.path(), false);
+            assert!(matches!(s, MailState::NotSetUp(w) if w.contains("AWS")));
+            std::fs::create_dir(user.path().join(".aws")).unwrap();
+            std::fs::write(user.path().join(".aws/credentials"), "x").unwrap();
+            assert_eq!(
+                mail_state(home.path(), user.path(), false),
+                MailState::Ready
+            );
+            let s = mail_state(home.path(), user.path(), true);
+            assert!(matches!(s, MailState::NotSetUp(w) if w.contains("mail.key")));
+        }
+        std::fs::write(&cfg, format!("[machine]\nmail = false\n{mail}")).unwrap();
+        assert_eq!(mail_state(home.path(), user.path(), true), MailState::Off);
+        std::fs::write(&cfg, "").unwrap();
+        assert_eq!(
+            mail_state(home.path(), user.path(), true),
+            MailState::NotConfigured
+        );
+    }
+
     use super::*;
 
     fn env() -> ServiceEnv {

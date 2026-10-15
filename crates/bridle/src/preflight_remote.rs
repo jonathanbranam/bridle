@@ -151,8 +151,8 @@ fn probes(c: &Ctx) -> Vec<Probe> {
     if c.mail {
         v.push(p(
             "aws credentials",
-            "found",
-            "[ -n \"$AWS_ACCESS_KEY_ID\" ] || [ -f \"$HOME/.aws/credentials\" ] || [ -f \"$HOME/.aws/config\" ]",
+            "found, or mail off there",
+            "grep -Eq '^[[:space:]]*mail[[:space:]]*=[[:space:]]*false' \"$HOME/.bridle/config.toml\" 2>/dev/null || [ -n \"$AWS_ACCESS_KEY_ID\" ] || [ -f \"$HOME/.aws/credentials\" ] || [ -f \"$HOME/.aws/config\" ]",
             "configure AWS credentials for the mail bridge (aws configure)",
         ));
     }

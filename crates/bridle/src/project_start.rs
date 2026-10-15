@@ -377,6 +377,21 @@ async fn local(
     let _ = writeln!(out, "{project}: daemon is up");
     let mail = |from: Option<&str>, out: &mut dyn Write| -> Result<(), String> {
         let fleet = Fleet::from_config(&MachineMap::load(home).map_err(|e| e.to_string())?);
+        match crate::mail_install::mail_state(home, &home_dir, false) {
+            crate::mail_install::MailState::Off => {
+                let _ = writeln!(out, "{project}: {}", crate::mail_install::MAIL_OFF);
+                return Ok(());
+            }
+            crate::mail_install::MailState::NotSetUp(why) => {
+                let _ = writeln!(
+                    out,
+                    "{project}: mail bridge skipped ({why}): {}",
+                    crate::mail_install::SET_UP_MAIL
+                );
+                return Ok(());
+            }
+            _ => {}
+        }
         let old = from
             .and_then(|m| fleet.hosts.get(m))
             .map(|h| OldMachine { host: h.clone() });

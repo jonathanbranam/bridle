@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Feature (br-afzu): `bridle projects sync` spreads `[mail]` too, with `projects` derived (`bridle` first, then every `[projects]` name), so every project takes mail on every machine. `[machine] mail = false` (never synced) turns mail off on one machine: `project start` skips the bridge, `mail install` refuses, `project preflight --to` skips the AWS check. Mail on without AWS credentials: `project start` skips the bridge with a warning and `bridle doctor` warns once. Migration: run `bridle projects sync --apply` once.
+
 ## [0.7.3] - 2026-10-14
 
 - Feature (br-cvfu): `bridle daemon restart --cancel` ends a pending drain (a restart or self-upgrade waiting for its quiet point) and `--postpone <dur>` (e.g. `30m`) holds off restarts, self-upgrades and a pending drain's quiet point, so a `bridle ticket land` is not killed mid-check (br-8swr); `bridle status` shows the postponement. Allowed to the human, the orchestrator and managers. Migration: none.
