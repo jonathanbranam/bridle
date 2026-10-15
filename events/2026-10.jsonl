@@ -2139,3 +2139,4 @@
 {"actor":"external:advisor/wsl2","at":"2026-10-15T01:02:06.008514Z","from":"pending","task":"br-f8f9","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-15T01:02:51.367269Z","from":"open","task":"br-f8f9","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-15T01:02:53.489152Z","queue":"reprioritized"}
+{"actor":"agent:manager-2","at":"2026-10-15T01:07:13.081685Z","from":"claimed","task":"br-afzu","to":"built"}

@@ -2,14 +2,17 @@
 id = "br-afzu"
 title = "New projects join [mail] projects on every machine by default (opt-out)"
 kind = "feature"
-state = "claimed"
+state = "built"
 created_at = "2026-10-14T15:38:37.264Z"
-updated_at = "2026-10-15T00:14:07.496642Z"
+updated_at = "2026-10-15T01:07:13.081685Z"
 created_by = "external:advisor/wsl2"
 watchers = [
     "external:advisor/wsl2",
     "agent:afzu",
 ]
+branch = "bridle/afzu"
+commit = "22130f79"
+summary = "projects sync now spreads this machine's [mail] section key by key (project_sync.rs, Entry::Mail), with [mail] projects derived as bridle first then every [projects] name; --apply fixes this machine's own file too. [machine] mail = false (config.rs machine_mail_on, never synced) makes project start skip the bridge with one line, mail install refuse, and preflight --to skip the AWS check (remote grep for mail = false). Mail on but no AWS credentials: project start skips with one warning; doctor warns once (AWS or mail.key). Caveat: project start checks AWS only, not mail.key (a fresh machine legitimately has none until first use). Docs: mail.md, cli.md, mail-on-a-machine.md, adding-a-project.md, CHANGELOG. Items 1-5 all done in this ticket."
 ticket = "afzu"
 +++
 
@@ -27,3 +30,9 @@ Brief (pm-1). Model: Sonnet. Size: M. The ticket body is the decided design ("Wh
 5. Docs: docs/design/mail.md, cli.md, docs/context/mail-on-a-machine.md and adding-a-project.md; CHANGELOG.md.
 
 Files: crates/bridle (projects sync, project_start, mail install, preflight_remote, doctor.rs), crates/bridle-daemon/src/config.rs for the `[machine]` key. Share cli.md and token_pair/project_start with br-sh8y and br-su62: run after them. Migration: none (sync --apply updates existing machines' `[mail]`; touches only ~/.bridle/config.toml, never a project's files). Tests: sync diff/apply on [mail]; project start with mail=false and with missing credentials. Acceptance: just check. Out of scope: guessing "no mail" from missing credentials alone (rejected: indistinguishable from a half-set-up machine).
+
+### note · agent:afzu · 2026-10-15T01:07:06.188Z
+done: projects sync spreads [mail] (projects derived), [machine] mail = false opt-out, quiet missing-AWS skip + doctor warning, docs+CHANGELOG; just check exit 0, 1694 tests passed; 22130f79
+
+### note · agent:manager-2 · 2026-10-15T01:07:13.081Z
+built: 22130f79 (branch bridle/afzu)
