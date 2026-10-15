@@ -243,5 +243,9 @@ Whether provenance should be stronger is open:
 [[how-strong-agent-provenance-should-be-2bzw|how strong provenance should be]].
 
 A daemon that starts holding role tokens in `credentials.toml` for its own project, none of which
-its database accepts, logs a warning naming `bridle token pair` (br-nbgp). The usual cause is a
+its database accepts, logs a warning naming `bridle token pair` (br-nbgp) and raises an incident notice (an
+`orchestrator.incident` event and a note to the human and the orchestrator; br-36a3). The same notice is
+raised at runtime, once an hour at most, when 401s hit three or more different role tokens the
+credentials file holds within five minutes while the human token is authenticating; 401s for
+tokens it does not hold (random ones) are not counted. The usual cause is a
 database replaced under a running daemon; `project take-over` therefore refuses while one runs.

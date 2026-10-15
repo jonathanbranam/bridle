@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Fix (br-36a3): role tokens the database rejects now raise an incident notice naming `bridle token pair`, at start and when 401s hit three or more held role tokens within five minutes (once an hour at most). Migration: none.
+
 ## [0.7.4] - 2026-10-15
 
 - Fix (br-6gkv): the mail bridge routes a BCC: the project address is also read from the `for <addr>` of `Received` headers, and mail that matches no project is logged (key, from, subject) instead of skipped silently. The stuck object `inbound/lf07te0vv2hu4tvpo8e1pnaqfieg1c5b9kc8ld01` is delivered by running the bridge once after this lands. Migration: none.

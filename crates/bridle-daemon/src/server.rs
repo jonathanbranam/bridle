@@ -52,6 +52,8 @@ pub struct AppState {
     pub emitter: Emitter,
     pub workspace: Workspace,
     pub project: String,
+    /// br-36a3: counts 401s from role tokens the credentials file holds.
+    pub token_watch: std::sync::Arc<crate::token_watch::TokenWatch>,
     pub repo: String,
     pub url: String,
     pub version: String,
@@ -390,15 +392,50 @@ async fn auth_middleware(
                 .into_response()
         }
         Ok(Some(principal)) => {
+            if principal.id == "human" {
+                state
+                    .token_watch
+                    .human_authenticated(std::time::Instant::now());
+            }
             let principal = named_advisor(principal, req.headers());
             req.extensions_mut().insert(principal);
             next.run(req).await
         }
         Ok(None) => {
+            note_rejected_role(&state, token).await;
             ApiError::new(StatusCode::UNAUTHORIZED, "unauthorized", "invalid token").into_response()
         }
         Err(e) => ApiError::new(StatusCode::INTERNAL_SERVER_ERROR, "internal", e.to_string())
             .into_response(),
+    }
+}
+
+/// br-36a3: a 401 for a token the credentials file holds as a role's counts toward the "role
+/// tokens lost" incident; a random token does not.
+async fn note_rejected_role(state: &AppState, token: String) {
+    let project = state.project.clone();
+    let role = tokio::task::spawn_blocking(move || {
+        bridle_api::discovery::credentials_for_project(
+            &bridle_api::discovery::credentials_path(),
+            &project,
+        )
+        .into_iter()
+        .find(|(who, t)| who != "human" && *t == token)
+        .map(|(who, _)| who)
+    })
+    .await
+    .ok()
+    .flatten();
+    let Some(role) = role else { return };
+    if let Some(roles) = state
+        .token_watch
+        .role_rejected(&role, std::time::Instant::now())
+    {
+        let incidents = crate::orchestrator::RealIncidents {
+            manager: state.manager.clone(),
+            emitter: state.emitter.clone(),
+        };
+        crate::token_watch::raise(&incidents, &roles).await;
     }
 }
 

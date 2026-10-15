@@ -55,6 +55,7 @@ mod supervisor;
 pub mod sync;
 mod tasks;
 mod ticket_links;
+mod token_watch;
 mod upgrade;
 pub mod usage_groups;
 pub mod usage_http;
@@ -528,12 +529,6 @@ async fn start_inner(
 
     let store = Store::open(ws.db()).await.context("opening the store")?;
     ensure_human_token(&store, &ws).await?;
-    warn_if_role_tokens_rejected(
-        &store,
-        &project,
-        &discovery::credentials_for_project(&discovery::credentials_path(), &project),
-    )
-    .await;
 
     // Fetch before anything is written, so a clone on a new machine adopts origin's state
     // rather than diverging from it, and so a project another host owns is refused (hw6c).
@@ -689,6 +684,8 @@ async fn start_inner(
         emitter.clone(),
         governor_handle.clone(),
     );
+    let held_tokens = discovery::credentials_for_project(&discovery::credentials_path(), &project);
+    warn_if_role_tokens_rejected(&store, &project, &held_tokens, &manager, &emitter).await;
     // A project drain's hold outlives a restart (yt5v); absent means no hold.
     if store.get_meta(PROJECT_HELD_KEY).await?.as_deref() == Some("1") {
         manager.set_held(true);
@@ -867,6 +864,7 @@ async fn start_inner(
         emitter: emitter.clone(),
         workspace: ws.clone(),
         project: project.clone(),
+        token_watch: std::sync::Arc::default(),
         repo: ws.repo.to_string_lossy().into_owned(),
         url: url.clone(),
         version: info.version.clone(),
@@ -1300,7 +1298,13 @@ fn refuse_if_already_running(project: &str, ws: &Workspace) -> anyhow::Result<()
 /// br-nbgp: the credentials file holds role tokens for this project and the store accepts none of
 /// them (a database replaced or rebuilt under a running daemon). Every role would fail with a bare
 /// 401, so say what fixes it.
-async fn warn_if_role_tokens_rejected(store: &Store, project: &str, held: &[(String, String)]) {
+async fn warn_if_role_tokens_rejected(
+    store: &Store,
+    project: &str,
+    held: &[(String, String)],
+    manager: &AgentManager,
+    emitter: &Emitter,
+) {
     if let Some(roles) = rejected_roles(store, held).await {
         tracing::warn!(
             project,
@@ -1308,6 +1312,11 @@ async fn warn_if_role_tokens_rejected(store: &Store, project: &str, held: &[(Str
             "none of the role tokens in credentials.toml is accepted by this database; \
              run `bridle token pair` to mint them again"
         );
+        let incidents = orchestrator::RealIncidents {
+            manager: manager.clone(),
+            emitter: emitter.clone(),
+        };
+        token_watch::raise(&incidents, &roles).await;
     }
 }
 
