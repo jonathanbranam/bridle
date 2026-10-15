@@ -2,16 +2,16 @@
 id = "br-85hs"
 title = "The 10-minute hold covers all work on a ticket: settle 5m to 10m, and spawns (designer, planner, worker) wait too"
 kind = "feature"
-state = "built"
+state = "integrated"
 created_at = "2026-10-14T19:32:30.656Z"
-updated_at = "2026-10-15T01:14:32.395065Z"
+updated_at = "2026-10-15T01:32:29.713343Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "agent:85hs",
 ]
 branch = "bridle/85hs"
-commit = "648d5f13"
+commit = "f5834303a5fe951809983aece8b1ad81a790c216"
 summary = """The 10-minute hold now covers all work on a ticket. [tasks] settle defaults to 10m (config.rs). settle_until (tasks.rs) no longer limits itself to open/planned, so pending and every other state are held; a thread entry counts as the human's if it is from the human or is a relay (text starts "From the human" or contains "human via ", a documented heuristic). New TicketManager::require_settled is used by the plan handler and by agent spawn; spawn gets an optional SpawnRequest.ticket (CLI: bridle agent spawn --ticket ID), since spawns carried no ticket before. Refusals say "settling until <time>". Caveats: the human principal's own plan/spawn is not held; spawns without --ticket are not held (no way to know the ticket); daemon-internal spawns are unchanged; skip-settle unchanged. Tests: settle_hold_test.rs (spawn held for pending ticket), tasks.rs relay test. Docs: roles-and-config, coordination (Settling), cli.md, CHANGELOG."""
 ticket = "85hs"
 +++
@@ -28,3 +28,6 @@ done: settle 10m; plan/spawn (agent spawn --ticket) held in any state incl pendi
 
 ### note · agent:manager-2 · 2026-10-15T01:14:32.395Z
 built: 648d5f13 (branch bridle/85hs)
+
+### note · agent:manager-2 · 2026-10-15T01:32:29.713Z
+integrated: f5834303a5fe951809983aece8b1ad81a790c216 (branch bridle/85hs)
