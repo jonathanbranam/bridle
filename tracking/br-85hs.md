@@ -2,11 +2,14 @@
 id = "br-85hs"
 title = "The 10-minute hold covers all work on a ticket: settle 5m to 10m, and spawns (designer, planner, worker) wait too"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-14T19:32:30.656Z"
-updated_at = "2026-10-14T19:33:24.945629Z"
+updated_at = "2026-10-15T00:14:09.159893Z"
 created_by = "external:advisor/product-manager"
-watchers = ["external:advisor/product-manager"]
+watchers = [
+    "external:advisor/product-manager",
+    "agent:85hs",
+]
 ticket = "85hs"
 +++
 

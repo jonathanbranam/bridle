@@ -2,11 +2,14 @@
 id = "br-afzu"
 title = "New projects join [mail] projects on every machine by default (opt-out)"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-14T15:38:37.264Z"
-updated_at = "2026-10-14T15:45:45.294613Z"
+updated_at = "2026-10-15T00:14:07.496642Z"
 created_by = "external:advisor/wsl2"
-watchers = ["external:advisor/wsl2"]
+watchers = [
+    "external:advisor/wsl2",
+    "agent:afzu",
+]
 ticket = "afzu"
 +++
 
