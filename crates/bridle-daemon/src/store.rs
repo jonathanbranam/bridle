@@ -16,8 +16,9 @@ use bridle_api::types::{
     Agent, AgentState, AgentUsage, Conflict, Edge, EdgeKind, Event, EventQuery, ExitInfo,
     ExternalUsage, Handover, InteractiveUsageRow, Message, MessageKind, MessageState, OutboxEntry,
     OutboxPeer, PortAllocation, PrincipalId, PrincipalKind, RateLimit, RateLimitPoint, Schedule,
-    TicketKind, TicketState, TokenCreated, TokenInfo, TokenTotals, Usage, UsageBreakdown,
-    UsageBucket, UsageGroup, UsageGroupBy, UsageInstance, UsageSeries, UsageSeriesPoint, When,
+    SessionStartup, TicketKind, TicketState, TokenCreated, TokenInfo, TokenTotals, Usage,
+    UsageBreakdown, UsageBucket, UsageGroup, UsageGroupBy, UsageInstance, UsageSeries,
+    UsageSeriesPoint, UsageSession, UsageSessionTurn, When,
 };
 use chrono::{DateTime, SecondsFormat, SubsecRound, Utc};
 use rusqlite::Connection;
@@ -1285,6 +1286,25 @@ impl Store {
         until: Option<DateTime<Utc>>,
     ) -> Result<Vec<SessionUsage>, StoreError> {
         self.with_conn(move |c| sync::usage_sessions(c, since, until))
+            .await
+    }
+
+    /// Every session with a turn (or external report) at or after `since`, newest first.
+    pub async fn usage_session_list(
+        &self,
+        since: Option<DateTime<Utc>>,
+    ) -> Result<Vec<UsageSession>, StoreError> {
+        self.with_conn(move |c| sync::usage_session_list(c, since))
+            .await
+    }
+
+    /// One hosted session's turns, oldest first. Turns with no recorded session are never in it.
+    pub async fn usage_session_turns(
+        &self,
+        agent_id: String,
+        session_id: String,
+    ) -> Result<Vec<UsageSessionTurn>, StoreError> {
+        self.with_conn(move |c| sync::usage_session_turns(c, &agent_id, &session_id))
             .await
     }
 
@@ -4560,6 +4580,249 @@ mod sync {
         Ok(out)
     }
 
+    /// Hosted sessions from the turns ledger joined to `agent_sessions` (reasons, limit), then
+    /// external ones from the statusline reports. A session with any turn in the period is
+    /// summed whole, so its startup is always its real first turn.
+    pub(super) fn usage_session_list(
+        conn: &Connection,
+        since: Option<DateTime<Utc>>,
+    ) -> Result<Vec<UsageSession>, StoreError> {
+        let since_str = since.map(fmt_dt);
+        let mut stmt = conn.prepare(
+            "SELECT agent_id, session_id, agent_name, role, model, started_at, ended_at,
+                    input_tokens, output_tokens, cache_read, cache_write, cost_total,
+                    context_tokens
+             FROM turns t
+             WHERE session_id IS NOT NULL AND EXISTS (
+                 SELECT 1 FROM turns p WHERE p.agent_id = t.agent_id AND p.session_id = t.session_id
+                   AND (?1 IS NULL OR p.started_at >= ?1))
+             ORDER BY started_at, n",
+        )?;
+        let rows = stmt.query_map(params![since_str], |r| {
+            Ok((
+                r.get::<_, String>(0)?,
+                r.get::<_, String>(1)?,
+                r.get::<_, String>(2)?,
+                r.get::<_, String>(3)?,
+                r.get::<_, String>(4)?,
+                r.get::<_, String>(5)?,
+                r.get::<_, Option<String>>(6)?,
+                [7, 8, 9, 10].map(|i| r.get::<_, i64>(i).unwrap_or(0) as u64),
+                r.get::<_, f64>(11)?,
+                r.get::<_, Option<i64>>(12)?.map(|n| n as u64),
+            ))
+        })?;
+        let mut out: Vec<UsageSession> = Vec::new();
+        for row in rows {
+            let (agent_id, session_id, name, role, model, started, ended, t, cost, ctx) = row?;
+            let started = parse_dt(&started)?;
+            let at = match out
+                .iter()
+                .position(|s| s.agent_id == agent_id && s.session_id == session_id)
+            {
+                Some(i) => i,
+                None => {
+                    out.push(UsageSession {
+                        agent_id,
+                        session_id,
+                        name: String::new(),
+                        role: String::new(),
+                        model: String::new(),
+                        external: false,
+                        started_at: started,
+                        ended_at: None,
+                        start_reason: None,
+                        end_reason: None,
+                        renewal_limit: None,
+                        turns: Some(0),
+                        tokens: TokenTotals::default(),
+                        cost_usd: 0.0,
+                        busy_seconds: Some(0),
+                        startup: Some(SessionStartup {
+                            cost_usd: cost,
+                            context_tokens: ctx,
+                            cache_read: t[2],
+                            cache_write: t[3],
+                        }),
+                        peak_context_tokens: None,
+                        end_context_tokens: None,
+                    });
+                    out.len() - 1
+                }
+            };
+            let s = &mut out[at];
+            // The newest turn's identity wins, as in `usage_instances`.
+            s.name = name;
+            s.role = role;
+            s.model = model;
+            *s.turns.get_or_insert(0) += 1;
+            s.tokens.input += t[0];
+            s.tokens.output += t[1];
+            s.tokens.cache_read += t[2];
+            s.tokens.cache_write += t[3];
+            s.cost_usd += cost;
+            if let Some(e) = parse_dt_opt(ended)? {
+                *s.busy_seconds.get_or_insert(0) += (e - started).num_seconds().max(0) as u64;
+            }
+            if let Some(c) = ctx {
+                s.peak_context_tokens = Some(s.peak_context_tokens.map_or(c, |p| p.max(c)));
+                s.end_context_tokens = Some(c);
+            }
+        }
+        // Start fields from the session's first row, end fields from its last: a resume
+        // of the same Claude session adds a row, and the session is one line to the reader.
+        let mut stmt = conn.prepare(
+            "SELECT started_at, start_reason, ended_at, end_reason, renewal_limit
+             FROM agent_sessions WHERE agent_id = ?1 AND session_id = ?2 ORDER BY id",
+        )?;
+        for s in &mut out {
+            let rows: Vec<_> = stmt
+                .query_map(params![s.agent_id, s.session_id], |r| {
+                    Ok((
+                        r.get::<_, String>(0)?,
+                        r.get::<_, String>(1)?,
+                        r.get::<_, Option<String>>(2)?,
+                        r.get::<_, Option<String>>(3)?,
+                        r.get::<_, Option<f64>>(4)?,
+                    ))
+                })?
+                .collect::<Result<_, _>>()?;
+            if let Some(first) = rows.first() {
+                s.started_at = parse_dt(&first.0)?;
+                s.start_reason = Some(first.1.clone());
+                s.renewal_limit = first.4;
+            }
+            if let Some(last) = rows.last() {
+                s.ended_at = parse_dt_opt(last.2.clone())?;
+                s.end_reason = last.3.clone();
+            }
+        }
+        out.extend(external_sessions(conn, since)?);
+        out.sort_by_key(|a| std::cmp::Reverse(a.started_at));
+        Ok(out)
+    }
+
+    /// External sessions: per statusline report the cost and token deltas and the context
+    /// size. No turns, reasons, busy time or startup. A report with no session id has no
+    /// session to belong to.
+    fn external_sessions(
+        conn: &Connection,
+        since: Option<DateTime<Utc>>,
+    ) -> Result<Vec<UsageSession>, StoreError> {
+        let mut stmt = conn.prepare(
+            "SELECT COALESCE(identity, ?2), session_id, model, observed_at, cost_delta,
+                    input_delta, output_delta, context_used_tokens
+             FROM interactive_usage i
+             WHERE session_id IS NOT NULL
+               AND (cost_delta IS NOT NULL OR input_delta IS NOT NULL OR output_delta IS NOT NULL)
+               AND EXISTS (SELECT 1 FROM interactive_usage p WHERE p.session_id = i.session_id
+                           AND (?1 IS NULL OR p.observed_at >= ?1))
+             ORDER BY observed_at, id",
+        )?;
+        let rows = stmt.query_map(params![since.map(fmt_dt), UNBRIDLED], |r| {
+            Ok((
+                r.get::<_, String>(0)?,
+                r.get::<_, String>(1)?,
+                r.get::<_, Option<String>>(2)?,
+                r.get::<_, String>(3)?,
+                r.get::<_, Option<f64>>(4)?,
+                r.get::<_, Option<i64>>(5)?,
+                r.get::<_, Option<i64>>(6)?,
+                r.get::<_, Option<i64>>(7)?,
+            ))
+        })?;
+        let mut out: Vec<UsageSession> = Vec::new();
+        for row in rows {
+            let (identity, session_id, model, at, cost, input, output, ctx) = row?;
+            let at = parse_dt(&at)?;
+            let i = match out
+                .iter()
+                .position(|s| s.agent_id == identity && s.session_id == session_id)
+            {
+                Some(i) => i,
+                None => {
+                    out.push(UsageSession {
+                        role: identity
+                            .strip_prefix(EXTERNAL_PREFIX)
+                            .unwrap_or(&identity)
+                            .split('/')
+                            .next()
+                            .unwrap_or_default()
+                            .to_string(),
+                        name: identity.clone(),
+                        agent_id: identity,
+                        session_id,
+                        model: "unknown".to_string(),
+                        external: true,
+                        started_at: at,
+                        ended_at: None,
+                        start_reason: None,
+                        end_reason: None,
+                        renewal_limit: None,
+                        turns: None,
+                        tokens: TokenTotals::default(),
+                        cost_usd: 0.0,
+                        busy_seconds: None,
+                        startup: None,
+                        peak_context_tokens: None,
+                        end_context_tokens: None,
+                    });
+                    out.len() - 1
+                }
+            };
+            let s = &mut out[i];
+            if let Some(m) = model {
+                s.model = m;
+            }
+            s.cost_usd += cost.unwrap_or(0.0);
+            s.tokens.input += input.unwrap_or(0).max(0) as u64;
+            s.tokens.output += output.unwrap_or(0).max(0) as u64;
+            if let Some(c) = ctx.map(|c| c.max(0) as u64) {
+                s.peak_context_tokens = Some(s.peak_context_tokens.map_or(c, |p| p.max(c)));
+                s.end_context_tokens = Some(c);
+            }
+        }
+        Ok(out)
+    }
+
+    pub(super) fn usage_session_turns(
+        conn: &Connection,
+        agent_id: &str,
+        session_id: &str,
+    ) -> Result<Vec<UsageSessionTurn>, StoreError> {
+        let mut stmt = conn.prepare(
+            "SELECT n, started_at, context_tokens, input_tokens, output_tokens, cache_read,
+                    cache_write, cost_total
+             FROM turns WHERE agent_id = ?1 AND session_id = ?2 ORDER BY started_at, n",
+        )?;
+        let rows = stmt.query_map(params![agent_id, session_id], |r| {
+            Ok((
+                r.get::<_, i64>(0)?,
+                r.get::<_, String>(1)?,
+                r.get::<_, Option<i64>>(2)?,
+                [3, 4, 5, 6].map(|i| r.get::<_, i64>(i).unwrap_or(0) as u64),
+                r.get::<_, f64>(7)?,
+            ))
+        })?;
+        let mut out = Vec::new();
+        for row in rows {
+            let (n, started, ctx, t, cost) = row?;
+            out.push(UsageSessionTurn {
+                n: n as u32,
+                started_at: parse_dt(&started)?,
+                context_tokens: ctx.map(|c| c as u64),
+                tokens: TokenTotals {
+                    input: t[0],
+                    output: t[1],
+                    cache_read: t[2],
+                    cache_write: t[3],
+                },
+                cost_usd: cost,
+            });
+        }
+        Ok(out)
+    }
+
     pub(super) fn usage_instances(
         conn: &Connection,
         since: Option<DateTime<Utc>>,
@@ -5974,6 +6237,110 @@ mod tests {
         assert_ne!(rows[0].0, rows[1].0);
         assert_eq!(rows[1], ("s-new".to_string(), 200));
         assert_eq!(rows[0].1, 100);
+    }
+
+    /// An agent renewed once is two sessions, each with its reasons, limit, startup and peak
+    /// context; a turn from before sessions were recorded is left out (br-eapt).
+    #[tokio::test]
+    async fn usage_session_list_has_one_row_per_session_with_reasons_and_startup() {
+        let (store, _tmp) = store().await;
+        let a = store.insert_agent(new_agent("w1")).await.expect("insert");
+        let t0 = DateTime::parse_from_rfc3339("2026-10-10T10:00:00Z")
+            .expect("ts")
+            .with_timezone(&Utc);
+        let m = chrono::Duration::minutes;
+        store
+            .session_start(&a.id, "sess-1", "spawn", 0.5)
+            .await
+            .expect("start");
+        // (n, new session, cost, cache_write, context)
+        let turns = [
+            (1, None, 1.0, 40, 100),
+            (2, None, 2.0, 0, 400),
+            (3, Some("s-new"), 0.5, 0, 50),
+        ];
+        for (n, session, cost, cache_write, ctx) in turns {
+            if let Some(s) = session {
+                store
+                    .session_end(&a.id, "renewal", Some(400))
+                    .await
+                    .expect("end");
+                store.set_agent_session(&a.id, s).await.expect("renew");
+                store
+                    .session_start(&a.id, s, "renewal", 0.4)
+                    .await
+                    .expect("start");
+            }
+            store
+                .add_turn_start(&a.id, n, t0 + m(n as i64))
+                .await
+                .expect("start");
+            store
+                .end_turn(
+                    &a.id,
+                    n,
+                    TurnEnd {
+                        subtype: "success".to_string(),
+                        is_error: false,
+                        terminal_reason: None,
+                        input_tokens: 10,
+                        output_tokens: 1,
+                        cache_read: 5,
+                        cache_write,
+                        cost_total: cost,
+                        context_tokens: ctx,
+                    },
+                )
+                .await
+                .expect("end");
+        }
+        store
+            .add_turn_start(&a.id, 4, t0 + m(4))
+            .await
+            .expect("start");
+        store
+            .conn
+            .lock()
+            .expect("lock")
+            .execute("UPDATE turns SET session_id = NULL WHERE n = 4", [])
+            .expect("null");
+
+        let list = store.usage_session_list(Some(t0)).await.expect("list");
+        assert_eq!(list.len(), 2, "NULL-session turn is left out: {list:?}");
+        // Newest first.
+        let (new, old) = (&list[0], &list[1]);
+        assert_eq!((old.session_id.as_str(), old.turns), ("sess-1", Some(2)));
+        assert_eq!(old.start_reason.as_deref(), Some("spawn"));
+        assert_eq!(old.end_reason.as_deref(), Some("renewal"));
+        assert_eq!(old.renewal_limit, Some(0.5));
+        assert_eq!(
+            (old.peak_context_tokens, old.end_context_tokens),
+            (Some(400), Some(400))
+        );
+        let startup = old.startup.as_ref().expect("startup");
+        assert_eq!(
+            (
+                startup.cost_usd,
+                startup.context_tokens,
+                startup.cache_write
+            ),
+            (1.0, Some(100), 40)
+        );
+        assert_eq!(old.cost_usd, 3.0);
+        assert_eq!((new.session_id.as_str(), new.turns), ("s-new", Some(1)));
+        assert_eq!(new.start_reason.as_deref(), Some("renewal"));
+        assert_eq!(
+            (new.end_reason.clone(), new.renewal_limit),
+            (None, Some(0.4))
+        );
+        assert_eq!(new.peak_context_tokens, Some(50));
+
+        let line = store
+            .usage_session_turns(a.id.clone(), "sess-1".to_string())
+            .await
+            .expect("turns");
+        let ctx: Vec<_> = line.iter().map(|t| (t.n, t.context_tokens)).collect();
+        assert_eq!(ctx, [(1, Some(100)), (2, Some(400))]);
     }
 
     /// A hosted agent with two sessions and an external session: the sums are right at each

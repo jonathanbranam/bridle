@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Feature (br-eapt): `GET /v1/usage/sessions?since=` lists every hosted session (and external statusline session) with its start and end reason, the renewal limit in force, tokens, cost, the first turn's cost and context (startup), and peak and final context; `GET /v1/usage/sessions/{agent_id}/{session_id}/turns` gives the context size per turn. The gateway serves both (`/api/v1/usage/sessions`, `/api/v1/projects/{project}/usage/sessions/{agent_id}/{session_id}/turns`) across projects, an unreachable project listed and never counted as zero. Additive; migration: none.
 - Docs (br-pmdh): the new-machine guides (`docs/context/add-a-machine.md`, the WSL2 guide) say to log in to Claude Code before the first `bridle serve`, unit start or `bridle project start`, and why (a daemon started before the login has agents that crash until it is restarted). Migration: none.
 - Feature (br-f8f9): `bridle up` starts this machine's orchestrator in a tmux pane tagged `@bridle=orchestrator` if none exists (starts a detached tmux server if none runs; running it twice starts one). `~/.bridle/no-autostart` makes it start nothing. `bridle up --install` writes a launchd plist / systemd user unit that runs it at boot (prints the load commands, never runs them); `bridle up --print-tmux-hooks` prints the tmux-resurrect hooks that keep the pane tag across a restore. Opt-in; migration: none.
 

@@ -27,8 +27,8 @@ use bridle_api::types::{
     Ticket, TicketQuery, TicketState, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine,
     TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery, UsageGroupBy, UsageGroups,
     UsageGroupsQuery, UsageHistoryQuery, UsageInstance, UsageInstancesQuery, UsagePeriods,
-    UsagePeriodsQuery, UsageSeries, UsageSeriesQuery, WakeResponse, When, WindowStatus,
-    WriteHandoverRequest, event_kind,
+    UsagePeriodsQuery, UsageSeries, UsageSeriesQuery, UsageSessionTurn, UsageSessions,
+    UsageSessionsQuery, WakeResponse, When, WindowStatus, WriteHandoverRequest, event_kind,
 };
 use bridle_api::types::{
     PeerWatchRequest, PrincipalId, RemoteWatchRequest, Schedule, ScheduleAddRequest,
@@ -153,6 +153,11 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/usage/periods", get(usage_periods))
         .route("/v1/usage/groups", get(usage_groups))
         .route("/v1/usage/agents", get(usage_instances))
+        .route("/v1/usage/sessions", get(usage_session_list))
+        .route(
+            "/v1/usage/sessions/{agent_id}/{session_id}/turns",
+            get(usage_session_turns),
+        )
         .route("/v1/usage/agents/{agent_id}/series", get(usage_series))
         .route("/v1/statusline", post(report_statusline))
         .route("/v1/budget", get(budget))
@@ -2566,6 +2571,29 @@ async fn usage_instances(
     Query(q): Query<UsageInstancesQuery>,
 ) -> Result<Json<Vec<UsageInstance>>, ApiError> {
     Ok(Json(state.store.usage_instances(q.since).await?))
+}
+
+async fn usage_session_list(
+    State(state): State<AppState>,
+    Query(q): Query<UsageSessionsQuery>,
+) -> Result<Json<UsageSessions>, ApiError> {
+    Ok(Json(UsageSessions {
+        project: state.project.clone(),
+        machine: state.outbox.machine_name(),
+        sessions: state.store.usage_session_list(q.since).await?,
+    }))
+}
+
+async fn usage_session_turns(
+    State(state): State<AppState>,
+    Path((agent_id, session_id)): Path<(String, String)>,
+) -> Result<Json<Vec<UsageSessionTurn>>, ApiError> {
+    Ok(Json(
+        state
+            .store
+            .usage_session_turns(agent_id, session_id)
+            .await?,
+    ))
 }
 
 async fn usage_series(

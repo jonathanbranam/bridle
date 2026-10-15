@@ -122,6 +122,16 @@ role and the sessions in a name each add up to it. That is an estimate: Anthropi
 limit's weights. `points_per_dollar` is the measured ratio, to check the estimate from week to week.
 Other machines' data is not merged here (br-ktgd's a65d).
 
+`GET /v1/usage/sessions?since=` (br-eapt) lists the sessions themselves for the context and cost pages: per
+hosted session its start and end reason and the renewal limit in force (from `agent_sessions`, br-2kam),
+turns, tokens, cost, busy time, the first turn's cost, context size and cache read/write (what startup
+eats, and whether it is cached across sessions), and the peak and final context size. A session with any turn
+in the period is counted whole, so its startup is its real first turn. A session resumed under the same
+Claude session id is one row: start fields from its first `agent_sessions` row, end fields from its last.
+`GET /v1/usage/sessions/{agent_id}/{session_id}/turns` gives the context size per turn. Turns from before
+`session_id` was recorded are left out, never shown as zero. External sessions are listed with cost, tokens
+and context from the statusline reports, and null turns, reasons and startup.
+
 `bridle usage --by role|model|agent --since <duration>` (and
 `GET /v1/usage/breakdown?since=&by=`) aggregates the turns ledger instead:
 turns, tokens, cost, busy time and the cache hit ratio, grouped by role or

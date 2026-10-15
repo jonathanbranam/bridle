@@ -260,6 +260,7 @@ points. The rate limits are account-wide, so `seven_day_points` (the highest any
 (weeks with days, real five-hour windows, raw readings; from the first daemon that answers, `null` if none)
 come once, not per project. It always answers 200. The per-project `usage/history` route stays. br-qhsa left
 no merged route in the tree, so this is the first.
+`GET /api/v1/usage/sessions?since=` (br-eapt) asks every daemon for `/v1/usage/sessions` and returns `AccountSessions {projects, since, sessions}`: `projects` as above (unreachable listed, never zero), `sessions` newest first, each a `SessionRow` that keeps its `project` and `machine` and flattens the daemon's session (reasons, `renewal_limit`, tokens, `startup_*`, `peak_context_tokens`, `end_context_tokens`). `GET /api/v1/projects/{project}/usage/sessions/{agent_id}/{session_id}/turns` returns `SessionTurns {project, agent_id, session_id, turns}` (each turn `n`, `started_at`, `context_tokens`, tokens, `cost_usd`), the context growth line.
 An unknown project is 404. **Dropped, by building the wire types from an
 allow-list:** the principal; the daemon's workspace, repo and URL; an agent's session id, pid,
 cwd, worktree, created_by and message counts; a session's pid, pane and Claude session id. No

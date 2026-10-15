@@ -203,7 +203,7 @@ pub struct AgentList {
     pub agents: Vec<AgentView>,
 }
 
-fn rfc(t: chrono::DateTime<chrono::Utc>) -> String {
+pub(crate) fn rfc(t: chrono::DateTime<chrono::Utc>) -> String {
     t.to_rfc3339()
 }
 
@@ -414,7 +414,7 @@ pub(crate) async fn usage_series(
     })
 }
 
-async fn client_for(project: &str) -> Result<Client, ActionError> {
+pub(crate) async fn client_for(project: &str) -> Result<Client, ActionError> {
     let (url, token) = resolve(project).await?;
     Ok(Client::new_with_timeout(
         url,

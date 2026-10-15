@@ -1532,6 +1532,86 @@ pub struct UsageInstance {
     pub last_turn_at: DateTime<Utc>,
 }
 
+/// `GET /v1/usage/sessions?since=`.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct UsageSessionsQuery {
+    /// Only sessions with a turn (or, external, a report) at or after this time.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub since: Option<DateTime<Utc>>,
+}
+
+/// What a session's first turn cost: what startup eats, and whether it was cached
+/// (br-eapt, br-ktgd decision 5).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SessionStartup {
+    pub cost_usd: f64,
+    /// `None` on a turn recorded before context sizes were.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub context_tokens: Option<u64>,
+    pub cache_read: u64,
+    pub cache_write: u64,
+}
+
+/// One session (`GET /v1/usage/sessions`): a hosted `(agent_id, session_id)` or an external
+/// statusline session. A session with a turn in the period is counted whole, all its turns.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct UsageSession {
+    pub agent_id: String,
+    pub session_id: String,
+    pub name: String,
+    pub role: String,
+    pub model: String,
+    #[serde(default)]
+    pub external: bool,
+    pub started_at: DateTime<Utc>,
+    /// `None` while the session is open, and for an external one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ended_at: Option<DateTime<Utc>>,
+    /// `spawn`, `resume` or `renewal`; `None` for an external session or one from before
+    /// start reasons were recorded.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub start_reason: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub end_reason: Option<String>,
+    /// The context renewal limit in force when the session started (a fraction).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub renewal_limit: Option<f64>,
+    /// `None` for an external session: the statusline doesn't report turns.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub turns: Option<u32>,
+    pub tokens: TokenTotals,
+    pub cost_usd: f64,
+    /// `None` for an external session.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub busy_seconds: Option<u64>,
+    /// `None` for an external session.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub startup: Option<SessionStartup>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub peak_context_tokens: Option<u64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub end_context_tokens: Option<u64>,
+}
+
+/// `GET /v1/usage/sessions`: this daemon's own project and machine only. Newest first.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct UsageSessions {
+    pub project: String,
+    pub machine: String,
+    pub sessions: Vec<UsageSession>,
+}
+
+/// One turn of a hosted session (`GET /v1/usage/sessions/{agent_id}/{session_id}/turns`).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct UsageSessionTurn {
+    pub n: u32,
+    pub started_at: DateTime<Utc>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub context_tokens: Option<u64>,
+    pub tokens: TokenTotals,
+    pub cost_usd: f64,
+}
+
 /// `GET /v1/usage/groups?since=&until=`.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct UsageGroupsQuery {

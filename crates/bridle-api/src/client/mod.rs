@@ -31,7 +31,8 @@ use crate::types::{
     TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
     UsageBreakdown, UsageBreakdownQuery, UsageGroups, UsageGroupsQuery, UsageHistoryQuery,
     UsageInstance, UsageInstancesQuery, UsagePeriods, UsagePeriodsQuery, UsageSeries,
-    UsageSeriesQuery, WakeResponse, WriteHandoverRequest,
+    UsageSeriesQuery, UsageSessionTurn, UsageSessions, UsageSessionsQuery, WakeResponse,
+    WriteHandoverRequest,
 };
 
 pub use bridle_docs::documents::{
@@ -475,6 +476,25 @@ impl Client {
         query: &UsageSeriesQuery,
     ) -> Result<UsageSeries, ClientError> {
         self.get_json_query(&["v1", "usage", "agents", agent_id, "series"], query)
+            .await
+    }
+
+    /// `GET /v1/usage/sessions`: every session with usage in the period.
+    pub async fn usage_sessions(
+        &self,
+        query: &UsageSessionsQuery,
+    ) -> Result<UsageSessions, ClientError> {
+        self.get_json_query(&["v1", "usage", "sessions"], query)
+            .await
+    }
+
+    /// `GET /v1/usage/sessions/{agent_id}/{session_id}/turns`: the context growth line.
+    pub async fn usage_session_turns(
+        &self,
+        agent_id: &str,
+        session_id: &str,
+    ) -> Result<Vec<UsageSessionTurn>, ClientError> {
+        self.get_json(&["v1", "usage", "sessions", agent_id, session_id, "turns"])
             .await
     }
 

@@ -13,6 +13,7 @@ pub mod intervals;
 pub mod items;
 pub mod messages;
 pub mod report;
+pub mod session_usage;
 pub mod specs;
 mod system;
 pub mod tasks;
@@ -69,6 +70,11 @@ pub fn router(
             post(documents::resolve_links_route),
         )
         .route("/usage/account", get(account_usage::account_usage_route))
+        .route("/usage/sessions", get(session_usage::sessions_route))
+        .route(
+            "/projects/{project}/usage/sessions/{agent_id}/{session_id}/turns",
+            get(session_usage::session_turns_route),
+        )
         .route("/projects/{project}/specs", get(specs::specs_route))
         .route("/projects/{project}/review", post(actions::review_route))
         .route("/projects/{project}/system", get(system::system_route))
