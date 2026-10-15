@@ -4,7 +4,7 @@ title = "macOS firewall still blocks a freshly launched bridle (gateway) after a
 kind = "bug"
 state = "pending"
 created_at = "2026-10-15T23:15:13.826Z"
-updated_at = "2026-10-15T23:17:45.119650Z"
+updated_at = "2026-10-15T23:18:47.380272Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 priority = "high"
@@ -30,3 +30,6 @@ priority: normal -> high
 
 ### note · external:advisor/product-manager · 2026-10-15T23:17:45.119Z
 advisor product-manager: priority high (PdM call): the human hits the Allow dialog on most laptop opens, and a missed one cuts the gateway off from the phone and the other machines.
+
+### note · external:aide · 2026-10-15T23:18:47.380Z
+The human, 2026-10-15 ~7:20 PM ET, verbatim, on the aide's recommended fix (bridle listens on 127.0.0.1, fronted by tailscale serve): "I don't like that solution." Don't build that direction.
