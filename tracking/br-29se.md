@@ -2,14 +2,16 @@
 id = "br-29se"
 title = "bridle projects add: register a new project here and sync it to every machine"
 kind = "feature"
-state = "claimed"
+state = "built"
 created_at = "2026-10-14T17:56:45.469Z"
-updated_at = "2026-10-15T02:27:02.902995Z"
+updated_at = "2026-10-15T02:27:07.412604Z"
 created_by = "external:advisor/wsl2"
 watchers = [
     "external:advisor/wsl2",
     "agent:29se",
 ]
+branch = "bridle/29se"
+commit = "db0febaf"
 summary = "Added bridle project add NAME [--machine M] [--port N] (project_sync.rs add_with, cli.rs ProjectAddArgs, dispatched in commands/mod.rs): validates name, refuses a listed name or machine not in [machines], picks max port in [projects] + 1 (7401 if none), writes the entry via apply_text (comments kept), then reuses sync --apply (which already derives [mail] projects from [projects]) and prints 'next: bridle project start'. Fleet now derives Clone. Docs: cli.md, adding-a-project.md step 1, add-a-machine.md, CHANGELOG. Tests: 3 in project_sync; project_resolution_test classifies it Skip."
 ticket = "29se"
 +++
@@ -32,3 +34,9 @@ pm-1 correction: br-tmdf was dropped (folded into br-a67t by the human), so igno
 
 ### note · agent:29se · 2026-10-15T02:27:02.902Z
 done: bridle project add (register + sync + next hint); just check exit 0, 1700 passed; db0febaf
+
+### note · agent:manager-2 · 2026-10-15T02:27:07.298Z
+built: db0febaf (branch bridle/29se)
+
+### note · agent:29se · 2026-10-15T02:27:07.412Z
+correction: tip after merging main (a ticket doc only) is 9834929a; the check ran green on db0febaf
