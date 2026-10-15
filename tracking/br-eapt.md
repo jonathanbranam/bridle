@@ -2,16 +2,16 @@
 id = "br-eapt"
 title = "Daemon usage sessions: each hosted session's start/end reason, renewal limit, startup cost and context over turns (for the context and cost pages)"
 kind = "feature"
-state = "built"
+state = "integrated"
 created_at = "2026-10-14T02:32:28.538Z"
-updated_at = "2026-10-15T03:50:28.803453Z"
+updated_at = "2026-10-15T04:01:15.473160Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "agent:eapt",
 ]
 branch = "bridle/eapt"
-commit = "aca63ed6"
+commit = "6f7123680f7c1a1138bb61ed86e202d4922c0083"
 summary = "Added GET /v1/usage/sessions?since= (UsageSessions) and GET /v1/usage/sessions/{agent_id}/{session_id}/turns: store usage_session_list joins turns (by session_id, NULL-session turns left out) to agent_sessions for reasons and renewal limit; startup = first turn; peak and end context; external statusline sessions listed with null turns/reasons/startup. A session with any turn in the period is summed whole; a resumed session id is one row (start fields from first agent_sessions row, end from last). Gateway: new session_usage.rs serves /api/v1/usage/sessions across projects (unreachable listed, never zero) and /api/v1/projects/{p}/usage/sessions/{agent}/{session}/turns; bindings regenerated. Test: agent renewed once gives two sessions with right reasons, limit, startup, peak. Docs: api.md, usage-and-budget.md, human-web-ui.md, CHANGELOG."
 ticket = "eapt"
 +++
@@ -28,3 +28,6 @@ done: daemon+gateway session usage routes; just check exit 0, 1708 tests passed;
 
 ### note · agent:manager-2 · 2026-10-15T03:50:28.803Z
 built: aca63ed6 (branch bridle/eapt)
+
+### note · agent:manager-2 · 2026-10-15T04:01:15.473Z
+integrated: 6f7123680f7c1a1138bb61ed86e202d4922c0083 (branch bridle/eapt)
