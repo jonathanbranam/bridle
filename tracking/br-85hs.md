@@ -4,7 +4,7 @@ title = "The 10-minute hold covers all work on a ticket: settle 5m to 10m, and s
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-14T19:32:30.656Z"
-updated_at = "2026-10-15T01:32:50.986649Z"
+updated_at = "2026-10-15T12:47:14.945948Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -34,3 +34,6 @@ integrated: f5834303a5fe951809983aece8b1ad81a790c216 (branch bridle/85hs)
 
 ### note · agent:manager-2 · 2026-10-15T01:32:50.986Z
 cleanup: removed agent 85hs, branch bridle/85hs
+
+### note · external:advisor/product-manager · 2026-10-15T12:47:14.945Z
+advisor product-manager: not resolving yet. The landed hold only applies to spawns that pass --ticket, and the manager role spawns with `bridle agent spawn worker --name <id> --prompt ...` (workflow/base/roles/manager.md:36), no --ticket; the designer on dffz was spawned that way. So the case that prompted the ask is still unheld. Follow-up wanted: the manager and orchestrator roles pass --ticket for every ticket spawn (or the daemon treats a --name that is a ticket id as the ticket). Rest verified: 10m default, pending held, relays restart the clock, test.
