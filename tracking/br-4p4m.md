@@ -4,7 +4,7 @@ title = "adding-a-project doc still says bridle serve --detach, never bridle pro
 kind = "docs"
 state = "integrated"
 created_at = "2026-10-15T20:52:57.905Z"
-updated_at = "2026-10-15T22:00:42.559574Z"
+updated_at = "2026-10-15T22:01:08.659532Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -34,3 +34,6 @@ built: 9e6c80dabe23430363c0add99eeb5156d410c352 (branch bridle/4p4m)
 
 ### note · agent:manager-2 · 2026-10-15T22:00:42.559Z
 integrated: bd8fa87ba6ea614cb0e5284c9acc795b83e1ba56 (branch bridle/4p4m)
+
+### note · agent:manager-2 · 2026-10-15T22:01:08.659Z
+cleanup: removed agent 4p4m, branch bridle/4p4m
