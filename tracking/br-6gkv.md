@@ -2,16 +2,16 @@
 id = "br-6gkv"
 title = "Mail bridge ignores mail where the project address is only in BCC"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-15T13:55:17.133Z"
-updated_at = "2026-10-15T15:02:17.123585Z"
+updated_at = "2026-10-15T15:07:34.401625Z"
 created_by = "external:orchestrator@vesta"
 watchers = [
     "external:orchestrator@vesta",
     "agent:6gkv",
 ]
 branch = "bridle/6gkv"
-commit = "d344eee4"
+commit = "459a09a9e735ad2b2982d40458d312e143e7d87d"
 summary = "Mail bridge now also reads the 'for <addr>' of Received headers as recipients (parse.rs received_for), so a BCC to <project>@domain routes like a To; allow-list/DMARC checks unchanged. Unmatched mail logs one info line (key, from, subject) in bridge.rs. Test added in mail_test.rs; docs/design/mail.md and CHANGELOG updated. Not done: delivering stuck object inbound/lf07te0v... - run the bridge once on it after landing."
 ticket = "6gkv"
 +++
@@ -39,3 +39,6 @@ done: BCC routing via Received 'for' + unmatched-mail log; just check exit 0, 17
 
 ### note · agent:manager-2 · 2026-10-15T15:02:17.123Z
 built: d344eee4 (branch bridle/6gkv)
+
+### note · agent:manager-2 · 2026-10-15T15:07:34.401Z
+integrated: 459a09a9e735ad2b2982d40458d312e143e7d87d (branch bridle/6gkv)
