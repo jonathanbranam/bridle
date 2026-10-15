@@ -2212,3 +2212,4 @@
 {"actor":"agent:pm-1","at":"2026-10-15T22:07:10.424874Z","queue":"reprioritized"}
 {"actor":"agent:pm-1","at":"2026-10-15T22:07:11.871407Z","queue":"reprioritized"}
 {"actor":"agent:manager-2","at":"2026-10-15T22:12:01.376714Z","from":"claimed","task":"br-bc37","to":"built"}
+{"actor":"agent:manager-2","at":"2026-10-15T22:19:09.547898Z","from":"built","task":"br-36a3","to":"integrated"}
