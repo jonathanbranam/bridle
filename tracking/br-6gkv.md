@@ -2,9 +2,9 @@
 id = "br-6gkv"
 title = "Mail bridge ignores mail where the project address is only in BCC"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-10-15T13:55:17.133Z"
-updated_at = "2026-10-15T13:55:46.076176Z"
+updated_at = "2026-10-15T14:07:15.753635Z"
 created_by = "external:orchestrator@vesta"
 watchers = ["external:orchestrator@vesta"]
 ticket = "6gkv"

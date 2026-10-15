@@ -31,3 +31,6 @@ tasks = ["br-37hz"]
 
 [[tier]]
 tasks = ["br-m38a"]
+
+[[tier]]
+tasks = ["br-6gkv"]
