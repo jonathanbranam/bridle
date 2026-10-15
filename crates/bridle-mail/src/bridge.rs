@@ -17,7 +17,7 @@ use crate::local::{FixedLocal, Local};
 use crate::outbound::{
     Feed, Mailer, OutMail, Sent, digest_due, digest_mail, is_open_question, question_mail,
 };
-use crate::parse::{Accepted, Rejection, evaluate};
+use crate::parse::{Accepted, Rejection, describe, evaluate};
 use crate::store::MailStore;
 use crate::token::Tokens;
 
@@ -391,7 +391,16 @@ impl Bridge {
         let raw = self.store.get(key).await?;
         let mail = match evaluate(&raw, &self.cfg, &self.project) {
             Ok(m) => m,
-            Err(Rejection::NotOurs) => return Ok(Outcome::Skipped),
+            Err(Rejection::NotOurs) => {
+                let (from, subject) = describe(&raw);
+                tracing::info!(
+                    key,
+                    from,
+                    subject,
+                    "mail matches no project; left in the bucket"
+                );
+                return Ok(Outcome::Skipped);
+            }
             Err(Rejection::UnknownProject { name, from }) => {
                 return self.unknown(key, &name, &from).await;
             }

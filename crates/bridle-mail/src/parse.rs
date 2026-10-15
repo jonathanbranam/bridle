@@ -134,6 +134,28 @@ fn addresses(a: Option<&Address<'_>>) -> Vec<String> {
     .unwrap_or_default()
 }
 
+/// Addresses from `Received: ... for <addr>;` headers. A BCC'd recipient is in no To/Cc, only
+/// here (the receiving MTA writes the envelope recipient into its Received line).
+fn received_for(msg: &mail_parser::Message<'_>) -> Vec<String> {
+    msg.headers_raw()
+        .filter(|(n, _)| n.eq_ignore_ascii_case("Received"))
+        .filter_map(|(_, v)| {
+            let after = v.split_whitespace().skip_while(|w| *w != "for").nth(1)?;
+            let a = after.trim_end_matches(';').trim_matches(['<', '>']);
+            a.contains('@').then(|| a.to_ascii_lowercase())
+        })
+        .collect()
+}
+
+/// The sender and subject of a mail, for the log line when nothing matched it.
+pub fn describe(raw: &[u8]) -> (String, String) {
+    let Some(msg) = MessageParser::default().parse(raw) else {
+        return (String::new(), String::new());
+    };
+    let from = addresses(msg.from()).into_iter().next().unwrap_or_default();
+    (from, msg.subject().unwrap_or("").trim().to_string())
+}
+
 pub fn evaluate(raw: &[u8], cfg: &MailConfig, project: &str) -> Result<Accepted, Rejection> {
     let msg = MessageParser::default()
         .parse(raw)
@@ -142,6 +164,7 @@ pub fn evaluate(raw: &[u8], cfg: &MailConfig, project: &str) -> Result<Accepted,
     let recipients: Vec<String> = addresses(msg.to())
         .into_iter()
         .chain(addresses(msg.cc()))
+        .chain(received_for(&msg))
         .collect();
     let route = recipients
         .iter()

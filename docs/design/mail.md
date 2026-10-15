@@ -50,8 +50,9 @@ the standard AWS chain, never from bridle's files.
 The bridge serves one project: `--project`, or the project of the workspace it runs in. Each poll
 lists the prefix and, per object:
 
-1. Recipient `<project>@domain` or `<project>+t-<task>@domain` (To or Cc). Anything else is another
-   bridge's: left untouched.
+1. Recipient `<project>@domain` or `<project>+t-<task>@domain` (To, Cc, or the `for <addr>` of a
+   `Received` header, which is how a BCC arrives). Anything else is another bridge's: left
+   untouched, with one info log line (key, from, subject).
 2. Accepted only if all hold: the topmost `Authentication-Results` stamped `amazonses.com` says
    `dmarc=pass` for the From domain; the From address is on `allow`; `X-SES-Spam-Verdict` and
    `X-SES-Virus-Verdict` are `PASS`; not an auto-reply or bounce (`Auto-Submitted` other than `no`,

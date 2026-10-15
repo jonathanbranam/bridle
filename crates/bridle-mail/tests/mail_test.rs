@@ -170,6 +170,25 @@ fn parses_project_and_task_addresses() {
 }
 
 #[test]
+fn routes_a_bcc_by_the_received_for_header() {
+    let hdr = "Received: from mx by ses with SMTP id abc for <PROJ@dev.branam.us>; Thu, 15 Oct 2026 13:47:00 +0000\r\n";
+    let to = "jon@jonpeters.online";
+    let m = eval(&Spec {
+        to,
+        extra: hdr,
+        ..Spec::default()
+    })
+    .expect("routed");
+    assert_eq!(m.route.project, "proj");
+    // The same mail without the Received line matches nothing.
+    let r = eval(&Spec {
+        to,
+        ..Spec::default()
+    });
+    assert_eq!(r, Err(Rejection::NotOurs));
+}
+
+#[test]
 fn strips_quoted_history_and_signature() {
     let body = "Do X first.\r\n\r\nThanks\r\n\r\n> old text\r\nOn Mon, Jan 1, 2026 at 9:00 AM Bob <b@x.y> wrote:\r\n> quoted\r\n";
     assert_eq!(
