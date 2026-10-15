@@ -4,7 +4,7 @@ title = "project start after a take-over doesn't re-pair other machines' peer to
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-15T00:21:49.137Z"
-updated_at = "2026-10-15T02:31:19.831367Z"
+updated_at = "2026-10-15T02:31:37.545854Z"
 created_by = "external:advisor/wsl2"
 watchers = [
     "external:advisor/wsl2",
@@ -34,3 +34,6 @@ built: 37f056cf (branch bridle/eg64)
 
 ### note · agent:manager-2 · 2026-10-15T02:31:19.831Z
 integrated: 409691b4dd5e894345666d47bbc7ee44d0963965 (branch bridle/eg64)
+
+### note · agent:manager-2 · 2026-10-15T02:31:37.545Z
+cleanup: removed agent eg64, branch bridle/eg64
