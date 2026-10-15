@@ -2,16 +2,16 @@
 id = "br-m38a"
 title = "Mail bridge drops the forwarded part of a forwarded email"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-15T13:52:07.944Z"
-updated_at = "2026-10-15T14:22:22.613574Z"
+updated_at = "2026-10-15T14:28:03.245149Z"
 created_by = "external:orchestrator@vesta"
 watchers = [
     "external:orchestrator@vesta",
     "agent:m38a",
 ]
 branch = "bridle/m38a"
-commit = "456dcdaf"
+commit = "d7fba8cf139ca503a9ba44e5b30e52a1c089c817"
 summary = 'Mail bridge keeps forwards (crates/bridle-mail/src/parse.rs). Root cause for inline forwards: strip_quoted cut at the forwarded "From:/Date:" header block; it now keeps everything from a "Begin forwarded message" / "---------- Forwarded message" line on. All inline text parts are joined (was body_text(0) only). message/rfc822 parts are appended under "---------- Forwarded message ----------" with From/Date/Subject/To and text, and no longer listed as dropped. Tests: 3 new in tests/mail_test.rs. Docs: design/mail.md, CHANGELOG. Not done: text attachments inlined into the body; they already land as files under .bridle/inbox/mail/<id>/ and are listed by path, so inlining is a design change for a follow-up if wanted.'
 ticket = "m38a"
 +++
@@ -47,3 +47,6 @@ done: mail bridge keeps inline + message/rfc822 forwards (just check exit 0, 171
 
 ### note · agent:manager-2 · 2026-10-15T14:22:22.613Z
 built: 456dcdaf (branch bridle/m38a)
+
+### note · agent:manager-2 · 2026-10-15T14:28:03.245Z
+integrated: d7fba8cf139ca503a9ba44e5b30e52a1c089c817 (branch bridle/m38a)
