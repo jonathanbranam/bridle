@@ -2,9 +2,9 @@
 id = "br-37hz"
 title = "Roles pass --ticket on every ticket spawn so the 10-minute hold applies (follow-up to 85hs)"
 kind = "fix"
-state = "open"
+state = "planned"
 created_at = "2026-10-15T12:47:22.979Z"
-updated_at = "2026-10-15T12:47:42.521326Z"
+updated_at = "2026-10-15T12:58:16.577418Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 ticket = "37hz"
