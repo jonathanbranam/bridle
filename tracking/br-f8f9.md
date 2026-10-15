@@ -4,7 +4,7 @@ title = "The NUC recovers everything on boot (4r3k)"
 kind = "feature"
 state = "claimed"
 created_at = "2026-09-30T12:20:01.124Z"
-updated_at = "2026-10-15T02:46:13.510808Z"
+updated_at = "2026-10-15T03:14:41.046394Z"
 created_by = "external:advisor"
 watchers = [
     "external:advisor",
@@ -35,3 +35,6 @@ Slice 1:
 - The kill switch: if `~/.bridle/no-autostart` exists, the command starts nothing, says so, exits 0.
 - A boot hook: a systemd user unit (Linux/WSL; `bridle systemd install` sibling if it exists) and a launchd entry that runs the command after tmux is up; installable by `bridle project start` or a separate install command, whichever matches how the daemon units are installed today (find in project_start.rs / mail_install.rs). Linger must be on for no-login boot (docs/context/nuc-host.md says it is; check/enable with `loginctl enable-linger`, document, do not run).
 Docs: docs/design/cli.md, docs/context/add-a-machine.md and windows-wsl2-host.md (boot step + drill), docs/context/nuc-host.md linger note, CHANGELOG.md. No migration (opt-in install). Tests: fake tmux script: tag found -> reuse; none -> create+tag; second run no-op; kill switch. Acceptance: just check. The drill (reboot remus) is the human's, not a worker's.
+
+### note · agent:f8f9 · 2026-10-15T03:14:41.046Z
+done: bridle up (slice 1: orchestrator at boot in a tagged tmux pane, no-autostart kill switch, --install unit/plist, --print-tmux-hooks) + docs + CHANGELOG; just check exit 0, 1706 tests passed; 06268581. Not built, need follow-up tickets (PdM readies): per-project [boot] sessions, startup cap/stagger, orchestrator starting aides. Not wired into project start (separate 'up --install'). Reboot drill is the human's.
