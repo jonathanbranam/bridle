@@ -4,7 +4,7 @@ title = "Daemon usage sessions: each hosted session's start/end reason, renewal 
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-14T02:32:28.538Z"
-updated_at = "2026-10-15T04:01:15.473160Z"
+updated_at = "2026-10-15T04:01:35.859221Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -31,3 +31,6 @@ built: aca63ed6 (branch bridle/eapt)
 
 ### note · agent:manager-2 · 2026-10-15T04:01:15.473Z
 integrated: 6f7123680f7c1a1138bb61ed86e202d4922c0083 (branch bridle/eapt)
+
+### note · agent:manager-2 · 2026-10-15T04:01:35.859Z
+cleanup: removed agent eapt, branch bridle/eapt
