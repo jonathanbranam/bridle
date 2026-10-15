@@ -67,6 +67,9 @@ lists the prefix and, per object:
    message:" or "---------- Forwarded message" line on is not stripped; an attached `message/rfc822`
    part is appended under a "---------- Forwarded message ----------" line with its From, Date,
    Subject and To and its text (not saved as a file).
+   Text attachments (`text/*`) are also inlined (257v), each under a "---------- Attachment: <name>
+   ----------" line after the body, cut at 100 KB per part with a "[truncated ...]" marker, whatever
+   the file-saving cap says. Images and other binary parts are not inlined (one debug line).
 4. Sent to `external:aide` while the project's aide is running (below), else `external:orchestrator`; with a task address, as a note on that
    task's thread (`task`). The object is deleted only after the daemon accepted it, so a down
    daemon just means a retry on the next poll.

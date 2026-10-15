@@ -233,7 +233,7 @@ pub fn evaluate(raw: &[u8], cfg: &MailConfig, project: &str) -> Result<Accepted,
             text.push_str(&forwarded_block(inner));
         }
     }
-    let text = cap(text.trim(), cfg.max_body_chars);
+    let mut text = cap(text.trim(), cfg.max_body_chars);
 
     let mut attachments = Vec::new();
     let mut dropped = Vec::new();
@@ -244,6 +244,16 @@ pub fn evaluate(raw: &[u8], cfg: &MailConfig, project: &str) -> Result<Accepted,
         let name = safe_name(part.attachment_name().unwrap_or("attachment"));
         let ctype = part.content_type();
         let is_text = ctype.is_some_and(|c| c.ctype().eq_ignore_ascii_case("text"));
+        if is_text {
+            // Inlined so the reader sees it without opening the saved file; also kept as a
+            // file below when small enough.
+            text.push_str(&format!(
+                "\n\n{ATTACHMENT_SEPARATOR_PREFIX} {name} ----------\n"
+            ));
+            text.push_str(&cap_attachment(&raw_contents(&msg, part)));
+        } else {
+            tracing::debug!(%name, "binary attachment not inlined");
+        }
         let lower = name.to_ascii_lowercase();
         if !(is_text || lower.ends_with(".md") || lower.ends_with(".txt")) {
             dropped.push(format!("{name} (only .md, .txt and text/* are kept)"));
@@ -265,6 +275,26 @@ pub fn evaluate(raw: &[u8], cfg: &MailConfig, project: &str) -> Result<Accepted,
         attachments,
         dropped,
     })
+}
+
+const ATTACHMENT_SEPARATOR_PREFIX: &str = "---------- Attachment:";
+const MAX_INLINE_ATTACHMENT_BYTES: usize = 100 * 1024;
+
+/// An attached text part as body text, cut to the inline cap (on a char boundary).
+fn cap_attachment(data: &[u8]) -> String {
+    let text = String::from_utf8_lossy(data);
+    let text = text.trim();
+    if text.len() <= MAX_INLINE_ATTACHMENT_BYTES {
+        return text.to_string();
+    }
+    let mut end = MAX_INLINE_ATTACHMENT_BYTES;
+    while !text.is_char_boundary(end) {
+        end -= 1;
+    }
+    format!(
+        "{}\n[truncated: the attachment was over {MAX_INLINE_ATTACHMENT_BYTES} bytes]",
+        &text[..end]
+    )
 }
 
 const FORWARD_SEPARATOR: &str = "---------- Forwarded message ----------";

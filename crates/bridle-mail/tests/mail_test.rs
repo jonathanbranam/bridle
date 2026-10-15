@@ -273,7 +273,23 @@ fn with_attachments() -> Vec<u8> {
 #[test]
 fn keeps_small_text_attachments_and_notes_the_rest() {
     let m = evaluate(&with_attachments(), &cfg(), "proj").expect("ok");
-    assert_eq!(m.text, "See attached.");
+    assert!(m.text.starts_with("See attached."), "{}", m.text);
+    assert!(
+        m.text
+            .contains("---------- Attachment: plan.md ----------\n# Plan"),
+        "{}",
+        m.text
+    );
+    assert!(
+        m.text
+            .contains("---------- Attachment: big.txt ----------\nxxx")
+    );
+    assert!(
+        m.text
+            .contains("[truncated: the attachment was over 102400 bytes]")
+    );
+    assert!(m.text.len() < 110_000, "{}", m.text.len());
+    assert!(!m.text.contains("a.pdf") && !m.text.contains("%PDF"));
     assert_eq!(m.attachments.len(), 1);
     assert_eq!(m.attachments[0].name, "plan.md");
     assert!(m.attachments[0].data.starts_with(b"# Plan"));
