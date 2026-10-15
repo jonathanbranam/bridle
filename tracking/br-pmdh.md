@@ -2,11 +2,14 @@
 id = "br-pmdh"
 title = "New-machine setup: log in to Claude Code before the first bridle serve"
 kind = "docs"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-14T18:14:53.591Z"
-updated_at = "2026-10-14T18:15:13.056093Z"
+updated_at = "2026-10-15T02:37:18.593413Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "agent:pmdh",
+]
 ticket = "pmdh"
 +++
 

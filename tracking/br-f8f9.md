@@ -2,13 +2,14 @@
 id = "br-f8f9"
 title = "The NUC recovers everything on boot (4r3k)"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-09-30T12:20:01.124Z"
-updated_at = "2026-10-15T01:02:51.367269Z"
+updated_at = "2026-10-15T02:37:16.429716Z"
 created_by = "external:advisor"
 watchers = [
     "external:advisor",
     "external:advisor/product-manager",
+    "agent:f8f9",
 ]
 size = "M"
 ticket = "4r3k"
