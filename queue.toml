@@ -9,6 +9,9 @@ tasks = [
 ]
 
 [[tier]]
+tasks = ["br-f8f9"]
+
+[[tier]]
 tasks = ["br-pmdh"]
 
 [[tier]]
