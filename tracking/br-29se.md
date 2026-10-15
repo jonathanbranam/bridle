@@ -2,11 +2,14 @@
 id = "br-29se"
 title = "bridle projects add: register a new project here and sync it to every machine"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-14T17:56:45.469Z"
-updated_at = "2026-10-14T22:21:14.689185Z"
+updated_at = "2026-10-15T01:38:42.341965Z"
 created_by = "external:advisor/wsl2"
-watchers = ["external:advisor/wsl2"]
+watchers = [
+    "external:advisor/wsl2",
+    "agent:29se",
+]
 ticket = "29se"
 +++
 

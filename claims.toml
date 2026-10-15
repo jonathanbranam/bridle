@@ -9,9 +9,19 @@ claimed_by = "human"
 claimed_at = "2026-10-03T11:04:49.732Z"
 
 [[claim]]
+task = "br-29se"
+claimed_by = "agent:29se"
+claimed_at = "2026-10-15T01:38:42.341965Z"
+
+[[claim]]
 task = "br-3a42"
 claimed_by = "human"
 claimed_at = "2026-10-03T11:04:49.756Z"
+
+[[claim]]
+task = "br-eg64"
+claimed_by = "agent:eg64"
+claimed_at = "2026-10-15T01:38:40.973266Z"
 
 [[claim]]
 task = "br-tkph"
