@@ -2133,3 +2133,4 @@
 {"actor":"agent:manager-2","at":"2026-10-15T00:13:28.992166Z","from":"built","task":"br-8usa","to":"integrated"}
 {"actor":"human","at":"2026-10-15T00:21:49.137Z","from":"","task":"br-eg64","to":"pending"}
 {"actor":"external:advisor/wsl2","at":"2026-10-15T00:23:39.788262Z","from":"pending","task":"br-eg64","to":"open"}
+{"actor":"agent:pm-1","at":"2026-10-15T00:24:23.304335Z","from":"open","task":"br-eg64","to":"planned"}
