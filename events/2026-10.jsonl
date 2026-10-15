@@ -2160,3 +2160,4 @@
 {"actor":"external:orchestrator","at":"2026-10-15T03:25:37.139135Z","from":"open","task":"br-mru4","to":"planned"}
 {"actor":"agent:manager-2","at":"2026-10-15T03:50:28.803453Z","from":"claimed","task":"br-eapt","to":"built"}
 {"actor":"agent:manager-2","at":"2026-10-15T04:01:15.473160Z","from":"built","task":"br-eapt","to":"integrated"}
+{"actor":"external:advisor/product-manager","at":"2026-10-15T12:46:56.379079Z","from":"pending","task":"br-qca7","to":"open"}

@@ -2,9 +2,9 @@
 id = "br-qca7"
 title = "aide prompt: say the orchestrator is <machine>-home, check its waiter there, and listen only on your own daemon"
 kind = "bug"
-state = "pending"
+state = "open"
 created_at = "2026-10-15T01:10:32.118Z"
-updated_at = "2026-10-15T01:10:42.276831Z"
+updated_at = "2026-10-15T12:46:56.379079Z"
 created_by = "external:aide@remus"
 watchers = ["external:aide@remus"]
 ticket = "qca7"
