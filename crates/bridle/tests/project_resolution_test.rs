@@ -70,6 +70,7 @@ const CLASSES: &[(&str, Kind, &str)] = &[
         "starts its own daemons under its own BRIDLE_HOME; takes no project",
     ),
     ("gateway", Skip, "serves every project"),
+    ("up", Skip, "per machine, not per project"),
     (
         "mail run",
         Skip,

@@ -328,6 +328,18 @@ mail set up by [[docs/context/mail-on-a-machine|set up mail on a machine]]; need
 bridle mail install --project P          # one per project it bridges
 ```
 
+**The orchestrator at boot** (opt-in; one per machine):
+
+```bash
+bridle up --install                      # launchd plist or systemd user unit; run what it prints
+bridle up --print-tmux-hooks             # add these two lines to ~/.tmux.conf if you use tmux-resurrect
+sudo loginctl enable-linger "$USER"      # Linux/WSL only: lets the unit run at boot with no login
+```
+
+`bridle up` starts the orchestrator in a tmux pane tagged `@bridle=orchestrator` only if none
+exists. `touch ~/.bridle/no-autostart` stops it starting anything. Drill: reboot, wait a minute,
+`tmux list-panes -a -F '#{pane_id} #{@bridle}'` shows one `orchestrator` pane.
+
 Both take `--force` to overwrite an existing file. `bridle mail uninstall` and
 `bridle launchd uninstall` exist; `bridle systemd uninstall` does not yet (br-xrkh).
 

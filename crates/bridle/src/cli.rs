@@ -51,6 +51,9 @@ pub enum Command {
     Report(ReportArgs),
     /// Developer tools: a throwaway second site to click through the web UI on.
     Dev(DevArgs),
+    /// Start this machine's orchestrator in a tmux pane tagged `@bridle=orchestrator` if none is
+    /// running (idempotent; a boot hook runs it). `~/.bridle/no-autostart` makes it do nothing.
+    Up(UpArgs),
     /// Run the gateway: the human web UI's API (`[gateway]` in ~/.bridle/config.toml).
     Gateway(GatewayArgs),
     /// Ask the daemon to shut down gracefully.
@@ -2276,6 +2279,20 @@ pub enum MailAction {
     Install(MailInstallArgs),
     /// Remove the file `mail install` wrote and print the unload command.
     Uninstall,
+}
+
+#[derive(Debug, Args)]
+pub struct UpArgs {
+    /// Write a launchd plist / systemd user unit that runs `bridle up` at login/boot; prints the
+    /// load commands and never runs them.
+    #[arg(long)]
+    pub install: bool,
+    /// With --install: overwrite an existing plist or unit.
+    #[arg(long, requires = "install")]
+    pub force: bool,
+    /// Print the tmux-resurrect hook lines that keep the pane tag across a tmux restore.
+    #[arg(long, conflicts_with = "install")]
+    pub print_tmux_hooks: bool,
 }
 
 #[derive(Debug, Args)]

@@ -46,6 +46,7 @@ mod ticket;
 mod token_pair;
 mod tools_only;
 mod trace;
+mod up;
 mod vendor;
 
 use std::process::ExitCode;

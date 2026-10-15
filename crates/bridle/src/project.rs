@@ -75,6 +75,7 @@ mod tests {
             NoProject("static text embedded in the binary; no daemon"),
         ),
         ("gateway", NoProject("serves every project")),
+        ("up", NoProject("per machine, not per project")),
         (
             "dev",
             NoProject("starts its own daemons under its own BRIDLE_HOME"),

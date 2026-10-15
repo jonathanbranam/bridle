@@ -310,6 +310,18 @@ br-4yc8 will report whether `bridle systemd install` works here):
 bridle systemd install           # writes the daemons' user units and prints the commands it does not run
 ```
 
+Boot step: the orchestrator comes up by itself after a reboot (opt-in; not yet drilled on this host):
+
+```bash
+bridle up --install                  # writes the user unit; run the commands it prints
+sudo loginctl enable-linger "$USER"  # so user units run at boot with nobody logged in
+bridle up --print-tmux-hooks         # add the two lines to ~/.tmux.conf (tmux-resurrect)
+```
+
+Drill: `wsl --shutdown`, start Ubuntu again (or reboot Windows), wait a minute, and check
+`tmux list-panes -a -F '#{pane_id} #{@bridle}'` shows one `orchestrator` pane. Kill switch:
+`touch ~/.bridle/no-autostart`.
+
 **Check:**
 
 ```bash

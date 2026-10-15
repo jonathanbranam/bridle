@@ -32,7 +32,7 @@ The human expects it to be slow with many agents and doesn't mind a slow swarm.
 - **Remote Control:** the `claude-rc` systemd user unit (`claude remote-control --name
   nuc` in tmux) was never set up and won't be. Linger is **off** (checked 2026-09-30), so user
   services start only after a login. `bridle systemd install` writes the daemons' units and
-  prints the `sudo loginctl enable-linger` command (ticket 4r3k).
+  prints the `sudo loginctl enable-linger` command (ticket 4r3k). `bridle up --install` (the orchestrator at boot, ticket f8f9) needs linger too: enable it with that command before relying on a no-login boot; bridle does not run it.
 
 So a bridle daemon on the NUC is reachable from the laptop by
 `ssh -L <port>:localhost:<port> nuc`, or directly on its Tailscale address if
