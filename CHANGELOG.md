@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Docs (br-37hz): the manager role and skill spawn workers and researchers with `--ticket <id>`, so the 10-minute settle hold (br-85hs) applies to them. Migration: none.
 - Docs (br-qca7): the aide role prompt says the machine's one orchestrator lives in `<machine>-home`, to check its waiter there (`bridle status --json --project <machine>-home`), and that the aide listens only on its own daemon (replies are forwarded). Migration: none.
 - Feature (br-eapt): `GET /v1/usage/sessions?since=` lists every hosted session (and external statusline session) with its start and end reason, the renewal limit in force, tokens, cost, the first turn's cost and context (startup), and peak and final context; `GET /v1/usage/sessions/{agent_id}/{session_id}/turns` gives the context size per turn. The gateway serves both (`/api/v1/usage/sessions`, `/api/v1/projects/{project}/usage/sessions/{agent_id}/{session_id}/turns`) across projects, an unreachable project listed and never counted as zero. Additive; migration: none.
 - Docs (br-pmdh): the new-machine guides (`docs/context/add-a-machine.md`, the WSL2 guide) say to log in to Claude Code before the first `bridle serve`, unit start or `bridle project start`, and why (a daemon started before the login has agents that crash until it is restarted). Migration: none.

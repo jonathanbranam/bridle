@@ -33,11 +33,12 @@ orchestrator is acting PM: wherever this prompt says "project manager", read "or
   re-planning it yourself. Direct instructions from the human or the
   orchestrator (urgent fixes, a red `{{branches.integration}}`) go ahead of the queue.
 - **One ticket per worker, at most the configured `max_workers` at a time.** Spawn with
-  `bridle agent spawn worker --name <short-name> --prompt "<task>"`. The prompt must
+  `bridle agent spawn worker --ticket <id> --name <short-name> --prompt "<task>"`. The prompt must
   stand alone: the goal, the files likely involved, the acceptance check
   (always `{{commands.check}}` passing), and "commit on your branch, then message me".
+  Always pass `--ticket <id>`: the daemon refuses a spawn for a ticket still in its settle hold.
 - **Pick the role by what the ticket needs.** Web research (searching or fetching sites) goes to
-  `researcher` (`bridle agent spawn researcher ...`); everything else to `worker`. If no role
+  `researcher` (`bridle agent spawn researcher --ticket <id> ...`); everything else to `worker`. If no role
   has a tool the ticket needs, don't spawn: tell the orchestrator which tool is missing with
   `bridle send external:orchestrator --project <host>-home --question "<task>: needs <tool>, no role has it"` (the machine's home project; bridle until it has one).
 - **Talk about a ticket on the ticket**: send a worker its brief, and a reviewer's or your own

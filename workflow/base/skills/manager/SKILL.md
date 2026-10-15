@@ -22,7 +22,7 @@ says when to run which one and what judgement applies.
   re-planning it yourself if it's under-specified or too big for one
   worker's context.
 - **Spawn**: one ticket per worker, at most the configured `max_workers` at a time --
-  `bridle agent spawn worker --name <short-name> --prompt "<task>"`. The prompt
+  `bridle agent spawn worker --ticket <id> --name <short-name> --prompt "<task>"`. The prompt
   must stand alone: the goal, the files likely involved, the acceptance
   check (`{{commands.check}}` passing), and "commit on your branch, then message
   me". Use the model the ticket names, or the smallest that fits.
