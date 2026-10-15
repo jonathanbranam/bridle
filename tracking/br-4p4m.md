@@ -2,11 +2,14 @@
 id = "br-4p4m"
 title = "adding-a-project doc still says bridle serve --detach, never bridle project start (follow-up to kf7t)"
 kind = "docs"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-15T20:52:57.905Z"
-updated_at = "2026-10-15T21:08:08.659397Z"
+updated_at = "2026-10-15T21:09:04.522697Z"
 created_by = "agent:pm-1"
-watchers = ["agent:pm-1"]
+watchers = [
+    "agent:pm-1",
+    "agent:4p4m",
+]
 ticket = "4p4m"
 +++
 
