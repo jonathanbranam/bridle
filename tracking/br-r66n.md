@@ -2,9 +2,9 @@
 id = "br-r66n"
 title = "A reopened non-incident ticket can't be planned: reopened is a dead end"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-10-13T13:07:23.575Z"
-updated_at = "2026-10-15T22:53:20.628377Z"
+updated_at = "2026-10-15T23:04:03.502838Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "r66n"

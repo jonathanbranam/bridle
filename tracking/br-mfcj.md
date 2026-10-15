@@ -2,9 +2,9 @@
 id = "br-mfcj"
 title = "Mail bridge hangs for good after one stalled S3 download (minimum throughput 0 B/s)"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-10-15T21:57:45.166Z"
-updated_at = "2026-10-15T22:51:58.710033Z"
+updated_at = "2026-10-15T23:04:02.297131Z"
 created_by = "external:aide@vesta"
 watchers = ["external:aide@vesta"]
 ticket = "mfcj"

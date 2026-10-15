@@ -2,9 +2,9 @@
 id = "br-54sp"
 title = "The daemon's automatic push of main raises a false 'push failed' alarm when the manager already pushed"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-10-13T00:14:34.643Z"
-updated_at = "2026-10-15T22:52:36.278205Z"
+updated_at = "2026-10-15T23:04:02.810733Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "54sp"
