@@ -2,16 +2,16 @@
 id = "br-qca7"
 title = "aide prompt: say the orchestrator is <machine>-home, check its waiter there, and listen only on your own daemon"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-15T01:10:32.118Z"
-updated_at = "2026-10-15T13:03:49.416336Z"
+updated_at = "2026-10-15T13:08:36.024856Z"
 created_by = "external:aide@remus"
 watchers = [
     "external:aide@remus",
     "agent:qca7",
 ]
 branch = "bridle/qca7"
-commit = "26f422b0"
+commit = "1637a592aab49bdabb834fac9d0423a963bac6bc"
 summary = "aide.md: says the one orchestrator is in <machine>-home, relay check uses bridle status --json --project <machine>-home, aide listens only on its own daemon (replies auto-forwarded). Docs only; CHANGELOG line added."
 ticket = "qca7"
 +++
@@ -38,3 +38,6 @@ done: aide.md says orchestrator is <machine>-home, relay checks waiter there, ai
 
 ### note · agent:manager-2 · 2026-10-15T13:03:49.416Z
 built: 26f422b0 (branch bridle/qca7)
+
+### note · agent:manager-2 · 2026-10-15T13:08:36.024Z
+integrated: 1637a592aab49bdabb834fac9d0423a963bac6bc (branch bridle/qca7)
