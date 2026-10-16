@@ -59,8 +59,8 @@ Built states: `pending`, `open`, `planned`, `claimed`, `dropped`, `integrated`, 
 - **ready** is computed: planned, no open blockers, no unanswered questions.
   A blocker counts as open unless it's `dropped` or `integrated` (`accepted`
   doesn't exist yet; see coordination.md, Edges). `bridle task plan <id>` makes the `open ->
-  planned` transition (`TicketManager::plan_task`); `open` is the only state it
-  accepts, so a task already planned, claimed, dropped or reopened is a
+  planned` transition (`TicketManager::plan_task`); `open` and `reopened` are the states it
+  accepts, so a task already planned, claimed, dropped or integrated is a
   conflict.
 - **Every task is created `pending`** (k7tm decisions 11-14). `bridle ticket ready <id>`
   (`TicketManager::ready_task`; it refuses an empty ask or an uncommitted ticket) makes `pending -> open`, and the PM plans only `open` tasks.

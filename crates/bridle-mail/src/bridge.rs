@@ -188,22 +188,33 @@ impl Bridge {
     /// Polls until the bucket has gone unreadable for 5 poll intervals, then returns an error
     /// so the process exits non-zero and the service manager restarts it: a bridge that is up
     /// but silent looks the same as no mail.
+    ///
+    /// The watchdog is its own future, not a check between polls: a poll that hangs anywhere
+    /// (a sink call, the outbound feed, not only an S3 read) never gets back to a check (br-zwup).
     pub async fn run(&self) -> anyhow::Result<()> {
-        let mut last_ok = tokio::time::Instant::now();
+        let (beat, mut beats) = tokio::sync::watch::channel(tokio::time::Instant::now());
+        let limit = self.cfg.poll_interval() * 5;
+        tokio::select! {
+            r = self.poll_forever(&beat) => r,
+            silent = silent_for(&mut beats, limit) => anyhow::bail!(
+                "no successful mail poll for {}s (5 x poll_secs); exiting so the service manager restarts the bridge",
+                silent.as_secs()
+            ),
+        }
+    }
+
+    /// The poll loop. Each successful inbound poll sends a heartbeat for the watchdog.
+    async fn poll_forever(
+        &self,
+        beat: &tokio::sync::watch::Sender<tokio::time::Instant>,
+    ) -> anyhow::Result<()> {
         loop {
             match self.poll_once().await {
                 Ok(_) => {
-                    last_ok = tokio::time::Instant::now();
+                    beat.send_replace(tokio::time::Instant::now());
                     self.failures.ok("mail poll")
                 }
                 Err(e) => self.failures.failed("mail poll", &e),
-            }
-            let limit = self.cfg.poll_interval() * 5;
-            if last_ok.elapsed() > limit {
-                anyhow::bail!(
-                    "no successful mail poll for {}s (5 x poll_secs); exiting so the service manager restarts the bridge",
-                    last_ok.elapsed().as_secs()
-                );
             }
             match self.poll_outbound(chrono::Local::now().naive_local()).await {
                 Ok(_) => self.failures.ok("mail outbound"),
@@ -537,6 +548,20 @@ impl Bridge {
                 Ok(path)
             })
             .collect()
+    }
+}
+
+/// Resolves once no heartbeat has come for `limit`, with how long it has been silent.
+async fn silent_for(
+    beats: &mut tokio::sync::watch::Receiver<tokio::time::Instant>,
+    limit: std::time::Duration,
+) -> std::time::Duration {
+    loop {
+        let last = *beats.borrow_and_update();
+        tokio::select! {
+            _ = tokio::time::sleep_until(last + limit) => return last.elapsed(),
+            _ = beats.changed() => {}
+        }
     }
 }
 

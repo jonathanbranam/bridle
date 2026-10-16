@@ -613,3 +613,26 @@ async fn the_watchdog_exits_when_polls_keep_failing() {
         "{e:#}"
     );
 }
+
+/// A daemon that accepts the connection and never answers: a hang outside any S3 call.
+struct HangingSink;
+
+#[async_trait]
+impl Sink for HangingSink {
+    async fn send(&self, _: SendRequest) -> anyhow::Result<Vec<String>> {
+        std::future::pending().await
+    }
+}
+
+#[tokio::test(start_paused = true)]
+async fn the_watchdog_catches_a_hang_after_the_store_read() {
+    let dir = tempfile::tempdir().expect("tmp");
+    let store = Arc::new(FakeStore::default());
+    store.put("inbound/ses1", Spec::default().raw());
+    let bridge = bridge(&store, Arc::new(HangingSink), cfg(), dir.path());
+    let e = bridge.run().await.unwrap_err();
+    assert!(
+        format!("{e:#}").contains("no successful mail poll"),
+        "{e:#}"
+    );
+}
