@@ -4,7 +4,7 @@ title = "bridle serve ignores --project for the repo: say so when --project and 
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-12T02:49:11.448Z"
-updated_at = "2026-10-16T02:52:33.477520Z"
+updated_at = "2026-10-16T02:52:47.049773Z"
 created_by = "external:advisor/nuc-rename"
 watchers = [
     "external:advisor/nuc-rename",
@@ -34,3 +34,6 @@ done: serve refuses --project/folder mismatch, already-running names project+wor
 
 ### note · agent:manager-2 · 2026-10-16T02:52:33.477Z
 integrated: d2c02581d80103137a2a23a1575e25025d504114 (branch bridle/eas4)
+
+### note · agent:manager-2 · 2026-10-16T02:52:47.049Z
+cleanup: removed agent eas4, branch bridle/eas4
