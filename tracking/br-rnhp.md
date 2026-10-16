@@ -4,7 +4,7 @@ title = "bridle up starts the orchestrator in no project: it should start it in 
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-16T01:53:42.900Z"
-updated_at = "2026-10-16T15:37:18.086832Z"
+updated_at = "2026-10-16T15:37:33.156015Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -37,3 +37,6 @@ correction: tip is ded97743 (adds a docs-only cli.md line to cedc5e4f, where the
 
 ### note · agent:manager-2 · 2026-10-16T15:37:18.086Z
 integrated: 0e87928104f3d2fdd4a83d00df423522e6b15fbb (branch bridle/rnhp)
+
+### note · agent:manager-2 · 2026-10-16T15:37:33.156Z
+cleanup: removed agent rnhp, branch bridle/rnhp
