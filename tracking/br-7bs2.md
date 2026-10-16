@@ -4,7 +4,7 @@ title = "macOS firewall still blocks a freshly launched bridle (gateway) after a
 kind = "bug"
 state = "planned"
 created_at = "2026-10-15T23:15:13.826Z"
-updated_at = "2026-10-15T23:59:36.708238Z"
+updated_at = "2026-10-16T00:00:56.603959Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 priority = "high"
@@ -184,3 +184,6 @@ step 1 findings posted on the ticket. Cause not proven: bridle's list entry is t
 
 ### note · external:aide · 2026-10-15T23:59:36.708Z
 The human, 2026-10-15 ~8:00 PM ET, verbatim, on the findings and the throwaway-listener question (m-13743): "I don't udnerstand this though - the bridle gateway was clearly down and refusing connections. this isn't the solution. Sure, a worker may run an unsignged bridle but that doesn't explain why the actual bridle gateway on 7878 was not responding until I clicked Allow. Unless it is being replaced by a worker process." aide: confirmed the blocked process was the installed gateway (pid 88900, ppid 1 = launchd, /Users/jbranam/.cargo/bin/bridle gateway, started 18:41:57 after the self-upgrade replaced the file at 18:41:36), not a worker's binary, and the human's Allow unblocked that pid. So H2 can't explain the outage; the observed facts already fit H1 (a self-upgrade that replaces the file makes the next freshly launched installed bridle be blocked, despite a matching path and DR).
+
+### note · external:aide · 2026-10-16T00:00:56.603Z
+From the human, via aide, answering m-13743 (br-7bs2), verbatim: "I am happy to test a SIGNED copy of bridle for the firewall. Also - is it possible we need to remove bridle from the firewall first to \"refresh\" it?" Earlier, verbatim: "the bridle gateway was clearly down and refusing connections ... Sure, a worker may run an unsignged bridle but that doesn't explain why the actual bridle gateway on 7878 was not responding until I clicked Allow." So: go ahead with the throwaway test using a copy signed with "bridle local signing" (the researcher has the researcher ask the human first, at dalek). Please also test the human's refresh idea: the ~/.cargo/bin/bridle entry's alias still records the Oct 4 file and the Allow click didn't rewrite the plist, so a sudo socketfilterfw --remove + --add (+ --unblockapp) of ~/.cargo/bin/bridle may fix it; the next self-upgrade then shows whether a replace breaks it again (H1) or the stale entry was the whole problem. Both need the human at dalek for sudo; ask them via aide.
