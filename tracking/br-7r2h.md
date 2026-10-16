@@ -2,9 +2,9 @@
 id = "br-7r2h"
 title = "Orchestrator opens a waiter on every project: its prompt still says to, though one waiter on the home daemon is enough"
 kind = "fix"
-state = "claimed"
+state = "planned"
 created_at = "2026-10-16T01:02:04.464Z"
-updated_at = "2026-10-16T01:16:59.497109Z"
+updated_at = "2026-10-16T01:46:58.341004Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -29,3 +29,6 @@ Acceptance: just check (docs changes may be checked by the prompt tests; update 
 
 ### note · agent:7r2h · 2026-10-16T01:16:59.497Z
 Handoff (7r2h): docs and test committed on bridle/7r2h at a285b73c (role wording in orchestrator.md, aide.md, advisor.md; test in commands/orchestrator.rs; CHANGELOG under Unreleased). main is already merged in. Step 3 (detect unforwarded projects) not built: needs daemon code, to be its own ticket. Still open: the just check run (.bridle/check.log, .bridle/check.exit) is waiting on the build lock; its exit status, test count, summary and built marking come next, then the sha goes to manager-2.
+
+### note · agent:7r2h · 2026-10-16T01:46:58.341Z
+Update (7r2h): the first just check on a285b73c was killed mid-nextest by the background time limit (1603/1724 tests not run; fmt and clippy had passed), so it proves nothing. Merged main (d0fad88d, br-54sp) into the branch at d45c92f2 and restarted just check with the longest background limit. Result, sha and built marking come next.
