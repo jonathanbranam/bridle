@@ -10,6 +10,8 @@ pub const OWNER_REFUSED_EXIT: u8 = 78;
 
 #[derive(Debug)]
 pub enum CliError {
+    /// Exit 2: answers are missing and there is no terminal to ask them (`project setup`).
+    Usage(String),
     /// Exit 3: no daemon could be found or reached.
     Unreachable(String),
     /// Exit 4: `bridle wait` gave up at `--timeout`.
@@ -28,6 +30,7 @@ pub enum CliError {
 impl CliError {
     pub fn exit_code(&self) -> u8 {
         match self {
+            CliError::Usage(_) => 2,
             CliError::Unreachable(_) => 3,
             CliError::Timeout(_) => 4,
             CliError::Superseded(_) => 5,
@@ -41,7 +44,8 @@ impl CliError {
 impl std::fmt::Display for CliError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            CliError::Unreachable(msg)
+            CliError::Usage(msg)
+            | CliError::Unreachable(msg)
             | CliError::Timeout(msg)
             | CliError::Superseded(msg)
             | CliError::Stopping(msg)

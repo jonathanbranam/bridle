@@ -5,7 +5,7 @@
 //! steps are applied in order, and the first failure stops the run with the fix. Nothing is
 //! stored: a second run reads the same state and does only what is missing.
 
-use std::io::Write;
+use std::io::{BufRead, IsTerminal, Write};
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
@@ -15,12 +15,12 @@ use bridle_api::machines::{MachineMap, owner_names};
 use bridle_daemon::paths::Workspace;
 use bridle_daemon::state_branch::{Owner, is_new_project, local_owner};
 
-use crate::cli::{Cli, ProjectAddArgs, ProjectSetupArgs};
+use crate::cli::{Cli, InitArgs, ProjectAddArgs, ProjectSetupArgs};
 use crate::error::CliError;
 use crate::mail_install::{MAIL_OFF, MailState, mail_state};
 use crate::project_stop::{Ctl, RealCtl};
 use crate::project_sync::{Real, add, sync, sync_counting};
-use crate::token_pair::{Exec, Fleet, Options, pair};
+use crate::token_pair::{Exec, Fleet, Options, TOKEN_ROLES, TokenType, pair};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Status {
@@ -67,6 +67,19 @@ trait Steps {
     async fn check(&mut self, i: usize) -> Status;
     /// Makes step `i`; the `Ok` text is its one-line result, the `Err` text the exact fix.
     async fn apply(&mut self, i: usize, out: &mut dyn Write) -> Result<String, String>;
+    /// The existing command that makes step `i` by hand (the "next:" line).
+    fn command(&self, i: usize) -> String;
+    /// Asks what the unmet steps need answered, before any is applied. Missing answers with no
+    /// terminal are an `Usage` error (exit 2) listing all of them.
+    async fn questions(&mut self, _statuses: &[Status]) -> Result<(), CliError> {
+        Ok(())
+    }
+}
+
+/// The command for the first step that is not complete: the one thing to do next.
+fn next_line<S: Steps>(steps: &S, statuses: &[Status]) -> Option<String> {
+    let i = statuses.iter().position(|s| !s.complete())?;
+    Some(format!("next: {}", steps.command(i)))
 }
 
 /// Runs the checklist and, unless `check_only`, applies what is unmet. `Err` carries the exit 1.
@@ -87,6 +100,9 @@ async fn drive<S: Steps>(
     }
     let incomplete = statuses.iter().filter(|s| !s.complete()).count();
     if check_only {
+        if let Some(n) = next_line(steps, &statuses) {
+            let _ = writeln!(out, "{n}");
+        }
         return if incomplete == 0 {
             let _ = writeln!(out, "{project} is fully set up");
             Ok(())
@@ -102,6 +118,7 @@ async fn drive<S: Steps>(
         let _ = writeln!(out, "nothing to do: {project} is fully set up");
         return Ok(());
     }
+    steps.questions(&statuses).await?;
     for (i, name) in names.iter().enumerate() {
         match &statuses[i] {
             Status::Unmet(_) => {}
@@ -217,19 +234,124 @@ fn mail_status(state: MailState, in_mail_projects: bool, has_bridge: bool) -> St
     }
 }
 
-struct Real5<'a> {
+/// A project with commits: where bridle's own files go (rule existing-projects: the default is
+/// a separate branch, never the project's own).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Choice {
+    Main,
+    Adopt,
+}
+
+const ADOPT: &str = "bridle-adopt";
+
+/// Where an answer comes from: a flag was already applied by the caller; else `-y` takes the
+/// default, else the terminal is asked, else it is reported missing (`None`).
+struct Asker {
+    yes: bool,
+    terminal: bool,
+    input: Box<dyn BufRead>,
+    out: Box<dyn Write>,
+}
+
+impl Asker {
+    /// Never answers: for the read-only checks behind `print_next`.
+    fn none() -> Self {
+        Asker {
+            yes: false,
+            terminal: false,
+            input: Box::new(std::io::empty()),
+            out: Box::new(std::io::sink()),
+        }
+    }
+
+    fn ask(&mut self, question: &str, default: &str) -> Option<String> {
+        if self.yes {
+            let _ = writeln!(self.out, "{question} {default} (default)");
+            return Some(default.to_string());
+        }
+        if !self.terminal {
+            return None;
+        }
+        let _ = write!(self.out, "{question} [{default}] ");
+        let _ = self.out.flush();
+        let mut line = String::new();
+        let _ = self.input.read_line(&mut line);
+        let line = line.trim();
+        Some(if line.is_empty() { default } else { line }.to_string())
+    }
+}
+
+const CLONE: usize = 0;
+const INIT: usize = 1;
+const REGISTER: usize = 2;
+const STATE: usize = 3;
+const SERVICE: usize = 4;
+const TOKENS: usize = 5;
+const MAIL: usize = 6;
+const AIDE: usize = 7;
+
+const STEPS: [&str; 8] = [
+    "clone",
+    "init",
+    "register",
+    "state",
+    "service",
+    "tokens",
+    "mail",
+    "aide token",
+];
+
+struct Setup<'a> {
     cli: &'a Cli,
     ctl: &'a dyn Ctl,
     home: PathBuf,
     sys: crate::project_start::Sys,
     project: String,
+    /// The clone's main checkout; for a clone still to make, where it will go.
     repo: PathBuf,
-    ws: Workspace,
+    workspace: Option<PathBuf>,
+    cloned: bool,
+    remote: Option<String>,
+    /// The clone's place was given (`--root`) or is the clone's own: nothing to ask.
+    root_given: bool,
+    /// The repo (or the remote) has commits; read by the clone and init checks.
+    commits: bool,
+    on_adopt: bool,
+    choice: Option<Choice>,
+    /// Whether to make the aide token; asked when that step is unmet.
+    aide: bool,
+    asker: Asker,
 }
 
-const STEPS: [&str; 5] = ["register", "state", "service", "tokens", "mail"];
+impl<'a> Setup<'a> {
+    fn new(
+        cli: &'a Cli,
+        project: &str,
+        repo: PathBuf,
+        remote: Option<String>,
+        asker: Asker,
+    ) -> Self {
+        Setup {
+            cli,
+            ctl: &RealCtl,
+            home: bridle_home(),
+            sys: crate::project_start::Sys::current(),
+            project: project.to_string(),
+            cloned: repo.join(".git").exists(),
+            repo,
+            workspace: None,
+            remote,
+            root_given: true,
+            commits: false,
+            on_adopt: false,
+            choice: None,
+            aide: true,
+            asker,
+        }
+    }
+}
 
-impl Real5<'_> {
+impl Setup<'_> {
     fn fleet(&self) -> Result<Fleet, String> {
         let map = MachineMap::load(&self.home).map_err(|e| e.to_string())?;
         Ok(Fleet::from_config(&map))
@@ -247,16 +369,173 @@ impl Real5<'_> {
             .await
             .is_ok()
     }
+
+    /// A dry-run `token pair` for this project, read as a status.
+    async fn pair_status(&self, roles: Vec<String>, tokens: Vec<TokenType>) -> Status {
+        if !self.daemon_up().await {
+            return Status::Unmet("the daemon is not running yet".into());
+        }
+        let Ok(fleet) = self.fleet() else {
+            return Status::Unknown("config.toml unreadable".into());
+        };
+        let opts = Options {
+            projects: vec![self.project.clone()],
+            roles,
+            tokens,
+            dry_run: true,
+            ..Default::default()
+        };
+        let (paired, report) = tokio::task::spawn_blocking(move || {
+            let mut buf = Vec::new();
+            let r = pair(&opts, &fleet, &Exec, &mut buf);
+            (r, String::from_utf8_lossy(&buf).into_owned())
+        })
+        .await
+        .unwrap_or((Err("token check did not finish".into()), String::new()));
+        tokens_status(paired, &report)
+    }
+
+    async fn check_clone(&mut self) -> Status {
+        if self.cloned {
+            let origin = git(&self.repo, &["remote", "get-url", "origin"]).await.ok();
+            return match (&self.remote, origin) {
+                (Some(want), Some(have)) if want.trim_end_matches('/') != have.trim() => {
+                    Status::Blocked(format!(
+                        "{} has origin {}, not {want}: pass the right URL or none",
+                        self.repo.display(),
+                        have.trim()
+                    ))
+                }
+                _ => Status::Done(format!("clone at {}", self.repo.display())),
+            };
+        }
+        let Some(url) = self.remote.clone() else {
+            return Status::Blocked(
+                "no clone here and no remote: make an empty repo for the project and pass its URL (`bridle project setup <URL>`)".into(),
+            );
+        };
+        if std::fs::read_dir(&self.repo).is_ok_and(|mut d| d.next().is_some()) {
+            return Status::Blocked(format!(
+                "{} exists and is not empty: pass --root with another place, or clone into it yourself",
+                self.repo.display()
+            ));
+        }
+        match git(Path::new("."), &["ls-remote", "--heads", &url]).await {
+            Ok(heads) => {
+                self.commits = !heads.trim().is_empty();
+                Status::Unmet(format!("clone {url} into {}", self.repo.display()))
+            }
+            Err(e) => Status::Blocked(format!("remote {url} is not reachable: {e}")),
+        }
+    }
+
+    async fn check_init(&mut self) -> Status {
+        if !self.cloned {
+            return Status::Unmet("after the clone (if it has no .bridle/config.toml)".into());
+        }
+        if self.repo.join(".bridle/config.toml").is_file() {
+            return Status::Done(".bridle/config.toml present".into());
+        }
+        self.commits = git(&self.repo, &["rev-parse", "--verify", "-q", "HEAD"])
+            .await
+            .is_ok();
+        self.on_adopt = git(&self.repo, &["symbolic-ref", "--short", "HEAD"])
+            .await
+            .is_ok_and(|b| b.trim() == ADOPT);
+        Status::Unmet("no .bridle/config.toml".into())
+    }
+
+    /// Makes `.bridle/config.toml` and the workflow files and commits them, on `bridle-adopt`
+    /// when the project has commits and adopt was chosen (the default).
+    async fn apply_init(&mut self) -> Result<String, String> {
+        let repo = self.repo.clone();
+        if repo.join(".bridle/config.toml").is_file() {
+            return Ok("already initialised in the clone".into());
+        }
+        let adopt = self.commits && self.choice != Some(Choice::Main);
+        if adopt && !self.on_adopt {
+            let b = ADOPT;
+            if git(&repo, &["checkout", "-q", "-b", b]).await.is_err() {
+                git(&repo, &["checkout", "-q", b]).await?;
+            }
+        }
+        let args = InitArgs {
+            repo: Some(repo.clone()),
+            name: Some(self.project.clone()),
+            integration: adopt.then(|| ADOPT.to_string()),
+            stack: None,
+        };
+        let r2 = repo.clone();
+        tokio::task::block_in_place(|| -> anyhow::Result<()> {
+            crate::init::scaffold(&r2, &args)?;
+            if !r2.join("workflow/base").is_dir() {
+                crate::vendor::init_vendor(&r2)?;
+            }
+            Ok(())
+        })
+        .map_err(|e| format!("{e:#}"))?;
+        let paths: Vec<&str> = [".bridle", ".gitignore", "workflow"]
+            .into_iter()
+            .filter(|p| repo.join(p).exists())
+            .collect();
+        let mut add = vec!["add", "-A", "--"];
+        add.extend(paths);
+        git(&repo, &add).await?;
+        git(
+            &repo,
+            &[
+                "commit",
+                "-q",
+                "-m",
+                "bridle: set up the project (bridle project setup)",
+            ],
+        )
+        .await
+        .map_err(|e| format!("{e}; commit .bridle, .gitignore and workflow yourself"))?;
+        Ok(if adopt {
+            format!("files committed on the new branch {ADOPT}")
+        } else {
+            "files committed".into()
+        })
+    }
 }
 
-impl Steps for Real5<'_> {
+/// Runs `git` in `dir` without ever prompting; the `Err` is git's first stderr line.
+async fn git(dir: &Path, args: &[&str]) -> Result<String, String> {
+    let dir = dir.to_path_buf();
+    let args: Vec<String> = args.iter().map(|a| a.to_string()).collect();
+    tokio::task::spawn_blocking(move || {
+        let out = std::process::Command::new("git")
+            .arg("-C")
+            .arg(&dir)
+            .args(&args)
+            .env("GIT_TERMINAL_PROMPT", "0")
+            .output()
+            .map_err(|e| format!("cannot run git: {e}"))?;
+        if out.status.success() {
+            return Ok(String::from_utf8_lossy(&out.stdout).into_owned());
+        }
+        let err = String::from_utf8_lossy(&out.stderr);
+        Err(format!(
+            "git {}: {}",
+            args.first().map(String::as_str).unwrap_or_default(),
+            err.lines().next().unwrap_or("failed").trim()
+        ))
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+impl Steps for Setup<'_> {
     fn names(&self) -> Vec<&'static str> {
         STEPS.to_vec()
     }
 
     async fn check(&mut self, i: usize) -> Status {
         match i {
-            0 => {
+            CLONE => self.check_clone().await,
+            INIT => self.check_init().await,
+            REGISTER => {
                 let fleet = match self.fleet() {
                     Ok(f) => f,
                     Err(e) => return Status::Unknown(format!("config.toml: {e}")),
@@ -275,40 +554,31 @@ impl Steps for Real5<'_> {
                 };
                 register_status(placed, counted)
             }
-            1 => state_status(
+            STATE if !self.cloned => {
+                Status::Unmet("after the clone: the daemon's first start creates it".into())
+            }
+            STATE => state_status(
                 local_owner(&self.repo).await,
                 &owner_names(&self.home),
                 is_new_project(&self.repo).await,
             ),
-            2 => service_status(
+            SERVICE => service_status(
                 self.sys
                     .units(&self.project)
                     .iter()
                     .any(|u| u.what == "daemon"),
                 self.daemon_up().await,
             ),
-            3 => {
-                if !self.daemon_up().await {
-                    return Status::Unmet("the daemon is not running yet".into());
-                }
-                let Ok(fleet) = self.fleet() else {
-                    return Status::Unknown("config.toml unreadable".into());
-                };
-                let opts = Options {
-                    projects: vec![self.project.clone()],
-                    dry_run: true,
-                    ..Default::default()
-                };
-                let (paired, report) = tokio::task::spawn_blocking(move || {
-                    let mut buf = Vec::new();
-                    let r = pair(&opts, &fleet, &Exec, &mut buf);
-                    (r, String::from_utf8_lossy(&buf).into_owned())
-                })
-                .await
-                .unwrap_or((Err("token check did not finish".into()), String::new()));
-                tokens_status(paired, &report)
+            TOKENS => {
+                let roles = TOKEN_ROLES
+                    .iter()
+                    .map(|r| r.name)
+                    .filter(|n| *n != AIDE_ROLE)
+                    .map(String::from)
+                    .collect();
+                self.pair_status(roles, Vec::new()).await
             }
-            _ => {
+            MAIL => {
                 let text =
                     std::fs::read_to_string(self.home.join("config.toml")).unwrap_or_default();
                 mail_status(
@@ -320,12 +590,38 @@ impl Steps for Real5<'_> {
                         .any(|u| u.what == "mail bridge"),
                 )
             }
+            _ => match self
+                .pair_status(vec![AIDE_ROLE.into()], vec![TokenType::Role])
+                .await
+            {
+                Status::Done(_) => Status::Done("aide token present".into()),
+                other => other,
+            },
         }
     }
 
     async fn apply(&mut self, i: usize, out: &mut dyn Write) -> Result<String, String> {
         match i {
-            0 => {
+            CLONE => {
+                let url = self.remote.clone().ok_or("no remote to clone")?;
+                if std::fs::read_dir(&self.repo).is_ok_and(|mut d| d.next().is_some()) {
+                    return Err(format!(
+                        "{} exists and is not empty: pass --root with another place",
+                        self.repo.display()
+                    ));
+                }
+                if let Some(parent) = self.repo.parent() {
+                    std::fs::create_dir_all(parent)
+                        .map_err(|e| format!("cannot make {}: {e}", parent.display()))?;
+                }
+                let dest = self.repo.display().to_string();
+                git(Path::new("."), &["clone", "-q", &url, &dest]).await?;
+                self.repo = self.repo.canonicalize().map_err(|e| e.to_string())?;
+                self.cloned = true;
+                Ok(format!("cloned into {}", self.repo.display()))
+            }
+            INIT => self.apply_init().await,
+            REGISTER => {
                 let fleet = self.fleet()?;
                 if fleet.placed.contains_key(&self.project) {
                     let home = self.home.clone();
@@ -348,14 +644,15 @@ impl Steps for Real5<'_> {
                 Ok("registered and synced".into())
             }
             // The daemon's first start makes `bridle/state` and claims the owner (serve).
-            1 => Ok("left to the daemon's first start (next step)".into()),
-            2 => {
+            STATE => Ok("left to the daemon's first start (next step)".into()),
+            SERVICE => {
+                let ws = Workspace::new(self.repo.clone(), self.workspace.clone());
                 crate::project_start::start_service(
                     self.cli,
                     &self.sys,
                     &self.project,
                     &self.repo,
-                    &self.ws,
+                    &ws,
                     self.ctl,
                     out,
                 )
@@ -363,13 +660,17 @@ impl Steps for Real5<'_> {
                 .map_err(|e| e.to_string())?;
                 Ok("daemon service installed and running".into())
             }
-            3 => {
-                crate::project_start::make_tokens(&self.home, &self.project, out)
-                    .await
-                    .map_err(|e| e.to_string())?;
+            TOKENS => {
+                let roles = TOKEN_ROLES
+                    .iter()
+                    .map(|r| r.name)
+                    .filter(|n| *n != AIDE_ROLE)
+                    .map(String::from)
+                    .collect();
+                self.make_tokens(roles, Vec::new(), out).await?;
                 Ok("tokens present on every machine".into())
             }
-            _ => {
+            MAIL => {
                 crate::project_start::bring_mail(
                     self.cli,
                     &self.sys,
@@ -388,44 +689,279 @@ impl Steps for Real5<'_> {
                 })?;
                 Ok("mail bridge installed".into())
             }
+            _ if !self.aide => Ok("skipped: not wanted (asked again on the next run)".into()),
+            _ => {
+                self.make_tokens(vec![AIDE_ROLE.into()], vec![TokenType::Role], out)
+                    .await?;
+                Ok("aide token made".into())
+            }
+        }
+    }
+
+    fn command(&self, i: usize) -> String {
+        let p = &self.project;
+        match i {
+            CLONE => match &self.remote {
+                Some(u) => format!("git clone {u} {}", self.repo.display()),
+                None => "make an empty repo and run bridle project setup <URL>".into(),
+            },
+            INIT => "bridle init".into(),
+            REGISTER => format!("bridle projects add {p}"),
+            STATE | SERVICE => "bridle project start".into(),
+            TOKENS => format!("bridle token pair --projects {p}"),
+            MAIL => format!("bridle mail install --project {p}"),
+            _ => format!("bridle token pair --projects {p} --roles {AIDE_ROLE}"),
+        }
+    }
+
+    async fn questions(&mut self, statuses: &[Status]) -> Result<(), CliError> {
+        let unmet = |i: usize| matches!(statuses[i], Status::Unmet(_));
+        let mut missing: Vec<String> = Vec::new();
+        if unmet(CLONE) && !self.root_given {
+            let default = self.repo.display().to_string();
+            match self
+                .asker
+                .ask(&format!("Put the clone of {} at", self.project), &default)
+            {
+                Some(a) => self.repo = expand(&a, &self.sys.home_dir),
+                None => missing.push(format!(
+                    "where the clone goes: pass --root DIR (proposed: {default})"
+                )),
+            }
+        }
+        if unmet(INIT) && self.commits && self.choice.is_none() && !self.on_adopt {
+            let q = format!(
+                "{} has commits. Put bridle's files on a new {ADOPT} branch (adopt) or on the project's own branch (main)?",
+                self.project
+            );
+            match self.asker.ask(&q, "adopt").as_deref() {
+                Some("adopt") => self.choice = Some(Choice::Adopt),
+                Some("main") => self.choice = Some(Choice::Main),
+                Some(other) => {
+                    return Err(CliError::Usage(format!(
+                        "'{other}' is not an answer: say adopt or main"
+                    )));
+                }
+                None => {
+                    missing.push("main or adopt: pass --main or --adopt (default adopt)".into())
+                }
+            }
+        }
+        if unmet(AIDE) {
+            let q = "Make the aide token (for the human's aide session)? [Y/n]";
+            match self.asker.ask(q, "Y") {
+                Some(a) => self.aide = !matches!(a.to_lowercase().as_str(), "n" | "no"),
+                None => missing.push("aide token: pass -y to make it".into()),
+            }
+        }
+        if missing.is_empty() {
+            return Ok(());
+        }
+        Err(CliError::Usage(format!(
+            "nothing was changed: no terminal to ask, and these answers are missing:\n  - {}\nanswer them with the flags, or pass -y to take every default",
+            missing.join("\n  - ")
+        )))
+    }
+}
+
+impl Setup<'_> {
+    /// `token pair` for this project, narrowed to `roles`/`tokens`: no second minting path.
+    async fn make_tokens(
+        &self,
+        roles: Vec<String>,
+        tokens: Vec<TokenType>,
+        out: &mut dyn Write,
+    ) -> Result<(), String> {
+        let opts = Options {
+            projects: vec![self.project.clone()],
+            roles,
+            tokens,
+            ..Default::default()
+        };
+        let fleet = self.fleet()?;
+        let (r, buf) = tokio::task::spawn_blocking(move || {
+            let mut buf = Vec::new();
+            let r = pair(&opts, &fleet, &Exec, &mut buf);
+            (r, buf)
+        })
+        .await
+        .map_err(|e| e.to_string())?;
+        let _ = out.write_all(&buf);
+        if r? {
+            Ok(())
+        } else {
+            Err(format!(
+                "some tokens were not made (see above; an unreachable machine was skipped): fix it and run `bridle token pair --projects {}`",
+                self.project
+            ))
         }
     }
 }
 
-/// The clone: `--repo`, else the running daemon's for `name`, else the current directory.
-fn repo_for(args: &ProjectSetupArgs, name: Option<&str>) -> anyhow::Result<PathBuf> {
+const AIDE_ROLE: &str = crate::token_pair::AIDE;
+
+fn expand(answer: &str, home: &Path) -> PathBuf {
+    match answer.strip_prefix("~/") {
+        Some(rest) => home.join(rest),
+        None => PathBuf::from(answer),
+    }
+}
+
+/// A target that is a place to clone from, not a project name: names have none of these.
+fn looks_like_url(t: &str) -> bool {
+    t.contains("://")
+        || (t.contains('@') && t.contains(':'))
+        || t.starts_with(['/', '.', '~'])
+        || t.ends_with(".git")
+}
+
+/// `git@host:org/foo.git` and `/srv/foo.git/` both give `foo`.
+fn project_from_remote(url: &str) -> Option<String> {
+    let last = url
+        .trim_end_matches('/')
+        .rsplit(['/', ':'])
+        .next()
+        .unwrap_or_default();
+    let name = last.strip_suffix(".git").unwrap_or(last);
+    let plain = !name.is_empty()
+        && name
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || matches!(c, '.' | '_' | '-'));
+    plain.then(|| name.to_string())
+}
+
+/// `<base>/<p>-work/<p>`, where `<base>` is the commonest parent of this machine's existing
+/// workspaces, else `~/work`. Only a proposal: it is always shown and confirmed.
+fn default_root(project: &str, workspaces: &[PathBuf], home: &Path) -> PathBuf {
+    let mut counts: Vec<(PathBuf, usize)> = Vec::new();
+    for parent in workspaces.iter().filter_map(|w| w.parent()) {
+        match counts.iter_mut().find(|(p, _)| p == parent) {
+            Some(c) => c.1 += 1,
+            None => counts.push((parent.to_path_buf(), 1)),
+        }
+    }
+    let base = counts
+        .iter()
+        .enumerate()
+        .max_by_key(|(i, (_, n))| (*n, std::cmp::Reverse(*i)))
+        .map(|(_, (p, _))| p.clone())
+        .unwrap_or_else(|| home.join("work"));
+    base.join(format!("{project}-work")).join(project)
+}
+
+/// The clone: `--repo`, `--root`, the running daemon's for `name`, or (with no remote to clone
+/// from) the current directory. `None`: there is none yet.
+fn find_clone(
+    args: &ProjectSetupArgs,
+    name: Option<&str>,
+    cloning: bool,
+    proposed: Option<PathBuf>,
+) -> anyhow::Result<Option<PathBuf>> {
     use anyhow::Context;
-    let repo = match (&args.repo, name) {
-        (Some(r), _) => r.clone(),
-        (None, Some(n)) => match list_registry().into_iter().find(|d| d.project == n) {
-            Some(d) => PathBuf::from(d.repo),
-            None if Path::new(".git").exists() => std::env::current_dir()?,
-            None => anyhow::bail!(
-                "no running daemon for {n} to find its clone: run this inside the clone, or pass --repo"
-            ),
-        },
-        (None, None) => std::env::current_dir().context("current directory")?,
+    let is_clone = |p: &PathBuf| p.join(".git").exists();
+    let found = args
+        .repo
+        .iter()
+        .chain(args.root.iter())
+        .chain(proposed.iter())
+        .find(|p| is_clone(p))
+        .cloned()
+        .or_else(|| {
+            let n = name?;
+            list_registry()
+                .into_iter()
+                .find(|d| d.project == n)
+                .map(|d| PathBuf::from(d.repo))
+        });
+    let repo = match (found, cloning, name) {
+        (Some(r), _, _) => r,
+        (None, true, _) => return Ok(None),
+        (None, false, Some(n)) if !Path::new(".git").exists() => anyhow::bail!(
+            "no running daemon for {n} to find its clone: run this inside the clone, or pass --repo (or the remote's URL to clone it)"
+        ),
+        (None, false, _) => std::env::current_dir().context("current directory")?,
     };
-    repo.canonicalize()
-        .with_context(|| format!("repo path {}", repo.display()))
+    Ok(Some(repo.canonicalize().with_context(|| {
+        format!("repo path {}", repo.display())
+    })?))
+}
+
+/// The "next:" line the step commands (`init`) end with: the first step of the
+/// checklist that is not done, from the same checks. Best effort and read-only; prints nothing
+/// when `repo` is not a clone of `project` or everything is done.
+pub async fn print_next(cli: &Cli, repo: &Path, project: &str) {
+    let Ok(repo) = repo.canonicalize() else {
+        return;
+    };
+    if !repo.join(".git").exists() || repo.file_name().is_none_or(|n| n != project) {
+        return;
+    }
+    let mut steps = Setup::new(cli, project, repo, None, Asker::none());
+    let mut statuses = Vec::new();
+    for i in 0..STEPS.len() {
+        statuses.push(steps.check(i).await);
+    }
+    if let Some(n) = next_line(&steps, &statuses) {
+        println!("{n}");
+    }
 }
 
 pub async fn run(cli: &Cli, args: &ProjectSetupArgs) -> Result<(), CliError> {
-    let name = args.name.clone().or_else(|| cli.project.clone());
-    let repo = repo_for(args, name.as_deref())?;
-    let project = name.unwrap_or_else(|| {
-        repo.file_name()
+    let (target_url, target_name) = match args.target.as_deref() {
+        Some(t) if looks_like_url(t) => (Some(t.to_string()), None),
+        Some(t) => (None, Some(t.to_string())),
+        None => (None, None),
+    };
+    if let (Some(a), Some(b)) = (&target_url, &args.remote)
+        && a != b
+    {
+        return Err(anyhow::anyhow!("two remotes given ({a} and --remote {b}): pass one").into());
+    }
+    let remote = args.remote.clone().or(target_url);
+    let name = target_name
+        .or_else(|| remote.as_deref().and_then(project_from_remote))
+        .or_else(|| cli.project.clone());
+    let home_dir = PathBuf::from(std::env::var_os("HOME").unwrap_or_default());
+    let spaces: Vec<PathBuf> = list_registry()
+        .into_iter()
+        .map(|d| PathBuf::from(d.workspace))
+        .collect();
+    // A rerun finds the clone an earlier run made at the proposed place.
+    let proposed = name.as_deref().map(|n| default_root(n, &spaces, &home_dir));
+    let found = find_clone(args, name.as_deref(), remote.is_some(), proposed)?;
+    let project = match (&name, &found) {
+        (Some(n), _) => n.clone(),
+        (None, Some(repo)) => repo
+            .file_name()
             .map(|n| n.to_string_lossy().into_owned())
-            .unwrap_or_default()
-    });
-    let mut steps = Real5 {
-        cli,
-        ctl: &RealCtl,
-        home: bridle_home(),
-        sys: crate::project_start::Sys::current(),
-        project: project.clone(),
-        ws: Workspace::new(repo.clone(), args.workspace.clone()),
-        repo,
+            .unwrap_or_default(),
+        (None, None) => {
+            return Err(anyhow::anyhow!(
+                "cannot tell the project's name from the remote: name it, `bridle project setup <name> --remote <URL>`"
+            )
+            .into());
+        }
+    };
+    let (repo, root_given) = match found {
+        Some(r) => (r, true),
+        None => match &args.root {
+            Some(r) => (r.clone(), true),
+            None => (default_root(&project, &spaces, &home_dir), false),
+        },
+    };
+    let asker = Asker {
+        yes: args.yes,
+        terminal: std::io::stdin().is_terminal(),
+        input: Box::new(std::io::BufReader::new(std::io::stdin())),
+        out: Box::new(std::io::stdout()),
+    };
+    let mut steps = Setup::new(cli, &project, repo, remote, asker);
+    steps.root_given = root_given;
+    steps.workspace = args.workspace.clone();
+    steps.choice = match (args.main, args.adopt) {
+        (true, _) => Some(Choice::Main),
+        (_, true) => Some(Choice::Adopt),
+        _ => None,
     };
     drive(&mut steps, &project, args.check, &mut std::io::stdout()).await
 }
@@ -580,6 +1116,9 @@ mod tests {
             self.state[i] = Status::Done("made".into());
             Ok("made".into())
         }
+        fn command(&self, i: usize) -> String {
+            format!("make-{i}")
+        }
     }
 
     fn done() -> Status {
@@ -662,5 +1201,65 @@ mod tests {
             "{msg}"
         );
         assert_eq!(f.applied, vec![0], "the known-unmet step was still made");
+    }
+
+    #[test]
+    fn a_url_is_told_from_a_name_and_gives_its_project() {
+        for u in [
+            "git@host:org/foo.git",
+            "https://h/o/foo",
+            "/srv/foo.git/",
+            "./foo",
+            "~/x/foo",
+        ] {
+            assert!(looks_like_url(u), "{u}");
+            assert_eq!(project_from_remote(u).as_deref(), Some("foo"), "{u}");
+        }
+        assert!(!looks_like_url("foo-bar"));
+        assert_eq!(project_from_remote("https://h/o/a b.git"), None);
+    }
+
+    #[test]
+    fn the_default_root_follows_the_commonest_parent_else_work() {
+        let home = Path::new("/h");
+        let spaces = [
+            PathBuf::from("/d/a-work"),
+            PathBuf::from("/d/b-work"),
+            PathBuf::from("/e/c"),
+        ];
+        assert_eq!(
+            default_root("p", &spaces, home),
+            PathBuf::from("/d/p-work/p")
+        );
+        assert_eq!(
+            default_root("p", &[], home),
+            PathBuf::from("/h/work/p-work/p")
+        );
+    }
+
+    fn asker(yes: bool, terminal: bool, typed: &str) -> Asker {
+        Asker {
+            yes,
+            terminal,
+            input: Box::new(std::io::Cursor::new(typed.to_string().into_bytes())),
+            out: Box::new(std::io::sink()),
+        }
+    }
+
+    #[test]
+    fn a_question_takes_the_typed_answer_the_default_on_enter_or_is_missing() {
+        assert_eq!(asker(true, false, "").ask("q", "d").as_deref(), Some("d"));
+        assert_eq!(asker(false, true, "\n").ask("q", "d").as_deref(), Some("d"));
+        assert_eq!(
+            asker(false, true, "x\n").ask("q", "d").as_deref(),
+            Some("x")
+        );
+        assert_eq!(asker(false, false, "x\n").ask("q", "d"), None);
+    }
+
+    #[test]
+    fn missing_answers_are_exit_two() {
+        let e = CliError::Usage("x".into());
+        assert_eq!(e.exit_code(), 2);
     }
 }

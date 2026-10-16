@@ -159,7 +159,21 @@ pub async fn run(mut cli: Cli) -> Result<(), CliError> {
         Command::StopDaemon => stop_daemon(&cli).await,
         Command::Restart(args) => restart(&cli, args).await,
         Command::Doctor(args) => crate::doctor::run(&cli, args),
-        Command::Init(args) => crate::init::run(args),
+        Command::Init(args) => {
+            crate::init::run(args)?;
+            let repo = match &args.repo {
+                Some(p) => p.clone(),
+                None => std::env::current_dir().unwrap_or_default(),
+            };
+            if let Some(name) = repo
+                .canonicalize()
+                .ok()
+                .and_then(|p| p.file_name().map(|n| n.to_string_lossy().into_owned()))
+            {
+                crate::project_setup::print_next(&cli, &repo, &name).await;
+            }
+            Ok(())
+        }
         Command::Launchd(args) => crate::launchd::run(&cli, args),
         Command::Sign(args) => crate::sign::run(args),
         Command::Systemd(args) => crate::systemd::run(&cli, args),

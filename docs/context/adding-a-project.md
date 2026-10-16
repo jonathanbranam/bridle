@@ -9,13 +9,17 @@ The machine config: [[docs/design/cli|cli]] ("Projects on other machines", k7mw)
 > `.bridle/rules/` reach spawned agents only from 9561950 on, once the daemon runs a binary from
 > that commit; `bridle sync` renders files, but nothing runs it for you and its skills are
 > gitignored ([[the-workflow-doesn-t-reach-agents-resolved-rules-hooks-and-o-34bw|34bw]]) ·
-> Built: `bridle project setup` (for a project that has a clone; cloning from a URL is planned, br-dffz) and `bridle project add` (below).
+> Built: `bridle project setup` (clones from a URL, or takes an existing clone; br-dffz) and `bridle project add` (below).
 
-Short answer: yes, you can add a project straight on the NUC. With a clone in place, run
-`bridle project setup` inside it (`--check` first to see the checklist): it does register, state,
-service, tokens and mail below, only what is missing, and says the fix when it stops. Cloning the
-repo and `bridle init` are still yours until the URL form lands (br-dffz). The rest of this page is
-what it runs, step by step. Before that command, no single command did it all.
+Short answer: run `bridle project setup <remote-url>` (you make the empty repo; it never does).
+It asks where the clone goes (proposed `<base>/<name>-work/<name>`; Enter takes it), whether a
+project that already has commits gets bridle's files on a new `bridle-adopt` branch (the default)
+or on its own branch, and whether to make the aide token; `-y` takes every default. Then it
+clones, runs init, registers the project, installs and starts the daemon, makes the tokens and
+the mail bridge, one step at a time, and stops with the fix if one fails: run the same command
+again to carry on. With a clone already in place, run it inside the clone instead. `--check`
+prints the checklist and changes nothing. The rest of this page is what it runs, step by step.
+Before that command, no single command did it all.
 `bridle init` only writes two files. The rest is a few commands of yours, then an orchestrator
 session that prepares the project. Your flow (make a workspace folder, clone the repo, ask the
 orchestrator to prepare it) is right. You also have to do the `~/.bridle` config and the tokens,

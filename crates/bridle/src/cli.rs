@@ -2670,16 +2670,27 @@ pub enum ProjectsAction {
     /// `token pair` and `mail install`. It stops at the first failure, says the fix and to run
     /// the same command again; a second run only does what is missing. `--check` prints the
     /// checklist and changes nothing. A step it cannot tell shows `unknown` and the run exits
-    /// non-zero. Run it inside the clone, or name a project whose daemon is running.
+    /// non-zero. Run it inside the clone, or name a project whose daemon is running. Given a
+    /// remote URL and no clone, it clones first (and `init`s), asking where the clone goes and,
+    /// for a project with commits, whether to use its own branch or a `bridle-adopt` branch.
     Setup(ProjectSetupArgs),
 }
 
 #[derive(Debug, Args)]
 pub struct ProjectSetupArgs {
-    /// The project's name. Defaults to `--project`, else the clone's directory name.
-    pub name: Option<String>,
-    /// The clone's main checkout. Defaults to the running daemon's of `NAME`, else the current
-    /// directory.
+    /// The project's name, or the URL of its remote (a git URL or path: it is cloned). A name
+    /// defaults to `--project`, else the clone's directory name.
+    pub target: Option<String>,
+    /// The remote to clone when there is no clone yet (same as a URL given as `TARGET`). The
+    /// human makes the empty repo; setup never creates one.
+    #[arg(long)]
+    pub remote: Option<String>,
+    /// Where the new clone goes. Without it setup proposes `<base>/<name>-work/<name>` and asks
+    /// to confirm or change it before writing anything (`-y` takes the proposal).
+    #[arg(long)]
+    pub root: Option<PathBuf>,
+    /// The clone's main checkout, when it already exists. Defaults to the running daemon's of
+    /// the project, else the current directory.
     #[arg(long)]
     pub repo: Option<PathBuf>,
     /// Defaults to the repo's parent directory.
@@ -2688,6 +2699,17 @@ pub struct ProjectSetupArgs {
     /// Print the checklist and change nothing; exits non-zero unless every step is done.
     #[arg(long)]
     pub check: bool,
+    /// A project with commits: put bridle's files on the project's own branch.
+    #[arg(long, conflicts_with = "adopt")]
+    pub main: bool,
+    /// A project with commits: put bridle's files on a new `bridle-adopt` branch and leave the
+    /// project's own branches alone (the default).
+    #[arg(long)]
+    pub adopt: bool,
+    /// Take the default for every question (root, main or adopt, aide token). Without a
+    /// terminal and without this, setup lists the unanswered questions and exits 2.
+    #[arg(short = 'y', long)]
+    pub yes: bool,
 }
 
 #[derive(Debug, Args)]
