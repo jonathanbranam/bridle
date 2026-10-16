@@ -2,11 +2,14 @@
 id = "br-d7r5"
 title = "Self-upgrade restarts in the middle of a task land's background check, so the land is lost and redone"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-11T18:15:25.764Z"
-updated_at = "2026-10-15T23:04:02.698844Z"
+updated_at = "2026-10-16T00:19:58.682289Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "agent:d7r5",
+]
 ticket = "d7r5"
 +++
 

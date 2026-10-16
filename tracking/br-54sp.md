@@ -2,11 +2,14 @@
 id = "br-54sp"
 title = "The daemon's automatic push of main raises a false 'push failed' alarm when the manager already pushed"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-13T00:14:34.643Z"
-updated_at = "2026-10-15T23:04:02.810733Z"
+updated_at = "2026-10-16T00:19:59.926850Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "agent:54sp",
+]
 ticket = "54sp"
 +++
 

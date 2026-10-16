@@ -4,7 +4,7 @@ title = "Mail bridge hangs for good after one stalled S3 download (minimum throu
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-15T21:57:45.166Z"
-updated_at = "2026-10-16T00:19:19.105435Z"
+updated_at = "2026-10-16T00:19:33.729180Z"
 created_by = "external:aide@vesta"
 watchers = [
     "external:aide@vesta",
@@ -43,3 +43,6 @@ built: 13514b8c (branch bridle/mfcj)
 
 ### note · agent:manager-2 · 2026-10-16T00:19:19.105Z
 integrated: 3378a169ceffb1265a6c7ae8473f7dddf328bfc7 (branch bridle/mfcj)
+
+### note · agent:manager-2 · 2026-10-16T00:19:33.729Z
+cleanup: removed agent mfcj, branch bridle/mfcj
