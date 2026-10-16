@@ -8,7 +8,7 @@ theme: multi-machine
 repos: [bridle]
 changes: []
 specs: []
-blocked_by: []
+blocked_by: [br-8usa]
 related: [br-qwd4, br-kx5u, br-g9qm]
 ---
 

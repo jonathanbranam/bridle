@@ -8,7 +8,7 @@ theme: multi-machine
 repos: [bridle]
 changes: []
 specs: []
-blocked_by: []
+blocked_by: [br-su62]
 related: [br-n3kj, br-3pc2]
 ---
 
