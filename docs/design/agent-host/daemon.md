@@ -54,6 +54,10 @@ workspace has registered the same project name. The
 state branch's worktree goes under `<workspace>/.bridle/state/`
 ([[docs/design/storage#The state branch|storage]]).
 
+`bridle serve` takes the repo from `--repo` or the cwd; `--project` only names it. When `--project`
+names a different project than the one the repo's workspace belongs to, `serve` refuses before
+migrations, naming both and the folder (br-eas4).
+
 **Discovery.** A client finds the daemon from the first of these that is set:
 
 1. `--url`;

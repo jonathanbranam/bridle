@@ -18,6 +18,7 @@ pub async fn run(cli: &Cli, args: &ServeArgs) -> Result<(), CliError> {
         )
         .into());
     }
+    refuse_project_mismatch(cli, &canonical_repo(args)?)?;
     crate::tools_only::refuse_serve(&canonical_repo(args)?)?;
     if args.check {
         bridle_daemon::rollback::preflight(&canonical_repo(args)?, None)?;
@@ -29,6 +30,38 @@ pub async fn run(cli: &Cli, args: &ServeArgs) -> Result<(), CliError> {
     } else {
         run_foreground(cli, args).await
     }
+}
+
+/// `serve` takes the repo from `--repo`/cwd, not from `--project`, so a `--project` naming another
+/// project than the repo's would serve one project's repo under the other's name (br-eas4).
+/// Refuse, saying both. A repo whose project can't be read is not blocked.
+fn refuse_project_mismatch(cli: &Cli, repo: &Path) -> Result<(), CliError> {
+    let Some(want) = cli.project.as_deref() else {
+        return Ok(());
+    };
+    let Some(have) = crate::project::from_cwd(repo) else {
+        return Ok(());
+    };
+    let known = discovery::list_registry()
+        .into_iter()
+        .find(|d| d.project == want)
+        .map(|d| d.repo);
+    mismatch_error(want, &have, repo, known.as_deref())
+        .map_or(Ok(()), |m| Err(anyhow::anyhow!(m).into()))
+}
+
+fn mismatch_error(want: &str, have: &str, repo: &Path, known: Option<&str>) -> Option<String> {
+    if want == have {
+        return None;
+    }
+    let clone = match known {
+        Some(p) => format!("{want}'s clone ({p})"),
+        None => format!("{want}'s clone"),
+    };
+    Some(format!(
+        "--project {want}, but this folder is project {have} ({}); cd to {clone} or drop --project",
+        repo.display()
+    ))
 }
 
 /// A hook that can't be installed (a symlinked hooks dir, someone else's pre-push) is said, not
@@ -374,6 +407,19 @@ pub(crate) fn tail_of_log(path: &Path, n: usize) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn project_mismatch_names_both() {
+        let repo = Path::new("/w/meta-notes/clone");
+        let m = mismatch_error("meta-notes-ui", "meta-notes", repo, Some("/w/ui/clone")).unwrap();
+        assert!(m.contains("--project meta-notes-ui"), "{m}");
+        assert!(
+            m.contains("project meta-notes (/w/meta-notes/clone)"),
+            "{m}"
+        );
+        assert!(m.contains("/w/ui/clone"), "{m}");
+        assert!(mismatch_error("a", "a", repo, None).is_none());
+    }
 
     #[test]
     fn owner_conflict_maps_to_exit_78() {

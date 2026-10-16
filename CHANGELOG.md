@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Fix (br-eas4): `bridle serve --project X` run from another project's folder now refuses before anything else, naming both projects and the folder, instead of serving that repo under X's name; the "already running" refusal now names the project and workspace. Migration: none.
 - Fix (br-d7r5): a restart or self-upgrade now waits for a `bridle ticket land` in progress (its check, merge, push and done), as it waits for a turn, so the land is no longer cut off; a land holds the drain for at most 2 h. Migration: none.
 - Fix (br-54sp): a rejected push of the integration branch (the automatic push, and `bridle push`) re-fetches first and raises no `push.failed` alarm when `origin/<branch>` already equals or contains the local branch, as when the manager pushed the same commits first. A real rejection (local has commits origin lacks) still alarms. Migration: none.
 - Fix (br-sy6z): `bridle project take-over` on the machine that released a project now says it was released by this machine and how to take it back (`bridle project start`), not "already owned". Behaviour is unchanged. Migration: none.

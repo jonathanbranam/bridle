@@ -1289,7 +1289,9 @@ fn refuse_if_already_running(project: &str, ws: &Workspace) -> anyhow::Result<()
         && pid_alive(existing.pid)
     {
         anyhow::bail!(
-            "a daemon is already running for this workspace (pid {})",
+            "a daemon for project '{}' is already running for this workspace {} (pid {})",
+            existing.project,
+            ws.workspace.display(),
             existing.pid
         );
     }
@@ -1687,6 +1689,28 @@ mod bind_tests {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn already_running_error_names_project_and_workspace() {
+        let tmp = tempfile::tempdir().expect("tmp");
+        let ws = Workspace::new(tmp.path().join("repo"), Some(tmp.path().to_path_buf()));
+        let info = bridle_api::types::DaemonInfo {
+            project: "zz-eas4-proj".into(),
+            workspace: tmp.path().to_string_lossy().into_owned(),
+            repo: ws.repo.to_string_lossy().into_owned(),
+            url: "http://127.0.0.1:1".into(),
+            pid: std::process::id() as i32,
+            started_at: chrono::Utc::now(),
+            version: "0".into(),
+            task_prefix: None,
+        };
+        discovery::write_daemon_json(tmp.path(), &info).expect("write");
+        let e = refuse_if_already_running("zz-eas4-other", &ws)
+            .unwrap_err()
+            .to_string();
+        assert!(e.contains("zz-eas4-proj"), "{e}");
+        assert!(e.contains(&tmp.path().display().to_string()), "{e}");
+    }
 
     #[tokio::test]
     async fn role_tokens_the_store_lost_are_reported_and_a_restart_keeps_them() {
