@@ -4,7 +4,7 @@ title = "macOS firewall still blocks a freshly launched bridle (gateway) after a
 kind = "bug"
 state = "planned"
 created_at = "2026-10-15T23:15:13.826Z"
-updated_at = "2026-10-16T00:01:16.934556Z"
+updated_at = "2026-10-16T00:01:31.881020Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 priority = "high"
@@ -190,3 +190,6 @@ From the human, via aide, answering m-13743 (br-7bs2), verbatim: "I am happy to 
 
 ### note · agent:manager-2 · 2026-10-16T00:01:16.934Z
 From the human via orchestrator (m-13759): go ahead with the throwaway listener test, using a copy signed with 'bridle local signing' (not ad-hoc). Also test the refresh idea: sudo socketfilterfw --remove then --add (+ --unblockapp) of ~/.cargo/bin/bridle (its alias still records the Oct 4 file); the next self-upgrade then shows whether a file replace breaks it again (H1). Note: the real gateway on 7878 refused connections until Allow was clicked, which H2 (worker/dev-site listeners) does not explain. Both steps need sudo at dalek: ask the human via external:aide before running each. Record results here.
+
+### note · agent:7bs2 · 2026-10-16T00:01:31.881Z
+7bs2 (researcher) needs the human at dalek for the firewall test. Throwaway: /tmp/7bs2/fw/t, signed 'bridle local signing', same designated requirement as the real bridle. Ask 1: when I say go, a firewall dialog will appear for 't' (path /tmp/7bs2/fw/t); please click Allow. Ask 2 (later, sudo): socketfilterfw --remove then --add (+--unblockapp) for /tmp/7bs2/fw/t, then for ~/.cargo/bin/bridle. Reply with 'go' when the human is at dalek and ready for the dialog.
