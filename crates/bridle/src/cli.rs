@@ -2663,6 +2663,31 @@ pub enum ProjectsAction {
     /// and to the human through aide. `--undo` lifts the hold. The hold lives in the daemon, so
     /// a restart loses it; a running drain takes it again.
     Drain(ProjectDrainArgs),
+    /// Bring a project that has a clone to fully set up on this machine, in one command: checks
+    /// each step against the real state, prints the checklist, then does the unmet ones in order
+    /// (register in `[projects]` and sync; `bridle/state` and the owner; the daemon's service;
+    /// tokens; the mail bridge) by calling the same code as `projects add`, `project start`,
+    /// `token pair` and `mail install`. It stops at the first failure, says the fix and to run
+    /// the same command again; a second run only does what is missing. `--check` prints the
+    /// checklist and changes nothing. A step it cannot tell shows `unknown` and the run exits
+    /// non-zero. Run it inside the clone, or name a project whose daemon is running.
+    Setup(ProjectSetupArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct ProjectSetupArgs {
+    /// The project's name. Defaults to `--project`, else the clone's directory name.
+    pub name: Option<String>,
+    /// The clone's main checkout. Defaults to the running daemon's of `NAME`, else the current
+    /// directory.
+    #[arg(long)]
+    pub repo: Option<PathBuf>,
+    /// Defaults to the repo's parent directory.
+    #[arg(long)]
+    pub workspace: Option<PathBuf>,
+    /// Print the checklist and change nothing; exits non-zero unless every step is done.
+    #[arg(long)]
+    pub check: bool,
 }
 
 #[derive(Debug, Args)]

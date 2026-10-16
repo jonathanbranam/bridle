@@ -500,7 +500,19 @@ fn add_with(
 /// Compares (and with `apply`, updates) every machine. Returns whether every machine could be
 /// read and, when applying, written.
 pub fn sync(fleet: &Fleet, files: &dyn Files, apply: bool, out: &mut dyn Write) -> bool {
+    sync_counting(fleet, files, apply, out).0
+}
+
+/// `sync`, and how many entries differ (add or change) on some machine: what `project setup`
+/// reads to tell whether the registration is complete.
+pub fn sync_counting(
+    fleet: &Fleet,
+    files: &dyn Files,
+    apply: bool,
+    out: &mut dyn Write,
+) -> (bool, usize) {
     let mut ok = true;
+    let mut pending = 0;
     let mut source = list_of(fleet);
     // This machine's [mail] is spread too, with `projects` derived from [projects] (afzu). With
     // no [mail] here there is nothing to spread.
@@ -594,6 +606,7 @@ pub fn sync(fleet: &Fleet, files: &dyn Files, apply: bool, out: &mut dyn Write) 
             .iter()
             .filter(|(_, d)| !matches!(d, Diff::Only(..)))
             .count();
+        pending += changes;
         let mut effective = target.clone();
         if apply && changes > 0 {
             let host = Where::Ssh(fleet.hosts[name].clone());
@@ -629,6 +642,7 @@ pub fn sync(fleet: &Fleet, files: &dyn Files, apply: bool, out: &mut dyn Write) 
         && local_mail.get(&("mail", "projects".into())) != Some(want)
     {
         let have = local_mail.get(&("mail", "projects".into()));
+        pending += 1;
         let _ = writeln!(
             out,
             "{}: differs [mail] projects (derived {}, here {})",
@@ -660,7 +674,7 @@ pub fn sync(fleet: &Fleet, files: &dyn Files, apply: bool, out: &mut dyn Write) 
             fleet.local, fleet.local
         );
     }
-    ok
+    (ok, pending)
 }
 
 #[cfg(test)]

@@ -262,6 +262,7 @@ pub async fn run(mut cli: Cli) -> Result<(), CliError> {
             crate::cli::ProjectsAction::Start(a) => crate::project_start::run(&cli, a).await,
             crate::cli::ProjectsAction::Preflight(a) => crate::preflight::run(&cli, a),
             crate::cli::ProjectsAction::Drain(a) => crate::project_drain::run(&cli, a).await,
+            crate::cli::ProjectsAction::Setup(a) => crate::project_setup::run(&cli, a).await,
             action => crate::project_sync::run(action),
         },
         Command::Advisor(args) => crate::advisor::run(&cli, &args.action).await,

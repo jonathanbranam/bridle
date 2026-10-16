@@ -356,93 +356,153 @@ async fn local(
         }
     }
     let ws = Workspace::new(repo.clone(), args.workspace.clone());
-    let os = std::env::consts::OS;
-    let home_dir = PathBuf::from(std::env::var_os("HOME").unwrap_or_default());
-    let config_home = std::env::var_os("XDG_CONFIG_HOME")
-        .filter(|v| !v.is_empty())
-        .map(PathBuf::from)
-        .unwrap_or_else(|| home_dir.join(".config"));
+    let sys = Sys::current();
     let mut out = std::io::stdout();
+    start_service(cli, &sys, &project, &repo, &ws, ctl, &mut out).await?;
+    let mail = |from: Option<&str>, out: &mut dyn Write| -> Result<(), String> {
+        bring_mail(cli, &sys, ctl, home, &repo, &project, from, out)
+    };
+    carry_in(cli, home, &ws, &project, &mail, &mut out).await
+}
 
-    let mut units = installed_units(os, &home_dir, &config_home, &project);
-    if !units.iter().any(|u| u.what == "daemon") {
-        install_unit(cli, os, &home_dir, &config_home, &project, &repo, &ws)?;
-        let _ = writeln!(out, "installed the unit for {project}");
-        units = installed_units(os, &home_dir, &config_home, &project);
+/// This machine's facts the unit and mail steps need.
+pub struct Sys {
+    pub os: &'static str,
+    pub uid: String,
+    pub home_dir: PathBuf,
+    pub config_home: PathBuf,
+}
+
+impl Sys {
+    pub fn current() -> Self {
+        let home_dir = PathBuf::from(std::env::var_os("HOME").unwrap_or_default());
+        let config_home = std::env::var_os("XDG_CONFIG_HOME")
+            .filter(|v| !v.is_empty())
+            .map(PathBuf::from)
+            .unwrap_or_else(|| home_dir.join(".config"));
+        let uid = Command::new("id")
+            .arg("-u")
+            .output()
+            .ok()
+            .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
+            .unwrap_or_default();
+        Sys {
+            os: std::env::consts::OS,
+            uid,
+            home_dir,
+            config_home,
+        }
     }
-    let uid = Command::new("id")
-        .arg("-u")
-        .output()
-        .ok()
-        .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
-        .unwrap_or_default();
-    for line in start_units(os, &uid, &units, ctl).map_err(|e| {
+
+    pub fn units(&self, project: &str) -> Vec<Unit> {
+        installed_units(self.os, &self.home_dir, &self.config_home, project)
+    }
+}
+
+/// Installs the daemon's unit if it is missing, starts it and waits until it answers.
+pub async fn start_service(
+    cli: &Cli,
+    sys: &Sys,
+    project: &str,
+    repo: &Path,
+    ws: &Workspace,
+    ctl: &dyn Ctl,
+    out: &mut dyn Write,
+) -> Result<(), CliError> {
+    let mut units = sys.units(project);
+    if !units.iter().any(|u| u.what == "daemon") {
+        install_unit(
+            cli,
+            sys.os,
+            &sys.home_dir,
+            &sys.config_home,
+            project,
+            repo,
+            ws,
+        )?;
+        let _ = writeln!(out, "installed the unit for {project}");
+        units = sys.units(project);
+    }
+    for line in start_units(sys.os, &sys.uid, &units, ctl).map_err(|e| {
         anyhow::anyhow!(
             "a unit could not be started ({e}); fix it, then run `bridle project start` again"
         )
     })? {
         let _ = writeln!(out, "{line}");
     }
-
-    wait_for_daemon(&project, Duration::from_secs(60)).await?;
+    wait_for_daemon(project, Duration::from_secs(60)).await?;
     let _ = writeln!(out, "{project}: daemon is up");
-    let mail = |from: Option<&str>, out: &mut dyn Write| -> Result<(), String> {
-        let fleet = Fleet::from_config(&MachineMap::load(home).map_err(|e| e.to_string())?);
-        match crate::mail_install::mail_state(home, &home_dir, false) {
-            crate::mail_install::MailState::Off => {
-                let _ = writeln!(out, "{project}: {}", crate::mail_install::MAIL_OFF);
-                return Ok(());
-            }
-            crate::mail_install::MailState::NotSetUp(why) => {
-                let _ = writeln!(
-                    out,
-                    "{project}: mail bridge skipped ({why}): {}",
-                    crate::mail_install::SET_UP_MAIL
-                );
-                return Ok(());
-            }
-            crate::mail_install::MailState::NotConfigured => {
-                let _ = writeln!(
-                    out,
-                    "{project}: mail bridge skipped (no [mail] section in config.toml)"
-                );
-                return Ok(());
-            }
-            crate::mail_install::MailState::Ready => {}
+    Ok(())
+}
+
+/// Installs and starts the project's mail bridge when this machine does mail and the project is
+/// in `[mail] projects`; says why and returns `Ok` when there is nothing to do.
+#[allow(clippy::too_many_arguments)]
+pub fn bring_mail(
+    cli: &Cli,
+    sys: &Sys,
+    ctl: &dyn Ctl,
+    home: &Path,
+    repo: &Path,
+    project: &str,
+    from: Option<&str>,
+    out: &mut dyn Write,
+) -> Result<(), String> {
+    let fleet = Fleet::from_config(&MachineMap::load(home).map_err(|e| e.to_string())?);
+    match crate::mail_install::mail_state(home, &sys.home_dir, false) {
+        crate::mail_install::MailState::Off => {
+            let _ = writeln!(out, "{project}: {}", crate::mail_install::MAIL_OFF);
+            return Ok(());
         }
-        let old = from
-            .and_then(|m| fleet.hosts.get(m))
-            .map(|h| OldMachine { host: h.clone() });
-        let old: Option<&dyn Old> = old.as_ref().map(|o| o as &dyn Old);
-        if !crate::project_mail::bring(old, home, &project, out)? {
+        crate::mail_install::MailState::NotSetUp(why) => {
             let _ = writeln!(
                 out,
-                "{project}: mail bridge skipped (project is not in [mail] projects)"
+                "{project}: mail bridge skipped ({why}): {}",
+                crate::mail_install::SET_UP_MAIL
             );
             return Ok(());
         }
-        let has_unit = |units: &[Unit]| units.iter().any(|u| u.what == "mail bridge");
-        if has_unit(&installed_units(os, &home_dir, &config_home, &project)) {
-            let _ = writeln!(out, "{project}: mail bridge already installed");
-        } else {
-            crate::mail_install::install_at(
-                cli,
-                &crate::cli::MailInstallArgs { force: false },
-                repo.clone(),
-                project.clone(),
-            )
-            .map_err(|e| e.to_string())?;
+        crate::mail_install::MailState::NotConfigured => {
+            let _ = writeln!(
+                out,
+                "{project}: mail bridge skipped (no [mail] section in config.toml)"
+            );
+            return Ok(());
         }
-        let bridge: Vec<Unit> = installed_units(os, &home_dir, &config_home, &project)
-            .into_iter()
-            .filter(|u| u.what == "mail bridge")
-            .collect();
-        for line in start_units(os, &uid, &bridge, ctl)? {
-            let _ = writeln!(out, "{line}");
-        }
-        Ok(())
-    };
-    carry_in(cli, home, &ws, &project, &mail, &mut out).await
+        crate::mail_install::MailState::Ready => {}
+    }
+    let old = from
+        .and_then(|m| fleet.hosts.get(m))
+        .map(|h| OldMachine { host: h.clone() });
+    let old: Option<&dyn Old> = old.as_ref().map(|o| o as &dyn Old);
+    if !crate::project_mail::bring(old, home, project, out)? {
+        let _ = writeln!(
+            out,
+            "{project}: mail bridge skipped (project is not in [mail] projects)"
+        );
+        return Ok(());
+    }
+    let has_unit = |units: &[Unit]| units.iter().any(|u| u.what == "mail bridge");
+    if has_unit(&sys.units(project)) {
+        let _ = writeln!(out, "{project}: mail bridge already installed");
+    } else {
+        crate::mail_install::install_at(
+            cli,
+            &crate::cli::MailInstallArgs { force: false },
+            repo.to_path_buf(),
+            project.to_string(),
+        )
+        .map_err(|e| e.to_string())?;
+    }
+    let bridge: Vec<Unit> = sys
+        .units(project)
+        .into_iter()
+        .filter(|u| u.what == "mail bridge")
+        .collect();
+    for line in start_units(sys.os, &sys.uid, &bridge, ctl)? {
+        let _ = writeln!(out, "{line}");
+    }
+    Ok(())
 }
 
 async fn wait_for_daemon(project: &str, limit: Duration) -> Result<(), CliError> {
@@ -467,31 +527,14 @@ async fn wait_for_daemon(project: &str, limit: Duration) -> Result<(), CliError>
     }
 }
 
-/// Tokens, then what `take-over` left for the new daemon. The tokens are re-created on every
-/// start (`token pair` keeps the working ones and says so), not only after a take-over: a fresh
-/// database has none, whatever the note says. The schedules are added as the human, with the
-/// token the daemon just made. The note is removed only when everything went through, so a
-/// failed start can simply be run again.
-async fn carry_in(
-    cli: &Cli,
-    home: &Path,
-    ws: &Workspace,
-    project: &str,
-    mail: &MailStep<'_>,
-    out: &mut dyn Write,
-) -> Result<(), CliError> {
-    let note = ws.state_dir().join(MOVED_IN);
-    let moved: Option<MovedIn> = match std::fs::read_to_string(&note) {
-        Ok(text) => Some(serde_json::from_str(&text).context("reading moved-in.json")?),
-        Err(_) => None,
-    };
+/// The same code as `bridle token pair`, narrowed to this project: no second minting path.
+/// It prints minted/kept per machine, and "unreachable" naming the machine.
+pub async fn make_tokens(home: &Path, project: &str, out: &mut dyn Write) -> Result<(), CliError> {
     let fleet = Fleet::from_config(&MachineMap::load(home).map_err(|e| anyhow::anyhow!(e))?);
     let opts = Options {
         projects: vec![project.to_string()],
         ..Default::default()
     };
-    // The same code as `bridle token pair`, narrowed to this project: no second minting path.
-    // It prints minted/kept per machine, and "unreachable" naming the machine.
     let paired = tokio::task::spawn_blocking(move || {
         let mut buf = Vec::new();
         let r = pair(&opts, &fleet, &Exec, &mut buf);
@@ -510,6 +553,28 @@ async fn carry_in(
         )
         .into());
     }
+    Ok(())
+}
+
+/// Tokens, then what `take-over` left for the new daemon. The tokens are re-created on every
+/// start (`token pair` keeps the working ones and says so), not only after a take-over: a fresh
+/// database has none, whatever the note says. The schedules are added as the human, with the
+/// token the daemon just made. The note is removed only when everything went through, so a
+/// failed start can simply be run again.
+async fn carry_in(
+    cli: &Cli,
+    home: &Path,
+    ws: &Workspace,
+    project: &str,
+    mail: &MailStep<'_>,
+    out: &mut dyn Write,
+) -> Result<(), CliError> {
+    let note = ws.state_dir().join(MOVED_IN);
+    let moved: Option<MovedIn> = match std::fs::read_to_string(&note) {
+        Ok(text) => Some(serde_json::from_str(&text).context("reading moved-in.json")?),
+        Err(_) => None,
+    };
+    make_tokens(home, project, out).await?;
     let Some(moved) = moved else {
         // A first or plain start still gets its bridge; a mail problem never fails the start.
         mail_step(mail, None, project, out);

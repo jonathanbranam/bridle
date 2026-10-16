@@ -25,6 +25,7 @@ mod prime;
 mod project;
 mod project_drain;
 mod project_mail;
+mod project_setup;
 mod project_start;
 mod project_stop;
 mod project_sync;

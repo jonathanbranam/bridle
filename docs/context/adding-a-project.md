@@ -9,9 +9,13 @@ The machine config: [[docs/design/cli|cli]] ("Projects on other machines", k7mw)
 > `.bridle/rules/` reach spawned agents only from 9561950 on, once the daemon runs a binary from
 > that commit; `bridle sync` renders files, but nothing runs it for you and its skills are
 > gitignored ([[the-workflow-doesn-t-reach-agents-resolved-rules-hooks-and-o-34bw|34bw]]) ·
-> Planned: `bridle project add` (below).
+> Built: `bridle project setup` (for a project that has a clone; cloning from a URL is planned, br-dffz) and `bridle project add` (below).
 
-Short answer: yes, you can add a project straight on the NUC. No single command does it all.
+Short answer: yes, you can add a project straight on the NUC. With a clone in place, run
+`bridle project setup` inside it (`--check` first to see the checklist): it does register, state,
+service, tokens and mail below, only what is missing, and says the fix when it stops. Cloning the
+repo and `bridle init` are still yours until the URL form lands (br-dffz). The rest of this page is
+what it runs, step by step. Before that command, no single command did it all.
 `bridle init` only writes two files. The rest is a few commands of yours, then an orchestrator
 session that prepares the project. Your flow (make a workspace folder, clone the repo, ask the
 orchestrator to prepare it) is right. You also have to do the `~/.bridle` config and the tokens,

@@ -42,7 +42,7 @@ impl Old for OldMachine {
     }
 }
 
-fn mails(config: &str, project: &str) -> bool {
+pub fn mails(config: &str, project: &str) -> bool {
     MailConfig::parse(config).is_ok_and(|c| c.projects.iter().any(|p| p == project))
 }
 

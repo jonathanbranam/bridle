@@ -126,6 +126,11 @@ const CLASSES: &[(&str, Kind, &str)] = &[
         "reads the clone in the cwd or --repo; no daemon, covered by preflight's unit tests",
     ),
     (
+        "projects setup",
+        Skip,
+        "works on the clone in the cwd, --repo or NAME's running daemon; covered by project_setup's unit tests",
+    ),
+    (
         "projects drain",
         Skip,
         "works on the clone in the cwd, --repo or --project's running daemon; covered by project_hold_test and the unit tests",
