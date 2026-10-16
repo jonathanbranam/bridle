@@ -2304,3 +2304,9 @@
 {"actor":"agent:manager-2","at":"2026-10-16T06:23:09.823649Z","from":"built","task":"br-r66n","to":"integrated"}
 {"actor":"agent:madb","at":"2026-10-16T06:26:24.755789Z","from":"claimed","task":"br-madb","to":"built"}
 {"actor":"agent:manager-2","at":"2026-10-16T06:39:25.660738Z","from":"built","task":"br-madb","to":"integrated"}
+{"actor":"human","at":"2026-10-16T10:03:24.458Z","from":"","task":"br-jkkp","to":"pending"}
+{"actor":"human","at":"2026-10-16T10:03:26.182Z","from":"","task":"br-mt4v","to":"pending"}
+{"actor":"human","at":"2026-10-16T10:03:28.515Z","from":"","task":"br-t9j4","to":"pending"}
+{"actor":"human","at":"2026-10-16T10:03:32.380Z","from":"","task":"br-8rdn","to":"pending"}
+{"actor":"human","at":"2026-10-16T10:03:34.933Z","from":"","task":"br-xgkf","to":"pending"}
+{"actor":"human","at":"2026-10-16T10:03:36.772Z","from":"","task":"br-zwup","to":"pending"}
