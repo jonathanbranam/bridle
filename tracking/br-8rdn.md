@@ -4,7 +4,7 @@ title = "7r2h gaps: token pair on a machine with no home keeps direct tokens; ma
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-16T10:03:32.380Z"
-updated_at = "2026-10-16T22:29:49.989916Z"
+updated_at = "2026-10-16T22:30:08.282703Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -47,3 +47,6 @@ done: token check names non-forwarding projects incl. missing visitor token with
 
 ### note · agent:manager-2 · 2026-10-16T22:29:49.989Z
 integrated: 60c9f9fa23966e2ffeaa9d59a06c5b743e3e3148 (branch bridle/8rdnb)
+
+### note · agent:manager-2 · 2026-10-16T22:30:08.282Z
+cleanup: removed agent 8rdnb, branch bridle/8rdnb
