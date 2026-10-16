@@ -9,6 +9,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-d7r5, br-8swr]
+resolved: 2026-10-16T21:08:11Z
 ---
 
 Follow-up to br-d7r5, which landed item 1 of the design the human approved (2026-10-15 ~9:05 PM ET: "Yeah, that's great. Update that with the design suggestion, and let's get that ticket moving as well"): the drain waits on a land in progress (a Lands guard beside `state.landing`), the status line names the land, 2 h cap. The design is on br-d7r5's thread (advisor product-manager, 2026-10-16 01:05Z). Not built, per manager-2 (m-13823):
