@@ -2,9 +2,9 @@
 id = "br-8kzq"
 title = "bridle agent wake says 'timeout 6900 s' but the orchestrator's wait ends at 25 min"
 kind = "bug"
-state = "pending"
+state = "open"
 created_at = "2026-10-16T21:09:32.161Z"
-updated_at = "2026-10-16T21:41:43.035709Z"
+updated_at = "2026-10-16T21:42:41.716090Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "8kzq"

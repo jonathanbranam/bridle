@@ -14,4 +14,16 @@ tasks = ["br-xgkf"]
 tasks = ["br-tvrp"]
 
 [[tier]]
+tasks = ["br-whce"]
+
+[[tier]]
 tasks = ["br-mtdg"]
+
+[[tier]]
+tasks = [
+    "br-9qws",
+    "br-vmrc",
+]
+
+[[tier]]
+tasks = ["br-r8jf"]
