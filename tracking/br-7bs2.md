@@ -4,11 +4,12 @@ title = "macOS firewall still blocks a freshly launched bridle (gateway) after a
 kind = "bug"
 state = "planned"
 created_at = "2026-10-15T23:15:13.826Z"
-updated_at = "2026-10-16T01:44:09.139407Z"
+updated_at = "2026-10-16T02:23:24.690040Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 priority = "high"
 priority_at = "2026-10-15T23:17:44.940888Z"
+summary = "Install is now atomic and identifier-stable. signing.rs: `install(src,dest)` signs a COPY named `bridle` in a temp dir beside dest with `codesign --force -i bridle -s <identity>`, checks the copy's Identifier is `bridle` (else refuses), logs a warning if its designated requirement differs from the live file's, then renames it over dest; no identity: plain copy+rename (ad-hoc stays). `sign(path)` (bridle sign binary) uses the same path in place. Self-upgrade (upgrade.rs): the real build runs `cargo install --root <state>/upgrade-root`, then `signing::install` puts it over the live exe, so cargo never writes the live path (side effect: `cargo install --list` no longer tracks self-upgraded builds). Restart (server.rs): logs `codesign -dr-`/identifier of the exe before every restart, and on an upgrade restart kickstarts the other running dev.bridle.* launchd jobs whose process is the exe (gateway, mail), not the daemon itself. lib.rs: on macOS, 3s after start the daemon connects to its own non-loopback (tailnet) address, retrying 3 times; on failure it raises an incident (record + orchestrator message) naming the firewall Allow dialog. Caveat: whether a self-connect is filtered by the app firewall is unverified, so the probe may miss a block; it will not false-alarm unless the connect fails. Not done: `just install` still runs plain `cargo install` before `sign binary`, so the live path is briefly linker-signed there (no daemon restart races it; fold into a follow-up if wanted). No live self-upgrade or firewall edits were run. Docs: CLAUDE.md, docs/design/cli.md, CHANGELOG."
 ticket = "7bs2"
 +++
 
@@ -272,3 +273,6 @@ Build, in this order; stop at the first boundary that gets long and tell the man
 (3) Evidence logging: log `codesign -dr-` / identifier of the installed exe just before each restart, so the next outage names the mismatching launch.
 (4) Detection (if small, else tell the manager and it becomes a follow-up): after a restart, the gateway/daemon probes its own tailnet address and, if unreachable, raises a notice/incident naming the macOS firewall as the likely cause.
 Tests: signing produces identifier `bridle` regardless of source file name; the rename leaves no window with a different identifier (unit test on the sign-copy-then-rename function); no-identity path unchanged. macOS-only code behind cfg as today. Docs: CLAUDE.md "Build configuration" firewall paragraph, docs/design/agent-host as fits, CHANGELOG. Acceptance: just check. Verify on dalek by running the new install path on a copy and checking `codesign -dvvv` identifier and DR; do NOT run live self-upgrade or touch firewall entries (needs the human's sudo). Never disable the firewall. Out of scope: option 2 (sudoers), tailscale serve fallback.
+
+### note · agent:fw7bs2 · 2026-10-16T02:23:24.690Z
+done: atomic identifier-stable install (-i bridle, sign copy + rename), launchd jobs restart, signature logging, own-address probe; just check exit 0, 1729 tests; 697423521da4c32a9732fa0dc89e421524860792
