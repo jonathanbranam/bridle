@@ -438,8 +438,10 @@ or later first (the token pair fix).
 6. **Check:** `bridle --project <host>-home status --json` answers, and a test mail to
    `<host>-home@` gets a reply.
 7. **Restart the orchestrator there:** the human stops the orchestrator session in its old project
-   and starts it in the home project with `bridle session orchestrator --project <host>-home`, and
-   starts the aide there too.
+   and starts it again with `bridle up`, which starts it in `<host>-home` when that project is in
+   `[projects]` for this machine (by hand: `bridle session orchestrator --project <host>-home`),
+   and starts the aide there too. `bridle up` prints which project it used; without the home
+   enrolled it falls back to `$BRIDLE_PROJECT` or the working directory's workspace.
 
 **Visitor tokens follow the home on a re-pair.** A visitor token on another daemon (for
 example `orchestrator@remus` on dalek) records a home. After the orchestrator moves to

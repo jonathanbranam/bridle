@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+- Fix (br-rnhp): `bridle up` starts the orchestrator with `--project <host>-home` when `[projects]` puts that project on this machine (it started it in no project, so a boot with no workspace cwd failed); otherwise as before, and it says which project it used. Migration: none.
 - Fix (br-mt4v): a forced restart over a land now also kills the check's descendants that left its process group (nextest children), not just the group; tests for eggc (one incident per forced land, refused land runs once open).
 
 - Fix (br-zwup): the mail bridge's no-successful-poll watchdog runs beside the poll loop, so a hang outside an S3 call (a daemon send, the outbound feed) also makes it exit non-zero for a restart, as a stalled S3 read does. Migration: none.

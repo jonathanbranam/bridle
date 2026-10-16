@@ -9,6 +9,7 @@ use std::process::Command;
 
 use anyhow::{Context, anyhow};
 use bridle_api::discovery;
+use bridle_api::machines::MachineMap;
 
 use crate::cli::{Cli, UpArgs};
 use crate::error::CliError;
@@ -85,17 +86,43 @@ pub fn run(cli: &Cli, a: &UpArgs) -> Result<(), CliError> {
         return install(cli, a.force);
     }
     let exe = std::env::current_exe().context("locating the bridle binary")?;
-    let command = format!(
-        "{} session orchestrator",
-        shell_quote(&exe.to_string_lossy())
-    );
+    let machines = MachineMap::load(&discovery::bridle_home()).map_err(|e| anyhow!("{e}"))?;
+    let (command, project_note) = orchestrator_command(&exe.to_string_lossy(), &machines);
     let message = ensure_orchestrator(&discovery::bridle_home(), "tmux", &command)?;
+    let message = format!("{message} ({project_note})");
     if cli.json {
         render::print_json(&serde_json::json!({ "message": message }))?;
     } else {
         println!("{message}");
     }
     Ok(())
+}
+
+/// The command the pane runs and a note on which project it picks. The boot hook has no cwd in
+/// any workspace, so the orchestrator goes to this machine's `<host>-home` when `[projects]` has
+/// it here (br-rnhp); otherwise `session` resolves the project as before.
+fn orchestrator_command(exe: &str, machines: &MachineMap) -> (String, String) {
+    let base = format!("{} session orchestrator", shell_quote(exe));
+    let home = machines.machine.name.as_deref().and_then(|host| {
+        let home = format!("{host}-home");
+        let here = machines
+            .projects
+            .get(&home)
+            .is_some_and(|p| p.machine == host);
+        here.then_some(home)
+    });
+    match home {
+        Some(home) => {
+            let note = format!("project {home}");
+            (format!("{base} --project {}", shell_quote(&home)), note)
+        }
+        None => (
+            base,
+            "no <host>-home in [projects] for this machine: project from $BRIDLE_PROJECT or the \
+             working directory"
+                .to_string(),
+        ),
+    }
 }
 
 fn shell_quote(s: &str) -> String {
@@ -316,6 +343,30 @@ esac
         let m = ensure_orchestrator(home.path(), &bin, "cmd").unwrap();
         assert!(m.contains("no-autostart"), "{m}");
         assert!(calls(t.path()).is_empty());
+    }
+
+    #[test]
+    fn the_command_names_the_home_project_when_enrolled() {
+        let enrolled = |toml: &str| toml::from_str::<MachineMap>(toml).unwrap();
+        let m = enrolled(
+            "[machine]\nname = \"vesta\"\n[projects]\nvesta-home = { machine = \"vesta\", port = 7500 }\n",
+        );
+        let (cmd, note) = orchestrator_command("/bin/bridle", &m);
+        assert_eq!(
+            cmd,
+            "'/bin/bridle' session orchestrator --project 'vesta-home'"
+        );
+        assert_eq!(note, "project vesta-home");
+        // Another machine's home, or none, falls back to today's command and says so.
+        for toml in [
+            "[machine]\nname = \"vesta\"\n[projects]\nvesta-home = { machine = \"dalek\", port = 1 }\n",
+            "[machine]\nname = \"vesta\"\n",
+            "",
+        ] {
+            let (cmd, note) = orchestrator_command("/bin/bridle", &enrolled(toml));
+            assert_eq!(cmd, "'/bin/bridle' session orchestrator");
+            assert!(note.contains("no <host>-home"), "{note}");
+        }
     }
 
     #[test]
