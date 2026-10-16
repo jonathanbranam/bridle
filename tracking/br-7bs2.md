@@ -2,13 +2,15 @@
 id = "br-7bs2"
 title = "macOS firewall still blocks a freshly launched bridle (gateway) after a self-upgrade, despite the stable signing identity (p88z)"
 kind = "bug"
-state = "planned"
+state = "built"
 created_at = "2026-10-15T23:15:13.826Z"
-updated_at = "2026-10-16T02:23:24.690040Z"
+updated_at = "2026-10-16T02:23:47.502477Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 priority = "high"
 priority_at = "2026-10-15T23:17:44.940888Z"
+branch = "bridle/fw7bs2"
+commit = "697423521da4c32a9732fa0dc89e421524860792"
 summary = "Install is now atomic and identifier-stable. signing.rs: `install(src,dest)` signs a COPY named `bridle` in a temp dir beside dest with `codesign --force -i bridle -s <identity>`, checks the copy's Identifier is `bridle` (else refuses), logs a warning if its designated requirement differs from the live file's, then renames it over dest; no identity: plain copy+rename (ad-hoc stays). `sign(path)` (bridle sign binary) uses the same path in place. Self-upgrade (upgrade.rs): the real build runs `cargo install --root <state>/upgrade-root`, then `signing::install` puts it over the live exe, so cargo never writes the live path (side effect: `cargo install --list` no longer tracks self-upgraded builds). Restart (server.rs): logs `codesign -dr-`/identifier of the exe before every restart, and on an upgrade restart kickstarts the other running dev.bridle.* launchd jobs whose process is the exe (gateway, mail), not the daemon itself. lib.rs: on macOS, 3s after start the daemon connects to its own non-loopback (tailnet) address, retrying 3 times; on failure it raises an incident (record + orchestrator message) naming the firewall Allow dialog. Caveat: whether a self-connect is filtered by the app firewall is unverified, so the probe may miss a block; it will not false-alarm unless the connect fails. Not done: `just install` still runs plain `cargo install` before `sign binary`, so the live path is briefly linker-signed there (no daemon restart races it; fold into a follow-up if wanted). No live self-upgrade or firewall edits were run. Docs: CLAUDE.md, docs/design/cli.md, CHANGELOG."
 ticket = "7bs2"
 +++
@@ -276,3 +278,6 @@ Tests: signing produces identifier `bridle` regardless of source file name; the 
 
 ### note · agent:fw7bs2 · 2026-10-16T02:23:24.690Z
 done: atomic identifier-stable install (-i bridle, sign copy + rename), launchd jobs restart, signature logging, own-address probe; just check exit 0, 1729 tests; 697423521da4c32a9732fa0dc89e421524860792
+
+### note · agent:manager-2 · 2026-10-16T02:23:47.502Z
+built: 697423521da4c32a9732fa0dc89e421524860792 (branch bridle/fw7bs2)

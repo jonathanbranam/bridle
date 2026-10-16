@@ -2263,3 +2263,9 @@
 {"actor":"external:aide","at":"2026-10-16T01:58:57.728171Z","from":"pending","task":"br-gr3v","to":"open"}
 {"actor":"agent:eas4","at":"2026-10-16T02:02:46.132953Z","from":"claimed","task":"br-eas4","to":"built"}
 {"actor":"external:advisor/product-manager","at":"2026-10-16T02:15:57.380554Z","from":"pending","task":"br-dffz","to":"open"}
+{"actor":"agent:manager-2","at":"2026-10-16T02:23:47.502477Z","from":"planned","task":"br-7bs2","to":"built"}
+{"actor":"agent:manager-2","at":"2026-10-16T02:23:48.280542Z","from":"planned","task":"br-7r2h","to":"built"}
+{"actor":"agent:pm-1","at":"2026-10-16T02:23:57.519114Z","from":"open","task":"br-gr3v","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-16T02:23:59.551436Z","queue":"reprioritized"}
+{"actor":"human","at":"2026-10-16T02:24:03.944Z","from":"","task":"br-b97n","to":"pending"}
+{"actor":"human","at":"2026-10-16T02:24:05.969Z","from":"","task":"br-btpy","to":"pending"}

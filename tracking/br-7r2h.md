@@ -2,14 +2,16 @@
 id = "br-7r2h"
 title = "Orchestrator opens a waiter on every project: its prompt still says to, though one waiter on the home daemon is enough"
 kind = "fix"
-state = "planned"
+state = "built"
 created_at = "2026-10-16T01:02:04.464Z"
-updated_at = "2026-10-16T02:10:50.574355Z"
+updated_at = "2026-10-16T02:23:58.672258Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "agent:7r2h",
 ]
+branch = "bridle/7r2h"
+commit = "d45c92f2"
 summary = "The orchestrator role no longer tells a fresh orchestrator to keep one waiter per project. The startup step and the Watch duty (workflow/base/roles/orchestrator.md) now say to keep one waiter, on the home daemon, which covers every project forwarding to it. A project that does not forward is named for `bridle token pair` (human-run; it pairs visiting tokens and is safe to re-run), not given its own waiter. The aide and advisor roles (workflow/base/roles/aide.md, advisor.md) said the orchestrator watches a project only through a waiter there; they now say it watches its home daemon only. A test in crates/bridle/src/commands/orchestrator.rs guards the old per-project wording. CHANGELOG has the line under Unreleased. Not built: step 3 of the ticket (detect unforwarded projects at startup) needs daemon code and should be its own ticket. Check: just check exit 0 on d45c92f2 (main d0fad88d merged in), 1725 run, 1725 passed, 6 skipped."
 ticket = "7r2h"
 +++
@@ -39,3 +41,18 @@ advisor product-manager: related br-gr3v (readied by the human tonight): token p
 
 ### note · agent:7r2h · 2026-10-16T02:10:50.574Z
 done: orchestrator role says one waiter on the home daemon, not one per project (aide and advisor roles, a regression test, CHANGELOG line); just check exit 0 on d45c92f2 (1725 run, 1725 passed, 6 skipped); summary is on the ticket. NOT marked built: 'bridle ticket built' was refused with 'forbidden: worker agents cannot use agent lifecycle endpoints', so please mark it built and land with --checked-commit d45c92f2. Step 3 (detect unforwarded projects) not built, needs its own ticket.
+
+### note · agent:manager-2 · 2026-10-16T02:23:48.280Z
+built: d45c92f2 (branch bridle/7r2h)
+
+### note · agent:7r2h · 2026-10-16T02:23:52.710Z
+7r2h: PdM says token pair homes in the first project and local daemons do not forward, so 7r2h should land with gr3v (commit d45c92f2 unchanged). Waiting for the PdM's call on landing order.
+
+### note · agent:manager-2 · 2026-10-16T02:23:55.911Z
+manager-2: holding the land of d45c92f2 until br-gr3v (the code half) lands, so the prompt is true when it ships. Not landing it in the current chain.
+
+### note · agent:7r2h · 2026-10-16T02:23:56.330Z
+Worker (7r2h): read the PdM comment on gr3v. Until gr3v lands, the prompt is wrong for vesta: token pair homes the orchestrator in the first project, not vesta-home, and local daemons do not forward, so a project on vesta still needs its own waiter. As built, the role text says to keep one waiter on the home and to name a non-forwarding project for token pair. Recommendation: land br-7r2h together with gr3v, so the prompt and the code agree. If gr3v is far off, add an interim line for vesta (its own waiter per daemon until forwarding is live). Not changing the prompt or landing order without the PdM's call. Built commit is d45c92f2.
+
+### note · agent:7r2h · 2026-10-16T02:23:58.672Z
+7r2h: agreed the prompt and gr3v must agree. manager-2 is holding the land of d45c92f2 until gr3v lands, so the text ships with its code. No change made on my side; the ticket comment has the detail.
