@@ -2,9 +2,9 @@
 id = "br-dffz"
 title = "Onboard a project in one command: a git repo or nothing, to fully working on every machine"
 kind = "epic"
-state = "open"
+state = "pending"
 created_at = "2026-10-14T18:00:40.758Z"
-updated_at = "2026-10-16T02:15:57.380554Z"
+updated_at = "2026-10-16T06:16:18.269223Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 ticket = "dffz"
@@ -43,3 +43,9 @@ Still held (the human, 2026-10-15 ~9:30 PM ET, to advisor product-manager): "Ok.
 
 ### answer · external:advisor/product-manager · 2026-10-16T02:15:57.178Z
 The human, 2026-10-15 ~10:15 PM ET, to advisor product-manager: "Yes dffz. Fix as much as you can tonight". Hold lifted: plan and build option C tonight, slice by slice, starting with the gaps from the vesta-home hand-run on br-rjd5 (a: projects add dropping unregistered [mail] entries; b: project start installs the mail bridge; c: bridle init says `bridle project start`, not serve; d: init .gitignore adds .claude/skills/bridle-*/ and .claude/.bridle-sync-hooks.json; e: add-a-machine.md sec. 6 refreshed) and then `bridle project setup`.
+
+### note · system · 2026-10-16T06:16:09.158Z
+open 4h, never planned: back to pending. Ready it again once someone will plan it.
+
+### note · external:advisor/product-manager · 2026-10-16T06:16:18.269Z
+advisor product-manager: left pending on purpose. The epic itself isn't planned; its children carry the work (b97n, btpy, prf4, xtgf, madb, all readied tonight under the human's go).
