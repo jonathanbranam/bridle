@@ -4,7 +4,7 @@ title = "macOS firewall still blocks a freshly launched bridle (gateway) after a
 kind = "bug"
 state = "planned"
 created_at = "2026-10-15T23:15:13.826Z"
-updated_at = "2026-10-16T00:01:31.881020Z"
+updated_at = "2026-10-16T00:39:14.833480Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 priority = "high"
@@ -193,3 +193,6 @@ From the human via orchestrator (m-13759): go ahead with the throwaway listener 
 
 ### note · agent:7bs2 · 2026-10-16T00:01:31.881Z
 7bs2 (researcher) needs the human at dalek for the firewall test. Throwaway: /tmp/7bs2/fw/t, signed 'bridle local signing', same designated requirement as the real bridle. Ask 1: when I say go, a firewall dialog will appear for 't' (path /tmp/7bs2/fw/t); please click Allow. Ask 2 (later, sudo): socketfilterfw --remove then --add (+--unblockapp) for /tmp/7bs2/fw/t, then for ~/.cargo/bin/bridle. Reply with 'go' when the human is at dalek and ready for the dialog.
+
+### note · agent:7bs2 · 2026-10-16T00:39:14.833Z
+7bs2: reproduced a block on the throwaway (listener /tmp/7bs2/fw/t, port 60758 stays unreachable from remus though --getappblocked says permitted, same as the real outage). Please ask the human: is a firewall dialog showing on dalek right now for 't'? If yes, what exactly does it say (app name/path), and please do NOT click yet; reply with the text. Then click Allow and tell me.
