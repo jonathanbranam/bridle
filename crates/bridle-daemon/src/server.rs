@@ -111,20 +111,74 @@ pub const LAND_DRAIN_CAP: std::time::Duration = std::time::Duration::from_secs(2
 /// The lands in flight: task id and start. A land runs after its manager's turn has ended, so the
 /// drain's "no agent mid-turn" does not see it; this does.
 #[derive(Clone, Default)]
-pub struct Lands(std::sync::Arc<std::sync::Mutex<Vec<(u64, String, std::time::Instant)>>>);
+pub struct Lands(std::sync::Arc<std::sync::Mutex<LandsInner>>);
+
+#[derive(Default)]
+struct LandsInner {
+    live: Vec<LandEntry>,
+    /// Set at the drain's quiet point: a land arriving after it is refused until the restart
+    /// (br-eggc), so it is never cut off by the exec.
+    closed: bool,
+}
+
+struct LandEntry {
+    n: u64,
+    task: String,
+    at: std::time::Instant,
+    /// Process group of the land's running check, 0 when none is running.
+    pgid: std::sync::Arc<std::sync::atomic::AtomicU32>,
+}
+
+/// A land that outlasted [`LAND_DRAIN_CAP`] when the drain restarted anyway.
+pub struct OverdueLand {
+    pub task: String,
+    pub secs: u64,
+    pgid: std::sync::Arc<std::sync::atomic::AtomicU32>,
+}
+
+impl OverdueLand {
+    /// Stops the land's check and everything under it, so no orphan survives the exec holding
+    /// the machine-wide test lock and the integration worktree. Only a pgid we started.
+    fn stop_check(&self) {
+        let pgid = self.pgid.load(std::sync::atomic::Ordering::SeqCst);
+        if pgid > 1
+            && let Err(e) = nix::sys::signal::killpg(
+                nix::unistd::Pid::from_raw(pgid as i32),
+                nix::sys::signal::Signal::SIGKILL,
+            )
+        {
+            tracing::warn!(task = %self.task, pgid, "stopping the land's check: {e}");
+        }
+    }
+}
 
 /// Held for the life of a land; dropping it (any exit path) ends the hold.
-pub struct LandGuard(Lands, u64);
+pub struct LandGuard(Lands, u64, std::sync::Arc<std::sync::atomic::AtomicU32>);
+
+impl LandGuard {
+    /// Where the integrator records the check's process group.
+    pub fn pgid(&self) -> std::sync::Arc<std::sync::atomic::AtomicU32> {
+        self.2.clone()
+    }
+}
 
 impl Lands {
-    pub fn begin(&self, task: &str) -> LandGuard {
+    /// `None` once the drain has closed for the restart.
+    pub fn begin(&self, task: &str) -> Option<LandGuard> {
         static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
         let n = NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-        self.0
-            .lock()
-            .expect("lands lock")
-            .push((n, task.to_string(), std::time::Instant::now()));
-        LandGuard(self.clone(), n)
+        let pgid = std::sync::Arc::new(std::sync::atomic::AtomicU32::new(0));
+        let mut g = self.0.lock().expect("lands lock");
+        if g.closed {
+            return None;
+        }
+        g.live.push(LandEntry {
+            n,
+            task: task.to_string(),
+            at: std::time::Instant::now(),
+            pgid: pgid.clone(),
+        });
+        Some(LandGuard(self.clone(), n, pgid))
     }
 
     /// Tasks whose land started no longer ago than `cap`.
@@ -132,10 +186,36 @@ impl Lands {
         self.0
             .lock()
             .expect("lands lock")
+            .live
             .iter()
-            .filter(|(_, _, at)| at.elapsed() <= cap)
-            .map(|(_, t, _)| t.clone())
+            .filter(|e| e.at.elapsed() <= cap)
+            .map(|e| e.task.clone())
             .collect()
+    }
+
+    /// At the quiet point: if no land is within `cap`, refuse new lands from now on and return
+    /// the ones past it (still running, to be reported and stopped). `None` if a land holds.
+    fn close_if_quiet(&self, cap: std::time::Duration) -> Option<Vec<OverdueLand>> {
+        let mut g = self.0.lock().expect("lands lock");
+        if g.live.iter().any(|e| e.at.elapsed() <= cap) {
+            return None;
+        }
+        g.closed = true;
+        Some(
+            g.live
+                .iter()
+                .map(|e| OverdueLand {
+                    task: e.task.clone(),
+                    secs: e.at.elapsed().as_secs(),
+                    pgid: e.pgid.clone(),
+                })
+                .collect(),
+        )
+    }
+
+    /// The restart did not go ahead: lands are accepted again.
+    pub fn reopen(&self) {
+        self.0.lock().expect("lands lock").closed = false;
     }
 }
 
@@ -145,7 +225,8 @@ impl Drop for LandGuard {
             .0
             .lock()
             .expect("lands lock")
-            .retain(|(n, _, _)| *n != self.1);
+            .live
+            .retain(|e| e.n != self.1);
     }
 }
 
@@ -3585,7 +3666,13 @@ async fn land_task(
         }
         .ok_or_else(|| ApiError::bad_request(format!("no branch for {id}; pass --branch")))?,
     };
-    let _land_hold = state.lands.begin(&id);
+    let Some(land_hold) = state.lands.begin(&id) else {
+        return Err(ApiError::new(
+            StatusCode::SERVICE_UNAVAILABLE,
+            "draining",
+            "not landing: the daemon is about to restart; retry once it has restarted",
+        ));
+    };
     let one_at_a_time = state.landing.clone().lock_owned().await;
     let emit = |kind: &'static str, data: serde_json::Value| {
         let emitter = state.emitter.clone();
@@ -3615,6 +3702,7 @@ async fn land_task(
         check,
         checked_commit: req.checked_commit.as_deref(),
         check_skip_paths: &state.check_skip_paths,
+        check_pgid: Some(land_hold.pgid()),
     })
     .await;
     let landed = match landed {
@@ -5235,6 +5323,7 @@ async fn perform_restart(
         .set_upgrade_waiting(built.map(|s| s.chars().take(9).collect()));
     let result = drain_and_restart(state, who, built).await;
     if result.is_err() {
+        state.lands.reopen();
         state.manager.set_upgrade_waiting(None);
         state.manager.lift_drain().await;
     }
@@ -5288,11 +5377,44 @@ async fn drain_and_restart(
             .map(|a| a.name.clone())
             .collect();
         let landing = state.lands.holding(LAND_DRAIN_CAP);
-        if busy.is_empty()
+        // Last, so the lands close only when everything else is quiet.
+        let overdue = if busy.is_empty()
             && !spawning
             && landing.is_empty()
             && state.manager.postponed_until().is_none()
         {
+            state.lands.close_if_quiet(LAND_DRAIN_CAP)
+        } else {
+            None
+        };
+        if let Some(overdue) = overdue {
+            for l in &overdue {
+                let text = format!(
+                    "the restart went ahead over the land of {}, which had run {} min (past the \
+                     {} min cap); its check was stopped. Land it again.",
+                    l.task,
+                    l.secs / 60,
+                    LAND_DRAIN_CAP.as_secs() / 60
+                );
+                tracing::error!(task = %l.task, secs = l.secs, "restart: forced over a land");
+                let _ = state
+                    .emitter
+                    .emit(
+                        "restart.land_forced",
+                        crate::supervisor::system_principal().id,
+                        None,
+                        serde_json::json!({"task": l.task, "secs": l.secs}),
+                    )
+                    .await;
+                use crate::orchestrator::Incidents;
+                crate::orchestrator::RealIncidents {
+                    manager: state.manager.clone(),
+                    emitter: state.emitter.clone(),
+                }
+                .record(&text)
+                .await;
+                l.stop_check();
+            }
             for h in &holders {
                 tracing::error!(agent = %h.name, secs = h.started.elapsed().as_secs(), "restart: not waiting on a stuck spawn");
                 let _ = state
@@ -5532,7 +5654,7 @@ mod tests {
         let lands = Lands::default();
         let cap = std::time::Duration::from_secs(60);
         assert!(lands.holding(cap).is_empty());
-        let g = lands.begin("br-aaaa");
+        let g = lands.begin("br-aaaa").expect("open");
         assert_eq!(lands.holding(cap), vec!["br-aaaa".to_string()]);
         // Past the cap a stuck land no longer holds the restart.
         assert!(lands.holding(std::time::Duration::ZERO).is_empty());
@@ -5541,5 +5663,52 @@ mod tests {
             lands.holding(cap).is_empty(),
             "dropping the guard ends the hold"
         );
+    }
+
+    #[test]
+    fn closing_at_the_quiet_point_refuses_later_lands_and_reports_overdue_ones() {
+        let lands = Lands::default();
+        let cap = std::time::Duration::from_secs(60);
+        let held = lands.begin("br-aaaa").expect("open");
+        assert!(
+            lands.close_if_quiet(cap).is_none(),
+            "a land within the cap holds"
+        );
+        let second = lands.begin("br-bbbb");
+        assert!(second.is_some(), "not closed while a land holds");
+        let overdue = lands
+            .close_if_quiet(std::time::Duration::ZERO)
+            .expect("past the cap");
+        assert_eq!(overdue.len(), 2);
+        assert!(lands.begin("br-cccc").is_none(), "closed for the restart");
+        lands.reopen();
+        assert!(lands.begin("br-cccc").is_some());
+        drop((held, second));
+    }
+
+    #[tokio::test]
+    async fn an_overdue_lands_check_group_is_stopped() {
+        let lands = Lands::default();
+        let g = lands.begin("br-aaaa").expect("open");
+        let dir = std::env::temp_dir();
+        let pgid = g.pgid();
+        let run = tokio::spawn(async move {
+            crate::integrator::run_check_for_test(&dir, "sleep 300 & wait", &pgid).await
+        });
+        for _ in 0..100 {
+            if g.pgid().load(std::sync::atomic::Ordering::SeqCst) != 0 {
+                break;
+            }
+            tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+        }
+        let overdue = lands
+            .close_if_quiet(std::time::Duration::ZERO)
+            .expect("past the cap");
+        overdue[0].stop_check();
+        let r = tokio::time::timeout(std::time::Duration::from_secs(10), run)
+            .await
+            .expect("the check ended")
+            .expect("joined");
+        assert!(r.is_err(), "a killed check is a failed check");
     }
 }

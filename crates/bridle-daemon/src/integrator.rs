@@ -57,6 +57,8 @@ pub struct LandInput<'a> {
     pub checked_commit: Option<&'a str>,
     /// `[integration] check_skip_paths` globs.
     pub check_skip_paths: &'a [String],
+    /// Receives the check's process group while it runs (br-eggc), so the daemon can stop it.
+    pub check_pgid: Option<std::sync::Arc<std::sync::atomic::AtomicU32>>,
 }
 
 pub struct Landed {
@@ -142,7 +144,7 @@ pub async fn land(i: &LandInput<'_>) -> Result<Landed, LandError> {
             );
         }
         Some(cmd) => {
-            count = run_check(&wt, cmd).await?;
+            count = run_check(&wt, cmd, i.check_pgid.as_deref()).await?;
             if let Some(n) = count {
                 band_check(n, read_count(i))?;
             }
@@ -361,13 +363,28 @@ fn parse_test_count(text: &str) -> Option<u64> {
 }
 
 /// The check's test count, when its output has a nextest summary line.
-async fn run_check(wt: &Path, cmd: &str) -> Result<Option<u64>, LandError> {
-    let out = Command::new("sh")
+async fn run_check(
+    wt: &Path,
+    cmd: &str,
+    pgid: Option<&std::sync::atomic::AtomicU32>,
+) -> Result<Option<u64>, LandError> {
+    let child = Command::new("sh")
         .arg("-c")
         .arg(cmd)
         .current_dir(wt)
-        .output()
-        .await?;
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        // Its own group, so a forced restart can stop the whole check, not just `sh`.
+        .process_group(0)
+        .spawn()?;
+    if let (Some(p), Some(id)) = (pgid, child.id()) {
+        p.store(id, std::sync::atomic::Ordering::SeqCst);
+    }
+    let out = child.wait_with_output().await;
+    if let Some(p) = pgid {
+        p.store(0, std::sync::atomic::Ordering::SeqCst);
+    }
+    let out = out?;
     let mut text = String::from_utf8_lossy(&out.stdout).into_owned();
     text.push_str(&String::from_utf8_lossy(&out.stderr));
     if out.status.success() {
@@ -379,6 +396,15 @@ async fn run_check(wt: &Path, cmd: &str) -> Result<Option<u64>, LandError> {
         cmd: cmd.to_string(),
         tail,
     })
+}
+
+#[cfg(test)]
+pub async fn run_check_for_test(
+    wt: &Path,
+    cmd: &str,
+    pgid: &std::sync::atomic::AtomicU32,
+) -> Result<Option<u64>, LandError> {
+    run_check(wt, cmd, Some(pgid)).await
 }
 
 #[cfg(test)]

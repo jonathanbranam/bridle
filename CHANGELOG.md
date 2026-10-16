@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Fix (br-eggc): the restart drain closes to new lands at its quiet point (a late `bridle ticket land` is refused with "retry once it has restarted"), and when a land outlasts the 2 h cap the restart records an event and an incident naming it and stops its `just check` process group first, so no orphaned check survives the exec. Migration: none.
 - Feature (br-btpy): `bridle project start` installs and starts the project's mail bridge on every start, not only after a take-over, when the project is in `[mail] projects` and the machine has mail set up. It prints what it did or why it skipped; a mail failure no longer fails the start and prints the `bridle mail install` command to run. Migration: none.
 - Fix (br-prf4): `bridle init` prints `bridle project start` as its next step (it printed `bridle serve`), and the `.gitignore` it writes for a new project also ignores `.claude/skills/bridle-*/` and `.claude/.bridle-sync-hooks.json`, the files `sync` generates. An existing project's `.gitignore` is not rewritten; a re-run of init appends the two lines only if they are missing, as it does for its other lines. Migration: none.
 - Docs (br-7r2h): the orchestrator role says to keep one waiter, on its home daemon, not one per project (the startup step and Watch duty contradicted the forwarding rule). A project that does not forward to the home is named for `bridle token pair`, not given its own waiter. The aide and advisor roles say the same. Migration: none.
