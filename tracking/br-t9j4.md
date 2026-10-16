@@ -2,9 +2,9 @@
 id = "br-t9j4"
 title = "7bs2 gaps: just install signs a copy and renames; the gateway checks its own tailnet listener"
 kind = "fix"
-state = "claimed"
+state = "planned"
 created_at = "2026-10-16T10:03:28.515Z"
-updated_at = "2026-10-16T22:09:23.475071Z"
+updated_at = "2026-10-16T22:23:38.548492Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -13,7 +13,7 @@ watchers = [
 ]
 branch = "bridle/t9j4"
 commit = "0454f3b8bc9bc2f2e61976a6de98929741c8b6c5"
-summary = "Ticket br-t9j4: just install now builds into a private cargo root and runs new 'bridle sign install SRC DEST' (signing::install: signed copy named bridle, renamed into place). The gateway (macOS, non-loopback bind) probes its own listener after start (crates/bridle-gateway/src/reachable.rs) and messages each local project's orchestrator naming the firewall; unit test uses a closed port. cli.md and CHANGELOG updated. just check green: 1756 passed. Caveat: the justfile install recipe was not run (it would overwrite the live binary)."
+summary = "Remainder (b): the gateway's self-probe failure now raises the daemon's own incident. New human-only POST /v1/incidents/notice {text} (server.rs, IncidentNotice in types.rs, Client::report_incident) calls RealIncidents.record + ask_orchestrator: an orchestrator.incident event, a note to the human and the orchestrator note kept. reachable::tell_orchestrators calls it per project instead of sending its own note. Test: daemon incidents_test (event recorded); gateway fake-unreachable-listener test unchanged. CHANGELOG and api.md updated. Caveat: no end-to-end gateway-to-daemon test."
 ticket = "t9j4"
 +++
 
@@ -41,3 +41,9 @@ Brief for the remainder (pm-1): item (a) is done. For (b), when the gateway's se
 
 ### note · agent:t9j4b · 2026-10-16T22:09:23.475Z
 t9j4b handoff: remainder (b) built, uncommitted in worktree: POST /v1/incidents/notice (human-only) reusing RealIncidents; gateway tell_orchestrators now calls Client::report_incident; daemon test + CHANGELOG + api.md. just check running in background (.bridle/check.exit); still to do: confirm exit 0, ticket summary, commit, message manager-2 the sha.
+
+### note · agent:t9j4b · 2026-10-16T22:23:35.688Z
+done: gateway self-probe failure now records orchestrator.incident via daemon helper (POST /v1/incidents/notice); just check exit 0, 1772 tests; 010449a3
+
+### note · agent:t9j4b · 2026-10-16T22:23:38.548Z
+t9j4b: built 010449a3 on bridle/t9j4b (check exit 0, 1772 tests). 'bridle ticket built' was refused (forbidden: worker agents cannot use agent lifecycle endpoints), so the ticket state is not moved; manager please mark it.
