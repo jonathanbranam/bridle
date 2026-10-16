@@ -895,6 +895,7 @@ async fn start_inner(
             ws.workspace.join("integration"),
         ),
         landing: Default::default(),
+        lands: Default::default(),
         queue_nudge: queue_nudge.clone(),
         open_watch: open_watch.clone(),
         outbox: outbox::Outbox::new(

@@ -97,9 +97,56 @@ pub struct AppState {
     pub warm_build: crate::warm_build::WarmBuild,
     /// Held for the length of a landing: one at a time.
     pub landing: std::sync::Arc<tokio::sync::Mutex<()>>,
+    /// Lands in progress (check, merge, push, done), for the restart drain (br-d7r5).
+    pub lands: Lands,
     pub queue_nudge: crate::queue_nudge::QueueNudge,
     pub open_watch: crate::open_watch::OpenWatch,
     pub outbox: crate::outbox::Outbox,
+}
+
+/// How long a land holds a restart's drain: past this it no longer does (a stuck land must not
+/// block the restart for good). Longer than any real check.
+pub const LAND_DRAIN_CAP: std::time::Duration = std::time::Duration::from_secs(2 * 3600);
+
+/// The lands in flight: task id and start. A land runs after its manager's turn has ended, so the
+/// drain's "no agent mid-turn" does not see it; this does.
+#[derive(Clone, Default)]
+pub struct Lands(std::sync::Arc<std::sync::Mutex<Vec<(u64, String, std::time::Instant)>>>);
+
+/// Held for the life of a land; dropping it (any exit path) ends the hold.
+pub struct LandGuard(Lands, u64);
+
+impl Lands {
+    pub fn begin(&self, task: &str) -> LandGuard {
+        static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+        let n = NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        self.0
+            .lock()
+            .expect("lands lock")
+            .push((n, task.to_string(), std::time::Instant::now()));
+        LandGuard(self.clone(), n)
+    }
+
+    /// Tasks whose land started no longer ago than `cap`.
+    pub fn holding(&self, cap: std::time::Duration) -> Vec<String> {
+        self.0
+            .lock()
+            .expect("lands lock")
+            .iter()
+            .filter(|(_, _, at)| at.elapsed() <= cap)
+            .map(|(_, t, _)| t.clone())
+            .collect()
+    }
+}
+
+impl Drop for LandGuard {
+    fn drop(&mut self) {
+        self.0
+            .0
+            .lock()
+            .expect("lands lock")
+            .retain(|(n, _, _)| *n != self.1);
+    }
 }
 
 pub fn router(state: AppState) -> Router {
@@ -3531,6 +3578,7 @@ async fn land_task(
         }
         .ok_or_else(|| ApiError::bad_request(format!("no branch for {id}; pass --branch")))?,
     };
+    let _land_hold = state.lands.begin(&id);
     let one_at_a_time = state.landing.clone().lock_owned().await;
     let emit = |kind: &'static str, data: serde_json::Value| {
         let emitter = state.emitter.clone();
@@ -5232,7 +5280,12 @@ async fn drain_and_restart(
             .filter(|a| a.state != bridle_api::types::AgentState::Idle)
             .map(|a| a.name.clone())
             .collect();
-        if busy.is_empty() && !spawning && state.manager.postponed_until().is_none() {
+        let landing = state.lands.holding(LAND_DRAIN_CAP);
+        if busy.is_empty()
+            && !spawning
+            && landing.is_empty()
+            && state.manager.postponed_until().is_none()
+        {
             for h in &holders {
                 tracing::error!(agent = %h.name, secs = h.started.elapsed().as_secs(), "restart: not waiting on a stuck spawn");
                 let _ = state
@@ -5249,7 +5302,9 @@ async fn drain_and_restart(
         }
         if !woke && started.elapsed() >= state.drain_wake_after {
             woke = true;
-            let still = if busy.is_empty() {
+            let still = if busy.is_empty() && !landing.is_empty() {
+                format!("landing {}", landing.join(", "))
+            } else if busy.is_empty() {
                 spawn_holder_labels(&holders).join(", ")
             } else {
                 busy.join(", ")
@@ -5446,6 +5501,22 @@ mod tests {
             resolve(&store, &human, "agent:w2").await,
             "agent:w2",
             "an explicit claimant id not naming a known agent passes through unchanged"
+        );
+    }
+
+    #[test]
+    fn a_land_holds_the_drain_until_it_ends_or_passes_the_cap() {
+        let lands = Lands::default();
+        let cap = std::time::Duration::from_secs(60);
+        assert!(lands.holding(cap).is_empty());
+        let g = lands.begin("br-aaaa");
+        assert_eq!(lands.holding(cap), vec!["br-aaaa".to_string()]);
+        // Past the cap a stuck land no longer holds the restart.
+        assert!(lands.holding(std::time::Duration::ZERO).is_empty());
+        drop(g);
+        assert!(
+            lands.holding(cap).is_empty(),
+            "dropping the guard ends the hold"
         );
     }
 }
