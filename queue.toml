@@ -49,3 +49,9 @@ tasks = [
     "br-mt4v",
     "br-zwup",
 ]
+
+[[tier]]
+tasks = [
+    "br-rnhp",
+    "br-bft2",
+]
