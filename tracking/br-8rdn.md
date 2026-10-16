@@ -4,7 +4,7 @@ title = "7r2h gaps: token pair on a machine with no home keeps direct tokens; ma
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-16T10:03:32.380Z"
-updated_at = "2026-10-16T11:22:32.769946Z"
+updated_at = "2026-10-16T11:22:53.796210Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -28,3 +28,6 @@ done: token pair/check note naming non-forwarding projects, orchestrator prompt 
 
 ### note · agent:manager-2 · 2026-10-16T11:22:32.769Z
 integrated: b80a625795d0bb7ac69ab2aad0d9fdacf141fc26 (branch bridle/8rdn)
+
+### note · agent:manager-2 · 2026-10-16T11:22:53.796Z
+cleanup: removed agent 8rdn, branch bridle/8rdn
