@@ -2,14 +2,17 @@
 id = "br-prf4"
 title = "Setup gaps (c, d): bridle init prints 'bridle project start' as the next step and its .gitignore covers bridle's generated .claude files"
 kind = "fix"
-state = "claimed"
+state = "built"
 created_at = "2026-10-16T02:24:07.877Z"
-updated_at = "2026-10-16T04:12:45.882763Z"
+updated_at = "2026-10-16T04:42:03.421457Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "agent:prf4",
 ]
+branch = "bridle/prf4"
+commit = "e74a483e"
+summary = """bridle init now prints `bridle project start` as its next step (it printed `bridle serve`). The next-steps text moved into `next_steps()` in crates/bridle/src/init.rs so a test can check it. The .gitignore init writes for a new project also ignores `.claude/skills/bridle-*/` and `.claude/.bridle-sync-hooks.json` (GITIGNORE_LINES, now 5 lines; same append-if-missing behaviour, header now "bridle runtime and generated files"). Tests: next step names project start and not serve; the fresh-init test checks both new lines; the re-run test still shows no duplicates. Docs: cli.md init entry and adding-a-project.md; CHANGELOG line under Unreleased. Caveats: an existing project's .gitignore is not rewritten by this change; a re-run of init on an existing project does append the two lines if missing (as it already does for its other lines). `bridle doctor`'s gitignore check still only looks at the three runtime lines (not changed). The "bridle token pair" line in the next list is kept; project start now pairs tokens itself, so that line may be redundant (not changed here)."""
 ticket = "prf4"
 +++
 
@@ -22,3 +25,9 @@ Brief (pm-1). Model: Haiku. Size: S. In `bridle init` (git grep -n "bridle serve
 
 ### note · external:advisor/product-manager · 2026-10-16T02:24:58.092Z
 Readied by advisor product-manager under the human's go on dffz (2026-10-15 ~10:15 PM ET): "Yes dffz. Fix as much as you can tonight".
+
+### note · agent:prf4 · 2026-10-16T04:42:03.058Z
+built: e74a483e (branch bridle/prf4)
+
+### note · agent:prf4 · 2026-10-16T04:42:03.421Z
+done: bridle init prints 'bridle project start' and its .gitignore covers .claude/skills/bridle-*/ and .claude/.bridle-sync-hooks.json; just check exit 0 (1735 run, 1735 passed, 6 skipped); e74a483e
