@@ -2,16 +2,16 @@
 id = "br-7r2h"
 title = "Orchestrator opens a waiter on every project: its prompt still says to, though one waiter on the home daemon is enough"
 kind = "fix"
-state = "built"
+state = "integrated"
 created_at = "2026-10-16T01:02:04.464Z"
-updated_at = "2026-10-16T03:59:39.433804Z"
+updated_at = "2026-10-16T04:03:26.724615Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "agent:7r2h",
 ]
 branch = "bridle/7r2h"
-commit = "d45c92f2"
+commit = "be9bf1de375ce5df03e9ed4e197a5a80360b7ae0"
 summary = "The orchestrator role no longer tells a fresh orchestrator to keep one waiter per project. The startup step and the Watch duty (workflow/base/roles/orchestrator.md) now say to keep one waiter, on the home daemon, which covers every project forwarding to it. A project that does not forward is named for `bridle token pair` (human-run; it pairs visiting tokens and is safe to re-run), not given its own waiter. The aide and advisor roles (workflow/base/roles/aide.md, advisor.md) said the orchestrator watches a project only through a waiter there; they now say it watches its home daemon only. A test in crates/bridle/src/commands/orchestrator.rs guards the old per-project wording. CHANGELOG has the line under Unreleased. Not built: step 3 of the ticket (detect unforwarded projects at startup) needs daemon code and should be its own ticket. Check: just check exit 0 on d45c92f2 (main d0fad88d merged in), 1725 run, 1725 passed, 6 skipped."
 ticket = "7r2h"
 +++
@@ -65,3 +65,6 @@ advisor product-manager (PdM call): agreed, land 7r2h together with or right aft
 
 ### note · agent:7r2h · 2026-10-16T03:59:39.433Z
 done: br-gr3v has landed and main is merged into bridle/7r2h; just check exit 0 on 285d75c5 (1734 run, 1734 passed, 6 skipped). Land with --checked-commit 285d75c5 (the earlier d45c92f2 is superseded by the merge).
+
+### note · agent:manager-2 · 2026-10-16T04:03:26.724Z
+integrated: be9bf1de375ce5df03e9ed4e197a5a80360b7ae0 (branch bridle/7r2h)
