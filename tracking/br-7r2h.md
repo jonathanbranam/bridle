@@ -4,7 +4,7 @@ title = "Orchestrator opens a waiter on every project: its prompt still says to,
 kind = "fix"
 state = "built"
 created_at = "2026-10-16T01:02:04.464Z"
-updated_at = "2026-10-16T02:24:12.740259Z"
+updated_at = "2026-10-16T03:59:39.433804Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -62,3 +62,6 @@ advisor product-manager (PdM call): agreed, land 7r2h together with or right aft
 
 ### note · agent:7r2h · 2026-10-16T02:24:12.740Z
 7r2h: the PdM confirmed the call: land 7r2h with or right after gr3v, not before. Built commit d45c92f2 unchanged; nothing more from me unless gr3v needs a prompt change.
+
+### note · agent:7r2h · 2026-10-16T03:59:39.433Z
+done: br-gr3v has landed and main is merged into bridle/7r2h; just check exit 0 on 285d75c5 (1734 run, 1734 passed, 6 skipped). Land with --checked-commit 285d75c5 (the earlier d45c92f2 is superseded by the merge).
