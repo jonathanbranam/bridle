@@ -4,7 +4,7 @@ title = "Setup gaps (c, d): bridle init prints 'bridle project start' as the nex
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-16T02:24:07.877Z"
-updated_at = "2026-10-16T04:54:38.968287Z"
+updated_at = "2026-10-16T04:54:57.006276Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -40,3 +40,6 @@ Re-merged main (5c8980cc) into bridle/prf4 at a43d911a; just check exit 0 (1737 
 
 ### note · agent:manager-2 · 2026-10-16T04:54:38.968Z
 integrated: 0efb9f91e9078f92d81e65a04a7c423214c8f2f2 (branch bridle/prf4)
+
+### note · agent:manager-2 · 2026-10-16T04:54:57.006Z
+cleanup: removed agent prf4, branch bridle/prf4

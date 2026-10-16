@@ -2,11 +2,14 @@
 id = "br-xtgf"
 title = "bridle project setup: the driver (steps with check and apply, --check, idempotent) over clone, init, register, state, service, tokens, mail"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-16T02:24:25.726Z"
-updated_at = "2026-10-16T02:36:10.369782Z"
+updated_at = "2026-10-16T04:55:13.817759Z"
 created_by = "agent:pm-1"
-watchers = ["agent:pm-1"]
+watchers = [
+    "agent:pm-1",
+    "agent:xtgf",
+]
 ticket = "xtgf"
 +++
 
