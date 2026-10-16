@@ -2,16 +2,16 @@
 id = "br-eggc"
 title = "Drain follow-up to d7r5: hold off new lands through the restart, raise an incident when the cap fires, no orphaned check"
 kind = "fix"
-state = "built"
+state = "integrated"
 created_at = "2026-10-16T01:06:01.801Z"
-updated_at = "2026-10-16T05:28:34.024175Z"
+updated_at = "2026-10-16T05:39:51.382486Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "agent:eggc",
 ]
 branch = "bridle/eggc"
-commit = "d47f56662d19964acb4cdd4dab816a3ed86946f4"
+commit = "c6dd050edfe01815b54fb6481a10a5280181039e"
 summary = "The restart drain closes the Lands registry at its quiet point (server.rs Lands::close_if_quiet, atomic with begin): a late land is refused 503 'retry once it has restarted', and the registry reopens if the restart fails. A land past the 2h cap gets a restart.land_forced event and an incident, and its check's process group is SIGKILLed before the exec (integrator run_check starts the check in its own group and records the pgid in LandInput.check_pgid). Unit tests cover close/refuse/reopen and the group kill; no integration test with a slow fake check (d7r5's wait test already exists in the suite). daemon.md and CHANGELOG updated."
 ticket = "eggc"
 +++
@@ -34,3 +34,6 @@ done: drain closes to late lands, incident + check pgid kill on the cap; just ch
 
 ### note · agent:eggc · 2026-10-16T05:28:34.024Z
 br-eggc: merged main (br-prf4) into bridle/eggc after the check, no conflicts; tip a3021e9c. Check was green on d47f5666 (code identical); re-run at landing.
+
+### note · agent:manager-2 · 2026-10-16T05:39:51.382Z
+integrated: c6dd050edfe01815b54fb6481a10a5280181039e (branch bridle/eggc)
