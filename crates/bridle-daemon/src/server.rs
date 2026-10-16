@@ -3525,6 +3525,13 @@ async fn push_integration(
             branch: state.integration.clone(),
         }));
     }
+    // The same commits may already be on origin (another pusher won the race): not a failure.
+    if crate::autopush::origin_has_local(&state.workspace.repo, &state.integration).await {
+        tracing::debug!(branch = %state.integration, "push rejected but origin already has the commits");
+        return Ok(Json(bridle_api::types::PushResult {
+            branch: state.integration.clone(),
+        }));
+    }
     let first = crate::autopush::first_line(&out.stderr);
     let body = format!(
         "Push of {} to origin failed ({}): {first}. The landing is on the local branch only; \

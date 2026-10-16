@@ -101,10 +101,28 @@ pub async fn report_failure(
     }
 }
 
+/// After a rejected push: re-fetches `integration` and says whether `origin/<integration>`
+/// equals or contains the local branch. Someone else (the manager) pushed the same commits
+/// between our look and our push, so nothing is missing from origin and no alarm is due
+/// (ticket 54sp). Any doubt (fetch failed, no such ref) says no, so a real failure still alarms.
+pub async fn origin_has_local(repo: &Path, integration: &str) -> bool {
+    match git(repo, &["fetch", "origin", integration]).await {
+        Ok(out) if out.status.success() => {}
+        _ => return false,
+    }
+    let local = format!("refs/heads/{integration}");
+    let remote = format!("refs/remotes/origin/{integration}");
+    matches!(
+        git(repo, &["merge-base", "--is-ancestor", &local, &remote]).await,
+        Ok(out) if out.status.success()
+    )
+}
+
 /// One look: with the branch strictly ahead of `origin/<integration>` (by the last fetch or
 /// push; no fetch here, only a `rev-list`), pushes it. `Ok(true)` when it pushed, `Ok(false)`
-/// when there was nothing to do (in step, behind, diverged, or no origin), `Err` with git's
-/// first line when the push was rejected or failed.
+/// when there was nothing to do (in step, behind, diverged, no origin, or a rejected push whose
+/// commits origin turned out to have already), `Err` with git's first line when the push was
+/// rejected or failed.
 pub async fn push_if_ahead(repo: &Path, integration: &str) -> Result<bool, String> {
     let range = format!("refs/heads/{integration}...refs/remotes/origin/{integration}");
     let out = git(repo, &["rev-list", "--left-right", "--count", &range]).await?;
@@ -123,6 +141,9 @@ pub async fn push_if_ahead(repo: &Path, integration: &str) -> Result<bool, Strin
     let out = git(repo, &["push", "origin", integration]).await?;
     if out.status.success() {
         Ok(true)
+    } else if origin_has_local(repo, integration).await {
+        tracing::debug!(branch = %integration, "push rejected but origin already has the commits");
+        Ok(false)
     } else {
         Err(first_line(&out.stderr))
     }
@@ -280,6 +301,7 @@ mod tests {
     async fn a_rejecting_origin_is_an_error_with_gits_line() {
         let (_tmp, origin, clone) = pair();
         let hook = origin.join("hooks/pre-receive");
+        std::fs::create_dir_all(origin.join("hooks")).unwrap();
         std::fs::write(&hook, "#!/bin/sh\necho 'nope: not the owner' >&2\nexit 1\n").unwrap();
         run(&origin, &["config", "core.hooksPath", "hooks"]);
         std::process::Command::new("chmod")
@@ -290,6 +312,30 @@ mod tests {
         run(&clone, &["commit", "--allow-empty", "-m", "ticket"]);
         let e = push_if_ahead(&clone, "main").await.unwrap_err();
         assert!(!e.is_empty(), "{e}");
+    }
+
+    #[tokio::test]
+    async fn a_push_that_lost_a_race_to_the_same_commits_is_quiet() {
+        let (_tmp, origin, clone) = pair();
+        run(&clone, &["commit", "--allow-empty", "-m", "ticket"]);
+        // The hook makes our push fail the way the lock race did, after another pusher put the
+        // same commit on origin.
+        let hook = origin.join("hooks/pre-receive");
+        std::fs::create_dir_all(origin.join("hooks")).unwrap();
+        let script = format!(
+            "#!/bin/sh\nunset GIT_QUARANTINE_PATH GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES\n\
+             git --git-dir={} fetch -q {} main:main\necho 'cannot lock ref' >&2\nexit 1\n",
+            origin.display(),
+            clone.display()
+        );
+        std::fs::write(&hook, script).unwrap();
+        run(&origin, &["config", "core.hooksPath", "hooks"]);
+        std::process::Command::new("chmod")
+            .arg("+x")
+            .arg(&hook)
+            .status()
+            .unwrap();
+        assert_eq!(push_if_ahead(&clone, "main").await, Ok(false));
     }
 
     #[test]

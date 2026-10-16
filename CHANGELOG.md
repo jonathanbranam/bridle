@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 - Fix (br-d7r5): a restart or self-upgrade now waits for a `bridle ticket land` in progress (its check, merge, push and done), as it waits for a turn, so the land is no longer cut off; a land holds the drain for at most 2 h. Migration: none.
+- Fix (br-54sp): a rejected push of the integration branch (the automatic push, and `bridle push`) re-fetches first and raises no `push.failed` alarm when `origin/<branch>` already equals or contains the local branch, as when the manager pushed the same commits first. A real rejection (local has commits origin lacks) still alarms. Migration: none.
 - Fix (br-sy6z): `bridle project take-over` on the machine that released a project now says it was released by this machine and how to take it back (`bridle project start`), not "already owned". Behaviour is unchanged. Migration: none.
 - Fix (br-9a7b): `bridle daemon restart --upgrade` under `self_upgrade = "release"` installs the newest release of `release_repo` newer than the running binary, as the automatic upgrade does, instead of looking for a green commit; "nothing to upgrade" then names releases. Migration: none.
 - Fix (br-mfcj): the mail bridge no longer hangs for good after a stalled S3 download: each S3 list, get and delete times out after 60 s and the next poll runs, and a bridge with no successful poll for 5 x `poll_secs` exits non-zero so its unit restarts it. Migration: none; the existing units already restart on a crash, no `bridle mail install` re-run needed.

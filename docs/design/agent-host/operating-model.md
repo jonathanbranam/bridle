@@ -246,7 +246,8 @@ the clone:
    and, when the branch is strictly ahead, `git push origin <integration>` (no fetch; never a
    force; behind or diverged is left to the origin watch below). A rejection is a `push.failed`
    event and a note to the human and the orchestrator, only when the push fails again on the
-   next tick (a one-off race between pushers stays quiet), then once per distinct error while it
+   next tick (a one-off race between pushers stays quiet), and never when, after a re-fetch,
+   `origin/<integration>` already contains the local branch (the manager pushed it first; `bridle push` treats that as success too, ticket 54sp), then once per distinct error while it
    is retried each tick. The note names git's reason line (`! [rejected] ...`, `error: ...`). Only a daemon that holds the project's ownership runs it, and `[state] push =
    false` turns it off. This is what makes "the remote never lags the clone" true for docs too. Projects with `[state] push = false` have no
    owner file and get no hook. `land` never pushes: only the merger pushes, and only the integration
