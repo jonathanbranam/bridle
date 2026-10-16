@@ -4,12 +4,13 @@ title = "token pair homes the orchestrator in 'bridle' or the holder's first pro
 kind = "bug"
 state = "claimed"
 created_at = "2026-10-16T01:58:15.267Z"
-updated_at = "2026-10-16T02:53:06.838503Z"
+updated_at = "2026-10-16T03:06:57.042385Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
     "agent:gr3v",
 ]
+summary = "token_pair.rs: home_for takes the holder machine and returns <machine>-home first for the orchestrator; entry_home also makes the orchestrator a visitor (home <machine>-home) on the holder's own non-home daemons, minted with the new hidden `pair-mint --replace-direct` (revokes the old direct token so external_exists is false and the existing wake forwarding fires). pair-check treats --home alone as visitor (no-home check). No daemon change: existing visitor-wake forwarding is reused, so ask 2 landed in the same change. Tests: home_for, mint calls, repair moves nuc's recorded home. Docs: cli.md, orchestrator-supervision.md, CHANGELOG. Migration: re-run bridle token pair on dalek, vesta, remus. Not tested against a live daemon."
 ticket = "gr3v"
 +++
 
