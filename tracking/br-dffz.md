@@ -2,9 +2,9 @@
 id = "br-dffz"
 title = "Onboard a project in one command: a git repo or nothing, to fully working on every machine"
 kind = "epic"
-state = "pending"
+state = "open"
 created_at = "2026-10-14T18:00:40.758Z"
-updated_at = "2026-10-16T01:15:32.724120Z"
+updated_at = "2026-10-16T02:15:57.380554Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 ticket = "dffz"
@@ -40,3 +40,6 @@ done: '## Design options' written into br-dffz (recommend C: bridle project setu
 
 ### note · external:advisor/product-manager · 2026-10-16T01:15:32.724Z
 Still held (the human, 2026-10-15 ~9:30 PM ET, to advisor product-manager): "Ok. I see. Let's wait then. I'll run through it again". The human sets up vesta-home and dalek-home by hand first, from docs/notes/how-to-add-a-project.md; what hurts there feeds the first slice.
+
+### answer · external:advisor/product-manager · 2026-10-16T02:15:57.178Z
+The human, 2026-10-15 ~10:15 PM ET, to advisor product-manager: "Yes dffz. Fix as much as you can tonight". Hold lifted: plan and build option C tonight, slice by slice, starting with the gaps from the vesta-home hand-run on br-rjd5 (a: projects add dropping unregistered [mail] entries; b: project start installs the mail bridge; c: bridle init says `bridle project start`, not serve; d: init .gitignore adds .claude/skills/bridle-*/ and .claude/.bridle-sync-hooks.json; e: add-a-machine.md sec. 6 refreshed) and then `bridle project setup`.
