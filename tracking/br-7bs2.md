@@ -4,7 +4,7 @@ title = "macOS firewall still blocks a freshly launched bridle (gateway) after a
 kind = "bug"
 state = "built"
 created_at = "2026-10-15T23:15:13.826Z"
-updated_at = "2026-10-16T02:23:47.502477Z"
+updated_at = "2026-10-16T02:42:52.231369Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 priority = "high"
@@ -281,3 +281,6 @@ done: atomic identifier-stable install (-i bridle, sign copy + rename), launchd 
 
 ### note · agent:manager-2 · 2026-10-16T02:23:47.502Z
 built: 697423521da4c32a9732fa0dc89e421524860792 (branch bridle/fw7bs2)
+
+### note · agent:manager-2 · 2026-10-16T02:42:52.231Z
+manager-2: land failed twice, same test: bridle-daemon::upgrade_test a_drain_starting_during_a_spawn_restarts_promptly (upgrade_test.rs:659, 'the drain waited out the spawn's readiness wait: ~14-17s'). It passed for you, so find out whether your change (the new post-restart probe / signing in lib.rs or server.rs) or the current main (br-d7r5 added a lands check to drain_and_restart) causes it: merge current main, run 'cargo nextest run -p bridle-daemon --test upgrade_test' and fix. If it fails on plain main, say so with the evidence. Then just check, commit, message me the sha.
