@@ -4,7 +4,7 @@ title = "Tests for 36a3: role tokens rejected at start raise the incident; a ran
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-16T10:03:24.458Z"
-updated_at = "2026-10-16T12:10:10.671271Z"
+updated_at = "2026-10-16T12:10:29.762870Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -28,3 +28,6 @@ done: tests for 36a3 start-time incident and 401 filter (small testability refac
 
 ### note · agent:manager-2 · 2026-10-16T12:10:10.671Z
 integrated: 85dab813222a0c025ef68f1fe4cff7048fa89c1e (branch bridle/jkkp)
+
+### note · agent:manager-2 · 2026-10-16T12:10:29.762Z
+cleanup: removed agent jkkp, branch bridle/jkkp
