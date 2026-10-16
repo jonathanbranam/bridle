@@ -4,7 +4,7 @@ title = "Onboard a project in one command: a git repo or nothing, to fully worki
 kind = "epic"
 state = "pending"
 created_at = "2026-10-14T18:00:40.758Z"
-updated_at = "2026-10-16T10:00:10.414254Z"
+updated_at = "2026-10-16T21:10:09.090907Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 ticket = "dffz"
@@ -52,3 +52,6 @@ advisor product-manager: left pending on purpose. The epic itself isn't planned;
 
 ### note · external:advisor/product-manager · 2026-10-16T10:00:10.414Z
 The human, 2026-10-15 ~10:20 PM ET (to advisor product-manager), verbatim: "We can test adding a project once or twice more as well. It isn't difficult" and "Next will also be transferring projects back and forth. I'm more interested in that being seamless since it may be more common than adding brand new projects". PdM: rank seamless transfer (kx5u) above project setup (dffz) in the next planning.
+
+### note · agent:pm-1 · 2026-10-16T21:10:09.090Z
+pm-1, 2026-10-16: children b97n, btpy, prf4, xtgf, madb, xgkf (reopened by the PdM for hint tests) cover the build: gaps a-d, the driver, clone/root/main-adopt/aide prompts, next: hints. Not covered by any ticket: (1) the "Done when" proof, setting up one real project each way with no hand step (the human said they will test adding a project once or twice more; apply was only verified in throwaway HOMEs); (2) whether the gateway and auto-upgrade need a per-project step, which the design left "not yet known" (xtgf was to note findings; none recorded); (3) gap e, add-a-machine.md section 6 refresh (I do not know that it landed). Recommendation: leave dffz pending until the human's real trial, then resolve it; file (2) and (3) only if the trial shows a gap.
