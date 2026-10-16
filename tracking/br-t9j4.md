@@ -2,13 +2,14 @@
 id = "br-t9j4"
 title = "7bs2 gaps: just install signs a copy and renames; the gateway checks its own tailnet listener"
 kind = "fix"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-16T10:03:28.515Z"
-updated_at = "2026-10-16T21:08:40.444172Z"
+updated_at = "2026-10-16T21:17:47.147652Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "agent:t9j4",
+    "agent:t9j4b",
 ]
 branch = "bridle/t9j4"
 commit = "0454f3b8bc9bc2f2e61976a6de98929741c8b6c5"
