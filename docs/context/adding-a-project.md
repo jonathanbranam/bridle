@@ -36,7 +36,8 @@ Run inside a clone. It:
   `packs = ["<stack>"]` with `--stack python|typescript` (0.4.0 binaries also accept `rust`, a pack
   that doesn't exist; dropped in f55537d), and a `check` command guessed
   from a justfile, `Cargo.toml`, `package.json` or `pyproject.toml`. It never overwrites.
-- appends bridle's runtime files to `.gitignore`.
+- appends bridle's runtime and generated files (`.bridle/` state, and the `.claude/` files `sync`
+  writes) to `.gitignore`.
 - vendors the base workflow into `.bridle/workflow/`, but only if nothing names a workflow
   already. On the NUC, the machine-level `workflow` path does, so nothing is vendored there.
 

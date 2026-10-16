@@ -708,8 +708,9 @@ bridle ticket comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain com
   `npm test` or `pytest`, by which of `justfile`/`Cargo.toml`/`package.json`/`pyproject.toml`
   exists; a commented stub if none) plus commented `[worktrees]` `setup`/`copy` stubs.
   `--name` is only a comment: config has no name key. `.gitignore` gets `.bridle/*.db*`,
-  `.bridle/daemon.json` and `.bridle/cache/` appended if missing. Prints the next steps (`sync`,
-  `doctor`, `serve`) and suggests `--stack` from the files it found; it runs none of them and
+  `.bridle/daemon.json` and `.bridle/cache/`, and the files `sync` generates into `.claude/`
+  (`.claude/skills/bridle-*/`, `.claude/.bridle-sync-hooks.json`), appended if missing. Prints the
+  next steps (`sync`, `doctor`, `project start`) and suggests `--stack` from the files it found; it runs none of them and
   asks nothing.
 - **`launchd install|uninstall`** (macOS only): writes/removes
   `~/Library/LaunchAgents/dev.bridle.<project>.plist` (project from `--project`, else the repo

@@ -10,8 +10,15 @@ use anyhow::{Context, bail};
 use crate::cli::InitArgs;
 use crate::error::CliError;
 
-/// What `doctor` looks for, so a fresh init passes it.
-const GITIGNORE_LINES: [&str; 3] = [".bridle/*.db*", ".bridle/daemon.json", ".bridle/cache/"];
+/// What `doctor` looks for, so a fresh init passes it, plus the files `sync` generates into
+/// `.claude/` (never committed).
+const GITIGNORE_LINES: [&str; 5] = [
+    ".bridle/*.db*",
+    ".bridle/daemon.json",
+    ".bridle/cache/",
+    ".claude/skills/bridle-*/",
+    ".claude/.bridle-sync-hooks.json",
+];
 
 pub fn run(args: &InitArgs) -> Result<(), CliError> {
     let repo = match &args.repo {
@@ -36,9 +43,7 @@ pub fn run(args: &InitArgs) -> Result<(), CliError> {
         .ok()
         .and_then(|p| p.file_name().map(|n| n.to_string_lossy().into_owned()))
         .unwrap_or_default();
-    println!(
-        "\nNext:\n  bridle sync     render the workflow layers into .claude/\n  bridle doctor   check the setup\n  bridle serve    start the daemon\n  bridle token pair --projects {name}   once it is serving: peer tokens so it can mail the other projects (n63z)"
-    );
+    println!("{}", next_steps(&name));
     pair_new_project(&name);
     if args.stack.is_none()
         && let Some(s) = detect_stack(&repo)
@@ -48,9 +53,15 @@ pub fn run(args: &InitArgs) -> Result<(), CliError> {
     Ok(())
 }
 
+fn next_steps(name: &str) -> String {
+    format!(
+        "\nNext:\n  bridle sync     render the workflow layers into .claude/\n  bridle doctor   check the setup\n  bridle project start   start the project's daemon (and mail bridge, if any)\n  bridle token pair --projects {name}   once it is serving: peer tokens so it can mail the other projects (n63z)"
+    )
+}
+
 /// Pairs a project that already has a daemon (a re-init) so it can send and receive mail at
 /// once (n63z). A fresh project has no daemon yet, so the "Next" list tells the human to run
-/// it after `bridle serve`. Failure (no ssh, a machine down) never fails init: it says to
+/// it after `bridle project start`. Failure (no ssh, a machine down) never fails init: it says to
 /// re-run the command.
 fn pair_new_project(name: &str) {
     if name.is_empty()
@@ -109,7 +120,7 @@ pub fn scaffold(repo: &Path, args: &InitArgs) -> anyhow::Result<Report> {
         if !out.is_empty() && !out.ends_with('\n') {
             out.push('\n');
         }
-        out.push_str("\n# bridle runtime files\n");
+        out.push_str("\n# bridle runtime and generated files\n");
         for l in missing {
             out.push_str(l);
             out.push('\n');
@@ -253,6 +264,9 @@ mod tests {
         assert!(config.contains("check = \"cargo test\""), "{config}");
         let gi = std::fs::read_to_string(d.path().join(".gitignore")).expect("read");
         assert!(gi.starts_with("target\n"), "{gi}");
+        for line in GITIGNORE_LINES {
+            assert!(gi.lines().any(|l| l == line), "{line} missing: {gi}");
+        }
 
         let home = tempfile::tempdir().expect("home");
         let (checks, cfg) = local_checks(d.path(), Some(home.path()));
@@ -269,6 +283,14 @@ mod tests {
             std::fs::read_to_string(d.path().join(".gitignore")).expect("read"),
             gi
         );
+    }
+
+    #[test]
+    fn next_step_is_project_start_not_serve() {
+        let s = next_steps("demo");
+        assert!(s.contains("bridle project start"), "{s}");
+        assert!(!s.contains("bridle serve"), "{s}");
+        assert!(s.contains("--projects demo"), "{s}");
     }
 
     #[test]
