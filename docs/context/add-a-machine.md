@@ -322,7 +322,8 @@ bridle gateway install                   # launchd plist or systemd user unit; r
 
 **The mail bridge** (optional, if you want mail; one per project on each machine that has its
 mail set up by [[docs/context/mail-on-a-machine|set up mail on a machine]]; needs `[mail]` and a
-`mail` token for the project, step 3c; a moved project gets it from `project start`):
+`mail` token for the project, step 3c; `bridle project start` installs and starts it for you when
+the project is in `[mail] projects` and mail is set up here, so this is only for fixing one by hand):
 
 ```bash
 bridle mail install --project P          # one per project it bridges
@@ -431,8 +432,9 @@ or later first (the token pair fix).
    token pair can fail on some visitor tokens (ticket g9qm); that is fine for now, see step 4.
 4. **Tokens:** run `bridle token pair --machines dalek,vesta,remus` twice, so every machine has the
    tokens for `<host>-home`.
-5. **Mail:** `bridle mail install --project <host>-home`, then enable its unit (`systemctl --user
-   enable --now` on Linux; `start` can stop before its mail step).
+5. **Mail:** `project start` (step 3) installs and starts the bridge once the tokens exist (run
+   it again after step 4 if it printed "mail bridge not installed"; it prints the
+   `bridle mail install --project <host>-home` to run by hand).
 6. **Check:** `bridle --project <host>-home status --json` answers, and a test mail to
    `<host>-home@` gets a reply.
 7. **Restart the orchestrator there:** the human stops the orchestrator session in its old project

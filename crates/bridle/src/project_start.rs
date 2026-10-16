@@ -29,6 +29,17 @@ use crate::token_pair::{Exec, Fleet, Options, Runner, Where, pair};
 /// Moves the mail bridge once the tokens exist: given the old machine's name and the output.
 type MailStep<'a> = dyn Fn(Option<&str>, &mut dyn Write) -> Result<(), String> + 'a;
 
+/// Runs the mail step. A failure is printed with the command to run, not returned: the project
+/// is up and mail can be fixed afterwards (br-btpy).
+fn mail_step(mail: &MailStep<'_>, from: Option<&str>, project: &str, out: &mut dyn Write) {
+    if let Err(e) = mail(from, out) {
+        let _ = writeln!(
+            out,
+            "{project}: mail bridge not installed ({e}); fix it, then run `bridle mail install --project {project}`"
+        );
+    }
+}
+
 /// Written by `take-over` in the workspace's `.bridle/`, removed once `start` has carried it in.
 const MOVED_IN: &str = "moved-in.json";
 
@@ -390,17 +401,30 @@ async fn local(
                 );
                 return Ok(());
             }
-            _ => {}
+            crate::mail_install::MailState::NotConfigured => {
+                let _ = writeln!(
+                    out,
+                    "{project}: mail bridge skipped (no [mail] section in config.toml)"
+                );
+                return Ok(());
+            }
+            crate::mail_install::MailState::Ready => {}
         }
         let old = from
             .and_then(|m| fleet.hosts.get(m))
             .map(|h| OldMachine { host: h.clone() });
         let old: Option<&dyn Old> = old.as_ref().map(|o| o as &dyn Old);
         if !crate::project_mail::bring(old, home, &project, out)? {
+            let _ = writeln!(
+                out,
+                "{project}: mail bridge skipped (project is not in [mail] projects)"
+            );
             return Ok(());
         }
         let has_unit = |units: &[Unit]| units.iter().any(|u| u.what == "mail bridge");
-        if !has_unit(&installed_units(os, &home_dir, &config_home, &project)) {
+        if has_unit(&installed_units(os, &home_dir, &config_home, &project)) {
+            let _ = writeln!(out, "{project}: mail bridge already installed");
+        } else {
             crate::mail_install::install_at(
                 cli,
                 &crate::cli::MailInstallArgs { force: false },
@@ -487,6 +511,8 @@ async fn carry_in(
         .into());
     }
     let Some(moved) = moved else {
+        // A first or plain start still gets its bridge; a mail problem never fails the start.
+        mail_step(mail, None, project, out);
         return Ok(());
     };
 
@@ -513,9 +539,7 @@ async fn carry_in(
         .into());
     }
     // After the tokens: the bridge needs its `mail` token to start.
-    mail(moved.from.as_deref(), out).map_err(|e| {
-        anyhow::anyhow!("{project} is running, but its mail bridge was not moved ({e}): fix it and run `bridle project start` again")
-    })?;
+    mail_step(mail, moved.from.as_deref(), project, out);
     std::fs::remove_file(&note).context("removing moved-in.json")?;
     Ok(())
 }
@@ -553,6 +577,19 @@ mod tests {
             name: name.into(),
             file: file.into(),
         }
+    }
+
+    #[test]
+    fn a_mail_failure_is_printed_with_the_command_not_returned() {
+        let mut out = Vec::new();
+        let failing = |_: Option<&str>, _: &mut dyn Write| Err("no mail token".to_string());
+        mail_step(&failing, None, "acme", &mut out);
+        let text = String::from_utf8(out).unwrap();
+        assert!(text.contains("no mail token"), "{text}");
+        assert!(
+            text.contains("bridle mail install --project acme"),
+            "{text}"
+        );
     }
 
     #[test]

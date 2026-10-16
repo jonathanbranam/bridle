@@ -74,7 +74,9 @@ the directory.
 
 3. **Start the daemon** in the clone: `bridle project start`. On a brand-new project it creates
    `bridle/state` and records this machine as owner (what `serve` does on a first run), then
-   installs and starts the daemon's unit and waits for it. Safe to run again. The daemon listens
+   installs and starts the daemon's unit and waits for it, then installs and starts the project's
+   mail bridge if the project is in `[mail] projects` and the machine has mail set up (it says
+   what it did or why it skipped, and a mail problem does not fail the start). Safe to run again. The daemon listens
    on the port from `[projects]`, on 127.0.0.1 and the machine's Tailscale address. It runs
    without `.bridle/config.toml`, and picks the config up on the next restart. Don't use
    `bridle serve --detach` for setup: `start` is the step.
