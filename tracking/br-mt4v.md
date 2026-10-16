@@ -4,7 +4,7 @@ title = "Tests for eggc: one incident per land past the cap; a land refused duri
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-16T10:03:26.182Z"
-updated_at = "2026-10-16T12:28:41.251630Z"
+updated_at = "2026-10-16T12:29:02.616994Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -28,3 +28,6 @@ done: tests for eggc (one incident per forced land, refused land runs once open,
 
 ### note · agent:manager-2 · 2026-10-16T12:28:41.251Z
 integrated: 1f88133026f6f4d6c47b7c1d89c059c731c799a1 (branch bridle/mt4v)
+
+### note · agent:manager-2 · 2026-10-16T12:29:02.616Z
+cleanup: removed agent mt4v, branch bridle/mt4v
