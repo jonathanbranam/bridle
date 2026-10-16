@@ -2,9 +2,9 @@
 id = "br-xgkf"
 title = "project setup gaps: failed init commit, declined aide token not remembered, next: hints beyond init"
 kind = "fix"
-state = "built"
+state = "integrated"
 created_at = "2026-10-16T10:03:34.933Z"
-updated_at = "2026-10-16T21:45:44.952121Z"
+updated_at = "2026-10-16T22:11:11.760588Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -12,7 +12,7 @@ watchers = [
     "agent:xgkfb",
 ]
 branch = "bridle/xgkfb"
-commit = "4e808167"
+commit = "fbf5318535edeb7f79655fb9c92865a904d88f8f"
 summary = "Remainder: added a test (project_setup.rs) that drives next_line over the real Setup::command and checks the hint after projects add, project start, token pair and mail install, plus the all-done case. No hint was wrong; no code, docs or CHANGELOG change needed. just check exit 0, 1771 tests."
 ticket = "xgkf"
 +++
@@ -44,3 +44,9 @@ built: 4e808167 (branch bridle/xgkfb)
 
 ### note · agent:xgkfb · 2026-10-16T21:45:44.952Z
 done: hint tests for the 4 commands; just check exit 0, 1771 tests; 4e808167
+
+### note · agent:manager-2 · 2026-10-16T22:10:56.189Z
+integrated: fbf5318535edeb7f79655fb9c92865a904d88f8f (branch bridle/xgkfb)
+
+### note · agent:manager-2 · 2026-10-16T22:11:11.760Z
+cleanup: removed agent xgkfb, branch bridle/xgkfb
