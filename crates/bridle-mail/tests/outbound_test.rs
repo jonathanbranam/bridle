@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use bridle_api::types::{Agent, Message, MessageKind, OpenQuestion, SendRequest, Ticket};
 use bridle_mail::{
     Bridge, FakeMailer, FakeStore, Feed, MailConfig, Outbound, Outcome, Rejection, Sent, Sink,
-    Tokens, decode_tickets, digest_due,
+    Tokens, decode_tickets, digest_due, digest_mail, is_bare_sent_notice,
 };
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use serde_json::json;
@@ -349,4 +349,99 @@ fn keys_persist_and_differ_per_machine() {
     assert_eq!(a.tag("p", "m-1"), again.tag("p", "m-1"));
     let other = Tokens::new(b"another machine's key".to_vec());
     assert_ne!(a.tag("p", "m-1"), other.tag("p", "m-1"));
+}
+
+fn message_at(id: &str, kind: &str, body: &str, created: &str, read: Option<&str>) -> Message {
+    let mut m = message(id, kind, "a-1", body);
+    m.created_at = created.parse().expect("created");
+    m.read_at = read.map(|r| r.parse().expect("read"));
+    m
+}
+
+#[test]
+fn the_digest_stamps_local_time_and_groups_by_age() {
+    // Eastern (UTC-4) on Friday 2026-10-16, 6:30 AM.
+    let tz = chrono::FixedOffset::west_opt(4 * 3600).expect("tz");
+    let now = NaiveDate::from_ymd_opt(2026, 10, 16)
+        .expect("date")
+        .and_hms_opt(6, 30, 0)
+        .expect("time");
+    let messages = [
+        // 11:00 UTC is 7:00 AM Eastern; created yesterday, updated later the same day.
+        message_at(
+            "m-1",
+            "note",
+            "Yesterday's blocker",
+            "2026-10-15T11:00:00Z",
+            Some("2026-10-15T13:15:00Z"),
+        ),
+        message_at("m-2", "note", "Last week's", "2026-10-10T20:00:00Z", None),
+        message_at("m-3", "note", "Ancient", "2026-09-01T20:00:00Z", None),
+        // 02:00 UTC on the 16th is still the 15th at 10:00 PM Eastern: yesterday.
+        message_at("m-4", "note", "Late night", "2026-10-16T02:00:00Z", None),
+    ];
+    let mail = digest_mail("proj", &cfg(), &messages, &[], &[], now, &tz);
+    let body = &mail.body;
+    assert!(
+        body.contains("m-1 from a-1: Yesterday's blocker [created Thu Oct 15 7:00 AM, updated Thu Oct 15 9:15 AM]"),
+        "{body}"
+    );
+    assert!(body.contains("[created Thu Oct 15 10:00 PM]"), "{body}");
+    let pos = |s: &str| body.find(s).unwrap_or_else(|| panic!("{s} in {body}"));
+    assert!(pos("  Yesterday\n") < pos("m-1"));
+    assert!(pos("m-1") < pos("  Last week\n"));
+    assert!(pos("  Last week\n") < pos("m-2"));
+    assert!(pos("m-2") < pos("  Older\n"));
+    assert!(pos("  Older\n") < pos("m-3"));
+    assert!(
+        !body.contains("  Today\n"),
+        "empty groups are left out: {body}"
+    );
+}
+
+#[test]
+fn bare_message_sent_items_are_dropped_unless_they_link_somewhere() {
+    let tz = chrono::FixedOffset::west_opt(4 * 3600).expect("tz");
+    let now = at(6, 30);
+    let bare = message("m-1", "note", "a-1", "Message sent");
+    let mut replying = message("m-2", "note", "a-1", "message sent.");
+    replying.reply_to = Some("m-0".into());
+    let real = message(
+        "m-3",
+        "note",
+        "a-1",
+        "Message sent to the build farm failed",
+    );
+    assert!(is_bare_sent_notice(&bare));
+    assert!(!is_bare_sent_notice(&replying));
+    assert!(!is_bare_sent_notice(&real));
+    let mail = digest_mail("proj", &cfg(), &[bare, replying, real], &[], &[], now, &tz);
+    assert!(!mail.body.contains("m-1 from"), "{}", mail.body);
+    assert!(mail.body.contains("m-2 from") && mail.body.contains("m-3 from"));
+    assert!(mail.body.contains("Blockers and decisions waiting (2)"));
+}
+
+#[test]
+fn merged_tickets_from_the_last_week_are_listed() {
+    let tz = chrono::FixedOffset::west_opt(4 * 3600).expect("tz");
+    let now = NaiveDate::from_ymd_opt(2026, 10, 1)
+        .expect("date")
+        .and_hms_opt(6, 30, 0)
+        .expect("time");
+    // task() was last updated 2026-09-30, yesterday.
+    let mail = digest_mail(
+        "proj",
+        &cfg(),
+        &[],
+        &[],
+        &[task("t-3", "integrated", None)],
+        now,
+        &tz,
+    );
+    assert!(
+        mail.body.contains("Merged in the last week (1)"),
+        "{}",
+        mail.body
+    );
+    assert!(mail.body.contains("t-3 merged: title of t-3"));
 }

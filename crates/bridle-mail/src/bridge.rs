@@ -305,6 +305,7 @@ impl Bridge {
                     &open,
                     &tasks,
                     now,
+                    &chrono::Local,
                 ))
                 .await
             {

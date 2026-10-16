@@ -91,7 +91,13 @@ from `<project>@domain`, to `[mail] to`. Nothing is mailed except:
 - **One digest a day**, the first pass at or after `digest_at` on a day with no digest yet
   (`<state dir>/mail/digest` holds the date; a bridge started late sends it at once). It lists the
   open questions, the task questions, the other unread inbox items (blockers and decisions), task
-  counts by state and the claimed tasks. Notes and answers are never mailed on their own.
+  counts by state, the claimed tasks, and the tickets merged in the last week. Notes and answers
+  are never mailed on their own. Each item carries its times in the bridge machine's local time
+  (US Eastern on the human's machines), `created Thu Oct 15 7:00 AM`, plus `updated ...` when the
+  last activity is a minute or more later. Within each section items are grouped under Today,
+  Yesterday, Last week (2 to 7 days back) and Older by their last activity (empty groups are left
+  out), newest first. An inbox item whose whole text is a bare "message sent" and that has no
+  reply link or incident is dropped: it says nothing and points nowhere (br-bft2).
 
 Mail isn't confidential and crosses several systems, so outbound carries the question text, ids,
 titles and counts only: no tokens, and no diffs or transcripts.

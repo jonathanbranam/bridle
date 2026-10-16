@@ -16,8 +16,8 @@ pub use bridge::{Bridge, ClientSink, Outbound, Outcome, Sink, decode_tickets};
 pub use config::MailConfig;
 pub use local::{FileLocal, FixedLocal, Local};
 pub use outbound::{
-    FakeMailer, Feed, Mailer, OutMail, Sent, SesMailer, digest_due, digest_mail, is_open_question,
-    question_mail,
+    FakeMailer, Feed, Mailer, OutMail, Sent, SesMailer, digest_due, digest_mail,
+    is_bare_sent_notice, is_open_question, question_mail,
 };
 pub use parse::{Accepted, Attachment, Rejection, Route, evaluate};
 pub use store::{FakeStore, MailStore, S3Store, TimeoutStore};

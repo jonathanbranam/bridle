@@ -11,8 +11,10 @@ use std::sync::Mutex;
 
 use anyhow::Context;
 use async_trait::async_trait;
-use bridle_api::types::{Agent, Message, MessageKind, MessageState, OpenQuestion, Ticket};
-use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
+use bridle_api::types::{
+    Agent, Message, MessageKind, MessageState, OpenQuestion, Ticket, TicketState,
+};
+use chrono::{DateTime, NaiveDate, NaiveDateTime, NaiveTime, TimeZone, Utc};
 
 use crate::config::MailConfig;
 use crate::token::Tokens;
@@ -253,59 +255,189 @@ pub fn question_mail(
     }
 }
 
-pub fn digest_mail(
+/// A message whose only text is a bare "message sent" style line and that points at nothing
+/// (no reply, no incident, no ticket id, no link) tells the human nothing, so the digest drops it.
+pub fn is_bare_sent_notice(m: &Message) -> bool {
+    let text = m.body.trim().trim_end_matches('.').to_lowercase();
+    matches!(text.as_str(), "message sent" | "sent" | "message sent ok")
+        && m.reply_to.is_none()
+        && m.incident_task.is_none()
+}
+
+/// How far back an item's last activity is, for grouping: the digest's day, then yesterday, the
+/// week before, and the rest.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+enum Age {
+    Today,
+    Yesterday,
+    LastWeek,
+    Older,
+}
+
+impl Age {
+    fn of(day: NaiveDate, today: NaiveDate) -> Age {
+        match (today - day).num_days() {
+            ..=0 => Age::Today,
+            1 => Age::Yesterday,
+            2..=7 => Age::LastWeek,
+            _ => Age::Older,
+        }
+    }
+
+    fn label(self) -> &'static str {
+        match self {
+            Age::Today => "Today",
+            Age::Yesterday => "Yesterday",
+            Age::LastWeek => "Last week",
+            Age::Older => "Older",
+        }
+    }
+}
+
+/// One digest line with the times it is grouped and stamped by.
+struct Item {
+    text: String,
+    created: NaiveDateTime,
+    updated: NaiveDateTime,
+}
+
+fn stamp(t: NaiveDateTime) -> String {
+    t.format("%a %b %-d %-I:%M %p").to_string()
+}
+
+/// "created X" and, when it differs by a minute or more, "updated Y", in the bridge's local time.
+fn times(created: NaiveDateTime, updated: NaiveDateTime) -> String {
+    if (updated - created).num_seconds().abs() >= 60 {
+        format!("created {}, updated {}", stamp(created), stamp(updated))
+    } else {
+        format!("created {}", stamp(created))
+    }
+}
+
+fn item<Tz: TimeZone>(
+    tz: &Tz,
+    text: String,
+    created: DateTime<Utc>,
+    updated: DateTime<Utc>,
+) -> Item {
+    let created = created.with_timezone(tz).naive_local();
+    let updated = updated.with_timezone(tz).naive_local().max(created);
+    Item {
+        text: format!("{text} [{}]", times(created, updated)),
+        created,
+        updated,
+    }
+}
+
+/// Writes `items` under Today / Yesterday / Last week / Older headings (the empty ones left
+/// out), newest activity first.
+fn push_grouped(out: &mut String, mut items: Vec<Item>, today: NaiveDate) {
+    items.sort_by(|a, b| b.updated.cmp(&a.updated).then(b.created.cmp(&a.created)));
+    let mut last = None;
+    for i in &items {
+        let age = Age::of(i.updated.date(), today);
+        if last != Some(age) {
+            out.push_str(&format!("  {}\n", age.label()));
+            last = Some(age);
+        }
+        out.push_str(&format!("  - {}\n", i.text));
+    }
+}
+
+pub fn digest_mail<Tz: TimeZone>(
     project: &str,
     cfg: &MailConfig,
     messages: &[Message],
     open: &[OpenQuestion],
     tasks: &[Ticket],
     now: NaiveDateTime,
+    tz: &Tz,
 ) -> OutMail {
+    let today = now.date();
     let mut out = format!(
-        "bridle digest for {project}, {}\n",
+        "bridle digest for {project}, {}\nTimes are local to the bridge (US Eastern on the human's machines).\n",
         now.format("%A %Y-%m-%d")
     );
+    let msg_item = |m: &Message| {
+        let updated = [m.written_at, m.delivered_at, m.read_at]
+            .into_iter()
+            .flatten()
+            .fold(m.created_at, |a, b| a.max(b));
+        item(
+            tz,
+            format!(
+                "{} from {}: {}",
+                m.id,
+                m.from,
+                clip(first_line(&m.body), 120)
+            ),
+            m.created_at,
+            updated,
+        )
+    };
     let questions: Vec<_> = messages.iter().filter(|m| is_open_question(m)).collect();
     out.push_str(&format!(
         "\nOpen questions for you ({}):\n",
         questions.len()
     ));
-    for q in &questions {
-        out.push_str(&format!(
-            "- {} from {}: {}\n",
-            q.id,
-            q.from,
-            clip(first_line(&q.body), 120)
-        ));
-    }
+    push_grouped(
+        &mut out,
+        questions.into_iter().map(msg_item).collect(),
+        today,
+    );
     if !open.is_empty() {
         out.push_str(&format!("\nOpen questions on tasks ({}):\n", open.len()));
-        for q in open {
-            out.push_str(&format!(
-                "- {} ({}): {}\n",
-                q.task_id,
-                q.asked_by,
-                clip(first_line(&q.body), 120)
-            ));
-        }
+        let items = open
+            .iter()
+            .map(|q| {
+                item(
+                    tz,
+                    format!(
+                        "{} ({}): {}",
+                        q.task_id,
+                        q.asked_by,
+                        clip(first_line(&q.body), 120)
+                    ),
+                    q.asked_at,
+                    q.asked_at,
+                )
+            })
+            .collect();
+        push_grouped(&mut out, items, today);
     }
     // The inbox is questions, blockers and decisions; whatever isn't a question is one of the
-    // other two.
+    // other two. Bare "message sent" lines are dropped.
     let others: Vec<_> = messages
         .iter()
-        .filter(|m| m.kind != MessageKind::Question && m.state != MessageState::Read)
+        .filter(|m| {
+            m.kind != MessageKind::Question
+                && m.state != MessageState::Read
+                && !is_bare_sent_notice(m)
+        })
         .collect();
     out.push_str(&format!(
         "\nBlockers and decisions waiting ({}):\n",
         others.len()
     ));
-    for m in &others {
-        out.push_str(&format!(
-            "- {} from {}: {}\n",
-            m.id,
-            m.from,
-            clip(first_line(&m.body), 120)
-        ));
+    push_grouped(&mut out, others.into_iter().map(msg_item).collect(), today);
+    let landed: Vec<_> = tasks
+        .iter()
+        .filter(|t| {
+            t.state == TicketState::Integrated
+                && Age::of(t.updated_at.with_timezone(tz).date_naive(), today) <= Age::LastWeek
+        })
+        .map(|t| {
+            item(
+                tz,
+                format!("{} merged: {}", t.id, clip(&t.title, 100)),
+                t.created_at,
+                t.updated_at,
+            )
+        })
+        .collect();
+    if !landed.is_empty() {
+        out.push_str(&format!("\nMerged in the last week ({}):\n", landed.len()));
+        push_grouped(&mut out, landed, today);
     }
     let mut by_state: BTreeMap<String, usize> = BTreeMap::new();
     for t in tasks {
@@ -321,14 +453,24 @@ pub fn digest_mail(
         out.push_str(&format!(" {state} {n};"));
     }
     out.push('\n');
-    for t in tasks.iter().filter(|t| t.claimed_by.is_some()) {
-        out.push_str(&format!(
-            "- {} in progress ({}): {}\n",
-            t.id,
-            t.claimed_by.as_deref().unwrap_or(""),
-            clip(&t.title, 100)
-        ));
-    }
+    let claimed = tasks
+        .iter()
+        .filter(|t| t.claimed_by.is_some())
+        .map(|t| {
+            item(
+                tz,
+                format!(
+                    "{} in progress ({}): {}",
+                    t.id,
+                    t.claimed_by.as_deref().unwrap_or(""),
+                    clip(&t.title, 100)
+                ),
+                t.created_at,
+                t.updated_at,
+            )
+        })
+        .collect();
+    push_grouped(&mut out, claimed, today);
     OutMail {
         from: format!("{project}@{}", cfg.domain),
         to: cfg.to.clone(),
