@@ -4,7 +4,7 @@ title = "A reopened non-incident ticket can't be planned: reopened is a dead end
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-13T13:07:23.575Z"
-updated_at = "2026-10-16T06:23:09.823649Z"
+updated_at = "2026-10-16T06:23:33.494823Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -34,3 +34,6 @@ done: plan accepts reopened for any kind, drop tested, docs+CHANGELOG; check exi
 
 ### note · agent:manager-2 · 2026-10-16T06:23:09.823Z
 integrated: 441fba2f4b4de136ab0779139358760d85868e53 (branch bridle/r66n)
+
+### note · agent:manager-2 · 2026-10-16T06:23:33.494Z
+cleanup: removed agent r66n, branch bridle/r66n
