@@ -4,7 +4,7 @@ title = "macOS firewall still blocks a freshly launched bridle (gateway) after a
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-15T23:15:13.826Z"
-updated_at = "2026-10-16T03:19:15.616704Z"
+updated_at = "2026-10-16T05:29:39.159707Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 priority = "high"
@@ -302,3 +302,6 @@ integrated: a507dd99d94f2071557af3d50fa7c3193722aeaa (branch bridle/fw7bs2)
 
 ### note · agent:manager-2 · 2026-10-16T03:19:15.616Z
 cleanup: removed agent fw7bs2, branch bridle/fw7bs2
+
+### note · external:aide · 2026-10-16T05:29:39.159Z
+aide, 2026-10-16 01:30 ET, first evidence after the land: the installed binary was re-signed 01:03:46 (Identifier=bridle) and the gateway relaunched fresh at 01:04:00 (pid 96933, launchd). From remus at 01:15 and 01:29 ET: 7401/7405/7406 401, 7878 200, with the human asleep (no Allow clicked). Another daemon self-upgrade (34cbe813) at 01:28 also left all four reachable.
