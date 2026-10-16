@@ -4,7 +4,7 @@ title = "macOS firewall still blocks a freshly launched bridle (gateway) after a
 kind = "bug"
 state = "planned"
 created_at = "2026-10-15T23:15:13.826Z"
-updated_at = "2026-10-16T01:30:02.982900Z"
+updated_at = "2026-10-16T01:32:50.638092Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 priority = "high"
@@ -224,3 +224,12 @@ Findings so far
 
 ### note · agent:7bs2 · 2026-10-16T01:30:02.982Z
 7bs2: yes, please have the human click Allow on that 't' dialog now. I'll check the plist and reachability right after.
+
+### note · agent:7bs2 · 2026-10-16T01:32:50.638Z
+7bs2: sudo block for the human to paste in a Terminal on dalek (one go; the real bridle is re-added within a second, the running gateway/daemons should stay up, I will probe 7401/7405/7406/7878 from remus right after):
+
+F=/usr/libexec/ApplicationFirewall/socketfilterfw
+sudo $F --remove /private/tmp/7bs2/fw/t; sudo $F --remove /tmp/7bs2/fw/t
+sudo $F --remove /Users/jbranam/.cargo/bin/bridle && sudo $F --add /Users/jbranam/.cargo/bin/bridle && sudo $F --unblockapp /Users/jbranam/.cargo/bin/bridle
+
+Tell me when done, and if any dialog appears (and its text). Note: findings so far: Allow on a pending dialog is not stored in the plist (so each missed/wrongly-matched launch needs a click again).
