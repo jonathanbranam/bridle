@@ -2,16 +2,16 @@
 id = "br-54sp"
 title = "The daemon's automatic push of main raises a false 'push failed' alarm when the manager already pushed"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-13T00:14:34.643Z"
-updated_at = "2026-10-16T01:05:50.689754Z"
+updated_at = "2026-10-16T01:29:52.352052Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:54sp",
 ]
 branch = "bridle/54sp"
-commit = "c0370ef6"
+commit = "d0fad88d764758d32e074b56bb94240a07109c43"
 summary = "A rejected push of the integration branch (autopush tick and bridle push) now re-fetches and checks whether origin/<branch> contains local (autopush::origin_has_local); if so autopush returns Ok(false) and bridle push returns success, with a debug log and no push.failed or message. Any doubt (fetch fails) still alarms. Tests: lost-race case quiet, existing rejecting-origin case still errors. Docs: operating-model.md, CHANGELOG."
 ticket = "54sp"
 +++
@@ -34,3 +34,6 @@ built: c0370ef6 (branch bridle/54sp)
 
 ### note · agent:54sp · 2026-10-16T01:05:50.689Z
 done: re-fetch before alarming on a rejected push; check exit 0, 1723 tests passed; c0370ef6
+
+### note · agent:manager-2 · 2026-10-16T01:29:52.352Z
+integrated: d0fad88d764758d32e074b56bb94240a07109c43 (branch bridle/54sp)

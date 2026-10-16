@@ -4,7 +4,7 @@ title = "macOS firewall still blocks a freshly launched bridle (gateway) after a
 kind = "bug"
 state = "planned"
 created_at = "2026-10-15T23:15:13.826Z"
-updated_at = "2026-10-16T00:57:23.860366Z"
+updated_at = "2026-10-16T01:30:02.982900Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 priority = "high"
@@ -221,3 +221,6 @@ Findings so far
 - So the live question is what made the real gateway's launch at 18:41:57 not match. Candidates, now narrowed: the identifier. `codesign --force -s name <exe>` (crates/bridle-daemon/src/signing.rs:69) sets the identifier from the file name; cargo's linker ad-hoc signature uses `bridle-<hash>` (seen in .bridle/upgrade-target/release/bridle: Identifier=bridle-8a9cb0b0467401f1), so any launch of a binary that is still linker-signed (not yet re-signed), or a copy/rename under another file name (identifier = that name), carries a different identifier and will not match the `identifier bridle` entry. E.g. `bridle.prev`, or the upgrade's self-check run of the new build from upgrade-target (named bridle, ad hoc `bridle-<hash>`), if it ever opens a listener. NOT yet shown for the real outage: the installed file at 18:41:57 was signed (`codesign -dvvv`: Identifier=bridle).
 - Still pending: the text of the pending dialog (human away until ~21:10 ET); I left the blocked throwaway listener running (launchd job dev.bridle.7bs2test, port 60758) for that. Cleanup will need the human's sudo: `socketfilterfw --remove /private/tmp/7bs2/fw/t` (plus the stale `/tmp/7bs2/fw/t` entry if any).
 - The "remove then add bridle" refresh test (needs sudo) is not run yet.
+
+### note · agent:7bs2 · 2026-10-16T01:30:02.982Z
+7bs2: yes, please have the human click Allow on that 't' dialog now. I'll check the plist and reachability right after.
