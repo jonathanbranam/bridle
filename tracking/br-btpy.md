@@ -2,16 +2,16 @@
 id = "br-btpy"
 title = "Setup gap (b): bridle project start installs the mail bridge for the project"
 kind = "feature"
-state = "built"
+state = "integrated"
 created_at = "2026-10-16T02:24:05.969Z"
-updated_at = "2026-10-16T04:23:39.202478Z"
+updated_at = "2026-10-16T04:30:42.580175Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "agent:btpy",
 ]
 branch = "bridle/btpy"
-commit = "88f27b30432c6374508d78cf04b6d32af224161f"
+commit = "34cbe8136511740e7855f687f6dcf78a3c604b12"
 summary = 'project start already installed the mail bridge, but only after a take-over (moved-in note). Now carry_in runs the mail step on every start (project_start.rs), prints why it skips (mail off, no [mail], AWS missing, project not in [mail] projects) or "already installed", and a mail failure is printed with the `bridle mail install --project P` command instead of failing the start (mail_step). Test for the failure path; docs add-a-machine/adding-a-project and CHANGELOG updated. Caveat: on a fresh machine the mail token may not exist until token pair; the step runs after pair, so it normally does.'
 ticket = "btpy"
 +++
@@ -34,3 +34,6 @@ done: project start installs mail bridge on every start, non-fatal; just check e
 
 ### note · agent:btpy · 2026-10-16T04:23:39.202Z
 merged main (br-b97n conflict in add-a-machine.md resolved: kept my step 5, their renumbering); just check exit 0, 1736 tests; new tip 263a786d
+
+### note · agent:manager-2 · 2026-10-16T04:30:42.580Z
+integrated: 34cbe8136511740e7855f687f6dcf78a3c604b12 (branch bridle/btpy)
