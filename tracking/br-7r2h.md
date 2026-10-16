@@ -2,9 +2,9 @@
 id = "br-7r2h"
 title = "Orchestrator opens a waiter on every project: its prompt still says to, though one waiter on the home daemon is enough"
 kind = "fix"
-state = "open"
+state = "planned"
 created_at = "2026-10-16T01:02:04.464Z"
-updated_at = "2026-10-16T01:02:53.369721Z"
+updated_at = "2026-10-16T01:14:04.112628Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 ticket = "7r2h"

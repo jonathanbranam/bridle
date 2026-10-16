@@ -2249,3 +2249,4 @@
 {"actor":"human","at":"2026-10-16T01:06:01.801Z","from":"","task":"br-eggc","to":"pending"}
 {"actor":"external:advisor/product-manager","at":"2026-10-16T01:06:11.032027Z","from":"pending","task":"br-eggc","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-16T01:06:17.339542Z","from":"pending","task":"br-x6q7","to":"dropped"}
+{"actor":"agent:pm-1","at":"2026-10-16T01:14:04.112628Z","from":"open","task":"br-7r2h","to":"planned"}
