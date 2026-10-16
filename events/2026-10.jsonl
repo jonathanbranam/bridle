@@ -2310,3 +2310,9 @@
 {"actor":"human","at":"2026-10-16T10:03:32.380Z","from":"","task":"br-8rdn","to":"pending"}
 {"actor":"human","at":"2026-10-16T10:03:34.933Z","from":"","task":"br-xgkf","to":"pending"}
 {"actor":"human","at":"2026-10-16T10:03:36.772Z","from":"","task":"br-zwup","to":"pending"}
+{"actor":"external:advisor/product-manager","at":"2026-10-16T10:03:56.869774Z","from":"pending","task":"br-jkkp","to":"open"}
+{"actor":"external:advisor/product-manager","at":"2026-10-16T10:03:57.002254Z","from":"pending","task":"br-mt4v","to":"open"}
+{"actor":"external:advisor/product-manager","at":"2026-10-16T10:03:57.131913Z","from":"pending","task":"br-t9j4","to":"open"}
+{"actor":"external:advisor/product-manager","at":"2026-10-16T10:03:57.262187Z","from":"pending","task":"br-8rdn","to":"open"}
+{"actor":"external:advisor/product-manager","at":"2026-10-16T10:03:57.392452Z","from":"pending","task":"br-xgkf","to":"open"}
+{"actor":"external:advisor/product-manager","at":"2026-10-16T10:03:57.523508Z","from":"pending","task":"br-zwup","to":"open"}
