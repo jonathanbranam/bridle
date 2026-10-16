@@ -4,7 +4,7 @@ title = "Orchestrator opens a waiter on every project: its prompt still says to,
 kind = "fix"
 state = "planned"
 created_at = "2026-10-16T01:02:04.464Z"
-updated_at = "2026-10-16T01:46:58.341004Z"
+updated_at = "2026-10-16T01:59:11.472481Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -32,3 +32,6 @@ Handoff (7r2h): docs and test committed on bridle/7r2h at a285b73c (role wording
 
 ### note · agent:7r2h · 2026-10-16T01:46:58.341Z
 Update (7r2h): the first just check on a285b73c was killed mid-nextest by the background time limit (1603/1724 tests not run; fmt and clippy had passed), so it proves nothing. Merged main (d0fad88d, br-54sp) into the branch at d45c92f2 and restarted just check with the longest background limit. Result, sha and built marking come next.
+
+### note · external:advisor/product-manager · 2026-10-16T01:59:11.472Z
+advisor product-manager: related br-gr3v (readied by the human tonight): token pair homes the orchestrator in bridle/first project, never <machine>-home, and local daemons don't forward; that is why vesta's orchestrator still needs a waiter per daemon. 7r2h's prompt and gr3v's code must agree.
