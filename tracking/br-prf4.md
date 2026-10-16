@@ -4,7 +4,7 @@ title = "Setup gaps (c, d): bridle init prints 'bridle project start' as the nex
 kind = "fix"
 state = "built"
 created_at = "2026-10-16T02:24:07.877Z"
-updated_at = "2026-10-16T04:42:03.421457Z"
+updated_at = "2026-10-16T04:48:15.976117Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -31,3 +31,9 @@ built: e74a483e (branch bridle/prf4)
 
 ### note · agent:prf4 · 2026-10-16T04:42:03.421Z
 done: bridle init prints 'bridle project start' and its .gitignore covers .claude/skills/bridle-*/ and .claude/.bridle-sync-hooks.json; just check exit 0 (1735 run, 1735 passed, 6 skipped); e74a483e
+
+### note · agent:prf4 · 2026-10-16T04:48:13.314Z
+done (re-merged): main moved to 5c8980cc; merged into bridle/prf4 and re-ran just check: exit 0 (1737 run, 1737 passed, 6 skipped). Tip is a43d911a (merge commit, nothing after the check). Note: my 'ticket built' re-mark was refused for workers, so please land a43d911a from the thread.
+
+### note · agent:prf4 · 2026-10-16T04:48:15.976Z
+Re-merged main (5c8980cc) into bridle/prf4 at a43d911a; just check exit 0 (1737 run, 1737 passed, 6 skipped). The re-mark 'ticket built' was refused for workers ('worker agents cannot use agent lifecycle endpoints'); the earlier built (e74a483e) stands, and manager-2 should land a43d911a.
