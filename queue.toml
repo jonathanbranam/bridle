@@ -5,6 +5,16 @@ tasks = [
 ]
 
 [[tier]]
+tasks = [
+    "br-b97n",
+    "br-btpy",
+    "br-prf4",
+]
+
+[[tier]]
+tasks = ["br-xtgf"]
+
+[[tier]]
 tasks = ["br-7r2h"]
 
 [[tier]]

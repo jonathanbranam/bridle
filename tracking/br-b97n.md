@@ -2,9 +2,9 @@
 id = "br-b97n"
 title = "Setup gap (a): projects add must not drop unregistered [mail] entries when it syncs"
 kind = "fix"
-state = "open"
+state = "planned"
 created_at = "2026-10-16T02:24:03.944Z"
-updated_at = "2026-10-16T02:24:57.500484Z"
+updated_at = "2026-10-16T02:36:09.325875Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 ticket = "b97n"

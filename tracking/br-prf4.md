@@ -2,9 +2,9 @@
 id = "br-prf4"
 title = "Setup gaps (c, d): bridle init prints 'bridle project start' as the next step and its .gitignore covers bridle's generated .claude files"
 kind = "fix"
-state = "open"
+state = "planned"
 created_at = "2026-10-16T02:24:07.877Z"
-updated_at = "2026-10-16T02:24:58.092111Z"
+updated_at = "2026-10-16T02:36:09.894151Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 ticket = "prf4"
