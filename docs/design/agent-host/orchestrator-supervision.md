@@ -201,7 +201,7 @@ orchestrator lives on another daemon), it also queues one `system` message per w
 its outbox, addressed to `external:orchestrator`, body `[<reason>] <text> (as of <time>)`, from
 `system@<machine>`. The home daemon's `/v1/forward` delivers it like any message (once: the
 origin id is deduplicated), so its ordinary message wake wakes the orchestrator's single waiter
-there; one waiter on the home daemon replaces one per project. Not forwarded: `message` and
+there; one waiter on the home daemon replaces one per project. `bridle token pair` makes this hold on the orchestrator's own machine too: it homes the orchestrator in `<machine>-home` and gives it a visitor token with that home on each local daemon (br-gr3v). Not forwarded: `message` and
 `question` (already messages) and `daemon_stopping`. Each message states when it was true, since
 usage, holds and stalls can be over by the time it is read. The local wake path is unchanged
 and still answers a waiter on the project's own daemon, so existing per-project waiters keep

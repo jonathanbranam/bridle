@@ -163,12 +163,12 @@ bridle token pair [--machines m,..] [--projects p,..] [--roles r,..] [--tokens r
                                              the default also pairs `peer` tokens: the receiving daemon mints `peer:<sending machine>` and the sender's file gets
                                              `[peer] <receiving project>`, for every project that sends to every other (same machine too);
                                              `[mail] peers = false` in a project's config leaves it out both ways (role tokens still
-                                             minted). A role token held for another machine's daemon is minted with a home (br-eurm: the
+                                             minted). A role token held for another machine's daemon is minted with a home (br-eurm; the orchestrator's is the holder's `<machine>-home` when it has one, br-gr3v; otherwise the
                                              same-named project on the holder's machine, else the role's project there, else its first
                                              project; `pair-mint --for <m> --home <p>`), and one with no home counts as not working
                                              (`GET /v1/status` carries `visitor_home`), and so does one whose recorded home differs from the home it would be minted with now (br-8usa: `pair-check --home`; a principal that moved to `<host>-home` follows on a re-pair), so a plain run re-mints it and replaces the
                                              holder's entry: no revoke and `token create --home` by hand. `bridle init` runs it for the new project when its daemon is already up, and
-                                             otherwise lists it as a next step. Spec: design/specs/token-pairing.md.
+                                             otherwise lists it as a next step. On the holder's own machine the orchestrator's token for every daemon except its `<machine>-home` is also a visitor token with that home (`pair-mint --replace-direct` revokes the old direct one), so those daemons forward wakes to the home (br-gr3v). Spec: design/specs/token-pairing.md.
                                              Its last step (not on `--dry-run`) is `token check` over everything selected: one
                                              `check <machine> <role> -> <daemon>/<project>: accepted|refused: <reason>` line each, and
                                              the exit is non-zero if any is refused (br-su62).

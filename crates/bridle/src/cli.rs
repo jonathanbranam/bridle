@@ -1787,6 +1787,9 @@ pub enum TokenAction {
         /// With `--for`: the visitor's home project on that machine (as `token create --home`).
         #[arg(long)]
         home: Option<String>,
+        /// With `--home` for the holder's own machine: also revoke the role's direct token.
+        #[arg(long)]
+        replace_direct: bool,
     },
     /// Helper for `token pair`: store the token on stdin as the role's entry for `--project`.
     #[command(hide = true)]

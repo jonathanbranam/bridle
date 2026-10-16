@@ -495,7 +495,7 @@ pub fn pair(
         let mut t = Tally::default();
         for e in p.role_entries(holder) {
             let label = format!("{} -> {}/{}", e.role, e.daemon, e.project);
-            let home = (!e.same).then(|| home_for(&up[holder], e.project, e.role));
+            let home = entry_home(holder, &up[holder], &e);
             match one(opts, fleet, runner, holder, &e, home) {
                 Ok(Outcome::Kept) => t.kept += 1,
                 Ok(Outcome::Minted) => t.minted += 1,
@@ -580,11 +580,14 @@ fn peer_one(
     Ok(Outcome::Minted)
 }
 
-/// The visitor's home on the holder machine: the project of the same name if the holder has it,
-/// else the role's own project, else the holder's first project (a daemon with none cannot
-/// receive replies at all).
-fn home_for(holder_projects: &[(String, u16)], project: &str, role: &str) -> String {
+/// The visitor's home on the holder machine: the orchestrator's `<machine>-home` if the holder
+/// has it (br-gr3v), else the project of the same name if the holder has it, else the role's own
+/// project, else the holder's first project (a daemon with none cannot receive replies at all).
+fn home_for(holder: &str, holder_projects: &[(String, u16)], project: &str, role: &str) -> String {
     let has = |p: &str| holder_projects.iter().any(|(h, _)| h == p);
+    if role == ORCHESTRATOR && has(&machine_home(holder)) {
+        return machine_home(holder);
+    }
     let default = TOKEN_ROLES
         .iter()
         .find(|r| r.name == role)
@@ -598,6 +601,23 @@ fn home_for(holder_projects: &[(String, u16)], project: &str, role: &str) -> Str
             .first()
             .map_or(default.to_string(), |(p, _)| p.clone())
     }
+}
+
+fn machine_home(machine: &str) -> String {
+    format!("{machine}-home")
+}
+
+/// The home a role's token for `e` is minted with, or None for a direct token. A token for
+/// another machine's daemon is a visitor. On the holder's own machine only the orchestrator is
+/// one, and only on daemons other than its `<machine>-home`: it then holds one waiter there, and
+/// the project daemons forward their wakes to it (br-gr3v).
+fn entry_home(holder: &str, holder_projects: &[(String, u16)], e: &RoleEntry) -> Option<String> {
+    if !e.same {
+        return Some(home_for(holder, holder_projects, e.project, e.role));
+    }
+    let home = machine_home(holder);
+    (e.role == ORCHESTRATOR && e.project != home && holder_projects.iter().any(|(p, _)| *p == home))
+        .then_some(home)
 }
 
 enum Outcome {
@@ -627,10 +647,10 @@ fn check_role(
     a.extend(args(&["token", "pair-check", e.role]));
     if !e.same {
         a.extend(args(&["--machine", e.daemon]));
-        // A kept visitor token must have the home it would be minted with now (br-8usa).
-        if let Some(home) = home {
-            a.extend(args(&["--home", home]));
-        }
+    }
+    // A kept visitor token must have the home it would be minted with now (br-8usa).
+    if let Some(home) = home {
+        a.extend(args(&["--home", home]));
     }
     runner.run(&fleet.at(holder), &a, None).map(|_| ())
 }
@@ -684,9 +704,7 @@ fn check_entries(p: &Plan, fleet: &Fleet, runner: &dyn Runner) -> Vec<Checked> {
                     runner,
                     holder,
                     &e,
-                    (!e.same)
-                        .then(|| home_for(&p.up[holder], e.project, e.role))
-                        .as_deref(),
+                    entry_home(holder, &p.up[holder], &e).as_deref(),
                 )
                 .err(),
             });
@@ -776,11 +794,15 @@ fn one(
         return Ok(Outcome::Would);
     }
     let mut mint = args(&["--project", project, "token", "pair-mint", role]);
-    if !same {
-        mint.extend(args(&["--for", holder]));
-        if let Some(home) = &home {
-            mint.extend(args(&["--home", home]));
+    if let Some(home) = &home {
+        mint.extend(args(&["--for", holder, "--home", home]));
+        if same {
+            // The holder's old direct token would keep a local orchestrator here, and with
+            // one the daemon forwards nothing (br-gr3v).
+            mint.push("--replace-direct".into());
         }
+    } else if !same {
+        mint.extend(args(&["--for", holder]));
     }
     let token = runner
         .run(&daemon_at, &mint, None)
@@ -877,7 +899,7 @@ mod tests {
                     let creds = self.creds.borrow();
                     let tok = creds.get(&key).ok_or("no entry")?;
                     let valid = self.valid.borrow();
-                    let visitor_ok = val("--machine").is_none() || {
+                    let visitor_ok = (val("--machine").is_none() && val("--home").is_none()) || {
                         let homes = self.homes.borrow();
                         let have = homes.get(tok).and_then(Option::as_ref);
                         have.is_some() && val("--home").is_none_or(|h| have == Some(&h))
@@ -1018,9 +1040,108 @@ mod tests {
         let p = |names: &[&str]| -> Vec<(String, u16)> {
             names.iter().map(|n| (n.to_string(), 1)).collect()
         };
-        assert_eq!(home_for(&p(&["bridle", "notes"]), "notes", "aide"), "notes");
-        assert_eq!(home_for(&p(&["bridle", "x"]), "notes", "aide"), "bridle");
-        assert_eq!(home_for(&p(&["x", "y"]), "notes", "aide"), "x");
+        assert_eq!(
+            home_for("m", &p(&["bridle", "notes"]), "notes", "aide"),
+            "notes"
+        );
+        assert_eq!(
+            home_for("m", &p(&["bridle", "x"]), "notes", "aide"),
+            "bridle"
+        );
+        assert_eq!(home_for("m", &p(&["x", "y"]), "notes", "aide"), "x");
+        // br-gr3v: the orchestrator's home is <machine>-home when there is one, else as above.
+        let orch = |names: &[&str]| home_for("m", &p(names), "bridle", ORCHESTRATOR);
+        assert_eq!(orch(&["bridle", "m-home", "x"]), "m-home");
+        assert_eq!(orch(&["bridle", "x"]), "bridle");
+        assert_eq!(orch(&["x", "y"]), "x");
+        // Other roles ignore <machine>-home.
+        assert_eq!(
+            home_for("m", &p(&["x", "m-home", "bridle"]), "notes", "aide"),
+            "bridle"
+        );
+    }
+
+    /// The pair-mint calls for the orchestrator: (project, --for, --home, --replace-direct).
+    fn orch_mints(s: &Sim) -> Vec<(String, Option<String>, Option<String>, bool)> {
+        s.calls
+            .borrow()
+            .iter()
+            .filter(|c| c.iter().any(|x| x == "pair-mint") && c.iter().any(|x| x == ORCHESTRATOR))
+            .map(|c| {
+                let at = |k: &str| c.iter().position(|x| x == k).map(|i| c[i + 1].clone());
+                (
+                    at("--project").unwrap(),
+                    at("--for"),
+                    at("--home"),
+                    c.iter().any(|x| x == "--replace-direct"),
+                )
+            })
+            .collect()
+    }
+
+    // br-gr3v
+    #[test]
+    fn the_orchestrator_is_homed_in_the_machine_home_and_local_daemons_forward() {
+        let mut s = sim();
+        s.projects
+            .get_mut("mbp")
+            .unwrap()
+            .extend([("mbp-home".into(), 7410), ("notes".into(), 7403)]);
+        let (ok, out) = run(&s, &Options::default());
+        assert!(ok, "{out}");
+        let m = orch_mints(&s);
+        let some = |x: &str| Some(x.to_string());
+        // mbp's own daemons other than its home: a visitor homed in mbp-home, replacing the
+        // direct token.
+        for p in ["bridle", "notes"] {
+            assert!(
+                m.contains(&(p.into(), some("mbp"), some("mbp-home"), true)),
+                "{m:?}"
+            );
+        }
+        // Its home daemon keeps a direct token; aide stays direct everywhere on mbp.
+        assert!(m.contains(&("mbp-home".into(), None, None, false)), "{m:?}");
+        assert!(
+            !s.calls
+                .borrow()
+                .iter()
+                .any(|c| c.iter().any(|x| x == "aide")
+                    && c.iter().any(|x| x == "pair-mint")
+                    && c.iter().any(|x| x == "--replace-direct"))
+        );
+        // nuc's orchestrator on mbp's daemons is homed in nuc's first project (nuc has no home).
+        assert!(m.iter().any(|(p, f, h, _)| p == "bridle"
+            && f.as_deref() == Some("nuc")
+            && h.as_deref() == Some("notes")));
+        // A second run changes nothing.
+        let (_, out) = run(&s, &Options::default());
+        assert_eq!(out.matches("(role tokens): minted 0").count(), 2, "{out}");
+    }
+
+    // br-gr3v, br-8usa: the home appears after a first pair; a re-pair moves the visitors.
+    #[test]
+    fn a_repair_moves_the_orchestrators_home_when_the_machine_home_appears() {
+        let mut s = sim();
+        run(&s, &Options::default());
+        let held_by_nuc = |s: &Sim| {
+            let tok = s.creds.borrow()[&(
+                "nuc".into(),
+                ORCHESTRATOR.into(),
+                Some("mbp".into()),
+                "bridle".into(),
+            )]
+                .clone();
+            s.homes.borrow()[&tok].clone()
+        };
+        // nuc has no bridle and no home: its first project.
+        assert_eq!(held_by_nuc(&s), Some("notes".to_string()));
+        s.projects
+            .get_mut("nuc")
+            .unwrap()
+            .push(("nuc-home".into(), 7420));
+        let (ok, out) = run(&s, &Options::default());
+        assert!(ok, "{out}");
+        assert_eq!(held_by_nuc(&s), Some("nuc-home".to_string()));
     }
 
     // br-eurm, s-8088

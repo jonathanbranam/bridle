@@ -912,7 +912,7 @@ async fn token_pair(cli: &Cli, action: &TokenAction) -> Result<(), CliError> {
             let status = Client::new(url, Some(token)).status().await?;
             // A visitor token (held for a daemon on another machine) without a home keeps its
             // replies on the daemon's side: not working, so the broker re-mints it (br-eurm).
-            if machine.is_some() && status.visitor_home.is_none() {
+            if (machine.is_some() || home.is_some()) && status.visitor_home.is_none() {
                 return Err(CliError::Other(anyhow::anyhow!(
                     "visitor token has no home"
                 )));
@@ -930,8 +930,12 @@ async fn token_pair(cli: &Cli, action: &TokenAction) -> Result<(), CliError> {
             role,
             for_machine,
             home,
+            replace_direct,
         } => {
             let client = client_for(cli).await?;
+            if *replace_direct {
+                let _ = client.revoke_token(role).await;
+            }
             let name = match for_machine {
                 Some(m) => format!("{role}@{m}"),
                 None => role.clone(),
