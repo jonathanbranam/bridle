@@ -4,7 +4,7 @@ title = "macOS firewall still blocks a freshly launched bridle (gateway) after a
 kind = "bug"
 state = "planned"
 created_at = "2026-10-15T23:15:13.826Z"
-updated_at = "2026-10-16T01:32:50.638092Z"
+updated_at = "2026-10-16T01:42:38.214575Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 priority = "high"
@@ -233,3 +233,27 @@ sudo $F --remove /private/tmp/7bs2/fw/t; sudo $F --remove /tmp/7bs2/fw/t
 sudo $F --remove /Users/jbranam/.cargo/bin/bridle && sudo $F --add /Users/jbranam/.cargo/bin/bridle && sudo $F --unblockapp /Users/jbranam/.cargo/bin/bridle
 
 Tell me when done, and if any dialog appears (and its text). Note: findings so far: Allow on a pending dialog is not stored in the plist (so each missed/wrongly-matched launch needs a click again).
+
+### note · agent:7bs2 · 2026-10-16T01:42:38.087Z
+# br-7bs2 step 1, final report (researcher 7bs2)
+
+Results after the human's sudo block (remove throwaway entries; `--remove` + `--add` + `--unblockapp` of ~/.cargo/bin/bridle), ~21:41 ET:
+- plist now 13 entries (throwaway gone); bridle entry re-created at slot 12 with the same DR (`identifier bridle and certificate leaf = H"37e5..."`). No dialog reported.
+- Probes from remus right after: 7401 401, 7405 401, 7406 401, 7878 200 (all answering). The processes were not restarted, so this shows remove/add did not break running listeners, NOT that a fresh launch is now safe. Whether the refresh helps is only shown by the next real self-upgrade: after it, check reachability of 7878 from remus and whether a dialog appears.
+
+Established by experiment (table in my interim comment)
+1. Allow on a dialog does NOT write the plist when an entry for that path already exists (the 7:25 click on the real gateway, and the click on the throwaway 't'): it unblocks the pending case only. Allow on a first-ever path creates an entry (per path, alias+DR).
+2. Replacing the file (new inode/birth/cdhash), in-place re-sign, plain restart, and launchd vs shell start all stay allowed when the signed identifier+leaf match the entry. So the stale alias creation date (H1) and hypotheses (a)/(c) are NOT the cause.
+3. A launch whose DR does not match the entry (identifier `bridle` -> `t`) is blocked with the dialog "Do you want the application “t” to accept incoming network connections?", and the block then also holds for later launches of the same path with the CORRECT DR until the dialog is answered, while `--getappblocked` still says "permitted". After the click, fresh launches work and nothing is stored. Same fingerprint as the real outage.
+4. Identifier source: `codesign --force -s <name> <exe>` (signing.rs:69) takes the identifier from the FILE NAME; cargo's linker signature is `bridle-<hash>` (seen in .bridle/upgrade-target/release/bridle). Any launch that listens while the file is still linker-signed, or under another name, mismatches `identifier bridle`.
+
+NOT established: which launch at ~18:41 mismatched. The installed file was signed `bridle` by 18:41:38 and the upgrade self-check (`serve --check`, serve.rs:22) only loads config, it does not listen. Candidates for step 2: (i) a bridle process started from ~/.cargo/bin/bridle between cargo's replace (18:41:36) and the re-sign (18:41:38) that binds a port, e.g. a launchd KeepAlive restart of mail/ui/track-web racing the replace (launchctl showed dev.bridle.mail.bridle exit -15); (ii) a child launch by the old daemon. Evidence to collect: log `codesign -dr-` of the exe just before each restart, and compare launchd start times of the other bridle jobs with the replace time.
+
+Recommended fix direction (not built): make install atomic and identifier-stable: sign a COPY named `bridle` outside the live path with `-i bridle`, check its DR equals the firewall entry's, then rename into place, so ~/.cargo/bin/bridle is never linker-signed; pass `-i bridle` explicitly in signing.rs; restart the launchd jobs after the rename. Detection: after restart, probe own tailnet address and name the firewall.
+
+Side effect: my `find / -xdev -samefile ~/.cargo/bin/bridle` (looking for the second hard link, link count 2) ran ~11 min over the whole volume including ~/Pictures under the bridle-hosted agent process tree; the Photos-library prompt the human saw is very probably from it. Killed (pid 47126); not repeated. Safe to Deny.
+
+Cleanup: launchd job dev.bridle.7bs2test booted out, listener gone; only /tmp/7bs2 remains.
+
+### note · agent:7bs2 · 2026-10-16T01:42:38.214Z
+step 1 done: cause of the 18:41 outage NOT proven; ruled out file replace/in-place re-sign/restart/launchd and stale alias; reproduced the block only via a DR (identifier) mismatch launch, which sticks until a dialog click (not stored). Full results + fix direction on the ticket. Also: my stray find / likely caused the human's photo-library prompt (stopped).
