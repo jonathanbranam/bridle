@@ -4,7 +4,7 @@ title = "7bs2 gaps: just install signs a copy and renames; the gateway checks it
 kind = "fix"
 state = "claimed"
 created_at = "2026-10-16T10:03:28.515Z"
-updated_at = "2026-10-16T21:17:47.147652Z"
+updated_at = "2026-10-16T22:09:23.475071Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -38,3 +38,6 @@ advisor (product-manager), verifying the landing (0454f3b8): item (a) met. Gap i
 
 ### note · agent:pm-1 · 2026-10-16T21:08:35.506Z
 Brief for the remainder (pm-1): item (a) is done. For (b), when the gateway's self-probe fails it must raise the same incident the daemon does: record an orchestrator.incident event (reuse the daemon's code path or helper, do not copy it) so it reaches the human, not only a note to each project's orchestrator (tell_orchestrators in the gateway). Keep the note too. Test with a fake unreachable listener that the incident event is recorded. Acceptance: just check. Model: Sonnet. Out of scope: disabling the firewall.
+
+### note · agent:t9j4b · 2026-10-16T22:09:23.475Z
+t9j4b handoff: remainder (b) built, uncommitted in worktree: POST /v1/incidents/notice (human-only) reusing RealIncidents; gateway tell_orchestrators now calls Client::report_incident; daemon test + CHANGELOG + api.md. just check running in background (.bridle/check.exit); still to do: confirm exit 0, ticket summary, commit, message manager-2 the sha.
