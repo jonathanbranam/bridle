@@ -4,7 +4,7 @@ title = "macOS firewall still blocks a freshly launched bridle (gateway) after a
 kind = "bug"
 state = "planned"
 created_at = "2026-10-15T23:15:13.826Z"
-updated_at = "2026-10-16T01:43:40.011593Z"
+updated_at = "2026-10-16T01:44:09.139407Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 priority = "high"
@@ -260,3 +260,15 @@ step 1 done: cause of the 18:41 outage NOT proven; ruled out file replace/in-pla
 
 ### note · external:aide · 2026-10-16T01:43:40.011Z
 From the human, via aide (~9:50 PM ET), verbatim, on br-7bs2 after the researcher's final report: "great, that sounds like a good fix; can we get that implemented over night". The fix as put to the human: make the install atomic and identifier-stable (sign a copy named bridle with -i bridle outside the live path, check its DR matches the firewall entry, then rename into place, so ~/.cargo/bin/bridle is never linker-signed; pass -i bridle in signing.rs; restart the launchd jobs after the rename), plus the post-restart tailnet reachability check. Please build it overnight.
+
+### note · external:advisor/product-manager · 2026-10-16T01:43:49.861Z
+The human, via aide (~9:50 PM ET 2026-10-15), verbatim, after the researcher's report: "great, that sounds like a good fix; can we get that implemented over night". Build it tonight: atomic, identifier-stable install (sign a copy named bridle with -i bridle outside the live path, check its DR matches the firewall entry, rename into place so ~/.cargo/bin/bridle is never linker-signed; -i bridle in signing.rs; restart the launchd jobs after the rename), plus the post-restart tailnet reachability check. (advisor product-manager)
+
+### note · agent:pm-1 · 2026-10-16T01:44:09.139Z
+Step 2 brief (pm-1), the build. The human, via aide and PdM (~9:50 PM ET): build it overnight (high). Model: Sonnet. Spawn a worker (not the researcher) with --ticket br-7bs2; the 10-minute hold from the human's last word ends ~9:53 PM ET. Read the researcher's final report above (findings 1-4, recommended fix) and crates/bridle-daemon/src/signing.rs (~69) and the self-upgrade install path (cargo replace, then re-sign, then restart).
+Build, in this order; stop at the first boundary that gets long and tell the manager:
+(1) Atomic, identifier-stable install: sign a COPY named `bridle` outside the live path (e.g. in a temp dir beside the target on the same filesystem) with `codesign --force -i bridle -s <identity>`, verify its designated requirement matches the installed one's (`codesign -dr-`; if the live file's DR differs, log it clearly), then rename it into place, so ~/.cargo/bin/bridle is never linker-signed or briefly unsigned. Pass `-i bridle` explicitly in signing.rs (do not rely on the file name). Apply to both `bridle sign binary` / `just install` and the daemon's self-upgrade. With no signing identity (CI, other machines) keep today's ad-hoc behaviour.
+(2) Restart the launchd/systemd bridle jobs only after the rename (candidate cause (i): a KeepAlive restart racing the replace); check the order in the upgrade code and fix it if jobs can start mid-replace.
+(3) Evidence logging: log `codesign -dr-` / identifier of the installed exe just before each restart, so the next outage names the mismatching launch.
+(4) Detection (if small, else tell the manager and it becomes a follow-up): after a restart, the gateway/daemon probes its own tailnet address and, if unreachable, raises a notice/incident naming the macOS firewall as the likely cause.
+Tests: signing produces identifier `bridle` regardless of source file name; the rename leaves no window with a different identifier (unit test on the sign-copy-then-rename function); no-identity path unchanged. macOS-only code behind cfg as today. Docs: CLAUDE.md "Build configuration" firewall paragraph, docs/design/agent-host as fits, CHANGELOG. Acceptance: just check. Verify on dalek by running the new install path on a copy and checking `codesign -dvvv` identifier and DR; do NOT run live self-upgrade or touch firewall entries (needs the human's sudo). Never disable the firewall. Out of scope: option 2 (sudoers), tailscale serve fallback.

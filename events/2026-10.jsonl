@@ -2255,3 +2255,4 @@
 {"actor":"agent:pm-1","at":"2026-10-16T01:17:04.190596Z","from":"open","task":"br-eggc","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-16T01:17:06.065101Z","queue":"reprioritized"}
 {"actor":"agent:manager-2","at":"2026-10-16T01:29:52.352052Z","from":"built","task":"br-54sp","to":"integrated"}
+{"actor":"agent:pm-1","at":"2026-10-16T01:44:09.497700Z","queue":"reprioritized"}
