@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+
+## [0.7.5] - 2026-10-16
+
 - Fix (br-rnhp): `bridle up` starts the orchestrator with `--project <host>-home` when `[projects]` puts that project on this machine (it started it in no project, so a boot with no workspace cwd failed); otherwise as before, and it says which project it used. Migration: none.
 - Feature (br-bft2): the mail digest stamps each item with its created (and, if later, updated) time in local time, groups items under Today / Yesterday / Last week / Older, lists tickets merged in the last week, and drops bare "message sent" items that link to nothing. Migration: none.
 - Fix (br-mt4v): a forced restart over a land now also kills the check's descendants that left its process group (nextest children), not just the group; tests for eggc (one incident per forced land, refused land runs once open).
