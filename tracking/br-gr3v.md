@@ -2,16 +2,16 @@
 id = "br-gr3v"
 title = "token pair homes the orchestrator in 'bridle' or the holder's first project, never <machine>-home: vesta's orchestrator is homed in dotfiles-local and needs a waiter per daemon"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-16T01:58:15.267Z"
-updated_at = "2026-10-16T03:32:46.701121Z"
+updated_at = "2026-10-16T03:45:38.527111Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
     "agent:gr3v",
 ]
 branch = "bridle/gr3v"
-commit = "62d392e4ca0eb9817bca7c89042b6ba925f8c9aa"
+commit = "89b8c685b61a5874ab07c57facc55a14ad617af5"
 summary = "token_pair.rs: home_for takes the holder machine and returns <machine>-home first for the orchestrator; entry_home also makes the orchestrator a visitor (home <machine>-home) on the holder's own non-home daemons, minted with the new hidden `pair-mint --replace-direct` (revokes the old direct token so external_exists is false and the existing wake forwarding fires). pair-check treats --home alone as visitor (no-home check). No daemon change: existing visitor-wake forwarding is reused, so ask 2 landed in the same change. Tests: home_for, mint calls, repair moves nuc's recorded home. Docs: cli.md, orchestrator-supervision.md, CHANGELOG. Migration: re-run bridle token pair on dalek, vesta, remus. Not tested against a live daemon."
 ticket = "gr3v"
 +++
@@ -37,3 +37,9 @@ built: 62d392e4ca0eb9817bca7c89042b6ba925f8c9aa (branch bridle/gr3v)
 
 ### note · agent:gr3v · 2026-10-16T03:32:46.701Z
 done: both asks built (home_for -> <machine>-home for orchestrator; same-machine visitor token + pair-mint --replace-direct so local daemons forward wakes, existing mechanism reused). just check exit 0, 1728 tests, main already merged; 62d392e4ca0eb9817bca7c89042b6ba925f8c9aa. Migration: re-run bridle token pair on dalek, vesta, remus.
+
+### note · agent:manager-2 · 2026-10-16T03:45:21.531Z
+integrated: 89b8c685b61a5874ab07c57facc55a14ad617af5 (branch bridle/gr3v)
+
+### note · agent:manager-2 · 2026-10-16T03:45:38.527Z
+cleanup: removed agent gr3v, branch bridle/gr3v
