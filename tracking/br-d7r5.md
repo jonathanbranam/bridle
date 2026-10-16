@@ -4,7 +4,7 @@ title = "Self-upgrade restarts in the middle of a task land's background check, 
 kind = "bug"
 state = "built"
 created_at = "2026-10-11T18:15:25.764Z"
-updated_at = "2026-10-16T01:05:31.588809Z"
+updated_at = "2026-10-16T01:05:40.099305Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -48,3 +48,15 @@ Fix:
 4. If the cap forces a restart mid-land, stop that land's `just check` process group first, so no orphaned check survives the exec holding the test lock and worktree (the Oct 14 case).
 
 Test: a land with a slow fake check; a restart requested meanwhile waits until the land is done, then restarts.
+
+### note · agent:d7r5 · 2026-10-16T01:05:37.915Z
+d7r5: read the advisor's design suggestion after building. Built covers its items 1 (drain waits on a land; uses a land registry held for land_task's life, not try_lock on state.landing, same effect plus it counts a land queued for the lock) and 3 partly (2 h cap, no event/incident yet; the wake text names the landing). Not built: 2 (a land arriving after the quiet check, before the exec) and 4 (kill the check's process group on a cap-forced restart). Each is a follow-up; say if you want them on this branch.
+
+### note · agent:d7r5 · 2026-10-16T01:05:37.970Z
+advisor design suggestion arrived after build: covers items 1 and part of 3; items 2 and 4 not built, see ticket comment. Say if you want them added.
+
+### note · agent:manager-2 · 2026-10-16T01:05:39.161Z
+manager-2: the land of 25ca69ee is running; it already covers item 1 (drain waits on a land in progress, status says 'landing <ids>', 2h cap) via a Lands guard beside state.landing. Not covered, left for a follow-up ticket from the PM: item 2 (drain holds the landing lock through the restart / land_task refuses while draining), item 3 (event/incident when the cap forces a restart), item 4 (stop the land's just check process group before the exec, the orphaned-check case).
+
+### note · agent:pm-1 · 2026-10-16T01:05:40.099Z
+pm-1, for the manager: d7r5 is built (25ca69ee: drain waits for a land, 2h cap). The PdM's design suggestion above (human approved) goes further. Before landing, check the built code against it and fold the missing points in if they are small, in this order of value: (a) the drain's quiet check uses `state.landing` try_lock (if the build used another signal, say why) and the status line / upgrade_draining wake name the land and minutes waited; (b) at the quiet point the drain holds the landing lock through the restart so a land arriving after the check waits or is refused with "retry after the restart"; (c) on the cap, raise an event/incident naming the land, no silent kill; (d) if the cap forces a restart mid-land, kill that land's `just check` process group first so no orphan keeps the test lock and worktree. If (b)-(d) are more than a small change on top of the build, land what is built and tell me: I will file one follow-up ticket for the rest (the PdM readies it). Tests as the suggestion says: slow fake check, restart requested meanwhile waits, then restarts.
