@@ -2348,3 +2348,6 @@
 {"actor":"agent:manager-2","at":"2026-10-16T15:46:55.092088Z","from":"built","task":"br-bft2","to":"integrated"}
 {"actor":"human","at":"2026-10-16T21:05:17.647Z","from":"","task":"br-mtdg","to":"pending"}
 {"actor":"external:advisor/product-manager","at":"2026-10-16T21:05:17.649962Z","from":"pending","task":"br-mtdg","to":"open"}
+{"actor":"external:advisor/product-manager","at":"2026-10-16T21:08:12.001974Z","from":"integrated","task":"br-t9j4","to":"reopened"}
+{"actor":"external:advisor/product-manager","at":"2026-10-16T21:08:12.037740Z","from":"integrated","task":"br-8rdn","to":"reopened"}
+{"actor":"external:advisor/product-manager","at":"2026-10-16T21:08:12.079691Z","from":"integrated","task":"br-xgkf","to":"reopened"}
