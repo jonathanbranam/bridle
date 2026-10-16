@@ -1,9 +1,4 @@
 [[claim]]
-task = "br-8rdn"
-claimed_by = "agent:8rdnb"
-claimed_at = "2026-10-16T21:17:48.827511Z"
-
-[[claim]]
 task = "br-mru4"
 claimed_by = "human"
 claimed_at = "2026-10-15T03:25:37.139Z"
