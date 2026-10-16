@@ -686,6 +686,18 @@ async fn start_inner(
     );
     let held_tokens = discovery::credentials_for_project(&discovery::credentials_path(), &project);
     warn_if_role_tokens_rejected(&store, &project, &held_tokens, &manager, &emitter).await;
+    if cfg!(target_os = "macos")
+        && let Some(addr) = listeners
+            .iter()
+            .filter_map(|l| l.local_addr().ok())
+            .find(|a| !a.ip().is_loopback())
+    {
+        let incidents = orchestrator::RealIncidents {
+            manager: manager.clone(),
+            emitter: emitter.clone(),
+        };
+        tokio::spawn(async move { probe_own_address(addr, &incidents, &PROBE_WAITS).await });
+    }
     // A project drain's hold outlives a restart (yt5v); absent means no hold.
     if store.get_meta(PROJECT_HELD_KEY).await?.as_deref() == Some("1") {
         manager.set_held(true);
@@ -1323,6 +1335,47 @@ async fn warn_if_role_tokens_rejected(
     }
 }
 
+/// The incident text when the daemon cannot reach its own non-loopback address.
+fn unreachable_text(addr: SocketAddr) -> String {
+    format!(
+        "This daemon cannot connect to its own address {addr} after a start. On macOS the likely \
+         cause is the application firewall blocking the installed `bridle` until its \"Allow\" \
+         dialog is answered (check the screen of the Mac, or the signature in the daemon log: \
+         `installed binary signature before restart`). Other machines cannot reach this \
+         project until then."
+    )
+}
+
+const PROBE_WAITS: [Duration; 3] = [
+    Duration::from_secs(3),
+    Duration::from_secs(10),
+    Duration::from_secs(10),
+];
+
+/// Connects to the daemon's own tailnet address a few times after start; if it never answers,
+/// raises an incident naming the firewall (ticket 7bs2). The firewall blocks incoming
+/// connections silently, so this is the only way the daemon notices.
+async fn probe_own_address(
+    addr: SocketAddr,
+    incidents: &impl orchestrator::Incidents,
+    waits: &[Duration],
+) {
+    for wait in waits {
+        tokio::time::sleep(*wait).await;
+        let connect = tokio::net::TcpStream::connect(addr);
+        if matches!(
+            tokio::time::timeout(Duration::from_secs(5), connect).await,
+            Ok(Ok(_))
+        ) {
+            return;
+        }
+    }
+    tracing::error!(%addr, "the daemon cannot reach its own address; firewall?");
+    let text = unreachable_text(addr);
+    incidents.record(&text).await;
+    incidents.ask_orchestrator(&text).await;
+}
+
 /// The roles held, comma-joined, when there are some and the store rejects all of them.
 async fn rejected_roles(store: &Store, held: &[(String, String)]) -> Option<String> {
     let roles: Vec<&(String, String)> = held.iter().filter(|(who, _)| who != "human").collect();
@@ -1688,6 +1741,33 @@ mod bind_tests {
 
 #[cfg(test)]
 mod tests {
+    use std::sync::Mutex as StdMutex;
+
+    #[derive(Default)]
+    struct Said(StdMutex<Vec<String>>);
+
+    impl orchestrator::Incidents for Said {
+        async fn record(&self, text: &str) {
+            self.0.lock().unwrap().push(text.to_string());
+        }
+        async fn ask_orchestrator(&self, _text: &str) {}
+    }
+
+    #[tokio::test]
+    async fn own_address_probe_raises_only_when_unreachable() {
+        let waits = [Duration::ZERO; 2];
+        let l = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let up = l.local_addr().unwrap();
+        let said = Said::default();
+        probe_own_address(up, &said, &waits).await;
+        assert!(said.0.lock().unwrap().is_empty());
+        drop(l);
+        probe_own_address(up, &said, &waits).await;
+        let got = said.0.lock().unwrap().clone();
+        assert_eq!(got.len(), 1);
+        assert!(got[0].contains("firewall") && got[0].contains(&up.to_string()));
+    }
+
     use super::*;
 
     #[test]

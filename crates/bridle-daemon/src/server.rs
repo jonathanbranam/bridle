@@ -5341,6 +5341,22 @@ async fn drain_and_restart(
         })?;
         crate::upgrade::record_built(&state.store, sha).await;
     }
+    // After the new binary is in place: record what it is signed as (evidence for a firewall
+    // outage), and restart the other launchd jobs onto it (ticket 7bs2).
+    let upgraded = built.is_some();
+    // Bounded: codesign can stall under load, and a restart must not wait on evidence.
+    let signature = tokio::task::spawn_blocking(move || {
+        if let Ok(exe) = crate::exe_path() {
+            crate::signing::log_signature(&exe);
+            if upgraded {
+                let jobs = crate::signing::restart_launchd_jobs(&exe);
+                if !jobs.is_empty() {
+                    tracing::info!(?jobs, "restarted launchd jobs onto the upgraded binary");
+                }
+            }
+        }
+    });
+    let _ = tokio::time::timeout(std::time::Duration::from_secs(2), signature).await;
     let commit =
         crate::restart::running_commit(&state.store, &state.workspace.repo, &state.integration)
             .await;

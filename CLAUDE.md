@@ -88,3 +88,11 @@ identity (override the name with `BRIDLE_SIGNING_IDENTITY`). Then `just install`
 self-upgrade re-sign the installed binary with it; with no such identity (CI, other machines) the
 ad-hoc signature stays. `bridle sign binary [path]` does the signing by hand. Plain `cargo build`
 in a worktree stays ad-hoc: only the installed binary needs a stable identity.
+
+The firewall's entry is `identifier bridle and certificate leaf = ...`, so the identifier matters as
+much as the certificate (br-7bs2): signing always passes `-i bridle`, and installs sign a copy named
+`bridle` in a temp dir beside the target and rename it into place (`signing::install`), so the live
+path is never linker-signed (`bridle-<hash>`) or misnamed. A launch with another identifier is
+blocked until a dialog is answered, and `socketfilterfw --getappblocked` still says permitted. The
+daemon logs `installed binary signature before restart` and raises an incident if it cannot reach
+its own tailnet address after a start.

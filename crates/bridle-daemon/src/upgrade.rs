@@ -281,8 +281,16 @@ impl Upgrader {
 
     async fn run_build(&self, ws: &Workspace, dir: &Path) -> Result<(), String> {
         let (program, args) = self.build.split_first().ok_or("empty build command")?;
-        let child = Command::new(program)
-            .args(args)
+        // The real build installs into a private root, then `signing::install` puts the signed
+        // copy over the live binary in one rename: cargo never writes the live path, so it is
+        // never linker-signed or unsigned while launchd may start it (ticket 7bs2).
+        let root = ws.state_dir().join("upgrade-root");
+        let mut child = Command::new(program);
+        child.args(args);
+        if self.sign {
+            child.arg("--root").arg(&root);
+        }
+        let child = child
             .current_dir(dir)
             .env("CARGO_TARGET_DIR", ws.state_dir().join("upgrade-target"))
             .kill_on_drop(true)
@@ -292,13 +300,11 @@ impl Upgrader {
             .map_err(|_| "the build timed out after an hour".to_string())?
             .map_err(|e| format!("running {program}: {e}"))?;
         if out.status.success() {
-            // A failed sign leaves the working ad-hoc build in place; don't fail the upgrade.
-            if self.sign
-                && let Err(e) = crate::exe_path()
-                    .map_err(anyhow::Error::from)
-                    .and_then(|exe| crate::signing::sign(&exe))
-            {
-                tracing::warn!("signing the upgraded binary: {e:#}");
+            if self.sign {
+                let exe = crate::exe_path().map_err(|e| format!("finding the binary: {e}"))?;
+                // On failure the old binary is untouched, so the upgrade fails cleanly.
+                crate::signing::install(&root.join("bin/bridle"), &exe)
+                    .map_err(|e| format!("installing the built binary: {e:#}"))?;
             }
             return Ok(());
         }
