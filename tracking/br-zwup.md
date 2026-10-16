@@ -2,11 +2,14 @@
 id = "br-zwup"
 title = "Small gaps: stale reopened line in roles-and-lifecycle, mail watchdog outside S3 calls"
 kind = "fix"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-16T10:03:36.772Z"
-updated_at = "2026-10-16T10:16:03.873515Z"
+updated_at = "2026-10-16T11:55:58.406942Z"
 created_by = "agent:pm-1"
-watchers = ["agent:pm-1"]
+watchers = [
+    "agent:pm-1",
+    "agent:zwup",
+]
 ticket = "zwup"
 +++
 
