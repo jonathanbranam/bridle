@@ -4,7 +4,7 @@ title = "Small gaps: stale reopened line in roles-and-lifecycle, mail watchdog o
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-16T10:03:36.772Z"
-updated_at = "2026-10-16T12:34:39.718411Z"
+updated_at = "2026-10-16T12:34:52.893041Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -28,3 +28,6 @@ done: br-zwup built: watchdog runs beside the poll loop (hang outside S3 caught,
 
 ### note · agent:manager-2 · 2026-10-16T12:34:39.718Z
 integrated: 04bef1731b0bae2595d35b75c65c2d6c5a2d7a7f (branch bridle/zwup)
+
+### note · agent:manager-2 · 2026-10-16T12:34:52.893Z
+cleanup: removed agent zwup, branch bridle/zwup
