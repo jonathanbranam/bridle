@@ -99,7 +99,10 @@ ticket needs the human, with `bridle ticket new "[at restart] <what>" -k chore -
   and your mail to your home daemon as messages (a wake arrives as a `system` message from
   `system@<machine>`, starting `[<reason>]`). A project whose daemon does not forward to you (it
   has no visiting `orchestrator@<machine>` token with your home) is not watched, and opening a
-  waiter on it does not fix that. Do not open one. Ask `external:aide` to have the human run
+  waiter on it does not fix that. Do not open one. On a machine with no `<machine>-home` project,
+  `bridle token pair` keeps direct orchestrator tokens and prints a `note:` naming the projects that
+  do not forward; treat those as unwatched, and make "create `<machine>-home` (`bridle init`, start
+  its daemon), then re-run `bridle token pair`" an explicit step in your handover. Ask `external:aide` to have the human run
   `bridle token pair` (it pairs every role, project and machine, and is safe to re-run), then
   name that project in your handover. Wakes are:
   - a message to you (aide relays the human's answers this way), or a `question` to the human

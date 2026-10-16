@@ -520,6 +520,7 @@ pub fn pair(
     if !opts.dry_run {
         let results = check_entries(&p, fleet, runner);
         write_check(out, &results, false);
+        write_non_forwarding(out, &p);
         ok &= results.iter().all(|r| r.refused.is_none());
     }
     Ok(ok)
@@ -618,6 +619,44 @@ fn entry_home(holder: &str, holder_projects: &[(String, u16)], e: &RoleEntry) ->
     let home = machine_home(holder);
     (e.role == ORCHESTRATOR && e.project != home && holder_projects.iter().any(|(p, _)| *p == home))
         .then_some(home)
+}
+
+/// The holder's projects whose daemons do not forward to the orchestrator: with no
+/// `<machine>-home` its tokens stay direct (br-gr3v), so only the project it waits on is heard.
+fn non_forwarding(p: &Plan, holder: &str) -> Vec<String> {
+    let Some(projects) = p.up.get(holder) else {
+        return Vec::new();
+    };
+    if !p.do_role
+        || !p.roles.contains(&ORCHESTRATOR)
+        || projects.iter().any(|(n, _)| *n == machine_home(holder))
+    {
+        return Vec::new();
+    }
+    let waits_on = home_for(holder, projects, "bridle", ORCHESTRATOR);
+    projects
+        .iter()
+        .filter(|(n, _)| *n != waits_on)
+        .map(|(n, _)| n.clone())
+        .collect()
+}
+
+/// Says which projects do not forward, and what to do about it (br-8rdn).
+fn write_non_forwarding(out: &mut dyn Write, p: &Plan) {
+    for holder in p.up.keys() {
+        let v = non_forwarding(p, holder);
+        if !v.is_empty() {
+            writeln!(
+                out,
+                "note: machine {holder} has no {home} project, so its orchestrator's tokens stay direct and \
+                 these daemons do not forward wakes or mail to it: {names}. Create {home} \
+                 (`bridle init`, then start its daemon), then re-run `bridle token pair`.",
+                home = machine_home(holder),
+                names = v.join(", ")
+            )
+            .ok();
+        }
+    }
 }
 
 enum Outcome {
@@ -772,6 +811,9 @@ pub fn check(
     };
     let results = check_entries(&p, fleet, runner);
     write_check(out, &results, json);
+    if !json {
+        write_non_forwarding(out, &p);
+    }
     Ok(p.ok && results.iter().all(|r| r.refused.is_none()))
 }
 
@@ -1116,6 +1158,28 @@ mod tests {
         // A second run changes nothing.
         let (_, out) = run(&s, &Options::default());
         assert_eq!(out.matches("(role tokens): minted 0").count(), 2, "{out}");
+    }
+
+    // br-8rdn
+    #[test]
+    fn a_machine_with_no_home_names_the_projects_that_do_not_forward() {
+        let mut s = sim();
+        s.projects
+            .get_mut("mbp")
+            .unwrap()
+            .extend([("notes".into(), 7403)]);
+        let (_, out) = run(&s, &Options::default());
+        assert!(
+            out.contains("machine mbp has no mbp-home project") && out.contains("notes"),
+            "{out}"
+        );
+        assert!(out.contains("re-run `bridle token pair`"), "{out}");
+        s.projects
+            .get_mut("mbp")
+            .unwrap()
+            .push(("mbp-home".into(), 7410));
+        let (_, out) = run(&s, &Options::default());
+        assert!(!out.contains("machine mbp has no"), "{out}");
     }
 
     // br-gr3v, br-8usa: the home appears after a first pair; a re-pair moves the visitors.
