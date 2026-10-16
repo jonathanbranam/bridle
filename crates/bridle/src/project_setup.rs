@@ -1216,6 +1216,43 @@ mod tests {
         ));
     }
 
+    /// The hint each step command ends with is `next_line` over the real step commands, so it
+    /// names the first unmet step: `projects add` leaves the state step, `project start` the
+    /// token step, `token pair` the mail step, `mail install` the aide token.
+    #[test]
+    fn each_command_hint_names_the_first_unmet_step_after_it() {
+        use clap::Parser;
+        let cli = Cli::parse_from(["bridle", "--project", "demo", "status"]);
+        let steps = Setup::new(&cli, "demo", PathBuf::from("/x/demo"), None, Asker::none());
+        let after = |first_unmet: usize| {
+            let statuses: Vec<Status> = (0..STEPS.len())
+                .map(|i| if i < first_unmet { done() } else { todo() })
+                .collect();
+            next_line(&steps, &statuses)
+        };
+        assert_eq!(
+            after(STATE).as_deref(),
+            Some("next: bridle project start"),
+            "after projects add"
+        );
+        assert_eq!(
+            after(TOKENS).as_deref(),
+            Some("next: bridle token pair --projects demo"),
+            "after project start"
+        );
+        assert_eq!(
+            after(MAIL).as_deref(),
+            Some("next: bridle mail install --project demo"),
+            "after token pair"
+        );
+        assert_eq!(
+            after(AIDE).as_deref(),
+            Some("next: bridle token pair --projects demo --roles aide"),
+            "after mail install"
+        );
+        assert_eq!(after(STEPS.len()), None, "everything done");
+    }
+
     /// A fake: each step is `todo` until applied, then `ok`; `fail` makes one apply fail.
     struct Fake {
         state: Vec<Status>,
