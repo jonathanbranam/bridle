@@ -27,3 +27,6 @@ tasks = [
 
 [[tier]]
 tasks = ["br-r8jf"]
+
+[[tier]]
+tasks = ["br-8kzq"]

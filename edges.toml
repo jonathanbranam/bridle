@@ -3693,3 +3693,9 @@ from = "br-tvrp"
 to = "br-mtdg"
 kind = "blocks"
 created_at = "2026-10-16T21:42:34.769Z"
+
+[[edge]]
+from = "br-8rdn"
+to = "br-r8jf"
+kind = "blocks"
+created_at = "2026-10-16T21:43:05.080Z"
