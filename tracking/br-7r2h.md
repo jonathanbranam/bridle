@@ -4,7 +4,7 @@ title = "Orchestrator opens a waiter on every project: its prompt still says to,
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-16T01:02:04.464Z"
-updated_at = "2026-10-16T04:03:26.724615Z"
+updated_at = "2026-10-16T04:03:52.517387Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -68,3 +68,6 @@ done: br-gr3v has landed and main is merged into bridle/7r2h; just check exit 0 
 
 ### note · agent:manager-2 · 2026-10-16T04:03:26.724Z
 integrated: be9bf1de375ce5df03e9ed4e197a5a80360b7ae0 (branch bridle/7r2h)
+
+### note · agent:manager-2 · 2026-10-16T04:03:52.517Z
+cleanup: removed agent 7r2h, branch bridle/7r2h
