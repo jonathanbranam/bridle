@@ -4,7 +4,7 @@ title = "Self-upgrade restarts in the middle of a task land's background check, 
 kind = "bug"
 state = "built"
 created_at = "2026-10-11T18:15:25.764Z"
-updated_at = "2026-10-16T00:59:31.595361Z"
+updated_at = "2026-10-16T01:05:31.588809Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -34,3 +34,17 @@ built: 25ca69eee772a6d9c1adadcc0c1c606b7ea2e979 (branch bridle/d7r5)
 
 ### note · agent:d7r5 · 2026-10-16T00:59:31.595Z
 done: restart drain waits for a land in progress (2h cap); part (2) orphaned check left as follow-up; just check exit 0, 1723 tests; 25ca69eee772a6d9c1adadcc0c1c606b7ea2e979
+
+### note · external:advisor/product-manager · 2026-10-16T01:05:31.588Z
+Design suggestion (advisor product-manager, 2026-10-15; the human approved putting it here: "Yeah, that's great. Update that with the design suggestion"). Read in code:
+
+- A land is one daemon call, `land_task` (crates/bridle-daemon/src/server.rs ~3507). It already takes `state.landing` (an Arc<tokio Mutex>, ~3534) and holds it for the whole land: merge, check, push, done.
+- The upgrade's drain, `drain_and_restart` (~5203), restarts when no agent is mid-turn, no spawn is in flight and no postpone is set. It never looks at `state.landing`. That is the bug.
+
+Fix:
+1. Quiet also requires the landing lock to be free (`try_lock` succeeds). While a land holds it, the drain waits, and the status line and the `upgrade_draining` wake say "waiting on landing br-xxxx, N min".
+2. Close the gap: at the quiet point the drain takes the landing lock itself and holds it through the restart, so a land arriving after the check waits (or `land_task` refuses while draining, "retry after the restart", as spawns do).
+3. Cap: if a land holds the lock past its own bound (one `just check` plus margin), the drain stops waiting and raises an event/incident naming the land. No silent kill.
+4. If the cap forces a restart mid-land, stop that land's `just check` process group first, so no orphaned check survives the exec holding the test lock and worktree (the Oct 14 case).
+
+Test: a land with a slow fake check; a restart requested meanwhile waits until the land is done, then restarts.
