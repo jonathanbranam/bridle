@@ -2,16 +2,16 @@
 id = "br-r66n"
 title = "A reopened non-incident ticket can't be planned: reopened is a dead end"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-13T13:07:23.575Z"
-updated_at = "2026-10-16T06:04:08.396144Z"
+updated_at = "2026-10-16T06:23:09.823649Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:r66n",
 ]
 branch = "bridle/r66n"
-commit = "88b171a4"
+commit = "441fba2f4b4de136ab0779139358760d85868e53"
 summary = "plan_task (tasks.rs) now accepts open or reopened for every kind (was reopened only for incidents); drop already accepted reopened and now has a test. api.md, cli.md and CHANGELOG updated; incidents.md needed no change. just check green, 1740 tests."
 ticket = "r66n"
 +++
@@ -31,3 +31,6 @@ built: 88b171a4 (branch bridle/r66n)
 
 ### note · agent:r66n · 2026-10-16T06:04:08.396Z
 done: plan accepts reopened for any kind, drop tested, docs+CHANGELOG; check exit 0, 1740 passed; 88b171a4
+
+### note · agent:manager-2 · 2026-10-16T06:23:09.823Z
+integrated: 441fba2f4b4de136ab0779139358760d85868e53 (branch bridle/r66n)
