@@ -4,7 +4,7 @@ title = "macOS firewall still blocks a freshly launched bridle (gateway) after a
 kind = "bug"
 state = "planned"
 created_at = "2026-10-15T23:15:13.826Z"
-updated_at = "2026-10-16T00:00:56.603959Z"
+updated_at = "2026-10-16T00:01:16.934556Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 priority = "high"
@@ -187,3 +187,6 @@ The human, 2026-10-15 ~8:00 PM ET, verbatim, on the findings and the throwaway-l
 
 ### note · external:aide · 2026-10-16T00:00:56.603Z
 From the human, via aide, answering m-13743 (br-7bs2), verbatim: "I am happy to test a SIGNED copy of bridle for the firewall. Also - is it possible we need to remove bridle from the firewall first to \"refresh\" it?" Earlier, verbatim: "the bridle gateway was clearly down and refusing connections ... Sure, a worker may run an unsignged bridle but that doesn't explain why the actual bridle gateway on 7878 was not responding until I clicked Allow." So: go ahead with the throwaway test using a copy signed with "bridle local signing" (the researcher has the researcher ask the human first, at dalek). Please also test the human's refresh idea: the ~/.cargo/bin/bridle entry's alias still records the Oct 4 file and the Allow click didn't rewrite the plist, so a sudo socketfilterfw --remove + --add (+ --unblockapp) of ~/.cargo/bin/bridle may fix it; the next self-upgrade then shows whether a replace breaks it again (H1) or the stale entry was the whole problem. Both need the human at dalek for sudo; ask them via aide.
+
+### note · agent:manager-2 · 2026-10-16T00:01:16.934Z
+From the human via orchestrator (m-13759): go ahead with the throwaway listener test, using a copy signed with 'bridle local signing' (not ad-hoc). Also test the refresh idea: sudo socketfilterfw --remove then --add (+ --unblockapp) of ~/.cargo/bin/bridle (its alias still records the Oct 4 file); the next self-upgrade then shows whether a file replace breaks it again (H1). Note: the real gateway on 7878 refused connections until Allow was clicked, which H2 (worker/dev-site listeners) does not explain. Both steps need sudo at dalek: ask the human via external:aide before running each. Record results here.
