@@ -4,7 +4,7 @@ title = "bridle project setup stop points 2 and 3: clone from URL, root prompt, 
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-16T05:28:35.570Z"
-updated_at = "2026-10-16T06:39:25.660738Z"
+updated_at = "2026-10-16T06:39:44.343287Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -31,3 +31,6 @@ done: project setup stop points 2+3 (clone from URL/--remote, --root prompt, mai
 
 ### note · agent:manager-2 · 2026-10-16T06:39:25.660Z
 integrated: de7c745470c2bd3ea04017d2cffbe3e3e520aa82 (branch bridle/madb)
+
+### note · agent:manager-2 · 2026-10-16T06:39:44.343Z
+cleanup: removed agent madb, branch bridle/madb
