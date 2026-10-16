@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 - Fix (br-8rdn): `bridle token check` also names, on a machine with a `<machine>-home`, the projects whose daemon has a missing or refused orchestrator visitor token (they do not forward wakes or mail to the home); the orchestrator role runs it at every start.
+- Fix (br-t9j4): when the gateway cannot reach its own tailnet address after a start, it now raises the incident through each project's daemon (`POST /v1/incidents/notice`, human token): an `orchestrator.incident` event, a note to the human and one to the orchestrator, as the daemon's own check does. It only noted each orchestrator before. Migration: none.
 
 ## [0.7.5] - 2026-10-16
 

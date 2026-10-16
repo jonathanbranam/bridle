@@ -15,7 +15,7 @@ use crate::types::{
     AskQuestionRequest, BudgetHoldRequest, BudgetOverrideRequest, BudgetStatus, BuiltTicketRequest,
     Conflict, DoneTicketRequest, DropTicketRequest, Edge, EditTicketRequest, Event, EventQuery,
     ForwardAck, ForwardRequest, ForwardState, Handover, HandoverDone, Health, HelloRequest,
-    HoldRequest, HoldTicketRequest, ImpactCheckRequest, ImpactReport, Interaction,
+    HoldRequest, HoldTicketRequest, ImpactCheckRequest, ImpactReport, IncidentNotice, Interaction,
     InteractionsQuery, InterruptRequest, InterruptResponse, LandRequest, LandResult,
     MaxWorkersRequest, Message, MessageQuery, NewEdgeRequest, NewTicketRequest, NoteTicketRequest,
     OpenQuestion, OrchestratorWakeQuery, OutboxEntry, OutboxSendRequest, PeerTokenCreateRequest,
@@ -288,6 +288,19 @@ impl Client {
     /// agent, or one per matching live agent for a `role:<name>` target.
     pub async fn send(&self, req: &SendRequest) -> Result<Vec<Message>, ClientError> {
         self.post_json(&["v1", "messages"], req).await
+    }
+
+    /// `POST /v1/incidents/notice` (human token): raises an incident through the daemon.
+    pub async fn report_incident(&self, text: &str) -> Result<(), ClientError> {
+        let _: serde_json::Value = self
+            .post_json(
+                &["v1", "incidents", "notice"],
+                &IncidentNotice {
+                    text: text.to_string(),
+                },
+            )
+            .await?;
+        Ok(())
     }
 
     /// `GET /v1/outbox/{id}`: where a message sent to another daemon has got to.

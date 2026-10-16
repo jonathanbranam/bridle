@@ -249,3 +249,23 @@ async fn editing_an_active_incident_updates_the_pending_notice_in_place() {
     assert_eq!(n.len(), 1, "got {n:?}");
     assert!(n[0].body.contains("green-ish"));
 }
+
+/// The gateway's unreachable-listener report (t9j4) goes through the daemon's own incident path.
+#[tokio::test]
+async fn a_reported_incident_is_an_event_and_notes_the_human() {
+    let (d, _tmp) = start_daemon(None).await;
+    d.client
+        .report_incident("The gateway cannot connect to its own address 100.64.0.1:1")
+        .await
+        .expect("report");
+    let events = d
+        .client
+        .events(&bridle_api::types::EventQuery::default())
+        .await
+        .expect("events");
+    let n = events
+        .iter()
+        .filter(|e| e.kind == bridle_api::types::event_kind::ORCHESTRATOR_INCIDENT)
+        .count();
+    assert_eq!(n, 1);
+}

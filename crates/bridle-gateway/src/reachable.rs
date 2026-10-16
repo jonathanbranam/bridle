@@ -8,7 +8,6 @@ use std::net::SocketAddr;
 use std::time::Duration;
 
 use bridle_api::client::Client;
-use bridle_api::types::{MessageKind, SendRequest, When};
 
 use crate::actions::resolve;
 use crate::discovery::{PROBE_TIMEOUT, current_targets};
@@ -55,8 +54,9 @@ pub async fn check(addr: SocketAddr, waits: &[Duration], raise: impl AsyncFnOnce
     true
 }
 
-/// Sends the incident as a note to `external:orchestrator` of every project on this machine,
-/// with the human's token (the gateway's only identity).
+/// Raises the incident on every project's daemon on this machine, with the human's token (the
+/// gateway's only identity): each records an `orchestrator.incident` event and notes the human
+/// and its orchestrator.
 pub async fn tell_orchestrators(text: String) {
     for t in current_targets().await {
         if t.workspace.is_none() {
@@ -66,17 +66,7 @@ pub async fn tell_orchestrators(text: String) {
             continue;
         };
         let client = Client::new_with_timeout(url, Some(token), PROBE_TIMEOUT * 5);
-        let sent = client
-            .send(&SendRequest {
-                to: Some("external:orchestrator".to_string()),
-                body: text.clone(),
-                kind: MessageKind::Note,
-                when: When::Now,
-                reply_to: None,
-                task: None,
-            })
-            .await;
-        if let Err(e) = sent {
+        if let Err(e) = client.report_incident(&text).await {
             tracing::warn!(project = %t.project, "could not report the unreachable gateway: {e}");
         }
     }

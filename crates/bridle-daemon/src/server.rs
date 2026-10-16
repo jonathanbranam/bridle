@@ -297,6 +297,7 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/agents/{id}/renew", post(renew_agent))
         .route("/v1/agents/{id}/transcript", get(transcript))
         .route("/v1/messages", get(list_messages).post(send_message))
+        .route("/v1/incidents/notice", post(incident_notice))
         .route("/v1/outbox", post(send_outbox))
         .route("/v1/schedules", get(list_schedules).post(add_schedule))
         .route("/v1/schedules/{id}", axum::routing::delete(remove_schedule))
@@ -712,6 +713,23 @@ fn require_not_visitor(principal: &Principal) -> Result<(), ApiError> {
     } else {
         Ok(())
     }
+}
+
+/// An incident raised by the gateway, through the same helper the daemon uses for its own.
+async fn incident_notice(
+    state: State<AppState>,
+    principal: Extension<Principal>,
+    Json(req): Json<bridle_api::types::IncidentNotice>,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    use crate::orchestrator::Incidents;
+    require_human(&principal.0)?;
+    let incidents = crate::orchestrator::RealIncidents {
+        manager: state.manager.clone(),
+        emitter: state.emitter.clone(),
+    };
+    incidents.record(&req.text).await;
+    incidents.ask_orchestrator(&req.text).await;
+    Ok(Json(serde_json::json!({})))
 }
 
 fn require_human(principal: &Principal) -> Result<(), ApiError> {

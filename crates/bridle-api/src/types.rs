@@ -815,6 +815,14 @@ pub struct Message {
 }
 
 /// `POST /v1/agents/{id}/messages` uses this with `to` ignored;
+/// `POST /v1/incidents/notice` (human only): a process outside the daemon (the gateway) raises
+/// an incident through the daemon's own path: an `orchestrator.incident` event, a note to the
+/// human and a note to `external:orchestrator`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IncidentNotice {
+    pub text: String,
+}
+
 /// `POST /v1/messages` requires `to` (`human`, agent id or name, or
 /// `role:<name>` for every live agent currently holding that role).
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
