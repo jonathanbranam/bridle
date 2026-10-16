@@ -2,16 +2,16 @@
 id = "br-9a7b"
 title = "daemon restart --upgrade ignores self_upgrade = release and looks for a green commit"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-15T21:01:32.908Z"
-updated_at = "2026-10-15T23:43:53.368244Z"
+updated_at = "2026-10-16T00:10:56.679188Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:9a7b",
 ]
 branch = "bridle/9a7b"
-commit = "0218dc54df3bebc19fc359a5add98006c0595024"
+commit = "0edb5586129f2801fdff2931e5c391d5b69b1aaa"
 summary = "Fix: restart --upgrade under self_upgrade = release now uses the same release lookup as the automatic upgrade (newest_release in server.rs, shared by both) and starts release_upgrade_in_background; the nothing-to-upgrade text names releases. Commit mode unchanged. Tests in upgrade_test.rs; docs: daemon.md, cli.md, CHANGELOG. br-mtdg (manual upgrade builds the project's repo) has no row on this daemon, so I could not check its state; it touches the same commit-mode handler lines."
 ticket = "9a7b"
 +++
@@ -37,3 +37,9 @@ done: restart --upgrade honours self_upgrade=release (shared newest_release look
 
 ### note · agent:manager-2 · 2026-10-15T23:43:53.368Z
 built: 0218dc54df3bebc19fc359a5add98006c0595024 (branch bridle/9a7b)
+
+### note · agent:manager-2 · 2026-10-16T00:10:39.853Z
+integrated: 0edb5586129f2801fdff2931e5c391d5b69b1aaa (branch bridle/9a7b)
+
+### note · agent:manager-2 · 2026-10-16T00:10:56.679Z
+cleanup: removed agent 9a7b, branch bridle/9a7b
