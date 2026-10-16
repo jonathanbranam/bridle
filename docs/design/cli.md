@@ -427,7 +427,7 @@ bridle orchestrator prime worker|planner [--component ID ...] [--task ID]   the 
 # different: `ticket` works on the file, `task` on the row alone. JSON fields and event names say "task" until step 9.
 bridle task new    <title> -k/--kind KIND [--body TEXT | --body-file FILE] [--component ID ...] [--size S|M|L] [--for-human] [--priority critical|urgent|high|normal|low] [--from TASK]
 bridle task show   <id>
-bridle task plan   <id>                                                 open -> planned: ready to build, claimable once unblocked
+bridle task plan   <id>                                                 open or reopened -> planned: ready to build, claimable once unblocked
 bridle task priority <id> critical|urgent|high|normal|low  change the priority; who and when go in the thread and a `task.priority` event
 bridle task kind <id> <kind>             change the kind, only while `pending` or `open` (refused planned, claimed, dropped, integrated, reopened); who and when go in the thread and a `task.kind` event
 bridle task edit   <id> [--title TEXT] [--body TEXT | --body-file FILE] [--component ID ... | --no-component] [--size S|M|L|none]

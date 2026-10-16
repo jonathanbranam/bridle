@@ -891,19 +891,18 @@ impl TicketManager {
             .await
     }
 
-    /// `open` -> `planned`: the PM has decided this task is ready to build.
-    /// Fails with `Conflict` if the task isn't `open` (including a task
-    /// that's already `planned`, `claimed`, or reachable only by `reopen`
-    /// once dropped).
+    /// `open` or `reopened` -> `planned`: the PM has decided this task is ready to
+    /// build. Fails with `Conflict` from any other state (already `planned`,
+    /// `claimed`, `dropped`, ...).
     pub async fn plan_task(&self, id: &str, actor: &PrincipalId) -> Result<Ticket, TicketError> {
         let mut task = self
             .get_task(id)
             .ok_or_else(|| TicketError::NotFound(format!("no such task: {id}")))?;
-        // A recurred incident goes active again from `reopened`.
-        let recurred = task.kind == TicketKind::Incident && task.state == TicketState::Reopened;
-        if task.state != TicketState::Open && !recurred {
+        // `reopened` is a way back into the queue for every kind (an incident that
+        // recurred goes active again the same way); it must not be a dead end.
+        if !matches!(task.state, TicketState::Open | TicketState::Reopened) {
             return Err(TicketError::Conflict(format!(
-                "task {id} is {}, not open; only an open task can be planned",
+                "task {id} is {}, not open or reopened; only an open or reopened task can be planned",
                 task.state
             )));
         }
@@ -2354,8 +2353,7 @@ mod tests {
             .expect_err("claimed, not open");
         assert!(matches!(err, TicketError::Conflict(_)));
 
-        // Dropped and reopened: also not open (reopened, per the lifecycle
-        // diagram, not open).
+        // Dropped and reopened: a reopened task can be planned again.
         tm.release_task(&task.id, &"agent:w1".to_string())
             .await
             .expect("release");
@@ -2365,11 +2363,28 @@ mod tests {
         tm.reopen_task(&task.id, &"human".to_string())
             .await
             .expect("reopen");
-        let err = tm
+        let replanned = tm
             .plan_task(&task.id, &"human".to_string())
             .await
-            .expect_err("reopened, not open");
-        assert!(matches!(err, TicketError::Conflict(_)));
+            .expect("reopened can be planned");
+        assert_eq!(replanned.state, TicketState::Planned);
+    }
+
+    #[tokio::test]
+    async fn a_reopened_task_can_be_dropped() {
+        let (tm, _tmp) = manager().await;
+        let task = tm
+            .new_open_task("t", TicketKind::Fix, String::new(), vec![], None)
+            .await
+            .expect("new");
+        let human = "human".to_string();
+        tm.drop_task(&task.id, "first", &human).await.expect("drop");
+        tm.reopen_task(&task.id, &human).await.expect("reopen");
+        let dropped = tm
+            .drop_task(&task.id, "again", &human)
+            .await
+            .expect("drop reopened");
+        assert_eq!(dropped.state, TicketState::Dropped);
     }
 
     #[tokio::test]

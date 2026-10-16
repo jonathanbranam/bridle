@@ -61,7 +61,7 @@ JSON over HTTP, versioned under `/v1`. The contract is
 | `POST /v1/tickets/submit` | `{title, kind, body}`: file an `open` task whose body starts `submitted by <principal>` (`bridle ticket submit`; visitors allowed, [[principals]]) |
 | `POST /v1/tickets/{id}/priority` · `/kind` · `/skip-settle` | change the priority (`{priority}`) · the kind (`{kind}`, only while `open`) · skip the settle period (`{reason}`; human, orchestrator or project manager); each recorded in the thread, the first two as `task.priority` / `task.kind` events |
 | `GET /v1/tickets/{id}` · `PATCH /v1/tickets/{id}` | one task, including its body and thread · change `title`/`body`/`components`/`size` (`{title?, body?, components?, size?}`; never state) |
-| `POST /v1/tickets/{id}/plan` | `open` -> `planned` |
+| `POST /v1/tickets/{id}/plan` | `open` or `reopened` -> `planned` (any kind); any other state is a 409 |
 | `POST /v1/tickets/{id}/drop` | `{reason}` (required) -> `dropped`, recorded in the thread |
 | `POST /v1/tickets/{id}/reopen` | `dropped` or `integrated` -> `reopened`; any other current state is a 409 |
 | `POST /v1/tickets/{id}/hold` · `/unhold` | `{reason, until?}`: `planned` -> `held` (not claimable or startable) · `held` -> `planned`; not for workers; other states are a 409 |
