@@ -4,7 +4,7 @@ title = "7bs2 gaps: just install signs a copy and renames; the gateway checks it
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-16T10:03:28.515Z"
-updated_at = "2026-10-16T11:08:06.939895Z"
+updated_at = "2026-10-16T11:08:30.421979Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -28,3 +28,6 @@ done: just install via sign install; gateway self-probe + incident; just check e
 
 ### note · agent:manager-2 · 2026-10-16T11:08:06.939Z
 integrated: 0454f3b8bc9bc2f2e61976a6de98929741c8b6c5 (branch bridle/t9j4)
+
+### note · agent:manager-2 · 2026-10-16T11:08:30.421Z
+cleanup: removed agent t9j4, branch bridle/t9j4
