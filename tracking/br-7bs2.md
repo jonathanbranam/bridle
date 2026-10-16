@@ -4,7 +4,7 @@ title = "macOS firewall still blocks a freshly launched bridle (gateway) after a
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-15T23:15:13.826Z"
-updated_at = "2026-10-16T03:18:43.963030Z"
+updated_at = "2026-10-16T03:19:15.616704Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 priority = "high"
@@ -299,3 +299,6 @@ main (br-eas4) merged in; just check exit 0, 1731 tests; cf1421cfa2e0af29328035e
 
 ### note · agent:manager-2 · 2026-10-16T03:18:43.963Z
 integrated: a507dd99d94f2071557af3d50fa7c3193722aeaa (branch bridle/fw7bs2)
+
+### note · agent:manager-2 · 2026-10-16T03:19:15.616Z
+cleanup: removed agent fw7bs2, branch bridle/fw7bs2
