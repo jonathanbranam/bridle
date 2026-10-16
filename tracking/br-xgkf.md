@@ -4,7 +4,7 @@ title = "project setup gaps: failed init commit, declined aide token not remembe
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-16T10:03:34.933Z"
-updated_at = "2026-10-16T11:44:09.881364Z"
+updated_at = "2026-10-16T11:44:36.954552Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -28,3 +28,6 @@ done: uncommitted init is unmet, aide decline remembered (git config), next: hin
 
 ### note · agent:manager-2 · 2026-10-16T11:44:09.881Z
 integrated: f6926f95c92cd68ebea59e14b93b7ab11ef9edf9 (branch bridle/xgkf)
+
+### note · agent:manager-2 · 2026-10-16T11:44:36.954Z
+cleanup: removed agent xgkf, branch bridle/xgkf
