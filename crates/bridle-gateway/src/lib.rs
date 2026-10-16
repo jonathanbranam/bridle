@@ -12,6 +12,7 @@ pub mod interactions;
 pub mod intervals;
 pub mod items;
 pub mod messages;
+pub mod reachable;
 pub mod report;
 pub mod session_usage;
 pub mod specs;

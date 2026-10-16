@@ -40,6 +40,18 @@ pub fn run(args: &SignArgs) -> Result<(), CliError> {
                 );
             }
         }
+        SignAction::Install { src, dest } => {
+            let signed = signing::install(src, dest)?;
+            println!(
+                "installed {}{}",
+                dest.display(),
+                if signed {
+                    " (signed)"
+                } else {
+                    " (ad-hoc signature)"
+                }
+            );
+        }
     }
     Ok(())
 }

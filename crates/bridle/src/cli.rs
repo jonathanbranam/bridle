@@ -1148,6 +1148,8 @@ pub enum SignAction {
         /// Defaults to this `bridle`.
         path: Option<PathBuf>,
     },
+    /// Put a built binary at DEST atomically: sign a copy named `bridle`, rename it over DEST.
+    Install { src: PathBuf, dest: PathBuf },
 }
 
 #[derive(Debug, Args)]

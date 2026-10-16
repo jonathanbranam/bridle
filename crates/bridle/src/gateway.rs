@@ -97,6 +97,18 @@ pub async fn run(cli: &Cli, args: &GatewayArgs) -> Result<(), CliError> {
     let _pid_file = bridle_gateway::PidFile::write(&home).context("writing the pid file")?;
     let mut sigterm = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
         .context("installing the SIGTERM handler")?;
+    if cfg!(target_os = "macos")
+        && let Some(addr) = listener.local_addr().ok().filter(|a| !a.ip().is_loopback())
+    {
+        tokio::spawn(async move {
+            bridle_gateway::reachable::check(
+                addr,
+                &bridle_gateway::reachable::PROBE_WAITS,
+                bridle_gateway::reachable::tell_orchestrators,
+            )
+            .await;
+        });
+    }
     let serving = bridle_gateway::serve(
         listener,
         config.login,

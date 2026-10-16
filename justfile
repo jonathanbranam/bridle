@@ -144,8 +144,16 @@ serve repo:
 # On a Mac with the "bridle local signing" identity (`just sign-setup`), the installed binary
 # is re-signed with it so the firewall's Allow survives rebuilds; else the ad-hoc signature stays.
 install:
-    cargo install --path crates/bridle --locked
-    "${CARGO_HOME:-$HOME/.cargo}/bin/bridle" sign binary "${CARGO_HOME:-$HOME/.cargo}/bin/bridle"
+    #!/usr/bin/env bash
+    set -euo pipefail
+    # Cargo installs into a private root; `sign install` then puts a signed copy named `bridle`
+    # over the live path in one rename, so it is never linker-signed while launchd may start it.
+    root="$(mktemp -d)"
+    trap 'rm -rf "$root"' EXIT
+    cargo install --path crates/bridle --locked --root "$root"
+    dest="${CARGO_HOME:-$HOME/.cargo}/bin"
+    mkdir -p "$dest"
+    "$root/bin/bridle" sign install "$root/bin/bridle" "$dest/bridle"
 
 # One time per Mac, works over SSH: create the local signing certificate (asks for the login
 # keychain password once; or set BRIDLE_KEYCHAIN_PASSWORD).
