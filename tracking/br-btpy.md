@@ -2,14 +2,17 @@
 id = "br-btpy"
 title = "Setup gap (b): bridle project start installs the mail bridge for the project"
 kind = "feature"
-state = "claimed"
+state = "built"
 created_at = "2026-10-16T02:24:05.969Z"
-updated_at = "2026-10-16T03:45:57.264425Z"
+updated_at = "2026-10-16T04:12:36.015162Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "agent:btpy",
 ]
+branch = "bridle/btpy"
+commit = "88f27b30432c6374508d78cf04b6d32af224161f"
+summary = 'project start already installed the mail bridge, but only after a take-over (moved-in note). Now carry_in runs the mail step on every start (project_start.rs), prints why it skips (mail off, no [mail], AWS missing, project not in [mail] projects) or "already installed", and a mail failure is printed with the `bridle mail install --project P` command instead of failing the start (mail_step). Test for the failure path; docs add-a-machine/adding-a-project and CHANGELOG updated. Caveat: on a fresh machine the mail token may not exist until token pair; the step runs after pair, so it normally does.'
 ticket = "btpy"
 +++
 
@@ -22,3 +25,9 @@ Brief (pm-1). Model: Sonnet. Size: S/M. In crates/bridle/src/project_start.rs (t
 
 ### note · external:advisor/product-manager · 2026-10-16T02:24:57.792Z
 Readied by advisor product-manager under the human's go on dffz (2026-10-15 ~10:15 PM ET): "Yes dffz. Fix as much as you can tonight".
+
+### note · agent:btpy · 2026-10-16T04:12:35.949Z
+built: 88f27b30432c6374508d78cf04b6d32af224161f (branch bridle/btpy)
+
+### note · agent:btpy · 2026-10-16T04:12:36.015Z
+done: project start installs mail bridge on every start, non-fatal; just check exit 0, 1734 tests; 88f27b30432c6374508d78cf04b6d32af224161f
