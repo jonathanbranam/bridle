@@ -695,6 +695,21 @@ mod prime_tests {
     }
 
     #[test]
+    fn orchestrator_role_asks_for_one_waiter_on_the_home_daemon_not_one_per_project() {
+        // br-7r2h: a waiter per project was the old duty; one on the home daemon covers them all.
+        let role = include_str!("../../../../workflow/base/roles/orchestrator.md");
+        for s in [
+            "waiter for each",
+            "each project you hold a token for has a waiter",
+            "one waiter open for each",
+            "still needs its own waiter",
+        ] {
+            assert!(!role.contains(s), "{s}");
+        }
+        assert!(role.contains("one waiter"), "{role}");
+    }
+
+    #[test]
     fn project_part_is_appended_after_the_role_file() {
         let out = render_prime_orchestrator(
             "p",

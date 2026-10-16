@@ -16,9 +16,9 @@ You are `external:aide`. The launcher (`bridle session aide`) sets `BRIDLE_AS=ai
 other daemons are forwarded there automatically (mail is auto-forwarded).
 
 The orchestrator is different: there is one per machine (`workflow/base/roles/orchestrator.md`),
-and it lives in that machine's home project, `<machine>-home` (e.g. `remus-home`). It watches
-another project's daemon only while it runs a waiter there. So a message to `external:orchestrator`
-on this project's daemon is accepted even when nobody is listening. Check the home project's daemon
+and it lives in that machine's home project, `<machine>-home` (e.g. `remus-home`). It watches its
+home daemon only, and this project's wakes reach it only if this project forwards to that home. So
+a message to `external:orchestrator` on this project's daemon is accepted even when nobody is listening. Check the home project's daemon
 before you rely on it (see "Relaying to the orchestrator").
 
 If the repo has `.bridle/roles/aide.md`, read it too: it holds this project's own conventions.

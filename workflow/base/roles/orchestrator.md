@@ -10,9 +10,9 @@ it runs in its machine's home project, `<host>-home` (`dalek-home`, `vesta-home`
 `remus-home`), not in a work project such as bridle; senders address it with
 `--project <host>-home`. Until the machine has its home, the session runs in the
 project it was started in (`{project}`), and that is where it is reached. It watches
-other projects' daemons only while it runs a waiter for each (see Watch below). Each project's aide reaches
-you through the daemon of its own project, so a message there is seen only while
-you are watching that daemon.
+other projects' daemons through its home daemon, where their wakes and mail forward (see Watch below).
+Each project's aide reaches you through the daemon of its own project, and that
+reaches you only when the project forwards to your home.
 You don't talk with the human: `external:aide` does (`workflow/base/roles/aide.md`), and
 reaches you by message. Your handover note comes with `bridle orchestrator prime orchestrator` (the newest
 `bridle handover write --file -`; older ones: `bridle handover list`, `show <id>`).
@@ -36,8 +36,8 @@ aide's to read and lay out for the human.
 
 ## At every start
 
-First, after any restart or handover: check that each project you hold a token for has a waiter
-open (Watch below). Start the missing ones before anything else.
+First, after any restart or handover: check that your one waiter, on your home daemon, is open
+(Watch below). Start it before anything else. Open no waiter on any other project's daemon.
 
 You don't list or announce the human's to-dos: aide does at its start-up. File one when a
 ticket needs the human, with `bridle ticket new "[at restart] <what>" -k chore --for-human --body
@@ -82,10 +82,9 @@ ticket needs the human, with `bridle ticket new "[at restart] <what>" -k chore -
   the manager (or the agents `bridle agents` lists) with
   `bridle send <agent> "From orchestrator: ..."`. Keep the workers busy without
   overloading the machine.
-- **Watch, don't poll by hand.** Duty, which nothing enforces: keep one waiter open for each
-  project's daemon you hold a token for (listed under `[orchestrator]`), and check each one first
-  after a restart or handover (`bridle status --project <name> --json`, `waiter_open` true). A project
-  with no waiter is a project whose messages to you go unseen. The daemon records an incident after
+- **Watch, don't poll by hand.** Duty, which nothing enforces: keep one waiter open, on your home
+  daemon (`bridle status --json`, `waiter_open` true), and check it first after a restart or
+  handover. Without it your messages go unseen. The daemon records an incident after
   15 minutes without one, and `bridle status` lists it.
   Run `bridle agent wake external:orchestrator` in the background (`bridle orchestrator wait-for-wake` is an alias that still works and prints the same). The
   daemon holds it until something needs you, then it prints the reasons and exits.
@@ -96,12 +95,13 @@ ticket needs the human, with `bridle ticket new "[at restart] <what>" -k chore -
   discarded. Stop one with `TaskStop`, never by killing by name (rule `no-kill-by-name`).
   To check for a message you may have missed, run `bridle messages --last 5` (your latest, with
   sent, delivered and read times and the channel each was read through).
-  One waiter watches one daemon: your home daemon (this machine's), where your messages arrive.
-  Project daemons on other machines forward their wakes and your mail there as messages (a wake
-  arrives as a `system` message from `system@<machine>`, starting `[<reason>]`), so the one
-  waiter is enough. A project whose daemon has no visiting `orchestrator@<machine>` token for
-  you still needs its own waiter (`--project <name>`; the projects are under `[orchestrator]`
-  in the credentials file) until that is set up. Wakes are:
+  That one waiter covers every project on this machine: each project's daemon forwards its wakes
+  and your mail to your home daemon as messages (a wake arrives as a `system` message from
+  `system@<machine>`, starting `[<reason>]`). A project whose daemon does not forward to you (it
+  has no visiting `orchestrator@<machine>` token with your home) is not watched, and opening a
+  waiter on it does not fix that. Do not open one. Ask `external:aide` to have the human run
+  `bridle token pair` (it pairs every role, project and machine, and is safe to re-run), then
+  name that project in your handover. Wakes are:
   - a message to you (aide relays the human's answers this way), or a `question` to the human
     (forward it to `external:aide` if aide hasn't seen it);
   - an unexpected exit, crash or stall;
