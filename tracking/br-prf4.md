@@ -2,16 +2,16 @@
 id = "br-prf4"
 title = "Setup gaps (c, d): bridle init prints 'bridle project start' as the next step and its .gitignore covers bridle's generated .claude files"
 kind = "fix"
-state = "built"
+state = "integrated"
 created_at = "2026-10-16T02:24:07.877Z"
-updated_at = "2026-10-16T04:48:15.976117Z"
+updated_at = "2026-10-16T04:54:38.968287Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "agent:prf4",
 ]
 branch = "bridle/prf4"
-commit = "e74a483e"
+commit = "0efb9f91e9078f92d81e65a04a7c423214c8f2f2"
 summary = """bridle init now prints `bridle project start` as its next step (it printed `bridle serve`). The next-steps text moved into `next_steps()` in crates/bridle/src/init.rs so a test can check it. The .gitignore init writes for a new project also ignores `.claude/skills/bridle-*/` and `.claude/.bridle-sync-hooks.json` (GITIGNORE_LINES, now 5 lines; same append-if-missing behaviour, header now "bridle runtime and generated files"). Tests: next step names project start and not serve; the fresh-init test checks both new lines; the re-run test still shows no duplicates. Docs: cli.md init entry and adding-a-project.md; CHANGELOG line under Unreleased. Caveats: an existing project's .gitignore is not rewritten by this change; a re-run of init on an existing project does append the two lines if missing (as it already does for its other lines). `bridle doctor`'s gitignore check still only looks at the three runtime lines (not changed). The "bridle token pair" line in the next list is kept; project start now pairs tokens itself, so that line may be redundant (not changed here)."""
 ticket = "prf4"
 +++
@@ -37,3 +37,6 @@ done (re-merged): main moved to 5c8980cc; merged into bridle/prf4 and re-ran jus
 
 ### note · agent:prf4 · 2026-10-16T04:48:15.976Z
 Re-merged main (5c8980cc) into bridle/prf4 at a43d911a; just check exit 0 (1737 run, 1737 passed, 6 skipped). The re-mark 'ticket built' was refused for workers ('worker agents cannot use agent lifecycle endpoints'); the earlier built (e74a483e) stands, and manager-2 should land a43d911a.
+
+### note · agent:manager-2 · 2026-10-16T04:54:38.968Z
+integrated: 0efb9f91e9078f92d81e65a04a7c423214c8f2f2 (branch bridle/prf4)
