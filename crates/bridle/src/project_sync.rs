@@ -296,6 +296,39 @@ pub fn mail_projects(fleet: &Fleet) -> Entry {
     Entry::Mail(normalise(&Value::Array(arr)).to_string())
 }
 
+/// The names in a `[mail] projects` entry (empty when it is not a list of strings).
+fn mail_names(e: Option<&Entry>) -> Vec<String> {
+    let Some(Entry::Mail(v)) = e else {
+        return vec![];
+    };
+    v.parse::<Value>()
+        .ok()
+        .and_then(|v| {
+            v.as_array().map(|a| {
+                a.iter()
+                    .filter_map(|x| x.as_str().map(String::from))
+                    .collect()
+            })
+        })
+        .unwrap_or_default()
+}
+
+/// `mail_projects` plus any name some machine already lists that `[projects]` does not: sync
+/// adds projects but never drops an enrolment just because the project is not registered yet.
+/// Returns the entry and the names it left alone.
+fn mail_projects_keeping(fleet: &Fleet, seen: &[Vec<String>]) -> (Entry, Vec<String>) {
+    let mut names = mail_names(Some(&mail_projects(fleet)));
+    let mut kept = vec![];
+    for n in seen.iter().flatten() {
+        if !names.contains(n) {
+            names.push(n.clone());
+            kept.push(n.clone());
+        }
+    }
+    let arr: toml_edit::Array = names.iter().map(String::as_str).collect();
+    (Entry::Mail(normalise(&Value::Array(arr)).to_string()), kept)
+}
+
 /// One difference between the source list and a target's.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Diff {
@@ -474,10 +507,6 @@ pub fn sync(fleet: &Fleet, files: &dyn Files, apply: bool, out: &mut dyn Write) 
     let local_text = files.read(&Where::Local).unwrap_or_default();
     let local_mail = parse_mail(&local_text).unwrap_or_default();
     let mut mail_source = local_mail.clone();
-    if !mail_source.is_empty() {
-        mail_source.insert(("mail", "projects".into()), mail_projects(fleet));
-    }
-    source.extend(mail_source.clone());
     let mut names: Vec<String> = vec![fleet.local.clone()];
     let mut lists: Vec<Option<List>> = vec![Some(source.clone())];
     let mut texts: Vec<String> = vec![String::new()];
@@ -507,6 +536,26 @@ pub fn sync(fleet: &Fleet, files: &dyn Files, apply: bool, out: &mut dyn Write) 
             }
         }
     }
+
+    // Derive `[mail] projects` now every machine has been read, so no machine's extra entry is lost.
+    if !mail_source.is_empty() {
+        let key = ("mail", "projects".to_string());
+        let seen: Vec<Vec<String>> = std::iter::once(&local_mail)
+            .chain(lists.iter().skip(1).flatten())
+            .map(|l| mail_names(l.get(&key)))
+            .collect();
+        let (entry, kept) = mail_projects_keeping(fleet, &seen);
+        if !kept.is_empty() {
+            let _ = writeln!(
+                out,
+                "[mail] projects: left {} (not in [projects])",
+                kept.join(", ")
+            );
+        }
+        mail_source.insert(("mail", "projects".into()), entry);
+    }
+    source.extend(mail_source.clone());
+    lists[0] = Some(source.clone());
 
     let _ = writeln!(out, "entry\t{}", names.join("\t"));
     let mut all: Vec<&(&'static str, String)> =
@@ -803,6 +852,26 @@ mod tests {
                 .unwrap()
                 .contains("nuc: cannot read config")
         );
+    }
+
+    #[test]
+    fn mail_entry_for_an_unregistered_project_is_kept_everywhere() {
+        let local = format!("{SRC}[mail]\nbucket = \"b\"\nprojects = [\"bridle\", \"later\"]\n");
+        let there = "[machine]\nname = \"nuc\"\n[mail]\nprojects = [\"bridle\", \"other\"]\n";
+        let f = Fake::new(&[("mbp", &local), ("nuc.lan", there)]);
+        let out = run(&f, true);
+        assert!(
+            out.contains("left later, other (not in [projects])"),
+            "{out}"
+        );
+        for h in ["nuc.lan", "mbp"] {
+            let now = f.0.borrow()[h].clone();
+            assert!(
+                now.contains("\"later\"") && now.contains("\"other\""),
+                "{h}: {now}"
+            );
+            assert!(now.contains("\"a\"") && now.contains("\"b\""), "{h}: {now}");
+        }
     }
 
     #[test]

@@ -422,9 +422,9 @@ or later first (the token pair fix).
 1. **Repo:** a git repository with a private remote (GitHub). State push is on by default, so
    tickets about the machine's setup can live in it. Run `bridle init` in the clone.
 2. **Enrol it on every machine:** add `<host>-home` to `[projects]` in `~/.bridle/config.toml`
-   (the `machine` is this machine), then `bridle projects sync --apply` on any machine. Add it to
-   `[mail] projects` on every machine by hand too: `projects sync` does not spread `[mail]` until
-   ticket afzu.
+   (the `machine` is this machine), then `bridle projects sync --apply` on any machine. The sync
+   spreads `[mail]` too and adds `<host>-home` to `[mail] projects`; it never removes an entry
+   that is not (yet) in `[projects]`, and prints the ones it left.
 3. **Start:** `bridle project start`. On a brand-new project (no `bridle/state` here or on
    origin) it needs no `take-over` first: the daemon it starts creates the branch and records this
    machine as owner (ticket kf7t). It installs the daemon as a service and enables it. Its
@@ -433,9 +433,9 @@ or later first (the token pair fix).
    tokens for `<host>-home`.
 5. **Mail:** `bridle mail install --project <host>-home`, then enable its unit (`systemctl --user
    enable --now` on Linux; `start` can stop before its mail step).
-7. **Check:** `bridle --project <host>-home status --json` answers, and a test mail to
+6. **Check:** `bridle --project <host>-home status --json` answers, and a test mail to
    `<host>-home@` gets a reply.
-8. **Restart the orchestrator there:** the human stops the orchestrator session in its old project
+7. **Restart the orchestrator there:** the human stops the orchestrator session in its old project
    and starts it in the home project with `bridle session orchestrator --project <host>-home`, and
    starts the aide there too.
 
