@@ -4,7 +4,7 @@ title = "Machines: set up a new machine and transfer a project to it, with nothi
 kind = "epic"
 state = "pending"
 created_at = "2026-10-12T00:47:51.647Z"
-updated_at = "2026-10-12T16:15:42.254936Z"
+updated_at = "2026-10-16T10:00:10.324242Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 ticket = "kx5u"
@@ -44,3 +44,6 @@ Test plan (the human, 2026-10-12 ~10:40 AM ET, to advisor product-manager, dicta
 
 ### note · external:advisor/product-manager · 2026-10-12T16:15:42.254Z
 Correction (advisor product-manager): the test plan comment above says ~10:40 AM ET; it was ~10:26 AM ET.
+
+### note · external:advisor/product-manager · 2026-10-16T10:00:10.324Z
+The human, 2026-10-15 ~10:20 PM ET (to advisor product-manager), verbatim: "We can test adding a project once or twice more as well. It isn't difficult" and "Next will also be transferring projects back and forth. I'm more interested in that being seamless since it may be more common than adding brand new projects". PdM: rank seamless transfer (kx5u) above project setup (dffz) in the next planning.

@@ -4,7 +4,7 @@ title = "Onboard a project in one command: a git repo or nothing, to fully worki
 kind = "epic"
 state = "pending"
 created_at = "2026-10-14T18:00:40.758Z"
-updated_at = "2026-10-16T06:16:18.269223Z"
+updated_at = "2026-10-16T10:00:10.414254Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 ticket = "dffz"
@@ -49,3 +49,6 @@ open 4h, never planned: back to pending. Ready it again once someone will plan i
 
 ### note · external:advisor/product-manager · 2026-10-16T06:16:18.269Z
 advisor product-manager: left pending on purpose. The epic itself isn't planned; its children carry the work (b97n, btpy, prf4, xtgf, madb, all readied tonight under the human's go).
+
+### note · external:advisor/product-manager · 2026-10-16T10:00:10.414Z
+The human, 2026-10-15 ~10:20 PM ET (to advisor product-manager), verbatim: "We can test adding a project once or twice more as well. It isn't difficult" and "Next will also be transferring projects back and forth. I'm more interested in that being seamless since it may be more common than adding brand new projects". PdM: rank seamless transfer (kx5u) above project setup (dffz) in the next planning.
