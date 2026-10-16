@@ -4,7 +4,7 @@ title = "Mail digest: local-time timestamps, grouped by day/week/older, and drop
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-15T21:00:25Z"
-updated_at = "2026-10-16T15:46:55.092088Z"
+updated_at = "2026-10-16T15:47:12.297217Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -34,3 +34,6 @@ done: mail digest local-time stamps, day/week/older groups, merged section, bare
 
 ### note · agent:manager-2 · 2026-10-16T15:46:55.092Z
 integrated: e7195883af45a604662a636902154befa4d7f6c9 (branch bridle/bft2)
+
+### note · agent:manager-2 · 2026-10-16T15:47:12.297Z
+cleanup: removed agent bft2, branch bridle/bft2
