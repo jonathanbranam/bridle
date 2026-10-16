@@ -511,6 +511,16 @@ New projects under bridle and the packs they need.
 | [tw-57dv](http://dalek.tailbc91f5.ts.net:7878/task?id=tw-57dv) | Decide: delete the bridle-adopt branch (track-web now works on dev) |  | claimed | the human's to-do |
 | [tw-mbzn](http://dalek.tailbc91f5.ts.net:7878/task?id=tw-mbzn) | Review the engagement-tracking + feedback design (openspec change games-engagement-and-... |  | claimed | the human's to-do |
 
+### Theme `email`: Email (future)
+
+Future, not current work: no tickets yet. The human, 2026-10-16 (via aide): "ask PdM to have a
+future theme on email including that and images", after "Don't need email to multiple projects
+yet" earlier that day.
+
+- **One email to several projects.** Today it reaches only the project whose bridge polls first:
+  the bridges share one S3 object, deleted after delivery.
+- **Images in mail**, both ways.
+
 ### The human's to-dos
 
 Chores assigned to the human: expand on an idea, review a ticket or branch.
