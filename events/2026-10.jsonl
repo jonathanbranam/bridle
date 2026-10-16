@@ -2280,3 +2280,4 @@
 {"actor":"agent:pm-1","at":"2026-10-16T02:36:09.894151Z","from":"open","task":"br-prf4","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-16T02:36:10.369782Z","from":"open","task":"br-xtgf","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-16T02:36:12.827477Z","queue":"reprioritized"}
+{"actor":"agent:manager-2","at":"2026-10-16T02:52:33.477520Z","from":"built","task":"br-eas4","to":"integrated"}

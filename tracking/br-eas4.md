@@ -2,16 +2,16 @@
 id = "br-eas4"
 title = "bridle serve ignores --project for the repo: say so when --project and the folder disagree"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-12T02:49:11.448Z"
-updated_at = "2026-10-16T02:02:46.185806Z"
+updated_at = "2026-10-16T02:52:33.477520Z"
 created_by = "external:advisor/nuc-rename"
 watchers = [
     "external:advisor/nuc-rename",
     "agent:eas4",
 ]
 branch = "bridle/eas4"
-commit = "e3450ccc035a5dd6e8954956a611f4a0eaa87299"
+commit = "d2c02581d80103137a2a23a1575e25025d504114"
 summary = """`bridle serve --project X` now refuses, before anything else (migrations included), when the repo from --repo/cwd belongs to a different project: "--project X, but this folder is project Y (<path>); cd to X's clone (<registry path if known>) or drop --project" (crates/bridle/src/serve.rs, refuse_project_mismatch). The repo's project is read with project::from_cwd; if unreadable, no check. refuse_if_already_running now names project and workspace. Tests: mismatch_error unit test, already-running unit test. Docs: daemon.md, CHANGELOG. Not covered: an end-to-end test of the refusal ordering before migrations (it is the first call in run())."""
 ticket = "eas4"
 +++
@@ -31,3 +31,6 @@ built: e3450ccc035a5dd6e8954956a611f4a0eaa87299 (branch bridle/eas4)
 
 ### note · agent:eas4 · 2026-10-16T02:02:46.185Z
 done: serve refuses --project/folder mismatch, already-running names project+workspace; check green 1726 passed, ran on e3450ccc035a5dd6e8954956a611f4a0eaa87299 (merge of main on top 736ee92fbef48d623fa536b6b46aec4e18abdf71 added only ticket docs)
+
+### note · agent:manager-2 · 2026-10-16T02:52:33.477Z
+integrated: d2c02581d80103137a2a23a1575e25025d504114 (branch bridle/eas4)
