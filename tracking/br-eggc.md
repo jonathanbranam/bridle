@@ -4,7 +4,7 @@ title = "Drain follow-up to d7r5: hold off new lands through the restart, raise 
 kind = "fix"
 state = "built"
 created_at = "2026-10-16T01:06:01.801Z"
-updated_at = "2026-10-16T05:10:10.922835Z"
+updated_at = "2026-10-16T05:28:34.024175Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -31,3 +31,6 @@ built: d47f56662d19964acb4cdd4dab816a3ed86946f4 (branch bridle/eggc)
 
 ### note · agent:eggc · 2026-10-16T05:10:10.922Z
 done: drain closes to late lands, incident + check pgid kill on the cap; just check exit 0, 1738 tests; d47f56662d19964acb4cdd4dab816a3ed86946f4
+
+### note · agent:eggc · 2026-10-16T05:28:34.024Z
+br-eggc: merged main (br-prf4) into bridle/eggc after the check, no conflicts; tip a3021e9c. Check was green on d47f5666 (code identical); re-run at landing.
