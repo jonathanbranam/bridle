@@ -2,13 +2,14 @@
 id = "br-xgkf"
 title = "project setup gaps: failed init commit, declined aide token not remembered, next: hints beyond init"
 kind = "fix"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-16T10:03:34.933Z"
-updated_at = "2026-10-16T21:08:40.738489Z"
+updated_at = "2026-10-16T21:17:49.639538Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "agent:xgkf",
+    "agent:xgkfb",
 ]
 branch = "bridle/xgkf"
 commit = "f6926f95c92cd68ebea59e14b93b7ab11ef9edf9"
