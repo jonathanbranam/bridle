@@ -2,11 +2,14 @@
 id = "br-btpy"
 title = "Setup gap (b): bridle project start installs the mail bridge for the project"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-16T02:24:05.969Z"
-updated_at = "2026-10-16T02:36:09.715354Z"
+updated_at = "2026-10-16T03:45:57.264425Z"
 created_by = "agent:pm-1"
-watchers = ["agent:pm-1"]
+watchers = [
+    "agent:pm-1",
+    "agent:btpy",
+]
 ticket = "btpy"
 +++
 
