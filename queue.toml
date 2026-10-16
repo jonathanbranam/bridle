@@ -31,3 +31,21 @@ tasks = ["br-r66n"]
 
 [[tier]]
 tasks = ["br-madb"]
+
+[[tier]]
+tasks = [
+    "br-t9j4",
+    "br-8rdn",
+]
+
+[[tier]]
+tasks = [
+    "br-xgkf",
+    "br-jkkp",
+]
+
+[[tier]]
+tasks = [
+    "br-mt4v",
+    "br-zwup",
+]

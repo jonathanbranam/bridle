@@ -2,9 +2,9 @@
 id = "br-xgkf"
 title = "project setup gaps: failed init commit, declined aide token not remembered, next: hints beyond init"
 kind = "fix"
-state = "open"
+state = "planned"
 created_at = "2026-10-16T10:03:34.933Z"
-updated_at = "2026-10-16T10:03:57.392452Z"
+updated_at = "2026-10-16T10:16:03.027320Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 ticket = "xgkf"
