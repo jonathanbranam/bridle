@@ -2298,3 +2298,4 @@
 {"actor":"external:advisor/product-manager","at":"2026-10-16T05:40:26.484443Z","from":"pending","task":"br-madb","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-16T05:40:28.037164Z","from":"open","task":"br-madb","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-16T05:40:29.071729Z","queue":"reprioritized"}
+{"actor":"agent:manager-2","at":"2026-10-16T05:46:05.035106Z","from":"built","task":"br-xtgf","to":"integrated"}

@@ -2,16 +2,16 @@
 id = "br-xtgf"
 title = "bridle project setup: the driver (steps with check and apply, --check, idempotent) over clone, init, register, state, service, tokens, mail"
 kind = "feature"
-state = "built"
+state = "integrated"
 created_at = "2026-10-16T02:24:25.726Z"
-updated_at = "2026-10-16T05:28:15.332866Z"
+updated_at = "2026-10-16T05:46:24.274486Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "agent:xtgf",
 ]
 branch = "bridle/xtgf"
-commit = "bbfcfcde"
+commit = "3a680bce7c91927f09fdb985b469e34ea7b08d18"
 summary = "Stop point 1 of br-dffz option C: `bridle project setup [NAME] [--repo] [--workspace] [--check]` in crates/bridle/src/project_setup.rs. A driver over five steps (register, state, service, tokens, mail), each a pure status function over what was read (tested) plus an apply that calls existing code. To avoid copying, project_start.rs was refactored into start_service, make_tokens, bring_mail and a Sys struct (project start uses them too); project_sync gained sync_counting (a read-only count of differing entries). Statuses: ok, skip, todo, blocked (state owned/released elsewhere: names take-over, setup never takes over), unknown (non-zero exit). --check exits 0 only when all ok/skip. A new project's bridle/state and owner are made by the daemon's first start, so the state step's apply is a no-op that defers to the service step. Verified with --check against this worktree and a throwaway git repo with its own BRIDLE_HOME; I did not run apply live (it would install a real launchd unit). Docs: cli.md, adding-a-project.md, CHANGELOG. Deferred to stop point 2: clone from URL, --remote, --root, main/adopt, -y, aide token, exit 2 without a terminal."
 ticket = "xtgf"
 +++
@@ -35,3 +35,9 @@ built: bbfcfcde (branch bridle/xtgf)
 
 ### note · agent:xtgf · 2026-10-16T05:28:15.332Z
 done: stop point 1 (bridle project setup: driver + --check + register/state/service/tokens/mail); just check exit 0, 1748 tests passed (last full 1737); commit bbfcfcde. Apply not run live (would install a real unit); --check verified on this worktree and a throwaway repo. Stopping here until you say go for stop point 2.
+
+### note · agent:manager-2 · 2026-10-16T05:46:05.035Z
+integrated: 3a680bce7c91927f09fdb985b469e34ea7b08d18 (branch bridle/xtgf)
+
+### note · agent:manager-2 · 2026-10-16T05:46:24.274Z
+cleanup: removed agent xtgf, branch bridle/xtgf
