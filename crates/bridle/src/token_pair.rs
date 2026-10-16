@@ -520,7 +520,7 @@ pub fn pair(
     if !opts.dry_run {
         let results = check_entries(&p, fleet, runner);
         write_check(out, &results, false);
-        write_non_forwarding(out, &p);
+        write_non_forwarding(out, &p, &[]);
         ok &= results.iter().all(|r| r.refused.is_none());
     }
     Ok(ok)
@@ -641,8 +641,36 @@ fn non_forwarding(p: &Plan, holder: &str) -> Vec<String> {
         .collect()
 }
 
-/// Says which projects do not forward, and what to do about it (br-8rdn).
-fn write_non_forwarding(out: &mut dyn Write, p: &Plan) {
+/// Says which projects do not forward, and what to do about it (br-8rdn). `results` are the
+/// checked entries: on a machine with a home, a local daemon whose orchestrator visitor token is
+/// missing or refused does not forward either (br-8rdn, item 3).
+fn write_non_forwarding(out: &mut dyn Write, p: &Plan, results: &[Checked]) {
+    for holder in p.up.keys() {
+        let home = machine_home(holder);
+        if !p.up[holder].iter().any(|(n, _)| *n == home) {
+            continue;
+        }
+        let v: Vec<&str> = results
+            .iter()
+            .filter(|r| {
+                r.holder == *holder
+                    && r.daemon == *holder
+                    && r.kind == ORCHESTRATOR
+                    && r.project != home
+                    && r.refused.is_some()
+            })
+            .map(|r| r.project.as_str())
+            .collect();
+        if !v.is_empty() {
+            writeln!(
+                out,
+                "note: on machine {holder} these daemons do not forward wakes or mail to {home}: {names} \
+                 (the orchestrator's visitor token is missing or refused). Run `bridle token pair`.",
+                names = v.join(", ")
+            )
+            .ok();
+        }
+    }
     for holder in p.up.keys() {
         let v = non_forwarding(p, holder);
         if !v.is_empty() {
@@ -812,7 +840,7 @@ pub fn check(
     let results = check_entries(&p, fleet, runner);
     write_check(out, &results, json);
     if !json {
-        write_non_forwarding(out, &p);
+        write_non_forwarding(out, &p, &results);
     }
     Ok(p.ok && results.iter().all(|r| r.refused.is_none()))
 }
@@ -1180,6 +1208,34 @@ mod tests {
             .push(("mbp-home".into(), 7410));
         let (_, out) = run(&s, &Options::default());
         assert!(!out.contains("machine mbp has no"), "{out}");
+    }
+
+    // br-8rdn item 3: a machine WITH a home names a daemon whose visitor token is missing.
+    #[test]
+    fn a_missing_visitor_token_on_a_machine_with_a_home_is_named_by_check() {
+        let mut s = sim();
+        s.projects
+            .get_mut("mbp")
+            .unwrap()
+            .extend([("mbp-home".into(), 7410), ("notes".into(), 7403)]);
+        run(&s, &Options::default());
+        let note = |s: &Sim| {
+            let mut out = Vec::new();
+            check(&Options::default(), &fleet(), s, &mut out, false).unwrap();
+            String::from_utf8(out).unwrap()
+        };
+        assert!(!note(&s).contains("do not forward"), "{}", note(&s));
+        s.valid
+            .borrow_mut()
+            .get_mut(&("mbp".into(), "notes".into()))
+            .unwrap()
+            .clear();
+        let text = note(&s);
+        assert!(
+            text.contains("on machine mbp these daemons do not forward")
+                && text.contains("mbp-home: notes"),
+            "{text}"
+        );
     }
 
     // br-gr3v, br-8usa: the home appears after a first pair; a re-pair moves the visitors.

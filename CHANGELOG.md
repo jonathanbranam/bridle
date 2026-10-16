@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Fix (br-8rdn): `bridle token check` also names, on a machine with a `<machine>-home`, the projects whose daemon has a missing or refused orchestrator visitor token (they do not forward wakes or mail to the home); the orchestrator role runs it at every start.
+
 ## [0.7.5] - 2026-10-16
 
 - Fix (br-rnhp): `bridle up` starts the orchestrator with `--project <host>-home` when `[projects]` puts that project on this machine (it started it in no project, so a boot with no workspace cwd failed); otherwise as before, and it says which project it used. Migration: none.

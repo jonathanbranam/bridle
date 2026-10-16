@@ -180,7 +180,10 @@ bridle token check [--machines m,..] [--projects p,..] [--roles r,..] [--tokens 
                                              `token pair`, so the two cannot disagree; a peer entry is held plus a live `peer:<machine>`
                                              on the receiver). One line per machine, role and project: `accepted`, or `refused: <reason>`
                                              (invalid token, visitor token has no home, unreachable, no entry). Non-zero if any is refused
-                                             or a machine is unreachable. `--json` prints an array of
+                                             or a machine is unreachable. Text mode then adds `note:` lines naming the projects whose
+                                             daemons do not forward wakes and mail to the orchestrator (br-8rdn): all but the waited-on one
+                                             when the machine has no `<machine>-home`, or, with a home, those whose orchestrator visitor
+                                             token is refused. The orchestrator runs it at every start. `--json` prints an array of
                                              `{machine, role, daemon, project, accepted, reason}`.
 bridle token create --peer <m>              a peer token, `peer:<m>`, for the daemons of machine <m> to forward mail here: always
                                              printed once; paste it under `[peer]` in the sender's credentials.toml, keyed by this project.
