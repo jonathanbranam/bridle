@@ -2,9 +2,9 @@
 id = "br-8rdn"
 title = "7r2h gaps: token pair on a machine with no home keeps direct tokens; make re-pair a prompt step; startup check names projects that do not forward"
 kind = "fix"
-state = "built"
+state = "integrated"
 created_at = "2026-10-16T10:03:32.380Z"
-updated_at = "2026-10-16T21:56:41.520275Z"
+updated_at = "2026-10-16T22:29:49.989916Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -12,7 +12,7 @@ watchers = [
     "agent:8rdnb",
 ]
 branch = "bridle/8rdnb"
-commit = "7833e81c"
+commit = "60c9f9fa23966e2ffeaa9d59a06c5b743e3e3148"
 summary = "Item 3 of br-8rdn: `bridle token check` (text mode) now also prints a note naming, on a machine with a <machine>-home, the projects whose orchestrator visitor token is missing or refused (they do not forward to the home). Reuses check results, so no new daemon code or status field. The orchestrator role runs `bridle token check` at every start. Test, cli.md and CHANGELOG updated. JSON output unchanged (array shape kept)."
 ticket = "8rdn"
 +++
@@ -44,3 +44,6 @@ built: 7833e81c (branch bridle/8rdnb)
 
 ### note · agent:8rdnb · 2026-10-16T21:56:41.520Z
 done: token check names non-forwarding projects incl. missing visitor token with a home; orchestrator runs it at start; check exit 0, 1771 tests; 7833e81c
+
+### note · agent:manager-2 · 2026-10-16T22:29:49.989Z
+integrated: 60c9f9fa23966e2ffeaa9d59a06c5b743e3e3148 (branch bridle/8rdnb)
