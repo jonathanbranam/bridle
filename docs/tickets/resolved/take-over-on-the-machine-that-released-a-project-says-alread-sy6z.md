@@ -10,6 +10,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-eg64, br-kx5u]
+resolved: 2026-10-16T10:02:58Z
 ---
 
 ## The ask

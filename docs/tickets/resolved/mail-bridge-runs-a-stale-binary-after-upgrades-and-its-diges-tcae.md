@@ -7,8 +7,9 @@ created_by: external:aide
 repos: [bridle]
 changes: []
 specs: []
-blocked_by: []
+blocked_by: [br-cvfu]
 related: [br-pcde, br-a885]
+resolved: 2026-10-16T10:02:58Z
 ---
 
 The human, 2026-10-14 ~8:30 AM ET (to aide), verbatim: "I haven't seen a bridle daily digest email since I think 10.7. Can you check on that?"

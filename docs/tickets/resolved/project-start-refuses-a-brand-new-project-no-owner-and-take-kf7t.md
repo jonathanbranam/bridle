@@ -8,8 +8,9 @@ theme: multi-machine
 repos: [bridle]
 changes: []
 specs: []
-blocked_by: []
+blocked_by: [br-sh8y]
 related: [br-8uxe]
+resolved: 2026-10-16T10:02:58Z
 ---
 
 ## The ask
