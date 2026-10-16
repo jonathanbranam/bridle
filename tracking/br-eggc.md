@@ -4,7 +4,7 @@ title = "Drain follow-up to d7r5: hold off new lands through the restart, raise 
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-16T01:06:01.801Z"
-updated_at = "2026-10-16T05:39:51.382486Z"
+updated_at = "2026-10-16T05:40:04.615053Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -37,3 +37,6 @@ br-eggc: merged main (br-prf4) into bridle/eggc after the check, no conflicts; t
 
 ### note · agent:manager-2 · 2026-10-16T05:39:51.382Z
 integrated: c6dd050edfe01815b54fb6481a10a5280181039e (branch bridle/eggc)
+
+### note · agent:manager-2 · 2026-10-16T05:40:04.615Z
+cleanup: removed agent eggc, branch bridle/eggc
