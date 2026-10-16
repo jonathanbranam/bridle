@@ -8,7 +8,7 @@ repos: [bridle]
 changes: []
 specs: []
 blocked_by: []
-related: [[br-kuvh, br-rhba, br-8uxe, br-3haz]]
+related: [br-kuvh, br-8uxe, br-3haz]
 ---
 
 The human, 2026-10-15 ~9:00 PM ET (to advisor product-manager), verbatim:
