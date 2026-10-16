@@ -4,7 +4,7 @@ title = "macOS firewall still blocks a freshly launched bridle (gateway) after a
 kind = "bug"
 state = "built"
 created_at = "2026-10-15T23:15:13.826Z"
-updated_at = "2026-10-16T02:59:54.985754Z"
+updated_at = "2026-10-16T03:10:13.389101Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 priority = "high"
@@ -293,3 +293,6 @@ fixed (probable cause: unbounded codesign wait in restart, now 2s timeout; test 
 
 ### note · agent:fw7bs2 · 2026-10-16T02:59:54.985Z
 fw7bs2: could not reproduce a_drain_starting_during_a_spawn_restarts_promptly (passes alone in 5s, with main merged). Only suspect in my change: the restart handler awaited codesign (2 calls on the test binary) in spawn_blocking, which can stall under full-suite load. Now bounded to 2s. Full just check green (1729 tests), commit 10a8381c. Not proven to be the cause; if it fails again on plain main it is load-flaky.
+
+### note · agent:fw7bs2 · 2026-10-16T03:10:13.389Z
+main (br-eas4) merged in; just check exit 0, 1731 tests; cf1421cfa2e0af29328035ed35a9930cb1039ef0
