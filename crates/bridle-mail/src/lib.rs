@@ -20,5 +20,5 @@ pub use outbound::{
     question_mail,
 };
 pub use parse::{Accepted, Attachment, Rejection, Route, evaluate};
-pub use store::{FakeStore, MailStore, S3Store};
+pub use store::{FakeStore, MailStore, S3Store, TimeoutStore};
 pub use token::Tokens;

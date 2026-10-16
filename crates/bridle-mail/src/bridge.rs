@@ -185,11 +185,25 @@ impl Bridge {
         self
     }
 
+    /// Polls until the bucket has gone unreadable for 5 poll intervals, then returns an error
+    /// so the process exits non-zero and the service manager restarts it: a bridge that is up
+    /// but silent looks the same as no mail.
     pub async fn run(&self) -> anyhow::Result<()> {
+        let mut last_ok = tokio::time::Instant::now();
         loop {
             match self.poll_once().await {
-                Ok(_) => self.failures.ok("mail poll"),
+                Ok(_) => {
+                    last_ok = tokio::time::Instant::now();
+                    self.failures.ok("mail poll")
+                }
                 Err(e) => self.failures.failed("mail poll", &e),
+            }
+            let limit = self.cfg.poll_interval() * 5;
+            if last_ok.elapsed() > limit {
+                anyhow::bail!(
+                    "no successful mail poll for {}s (5 x poll_secs); exiting so the service manager restarts the bridge",
+                    last_ok.elapsed().as_secs()
+                );
             }
             match self.poll_outbound(chrono::Local::now().naive_local()).await {
                 Ok(_) => self.failures.ok("mail outbound"),

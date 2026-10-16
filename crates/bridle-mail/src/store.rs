@@ -12,6 +12,46 @@ pub trait MailStore: Send + Sync {
     async fn delete(&self, key: &str) -> anyhow::Result<()>;
 }
 
+/// Bounds every call on the inner store, so a stalled S3 stream (the SDK's own stall check
+/// only fires on a stream that has started) errors out instead of wedging the poll loop.
+pub struct TimeoutStore {
+    inner: std::sync::Arc<dyn MailStore>,
+    limit: std::time::Duration,
+}
+
+impl TimeoutStore {
+    pub fn new(inner: std::sync::Arc<dyn MailStore>, limit: std::time::Duration) -> Self {
+        TimeoutStore { inner, limit }
+    }
+
+    async fn bound<T>(
+        &self,
+        what: &str,
+        f: impl std::future::Future<Output = anyhow::Result<T>>,
+    ) -> anyhow::Result<T> {
+        tokio::time::timeout(self.limit, f)
+            .await
+            .map_err(|_| anyhow::anyhow!("{what} timed out after {}s", self.limit.as_secs()))?
+    }
+}
+
+#[async_trait]
+impl MailStore for TimeoutStore {
+    async fn list(&self) -> anyhow::Result<Vec<String>> {
+        self.bound("listing the bucket", self.inner.list()).await
+    }
+
+    async fn get(&self, key: &str) -> anyhow::Result<Vec<u8>> {
+        self.bound(&format!("getting {key}"), self.inner.get(key))
+            .await
+    }
+
+    async fn delete(&self, key: &str) -> anyhow::Result<()> {
+        self.bound(&format!("deleting {key}"), self.inner.delete(key))
+            .await
+    }
+}
+
 pub struct S3Store {
     client: aws_sdk_s3::Client,
     bucket: String,

@@ -570,3 +570,46 @@ fn an_attached_message_is_appended_to_the_body() {
         m.dropped
     );
 }
+
+/// A bucket whose reads never return, like the stalled S3 stream of br-mfcj.
+struct HangingStore;
+
+#[async_trait]
+impl bridle_mail::MailStore for HangingStore {
+    async fn list(&self) -> anyhow::Result<Vec<String>> {
+        std::future::pending().await
+    }
+    async fn get(&self, _: &str) -> anyhow::Result<Vec<u8>> {
+        std::future::pending().await
+    }
+    async fn delete(&self, _: &str) -> anyhow::Result<()> {
+        std::future::pending().await
+    }
+}
+
+#[tokio::test(start_paused = true)]
+async fn a_stalled_store_call_times_out_instead_of_hanging() {
+    let store =
+        bridle_mail::TimeoutStore::new(Arc::new(HangingStore), std::time::Duration::from_secs(60));
+    let e = bridle_mail::MailStore::get(&store, "k").await.unwrap_err();
+    assert!(format!("{e:#}").contains("timed out"), "{e:#}");
+    assert!(bridle_mail::MailStore::list(&store).await.is_err());
+}
+
+#[tokio::test(start_paused = true)]
+async fn the_watchdog_exits_when_polls_keep_failing() {
+    let store =
+        bridle_mail::TimeoutStore::new(Arc::new(HangingStore), std::time::Duration::from_secs(60));
+    let bridge = Bridge::new(
+        Arc::new(store),
+        Arc::new(Recorder::default()),
+        cfg(),
+        "proj".into(),
+        std::env::temp_dir(),
+    );
+    let e = bridge.run().await.unwrap_err();
+    assert!(
+        format!("{e:#}").contains("no successful mail poll"),
+        "{e:#}"
+    );
+}

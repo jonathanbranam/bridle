@@ -339,8 +339,12 @@ pub(super) async fn mail_run(cli: &Cli) -> Result<(), CliError> {
         );
     };
     let cfg = bridle_mail::MailConfig::load()?;
-    let store =
-        bridle_mail::S3Store::connect(&cfg.bucket, &cfg.prefix, cfg.region.as_deref()).await;
+    let store = bridle_mail::TimeoutStore::new(
+        std::sync::Arc::new(
+            bridle_mail::S3Store::connect(&cfg.bucket, &cfg.prefix, cfg.region.as_deref()).await,
+        ),
+        std::time::Duration::from_secs(60),
+    );
     let state = discovery::state_dir(&workspace);
     let attachments = state.join("inbox").join("mail");
     let client = client_for(cli).await?;
