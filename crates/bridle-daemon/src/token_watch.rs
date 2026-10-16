@@ -6,7 +6,7 @@
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
-use crate::orchestrator::{Incidents, RealIncidents};
+use crate::orchestrator::Incidents;
 
 /// How many distinct held role tokens must be rejected inside [`WINDOW`] to raise.
 const THRESHOLD: usize = 3;
@@ -23,7 +23,7 @@ pub fn incident_text(roles: &str) -> String {
 }
 
 /// Tells the human and the orchestrator (the daemon's existing incident notice, not a ticket).
-pub async fn raise(incidents: &RealIncidents, roles: &str) {
+pub async fn raise(incidents: &impl Incidents, roles: &str) {
     let text = incident_text(roles);
     incidents.record(&text).await;
     incidents.ask_orchestrator(&text).await;

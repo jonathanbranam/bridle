@@ -543,13 +543,13 @@ async fn auth_middleware(
 async fn note_rejected_role(state: &AppState, token: String) {
     let project = state.project.clone();
     let role = tokio::task::spawn_blocking(move || {
-        bridle_api::discovery::credentials_for_project(
-            &bridle_api::discovery::credentials_path(),
-            &project,
+        held_role(
+            bridle_api::discovery::credentials_for_project(
+                &bridle_api::discovery::credentials_path(),
+                &project,
+            ),
+            &token,
         )
-        .into_iter()
-        .find(|(who, t)| who != "human" && *t == token)
-        .map(|(who, _)| who)
     })
     .await
     .ok()
@@ -565,6 +565,13 @@ async fn note_rejected_role(state: &AppState, token: String) {
         };
         crate::token_watch::raise(&incidents, &roles).await;
     }
+}
+
+/// The role the credentials file holds `token` for, if any (never the human's).
+fn held_role(held: Vec<(String, String)>, token: &str) -> Option<String> {
+    held.into_iter()
+        .find(|(who, t)| who != "human" && t == token)
+        .map(|(who, _)| who)
 }
 
 /// A named advisor's CLI adds its name (`BRIDLE_ADVISOR_NAME`) to the shared advisor token's
@@ -5550,6 +5557,17 @@ mod tests {
     //! end-to-end `?claimed_by=` filter is exercised at the `TicketManager`
     //! level instead (`tasks.rs`, `claim_blocks_ready_and_release_unblocks_it`).
     use super::*;
+
+    #[test]
+    fn only_held_role_tokens_count_as_rejected_roles() {
+        let held = vec![
+            ("human".to_string(), "h-tok".to_string()),
+            ("aide".to_string(), "a-tok".to_string()),
+        ];
+        assert_eq!(held_role(held.clone(), "a-tok").as_deref(), Some("aide"));
+        assert_eq!(held_role(held.clone(), "random"), None, "random token");
+        assert_eq!(held_role(held, "h-tok"), None, "the human token");
+    }
 
     #[test]
     fn token_less_local_only_for_loopback_reads() {

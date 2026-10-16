@@ -685,7 +685,11 @@ async fn start_inner(
         governor_handle.clone(),
     );
     let held_tokens = discovery::credentials_for_project(&discovery::credentials_path(), &project);
-    warn_if_role_tokens_rejected(&store, &project, &held_tokens, &manager, &emitter).await;
+    let start_incidents = orchestrator::RealIncidents {
+        manager: manager.clone(),
+        emitter: emitter.clone(),
+    };
+    warn_if_role_tokens_rejected(&store, &project, &held_tokens, &start_incidents).await;
     if cfg!(target_os = "macos")
         && let Some(addr) = listeners
             .iter()
@@ -1317,8 +1321,7 @@ async fn warn_if_role_tokens_rejected(
     store: &Store,
     project: &str,
     held: &[(String, String)],
-    manager: &AgentManager,
-    emitter: &Emitter,
+    incidents: &impl orchestrator::Incidents,
 ) {
     if let Some(roles) = rejected_roles(store, held).await {
         tracing::warn!(
@@ -1327,11 +1330,7 @@ async fn warn_if_role_tokens_rejected(
             "none of the role tokens in credentials.toml is accepted by this database; \
              run `bridle token pair` to mint them again"
         );
-        let incidents = orchestrator::RealIncidents {
-            manager: manager.clone(),
-            emitter: emitter.clone(),
-        };
-        token_watch::raise(&incidents, &roles).await;
+        token_watch::raise(incidents, &roles).await;
     }
 }
 
@@ -1822,5 +1821,25 @@ mod tests {
             Some("aide, advisor")
         );
         assert_eq!(rejected_roles(&fresh, &[]).await, None);
+    }
+
+    #[tokio::test]
+    async fn role_tokens_rejected_at_start_raise_the_incident() {
+        let tmp = tempfile::tempdir().expect("tmp");
+        let fresh = Store::open(tmp.path().join("fresh.db")).await.expect("db");
+        let held = vec![
+            ("aide".to_string(), "lost-1".to_string()),
+            ("advisor".to_string(), "lost-2".to_string()),
+        ];
+        let said = Said::default();
+        warn_if_role_tokens_rejected(&fresh, "p", &held, &said).await;
+        let got = said.0.lock().unwrap().clone();
+        assert_eq!(got.len(), 1);
+        assert!(got[0].contains("aide, advisor") && got[0].contains("`bridle token pair`"));
+
+        // Nothing held, nothing raised.
+        let quiet = Said::default();
+        warn_if_role_tokens_rejected(&fresh, "p", &[], &quiet).await;
+        assert!(quiet.0.lock().unwrap().is_empty());
     }
 }
