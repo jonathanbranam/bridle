@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+- Fix (br-mt4v): a forced restart over a land now also kills the check's descendants that left its process group (nextest children), not just the group; tests for eggc (one incident per forced land, refused land runs once open).
 
 - Fix (br-t9j4): `just install` builds into a private root and `bridle sign install SRC DEST` puts a signed copy named `bridle` over the live binary in one rename (it was installed then re-signed in place, briefly linker-signed). On macOS the gateway now connects to its own non-loopback address after a start and, if it never answers, messages each local project's orchestrator naming the firewall. Migration: none.
 - Fix (br-8rdn): on a machine with no `<machine>-home`, `bridle token pair` and `bridle token check` print a note naming the projects whose daemons do not forward wakes and mail to the orchestrator and saying to create the home and re-run `token pair`; the orchestrator role says the same and makes the re-pair a handover step. Migration: none.

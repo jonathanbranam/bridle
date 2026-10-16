@@ -189,6 +189,8 @@ pub struct RunningDaemon {
     pub info: DaemonInfo,
     /// The agent manager, for tests that need to reach into it (a stuck spawn).
     pub manager: AgentManager,
+    /// The lands in flight, for tests that shorten the drain's cap on them.
+    pub lands: server::Lands,
     shutdown_tx: watch::Sender<bool>,
     restart_requested: std::sync::Arc<std::sync::atomic::AtomicBool>,
     join_handle: tokio::task::JoinHandle<()>,
@@ -932,6 +934,7 @@ async fn start_inner(
     };
     wakes.set_outbox(state.outbox.clone());
     let tick_state = state.clone();
+    let lands_handle = state.lands.clone();
     let app = server::router(state);
 
     // The axum listener must close only after the cleanup sequence below
@@ -1277,6 +1280,7 @@ async fn start_inner(
         url,
         info,
         manager: manager_handle,
+        lands: lands_handle,
         shutdown_tx,
         restart_requested,
         join_handle,

@@ -119,6 +119,8 @@ struct LandsInner {
     /// Set at the drain's quiet point: a land arriving after it is refused until the restart
     /// (br-eggc), so it is never cut off by the exec.
     closed: bool,
+    /// Overrides [`LAND_DRAIN_CAP`] (tests).
+    cap: Option<std::time::Duration>,
 }
 
 struct LandEntry {
@@ -141,18 +143,56 @@ impl OverdueLand {
     /// the machine-wide test lock and the integration worktree. Only a pgid we started.
     fn stop_check(&self) {
         let pgid = self.pgid.load(std::sync::atomic::Ordering::SeqCst);
-        if pgid > 1
-            && let Err(e) = nix::sys::signal::killpg(
-                nix::unistd::Pid::from_raw(pgid as i32),
-                nix::sys::signal::Signal::SIGKILL,
-            )
-        {
+        if pgid <= 1 {
+            return;
+        }
+        // nextest puts each test in its own group, so the group kill alone leaves them orphaned:
+        // snapshot the tree under the check first, then kill the group and every descendant.
+        let tree = descendants(pgid);
+        if let Err(e) = nix::sys::signal::killpg(
+            nix::unistd::Pid::from_raw(pgid as i32),
+            nix::sys::signal::Signal::SIGKILL,
+        ) {
             tracing::warn!(task = %self.task, pgid, "stopping the land's check: {e}");
+        }
+        for pid in tree {
+            let _ = nix::sys::signal::kill(
+                nix::unistd::Pid::from_raw(pid as i32),
+                nix::sys::signal::Signal::SIGKILL,
+            );
         }
     }
 }
 
-/// Held for the life of a land; dropping it (any exit path) ends the hold.
+/// Every process under `root` (its children, theirs, and so on), from one `ps` snapshot.
+fn descendants(root: u32) -> Vec<u32> {
+    let Ok(out) = std::process::Command::new("ps")
+        .args(["-axo", "pid=,ppid="])
+        .output()
+    else {
+        return Vec::new();
+    };
+    let pairs: Vec<(u32, u32)> = String::from_utf8_lossy(&out.stdout)
+        .lines()
+        .filter_map(|l| {
+            let mut f = l.split_whitespace().map(|x| x.parse::<u32>().ok());
+            Some((f.next()??, f.next()??))
+        })
+        .collect();
+    let mut found = vec![root];
+    let mut i = 0;
+    while i < found.len() {
+        let parent = found[i];
+        for (pid, ppid) in &pairs {
+            if *ppid == parent && !found.contains(pid) {
+                found.push(*pid);
+            }
+        }
+        i += 1;
+    }
+    found.split_off(1)
+}
+
 pub struct LandGuard(Lands, u64, std::sync::Arc<std::sync::atomic::AtomicU32>);
 
 impl LandGuard {
@@ -163,6 +203,20 @@ impl LandGuard {
 }
 
 impl Lands {
+    /// How long a land holds the drain.
+    pub fn cap(&self) -> std::time::Duration {
+        self.0
+            .lock()
+            .expect("lands lock")
+            .cap
+            .unwrap_or(LAND_DRAIN_CAP)
+    }
+
+    /// Test seam: a short cap, so a test need not wait out two hours.
+    pub fn set_cap(&self, cap: std::time::Duration) {
+        self.0.lock().expect("lands lock").cap = Some(cap);
+    }
+
     /// `None` once the drain has closed for the restart.
     pub fn begin(&self, task: &str) -> Option<LandGuard> {
         static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
@@ -195,7 +249,7 @@ impl Lands {
 
     /// At the quiet point: if no land is within `cap`, refuse new lands from now on and return
     /// the ones past it (still running, to be reported and stopped). `None` if a land holds.
-    fn close_if_quiet(&self, cap: std::time::Duration) -> Option<Vec<OverdueLand>> {
+    pub fn close_if_quiet(&self, cap: std::time::Duration) -> Option<Vec<OverdueLand>> {
         let mut g = self.0.lock().expect("lands lock");
         if g.live.iter().any(|e| e.at.elapsed() <= cap) {
             return None;
@@ -5383,14 +5437,14 @@ async fn drain_and_restart(
             .filter(|a| a.state != bridle_api::types::AgentState::Idle)
             .map(|a| a.name.clone())
             .collect();
-        let landing = state.lands.holding(LAND_DRAIN_CAP);
+        let landing = state.lands.holding(state.lands.cap());
         // Last, so the lands close only when everything else is quiet.
         let overdue = if busy.is_empty()
             && !spawning
             && landing.is_empty()
             && state.manager.postponed_until().is_none()
         {
-            state.lands.close_if_quiet(LAND_DRAIN_CAP)
+            state.lands.close_if_quiet(state.lands.cap())
         } else {
             None
         };
@@ -5401,7 +5455,7 @@ async fn drain_and_restart(
                      {} min cap); its check was stopped. Land it again.",
                     l.task,
                     l.secs / 60,
-                    LAND_DRAIN_CAP.as_secs() / 60
+                    state.lands.cap().as_secs() / 60
                 );
                 tracing::error!(task = %l.task, secs = l.secs, "restart: forced over a land");
                 let _ = state
@@ -5728,5 +5782,48 @@ mod tests {
             .expect("the check ended")
             .expect("joined");
         assert!(r.is_err(), "a killed check is a failed check");
+    }
+
+    #[tokio::test]
+    async fn an_overdue_lands_check_children_in_their_own_groups_are_stopped_too() {
+        // As nextest does: a child that leaves the check's process group.
+        let lands = Lands::default();
+        let g = lands.begin("br-aaaa").expect("open");
+        let dir = tempfile::tempdir().expect("tmp");
+        let pidfile = dir.path().join("pid");
+        let cmd = format!(
+            "perl -e 'setpgrp(0,0); exec \"sleep\",\"300\"' & echo $! > {}; wait",
+            pidfile.display()
+        );
+        let pgid = g.pgid();
+        let wd = dir.path().to_path_buf();
+        let run =
+            tokio::spawn(
+                async move { crate::integrator::run_check_for_test(&wd, &cmd, &pgid).await },
+            );
+        let mut child = 0i32;
+        for _ in 0..200 {
+            if let Ok(t) = std::fs::read_to_string(&pidfile)
+                && let Ok(p) = t.trim().parse()
+            {
+                child = p;
+                break;
+            }
+            tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+        }
+        assert!(child > 1, "the child started");
+        let overdue = lands
+            .close_if_quiet(std::time::Duration::ZERO)
+            .expect("past the cap");
+        overdue[0].stop_check();
+        let _ = tokio::time::timeout(std::time::Duration::from_secs(10), run).await;
+        let alive = || nix::sys::signal::kill(nix::unistd::Pid::from_raw(child), None).is_ok();
+        for _ in 0..100 {
+            if !alive() {
+                break;
+            }
+            tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+        }
+        assert!(!alive(), "the child in its own group survived the stop");
     }
 }
