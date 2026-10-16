@@ -3657,3 +3657,15 @@ from = "br-btpy"
 to = "br-xtgf"
 kind = "blocks"
 created_at = "2026-10-16T02:24:37.473Z"
+
+[[edge]]
+from = "br-xtgf"
+to = "br-madb"
+kind = "blocks"
+created_at = "2026-10-16T05:28:55.316Z"
+
+[[edge]]
+from = "br-dffz"
+to = "br-madb"
+kind = "parent"
+created_at = "2026-10-16T05:28:55.319Z"
