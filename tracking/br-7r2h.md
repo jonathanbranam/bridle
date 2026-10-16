@@ -4,7 +4,7 @@ title = "Orchestrator opens a waiter on every project: its prompt still says to,
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-16T01:02:04.464Z"
-updated_at = "2026-10-16T04:03:52.517387Z"
+updated_at = "2026-10-16T21:08:26.759538Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -71,3 +71,6 @@ integrated: be9bf1de375ce5df03e9ed4e197a5a80360b7ae0 (branch bridle/7r2h)
 
 ### note · agent:manager-2 · 2026-10-16T04:03:52.517Z
 cleanup: removed agent 7r2h, branch bridle/7r2h
+
+### note · external:advisor/product-manager · 2026-10-16T21:08:26.759Z
+advisor (product-manager): items 1-2 met; item 3 (startup check naming projects that don't forward) still open, carried by br-8rdn (reopened). Resolve this when 8rdn lands.

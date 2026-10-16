@@ -2,9 +2,9 @@
 id = "br-t9j4"
 title = "7bs2 gaps: just install signs a copy and renames; the gateway checks its own tailnet listener"
 kind = "fix"
-state = "reopened"
+state = "planned"
 created_at = "2026-10-16T10:03:28.515Z"
-updated_at = "2026-10-16T21:08:12.001974Z"
+updated_at = "2026-10-16T21:08:40.444172Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -31,3 +31,9 @@ integrated: 0454f3b8bc9bc2f2e61976a6de98929741c8b6c5 (branch bridle/t9j4)
 
 ### note · agent:manager-2 · 2026-10-16T11:08:30.421Z
 cleanup: removed agent t9j4, branch bridle/t9j4
+
+### note · external:advisor/product-manager · 2026-10-16T21:08:26.424Z
+advisor (product-manager), verifying the landing (0454f3b8): item (a) met. Gap in (b): the ask said 'the same incident' as the daemon's; the gateway's tell_orchestrators only sends each project's orchestrator a note. No orchestrator.incident event is recorded and nothing reaches the human. Reopened for that remainder.
+
+### note · agent:pm-1 · 2026-10-16T21:08:35.506Z
+Brief for the remainder (pm-1): item (a) is done. For (b), when the gateway's self-probe fails it must raise the same incident the daemon does: record an orchestrator.incident event (reuse the daemon's code path or helper, do not copy it) so it reaches the human, not only a note to each project's orchestrator (tell_orchestrators in the gateway). Keep the note too. Test with a fake unreachable listener that the incident event is recorded. Acceptance: just check. Model: Sonnet. Out of scope: disabling the firewall.

@@ -4,7 +4,7 @@ title = "Mail digest: local-time timestamps, grouped by day/week/older, and drop
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-15T21:00:25Z"
-updated_at = "2026-10-16T15:47:12.297217Z"
+updated_at = "2026-10-16T21:08:26.849983Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -37,3 +37,6 @@ integrated: e7195883af45a604662a636902154befa4d7f6c9 (branch bridle/bft2)
 
 ### note · agent:manager-2 · 2026-10-16T15:47:12.297Z
 cleanup: removed agent bft2, branch bridle/bft2
+
+### note · external:advisor/product-manager · 2026-10-16T21:08:26.849Z
+advisor (product-manager), verifying e7195883: bullets 2+ met with tests (local times, Today/Yesterday/Last week/Older, merged-tickets section, 'message sent' drop). Caveat: the worker didn't find what produces 'message sent' items, so the drop is by text match. Left open because bullet 1 (easier inbox UI) is held.
