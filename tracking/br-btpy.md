@@ -4,7 +4,7 @@ title = "Setup gap (b): bridle project start installs the mail bridge for the pr
 kind = "feature"
 state = "built"
 created_at = "2026-10-16T02:24:05.969Z"
-updated_at = "2026-10-16T04:12:36.015162Z"
+updated_at = "2026-10-16T04:23:39.202478Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -31,3 +31,6 @@ built: 88f27b30432c6374508d78cf04b6d32af224161f (branch bridle/btpy)
 
 ### note · agent:btpy · 2026-10-16T04:12:36.015Z
 done: project start installs mail bridge on every start, non-fatal; just check exit 0, 1734 tests; 88f27b30432c6374508d78cf04b6d32af224161f
+
+### note · agent:btpy · 2026-10-16T04:23:39.202Z
+merged main (br-b97n conflict in add-a-machine.md resolved: kept my step 5, their renumbering); just check exit 0, 1736 tests; new tip 263a786d
