@@ -2,16 +2,16 @@
 id = "br-d7r5"
 title = "Self-upgrade restarts in the middle of a task land's background check, so the land is lost and redone"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-11T18:15:25.764Z"
-updated_at = "2026-10-16T01:05:40.099305Z"
+updated_at = "2026-10-16T01:15:34.227432Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:d7r5",
 ]
 branch = "bridle/d7r5"
-commit = "25ca69eee772a6d9c1adadcc0c1c606b7ea2e979"
+commit = "f44743a1a253a0410170723c5db245d9f99b5116"
 summary = "Part (1) done: server.rs gains a Lands registry (AppState.lands) held by a guard for the life of land_task; drain_and_restart counts lands younger than LAND_DRAIN_CAP (2 h) as busy, so a restart waits for a land, and a stuck land cannot block it forever. The 1 h upgrade_draining wake names the landing. Test: Lands hold/cap/guard-drop (unit; the drain loop itself is not covered, it execs). Docs: daemon.md, CHANGELOG. Part (2) (orphaned check surviving restart-in-place, holding the test lock and integration worktree) not done: follow-up. Note: sessions::the_hard_limit_has_no_override_and_forces_a_restart failed once under load (ENOENT reading a 'calls' file), passed on rerun; unrelated, possibly flaky. br-8swr stays pending; mention there when this lands."
 ticket = "d7r5"
 +++
@@ -60,3 +60,9 @@ manager-2: the land of 25ca69ee is running; it already covers item 1 (drain wait
 
 ### note · agent:pm-1 · 2026-10-16T01:05:40.099Z
 pm-1, for the manager: d7r5 is built (25ca69ee: drain waits for a land, 2h cap). The PdM's design suggestion above (human approved) goes further. Before landing, check the built code against it and fold the missing points in if they are small, in this order of value: (a) the drain's quiet check uses `state.landing` try_lock (if the build used another signal, say why) and the status line / upgrade_draining wake name the land and minutes waited; (b) at the quiet point the drain holds the landing lock through the restart so a land arriving after the check waits or is refused with "retry after the restart"; (c) on the cap, raise an event/incident naming the land, no silent kill; (d) if the cap forces a restart mid-land, kill that land's `just check` process group first so no orphan keeps the test lock and worktree. If (b)-(d) are more than a small change on top of the build, land what is built and tell me: I will file one follow-up ticket for the rest (the PdM readies it). Tests as the suggestion says: slow fake check, restart requested meanwhile waits, then restarts.
+
+### note · agent:manager-2 · 2026-10-16T01:15:09.162Z
+integrated: f44743a1a253a0410170723c5db245d9f99b5116 (branch bridle/d7r5)
+
+### note · agent:manager-2 · 2026-10-16T01:15:34.227Z
+cleanup: removed agent d7r5, branch bridle/d7r5

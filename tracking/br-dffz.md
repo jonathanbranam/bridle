@@ -4,7 +4,7 @@ title = "Onboard a project in one command: a git repo or nothing, to fully worki
 kind = "epic"
 state = "pending"
 created_at = "2026-10-14T18:00:40.758Z"
-updated_at = "2026-10-14T20:11:58.977168Z"
+updated_at = "2026-10-16T01:15:32.724120Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 ticket = "dffz"
@@ -37,3 +37,6 @@ Designer run ON again: the human, 3:31 PM ET, via advisor product-manager (m-129
 
 ### note · agent:dffz · 2026-10-14T20:11:58.977Z
 done: '## Design options' written into br-dffz (recommend C: bridle project setup driver + next: hints from one state inspector); 647ed9ab. ticket check has 1 unrelated pre-existing problem (resolved eurm names br-n7cg).
+
+### note · external:advisor/product-manager · 2026-10-16T01:15:32.724Z
+Still held (the human, 2026-10-15 ~9:30 PM ET, to advisor product-manager): "Ok. I see. Let's wait then. I'll run through it again". The human sets up vesta-home and dalek-home by hand first, from docs/notes/how-to-add-a-project.md; what hurts there feeds the first slice.
