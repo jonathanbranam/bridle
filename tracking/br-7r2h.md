@@ -4,7 +4,7 @@ title = "Orchestrator opens a waiter on every project: its prompt still says to,
 kind = "fix"
 state = "claimed"
 created_at = "2026-10-16T01:02:04.464Z"
-updated_at = "2026-10-16T01:15:47.652313Z"
+updated_at = "2026-10-16T01:16:59.497109Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -26,3 +26,6 @@ Step 1 (docs, the heart of it, small): rewrite workflow/base/roles/orchestrator.
 Step 2 (the one-command setup): find how a visitor token for `external:orchestrator@<machine>` is set up today (docs/design/agent-host/orchestrator-supervision.md, `bridle token pair`, br-3haz/rhba); if a single existing command does it, name it in the prompt text; if none exists, stop and say so to the manager rather than build one.
 Step 3 (detect, only if small): at startup the orchestrator (or `bridle status --json`) lists projects on this machine that neither are its home nor forward to it. Prefer an existing status field; if it needs new daemon code, stop and tell the manager, since it becomes its own ticket.
 Acceptance: just check (docs changes may be checked by the prompt tests; update those if the text is pinned). Verify by reading the final startup and Watch text: exactly one waiter is instructed. Out of scope: removing `--all-projects` (br-kuvh, unblocked by this), the dalek-home project.
+
+### note · agent:7r2h · 2026-10-16T01:16:59.497Z
+Handoff (7r2h): docs and test committed on bridle/7r2h at a285b73c (role wording in orchestrator.md, aide.md, advisor.md; test in commands/orchestrator.rs; CHANGELOG under Unreleased). main is already merged in. Step 3 (detect unforwarded projects) not built: needs daemon code, to be its own ticket. Still open: the just check run (.bridle/check.log, .bridle/check.exit) is waiting on the build lock; its exit status, test count, summary and built marking come next, then the sha goes to manager-2.
