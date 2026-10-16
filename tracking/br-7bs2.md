@@ -4,7 +4,7 @@ title = "macOS firewall still blocks a freshly launched bridle (gateway) after a
 kind = "bug"
 state = "planned"
 created_at = "2026-10-15T23:15:13.826Z"
-updated_at = "2026-10-16T00:39:14.833480Z"
+updated_at = "2026-10-16T00:57:23.860366Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 priority = "high"
@@ -196,3 +196,28 @@ From the human via orchestrator (m-13759): go ahead with the throwaway listener 
 
 ### note · agent:7bs2 · 2026-10-16T00:39:14.833Z
 7bs2: reproduced a block on the throwaway (listener /tmp/7bs2/fw/t, port 60758 stays unreachable from remus though --getappblocked says permitted, same as the real outage). Please ask the human: is a firewall dialog showing on dalek right now for 't'? If yes, what exactly does it say (app name/path), and please do NOT click yet; reply with the text. Then click Allow and tell me.
+
+### note · agent:7bs2 · 2026-10-16T00:57:23.860Z
+# br-7bs2 interim results (researcher 7bs2), experiments on throwaway /tmp/7bs2/fw/t
+
+Setup: tiny C listener on 0.0.0.0:60758, signed `codesign -s "bridle local signing" -i bridle` (DR identical to the real bridle's: `identifier bridle and certificate leaf = H"37e5..."`). Probed from remus via `ssh remus curl http://100.100.189.100:60758/` (200 = reachable, 000 = blocked). Shell-started and launchd-started (gui domain) both tried.
+
+| step | result |
+|---|---|
+| first listen | dialog; human clicked Allow; plist gained NEW entry 13 (same DR as entry 10, own alias for /private/tmp/7bs2/fw/t). So Allow does write the plist. Entries are per path. |
+| running after Allow | 200 |
+| restart same file, no re-sign (hypothesis c) | 200 |
+| `codesign -f` re-sign of the file (a) | 200 (this changes the inode too) |
+| `cp t t.new && mv t.new t` (new inode, birth, same bytes) (H1) | 200 |
+| new bytes, new cdhash, signed with -i bridle, mv over | 200, no plist change |
+| launchd-started instead of shell child | 200 |
+| replace with a fresh UNSIGNED cc build, `codesign --force -s ... t` (no -i) then `launchctl kickstart -k` | **000 blocked**. DR became `identifier t` (force-sign takes the identifier from the file name), differing from the entry's `identifier bridle`, so this proves the DR (identifier+leaf) IS enforced, not just path. |
+| then re-signed with `-i bridle` (DR back to the entry's), kickstart | **still 000** although `--getappblocked` says permitted and lsof shows the process listening. Same signature of failure as the real outage. |
+
+Findings so far
+- H1 (file replaced: new inode/birth/cdhash) does NOT by itself break an allowed entry: three replace variants stayed reachable with no new dialog and no plist change.
+- Hypothesis (c) restart w/o re-sign: fine. Hypothesis (a) in-place re-sign: fine.
+- A launch whose code requirement did NOT match the entry (identifier changed) is blocked; and the block persisted after the requirement matched again, on a fresh process. So a state "blocked/pending" seems to stick per path after one non-matching launch, until a dialog is answered (the real gateway: same, blocked until the human clicked Allow). `--getappblocked` is blind to it.
+- So the live question is what made the real gateway's launch at 18:41:57 not match. Candidates, now narrowed: the identifier. `codesign --force -s name <exe>` (crates/bridle-daemon/src/signing.rs:69) sets the identifier from the file name; cargo's linker ad-hoc signature uses `bridle-<hash>` (seen in .bridle/upgrade-target/release/bridle: Identifier=bridle-8a9cb0b0467401f1), so any launch of a binary that is still linker-signed (not yet re-signed), or a copy/rename under another file name (identifier = that name), carries a different identifier and will not match the `identifier bridle` entry. E.g. `bridle.prev`, or the upgrade's self-check run of the new build from upgrade-target (named bridle, ad hoc `bridle-<hash>`), if it ever opens a listener. NOT yet shown for the real outage: the installed file at 18:41:57 was signed (`codesign -dvvv`: Identifier=bridle).
+- Still pending: the text of the pending dialog (human away until ~21:10 ET); I left the blocked throwaway listener running (launchd job dev.bridle.7bs2test, port 60758) for that. Cleanup will need the human's sudo: `socketfilterfw --remove /private/tmp/7bs2/fw/t` (plus the stale `/tmp/7bs2/fw/t` entry if any).
+- The "remove then add bridle" refresh test (needs sudo) is not run yet.
