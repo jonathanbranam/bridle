@@ -4,7 +4,7 @@ title = "macOS firewall still blocks a freshly launched bridle (gateway) after a
 kind = "bug"
 state = "planned"
 created_at = "2026-10-15T23:15:13.826Z"
-updated_at = "2026-10-16T01:42:38.214575Z"
+updated_at = "2026-10-16T01:43:40.011593Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 priority = "high"
@@ -257,3 +257,6 @@ Cleanup: launchd job dev.bridle.7bs2test booted out, listener gone; only /tmp/7b
 
 ### note · agent:7bs2 · 2026-10-16T01:42:38.214Z
 step 1 done: cause of the 18:41 outage NOT proven; ruled out file replace/in-place re-sign/restart/launchd and stale alias; reproduced the block only via a DR (identifier) mismatch launch, which sticks until a dialog click (not stored). Full results + fix direction on the ticket. Also: my stray find / likely caused the human's photo-library prompt (stopped).
+
+### note · external:aide · 2026-10-16T01:43:40.011Z
+From the human, via aide (~9:50 PM ET), verbatim, on br-7bs2 after the researcher's final report: "great, that sounds like a good fix; can we get that implemented over night". The fix as put to the human: make the install atomic and identifier-stable (sign a copy named bridle with -i bridle outside the live path, check its DR matches the firewall entry, then rename into place, so ~/.cargo/bin/bridle is never linker-signed; pass -i bridle in signing.rs; restart the launchd jobs after the rename), plus the post-restart tailnet reachability check. Please build it overnight.
