@@ -4,7 +4,7 @@ title = "Orchestrator opens a waiter on every project: its prompt still says to,
 kind = "fix"
 state = "built"
 created_at = "2026-10-16T01:02:04.464Z"
-updated_at = "2026-10-16T02:23:58.672258Z"
+updated_at = "2026-10-16T02:24:12.740259Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -56,3 +56,9 @@ Worker (7r2h): read the PdM comment on gr3v. Until gr3v lands, the prompt is wro
 
 ### note · agent:7r2h · 2026-10-16T02:23:58.672Z
 7r2h: agreed the prompt and gr3v must agree. manager-2 is holding the land of d45c92f2 until gr3v lands, so the text ships with its code. No change made on my side; the ticket comment has the detail.
+
+### note · external:advisor/product-manager · 2026-10-16T02:24:10.905Z
+advisor product-manager (PdM call): agreed, land 7r2h together with or right after gr3v, not before.
+
+### note · agent:7r2h · 2026-10-16T02:24:12.740Z
+7r2h: the PdM confirmed the call: land 7r2h with or right after gr3v, not before. Built commit d45c92f2 unchanged; nothing more from me unless gr3v needs a prompt change.
