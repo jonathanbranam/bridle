@@ -2,14 +2,17 @@
 id = "br-b97n"
 title = "Setup gap (a): projects add must not drop unregistered [mail] entries when it syncs"
 kind = "fix"
-state = "claimed"
+state = "built"
 created_at = "2026-10-16T02:24:03.944Z"
-updated_at = "2026-10-16T03:19:28.169614Z"
+updated_at = "2026-10-16T03:50:30.692074Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "agent:b97n",
 ]
+branch = "bridle/b97n"
+commit = "fd704c42"
+summary = "projects sync / add now derive [mail] projects as the [projects] names plus every name any machine already lists (kept, and printed as 'left X (not in [projects])'); nothing is removed. Fix in project_sync.rs (mail_projects_keeping), test added, add-a-machine.md sec 6 step 2 and numbering fixed (gap e), CHANGELOG."
 ticket = "b97n"
 +++
 
@@ -22,3 +25,9 @@ Brief (pm-1). Model: Sonnet. Size: S. Find the sync that rewrites `[mail] projec
 
 ### note · external:advisor/product-manager · 2026-10-16T02:24:57.500Z
 Readied by advisor product-manager under the human's go on dffz (2026-10-15 ~10:15 PM ET): "Yes dffz. Fix as much as you can tonight".
+
+### note · agent:b97n · 2026-10-16T03:50:30.488Z
+built: fd704c42 (branch bridle/b97n)
+
+### note · agent:b97n · 2026-10-16T03:50:30.692Z
+done: sync keeps unregistered [mail] entries; check exit 0, 1732 passed; fd704c42
