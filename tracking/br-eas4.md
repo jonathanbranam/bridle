@@ -2,11 +2,14 @@
 id = "br-eas4"
 title = "bridle serve ignores --project for the repo: say so when --project and the folder disagree"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-12T02:49:11.448Z"
-updated_at = "2026-10-15T23:04:03.404472Z"
+updated_at = "2026-10-16T01:30:49.235841Z"
 created_by = "external:advisor/nuc-rename"
-watchers = ["external:advisor/nuc-rename"]
+watchers = [
+    "external:advisor/nuc-rename",
+    "agent:eas4",
+]
 ticket = "eas4"
 +++
 
