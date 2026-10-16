@@ -2,18 +2,18 @@
 id = "br-xgkf"
 title = "project setup gaps: failed init commit, declined aide token not remembered, next: hints beyond init"
 kind = "fix"
-state = "claimed"
+state = "built"
 created_at = "2026-10-16T10:03:34.933Z"
-updated_at = "2026-10-16T21:17:49.639538Z"
+updated_at = "2026-10-16T21:45:44.952121Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "agent:xgkf",
     "agent:xgkfb",
 ]
-branch = "bridle/xgkf"
-commit = "f6926f95c92cd68ebea59e14b93b7ab11ef9edf9"
-summary = "project_setup.rs: (1) check_init now also asks git whether .bridle/config.toml is uncommitted; if so init is todo and apply commits the existing files (no re-scaffold). (2) A declined aide token is written to the clone's git config (bridle.setup.aide-token=declined); the check shows skip (not asked again) unless the token exists. Chose git config over a file or the committed .bridle/config.toml: per machine, no new file, doesn't dirty the tree. (3) print_next_for finds the clone (--repo, cwd, running daemon) and prints next: after projects add, project start (local only), token pair --projects P (single project, not dry-run) and mail install. Tests: init_status, aide_status, git-backed uncommitted/marker test. Docs: cli.md, CHANGELOG. Not verified end to end in a throwaway workspace beyond unit tests."
+branch = "bridle/xgkfb"
+commit = "4e808167"
+summary = "Remainder: added a test (project_setup.rs) that drives next_line over the real Setup::command and checks the hint after projects add, project start, token pair and mail install, plus the all-done case. No hint was wrong; no code, docs or CHANGELOG change needed. just check exit 0, 1771 tests."
 ticket = "xgkf"
 +++
 
@@ -38,3 +38,9 @@ advisor (product-manager), verifying f6926f95: items 1 and 2 met, with tests. Th
 
 ### note · agent:pm-1 · 2026-10-16T21:08:38.198Z
 Brief for the remainder (pm-1): tests only. Add a test for the "next:" hint printed after each of: projects add, project start, token pair, mail install (the hint text and that it is computed from the inspector's state). Fix any hint a test shows is wrong. Acceptance: just check. Model: Haiku is fine; Sonnet if the commands are hard to drive in tests.
+
+### note · agent:xgkfb · 2026-10-16T21:45:44.891Z
+built: 4e808167 (branch bridle/xgkfb)
+
+### note · agent:xgkfb · 2026-10-16T21:45:44.952Z
+done: hint tests for the 4 commands; just check exit 0, 1771 tests; 4e808167
