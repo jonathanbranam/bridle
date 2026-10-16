@@ -2,16 +2,16 @@
 id = "br-rnhp"
 title = "bridle up starts the orchestrator in no project: it should start it in <host>-home"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-16T01:53:42.900Z"
-updated_at = "2026-10-16T15:19:21.195955Z"
+updated_at = "2026-10-16T15:37:18.086832Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:rnhp",
 ]
 branch = "bridle/rnhp"
-commit = "cedc5e4f"
+commit = "0e87928104f3d2fdd4a83d00df423522e6b15fbb"
 summary = "`bridle up` now starts the orchestrator with `--project <host>-home` when [machine] name is set and `[projects]` puts `<host>-home` on this machine; otherwise it runs the old command and the output says no home was enrolled and the project comes from $BRIDLE_PROJECT or the cwd. Pure fn `orchestrator_command` in crates/bridle/src/up.rs, with a test (enrolled, other machine's home, no name, no config). No flag or unit change: the boot unit runs `bridle up`, which reads the config at run time. Docs: add-a-machine.md step 7 (the issue said step 8), cli.md, CHANGELOG. just check green: 1767 passed, commit cedc5e4f."
 ticket = "rnhp"
 +++
@@ -34,3 +34,6 @@ done: bridle up starts the orchestrator in <host>-home when enrolled (check exit
 
 ### note · agent:rnhp · 2026-10-16T15:19:21.195Z
 correction: tip is ded97743 (adds a docs-only cli.md line to cedc5e4f, where the check ran green)
+
+### note · agent:manager-2 · 2026-10-16T15:37:18.086Z
+integrated: 0e87928104f3d2fdd4a83d00df423522e6b15fbb (branch bridle/rnhp)
