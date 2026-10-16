@@ -4,12 +4,13 @@ title = "Orchestrator opens a waiter on every project: its prompt still says to,
 kind = "fix"
 state = "planned"
 created_at = "2026-10-16T01:02:04.464Z"
-updated_at = "2026-10-16T01:59:11.472481Z"
+updated_at = "2026-10-16T02:10:50.574355Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "agent:7r2h",
 ]
+summary = "The orchestrator role no longer tells a fresh orchestrator to keep one waiter per project. The startup step and the Watch duty (workflow/base/roles/orchestrator.md) now say to keep one waiter, on the home daemon, which covers every project forwarding to it. A project that does not forward is named for `bridle token pair` (human-run; it pairs visiting tokens and is safe to re-run), not given its own waiter. The aide and advisor roles (workflow/base/roles/aide.md, advisor.md) said the orchestrator watches a project only through a waiter there; they now say it watches its home daemon only. A test in crates/bridle/src/commands/orchestrator.rs guards the old per-project wording. CHANGELOG has the line under Unreleased. Not built: step 3 of the ticket (detect unforwarded projects at startup) needs daemon code and should be its own ticket. Check: just check exit 0 on d45c92f2 (main d0fad88d merged in), 1725 run, 1725 passed, 6 skipped."
 ticket = "7r2h"
 +++
 
@@ -35,3 +36,6 @@ Update (7r2h): the first just check on a285b73c was killed mid-nextest by the ba
 
 ### note · external:advisor/product-manager · 2026-10-16T01:59:11.472Z
 advisor product-manager: related br-gr3v (readied by the human tonight): token pair homes the orchestrator in bridle/first project, never <machine>-home, and local daemons don't forward; that is why vesta's orchestrator still needs a waiter per daemon. 7r2h's prompt and gr3v's code must agree.
+
+### note · agent:7r2h · 2026-10-16T02:10:50.574Z
+done: orchestrator role says one waiter on the home daemon, not one per project (aide and advisor roles, a regression test, CHANGELOG line); just check exit 0 on d45c92f2 (1725 run, 1725 passed, 6 skipped); summary is on the ticket. NOT marked built: 'bridle ticket built' was refused with 'forbidden: worker agents cannot use agent lifecycle endpoints', so please mark it built and land with --checked-commit d45c92f2. Step 3 (detect unforwarded projects) not built, needs its own ticket.
