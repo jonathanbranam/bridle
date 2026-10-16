@@ -434,7 +434,14 @@ impl Setup<'_> {
             return Status::Unmet("after the clone (if it has no .bridle/config.toml)".into());
         }
         if self.repo.join(".bridle/config.toml").is_file() {
-            return Status::Done(".bridle/config.toml present".into());
+            // A failed commit leaves the files made but not committed: not done.
+            let dirty = git(
+                &self.repo,
+                &["status", "--porcelain", "--", ".bridle/config.toml"],
+            )
+            .await
+            .is_ok_and(|o| !o.trim().is_empty());
+            return init_status(dirty);
         }
         self.commits = git(&self.repo, &["rev-parse", "--verify", "-q", "HEAD"])
             .await
@@ -450,7 +457,10 @@ impl Setup<'_> {
     async fn apply_init(&mut self) -> Result<String, String> {
         let repo = self.repo.clone();
         if repo.join(".bridle/config.toml").is_file() {
-            return Ok("already initialised in the clone".into());
+            // Made by an earlier run whose commit failed: commit it, don't scaffold again.
+            return self
+                .commit_init(&repo, "already scaffolded; files committed")
+                .await;
         }
         let adopt = self.commits && self.choice != Some(Choice::Main);
         if adopt && !self.on_adopt {
@@ -474,15 +484,27 @@ impl Setup<'_> {
             Ok(())
         })
         .map_err(|e| format!("{e:#}"))?;
+        self.commit_init(
+            &repo,
+            &if adopt {
+                format!("files committed on the new branch {ADOPT}")
+            } else {
+                "files committed".into()
+            },
+        )
+        .await
+    }
+
+    async fn commit_init(&self, repo: &Path, done: &str) -> Result<String, String> {
         let paths: Vec<&str> = [".bridle", ".gitignore", "workflow"]
             .into_iter()
             .filter(|p| repo.join(p).exists())
             .collect();
         let mut add = vec!["add", "-A", "--"];
         add.extend(paths);
-        git(&repo, &add).await?;
+        git(repo, &add).await?;
         git(
-            &repo,
+            repo,
             &[
                 "commit",
                 "-q",
@@ -492,11 +514,29 @@ impl Setup<'_> {
         )
         .await
         .map_err(|e| format!("{e}; commit .bridle, .gitignore and workflow yourself"))?;
-        Ok(if adopt {
-            format!("files committed on the new branch {ADOPT}")
-        } else {
-            "files committed".into()
-        })
+        Ok(done.into())
+    }
+}
+
+fn init_status(uncommitted: bool) -> Status {
+    if uncommitted {
+        Status::Unmet(".bridle/config.toml is made but not committed".into())
+    } else {
+        Status::Done(".bridle/config.toml present".into())
+    }
+}
+
+/// The clone's own git config remembers a declined aide token: real state on this machine,
+/// no file of ours, and it does not dirty the tree.
+const DECLINED_KEY: &str = "bridle.setup.aide-token";
+
+fn aide_status(token: Status, declined: bool, project: &str) -> Status {
+    match token {
+        Status::Done(_) => Status::Done("aide token present".into()),
+        Status::Unmet(_) if declined => Status::Skipped(format!(
+            "declined; make it with `bridle token pair --projects {project} --roles {AIDE_ROLE}`"
+        )),
+        other => other,
     }
 }
 
@@ -590,13 +630,15 @@ impl Steps for Setup<'_> {
                         .any(|u| u.what == "mail bridge"),
                 )
             }
-            _ => match self
-                .pair_status(vec![AIDE_ROLE.into()], vec![TokenType::Role])
-                .await
-            {
-                Status::Done(_) => Status::Done("aide token present".into()),
-                other => other,
-            },
+            _ => {
+                let token = self
+                    .pair_status(vec![AIDE_ROLE.into()], vec![TokenType::Role])
+                    .await;
+                let declined = git(&self.repo, &["config", "--local", "--get", DECLINED_KEY])
+                    .await
+                    .is_ok_and(|v| v.trim() == "declined");
+                aide_status(token, declined, &self.project)
+            }
         }
     }
 
@@ -689,7 +731,10 @@ impl Steps for Setup<'_> {
                 })?;
                 Ok("mail bridge installed".into())
             }
-            _ if !self.aide => Ok("skipped: not wanted (asked again on the next run)".into()),
+            _ if !self.aide => {
+                git(&self.repo, &["config", "--local", DECLINED_KEY, "declined"]).await?;
+                Ok("skipped: declined (remembered in the clone's git config)".into())
+            }
             _ => {
                 self.make_tokens(vec![AIDE_ROLE.into()], vec![TokenType::Role], out)
                     .await?;
@@ -886,24 +931,46 @@ fn find_clone(
     })?))
 }
 
-/// The "next:" line the step commands (`init`) end with: the first step of the
-/// checklist that is not done, from the same checks. Best effort and read-only; prints nothing
-/// when `repo` is not a clone of `project` or everything is done.
+/// The "next:" line the step commands (`init`, `projects add`, `project start`, `token pair`,
+/// `mail install`) end with: the first step of the checklist that is not done, from the same
+/// checks. Best effort and read-only; prints nothing when `repo` is not a clone of `project` or
+/// everything is done.
 pub async fn print_next(cli: &Cli, repo: &Path, project: &str) {
-    let Ok(repo) = repo.canonicalize() else {
-        return;
-    };
+    if let Some(n) = next_in(cli, repo, project).await {
+        println!("{n}");
+    }
+}
+
+/// `print_next` for a command that is not given the clone: tries `repo` if given, the current
+/// directory, then the clone of a running daemon for `project`.
+pub async fn print_next_for(cli: &Cli, project: &str, repo: Option<&Path>) {
+    let mut candidates: Vec<PathBuf> = repo.map(Path::to_path_buf).into_iter().collect();
+    candidates.extend(std::env::current_dir().ok());
+    candidates.extend(
+        list_registry()
+            .into_iter()
+            .find(|d| d.project == project)
+            .map(|d| PathBuf::from(d.repo)),
+    );
+    for c in candidates {
+        if let Some(n) = next_in(cli, &c, project).await {
+            println!("{n}");
+            return;
+        }
+    }
+}
+
+async fn next_in(cli: &Cli, repo: &Path, project: &str) -> Option<String> {
+    let repo = repo.canonicalize().ok()?;
     if !repo.join(".git").exists() || repo.file_name().is_none_or(|n| n != project) {
-        return;
+        return None;
     }
     let mut steps = Setup::new(cli, project, repo, None, Asker::none());
     let mut statuses = Vec::new();
     for i in 0..STEPS.len() {
         statuses.push(steps.check(i).await);
     }
-    if let Some(n) = next_line(&steps, &statuses) {
-        println!("{n}");
-    }
+    next_line(&steps, &statuses)
 }
 
 pub async fn run(cli: &Cli, args: &ProjectSetupArgs) -> Result<(), CliError> {
@@ -980,6 +1047,71 @@ mod tests {
 
     fn names() -> Vec<String> {
         vec!["dalek".to_string(), "dalek.local".to_string()]
+    }
+
+    #[test]
+    fn init_files_made_but_not_committed_are_not_done() {
+        assert!(matches!(init_status(true), Status::Unmet(_)));
+        assert!(matches!(init_status(false), Status::Done(_)));
+    }
+
+    #[test]
+    fn a_declined_aide_token_is_skipped_unless_it_exists() {
+        let unmet = || Status::Unmet("no token".into());
+        assert!(matches!(
+            aide_status(unmet(), true, "p"),
+            Status::Skipped(t) if t.contains("--projects p --roles aide")
+        ));
+        assert!(matches!(aide_status(unmet(), false, "p"), Status::Unmet(_)));
+        assert!(matches!(
+            aide_status(Status::Done("x".into()), true, "p"),
+            Status::Done(_)
+        ));
+        let blocked = Status::Blocked("b".into());
+        assert_eq!(aide_status(blocked.clone(), true, "p"), blocked);
+    }
+
+    #[tokio::test]
+    async fn a_clone_with_uncommitted_init_files_is_seen_through_git() {
+        let d = tempfile::tempdir().expect("tmp");
+        let run = |args: &[&str]| {
+            assert!(
+                std::process::Command::new("git")
+                    .arg("-C")
+                    .arg(d.path())
+                    .args(args)
+                    .status()
+                    .expect("git")
+                    .success()
+            );
+        };
+        run(&["init", "-q"]);
+        std::fs::create_dir(d.path().join(".bridle")).expect("mkdir");
+        std::fs::write(d.path().join(".bridle/config.toml"), "").expect("write");
+        let status = |p: &Path| {
+            let p = p.to_path_buf();
+            async move { git(&p, &["status", "--porcelain", "--", ".bridle/config.toml"]).await }
+        };
+        assert!(!status(d.path()).await.expect("status").trim().is_empty());
+        run(&["add", "-A"]);
+        run(&[
+            "-c",
+            "user.name=t",
+            "-c",
+            "user.email=t@t",
+            "commit",
+            "-qm",
+            "x",
+        ]);
+        assert!(status(d.path()).await.expect("status").trim().is_empty());
+        // The decline marker round-trips through the clone's own git config.
+        git(d.path(), &["config", "--local", DECLINED_KEY, "declined"])
+            .await
+            .expect("set");
+        let v = git(d.path(), &["config", "--local", "--get", DECLINED_KEY])
+            .await
+            .expect("get");
+        assert_eq!(v.trim(), "declined");
     }
 
     #[test]

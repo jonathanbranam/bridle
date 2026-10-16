@@ -840,6 +840,9 @@ async fn token_pair(cli: &Cli, action: &TokenAction) -> Result<(), CliError> {
                     "some tokens could not be paired (see above); run again to fill the gaps"
                 )));
             }
+            if let ([p], false) = (projects.as_slice(), dry_run) {
+                crate::project_setup::print_next_for(cli, p, None).await;
+            }
         }
         TokenAction::Check {
             machines,

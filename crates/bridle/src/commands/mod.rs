@@ -251,7 +251,13 @@ pub async fn run(mut cli: Cli) -> Result<(), CliError> {
         Command::WaitForWake(args) => wait_for_wake(&cli, args.timeout).await,
         Command::Mail(args) => match &args.action {
             crate::cli::MailAction::Run => mail_run(&cli).await,
-            crate::cli::MailAction::Install(a) => crate::mail_install::install(&cli, a),
+            crate::cli::MailAction::Install(a) => {
+                crate::mail_install::install(&cli, a)?;
+                if let Some(p) = &cli.project {
+                    crate::project_setup::print_next_for(&cli, p, None).await;
+                }
+                Ok(())
+            }
             crate::cli::MailAction::Uninstall => crate::mail_install::uninstall(&cli),
         },
         Command::Prime(args) => prime(&cli, args).await,
@@ -271,9 +277,19 @@ pub async fn run(mut cli: Cli) -> Result<(), CliError> {
         Command::Machine(args) => crate::tools_only::run(&args.action),
         Command::Projects(args) => match &args.action {
             crate::cli::ProjectsAction::TakeOver(a) => crate::take_over::run(&cli, a).await,
-            crate::cli::ProjectsAction::Add(a) => crate::project_sync::add(a),
+            crate::cli::ProjectsAction::Add(a) => {
+                crate::project_sync::add(a)?;
+                crate::project_setup::print_next_for(&cli, &a.name, None).await;
+                Ok(())
+            }
             crate::cli::ProjectsAction::Stop(a) => crate::project_stop::run(&cli, a).await,
-            crate::cli::ProjectsAction::Start(a) => crate::project_start::run(&cli, a).await,
+            crate::cli::ProjectsAction::Start(a) => {
+                crate::project_start::run(&cli, a).await?;
+                if let (None, Some(p)) = (&a.machine, &cli.project) {
+                    crate::project_setup::print_next_for(&cli, p, a.repo.as_deref()).await;
+                }
+                Ok(())
+            }
             crate::cli::ProjectsAction::Preflight(a) => crate::preflight::run(&cli, a),
             crate::cli::ProjectsAction::Drain(a) => crate::project_drain::run(&cli, a).await,
             crate::cli::ProjectsAction::Setup(a) => crate::project_setup::run(&cli, a).await,
