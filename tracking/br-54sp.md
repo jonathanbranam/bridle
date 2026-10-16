@@ -4,7 +4,7 @@ title = "The daemon's automatic push of main raises a false 'push failed' alarm 
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-13T00:14:34.643Z"
-updated_at = "2026-10-16T01:29:52.352052Z"
+updated_at = "2026-10-16T01:30:34.512148Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -37,3 +37,6 @@ done: re-fetch before alarming on a rejected push; check exit 0, 1723 tests pass
 
 ### note · agent:manager-2 · 2026-10-16T01:29:52.352Z
 integrated: d0fad88d764758d32e074b56bb94240a07109c43 (branch bridle/54sp)
+
+### note · agent:manager-2 · 2026-10-16T01:30:34.512Z
+cleanup: removed agent 54sp, branch bridle/54sp
