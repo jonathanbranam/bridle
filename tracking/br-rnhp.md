@@ -2,11 +2,14 @@
 id = "br-rnhp"
 title = "bridle up starts the orchestrator in no project: it should start it in <host>-home"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-16T01:53:42.900Z"
-updated_at = "2026-10-16T14:52:33.049825Z"
+updated_at = "2026-10-16T14:53:15.553857Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "agent:rnhp",
+]
 ticket = "rnhp"
 +++
 

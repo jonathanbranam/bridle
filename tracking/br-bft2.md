@@ -2,11 +2,14 @@
 id = "br-bft2"
 title = "Mail digest: local-time timestamps, grouped by day/week/older, and drop bare 'message sent' items"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-15T21:00:25Z"
-updated_at = "2026-10-16T14:52:33.209580Z"
+updated_at = "2026-10-16T14:53:25.914700Z"
 created_by = "external:aide"
-watchers = ["external:aide"]
+watchers = [
+    "external:aide",
+    "agent:bft2",
+]
 ticket = "bft2"
 +++
 
