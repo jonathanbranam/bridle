@@ -4,7 +4,7 @@ title = "Setup gap (b): bridle project start installs the mail bridge for the pr
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-16T02:24:05.969Z"
-updated_at = "2026-10-16T04:30:42.580175Z"
+updated_at = "2026-10-16T04:31:02.773020Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -37,3 +37,6 @@ merged main (br-b97n conflict in add-a-machine.md resolved: kept my step 5, thei
 
 ### note · agent:manager-2 · 2026-10-16T04:30:42.580Z
 integrated: 34cbe8136511740e7855f687f6dcf78a3c604b12 (branch bridle/btpy)
+
+### note · agent:manager-2 · 2026-10-16T04:31:02.773Z
+cleanup: removed agent btpy, branch bridle/btpy

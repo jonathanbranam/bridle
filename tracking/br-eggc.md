@@ -2,11 +2,14 @@
 id = "br-eggc"
 title = "Drain follow-up to d7r5: hold off new lands through the restart, raise an incident when the cap fires, no orphaned check"
 kind = "fix"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-16T01:06:01.801Z"
-updated_at = "2026-10-16T01:17:04.190596Z"
+updated_at = "2026-10-16T04:31:14.571183Z"
 created_by = "external:advisor/product-manager"
-watchers = ["external:advisor/product-manager"]
+watchers = [
+    "external:advisor/product-manager",
+    "agent:eggc",
+]
 ticket = "eggc"
 +++
 

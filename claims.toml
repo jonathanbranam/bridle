@@ -24,6 +24,11 @@ claimed_by = "human"
 claimed_at = "2026-10-15T03:25:37.139Z"
 
 [[claim]]
+task = "br-eggc"
+claimed_by = "agent:eggc"
+claimed_at = "2026-10-16T04:31:14.571183Z"
+
+[[claim]]
 task = "br-tkph"
 claimed_by = "human"
 claimed_at = "2026-10-04T12:49:58.215Z"
