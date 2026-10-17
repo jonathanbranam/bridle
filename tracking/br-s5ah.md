@@ -4,7 +4,7 @@ title = "A daemon without an aide leaves its orchestrator no route to the human"
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-06T23:09:15.193Z"
-updated_at = "2026-10-17T23:53:34.043959Z"
+updated_at = "2026-10-17T23:54:01.233655Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -47,3 +47,6 @@ done: missing-aide error names the fallback (send human / --for-human), orchestr
 
 ### note · agent:manager-2 · 2026-10-17T23:53:34.043Z
 integrated: d05ef3a39bf985f1829826c7beba0436e14750e8 (branch bridle/ws5ah)
+
+### note · agent:manager-2 · 2026-10-17T23:54:01.233Z
+cleanup: removed agent ws5ah, branch bridle/ws5ah
