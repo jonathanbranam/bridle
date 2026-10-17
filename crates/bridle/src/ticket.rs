@@ -65,7 +65,55 @@ pub fn tickets_root(repo: &Path) -> PathBuf {
     repo.join("docs/tickets")
 }
 
+/// `--project X` from inside another project's clone would write the file there (br-mggk);
+/// refuse. A clone outside any workspace (`cwd_project` unknown) is left to the caller.
+fn check_project_matches(requested: Option<&str>, cwd_project: Option<&str>) -> anyhow::Result<()> {
+    match (requested, cwd_project) {
+        (Some(want), Some(here)) if want != here => bail!(
+            "--project {want} but this clone belongs to project {here}; the ticket file would be \
+             written here. Run `bridle ticket new` from {want}'s clone"
+        ),
+        _ => Ok(()),
+    }
+}
+
+/// A row that already names a ticket with a file keeps it: re-linking to a new file orphans the
+/// row once the duplicate is dropped (br-mggk, br-b3ef).
+fn check_not_linked(root: &Path, task: &bridle_api::Ticket) -> anyhow::Result<()> {
+    let Some(t) = &task.ticket else {
+        return Ok(());
+    };
+    if ["open", "resolved"]
+        .iter()
+        .any(|d| find_by_id(&root.join(d), t).is_ok())
+    {
+        bail!(
+            "{} already has ticket {t}; not making another (it would re-link the row)",
+            task.id
+        );
+    }
+    Ok(())
+}
+
+/// A refused mint (the daemon said no) leaves no file behind (br-mggk).
+fn discard_unfiled(
+    path: &Path,
+    rel: &str,
+    repos: &[String],
+    cause: impl std::fmt::Display,
+) -> anyhow::Error {
+    let _ = std::fs::remove_file(path);
+    anyhow!(
+        "ticket {rel} (repos [{}]) not made, its row was not filed: {cause}",
+        repos.join(", ")
+    )
+}
+
 pub(crate) async fn new(cli: &Cli, repo: &Path, args: &TicketNewArgs) -> Result<(), CliError> {
+    check_project_matches(
+        cli.project.as_deref(),
+        crate::project::from_cwd(repo).as_deref(),
+    )?;
     let repos = if args.repos.is_empty() {
         vec![project_name(cli, repo)?]
     } else {
@@ -86,6 +134,9 @@ pub(crate) async fn new(cli: &Cli, repo: &Path, args: &TicketNewArgs) -> Result<
         (None, None) => return Err(anyhow!("a kind is required").into()),
     };
     let root = tickets_root(repo);
+    if let Some(t) = &from {
+        check_not_linked(&root, t)?;
+    }
     let id = from.as_ref().and_then(|t| reusable_id(&root, &t.id));
     let ask = if args.body.is_some() || args.body_file.is_some() {
         crate::commands::read_text(&args.body, &args.body_file, "body")?
@@ -134,17 +185,24 @@ pub(crate) async fn new(cli: &Cli, repo: &Path, args: &TicketNewArgs) -> Result<
         } else {
             Some(format!("{rel}\n\n{}", task.body))
         };
-        client_for(cli)
-            .await?
-            .edit_task(
-                &task.id,
-                &EditTicketRequest {
-                    body,
-                    ticket: Some(ticket_id),
-                    ..Default::default()
-                },
-            )
-            .await?;
+        let linked = async {
+            client_for(cli)
+                .await?
+                .edit_task(
+                    &task.id,
+                    &EditTicketRequest {
+                        body,
+                        ticket: Some(ticket_id),
+                        ..Default::default()
+                    },
+                )
+                .await?;
+            Ok::<_, CliError>(())
+        }
+        .await;
+        if let Err(e) = linked {
+            return Err(discard_unfiled(&path, &rel, &repos, e).into());
+        }
     }
     if from.is_none() {
         // Every ticket has a row, `pending` until `ticket ready` (22ab section 2). The daemon
@@ -161,7 +219,7 @@ pub(crate) async fn new(cli: &Cli, repo: &Path, args: &TicketNewArgs) -> Result<
             priority,
         )
         .await
-        .map_err(|e| anyhow!("{rel} was written but its row was not filed: {e}"))?;
+        .map_err(|e| discard_unfiled(&path, &rel, &repos, e))?;
         // The file's prefix and the row's come from different places; refuse if they differ.
         if task.id.rsplit_once('-').map(|(p, _)| p) != Some(prefix.as_str()) {
             return Err(anyhow!(
@@ -1571,6 +1629,43 @@ mod tests {
         );
         let e = pick_prefix(Some("br".into()), Some("ui".into()), r).unwrap_err();
         assert!(e.to_string().contains("differs"));
+    }
+
+    fn row_with_ticket(ticket: Option<&str>) -> bridle_api::Ticket {
+        serde_json::from_value(serde_json::json!({
+            "id": "br-abcd", "title": "T", "kind": "feature", "state": "open", "body": "x",
+            "thread": [], "created_at": "2026-01-01T00:00:00Z",
+            "updated_at": "2026-01-01T00:00:00Z", "ticket": ticket,
+        }))
+        .unwrap()
+    }
+
+    #[test]
+    fn project_flag_for_another_clone_is_refused() {
+        assert!(check_project_matches(Some("a"), Some("b")).is_err());
+        assert!(check_project_matches(Some("a"), Some("a")).is_ok());
+        assert!(check_project_matches(None, Some("b")).is_ok());
+        assert!(check_project_matches(Some("a"), None).is_ok());
+    }
+
+    #[test]
+    fn refused_mint_removes_the_file() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("t-abcd.md");
+        std::fs::write(&path, "x").unwrap();
+        let e = discard_unfiled(&path, "t-abcd.md", &["x".to_string()], "forbidden");
+        assert!(!path.exists());
+        assert!(e.to_string().contains("forbidden"));
+    }
+
+    #[test]
+    fn from_task_refuses_a_row_that_already_has_a_ticket_file() {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::create_dir_all(dir.path().join("open")).unwrap();
+        std::fs::write(dir.path().join("open/old-thing-wxyz.md"), "x").unwrap();
+        assert!(check_not_linked(dir.path(), &row_with_ticket(Some("wxyz"))).is_err());
+        assert!(check_not_linked(dir.path(), &row_with_ticket(Some("zzzz"))).is_ok());
+        assert!(check_not_linked(dir.path(), &row_with_ticket(None)).is_ok());
     }
 
     #[test]

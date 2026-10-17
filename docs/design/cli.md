@@ -337,13 +337,17 @@ bridle ticket new "<title>" --kind <kind> [--repos a,b] [--blocked-by ids] [--re
                                              initiative, children via `parent`) and `docs`; `feature`, `fix`, `docs`,
                                              `chore` and `arch-revision` are the change kinds (`TaskKind::is_change`).
                                              No `idea` kind. The new ticket's id is never a task's id either
-                                             (one id space)
+                                             (one id space). `--project X` from another project's clone
+                                             is refused (the file would land there); a refused mint
+                                             (the daemon said no) removes the file it wrote (br-mggk)
 bridle ticket new --from-task <task-id> [--kind k] [title]   as `ticket new`, from an existing task (needs a daemon):
                                              title and kind default to the task's; the ticket takes the
                                              task's id, or a fresh one when the task's tail has a character
                                              the ticket alphabet lacks (old hex ids with 0/1) or a ticket has
                                              it; either way the ticket's `tasks:` lists the task and the
-                                             task's `ticket` field is set to the ticket's id
+                                             task's `ticket` field is set to the ticket's id.
+                                             Refused when the row's `ticket` already has a file
+                                             (re-linking would orphan the row; br-mggk)
 bridle ticket ready <id>                     marks the ticket's row ready (`pending` -> `open`; the PM plans only open
                                              rows). Taken only with the human's approval (orchestrator or an advisor in
                                              a conversation with them; a manager for its own small fix). Refuses an

@@ -697,17 +697,10 @@ fn a_repo_not_yet_served_is_named_after_its_folder() {
     }
 }
 
-/// What a naming command wrote or printed: its output, plus the ticket it minted.
-fn names(w: &World, leaf: &[String], cwd: &Path, r: &Ran) -> String {
-    let mut text = r.out.clone();
-    let _ = w;
-    if leaf_name(leaf) == "ticket new" {
-        let dir = cwd.join("docs/tickets/open");
-        for e in fs::read_dir(dir).into_iter().flatten().flatten() {
-            text.push_str(&fs::read_to_string(e.path()).unwrap_or_default());
-        }
-    }
-    text
+/// What a naming command printed. `ticket new` against the fake daemon is refused (it answers
+/// 500), so it leaves no file (br-mggk) and names its repos in the refusal instead.
+fn names(_w: &World, _leaf: &[String], _cwd: &Path, r: &Ran) -> String {
+    r.out.clone()
 }
 
 // s-4b92: an unclassified command fails the check.
