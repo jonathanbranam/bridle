@@ -4,7 +4,7 @@ title = "Flaky: restart_hold_test cancel_ends_an_upgrade_drain_quietly hit its 6
 kind = "bug"
 state = "pending"
 created_at = "2026-10-17T01:43:51.292Z"
-updated_at = "2026-10-17T09:23:53.114373Z"
+updated_at = "2026-10-17T09:31:41.613790Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "6byg"
@@ -19,3 +19,9 @@ From orchestrator: under the human's flaky-test rule (2026-10-11: 'disable it an
 
 ### note · agent:ignore6byg · 2026-10-17T09:23:53.114Z
 done: cancel_ends_an_upgrade_drain_quietly is #[ignore = "flaky, br-6byg"] (test body unchanged); CHANGELOG Unreleased line added (test changes are listed there, e.g. k562); just check exit=0, 1802 run, 1802 passed, 7 skipped (last full landing 1809, in band); main already merged (no-op); commit 93f3c4639ff96c1f7b1686df8d49bd77d82d514f
+
+### note · agent:ignore6byg · 2026-10-17T09:31:39.332Z
+done: merged main (5febee5f, br-4cgx) into bridle/ignore6byg; just check exit=0 on the merge, 1808 run, 1808 passed, 7 skipped; tip 3e1c... see sha
+
+### note · agent:ignore6byg · 2026-10-17T09:31:41.613Z
+correction to m-15394: the tip is def68f77ee22f86ab9fabdeaa6400f1ba311143d (merge of main 5febee5f into bridle/ignore6byg, on top of 93f3c463). just check ran on that tip: exit 0, 1808 run, 1808 passed, 7 skipped. Ignore the placeholder sha in m-15394.
