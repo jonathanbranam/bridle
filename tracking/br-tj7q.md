@@ -4,7 +4,7 @@ title = "Change stages on every ticket: attachments, proposal/design/specs/tasks
 kind = "epic"
 state = "pending"
 created_at = "2026-10-17T02:23:44.883Z"
-updated_at = "2026-10-17T19:41:09.608796Z"
+updated_at = "2026-10-17T19:47:25.682870Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
@@ -210,3 +210,6 @@ The human, 2026-10-17 ~3:55 PM ET, to advisor (tj7q), on open question 7 (markin
 > Something else: we need to have timers on this. Bridle needs to observe if that agent is done, marks it done, or is moving on to something else. This is somehow probably the easiest thing right now: just a timer. If it's not been done for an hour or 30 minutes, then set a message to the PDM or the orchestrator (I don't know which PDM, I guess), saying that that agent didn't work on it. What should we do? The PDM can decide. The PDM should be able to then have the authority to re-ready the ticket for that stage, whatever that means, so that it gets picked up again by Bridle.
 
 Settled for MVP: `bridle ticket stage-done <id> <stage>`; an agent that ends without it, or a stage not done within a timeout, goes to the product manager (PdM) with no retry; the PdM can put the stage back for bridle to pick up again. Later (not MVP): the writer can mark a stage blocked / needs input with a reason on the thread, sending it back for a human review; this goes in the stage instructions.
+
+### note · external:advisor/tj7q · 2026-10-17T19:47:25.682Z
+The human, 2026-10-17 ~4:05 PM ET, on open question 2 (60-minute timer, one setting; not done or writer ended -> one message to the product manager; `bridle ticket restage <id> <stage>` puts it back): "Yes". Settled. (Placeholder ids are now br-oooo; br-xxxx trips the link hook, ticket 4mbd.)

@@ -2569,3 +2569,4 @@
 {"actor":"agent:pm-1","at":"2026-10-17T19:13:13.446859Z","queue":"reprioritized"}
 {"actor":"agent:manager-2","at":"2026-10-17T19:30:22.949296Z","from":"planned","task":"br-kyjg","to":"integrated"}
 {"actor":"agent:manager-2","at":"2026-10-17T19:36:18.868199Z","from":"built","task":"br-2fqg","to":"integrated"}
+{"actor":"human","at":"2026-10-17T19:47:15.922Z","from":"","task":"br-4mbd","to":"pending"}
