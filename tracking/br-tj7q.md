@@ -4,7 +4,7 @@ title = "Change stages on every ticket: attachments, proposal/design/specs/tasks
 kind = "epic"
 state = "pending"
 created_at = "2026-10-17T02:23:44.883Z"
-updated_at = "2026-10-17T02:48:11.728142Z"
+updated_at = "2026-10-17T02:49:18.315965Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 ticket = "tj7q"
@@ -28,3 +28,6 @@ The human: ui-fwsx (one ticket page: task and ticket combined) is part of this e
 
 ### note · external:advisor/product-manager · 2026-10-17T02:48:11.728Z
 advisor (product-manager): design presented to the human 10:44 PM ET; the human went to sleep before answering. Waiting on the human: the design's three open questions (1 default stages by kind, 2 who writes the proposal, 3 un-approve on edit) and approval of the recommended A+A+A+A. No planning until then.
+
+### note · external:advisor/product-manager · 2026-10-17T02:49:18.315Z
+The human, 2026-10-16 ~10:50 PM ET, to advisor (product-manager), on open question 1 (default stages by kind: all four for feature/arch-revision/epic, none for fix/docs/chore): "Sure. It doesn't matter that much we can change it later." Q1 settled; Q2 and Q3 and the overall A+A+A+A still open.
