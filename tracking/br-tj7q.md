@@ -4,7 +4,7 @@ title = "Change stages on every ticket: attachments, proposal/design/specs/tasks
 kind = "epic"
 state = "pending"
 created_at = "2026-10-17T02:23:44.883Z"
-updated_at = "2026-10-17T21:36:23.739194Z"
+updated_at = "2026-10-17T21:40:18.440037Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
@@ -276,3 +276,16 @@ The human, 2026-10-17 ~4:45 PM ET, on open question 1 (epic split), verbatim:
 > The first one is just reject, approve, and reject goes back to the agent. The reason I got started on all this is that, for v1, I should be able to use comments. If v1 may just be accept, reject, or approve, that's fine. v2 could be accept with comments. If that's harder, I don't think it's harder, maybe, though. Anyway, it's just not that urgent of a thing.
 
 advisor (tj7q): folded into the split proposal: V1 = review like a PR (highlight comments on sections plus overall comments; approve, or request changes; comments go to a fresh writer of the same role, whose prompt is the stage's original rules and template, the file as written, and the human's comments, "please address them"; it comes back for review). V2 = "approve with feedback" (the writer fixes, it moves on without a second review).
+
+### note · external:advisor/tj7q · 2026-10-17T21:40:18.440Z
+The human, 2026-10-17 ~4:55 PM ET, on open question 1 (epic split), verbatim:
+
+> Yep, I agree with that. Both the splits and the overall description look good. I'd like to see a final. I can't tell. I think we're ready to build, and I think we can get started on this. It would be great to get the MVP done today so I can use it tomorrow.
+>
+> It doesn't seem like there are that many tickets, but sequence the tickets and remember that you're changing the ticketing system while we're sequencing these tickets. We might need separate tickets for building the version 2 stuff and making version 2 the default. I'd like to see it built before it becomes the default, and then we should probably make it an option.
+>
+> At the end of the MVP, we should be able to create version 1 and version 2 tickets because I do want to try a version 2 ticket. I don't want every ticket to have to be version 2 because we'll end up with a chicken-and-the-egg problem. If we break ticketing on version 2, we won't be able to work any tickets, right? We can't fix the problem.
+>
+> Let's do that: fold that in, and make sure that we add the version 2 stuff and that tickets that are version 2 get handled by the new workflow. Tickets that are version 1 still go through the old workflow, and then we'll revise. I think I would add to the "when done" for that epic that version 2 becomes the default.
+
+Settled: the split (MVP / V1 / V2) and the description. Version 2 is opt-in through the MVP (`ticket new --version 2`); version 1 tickets keep today's workflow untouched; making version 2 the default is the MVP's last child, after the human has tried a version 2 ticket, and is in the MVP's done-when. advisor (tj7q) now rewrites tj7q as the MVP epic, files the sequenced children and the V1/V2 epics (all pending), and updates the roadmap. Nothing readied without the human's go.
