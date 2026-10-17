@@ -103,3 +103,77 @@ async fn a_mention_in_a_document_comment_tells_that_role_once_and_an_escaped_one
     daemon.client.review_now(&req).await.expect("again");
     assert_eq!(told(&orch, "me").await.len(), 1);
 }
+
+/// Runs `review now` on `doc` and returns (the lines `orch` got, the lines the human got).
+async fn review_doc(doc: &str) -> (Vec<String>, Vec<String>, bool) {
+    let (daemon, _dir) = start_daemon(None).await;
+    let orch = daemon.external_client("orchestrator").await;
+    std::fs::create_dir_all(daemon.repo.join(".bridle")).expect("mkdir");
+    std::fs::write(daemon.repo.join("doc.md"), doc).expect("doc");
+    std::fs::write(daemon.repo.join(".bridle/review-documents.txt"), "doc.md\n").expect("list");
+    let req = ReviewNowRequest {
+        path: "doc.md".into(),
+        resend: false,
+    };
+    daemon.client.review_now(&req).await.expect("now");
+    let msgs = |c: &bridle_api::Client, to: &str| {
+        let (c, to) = (c.clone(), to.to_string());
+        async move {
+            c.list_messages(&bridle_api::types::MessageQuery {
+                to: Some(to),
+                ..Default::default()
+            })
+            .await
+            .expect("messages")
+            .into_iter()
+            .map(|m| m.body)
+            .collect::<Vec<_>>()
+        }
+    };
+    let default = daemon
+        .client
+        .get_agent(&bridle_daemon::doc_watch::agent_name("doc.md"))
+        .await
+        .is_ok();
+    (
+        msgs(&orch, "me").await,
+        msgs(&daemon.client, "human").await,
+        default,
+    )
+}
+
+const COMMENT: &str = "\n> [!comment] c1 human, 2026-10-03 14:05, on \"Line\"\n> Why?";
+
+#[tokio::test]
+async fn a_reviewer_in_the_front_matter_gets_the_batch_and_no_default_agent_starts() {
+    let doc = format!("---\nreviewer: external:orchestrator\n---\nLine.\n{COMMENT}\n");
+    let (orch, _, default) = review_doc(&doc).await;
+    assert_eq!(orch.len(), 1, "{orch:?}");
+    assert!(orch[0].contains("Why?"), "{orch:?}");
+    assert!(!default, "the default reviewer was started");
+}
+
+#[tokio::test]
+async fn a_mention_of_the_reviewer_is_not_a_second_message() {
+    let doc = format!(
+        "---\nreviewer: external:orchestrator\n---\nLine.\n{COMMENT} @orchestrator and @external:orchestrator\n"
+    );
+    let (orch, _, _) = review_doc(&doc).await;
+    assert_eq!(orch.len(), 1, "{orch:?}");
+}
+
+#[tokio::test]
+async fn an_unknown_reviewer_is_reported_and_the_default_takes_the_batch() {
+    let doc = format!("---\nreviewer: nobody-here\n---\nLine.\n{COMMENT}\n");
+    let (orch, _, default) = review_doc(&doc).await;
+    assert!(orch.is_empty());
+    assert!(default, "the default reviewer was not started");
+}
+
+#[tokio::test]
+async fn no_reviewer_keeps_the_default_agent() {
+    let doc = format!("---\ntitle: x\n---\nLine.\n{COMMENT}\n");
+    let (orch, _, default) = review_doc(&doc).await;
+    assert!(orch.is_empty());
+    assert!(default);
+}

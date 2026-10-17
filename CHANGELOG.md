@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Feature (br-re79): a document under review may set `reviewer: <agent>` in its front matter; its comments then go to that agent instead of the default `doc-<id>` reviewer (an unknown agent is reported and the default takes the batch). Migration: none.
 - Fix (br-3stk): `bridle ticket land` runs `[worktrees] setup` (e.g. `npm ci`) in its check worktree before the check, so a JS project lands without `--checked-commit`; it also falls back to the ticket's last recorded branch when `--branch` is omitted. Migration: none; set `[worktrees] setup` if the check needs installed dependencies.
 
 ## [0.7.6] - 2026-10-17

@@ -270,6 +270,15 @@ fn counter(text: &str) -> Option<u32> {
     v.trim().strip_prefix('c')?.parse().ok()
 }
 
+/// The `reviewer:` agent named in the document's front matter (br-re79), if any.
+fn reviewer(text: &str) -> Option<String> {
+    let rest = text.strip_prefix("---\n")?;
+    let fm = &rest[..rest.find("\n---")?];
+    let v = fm.lines().find_map(|l| l.strip_prefix("reviewer:"))?;
+    let v = v.trim().trim_matches(['"', '\'']);
+    (!v.is_empty()).then(|| v.to_string())
+}
+
 /// The text with the counter set to `c<n>`: replaced in place, added to the front matter, or a
 /// minimal front matter made when the document has none.
 fn set_counter(text: &str, n: u32) -> String {
@@ -849,16 +858,18 @@ impl DocWatcher {
                  ones new IDs (and raise next_comment_id in the front matter past them)."
             ));
         }
-        if !self
-            .deliver(&Due {
-                path: path.to_string(),
-                batch,
-            })
-            .await
+        let named = self.to_reviewer(path, &with_ids, &batch).await;
+        if named.is_none()
+            && !self
+                .deliver(&Due {
+                    path: path.to_string(),
+                    batch,
+                })
+                .await
         {
             return Err("the document's agent could not be started; see the daemon log".into());
         }
-        self.send_mentions(path, &entries).await;
+        self.send_mentions(path, &entries, named).await;
         // Read again: the agent may already have edited the file.
         let latest = std::fs::read_to_string(&file).map_err(|e| format!("{path}: {e}"))?;
         let marked = mark_threads(&latest, &threads, "sent", &stamp(now));
@@ -870,16 +881,22 @@ impl DocWatcher {
     /// Tells whoever the newly delivered comments `@mention` (br-4cgx). The author is the human
     /// (only their entries are pending); the document's own agent already has the comment, so
     /// it is not told twice.
-    async fn send_mentions(&self, path: &str, entries: &[String]) {
+    /// `named` is who got the batch in place of the document's own agent: like it, they are not
+    /// told again of a mention.
+    async fn send_mentions(&self, path: &str, entries: &[String], named: Option<Vec<ToTarget>>) {
         let here = format!("document {path}");
-        let own = self
-            .store
-            .get_agent(&agent_name(path))
-            .await
-            .ok()
-            .flatten()
-            .map(|a| ToTarget::Agent(a.id));
-        let already: Vec<ToTarget> = own.into_iter().collect();
+        let already: Vec<ToTarget> = match named {
+            Some(t) => t,
+            None => self
+                .store
+                .get_agent(&agent_name(path))
+                .await
+                .ok()
+                .flatten()
+                .map(|a| ToTarget::Agent(a.id))
+                .into_iter()
+                .collect(),
+        };
         let author = ToTarget::Human;
         let link = self
             .outbox
@@ -904,6 +921,54 @@ impl DocWatcher {
             unknown.extend(u);
         }
         crate::mentions::report_unknown(&self.manager, "human", author, &here, &unknown).await;
+    }
+
+    /// Sends the batch to the agent the front matter's `reviewer:` names (br-re79), resolved as
+    /// an `@name` mention is. `None` means the default reviewer takes it: no `reviewer:`, or one
+    /// that resolves to nobody (the human is told).
+    async fn to_reviewer(&self, path: &str, text: &str, batch: &str) -> Option<Vec<ToTarget>> {
+        let name = reviewer(text)?;
+        let targets = match crate::server::resolve_name(&self.store, &name).await {
+            Some(t) if !t.is_empty() => t,
+            _ => {
+                tracing::warn!(path, reviewer = %name, "document's reviewer not found; default reviewer used");
+                let line = format!(
+                    "document {path}: reviewer {name} not found; the comments went to the default reviewer"
+                );
+                let _ = self
+                    .manager
+                    .send(
+                        "human".to_string(),
+                        ToTarget::Human,
+                        MessageKind::TaskUpdate,
+                        line,
+                        Default::default(),
+                        None,
+                    )
+                    .await;
+                return None;
+            }
+        };
+        let body = prompt(&self.repo, path, batch);
+        let mut sent = Vec::new();
+        for t in targets {
+            match self
+                .manager
+                .send(
+                    "system".to_string(),
+                    t.clone(),
+                    MessageKind::Note,
+                    body.clone(),
+                    When::Idle,
+                    None,
+                )
+                .await
+            {
+                Ok(_) => sent.push(t),
+                Err(e) => tracing::warn!(path, reviewer = %name, "reviewer not sent: {e}"),
+            }
+        }
+        (!sent.is_empty()).then_some(sent)
     }
 
     /// Start, resume or message the document's agent. False when it didn't go.
@@ -966,6 +1031,17 @@ mod tests {
 
     fn t(min: i64) -> DateTime<Utc> {
         DateTime::<Utc>::from_timestamp(1_800_000_000, 0).unwrap() + Duration::minutes(min)
+    }
+
+    #[test]
+    fn reviewer_comes_from_the_front_matter() {
+        assert_eq!(
+            reviewer("---\ntitle: x\nreviewer: \"advisor/pm\"\n---\nbody"),
+            Some("advisor/pm".to_string())
+        );
+        assert_eq!(reviewer("---\ntitle: x\n---\nreviewer: a"), None);
+        assert_eq!(reviewer("---\nreviewer:\n---\n"), None);
+        assert_eq!(reviewer("no front matter"), None);
     }
 
     #[test]

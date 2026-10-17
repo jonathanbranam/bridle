@@ -221,6 +221,13 @@ already has the comment and is not told again; `\@name` is not a mention; a name
 nobody is reported back to the human. Only the newest pending entry of each thread is scanned, so a
 resent thread does not tell anyone twice. Ticket-thread mentions use the same message.
 
+**Reviewer (br-re79).** A document whose front matter has `reviewer: <agent>` sends its batch
+to that agent (same naming as an @-mention, minus the project qualifier: a role, an agent name,
+`external:...`) as a message, instead of to the `doc-<id>` agent; none is spawned. The reviewer
+counts like the document's own agent for mentions: a mention of the same agent is not sent
+twice. A `reviewer:` that resolves to nobody is reported to the human and the default
+`doc-<id>` agent gets the batch. Without `reviewer:` nothing changes.
+
 **Marks, IDs and review now (ticket ehv6).** Each entry may end its first line with one ASCII
 status, `[pending|sent|read YYYY-MM-DD HH:MM EDT]` (US Eastern with its zone; only the latest is
 kept). Nothing parses the times: state is which mark is present. When bridle sends a batch it first
