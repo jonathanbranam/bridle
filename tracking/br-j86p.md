@@ -4,7 +4,7 @@ title = "Same-machine orchestrator keeps direct tokens (visiting-orchestrator to
 kind = "fix"
 state = "claimed"
 created_at = "2026-10-17T02:44:03.225Z"
-updated_at = "2026-10-17T10:42:39.988499Z"
+updated_at = "2026-10-17T11:12:02.535398Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -15,7 +15,7 @@ priority = "critical"
 priority_at = "2026-10-17T02:44:37.657490Z"
 branch = "bridle/j86p"
 commit = "46fb56d931b2762e1ad6609ba3bce3666446abbb"
-summary = "Step 1 only. The machine's orchestrator keeps a DIRECT token on same-machine daemons that records a home (pair-mint --direct replaces --replace-direct and revokes the old visitor token; pair-check refuses a visitor token on the holder's own machine, so a re-pair swaps it). Daemon: token create accepts home without machine; forward_to_home and wake forward_home forward for a direct orchestrator that has a home (a direct one without a home still keeps wakes). Tests: token_pair repair sim, outbox_test direct orchestrator comments + wakes/mail forward + cross-machine visitor still refused. Docs: cli.md, orchestrator-supervision.md, CHANGELOG (migration: re-run token pair on dalek, vesta, remus). Step 2 (ticket new --project X clone, refused --from-task leaves file, --from-task re-link orphaning) not started."
+summary = "Follow-up: principals.md now says a home is recorded on visitor tokens and on the same-machine orchestrator's direct token (rights kept, home only forwards); orchestrator role says 'orchestrator token' not 'visitor token' (.bridle/roles copy is a different file, untouched); outbox_test now also asserts the direct orchestrator can ready and a cross-machine visitor cannot. No CHANGELOG. Check exit 0, 1811 tests, e5779e65."
 ticket = "j86p"
 +++
 
@@ -72,3 +72,6 @@ Follow-up brief (pm-1), from the PdM's check. Model: Sonnet (small). Fix three g
 (2) workflow/base/roles/orchestrator.md ~44: still says 'orchestrator visitor token'; reword to the direct-token-with-home behaviour (check the workflow copy rule for any generated copies).
 (3) Add a test that the same-machine orchestrator can READY a ticket (only comment is tested today), next to the existing comment test.
 Add a CHANGELOG line only if the docs change user-visible wording. Acceptance: just check. Out of scope: any code change beyond the test; br-ncbz side bugs.
+
+### note · agent:j86pb · 2026-10-17T11:12:02.535Z
+done: j86p follow-up (3 gaps); just check exit 0, 1811 tests passed, main already merged; e5779e65
