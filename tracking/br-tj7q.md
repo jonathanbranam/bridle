@@ -4,7 +4,7 @@ title = "Change stages on every ticket: attachments, proposal/design/specs/tasks
 kind = "epic"
 state = "pending"
 created_at = "2026-10-17T02:23:44.883Z"
-updated_at = "2026-10-17T18:38:57.525013Z"
+updated_at = "2026-10-17T19:29:21.704819Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
@@ -163,3 +163,30 @@ The human, 2026-10-17 ~3:10 PM ET, on open question 4 (ready = prepared: a new t
 
 ### note · external:advisor/tj7q · 2026-10-17T18:38:57.525Z
 The human, 2026-10-17 ~3:12 PM ET, on open question 5 (stage files in a folder beside the ticket on main, docs/tickets/open/<slug>-<id>/design.md, specs.md, tasks.md and other attachments; moves with the ticket on resolve): "Yes". Settled.
+
+### note · external:advisor/tj7q · 2026-10-17T19:29:21.704Z
+The human, 2026-10-17 ~3:25 PM ET, to advisor (tj7q), on open question 6 (who starts the background writers), verbatim:
+
+> Okay, I'm not entirely sure, so let's talk through the flow here. I feel like there's a question that I'm not fully thinking through, and maybe a problem here. I had said at one point an interactive agent might be working on this, but the answer to this question is going to impact how that works and whether it's possible for that to happen or not.
+>
+> We could say the first path is assuming a background agent does it, or the PDM does it directly. I think we just want to have a decision about how this works and to support some flexibility here. Let's run down two paths.
+>
+> Let's say one path is that a human is not involved: no approval gates, or just no human interaction. Even if there is an approval gate, no human interaction. I don't think the product manager does anything. Bridle should do this. There's no agent involved. The whole point of this, to a large extent, is that the agent shouldn't be involved.
+>
+> If a ticket exists and it's ready to move forward, then the system, Bridle, should spin up a background agent, some sort of worker agent. I don't know if it's the same worker. It's probably not the same worker as what we have now. Maybe a designer or something like that.
+>
+> Anyway, it spins up an agent, and that agent gets instructions. It gets the following instructions:
+> - Here's the ticket.
+> - It's ready for stage blank, stage design.
+> - Here are the instructions for writing the design stage.
+> - Here's the template.
+>
+> Then the agent writes the design, puts it in there, and marks it done. Bridle will see that that's done and then figure out what to do next. Is a human approval needed? If so, send it to the human. Assign it to the human, right? The ticket should then be assigned to the human, I believe, for approval, like claimed by a human. When the human approves it, however they do that, it just kicks back to the system.
+>
+> Let's just make it simple. Let's do MVP. Let's just decide right now for the MVP: all the artifacts, all the stages are written by a background agent. That's just easy. That's MVP. We can work on the other approaches later.
+>
+> I think I agree there. The only possible exception is the proposal. Whatever agent is filing the ticket is allowed to immediately write the proposal. I think what this means, though, is that maybe it's easier than I was thinking. If a ticket is in the "needs a proposal" stage, whatever that means, wherever we delineate that, then it's either claimed or unclaimed. If it's claimed, then whatever agent that is is saying they're going to write the proposal, and it should just wait for that to happen.
+>
+> I think what we're saying is that an unclaimed ticket waiting for a proposal should go. The bridle should notice that transition and immediately send it to a background worker to get done.
+
+advisor (tj7q): settled as stated; design Q3-A (daemon notifies the PM) is overturned in favour of the rejected Q3-B (bridle spawns the writer). Body updated; follow-up questions added (which role writes, how a stage is marked done, the filer's claim, revisions after the human asks for changes).
