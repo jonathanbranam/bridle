@@ -64,9 +64,12 @@ pub async fn run(cli: &Cli, action: &AdvisorAction) -> Result<(), CliError> {
         return Ok(());
     }
     let panes = tmux_output(&["list-panes", "-a", "-F", "#{pane_id} #{@bridle}"]);
-    let args = tmux_args(mode, panes.as_deref().unwrap_or(""), &command);
+    let args = tmux_args(mode, panes.as_deref().unwrap_or(""));
     let refs: Vec<&str> = args.iter().map(String::as_str).collect();
-    tmux_output(&refs).map_err(|e| anyhow::anyhow!("tmux {}: {e}", args[0]))?;
+    let pane = tmux_output(&refs).map_err(|e| anyhow::anyhow!("tmux {}: {e}", args[0]))?;
+    // A shell first, then the command typed into it (rule tmux-shell-first).
+    tmux_output(&["send-keys", "-t", pane.trim(), &command, "Enter"])
+        .map_err(|e| anyhow::anyhow!("tmux send-keys: {e}"))?;
     println!("started advisor {name} in a new tmux pane");
     Ok(())
 }
@@ -82,10 +85,10 @@ fn session_command(project: Option<&str>, name: &str) -> String {
     }
 }
 
-/// The tmux call that starts `command`: a split beside the orchestrator's pane (tagged
+/// The tmux call that opens a shell pane for the advisor (the command is typed in after): a split beside the orchestrator's pane (tagged
 /// `@bridle=orchestrator`) or, when there is none or `window` is configured, a new window. `-d`
-/// keeps the caller's focus where it is.
-fn tmux_args(mode: AdvisorPane, panes: &str, command: &str) -> Vec<String> {
+/// keeps the caller's focus where it is; `-P` prints the new pane's id.
+fn tmux_args(mode: AdvisorPane, panes: &str) -> Vec<String> {
     let orch = panes.lines().find_map(|l| {
         let (id, tag) = l.split_once(' ')?;
         (tag.trim() == "orchestrator").then_some(id)
@@ -95,7 +98,7 @@ fn tmux_args(mode: AdvisorPane, panes: &str, command: &str) -> Vec<String> {
         (AdvisorPane::Split, Some(pane)) => v(&["split-window", "-d", "-t", pane]),
         _ => v(&["new-window", "-d"]),
     };
-    args.push(command.to_string());
+    args.extend(v(&["-P", "-F", "#{pane_id}"]));
     args
 }
 
@@ -126,16 +129,16 @@ mod tests {
     fn split_targets_the_orchestrator_pane() {
         let panes = "%1 \n%4 orchestrator\n%5 advisor-x\n";
         assert_eq!(
-            tmux_args(AdvisorPane::Split, panes, "c"),
-            ["split-window", "-d", "-t", "%4", "c"]
+            tmux_args(AdvisorPane::Split, panes),
+            ["split-window", "-d", "-t", "%4", "-P", "-F", "#{pane_id}"]
         );
         assert_eq!(
-            tmux_args(AdvisorPane::Window, panes, "c"),
-            ["new-window", "-d", "c"]
+            tmux_args(AdvisorPane::Window, panes),
+            ["new-window", "-d", "-P", "-F", "#{pane_id}"]
         );
         assert_eq!(
-            tmux_args(AdvisorPane::Split, "%1 \n", "c"),
-            ["new-window", "-d", "c"]
+            tmux_args(AdvisorPane::Split, "%1 \n"),
+            ["new-window", "-d", "-P", "-F", "#{pane_id}"]
         );
     }
 }

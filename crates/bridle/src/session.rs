@@ -641,7 +641,7 @@ async fn restart_session(
         let recent = client
             .latest_handover(Some(&info.identity))
             .await?
-            .is_some_and(|h| (chrono::Utc::now() - h.created_at) < RECENT_NOTE);
+            .is_some_and(|h| is_recent_note(h.created_at, chrono::Utc::now()));
         if recent {
             println!("{} wrote a handover note just now; using it", info.identity);
         } else {
@@ -720,6 +720,13 @@ async fn restart_session(
 
 /// A handover note newer than this at the time of the request counts as the answer to it.
 const RECENT_NOTE: chrono::Duration = chrono::Duration::seconds(120);
+
+fn is_recent_note(
+    created_at: chrono::DateTime<chrono::Utc>,
+    now: chrono::DateTime<chrono::Utc>,
+) -> bool {
+    now - created_at < RECENT_NOTE
+}
 
 /// Seconds to wait after SIGTERM, and again after SIGKILL, for the launcher to exit.
 fn stop_wait_secs() -> u64 {
@@ -908,6 +915,16 @@ fn process_start(pid: i32) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_note_under_120_seconds_old_counts_as_the_answer() {
+        let now = chrono::Utc::now();
+        let ago = |s| now - chrono::Duration::seconds(s);
+        assert!(is_recent_note(ago(5), now));
+        assert!(is_recent_note(ago(119), now));
+        assert!(!is_recent_note(ago(120), now));
+        assert!(!is_recent_note(ago(3600), now));
+    }
 
     #[test]
     fn detached_restart_line_quotes_and_logs() {

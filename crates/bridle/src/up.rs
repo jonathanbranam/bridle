@@ -70,8 +70,11 @@ fn ensure_orchestrator(
         vec!["new-session", "-d", "-s", SESSION]
     };
     args.extend(fmt);
-    args.push(command);
+    // A shell window first, then the command typed into it (rule tmux-shell-first): a window
+    // running the launcher itself closes with the session.
     let pane = tmux(tmux_bin, &args).map_err(|e| anyhow!("tmux {}: {e}", args[0]))?;
+    tmux(tmux_bin, &["send-keys", "-t", &pane, command, "Enter"])
+        .map_err(|e| anyhow!("tmux send-keys: {e}"))?;
     tmux(tmux_bin, &["set-option", "-p", "-t", &pane, "@bridle", TAG])
         .map_err(|e| anyhow!("tmux set-option: {e}"))?;
     Ok(format!("started the orchestrator in pane {pane}"))
@@ -332,6 +335,9 @@ esac
                 .iter()
                 .any(|l| l.starts_with("new-window -d"))
         );
+        let c = calls(t.path());
+        assert!(c.iter().any(|l| l == "send-keys -t %9 cmd Enter"), "{c:?}");
+        assert!(c.iter().all(|l| !l.ends_with(" cmd")), "{c:?}");
     }
 
     #[test]

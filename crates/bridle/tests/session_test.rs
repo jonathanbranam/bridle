@@ -196,7 +196,7 @@ fn advisor_start(tmux_env: bool, panes: &str, config: &str, agent: bool) -> (Out
         bin.path(),
         "tmux",
         &format!(
-            "echo \"$@\" >> {rec}\n[ \"$1\" = list-panes ] && printf '%b' '{panes}'\nexit 0",
+            "echo \"$@\" >> {rec}\n[ \"$1\" = list-panes ] && printf '%b' '{panes}'\ncase \"$1\" in new-window|split-window) echo %7;; esac\nexit 0",
             rec = rec.display()
         ),
     );
@@ -229,7 +229,11 @@ fn advisor_start_splits_the_orchestrator_window() {
     let (out, tmux) = advisor_start(true, "%1 \\n%4 orchestrator\\n", "", false);
     assert!(out.status.success(), "{out:?}");
     assert!(
-        tmux.contains("split-window -d -t %4 bridle session advisor --project bridle fred"),
+        tmux.contains("split-window -d -t %4 -P -F #{pane_id}"),
+        "{tmux}"
+    );
+    assert!(
+        tmux.contains("send-keys -t %7 bridle session advisor --project bridle fred Enter"),
         "{tmux}"
     );
 }
@@ -243,8 +247,9 @@ fn advisor_start_window_mode_opens_a_window() {
         false,
     );
     assert!(out.status.success(), "{out:?}");
+    assert!(tmux.contains("new-window -d -P -F #{pane_id}"), "{tmux}");
     assert!(
-        tmux.contains("new-window -d bridle session advisor --project bridle fred"),
+        tmux.contains("send-keys -t %7 bridle session advisor --project bridle fred Enter"),
         "{tmux}"
     );
 }
@@ -522,6 +527,19 @@ fn restart_run_as(
     tail: &str,
     bridle_as: Option<&str>,
 ) -> (String, bool) {
+    let (text, rec) = restart_run_rec(launcher_sh, self_restart, tail, bridle_as, false);
+    (text, rec.is_some())
+}
+
+/// `restart_run_as` returning the tmux calls (None when tmux was never called). With `gone`, the
+/// session's pane `%3` no longer exists: typing into it fails, and `new-window` makes `%8`.
+fn restart_run_rec(
+    launcher_sh: &str,
+    self_restart: bool,
+    tail: &str,
+    bridle_as: Option<&str>,
+    gone: bool,
+) -> (String, Option<String>) {
     let bin = tempfile::tempdir().unwrap();
     let home = tempfile::tempdir().unwrap();
     let typed = bin.path().join("tmux.rec");
@@ -530,8 +548,11 @@ fn restart_run_as(
         "tmux",
         // `run-shell -b LINE` is how the detached restart leaves the session: run LINE.
         &format!(
-            "echo \"$@\" >> {}; if [ \"$1\" = run-shell ]; then sh -c \"$3\" & fi",
-            typed.display()
+            "echo \"$@\" >> {}; if [ \"$1\" = run-shell ]; then sh -c \"$3\" & fi\n\
+             if [ {gone} = 1 ]; then [ \"$1 $3\" = \"send-keys %3\" ] && exit 1; \
+             [ \"$1\" = new-window ] && echo %8; fi\nexit 0",
+            typed.display(),
+            gone = u8::from(gone)
         ),
     );
     let path = format!(
@@ -606,7 +627,7 @@ fn restart_run_as(
             .status();
     }
     let _ = waiter.join();
-    (text, typed.exists())
+    (text, fs::read_to_string(&typed).ok())
 }
 
 #[test]
@@ -614,6 +635,36 @@ fn restart_stops_the_old_launcher_and_waits_for_the_new_one_to_register() {
     let (text, typed) = restart_run("sleep 60; :", false);
     assert!(text.contains("restarted aide in pane %3"), "{text}");
     assert!(typed);
+}
+
+#[test]
+fn restart_with_the_pane_gone_opens_a_shell_window_then_types_into_it() {
+    let (text, rec) = restart_run_rec(
+        "sleep 60; :",
+        false,
+        "session restart aide --fresh",
+        None,
+        true,
+    );
+    let rec = rec.unwrap_or_default();
+    assert!(
+        text.contains("restarted aide in a new tmux window"),
+        "{text}"
+    );
+    let new_window = rec
+        .lines()
+        .position(|l| l.starts_with("new-window -d -P"))
+        .expect(&rec);
+    let typed = rec
+        .lines()
+        .position(|l| l.starts_with("send-keys -t %8 "))
+        .expect(&rec);
+    assert!(new_window < typed, "{rec}");
+    assert!(
+        !rec.lines()
+            .any(|l| l.starts_with("new-window") && l.contains("session")),
+        "the window must be a bare shell: {rec}"
+    );
 }
 
 #[test]
