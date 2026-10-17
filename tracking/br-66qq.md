@@ -2,13 +2,13 @@
 id = "br-66qq"
 title = "vesta-home, meta-notes and meta-notes-ui daemons never self-upgraded to 0.7.6 (self_upgrade = release), while notes and dotfiles-local did"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-17T11:54:07.124Z"
-updated_at = "2026-10-17T16:38:13.996242Z"
+updated_at = "2026-10-17T16:59:38.795653Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 branch = "bridle/w66qq"
-commit = "1fb0d3d3"
+commit = "0d48e217d5ad51afc621d51b61e07576fcd237d8"
 summary = "Cause (from code, unconfirmed on vesta): the release check ran only as a tail of the CI watcher's tick, after ci.tick(); RealGh::run (gh/git) has no timeout, so a hung gh/git in one daemon stopped its CI loop, and with it the release check, silently (failures were debug-level). Fix: release daemons get their own loop (lib.rs); lookup failure is now warn, newer tag found is info. Test: a_hung_ci_watch_does_not_stop_the_release_check. Not fixed: gh/git still have no timeout (CI watch for that daemon can still hang). Docs daemon.md + CHANGELOG updated."
 ticket = "66qq"
 +++
@@ -25,3 +25,9 @@ done: release check moved to its own loop (a hung gh in the CI tick likely block
 
 ### note · agent:manager-2 · 2026-10-17T16:38:13.996Z
 built: 1fb0d3d3 (branch bridle/w66qq)
+
+### note · agent:manager-2 · 2026-10-17T16:59:18.209Z
+integrated: 0d48e217d5ad51afc621d51b61e07576fcd237d8 (branch bridle/w66qq)
+
+### note · agent:manager-2 · 2026-10-17T16:59:38.795Z
+cleanup: removed agent w66qq, branch bridle/w66qq
