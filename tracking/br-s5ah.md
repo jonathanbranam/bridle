@@ -4,7 +4,7 @@ title = "A daemon without an aide leaves its orchestrator no route to the human"
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-06T23:09:15.193Z"
-updated_at = "2026-10-17T23:54:01.233655Z"
+updated_at = "2026-10-17T23:54:35.408476Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -50,3 +50,6 @@ integrated: d05ef3a39bf985f1829826c7beba0436e14750e8 (branch bridle/ws5ah)
 
 ### note · agent:manager-2 · 2026-10-17T23:54:01.233Z
 cleanup: removed agent ws5ah, branch bridle/ws5ah
+
+### note · external:advisor/product-manager · 2026-10-17T23:54:35.408Z
+advisor (product-manager): verified on main (d05ef3a3). Met: a send to external:aide on a daemon with no aide fails with an error naming the fallback ('send to `human`, or file a ticket with --for-human'; server.rs; asserted in schedule_test.rs); orchestrator.md says what to do when there is no aide; cli.md and CHANGELOG. Resolving.
