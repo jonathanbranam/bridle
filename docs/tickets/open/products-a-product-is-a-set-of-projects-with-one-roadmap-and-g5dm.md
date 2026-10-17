@@ -9,7 +9,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-6h65, br-d9wq, br-22ab, br-syqn]
-next_comment_id: c2
+next_comment_id: c3
 ---
 
 ## The ask
@@ -184,6 +184,10 @@ The PdM is a seat belonging to the **home project's daemon**, not a separate kin
   product (`bridle token create --external product-manager/<product>` on the member).
 - **Daemons watched.** Exactly the member projects found by section 1, plus none else. Watching
   uses the existing task watcher mechanism (br-519b), not a new poll.
+
+> [!comment] c2 human, 2026-10-16 22:14 EDT, on "Daemons watched. Exactly the member projects found by section 1, plus none else. Watching uses the existing task watcher mechanism (br-519b), not a new poll." [pending 2026-10-16 22:14 EDT]
+> I don't think this matters any more. There should be a unified waiter for each role no matter what.
+
 - **Inbox.** One inbox on the home daemon, address `product-manager/<product>@<home>`.
   Requests for a member project go there instead of the project aide (the decided routing):
   `bridle send` and the request-a-feature path resolve the recipient from the target project's
