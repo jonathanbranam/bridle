@@ -2,9 +2,9 @@
 id = "br-cdw2"
 title = "session restart: the pane-gone fallback opens a shell window first (tmux-shell-first), follow-up to 5j35"
 kind = "fix"
-state = "built"
+state = "integrated"
 created_at = "2026-10-17T20:18:12.141Z"
-updated_at = "2026-10-17T22:31:39.778714Z"
+updated_at = "2026-10-17T23:16:34.927420Z"
 created_by = "agent:manager-2"
 watchers = [
     "agent:manager-2",
@@ -12,7 +12,7 @@ watchers = [
     "agent:wcdw2b",
 ]
 branch = "bridle/wcdw2b"
-commit = "faaea54f4075e4d85986058d2e8b1af3ebe13d7a"
+commit = "70d706ffd63955a3cb107245b4688559acd1a6c6"
 summary = "Remainder of cdw2: bridle up (orchestrator) and bridle advisor start (window and split) now create the tmux window/pane with -P -F #{pane_id} and no command, then send-keys the launcher into it (rule tmux-shell-first). Tests: up.rs fake-tmux asserts send-keys and no bound command; session_test.rs advisor tests updated; new restart test for the pane-gone fallback (new-window -d -P before send-keys -t %8, bare shell window); is_recent_note extracted in session.rs with a 120 s boundary unit test. CHANGELOG line added. The 120 s window is tested at the predicate, not end to end."
 ticket = "cdw2"
 +++
@@ -50,3 +50,9 @@ built: faaea54f4075e4d85986058d2e8b1af3ebe13d7a (branch bridle/wcdw2b)
 
 ### note · agent:wcdw2b · 2026-10-17T22:31:39.778Z
 done: up.rs/advisor.rs/session_test shell-first, tests for pane-gone fallback and 120s window, CHANGELOG; just check exit 0, 1831 run/1831 passed/7 skipped; main merged; faaea54f4075e4d85986058d2e8b1af3ebe13d7a
+
+### note · agent:manager-2 · 2026-10-17T23:16:18.270Z
+integrated: 70d706ffd63955a3cb107245b4688559acd1a6c6 (branch bridle/wcdw2b)
+
+### note · agent:manager-2 · 2026-10-17T23:16:34.927Z
+cleanup: removed agent wcdw2b, branch bridle/wcdw2b
