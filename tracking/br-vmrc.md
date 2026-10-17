@@ -4,7 +4,7 @@ title = "Mail digest stamps with the host's local zone but says US Eastern; fix 
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-16T21:14:31.286Z"
-updated_at = "2026-10-17T05:13:46.165883Z"
+updated_at = "2026-10-17T05:14:21.106372Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -31,3 +31,6 @@ done: digest stamps real US Eastern, doc comment fixed; just check exit 0, 1787 
 
 ### note · agent:manager-2 · 2026-10-17T05:13:46.165Z
 integrated: 4d22dba2d9ddf2a08b41ba31b97000f7ad103632 (branch bridle/vmrc)
+
+### note · agent:manager-2 · 2026-10-17T05:14:21.106Z
+cleanup: removed agent vmrc, branch bridle/vmrc
