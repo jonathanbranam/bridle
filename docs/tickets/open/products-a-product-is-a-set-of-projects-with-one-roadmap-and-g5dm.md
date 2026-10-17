@@ -9,6 +9,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-6h65, br-d9wq, br-22ab, br-syqn]
+next_comment_id: c2
 ---
 
 ## The ask
@@ -120,6 +121,9 @@ Options:
   roadmap is.
 - C. **Recommended.** The product is declared once, in its **home project's**
   `.bridle/config.toml`; every other member names it with one line.
+
+> [!comment] c1 human, 2026-10-16 22:12 EDT, on "Recommended. The product is declared once, in its home project's .bridle/config.toml; every other member names it with one line." [pending 2026-10-16 22:12 EDT]
+> Agree. Approved C. Product declared in a home project (user decides).
 
 ```toml
 # home project (the one holding the roadmap), e.g. bridle
