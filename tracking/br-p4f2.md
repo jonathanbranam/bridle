@@ -2,16 +2,16 @@
 id = "br-p4f2"
 title = "bridle migrate 0006 refuses every project that works on main (protected-branch check ignores [branches] integration), even with nothing to change"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-16T01:52:45.667Z"
-updated_at = "2026-10-17T06:44:21.359928Z"
+updated_at = "2026-10-17T07:02:35.323145Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
     "agent:p4f2",
 ]
 branch = "bridle/p4f2"
-commit = "629c71c4"
+commit = "c9dfa15ac2d8e789ac29fbf0949625ac387cbbc6"
 summary = "migrate.rs: refuse_on_protected_branch now allows a branch the project declares as [branches] integration (integration_set, and not also the release branch); main/dev/release otherwise still refuse. The guard moved from the top of 0003/0004/0005/0006/0007 and the links migration to just before each writes, so a migration with nothing to change never refuses. The rename migration had no guard and is unchanged. Test added; CHANGELOG line. No design docs mention the guard."
 ticket = "p4f2"
 +++
@@ -31,3 +31,9 @@ built: 629c71c4 (branch bridle/p4f2)
 
 ### note · agent:p4f2 · 2026-10-17T06:44:21.359Z
 done: migrate guard honours [branches] integration and is skipped when nothing to change; just check exit 0, 1793 tests passed, sha 629c71c4
+
+### note · agent:manager-2 · 2026-10-17T07:02:19.229Z
+integrated: c9dfa15ac2d8e789ac29fbf0949625ac387cbbc6 (branch bridle/p4f2)
+
+### note · agent:manager-2 · 2026-10-17T07:02:35.323Z
+cleanup: removed agent p4f2, branch bridle/p4f2
