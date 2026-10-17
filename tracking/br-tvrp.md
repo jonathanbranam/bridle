@@ -4,7 +4,7 @@ title = "Release-mode self-upgrade does not re-sign: the gateway is firewall-blo
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-16T21:14:23.982Z"
-updated_at = "2026-10-17T03:14:53.231593Z"
+updated_at = "2026-10-17T03:15:15.227538Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -49,3 +49,6 @@ done: release::install signs via signing::install on macOS (ad-hoc + one-line wa
 
 ### note · agent:manager-2 · 2026-10-17T03:14:53.231Z
 integrated: b0e3ceeddc946a06e07b057f3d1a69a1f6698e23 (branch bridle/tvrp)
+
+### note · agent:manager-2 · 2026-10-17T03:15:15.227Z
+cleanup: removed agent tvrp, branch bridle/tvrp
