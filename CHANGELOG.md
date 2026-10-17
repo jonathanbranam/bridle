@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Fix (br-2uzx): a late usage reading from before a window reset (its `resets_at` older than the stored one) is dropped, so it no longer re-fires the usage wake or misleads the budget governor. Migration: none.
 - Fix (br-8swr): a land retried after a restart drain cut its reply now succeeds, reporting the commit the ticket was integrated as, instead of failing with `git commit failed` on the already-landed branch. Migration: none.
 - Fix (br-q4vb): a daemon whose orchestrator is a visitor forwarded every old agent exit to the visitor's home again on each restart (one more copy each time). Forwarding now has its own cursor, saved after each forward. Migration: none.
 - Fix (br-cdw2): `bridle up` and `bridle advisor start` now open a shell tmux window or pane and type the launcher into it (rule tmux-shell-first), as `session restart` does, so the window survives the session and a restart can type into it. Migration: none.

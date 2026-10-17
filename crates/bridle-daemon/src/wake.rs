@@ -985,6 +985,24 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn a_late_reading_from_the_old_window_fires_nothing() {
+        let r = rig().await;
+        let set = |u: f64, day: i64| RateLimit {
+            window: "seven_day".into(),
+            status: None,
+            utilization: Some(u),
+            resets_at: Some(Utc::now() + chrono::Duration::days(day)),
+            observed_at: Utc::now(),
+        };
+        r.store.upsert_rate_limit(set(0.0, 7)).await.expect("rl");
+        assert!(r.reasons(Utc::now()).await.is_empty());
+        r.store.upsert_rate_limit(set(0.89, -1)).await.expect("rl");
+        assert!(r.reasons(Utc::now()).await.is_empty());
+        let kept = r.store.rate_limits().await.expect("rls");
+        assert_eq!(kept[0].utilization, Some(0.0));
+    }
+
+    #[tokio::test]
     async fn usage_stays_silent_when_resets_at_jitters() {
         let r = rig().await;
         let base = Utc::now() + chrono::Duration::days(1);

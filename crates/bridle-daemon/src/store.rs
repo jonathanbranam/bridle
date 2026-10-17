@@ -4005,6 +4005,23 @@ mod sync {
     // ---------- rate limits / usage ----------
 
     pub(super) fn upsert_rate_limit(conn: &Connection, rl: &RateLimit) -> Result<(), StoreError> {
+        // A late reading from before a reset (its `resets_at` is older than the stored one by
+        // more than the sub-second jitter) must not overwrite the new window's reading: it would
+        // re-fire the usage wake and mislead the governor (br-2uzx).
+        if let Some(new) = rl.resets_at {
+            let stored: Option<Option<String>> = conn
+                .query_row(
+                    "SELECT resets_at FROM rate_limits WHERE window = ?1",
+                    params![rl.window],
+                    |r| r.get(0),
+                )
+                .optional()?;
+            if let Some(old) = parse_dt_opt(stored.flatten())?
+                && old - new > chrono::Duration::minutes(1)
+            {
+                return Ok(());
+            }
+        }
         conn.execute(
             "INSERT INTO rate_limits(window, status, utilization, resets_at, observed_at)
              VALUES (?1, ?2, ?3, ?4, ?5)
