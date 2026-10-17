@@ -15,31 +15,42 @@ before it moves: "waits on the human" is a pending task only the human can appro
 is the project manager's; "ready to build" is in the queue; "HELD" is planned in bridle but
 stopped by the human.
 
-Last updated: 2026-10-12 5:30 PM ET (tables regenerated).
+Last updated: 2026-10-16 10:20 PM ET. "Epic status" below is current (checked against live
+ticket states); the theme tables further down were last regenerated 2026-10-12 and are stale.
 
-## Needs the human now
+## Epic status (2026-10-16), in the human's order
 
-In the order the PdM suggests (2026-10-12 5:30 PM ET; bridle's queue is empty):
+What each epic needs from the human to finish. "Hands-on" is the human's own doing; "decision"
+needs real thought; cheap approvals were cleared 2026-10-16 (p4f2 ef3u re79 4cgx 9dcz ui-sxs3
+ui-qfur readied, d9wq dropped).
 
-1. **The MVP trials** (epic kx5u): move data-contracts dalek -> remus idle, back again, then with
-   work in flight (br-yt5v, its prerequisite, landed 3:19 PM ET). Runbook:
-   docs/context/move-a-project.md.
-2. **V1 of the move** (kt25 K7, one `bridle project move`) waits on the drain bugs br-ef3u (stale
-   agent tracking holds the drain) and br-8swr (manager waiting on just check read as idle):
-   approve them to ready.
-3. **One orchestrator per machine** (epic 3): 3mz4 and 7d62 done; no build defined. Is "one per
-   box" (ma8e's working rule) final, and should the designer draft the rest from the done-when?
-4. **Machine admin role** (epic 4): ready br-gb97's design pass for the designer?
-5. **Products** (epic 5): br-g5dm's design landed with 5 questions for you.
-6. **Gates** (epic 7): review br-95mu; the v2va slices stay HELD until 22ab lands and you
-   re-review v2va.
-7. **Remus move** (br-jw75): start its design now, or after the trials?
-8. **Pending your review** (filed 10-12): ui-fwsx, br-ehg7, br-t7ya. Older: 79c3 land or drop;
-   kuw2 (br-efs2); gtzx; gz4p (low); the "(PdM draft)" done-when lines below.
+| # | Epic | Status | Needs from the human |
+|---|---|---|---|
+| 0 | Usage you can trust (rdkn) | Done (UI ui-h79b, ui-evy7 queued) | Nothing |
+| 1 | Three machines on bridle (du7e) | Nearly done: all on 0.7.5 (confirmed 10-16) | Migrations complete everywhere (waits on p4f2 for track-web on dalek); then 22ab step 10 (8zts) opens |
+| 1b | Transfer a project (kx5u) | In progress: code built, trial 1 done (data-contracts on remus) | Hands-on: trial 2 (back), trial 3 (work in flight). Decision: is K7, the one `bridle project move` (kt25), part of V1? |
+| 1c | Bridle to remus (jw75) | Not started, after 1b | Decision: when the design pass starts. Hands-on: dalek-home |
+| - | One-command project setup (dffz) | Nearly done: all built | Hands-on: one real `bridle project setup` |
+| 2 | UI ships with releases | Nearly done | Decision: design tc7t (dev machine follows landings, 785a) now, or fold into 1c |
+| 3 | One orchestrator per machine | In progress (homes run orchestrators; 9966 queued) | Decision: confirm done-when; "second orchestrator can't start" and "coordinate a takeover" undefined. Hands-on: reboot test (mru4) |
+| 4 | Machine admin role (j6d3) | Not started | Approve gb97's design pass |
+| 5 | Products | Blocked, low | Decision: g5dm's 5 questions |
+| 6 | Attachments | Not started, no tickets | Decision: go on the MIME-parts approach (also scheduler ladder step 2) |
+| 7 | Gates (reviews-enforced) | Blocked | Review 95mu; re-review v2va once 22ab ends (slices held) |
+| 8 | Machine sync | In progress | Reboot test (as 3); fold or drop rjd5 |
+| 9-11 | Machine-transparent, background agents, security | Not started by choice | Nothing now |
+
+Finishing by themselves: everything-is-a-ticket (8zts, gated on 1), migrations (p4f2). Done:
+messaging, machine setup, ui-releases' t3dr. Benchmarking: held (v6kr); the human wants another
+idle run on a quiet midweek night (9d95 dropped 10-16).
+
+Most "(PdM draft)" done-when lines were never confirmed by the human.
 
 ## The scheduler ladder (the human's sequence, 2026-10-09)
 
 Goal: ship scheduled messages, with design and specs approved before build. In build order:
+
+2026-10-16: stalled since 10-09. Steps 2-8 never started (step 2 waited on two decisions); work moved to machines and transfers. Restart, fold into gates (epic 7), or drop as a sequence: the human's call.
 
 | Step | What | Status |
 |---|---|---|
