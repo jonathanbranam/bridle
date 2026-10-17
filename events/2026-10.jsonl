@@ -2396,3 +2396,9 @@
 {"actor":"agent:whce","at":"2026-10-17T01:58:15.285167Z","from":"claimed","task":"br-whce","to":"built"}
 {"actor":"human","at":"2026-10-17T02:01:08.052Z","from":"","task":"br-cah9","to":"pending"}
 {"actor":"human@vesta","at":"2026-10-17T02:02:00.281182Z","from":"claimed","task":"br-jgdb","to":"integrated"}
+{"actor":"external:advisor/product-manager","at":"2026-10-17T02:06:31.856418Z","from":"pending","task":"br-p4f2","to":"open"}
+{"actor":"external:advisor/product-manager","at":"2026-10-17T02:06:32.261929Z","from":"pending","task":"br-ef3u","to":"open"}
+{"actor":"external:advisor/product-manager","at":"2026-10-17T02:06:32.689353Z","from":"pending","task":"br-re79","to":"open"}
+{"actor":"external:advisor/product-manager","at":"2026-10-17T02:06:33.084542Z","from":"pending","task":"br-4cgx","to":"open"}
+{"actor":"external:advisor/product-manager","at":"2026-10-17T02:06:33.462913Z","from":"pending","task":"br-9dcz","to":"open"}
+{"actor":"external:advisor/product-manager","at":"2026-10-17T02:06:37.499175Z","from":"pending","task":"br-d9wq","to":"dropped"}
