@@ -10,6 +10,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-kt25, br-y455, br-btdn]
+resolved: 2026-10-17T12:32:33Z
 ---
 
 ## The ask
