@@ -1,6 +1,6 @@
 ---
 id: br-4a4v
-title: Agents commit under their own name (email dev@branam.us) and push with a per-machine PAT, not the human's identity and SSH key
+title: Agents commit under their own name with bridle@branam.us, and push with a per-machine PAT, not the human's identity and SSH key
 kind: feature
 created: 2026-10-17
 created_by: external:advisor/product-manager
