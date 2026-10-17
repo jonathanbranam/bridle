@@ -918,8 +918,11 @@ bridle ticket comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain com
   restarts one: it SIGTERMs, then SIGKILLs, the launcher's children (by pid, never by name;
   `BRIDLE_STOP_WAIT_SECS`, default 20, each), fails without typing anything if the launcher is
   still alive, prints "restarted" only once a session with a new pid has registered, and runs
-  detached (own process group, log `~/.bridle/restart-<identity>.log`) when started from inside
-  the session it stops, so a session can restart itself (br-4s3z; the handover note is a
+  detached (started by `tmux run-shell -b`, so it is not claude's descendant; own process group
+  when there is no tmux; log `~/.bridle/restart-<identity>.log`) when started from inside
+  the session it stops, so a session can restart itself (br-4s3z, br-5j35; a handover note
+  written in the 2 minutes before the request counts, and if typing into the pane fails the
+  launcher goes in a new tmux window; the handover note is a
   record, so a restart never removes it); `bridle session keep <identifier>` carries on past a context warning
   (orchestrator-supervision.md, section 6). The hidden
   `bridle session note` is the advisor's SessionStart hook. `events --kind session.context`

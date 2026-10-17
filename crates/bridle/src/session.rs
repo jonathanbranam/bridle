@@ -636,44 +636,66 @@ async fn restart_session(
                 .map(|h| h.map(|h| h.id))
         };
         let before = newest().await?;
-        let to = format!("external:{}", info.identity);
-        let repo = std::env::current_dir().map_err(anyhow::Error::from)?;
-        let body = handover_request(&repo, &info.identity, reason);
-        client
-            .send(&bridle_api::SendRequest {
-                to: Some(to),
-                body,
-                kind: bridle_api::MessageKind::Note,
-                when: bridle_api::When::Now,
-                reply_to: None,
-                task: None,
-            })
-            .await?;
-        println!("asked {} to write a handover note; waiting", info.identity);
-        let deadline = std::time::Instant::now() + handover_wait();
-        while newest().await? == before {
-            if std::time::Instant::now() >= deadline {
-                return Err(anyhow::anyhow!(
-                    "no handover note after {}s; nothing restarted. Use --fresh to restart with \
-                     no context",
-                    handover_wait().as_secs()
-                )
-                .into());
+        // A note written just before the request (the session saw its context filling up) counts,
+        // so the session isn't asked twice.
+        let recent = client
+            .latest_handover(Some(&info.identity))
+            .await?
+            .is_some_and(|h| (chrono::Utc::now() - h.created_at) < RECENT_NOTE);
+        if recent {
+            println!("{} wrote a handover note just now; using it", info.identity);
+        } else {
+            let to = format!("external:{}", info.identity);
+            let repo = std::env::current_dir().map_err(anyhow::Error::from)?;
+            let body = handover_request(&repo, &info.identity, reason);
+            client
+                .send(&bridle_api::SendRequest {
+                    to: Some(to),
+                    body,
+                    kind: bridle_api::MessageKind::Note,
+                    when: bridle_api::When::Now,
+                    reply_to: None,
+                    task: None,
+                })
+                .await?;
+            println!("asked {} to write a handover note; waiting", info.identity);
+            let deadline = std::time::Instant::now() + handover_wait();
+            while newest().await? == before {
+                if std::time::Instant::now() >= deadline {
+                    return Err(anyhow::anyhow!(
+                        "no handover note after {}s; nothing restarted. Use --fresh to restart \
+                         with no context",
+                        handover_wait().as_secs()
+                    )
+                    .into());
+                }
+                tokio::time::sleep(std::time::Duration::from_millis(500)).await;
             }
-            tokio::time::sleep(std::time::Duration::from_millis(500)).await;
         }
     }
     stop_session(info.pid).await?;
     let cmd = relaunch_command(&info.identity, info.project.as_deref());
     match &info.pane {
         Some(pane) => {
-            let ok = Command::new("tmux")
+            // The pane closes with the session when its window ran the launcher as the pane's own
+            // command; then (or when typing fails) relaunch in a new window of the same server.
+            let typed = Command::new("tmux")
                 .args(["send-keys", "-t", pane, &cmd, "Enter"])
                 .status()
                 .is_ok_and(|s| s.success());
+            let (ok, where_) = if typed {
+                (true, format!("pane {pane}"))
+            } else {
+                let name = info.identity.replace('/', "-");
+                let w = Command::new("tmux")
+                    .args(["new-window", "-d", "-n", &name, &cmd])
+                    .status()
+                    .is_ok_and(|s| s.success());
+                (w, "a new tmux window".to_string())
+            };
             if ok {
                 wait_registered(&client, &info.identity, info.pid).await?;
-                println!("restarted {} in pane {pane}", info.identity);
+                println!("restarted {} in {where_}", info.identity);
             } else {
                 println!("pane {pane} is gone; run in a terminal: {cmd}");
             }
@@ -685,6 +707,9 @@ async fn restart_session(
     }
     Ok(())
 }
+
+/// A handover note newer than this at the time of the request counts as the answer to it.
+const RECENT_NOTE: chrono::Duration = chrono::Duration::seconds(120);
 
 /// Seconds to wait after SIGTERM, and again after SIGKILL, for the launcher to exit.
 fn stop_wait_secs() -> u64 {
@@ -794,35 +819,62 @@ fn is_descendant_of(pid: i32) -> bool {
     false
 }
 
-/// Re-runs this command in its own process group, so killing the session it was started from
-/// does not kill the restart. Output goes to `~/.bridle/restart-<identity>.log`. It runs
-/// `session restart <identity>` itself, not this command's arguments: those may be a
-/// `handover write` whose note is on a stdin the child does not have.
-fn detach_restart(cli: &Cli, identity: &str, fresh: bool) -> Result<(), CliError> {
-    use std::os::unix::process::CommandExt;
-    let log = bridle_home().join(format!("restart-{}.log", identity.replace('/', "-")));
-    let f = std::fs::File::create(&log).with_context(|| format!("creating {}", log.display()))?;
-    let f2 = f.try_clone().context("cloning log handle")?;
-    let mut cmd = Command::new(std::env::current_exe().context("finding bridle")?);
+/// Single-quotes `s` for `sh`.
+fn sh_quote(s: &str) -> String {
+    format!("'{}'", s.replace('\'', "'\\''"))
+}
+
+/// The shell line the detached restart runs: `session restart <identity>` itself, not this
+/// command's arguments (those may be a `handover write` whose note is on a stdin the child does
+/// not have), with its output in `log`.
+fn detached_restart_line(exe: &Path, cli: &Cli, identity: &str, fresh: bool, log: &Path) -> String {
+    let mut words = vec![
+        "env".to_string(),
+        "BRIDLE_RESTART_DETACHED=1".into(),
+        format!("{OWN_RESTART_ENV}=1"),
+        exe.display().to_string(),
+    ];
     for (flag, v) in [
         ("--url", &cli.url),
         ("--project", &cli.project),
         ("--token", &cli.token),
     ] {
         if let Some(v) = v {
-            cmd.args([flag, v]);
+            words.push(flag.into());
+            words.push(v.clone());
         }
     }
-    cmd.args(["session", "restart", identity])
-        .arg(if fresh { "--fresh" } else { "--handover" })
-        .env("BRIDLE_RESTART_DETACHED", "1")
-        .env(OWN_RESTART_ENV, "1")
-        .process_group(0)
-        .stdin(std::process::Stdio::null())
-        .stdout(f)
-        .stderr(f2)
-        .spawn()
-        .context("spawning the detached restart")?;
+    words.extend(["session".into(), "restart".into(), identity.into()]);
+    words.push(if fresh { "--fresh" } else { "--handover" }.into());
+    let cmd: Vec<String> = words.iter().map(|w| sh_quote(w)).collect();
+    format!(
+        "{} </dev/null >{} 2>&1",
+        cmd.join(" "),
+        sh_quote(&log.display().to_string())
+    )
+}
+
+/// Re-runs this command outside the session, so stopping the session does not kill the restart.
+/// A process group is not enough: the restarter would still be claude's descendant and goes
+/// with it. `tmux run-shell -b` starts it from the tmux server instead; with no tmux it falls
+/// back to its own process group. Output goes to `~/.bridle/restart-<identity>.log`.
+fn detach_restart(cli: &Cli, identity: &str, fresh: bool) -> Result<(), CliError> {
+    use std::os::unix::process::CommandExt;
+    let log = bridle_home().join(format!("restart-{}.log", identity.replace('/', "-")));
+    let exe = std::env::current_exe().context("finding bridle")?;
+    let line = detached_restart_line(&exe, cli, identity, fresh, &log);
+    let via_tmux = Command::new("tmux")
+        .args(["run-shell", "-b", &line])
+        .status()
+        .is_ok_and(|s| s.success());
+    if !via_tmux {
+        Command::new("sh")
+            .args(["-c", &line])
+            .process_group(0)
+            .stdin(std::process::Stdio::null())
+            .spawn()
+            .context("spawning the detached restart")?;
+    }
     println!(
         "restarting {identity} from outside the session; progress in {}",
         log.display()
@@ -846,6 +898,26 @@ fn process_start(pid: i32) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn detached_restart_line_quotes_and_logs() {
+        let cli =
+            <Cli as clap::Parser>::try_parse_from(["bridle", "--project", "my proj", "status"])
+                .unwrap();
+        let l = detached_restart_line(
+            Path::new("/bin/bridle"),
+            &cli,
+            "advisor/a",
+            true,
+            Path::new("/h/restart-a.log"),
+        );
+        assert_eq!(
+            l,
+            "'env' 'BRIDLE_RESTART_DETACHED=1' 'BRIDLE_RESTART_OWN=1' '/bin/bridle' '--project' \
+             'my proj' 'session' 'restart' 'advisor/a' '--fresh' </dev/null >'/h/restart-a.log' 2>&1"
+        );
+        assert_eq!(sh_quote("it's"), "'it'\\''s'");
+    }
 
     #[test]
     fn handover_request_keeps_the_reason_and_uses_the_resolver() {

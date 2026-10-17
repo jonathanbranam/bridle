@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Fix (br-5j35): `bridle session restart` run from inside the session now relaunches it. The detached restarter is started by `tmux run-shell -b` (it used to stay claude's descendant and die with it), a handover note from the last 2 minutes counts instead of asking again, and when the pane is gone the launcher starts in a new tmux window. Migration: none.
 - Fix (br-2fqg): the worker role now says to `bridle ticket claim` the ticket first. A spawned worker's ticket is `planned`, and the daemon lets a worker mark `built` only a ticket it has claimed, so `ticket built` was refused for workers that followed the role. Migration: none.
 - Fix (br-kyjg): a command that hits a daemon without that route (an older daemon) now says `the daemon at <url> (version X) doesn't have this command; upgrade it` instead of a bare `unknown: `; any empty error reply names its HTTP status. Migration: none.
 - Fix (br-z5kz): a spawn refused during a restart drain now tells the agent to end its turn (the daemon resumes it after the restart), and the manager role says so; a manager waiting in its turn for the drain used to deadlock the restart. Migration: none.

@@ -483,7 +483,8 @@ fn restart_daemon(old_pid: std::sync::Arc<std::sync::atomic::AtomicU32>, typed: 
             let mut buf = [0u8; 4096];
             let n = c.read(&mut buf).unwrap_or(0);
             let old = old_pid.load(std::sync::atomic::Ordering::SeqCst);
-            let pid = if typed.exists() { old + 1 } else { old };
+            let sent = fs::read_to_string(&typed).is_ok_and(|s| s.contains("send-keys"));
+            let pid = if sent { old + 1 } else { old };
             let body = if buf[..n].starts_with(b"POST /v1/handovers") {
                 HANDOVER_JSON.to_string()
             } else {
@@ -527,7 +528,11 @@ fn restart_run_as(
     stub(
         bin.path(),
         "tmux",
-        &format!("echo \"$@\" >> {}", typed.display()),
+        // `run-shell -b LINE` is how the detached restart leaves the session: run LINE.
+        &format!(
+            "echo \"$@\" >> {}; if [ \"$1\" = run-shell ]; then sh -c \"$3\" & fi",
+            typed.display()
+        ),
     );
     let path = format!(
         "{}:{}",
