@@ -2,11 +2,14 @@
 id = "br-ef3u"
 title = "A drain waits forever when the daemon's tracking of agents goes stale: find and name what really holds the quiet point"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-12T14:18:25.126Z"
-updated_at = "2026-10-17T02:07:33.004733Z"
+updated_at = "2026-10-17T07:18:47.255507Z"
 created_by = "external:advisor/product-manager"
-watchers = ["external:advisor/product-manager"]
+watchers = [
+    "external:advisor/product-manager",
+    "agent:ef3u",
+]
 ticket = "ef3u"
 +++
 
