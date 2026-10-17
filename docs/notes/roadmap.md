@@ -15,7 +15,7 @@ before it moves: "waits on the human" is a pending task only the human can appro
 is the project manager's; "ready to build" is in the queue; "HELD" is planned in bridle but
 stopped by the human.
 
-Last updated: 2026-10-16 10:20 PM ET. "Epic status" below is current (checked against live
+Last updated: 2026-10-17 7:30 AM ET. "Epic status" below is current (checked against live
 ticket states); the theme tables further down were last regenerated 2026-10-12 and are stale.
 
 ## Epic status (2026-10-16), in the human's order
@@ -35,8 +35,8 @@ ui-qfur readied, d9wq dropped).
 | 3 | One orchestrator per machine | In progress (homes run orchestrators; 9966 queued) | Decision: confirm done-when; "second orchestrator can't start" and "coordinate a takeover" undefined. Hands-on: reboot test (mru4) |
 | 4 | Machine admin role (j6d3) | Not started | Approve gb97's design pass |
 | 5 | Products | Blocked, low | Decision: g5dm's 5 questions |
-| 6 | Attachments | Not started, no tickets | Decision: go on the MIME-parts approach (also scheduler ladder step 2) |
-| 7 | Gates (reviews-enforced) | Blocked | Review 95mu; re-review v2va once 22ab ends (slices held) |
+| 6 | Change stages on every ticket (br-tj7q): NEXT PRIORITY (the human, 2026-10-17) | Design pass written (Design options in the ticket); absorbs attachments, ladder steps 2-8, 95mu | Review the design: Q3 un-approve on edit, small kinds' proposal, rule delivery in the prompt or on demand; then approve |
+| 7 | Gates (reviews-enforced) | Design-before-build half moves into tj7q (95mu); review-before-landing (v2va slices A-D) held | Re-review v2va once 22ab ends |
 | 8 | Machine sync | In progress | Reboot test (as 3); fold or drop rjd5 |
 | 9-11 | Machine-transparent, background agents, security | Not started by choice | Nothing now |
 
@@ -50,7 +50,7 @@ Most "(PdM draft)" done-when lines were never confirmed by the human.
 
 Goal: ship scheduled messages, with design and specs approved before build. In build order:
 
-2026-10-16: stalled since 10-09. Steps 2-8 never started (step 2 waited on two decisions); work moved to machines and transfers. Restart, fold into gates (epic 7), or drop as a sequence: the human's call.
+2026-10-17: steps 2-8 are replaced by epic br-tj7q (change stages on every ticket); step 9's rest (yfv5) becomes a ticket run through it. 2026-10-16: stalled since 10-09. Steps 2-8 never started (step 2 waited on two decisions); work moved to machines and transfers. Restart, fold into gates (epic 7), or drop as a sequence: the human's call.
 
 | Step | What | Status |
 |---|---|---|
@@ -86,7 +86,7 @@ migrations.
 3. **One orchestrator per machine** (`orchestrator-per-machine`)
 4. **Machine admin role** (j6d3; gb97)
 5. **Products: formalize the PdM role** (`products`)
-6. **Documents and attachments on tickets: multi-part tickets** (`attachments`)
+6. **Change stages on every ticket** (br-tj7q; the human, 2026-10-17 ~7:25 AM ET: "tj7q should be the next priority"). Absorbs `attachments` and scheduler ladder steps 2-8, and 95mu from gates.
 7. **Gates: design before build, review before landing: the per-ticket workflow** (`reviews-enforced`; stx8 first)
 8. **Machine sync and recovery** (`machine-sync`)
 9. **Projects become machine-transparent** (`machine-transparent`)
@@ -298,12 +298,19 @@ Agents use bridle correctly: commands, help, roles, the workflow reaching every 
 
 How work gets from an idea to ready: the PdM, the designer, change specs, reviews, task states.
 
-#### Epic `attachments`: Documents and attachments on tickets
+#### Epic `change-stages` (br-tj7q): Change stages on every ticket
 
-- Outcome: Several documents (a design, specs) and later images on one ticket; the human's MIME parts idea.
-- Done when: A ticket carries a design and specs as parts, and the designer writes into them.
-
-No tasks yet.
+- Outcome: Every ticket carries attachments, among them the stage files proposal, design, specs
+  and tasks; the human lists the stages they review per ticket; agents write each stage as it
+  unblocks from fixed templates built from bridle rules; a proposal agreed with the human is
+  needed for ready; specs become bridle specs on landing; one ticket page in bridle-ui shows the
+  attachments as tabs or a picker (ui-fwsx folded in). Replaces epic `attachments` and scheduler
+  ladder steps 2-8; takes 95mu from gates.
+- Done when: (from the ticket) a new ticket gets the four stage files; the human can list the
+  stages to review; agents write each stage as it unblocks and wait only on the listed reviews;
+  when the ticket lands its specs are in the project's bridle specs; the ticket page shows the
+  attachments as tabs or a picker. Proven on one real ticket end to end.
+- Next: the human reviews the design (three open questions), then planning.
 
 #### Epic `reviews-enforced`: Gates: design before build, review before landing
 
