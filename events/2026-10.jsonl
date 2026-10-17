@@ -2391,3 +2391,4 @@
 {"actor":"external:orchestrator","at":"2026-10-17T01:34:26.619061Z","from":"planned","task":"br-y455","to":"integrated"}
 {"actor":"external:orchestrator","at":"2026-10-17T01:34:31.115500Z","from":"planned","task":"br-2ax5","to":"integrated"}
 {"actor":"external:orchestrator","at":"2026-10-17T01:38:00.105820Z","from":"built","task":"br-5cru","to":"dropped"}
+{"actor":"human","at":"2026-10-17T01:43:51.292Z","from":"","task":"br-6byg","to":"pending"}
