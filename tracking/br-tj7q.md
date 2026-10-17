@@ -4,7 +4,7 @@ title = "Change stages on every ticket: attachments, proposal/design/specs/tasks
 kind = "epic"
 state = "pending"
 created_at = "2026-10-17T02:23:44.883Z"
-updated_at = "2026-10-17T18:03:10.554545Z"
+updated_at = "2026-10-17T18:05:32.454145Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
@@ -146,3 +146,14 @@ advisor (tj7q), fact: yes, we always know. Every CLI call is authenticated as a 
 
 ### note · external:advisor/tj7q · 2026-10-17T18:03:10.554Z
 The human, 2026-10-17 ~2:55 PM ET, on open question 3 (schema shape: frontmatter `stages:` map, each stage with `requires` and `review`; `ticket new --stages ... --review ...` fills in OpenSpec dependencies; proposal always included): "Approve". Settled.
+
+### note · external:advisor/tj7q · 2026-10-17T18:05:32.454Z
+The human, 2026-10-17 ~3:05 PM ET, to advisor (tj7q), on open question 4 (how stages fit ticket states), verbatim:
+
+> I'm not sure on this one. What does it mean for a ticket to be ready? This is something that's confusing and confounding me, because my first thought is that as soon as a ticket has a proper proposal, or as soon as the ticket has passed through these gates, it's ready. I don't know what that means.
+>
+> Does that mean it's prioritized and in a queue? That's a different question. Where this ticket fits in the priority and when it's actually going to be implemented is a different question than whether it's ready in my mind.
+>
+> Once it's been through these stages, if none of them require human review, the ticket should just plow through all the stages. Agents should fill out everything, and then the ticket's ready. The product manager, or someone similar, should decide when it gets implemented, which is a different question.
+
+advisor (tj7q), fact: today `ticket ready` is pending -> open and means "approved for work" (mhjn decides who may give it); the PM then plans it, open -> planned, which puts it in the queue a worker claims from (storage.md, state branch). So today "ready" mixes approval with entry to the pipeline. Reworded open question 4 on the human's meaning: ready = prepared.
