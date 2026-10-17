@@ -2,13 +2,14 @@
 id = "br-cdw2"
 title = "session restart: the pane-gone fallback opens a shell window first (tmux-shell-first), follow-up to 5j35"
 kind = "fix"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-17T20:18:12.141Z"
-updated_at = "2026-10-17T21:19:25.446525Z"
+updated_at = "2026-10-17T21:20:23.046720Z"
 created_by = "agent:manager-2"
 watchers = [
     "agent:manager-2",
     "agent:wcdw2",
+    "agent:wcdw2b",
 ]
 branch = "bridle/wcdw2"
 commit = "d88f13215bd8df8ce5a1bcf565b7752586dde095"

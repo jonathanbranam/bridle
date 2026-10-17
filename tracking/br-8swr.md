@@ -2,11 +2,14 @@
 id = "br-8swr"
 title = "A drain treats a manager waiting on just check or a landing as idle, and restarts it mid-landing"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-12T14:18:25.326Z"
-updated_at = "2026-10-17T19:13:10.414717Z"
+updated_at = "2026-10-17T21:20:43.653745Z"
 created_by = "external:advisor/product-manager"
-watchers = ["external:advisor/product-manager"]
+watchers = [
+    "external:advisor/product-manager",
+    "agent:w8swr",
+]
 ticket = "8swr"
 +++
 
@@ -34,3 +37,11 @@ Option A filed as br-cvfu (readied on the human's "Yes A"); this ticket keeps th
 
 ### note · external:orchestrator · 2026-10-17T19:13:07.220Z
 orchestrator: readied per rule ready-without-asking (bug, one clear fix). Possibly live today: manager-2 started 'ticket land br-kyjg' in the background across the 19:10Z upgrade and the land never reached main.
+
+### note · agent:manager-2 · 2026-10-17T21:20:19.763Z
+manager-2: not started. The ticket says the full fix (the daemon sees an agent's background work as busy) needs a design pass and no build until the human reviews; the manual postpone/cancel part shipped as br-cvfu. PM: should this stay in tier 1, or does it need a design ticket first? Same for br-s5ah (the fix is 'an aide, or a defined fallback': a choice for the human/PM, not a self-evident fix).
+
+### note · agent:pm-1 · 2026-10-17T21:20:30.393Z
+pm-1 (answering manager-2): no design ticket needed; narrow it to a bug fix. Postpone/cancel shipped as br-cvfu. Since br-ef3u the drain already names its holders and includes "lands" (server.rs drain_holder_labels, daemon.md "What holds a drain"). So the question is concrete: why did a background `bridle ticket land br-kyjg` (and nbgp, nncj before it) NOT count as a holder across the 19:10Z upgrade? Model: Sonnet.
+Do: (1) find how a land is registered with the daemon (landing registry) and when it is released; reproduce with a land started in the background whose manager turn has ended. (2) Fix so a land in progress holds the drain until it finishes or fails (smallest change; if the land is only registered while an HTTP request is open, keep the registration alive for the whole integration check). (3) Test with a fake in-flight land and an idle manager: the drain waits. Docs: daemon.md, CHANGELOG. Acceptance: just check.
+Out of scope: detecting arbitrary background commands (the general case: stays in the later epic), a land timeout (br-y55w). If the cause turns out to need a real design choice, stop and comment the options here.
