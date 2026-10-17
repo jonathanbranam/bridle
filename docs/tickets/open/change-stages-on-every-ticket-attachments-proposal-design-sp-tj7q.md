@@ -56,6 +56,20 @@ with a gate. Not scheduling, not priority.
   be assigned, but for now the ticket carries its own (the human, 2026-10-17: "we're simplifying
   that for the moment and just saying the schema lives on the ticket. The schema tells you which
   artifacts to create in what order and which artifacts are dependent on other artifacts").
+- **Schema shape** (the human, 2:55 PM ET: "Approve"): frontmatter, one entry per stage with what
+  it requires and who reviews it:
+
+  ```
+  stages:
+    proposal: {review: human}
+    design:   {requires: [proposal]}
+    specs:    {requires: [proposal], review: human}
+    tasks:    {requires: [design, specs]}
+  ```
+
+  `bridle ticket new --stages design,specs,tasks --review specs` writes it, with OpenSpec's
+  dependencies filled in. The proposal is always included. A ticket with only a proposal goes to a
+  worker once the proposal is written (and signed, if reviewed).
 - **No rule ahead of time** on which stages a ticket has (not all four, no default by kind):
   whoever creates the ticket decides its stages and which need the human's approval (the human:
   "there's no rule. We don't need to make a rule for this ahead of time"). MVP's stages are
@@ -97,10 +111,23 @@ with a gate. Not scheduling, not priority.
   started for the stage is fine for MVP.
 - With human review: the agent writes the file and says it is ready for review; the human
   approves, or asks for changes and then approves. Without: it goes straight on.
-- There is a command to approve (sign) a stage. The human does not want to have to run it
-  themselves (open question 2).
-- The ticket is handed to a worker only when every listed stage's file exists and every gate is
-  signed.
+- **Approving**: `bridle ticket approve <id> <stage>`. The human need not type it: they say
+  "approved" to whoever they are talking to (an advisor, aide, the PM), who runs it for them. Every
+  approval records the signer (the human), who ran it (the human, or the agent's principal: "human
+  via <agent>"; detected from the caller's token, never claimed) and the time. UI and CLI are not
+  told apart (the human, 2:50 PM ET: "I want to know where that came from, just so I can be like,
+  'What happened?'" and "The difference between whether I use the UI or the command line is
+  unimportant"). V1 adds the button.
+- **Ready means prepared** (the human, 3:05 PM ET: "Once it's been through these stages, if none
+  of them require human review, the ticket should just plow through all the stages. Agents should
+  fill out everything, and then the ticket's ready"; settled 3:10 PM, "Approved"). A new ticket
+  is preparing: agents write each stage as it unblocks and stop only at a gate listed for the
+  human. When every stage is written and every gate signed it becomes ready by itself; there is
+  no separate ready approval (the human's say is the gates they list). When a ready ticket is
+  built (priority, queue) is the PM's call, outside this epic ("Where this ticket fits in the
+  priority and when it's actually going to be implemented is a different question"). Changes
+  mhjn (who readies what); today's pending/open/planned states map onto preparing/ready, to be
+  designed.
 
 Later (named by the human, not MVP): gates owned by agents (other kinds of review); standard
 schemas assigned to tickets; different stage types.
@@ -118,18 +145,6 @@ schemas assigned to tickets; different stage types.
    for any agent, signed human gates, read in the existing docs viewer. V1 = the ticket page in
    bridle-ui (tabs, combined task/ticket page, approve button), template-heading check. V2 =
    attachments of any type (images), gates owned by agents, standard schemas to assign. [yes]
-2. Approving without running a command: the human says "approved" to whoever they are talking to
-   (an advisor, aide or the PM), and that agent runs `bridle ticket approve <id> <stage>` as human
-   via agent; the signature records the human as the signer. In V1 the ticket page has a button.
-   [yes]
-3. Schema shape on the ticket: frontmatter, one entry per stage with its `requires` and `gate`,
-   e.g. `stages: [proposal: {gate: human}, design: {requires: [proposal]}, ...]`.
-   `bridle ticket new --stages proposal,design,specs,tasks --review proposal,specs` writes it with
-   OpenSpec's dependencies filled in; a ticket with no stages goes straight to a worker as today.
-   [yes]
-4. Ticket states: the proposal is written while the ticket is `pending`; the human signing it is
-   what readies it (`open`); the rest are written while `open`; it becomes `planned` (handed to a
-   worker) when every listed stage is written and every gate signed. [yes]
 5. Where files live: a folder beside the ticket on main, `docs/tickets/open/<slug>-<id>/design.md`
    etc. (design Q1-A). [yes]
 6. Starting background writers: when a stage unblocks, the daemon tells the project manager, who
