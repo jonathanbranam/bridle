@@ -4,7 +4,7 @@ title = "Same-machine orchestrator keeps direct tokens (visiting-orchestrator to
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-17T02:44:03.225Z"
-updated_at = "2026-10-17T04:15:57.138999Z"
+updated_at = "2026-10-17T04:16:23.801762Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -58,3 +58,6 @@ split off br-ncbz: ticket new --project X writes into X's clone; a refused ticke
 
 ### note · agent:manager-2 · 2026-10-17T04:15:57.138Z
 integrated: 46fb56d931b2762e1ad6609ba3bce3666446abbb (branch bridle/j86p)
+
+### note · agent:manager-2 · 2026-10-17T04:16:23.801Z
+cleanup: removed agent j86p, branch bridle/j86p
