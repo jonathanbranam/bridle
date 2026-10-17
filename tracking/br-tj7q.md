@@ -4,7 +4,7 @@ title = "Change stages on every ticket: attachments, proposal/design/specs/tasks
 kind = "epic"
 state = "pending"
 created_at = "2026-10-17T02:23:44.883Z"
-updated_at = "2026-10-17T19:53:49.849120Z"
+updated_at = "2026-10-17T19:57:52.249782Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
@@ -234,3 +234,12 @@ The human, 2026-10-17 ~4:20 PM ET, on open question 7 (specs.md is a draft in br
 > That is far future concern but important to follow up. TBD if that is only an inform or an approval. BTW we should use RACI terms for these as well. Helpful to be clear
 
 Settled for MVP. Recorded as later: spec drift re-review (inform or approval, TBD). RACI terms (Responsible, Accountable, Consulted, Informed) to be used for who does what at a stage and gate: added to the names question.
+
+### note · external:advisor/tj7q · 2026-10-17T19:57:52.249Z
+The human, 2026-10-17 ~4:24 PM ET, on open question 8 (one worker builds the whole ticket, following tasks.md as its checklist, like OpenSpec's apply; no child rows), verbatim:
+
+> Yes, that's correct. We should liberally steal and copy the OpenSpec apply skill, or anything else from OpenSpec, for how this works. It doesn't have to be in the MVP, but in the future, there are rules for the apply step as well.
+>
+> OpenSpec doesn't really do this, and it kind of depends on how detailed those tasks are and how necessary it is. I think having rules injected right then is really helpful for certain very tight programming things where we want the code written in a specific way. That should be an expectation.
+
+Settled for MVP. Later: copy OpenSpec's apply skill freely; the apply step (the worker building from tasks.md) gets its own layered rules injected at the moment of work, like the stages, for code that must be written a specific way.
