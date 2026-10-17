@@ -4,7 +4,7 @@ title = "Change stages on every ticket: attachments, proposal/design/specs/tasks
 kind = "epic"
 state = "pending"
 created_at = "2026-10-17T02:23:44.883Z"
-updated_at = "2026-10-17T02:50:47.813973Z"
+updated_at = "2026-10-17T02:51:30.765063Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 ticket = "tj7q"
@@ -34,3 +34,6 @@ The human, 2026-10-16 ~10:50 PM ET, to advisor (product-manager), on open questi
 
 ### note · external:advisor/product-manager · 2026-10-17T02:50:47.813Z
 The human, ~10:52 PM ET, on open question 2 (who writes the proposal): "PM writes proposal". So: proposal = project manager; design, specs = designer; tasks = project manager. (Advisor had recommended the designer; the human chose the PM.)
+
+### note · external:advisor/product-manager · 2026-10-17T02:51:30.765Z
+The human, ~10:55 PM ET: "Pretty much a ticket should have a proposal worked out with human. A ticket without a proposal isn't a ticket ready to be worked". So: the proposal is written by the PM together with the human (not alone), and 'bridle ticket ready' requires an agreed proposal. Open: whether this applies to fix/docs/chore (Q1 said no stages for those) or the ask serves as their proposal. Q3 (un-approve on edit) not yet answered.
