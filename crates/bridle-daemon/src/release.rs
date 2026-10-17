@@ -208,11 +208,31 @@ fn unpack(tarball: &[u8], dir: &Path) -> Result<PathBuf, String> {
 }
 
 /// Puts `new_bin` at `exe`: written beside it, then renamed over it, so the path never holds a
-/// partial binary. The running binary is kept first for rollback (`rollback.rs`).
+/// partial binary. The running binary is kept first for rollback (`rollback.rs`). On macOS the
+/// copy is signed `-i bridle` first (`signing::install`), as the commit path does, so the
+/// firewall's Allow survives the upgrade (ticket tvrp).
 pub fn install(ws: &Workspace, new_bin: &Path, exe: &Path) -> Result<(), String> {
+    // Not under test: a stand-in "binary" can't be codesigned on a Mac that has the identity.
+    install_signed(cfg!(target_os = "macos") && !cfg!(test), ws, new_bin, exe)
+}
+
+/// [`install`] with the platform choice made by the caller, so tests can take either branch.
+/// A failed sign leaves `exe` as it was (the rename comes last) and the stash for rollback.
+fn install_signed(sign: bool, ws: &Workspace, new_bin: &Path, exe: &Path) -> Result<(), String> {
     use std::os::unix::fs::PermissionsExt;
     crate::rollback::stash_previous(ws, exe)
         .map_err(|e| format!("keeping the previous binary: {e:#}"))?;
+    if sign {
+        let signed = crate::signing::install(new_bin, exe)
+            .map_err(|e| format!("signing the release binary over {}: {e:#}", exe.display()))?;
+        if !signed {
+            tracing::warn!(
+                "self-upgrade: no signing identity found; the release binary keeps its ad-hoc \
+                 signature and the firewall may ask again (run `just sign-setup`)"
+            );
+        }
+        return Ok(());
+    }
     let mut name = exe
         .file_name()
         .ok_or("the install path has no name")?
@@ -474,6 +494,34 @@ mod tests {
         let prev = std::fs::read_to_string(ws.state_dir().join("bridle.prev")).expect("prev");
         assert_eq!(prev, "old binary");
         assert!(!tmp.path().join("bridle.new").exists());
+    }
+
+    #[test]
+    fn a_failed_sign_leaves_the_installed_binary_and_the_stash() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let ws = ws(tmp.path());
+        std::fs::create_dir_all(ws.state_dir()).expect("state dir");
+        let exe = tmp.path().join("bridle");
+        std::fs::write(&exe, "old binary").expect("write");
+        // The signing path fails here (no such source), as a codesign failure would.
+        let err = install_signed(true, &ws, &tmp.path().join("missing"), &exe).expect_err("fails");
+        assert!(err.contains("signing the release binary"), "{err}");
+        assert_eq!(std::fs::read_to_string(&exe).expect("read"), "old binary");
+        let prev = std::fs::read_to_string(ws.state_dir().join("bridle.prev")).expect("prev");
+        assert_eq!(prev, "old binary");
+    }
+
+    #[test]
+    fn without_signing_the_binary_is_copied_in() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let ws = ws(tmp.path());
+        std::fs::create_dir_all(ws.state_dir()).expect("state dir");
+        let exe = tmp.path().join("bridle");
+        std::fs::write(&exe, "old").expect("write");
+        let new = tmp.path().join("new");
+        std::fs::write(&new, "new").expect("write");
+        install_signed(false, &ws, &new, &exe).expect("install");
+        assert_eq!(std::fs::read_to_string(&exe).expect("read"), "new");
     }
 
     #[test]

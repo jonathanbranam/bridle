@@ -413,7 +413,9 @@ minutes (`release::POLL_EVERY`, counted even when the ask fails, so rate limits 
 newer than the running version (plain `X.Y.Z` compare, a prerelease or odd tag is never newer)
 starts a background upgrade: download `bridle-<tag>-<target>.tar.gz` and `SHA256SUMS` (names from
 the release workflow, `scripts/package-release.sh`), check the SHA256, unpack, keep the running
-binary as `bridle.prev`, write the new one beside the install path and rename it over, and, if the
+binary as `bridle.prev`, write the new one beside the install path and rename it over (on macOS
+through `signing::install`: signed `-i bridle` with the local identity, ad hoc with a logged warning
+to run `just sign-setup` when there is none; a failed sign leaves the installed binary alone; ticket tvrp), and, if the
 tarball has a `ui/` folder (tags from before t3dr don't; then `~/.bridle/ui/` is left alone), copy
 it to `ui.tmp` beside `~/.bridle/ui/` and rename it in (the old folder steps aside to `ui.old`
 first). A UI that fails to install is logged and doesn't undo the binary. No other upgrade mode
