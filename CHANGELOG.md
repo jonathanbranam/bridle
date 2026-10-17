@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Fix (br-p4f2): `bridle migrate` no longer refuses a project that works on `main` when its `[branches] integration` says so (unless that branch is also its release branch), and a migration with nothing to change never refuses. Other protected branches still refuse. Migration: none.
 - Fix (br-r8jf): `token pair-mint --direct` revokes the earlier visitor token only after the direct mint succeeds, so a failed mint no longer leaves the holder with no token; the stall check's marker read runs off the async runtime; `projects sync` never removing a `[mail] projects` name is documented as intended.
 - Fix (br-mggk): `bridle ticket new` refuses `--project X` from another project's clone (it wrote the file there), removes the file when the daemon refuses the row, and `--from-task` refuses a row that already has a ticket file instead of re-linking it (br-b3ef). Migration: none.
 - Fix (br-8kzq): `bridle agent wake` and `bridle orchestrator wait-for-wake` with no `--timeout` now wait the 6900 s they print (the daemon's orchestrator route had defaulted to 25 min, so the wait ended early and the orchestrator re-armed every 25 min). Migration: none.

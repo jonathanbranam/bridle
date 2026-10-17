@@ -119,7 +119,6 @@ const AGENT_SITE_LINE: &str = ".agent-site/";
 /// Appends `.agent-site/` to `.gitignore` unless a line already says so, so a rerun finds nothing.
 fn gitignore_agent_site(ctx: &Ctx) -> anyhow::Result<Report> {
     let project = project_of(ctx.repo);
-    refuse_on_protected_branch(ctx.repo, &project)?;
     let path = ctx.repo.join(".gitignore");
     let text = match std::fs::read_to_string(&path) {
         Ok(t) => t,
@@ -139,6 +138,7 @@ fn gitignore_agent_site(ctx: &Ctx) -> anyhow::Result<Report> {
         });
     }
     let files = vec![".gitignore".to_string()];
+    refuse_on_protected_branch(ctx.repo, &project)?;
     refuse_if_uncommitted(ctx.repo, &files)?;
     if !ctx.dry_run {
         let mut new = text;
@@ -218,7 +218,6 @@ fn rename_product_manager(ctx: &Ctx) -> anyhow::Result<Report> {
 /// project has run this.
 fn standard_ticket_fields(ctx: &Ctx) -> anyhow::Result<Report> {
     let project = project_of(ctx.repo);
-    refuse_on_protected_branch(ctx.repo, &project)?;
     let prefix = match bridle_daemon::config::Config::load(ctx.repo) {
         Ok(c) => c.task_prefix,
         Err(_) => None,
@@ -251,6 +250,7 @@ fn standard_ticket_fields(ctx: &Ctx) -> anyhow::Result<Report> {
             summary: "every ticket already has the standard fields".into(),
         });
     }
+    refuse_on_protected_branch(ctx.repo, &project)?;
     refuse_if_uncommitted(ctx.repo, &files)?;
     if !ctx.dry_run {
         for (p, new) in &edits {
@@ -269,7 +269,6 @@ fn standard_ticket_fields(ctx: &Ctx) -> anyhow::Result<Report> {
 /// `bridle task kind`, an integrated one stays as it was.
 fn bug_tickets_that_are_fixes(ctx: &Ctx) -> anyhow::Result<Report> {
     let project = project_of(ctx.repo);
-    refuse_on_protected_branch(ctx.repo, &project)?;
     let root = crate::ticket::tickets_root(ctx.repo);
     let mut paths = vec![];
     md_files(&root, &mut paths);
@@ -297,6 +296,7 @@ fn bug_tickets_that_are_fixes(ctx: &Ctx) -> anyhow::Result<Report> {
             summary: "no bug ticket with a task".into(),
         });
     }
+    refuse_on_protected_branch(ctx.repo, &project)?;
     refuse_if_uncommitted(ctx.repo, &files)?;
     if !ctx.dry_run {
         for (p, new) in &edits {
@@ -315,8 +315,6 @@ fn bug_tickets_that_are_fixes(ctx: &Ctx) -> anyhow::Result<Report> {
 /// and the `tasks:` list goes. Edges that don't join two tickets here, and `duplicates`,
 /// `supersedes` and `discovered-from`, stay edges. A rerun finds nothing to add.
 fn ticket_links_in_frontmatter(ctx: &Ctx) -> anyhow::Result<Report> {
-    let project = project_of(ctx.repo);
-    refuse_on_protected_branch(ctx.repo, &project)?;
     let git_show = |path: &str| -> Option<String> {
         let out = std::process::Command::new("git")
             .arg("-C")
@@ -425,7 +423,6 @@ fn kind_for(rows: &[Row], id: &str) -> String {
 /// ticket-checked and are left for now.
 fn backfill_ticket_kind(ctx: &Ctx) -> anyhow::Result<Report> {
     let project = project_of(ctx.repo);
-    refuse_on_protected_branch(ctx.repo, &project)?;
     let rows = state_rows(ctx.repo);
     let root = crate::ticket::tickets_root(ctx.repo);
     let mut paths = vec![];
@@ -454,6 +451,7 @@ fn backfill_ticket_kind(ctx: &Ctx) -> anyhow::Result<Report> {
             summary: "every ticket already has a kind".into(),
         });
     }
+    refuse_on_protected_branch(ctx.repo, &project)?;
     refuse_if_uncommitted(ctx.repo, &files)?;
     if !ctx.dry_run {
         for (p, new) in &edits {
@@ -468,7 +466,6 @@ fn backfill_ticket_kind(ctx: &Ctx) -> anyhow::Result<Report> {
 
 fn a_ticket_for_every_active_task(ctx: &Ctx) -> anyhow::Result<Report> {
     let project = project_of(ctx.repo);
-    refuse_on_protected_branch(ctx.repo, &project)?;
     let mut rows = state_rows(ctx.repo);
     rows.sort_by(|a, b| a.created_at.cmp(&b.created_at).then(a.id.cmp(&b.id)));
     let plan = plan_tickets(ctx.repo, &rows);
@@ -479,6 +476,7 @@ fn a_ticket_for_every_active_task(ctx: &Ctx) -> anyhow::Result<Report> {
             summary: "every active task already has a ticket".into(),
         });
     }
+    refuse_on_protected_branch(ctx.repo, &project)?;
     if !ctx.dry_run {
         let exe = std::env::current_exe().context("finding the bridle binary")?;
         for (task, parent) in &plan {
@@ -677,6 +675,7 @@ fn carry_links(
             summary: "no ticket links to carry".into(),
         });
     }
+    refuse_on_protected_branch(ctx.repo, &project_of(ctx.repo))?;
     refuse_if_uncommitted(ctx.repo, &files)?;
     if !ctx.dry_run {
         for (p, new) in &changed {
@@ -712,7 +711,8 @@ fn project_of(repo: &Path) -> String {
 
 /// The first protected-branch guard (rule existing-projects): a migration that rewrites a
 /// project's files refuses while `main`, `dev` or the configured `[branches] release` is checked
-/// out, so it only ever lands on a trial or integration branch. Bridle's own repo is not an
+/// out, unless the project declares that branch its `[branches] integration` (and it is not also
+/// the release branch). Migrations call it only once they have something to change. Bridle's own repo is not an
 /// existing project in that sense, and a repo without git has no branch to protect.
 fn refuse_on_protected_branch(repo: &Path, project: &str) -> anyhow::Result<()> {
     if project == "bridle" {
@@ -728,10 +728,15 @@ fn refuse_on_protected_branch(repo: &Path, project: &str) -> anyhow::Result<()> 
         return Ok(());
     }
     let branch = String::from_utf8_lossy(&out.stdout).trim().to_string();
-    let release = bridle_daemon::config::Config::load(repo)
+    let branches = bridle_daemon::config::Config::load(repo)
         .ok()
-        .and_then(|c| c.branches.release);
-    if branch == "main" || branch == "dev" || release.as_deref() == Some(branch.as_str()) {
+        .map(|c| c.branches);
+    let release = branches.as_ref().and_then(|b| b.release.clone());
+    let own_integration = branches
+        .as_ref()
+        .is_some_and(|b| b.integration_set && b.integration == branch);
+    let is_release = release.as_deref() == Some(branch.as_str());
+    if is_release || (!own_integration && (branch == "main" || branch == "dev")) {
         return Err(Refused(format!(
             "{branch} is a protected branch of {project}; check out the project's trial branch (e.g. bridle-adopt) and rerun"
         ))
@@ -1429,6 +1434,38 @@ mod tests {
         std::fs::write(
             p.path().join(".bridle/config.toml"),
             "[branches]\nintegration = \"bridle-adopt\"\nrelease = \"bridle-adopt\"\n",
+        )
+        .unwrap();
+        assert!(refuse_on_protected_branch(p.path(), "other").is_err());
+    }
+
+    #[test]
+    fn a_declared_integration_branch_is_not_protected_and_nothing_to_change_never_refuses() {
+        let p = ticket_project("main");
+        let ctx = Ctx {
+            repo: p.path(),
+            dry_run: true,
+        };
+        // Nothing to change: no refusal on main, with or without a declared integration.
+        std::fs::remove_dir_all(p.path().join("docs/tickets")).unwrap();
+        for m in MIGRATIONS.iter().filter(|m| !m.manual_only) {
+            if m.id.starts_with("0007") {
+                continue; // adds a line when .gitignore lacks it
+            }
+            let r = (m.run)(&ctx);
+            assert!(r.is_ok() || !is_refusal(&r.unwrap_err()), "{}", m.id);
+        }
+        // main declared as integration: the guard passes.
+        std::fs::write(
+            p.path().join(".bridle/config.toml"),
+            "[branches]\nintegration = \"main\"\n",
+        )
+        .unwrap();
+        assert!(refuse_on_protected_branch(p.path(), "other").is_ok());
+        // ...unless it is also the release branch.
+        std::fs::write(
+            p.path().join(".bridle/config.toml"),
+            "[branches]\nintegration = \"main\"\nrelease = \"main\"\n",
         )
         .unwrap();
         assert!(refuse_on_protected_branch(p.path(), "other").is_err());
