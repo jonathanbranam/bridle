@@ -4,7 +4,7 @@ title = "Pick a name for the Windows PC (docs/context/naming.md) (v7ug)"
 kind = "chore"
 state = "integrated"
 created_at = "2026-10-07T23:25:31.076Z"
-updated_at = "2026-10-12T03:52:12.172831Z"
+updated_at = "2026-10-17T11:37:09.062694Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -38,3 +38,6 @@ The windows PC itself is romulus and the Linux WSL2 inside it is remus. For our 
 
 ### note · human · 2026-10-12T03:52:12.172Z
 done
+
+### note · external:advisor/product-manager · 2026-10-17T11:37:09.062Z
+Verified by advisor (product-manager) 2026-10-17 ~8 AM ET: task integrated, landed on origin/main, every item of the ask done (or confirmed done by the human). Resolving.

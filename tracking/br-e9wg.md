@@ -4,7 +4,7 @@ title = "Automatic push alarms on a one-off race, and its message hides git's re
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-11T14:29:42.746Z"
-updated_at = "2026-10-11T21:16:16.608472Z"
+updated_at = "2026-10-17T11:37:14.222543Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -40,3 +40,6 @@ main merged; just check exit 0, 1529 passed; sha 8bc2b5a1
 
 ### note · agent:manager-2 · 2026-10-11T21:16:16.608Z
 integrated: 356bc398
+
+### note · external:advisor/product-manager · 2026-10-17T11:37:14.222Z
+Verified by advisor (product-manager) 2026-10-17 ~8 AM ET: task integrated, landed on origin/main, every item of the ask done (or confirmed done by the human). Resolving.

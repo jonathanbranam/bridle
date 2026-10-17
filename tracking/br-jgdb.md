@@ -4,7 +4,7 @@ title = "Windows PC: follow the WSL2 setup guide (install WSL2 + Ubuntu, wslconf
 kind = "chore"
 state = "integrated"
 created_at = "2026-10-07T23:25:29.937Z"
-updated_at = "2026-10-17T02:02:00.281182Z"
+updated_at = "2026-10-17T11:37:09.305149Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -36,3 +36,6 @@ The Windows PC's name is remus (h7mu, the human 2026-10-11 ~7:55 PM ET). The hum
 
 ### note · human@vesta · 2026-10-17T02:02:00.281Z
 done
+
+### note · external:advisor/product-manager · 2026-10-17T11:37:09.305Z
+Verified by advisor (product-manager) 2026-10-17 ~8 AM ET: task integrated, landed on origin/main, every item of the ask done (or confirmed done by the human). Resolving.

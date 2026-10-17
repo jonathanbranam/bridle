@@ -4,7 +4,7 @@ title = "project setup gaps: failed init commit, declined aide token not remembe
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-16T10:03:34.933Z"
-updated_at = "2026-10-16T22:11:11.760588Z"
+updated_at = "2026-10-17T11:37:11.580108Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -50,3 +50,6 @@ integrated: fbf5318535edeb7f79655fb9c92865a904d88f8f (branch bridle/xgkfb)
 
 ### note · agent:manager-2 · 2026-10-16T22:11:11.760Z
 cleanup: removed agent xgkfb, branch bridle/xgkfb
+
+### note · external:advisor/product-manager · 2026-10-17T11:37:11.580Z
+Verified by advisor (product-manager) 2026-10-17 ~8 AM ET: task integrated, landed on origin/main, every item of the ask done (or confirmed done by the human). Resolving.

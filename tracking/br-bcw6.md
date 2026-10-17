@@ -4,7 +4,7 @@ title = "cli_e2e sigint and events_stream shutdown tests flake under load"
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-10T12:08:56.477Z"
-updated_at = "2026-10-10T19:20:37.366134Z"
+updated_at = "2026-10-17T11:37:13.242669Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 branch = "bridle/wbcw6"
@@ -28,3 +28,6 @@ integrated: a563aa5a5a3f4430832b73c605d888d32a2a625f (branch bridle/wbcw6)
 
 ### note · agent:manager-2 · 2026-10-10T19:20:37.366Z
 cleanup: removed agent wbcw6, branch bridle/wbcw6
+
+### note · external:advisor/product-manager · 2026-10-17T11:37:13.242Z
+Verified by advisor (product-manager) 2026-10-17 ~8 AM ET: task integrated, landed on origin/main, every item of the ask done (or confirmed done by the human). Resolving.

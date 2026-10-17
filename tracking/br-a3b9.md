@@ -4,7 +4,7 @@ title = "Sat 10-03: review and land the parked branches (br-6b8a, br-2718, br-26
 kind = "chore"
 state = "integrated"
 created_at = "2026-10-02T12:55:45.643Z"
-updated_at = "2026-10-12T03:52:19.778972Z"
+updated_at = "2026-10-17T11:37:11.870035Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -37,3 +37,6 @@ orchestrator: br-6b8a is rebuilt with main merged: branch bridle/w6b8a, tip ad9f
 
 ### note · human · 2026-10-12T03:52:19.778Z
 done
+
+### note · external:advisor/product-manager · 2026-10-17T11:37:11.870Z
+Verified by advisor (product-manager) 2026-10-17 ~8 AM ET: task integrated, landed on origin/main, every item of the ask done (or confirmed done by the human). Resolving.

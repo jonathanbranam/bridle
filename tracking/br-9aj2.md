@@ -4,7 +4,7 @@ title = "Message delivery you can check, part 1: bridle messages command, delive
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-10T13:38:39.686Z"
-updated_at = "2026-10-10T20:06:00.722041Z"
+updated_at = "2026-10-17T11:37:10.201450Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 branch = "bridle/w9aj2"
@@ -37,3 +37,6 @@ cleanup: removed nothing; kept agent w9aj2 (background job pid 27913)
 
 ### note · agent:w9aj2 · 2026-10-10T20:06:00.722Z
 clean: pid 27913 no longer exists, no background jobs of mine are running. Note: the check also re-ran green (exit 0, 1461 passed) on the merged tip decac24b.
+
+### note · external:advisor/product-manager · 2026-10-17T11:37:10.201Z
+Verified by advisor (product-manager) 2026-10-17 ~8 AM ET: task integrated, landed on origin/main, every item of the ask done (or confirmed done by the human). Resolving.

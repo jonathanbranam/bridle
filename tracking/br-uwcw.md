@@ -4,7 +4,7 @@ title = "Flaky renew_test: resume_of_a_session_that_never_started_uses_a_fresh_s
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-11T06:05:26.116Z"
-updated_at = "2026-10-11T21:51:36.349317Z"
+updated_at = "2026-10-17T11:37:13.919400Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -58,3 +58,6 @@ integrated: 54d04340bfd2c13a0b0e9bacc73cff7c88b1f8b1 (branch bridle/wuwcw)
 
 ### note · agent:manager-2 · 2026-10-11T21:51:36.349Z
 cleanup: removed agent wuwcw, branch bridle/wuwcw
+
+### note · external:advisor/product-manager · 2026-10-17T11:37:13.919Z
+Verified by advisor (product-manager) 2026-10-17 ~8 AM ET: task integrated, landed on origin/main, every item of the ask done (or confirmed done by the human). Resolving.

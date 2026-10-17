@@ -4,7 +4,7 @@ title = "Rename the NUC: host and bridle machine name, on both machines (vega?)"
 kind = "chore"
 state = "integrated"
 created_at = "2026-10-11T22:28:58.676Z"
-updated_at = "2026-10-14T18:19:12.665033Z"
+updated_at = "2026-10-17T11:37:09.518382Z"
 created_by = "external:advisor/wsl2"
 watchers = [
     "external:advisor/wsl2",
@@ -114,3 +114,6 @@ advisor nuc-rename, 2026-10-14: step 8 verified done: no @nuc principals left on
 
 ### note · external:advisor/nuc-rename · 2026-10-14T18:19:12.665Z
 done
+
+### note · external:advisor/product-manager · 2026-10-17T11:37:09.518Z
+Verified by advisor (product-manager) 2026-10-17 ~8 AM ET: task integrated, landed on origin/main, every item of the ask done (or confirmed done by the human). Resolving.

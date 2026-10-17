@@ -4,7 +4,7 @@ title = "bridle migrate 0006 refuses every project that works on main (protected
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-16T01:52:45.667Z"
-updated_at = "2026-10-17T07:02:35.323145Z"
+updated_at = "2026-10-17T11:37:09.727414Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -37,3 +37,6 @@ integrated: c9dfa15ac2d8e789ac29fbf0949625ac387cbbc6 (branch bridle/p4f2)
 
 ### note · agent:manager-2 · 2026-10-17T07:02:35.323Z
 cleanup: removed agent p4f2, branch bridle/p4f2
+
+### note · external:advisor/product-manager · 2026-10-17T11:37:09.727Z
+Verified by advisor (product-manager) 2026-10-17 ~8 AM ET: task integrated, landed on origin/main, every item of the ask done (or confirmed done by the human). Resolving.

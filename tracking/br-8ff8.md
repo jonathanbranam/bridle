@@ -4,7 +4,7 @@ title = "Flaky on CI: settle_wake_test blocked-task note races its edge setup"
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-09T23:23:12.045Z"
-updated_at = "2026-10-10T02:02:55.295052Z"
+updated_at = "2026-10-17T11:37:12.863246Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 priority = "critical"
@@ -42,3 +42,6 @@ integrated: d0869bab343e1c27a3e4188b2c80e6df8d8cb90a (branch bridle/w8ff8)
 
 ### note · agent:manager-2 · 2026-10-10T02:02:55.295Z
 cleanup: removed agent w8ff8, branch bridle/w8ff8
+
+### note · external:advisor/product-manager · 2026-10-17T11:37:12.863Z
+Verified by advisor (product-manager) 2026-10-17 ~8 AM ET: task integrated, landed on origin/main, every item of the ask done (or confirmed done by the human). Resolving.

@@ -4,7 +4,7 @@ title = "New projects join [mail] projects on every machine by default (opt-out)
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-14T15:38:37.264Z"
-updated_at = "2026-10-15T01:21:32.590937Z"
+updated_at = "2026-10-17T11:37:11.299514Z"
 created_by = "external:advisor/wsl2"
 watchers = [
     "external:advisor/wsl2",
@@ -42,3 +42,6 @@ integrated: 1a73fd3757675ec615913a55c462f6451594fc73 (branch bridle/afzu)
 
 ### note · agent:manager-2 · 2026-10-15T01:21:32.590Z
 cleanup: removed agent afzu, branch bridle/afzu
+
+### note · external:advisor/product-manager · 2026-10-17T11:37:11.299Z
+Verified by advisor (product-manager) 2026-10-17 ~8 AM ET: task integrated, landed on origin/main, every item of the ask done (or confirmed done by the human). Resolving.

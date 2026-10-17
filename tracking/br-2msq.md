@@ -4,7 +4,7 @@ title = "bridle send --project to a local daemon needs a peer token, and --url c
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-10T02:31:14.507Z"
-updated_at = "2026-10-10T22:17:55.005657Z"
+updated_at = "2026-10-17T11:37:10.444952Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 branch = "bridle/w2msq"
@@ -37,3 +37,6 @@ integrated: 200668f8f50109d91b6c9852ce2bd7f239e29539 (branch bridle/w2msq)
 
 ### note · agent:manager-2 · 2026-10-10T22:17:55.005Z
 cleanup: removed agent w2msq, branch bridle/w2msq
+
+### note · external:advisor/product-manager · 2026-10-17T11:37:10.444Z
+Verified by advisor (product-manager) 2026-10-17 ~8 AM ET: task integrated, landed on origin/main, every item of the ask done (or confirmed done by the human). Resolving.

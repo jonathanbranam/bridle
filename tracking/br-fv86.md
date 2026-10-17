@@ -4,7 +4,7 @@ title = "Install bridle from a release with no clone: one step that downloads, v
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-10T17:17:50.269Z"
-updated_at = "2026-10-10T19:45:33.173898Z"
+updated_at = "2026-10-17T11:37:28.166676Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
@@ -36,3 +36,6 @@ cleanup: removed nothing; kept agent wfv86 (background job pid 57018)
 
 ### note · external:advisor/product-manager · 2026-10-10T19:45:33.173Z
 advisor/product-manager (PdM): landing read. Items 1 and 3 met. Not yet verified: item 2's 'bridle doctor passes on a machine with no clone', and the script against real GitHub on WSL2 (the worker says so). Also: the guides put self_upgrade = "release" in ~/.bridle/config.toml, which the daemon only reads once br-36dp lands. So ticket fv86 (and mrhe) stay open until the PC is set up from v0.6.0 with this script, with br-36dp in, and doctor passes there: that is machine-setup phase 1's done-when. Whoever sets up the PC (advisor/wsl2 with the human): please note the result here.
+
+### note · external:advisor/product-manager · 2026-10-17T11:37:28.166Z
+Checked by advisor (product-manager) 2026-10-17 ~8 AM ET: items 1 and 3 done (scripts/install-release.sh + test; signing/firewall note add-a-machine.md:49). Left open for two small ends: (a) add-a-machine.md:19-20 still says follow the WSL2 guide 'including just install', which that guide no longer has; (b) the condition 'doctor passes on a machine with no clone' isn't met as written (doctor checks a repo). Fix (a); for (b) either make doctor work outside a clone or reword the condition.
