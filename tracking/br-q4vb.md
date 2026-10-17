@@ -4,7 +4,7 @@ title = "Wake forwarding sends one agent_exited event 7 times on a daemon restar
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-17T03:16:03.081Z"
-updated_at = "2026-10-17T22:27:51.499753Z"
+updated_at = "2026-10-17T22:28:08.363757Z"
 created_by = "external:orchestrator@dalek"
 watchers = [
     "external:orchestrator@dalek",
@@ -34,3 +34,6 @@ done: forwarding had no cursor of its own (shared the wake cursor, saved only on
 
 ### note · agent:manager-2 · 2026-10-17T22:27:51.499Z
 integrated: 898df76a8ddb1715d9e8ac4175fda4dca9c36df0 (branch bridle/wq4vb)
+
+### note · agent:manager-2 · 2026-10-17T22:28:08.363Z
+cleanup: removed agent wq4vb, branch bridle/wq4vb
