@@ -2599,3 +2599,4 @@
 {"actor":"agent:pm-1","at":"2026-10-17T21:44:28.990104Z","from":"open","task":"br-xccp","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-17T21:44:29.977939Z","queue":"reprioritized"}
 {"actor":"agent:wq4vb","at":"2026-10-17T21:51:05.164423Z","from":"claimed","task":"br-q4vb","to":"built"}
+{"actor":"external:advisor/product-manager","at":"2026-10-17T21:52:45.190686Z","from":"pending","task":"br-4a4v","to":"open"}
