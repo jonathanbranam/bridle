@@ -5,24 +5,12 @@
 
 use bridle_api::discovery::bridle_home;
 use bridle_daemon::config::ui_base_url;
+use bridle_daemon::mentions::{encode, target_url};
 use bridle_docs::specs;
 
 use crate::cli::{Cli, LinkArgs};
 use crate::error::CliError;
 use crate::project;
-
-/// Percent-encode everything but unreserved characters; `keep_slash` leaves `/` for a path value.
-fn encode(s: &str, keep_slash: bool) -> String {
-    let mut out = String::new();
-    for b in s.bytes() {
-        if b.is_ascii_alphanumeric() || b"-._~".contains(&b) || (keep_slash && b == b'/') {
-            out.push(b as char);
-        } else {
-            out.push_str(&format!("%{b:02X}"));
-        }
-    }
-    out
-}
 
 /// The URL for `target` under `base`. A spec ID needs `spec_path` to find the file it lives in.
 pub(crate) fn url(
@@ -31,7 +19,8 @@ pub(crate) fn url(
     project: impl FnOnce() -> Result<String, CliError>,
     spec_path: impl FnOnce(&str) -> Option<String>,
 ) -> Result<String, CliError> {
-    let p = encode(&project()?, false);
+    let project = project()?;
+    let p = encode(&project, false);
     if specs::is_spec_id(target) {
         let path = spec_path(target).ok_or_else(|| {
             anyhow::anyhow!("no spec file has the requirement or scenario {target}")
@@ -47,10 +36,7 @@ pub(crate) fn url(
             encode(file, true)
         ));
     }
-    if target.contains('/') || target.ends_with(".md") {
-        return Ok(format!("{base}/p/{p}/docs?path={}", encode(target, true)));
-    }
-    Ok(format!("{base}/p/{p}/tickets/{}", encode(target, false)))
+    Ok(target_url(base, &project, target))
 }
 
 pub async fn run(cli: &Cli, args: &LinkArgs) -> Result<(), CliError> {

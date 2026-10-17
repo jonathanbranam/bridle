@@ -4438,6 +4438,8 @@ async fn send_mentions(
 ) -> Vec<ToTarget> {
     let author = target_for_principal(state, actor).await.ok().flatten();
     let here = format!("{} ({})", task.id, task.title);
+    let link =
+        crate::mentions::link_for(std::path::Path::new(&state.repo), &state.project, &task.id);
     let (told, unknown) = crate::mentions::send(
         &state.store,
         &state.manager,
@@ -4445,6 +4447,7 @@ async fn send_mentions(
         actor,
         author.as_ref(),
         &here,
+        link.as_deref(),
         body,
         already,
     )

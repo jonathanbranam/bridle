@@ -61,6 +61,38 @@ fn project_of(outbox: &Outbox, qualifier: &str) -> Option<String> {
     (project == outbox.project() || outbox.check_destination(&project).is_ok()).then_some(project)
 }
 
+/// Percent-encode everything but unreserved characters; `keep_slash` leaves `/` for a path value.
+pub fn encode(s: &str, keep_slash: bool) -> String {
+    let mut out = String::new();
+    for b in s.bytes() {
+        if b.is_ascii_alphanumeric() || b"-._~".contains(&b) || (keep_slash && b == b'/') {
+            out.push(b as char);
+        } else {
+            out.push_str(&format!("%{b:02X}"));
+        }
+    }
+    out
+}
+
+/// The UI URL for a ticket id or a document path, as `bridle link` prints it.
+pub fn target_url(base: &str, project: &str, target: &str) -> String {
+    let p = encode(project, false);
+    if target.contains('/') || target.ends_with(".md") {
+        format!("{base}/p/{p}/docs?path={}", encode(target, true))
+    } else {
+        format!("{base}/p/{p}/tickets/{}", encode(target, false))
+    }
+}
+
+/// `target_url` under the configured `[gateway] public_url`; `None` when none is set.
+pub fn link_for(repo: &std::path::Path, project: &str, target: &str) -> Option<String> {
+    let home = bridle_api::discovery::bridle_home();
+    let base = crate::config::ui_base_url(&home, Some(repo))
+        .ok()
+        .flatten()?;
+    Some(target_url(&base, project, target))
+}
+
 /// Sends each name `body` mentions one `task_update` message: `{here}: {actor} mentioned you:
 /// ...`. Names resolve in this project, or through the outbox for `project:role` (br-4cgx).
 /// `already` (and the author, who is not told of their own mention) are skipped. Returns the
@@ -73,10 +105,12 @@ pub async fn send(
     actor: &str,
     author: Option<&ToTarget>,
     here: &str,
+    link: Option<&str>,
     body: &str,
     already: &[ToTarget],
 ) -> (Vec<ToTarget>, Vec<String>) {
-    let line = format!("{here}: {actor} mentioned you: {}", excerpt(body));
+    let link = link.map(|l| format!(" {l}")).unwrap_or_default();
+    let line = format!("{here}{link}: {actor} mentioned you: {}", excerpt(body));
     let mut told: Vec<ToTarget> = Vec::new();
     let mut unknown: Vec<String> = Vec::new();
     // `ui:orchestrator` and `ui:external:orchestrator` are one recipient.
@@ -196,6 +230,18 @@ pub async fn report_unknown(
 #[cfg(test)]
 mod tests {
     use super::mentioned;
+
+    #[test]
+    fn target_urls_match_bridle_link() {
+        assert_eq!(
+            super::target_url("http://ui:1", "bridle", "br-4cgx"),
+            "http://ui:1/p/bridle/tickets/br-4cgx"
+        );
+        assert_eq!(
+            super::target_url("http://ui:1", "bridle", "docs/a b.md"),
+            "http://ui:1/p/bridle/docs?path=docs/a%20b.md"
+        );
+    }
 
     #[test]
     fn finds_each_distinct_name_once() {

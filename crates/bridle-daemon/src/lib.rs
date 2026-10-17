@@ -32,7 +32,7 @@ pub mod handover;
 pub mod impact;
 mod integrator;
 pub mod load;
-mod mentions;
+pub mod mentions;
 mod open_watch;
 mod orchestrator;
 mod outbox;

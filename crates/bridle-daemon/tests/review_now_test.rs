@@ -67,6 +67,10 @@ async fn a_mention_in_a_document_comment_tells_that_role_once_and_an_escaped_one
     std::fs::create_dir_all(daemon.repo.join(".bridle")).expect("mkdir");
     std::fs::write(daemon.repo.join("doc.md"), doc).expect("doc");
     std::fs::write(daemon.repo.join(".bridle/review-documents.txt"), "doc.md\n").expect("list");
+    let cfg = daemon.repo.join(".bridle/config.toml");
+    let mut text = std::fs::read_to_string(&cfg).unwrap_or_default();
+    text.push_str("\n[gateway]\npublic_url = \"http://ui.example\"\n");
+    std::fs::write(&cfg, text).expect("config");
     let req = ReviewNowRequest {
         path: "doc.md".into(),
         resend: false,
@@ -89,7 +93,8 @@ async fn a_mention_in_a_document_comment_tells_that_role_once_and_an_escaped_one
     let lines = told(&orch, "me").await;
     assert_eq!(lines.len(), 1, "{lines:?}");
     assert!(
-        lines[0].contains("document doc.md: human mentioned you"),
+        lines[0].starts_with("document doc.md http://ui.example/p/")
+            && lines[0].contains("/docs?path=doc.md: human mentioned you"),
         "{lines:?}"
     );
     assert!(told(&aide, "me").await.is_empty());

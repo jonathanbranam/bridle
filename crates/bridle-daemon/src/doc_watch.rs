@@ -881,6 +881,10 @@ impl DocWatcher {
             .map(|a| ToTarget::Agent(a.id));
         let already: Vec<ToTarget> = own.into_iter().collect();
         let author = ToTarget::Human;
+        let link = self
+            .outbox
+            .as_ref()
+            .and_then(|o| crate::mentions::link_for(&self.repo, o.project(), path));
         let mut unknown = Vec::new();
         let mut told: Vec<ToTarget> = already.clone();
         for entry in entries {
@@ -891,6 +895,7 @@ impl DocWatcher {
                 "human",
                 Some(&author),
                 &here,
+                link.as_deref(),
                 entry,
                 &told,
             )

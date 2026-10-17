@@ -212,6 +212,15 @@ caps document agents running at once (a document needing a start waits, still du
 frees); `[review] idle_hours` (default 4) stops an idle document agent, which resumes with its next
 batch. The watcher ticks every 30 s; at debug level it logs why a document is held back (not still long enough), due, or waiting for a slot. Just before sending it re-reads the file and sends only if the pending threads are unchanged, comparing without thread IDs (ad3t: a document whose threads already had IDs was never sent).
 
+**@-mentions (br-4cgx).** When a pending comment is delivered, each `@role` or `@agent-name` in it
+(also `@project:role`, `@prefix:role`, `@project:external:role` for another project, through the
+outbox) gets one `task_update` message with the document path, the UI link as `bridle link` prints
+it (omitted without `[gateway] public_url`) and the comment text. Only the human's comments are
+pending, so only they fire mentions. A name is told once per delivery; the document's own agent
+already has the comment and is not told again; `\@name` is not a mention; a name that resolves to
+nobody is reported back to the human. Only the newest pending entry of each thread is scanned, so a
+resent thread does not tell anyone twice. Ticket-thread mentions use the same message.
+
 **Marks, IDs and review now (ticket ehv6).** Each entry may end its first line with one ASCII
 status, `[pending|sent|read YYYY-MM-DD HH:MM EDT]` (US Eastern with its zone; only the latest is
 kept). Nothing parses the times: state is which mark is present. When bridle sends a batch it first
