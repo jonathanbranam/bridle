@@ -506,7 +506,9 @@ bridle ticket comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain com
   it isn't running the message still waits in the name's own inbox for its next session, and `send`
   adds "<name> isn't running; waiting in its inbox" (an `@machine` address goes to `external:advisor`,
   marked "(originally for advisor/<name>)"); `bridle send` prints one `sent <id> -> <to>` line per recipient.
-  A role with no live agents is an error, same as an unknown agent name.
+  A role with no live agents is an error, same as an unknown agent name. `external:aide` on a daemon
+  with no aide is the same not_found, but the error names the fallback: `bridle send human`, or a
+  `--for-human` ticket (`bridle send human` needs no aide).
   `--project <other>` naming a different daemon than the sender's own, with no direct token for it on
   this machine (3haz; with `$BRIDLE_AS`'s credential for <other> and its daemon in this machine's registry
   the send goes straight to that daemon, 2msq; `--url` with `--project` picks the daemon and names the token): the CLI hands the message to

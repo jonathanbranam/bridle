@@ -1920,7 +1920,14 @@ async fn resolve_targets_in(store: &Store, to_raw: &str) -> Result<Vec<ToTarget>
         if advisor.as_deref().is_some_and(|a| !valid_advisor_name(a))
             || !store.external_exists(&owner).await?
         {
-            return Err(ApiError::not_found(format!("no such recipient: {to_raw}")));
+            let hint = if owner == "aide" {
+                "; this daemon has no aide: send to `human`, or file a ticket with --for-human"
+            } else {
+                ""
+            };
+            return Err(ApiError::not_found(format!(
+                "no such recipient: {to_raw}{hint}"
+            )));
         }
         // A named advisor's mail waits in its own inbox, running or not (hwek). A machine
         // suffix is another daemon's session: that mail goes to the shared inbox, marked.

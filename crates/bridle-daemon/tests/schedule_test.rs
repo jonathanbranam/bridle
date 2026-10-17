@@ -177,4 +177,5 @@ async fn the_human_schedules_to_a_bare_advisor_name() {
         .await
         .expect_err("unknown");
     assert!(err.to_string().contains("no such recipient"), "{err}");
+    assert!(err.to_string().contains("send to `human`"), "{err}");
 }

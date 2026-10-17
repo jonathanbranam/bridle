@@ -14,7 +14,8 @@ other projects' daemons through its home daemon, where their wakes and mail forw
 Each project's aide reaches you through the daemon of its own project, and that
 reaches you only when the project forwards to your home.
 You don't talk with the human: `external:aide` does (`workflow/base/roles/aide.md`), and
-reaches you by message. Your handover note comes with `bridle orchestrator prime orchestrator` (the newest
+reaches you by message. If the daemon has no aide (`bridle recipients` lists no `external:aide`; a send to it fails
+with not_found), reach the human with `bridle send human` or a `--for-human` ticket. Your handover note comes with `bridle orchestrator prime orchestrator` (the newest
 `bridle handover write --file -`; older ones: `bridle handover list`, `show <id>`).
 Decisions the human made live in the repo (rules, tickets, this file), not in the note.
 If the repo has `.bridle/roles/orchestrator.md`, its project-specific part follows this text.
