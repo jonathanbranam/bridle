@@ -122,9 +122,13 @@ Options:
 - C. **Recommended.** The product is declared once, in its **home project's**
   `.bridle/config.toml`; every other member names it with one line.
 
-> [!comment] c1 human, 2026-10-16 22:12 EDT, on "Recommended. The product is declared once, in its home project's .bridle/config.toml; every other member names it with one line." [pending 2026-10-16 22:12 EDT]
+> [!comment] c1 human, 2026-10-16 22:12 EDT, on "Recommended. The product is declared once, in its home project's .bridle/config.toml; every other member names it with one line." [sent 2026-10-16 22:26 EDT]
 > Agree. Approved C. Product declared in a home project (user decides).
 
+>
+> **doc-g5dm, 2026-10-16 22:31 EDT:** @human Noted, C stands. Nothing to change in the text.
+>
+> **resolved by doc-g5dm, 2026-10-16 22:31 EDT**
 ```toml
 # home project (the one holding the roadmap), e.g. bridle
 [product]
@@ -150,8 +154,8 @@ projects need nothing.
 ### 2. Where the roadmap lives, and how the gateway shows it
 
 The roadmap lives in the home project. It stays where it is for bridle
-(`docs/notes/roadmap.md`), and the `[product]` table gets an optional
-`roadmap = "docs/notes/roadmap.md"` path, defaulting to `docs/roadmap.md`. It stays a
+(`docs/notes/roadmap.md`) today and moves to a fixed `docs/roadmap.md` in the home project
+(the human, 2026-10-16); the `[product]` table has no roadmap path. It stays a
 hand-kept document owned by the PdM for now; tasks in member projects are listed in it by
 qualified id (`ui-vhrb`, `br-g5dm`), which the id scheme already makes unambiguous across
 projects. A database-backed roadmap is deferred (YAGNI): the trial has not settled its shape.
@@ -178,30 +182,47 @@ by `bridle ticket check`; deferred, not rejected.
 
 The PdM is a seat belonging to the **home project's daemon**, not a separate kind of daemon:
 
-- **Tokens.** One external-principal key per member project (the same mechanism advisors use),
-  so the PdM reads and files tickets in each member daemon and in no others. Product-less
+- **Tokens.** One external-principal key per member project (the same mechanism advisors use).
+  Each key is a daemon API token: the PdM reads and files tickets through each member daemon's
+  API (`bridle` CLI against that daemon), not by reading the member's files, so it reaches each
+  member daemon and no others. Product-less
   projects and other products' projects have no key for it. Created when a project joins the
   product (`bridle token create --external product-manager/<product>` on the member).
 
-> [!comment] c4 human, 2026-10-16 22:17 EDT, on "the PdM reads and files tickets in each member daemon and in no others" [pending 2026-10-16 22:17 EDT]
+> [!comment] c4 human, 2026-10-16 22:17 EDT, on "the PdM reads and files tickets in each member daemon and in no others" [sent 2026-10-16 22:26 EDT]
 > Is the token for the daemon? How does the pdm read files? The file system or bridle?
 
-- **Daemons watched.** Exactly the member projects found by section 1, plus none else. Watching
-  uses the existing task watcher mechanism (br-519b), not a new poll.
+>
+> **doc-g5dm, 2026-10-16 22:31 EDT:** @human Yes, the token is for a daemon: one per member project. The PdM goes through bridle (each member daemon's API), not the file system. I reworded the Tokens bullet to say so.
+>
+> **resolved by doc-g5dm, 2026-10-16 22:31 EDT**
+- **Daemons watched.** Exactly the member projects found by section 1, plus none else. The PdM
+  waits like every other role, through the unified per-role waiter, not a PdM-specific poll or
+  watcher (the human, 2026-10-16).
 
-> [!comment] c2 human, 2026-10-16 22:14 EDT, on "Daemons watched. Exactly the member projects found by section 1, plus none else. Watching uses the existing task watcher mechanism (br-519b), not a new poll." [pending 2026-10-16 22:14 EDT]
+> [!comment] c2 human, 2026-10-16 22:14 EDT, on "Daemons watched. Exactly the member projects found by section 1, plus none else. Watching uses the existing task watcher mechanism (br-519b), not a new poll." [sent 2026-10-16 22:26 EDT]
 > I don't think this matters any more. There should be a unified waiter for each role no matter what.
 
-- **Inbox.** One inbox on the home daemon, address `product-manager/<product>@<home>`.
-  Requests for a member project go there instead of the project aide (the decided routing):
+>
+> **doc-g5dm, 2026-10-16 22:31 EDT:** @human Agreed. I replaced the br-519b watcher sentence with the unified per-role waiter, in Daemons watched.
+>
+> **resolved by doc-g5dm, 2026-10-16 22:31 EDT**
+- **Inbox.** One inbox on the home daemon. The PdM runs on the home project, so its address is
+  its ordinary principal there, `external:product-manager` (the human, 2026-10-16), not a new
+  address form. Requests for a member project go there, from any sender, instead of the project
+  aide (the decided routing):
   `bridle send` and the request-a-feature path resolve the recipient from the target project's
   `[product]` table, falling back to the aide when it is absent. The member's aide keeps its
   own inbox for project-internal matters, so nothing is lost if the PdM is not running (and
   per br-6h65, the PdM need not be standing: a message to its inbox starts it).
 
-> [!comment] c3 human, 2026-10-16 22:16 EDT, on "One inbox on the home daemon, address product-manager/<product>@<home>. Requests for a member project go there instead of the project aide (the decided routing)" [pending 2026-10-16 22:16 EDT]
+> [!comment] c3 human, 2026-10-16 22:16 EDT, on "One inbox on the home daemon, address product-manager/<product>@<home>. Requests for a member project go there instead of the project aide (the decided routing)" [sent 2026-10-16 22:26 EDT]
 > Since the pdm runs on the project home it already has a name external:product-manager of the bridle project.
 
+>
+> **doc-g5dm, 2026-10-16 22:31 EDT:** @human Right. I dropped the `product-manager/<product>@<home>` address; the inbox is the PdM's ordinary principal on the home daemon, `external:product-manager`.
+>
+> **resolved by doc-g5dm, 2026-10-16 22:31 EDT**
 - Rejected: one PdM with a "current product" switch. That keeps every product in one context,
   the problem this epic exists to remove.
 
@@ -238,19 +259,32 @@ only for the product.
 2. Should the roadmap file move to a fixed `docs/roadmap.md`, or keep the configurable path
    (bridle's stays `docs/notes/roadmap.md`)?
 
-> [!comment] c5 human, 2026-10-16 22:17 EDT, on "Should the roadmap file move to a fixed docs/roadmap.md" [pending 2026-10-16 22:17 EDT]
+> [!comment] c5 human, 2026-10-16 22:17 EDT, on "Should the roadmap file move to a fixed docs/roadmap.md" [sent 2026-10-16 22:26 EDT]
 > Yes docs roadmap
 
+>
+> **doc-g5dm, 2026-10-16 22:31 EDT:** @human Done. Section 2 now says a fixed `docs/roadmap.md` in the home project, with no path option. bridle's file moves there from docs/notes.
+>
+> **resolved by doc-g5dm, 2026-10-16 22:31 EDT**
 3. Are themes per product with the qualified form `<product>/<slug>` right, and should
    `bridle ticket check` warn on a `theme:` in a product-less project?
 4. Cross-product work: is "one owner, the other PdM notified, no shared epic" enough, or do you
    want a real shared epic?
 
-> [!comment] c6 human, 2026-10-16 22:18 EDT, on "Cross-product work: is "one owner, the other PdM notified, no shared epic" enough" [pending 2026-10-16 22:18 EDT]
+> [!comment] c6 human, 2026-10-16 22:18 EDT, on "Cross-product work: is "one owner, the other PdM notified, no shared epic" enough" [sent 2026-10-16 22:26 EDT]
 > Yes.
 
+>
+> **doc-g5dm, 2026-10-16 22:31 EDT:** @human Good, the section 5 text stands.
+>
+> **resolved by doc-g5dm, 2026-10-16 22:31 EDT**
 5. Should a message from one agent to a member project reach the PdM even when the sender is in
    the same product (a bridle-ui worker asking bridle), or only for outside senders?
 
-> [!comment] c7 human, 2026-10-16 22:19 EDT, on "Should a message from one agent to a member project reach the PdM even when the sender is in the same product (a bridle-ui worker asking bridle), or only for outside senders?" [pending 2026-10-16 22:19 EDT]
+> [!comment] c7 human, 2026-10-16 22:19 EDT, on "Should a message from one agent to a member project reach the PdM even when the sender is in the same product (a bridle-ui worker asking bridle), or only for outside senders?" [sent 2026-10-16 22:26 EDT]
 > Don't understand. Agents should message the product-manager agent on the home project of the product. Anyone can message anyone
+
+>
+> **doc-g5dm, 2026-10-16 22:31 EDT:** @human My question was whether a sender in the same product is treated differently. Your answer is no: requests for a member project go to the PdM on the home project, from any sender, and no one is blocked from messaging anyone. I added "from any sender" to the Inbox bullet.
+>
+> **resolved by doc-g5dm, 2026-10-16 22:31 EDT**
