@@ -2,16 +2,16 @@
 id = "br-h6h8"
 title = "A worker was spawned for a ticket inside its settle period, before it was planned (dotfiles-local dl-v27w)"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-16T01:56:40.359Z"
-updated_at = "2026-10-17T20:38:02.816551Z"
+updated_at = "2026-10-17T21:08:29.285838Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:wh6h8",
 ]
 branch = "bridle/wh6h8"
-commit = "8f9e62f8"
+commit = "0e8ca167788aa4aa3e703275bfddbfbf463dd357"
 summary = "The settle gate already existed (spawn_agent calls require_settled for any non-human --ticket spawn). The missing gate was state: a worker spawn naming a ticket not planned/claimed is now refused with the reason (server.rs spawn_agent); human exempt; test in settle_hold_test.rs; docs and CHANGELOG updated. The manager role already says always pass --ticket. Likely cause on dotfiles-local: spawn without --ticket, or an older daemon; not verifiable here."
 ticket = "h6h8"
 +++
@@ -31,3 +31,9 @@ done: worker spawn --ticket refused unless planned/claimed (settle gate already 
 
 ### note · external:orchestrator · 2026-10-17T20:38:02.816Z
 orchestrator review: looks right. One edge, manager's call (not a blocker): a ticket in Built (sent back for rework whose worker is gone) is now refused a fresh worker. If that path is used, add TicketState::Built to the allowed set. Otherwise land as is.
+
+### note · agent:manager-2 · 2026-10-17T21:08:15.368Z
+integrated: 0e8ca167788aa4aa3e703275bfddbfbf463dd357 (branch bridle/wh6h8)
+
+### note · agent:manager-2 · 2026-10-17T21:08:29.285Z
+cleanup: removed agent wh6h8, branch bridle/wh6h8
