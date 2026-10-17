@@ -26,6 +26,22 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-17 02:05Z: the orchestrator lost its role on every non-home daemon after the token pair
+
+- **What happened:** after the br-gr3v pairing, each machine's orchestrator is a visitor
+  (`orchestrator@<machine>`) on every daemon but its home. Visitors may only submit tickets and
+  comment on their own submissions, so `ticket ready`, `ticket comment` and `ticket new
+  --from-task` are refused. Found by orchestrator@vesta on meta-notes, and again by
+  orchestrator@dalek on bridle (02:32Z) right after moving to dalek-home. Two side bugs:
+  `ticket new --project bridle` from vesta wrote the file into the vesta-home clone, and a refused
+  `ticket new --from-task` on dalek still wrote its file into the bridle clone.
+- **Impact:** the orchestrator can't ready approved tickets, comment on threads or close rows on
+  any work project; every such step goes through a manager or the PdM. Two stray ticket files
+  (one duplicate, zzt7, deleted).
+- **Cause:** the visitor permission set (br-gr3v) doesn't carry the orchestrator's role.
+- **Category:** `daemon`, `config`.
+- **Follow-up:** br-cah9 (critical; awaiting ready by the PdM, planned next after tvrp).
+
 ## 2026-10-13 03:23Z: main red on a flaky macOS test
 
 - **What happened:** CI failed on 6111b0b7 (a docs-only commit) on macos-latest:
