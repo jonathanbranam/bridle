@@ -2,9 +2,9 @@
 id = "br-j86p"
 title = "Same-machine orchestrator keeps direct tokens (visiting-orchestrator token is submit-only); ticket new --project writes into the wrong clone"
 kind = "fix"
-state = "built"
+state = "integrated"
 created_at = "2026-10-17T02:44:03.225Z"
-updated_at = "2026-10-17T03:56:59.442216Z"
+updated_at = "2026-10-17T04:15:57.138999Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -13,7 +13,7 @@ watchers = [
 priority = "critical"
 priority_at = "2026-10-17T02:44:37.657490Z"
 branch = "bridle/j86p"
-commit = "d23e983d563893bc67ff7a707b29b90bc78acf2c"
+commit = "46fb56d931b2762e1ad6609ba3bce3666446abbb"
 summary = "Step 1 only. The machine's orchestrator keeps a DIRECT token on same-machine daemons that records a home (pair-mint --direct replaces --replace-direct and revokes the old visitor token; pair-check refuses a visitor token on the holder's own machine, so a re-pair swaps it). Daemon: token create accepts home without machine; forward_to_home and wake forward_home forward for a direct orchestrator that has a home (a direct one without a home still keeps wakes). Tests: token_pair repair sim, outbox_test direct orchestrator comments + wakes/mail forward + cross-machine visitor still refused. Docs: cli.md, orchestrator-supervision.md, CHANGELOG (migration: re-run token pair on dalek, vesta, remus). Step 2 (ticket new --project X clone, refused --from-task leaves file, --from-task re-link orphaning) not started."
 ticket = "j86p"
 +++
@@ -55,3 +55,6 @@ done step 1: just check exit 0, 1786 tests passed, main merged; d23e983d563893bc
 
 ### note · agent:manager-2 · 2026-10-17T03:56:59.442Z
 split off br-ncbz: ticket new --project X writes into X's clone; a refused ticket new --from-task leaves no file
+
+### note · agent:manager-2 · 2026-10-17T04:15:57.138Z
+integrated: 46fb56d931b2762e1ad6609ba3bce3666446abbb (branch bridle/j86p)
