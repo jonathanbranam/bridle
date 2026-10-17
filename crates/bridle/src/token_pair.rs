@@ -111,9 +111,19 @@ pub fn remote_bridle_cmd(args: &[String]) -> String {
     format!("{REMOTE_PATH}; exec bridle {}", quoted.join(" "))
 }
 
+/// The line that says why a helper failed: the first `error` line (clap ends its output with
+/// "For more information, try '--help'."), else the last line.
+fn failure_line(stderr: &str) -> &str {
+    let text = stderr.trim();
+    text.lines()
+        .find(|l| l.starts_with("error"))
+        .or_else(|| text.lines().last())
+        .unwrap_or("")
+}
+
 /// The reason for a failed remote run: 127 is the shell not finding bridle, 255 is ssh itself.
 pub fn remote_failure(host: &str, code: i32, stderr: &str) -> String {
-    let last = stderr.trim().lines().last().unwrap_or("");
+    let last = failure_line(stderr);
     match code {
         127 => format!("bridle not found on {host} (looked on PATH, ~/.local/bin, ~/.cargo/bin)"),
         255 if last.is_empty() => format!("{host} unreachable: ssh failed"),
@@ -185,7 +195,7 @@ impl Runner for Exec {
             Err(if err.is_empty() {
                 format!("exit {}", out.status.code().unwrap_or(-1))
             } else {
-                err.lines().last().unwrap_or(err).to_string()
+                failure_line(err).to_string()
             })
         }
     }
@@ -1086,6 +1096,15 @@ mod tests {
             "error: no such project"
         );
         assert_eq!(remote_failure("nuc", 2, ""), "exit 2");
+        // clap's usage trailer is not the reason.
+        assert_eq!(
+            remote_failure(
+                "nuc",
+                2,
+                "error: the following required arguments were not provided:\n  --machine\n\nUsage: x\n\nFor more information, try '--help'.\n"
+            ),
+            "error: the following required arguments were not provided:"
+        );
     }
 
     #[test]
