@@ -78,3 +78,24 @@ If that day comes:
 
 Nothing here should switch without the human's say-so; any change to push credentials gets its
 own ticket and a set-up note for the human before it ships.
+
+## Decision (the human, 2026-10-17 ~5:05 PM ET): by hand, option A
+
+The human, verbatim (to advisor product-manager): "Yeah, we can do it by hand. I think I did this on
+at least Remus. I don't know if I did it on Vesta or not." And: "Everyone should commit as
+dev@branam.us, though."
+
+So nothing is built. What's left:
+
+- **Docs (this ticket's change):** `docs/context/add-a-machine.md` gets a step: set the global
+  identity to `git config --global user.name "Jonathan Branam (<machine>)"` and
+  `git config --global user.email dev@branam.us`, and make sure no included file (such as
+  `~/.gitconfig.local`) sets a different `[user]`. Check with
+  `git config --show-origin --get-all user.name`.
+- **The human, by hand:** check vesta and remus (and the NUC) with that command and fix any that
+  are not `Jonathan Branam (<machine>) <dev@branam.us>`.
+- dalek: done (global `~/.gitconfig` since ~10-13; advisor aligned `~/.gitconfig.local` on
+  2026-10-17 at the human's say-so, backup `~/.gitconfig.local.bak-2026-10-17`).
+
+Separate, not here: agents committing and pushing under a bridle identity rather than the
+human's (new ticket, see related).
