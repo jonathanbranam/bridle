@@ -2263,8 +2263,7 @@ pub enum FocusAction {
 
 #[derive(Debug, Args)]
 pub struct WaitForWakeArgs {
-    /// Give up after this many seconds and print `nothing`; default 25 minutes, cap 6900 s
-    /// (1 h 55 min).
+    /// Give up after this many seconds and print `nothing`; default and cap 6900 s (1 h 55 min).
     #[arg(long)]
     pub timeout: Option<u64>,
 }

@@ -2,6 +2,16 @@
 
 use super::*;
 
+/// The wait a `bridle agent wake` or `bridle orchestrator wait-for-wake` asks for when it has no
+/// `--timeout`: the cap, which the CLI sends so it agrees with what it prints (the daemon's bare
+/// orchestrator route defaults to 25 min for raw API callers).
+pub(super) const WAKE_WAIT_SECS: u64 = 6900;
+
+/// The wait to request: `--timeout` or the cap, never over the cap.
+pub(super) fn wake_wait_secs(requested: Option<u64>) -> u64 {
+    requested.unwrap_or(WAKE_WAIT_SECS).min(WAKE_WAIT_SECS)
+}
+
 pub(super) async fn spawn(cli: &Cli, args: &SpawnArgs) -> Result<(), CliError> {
     let client = client_for(cli).await?;
     let prompt = match (&args.prompt, &args.prompt_file) {
@@ -253,16 +263,16 @@ pub(super) async fn wake(cli: &Cli, args: &WakeArgs) -> Result<(), CliError> {
         )));
     }
     let identifier = args.identifier.clone().unwrap_or_default();
+    let timeout_secs = wake_wait_secs(args.timeout);
     // On stderr so `--json` output stays clean.
     eprintln!(
-        "waiting as {identifier} (pid {}, timeout {} s)",
-        std::process::id(),
-        args.timeout.map_or(6900, |t| t.min(6900))
+        "waiting as {identifier} (pid {}, timeout {timeout_secs} s)",
+        std::process::id()
     );
     let got = client
         .principal_wake(&bridle_api::types::PrincipalWakeQuery {
             principal: identifier.clone(),
-            timeout_secs: args.timeout,
+            timeout_secs: Some(timeout_secs),
             session,
             pid: Some(std::process::id()),
         })
@@ -352,5 +362,17 @@ pub(super) fn print_transcript_line(line: &bridle_api::TranscriptLine, raw: bool
     };
     for rendered in render::render_stream_json_line(&value) {
         println!("{rendered}");
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::wake_wait_secs;
+
+    #[test]
+    fn a_wake_with_no_timeout_waits_the_cap() {
+        assert_eq!(wake_wait_secs(None), 6900);
+        assert_eq!(wake_wait_secs(Some(60)), 60);
+        assert_eq!(wake_wait_secs(Some(9000)), 6900);
     }
 }

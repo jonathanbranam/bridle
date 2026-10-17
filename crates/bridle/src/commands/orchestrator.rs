@@ -415,7 +415,7 @@ pub(super) async fn wait_for_wake(cli: &Cli, timeout: Option<u64>) -> Result<(),
     let client = client_for(cli).await?;
     // The old route, not `GET /v1/wake`: daemons from before br-2672 answer the new one with
     // text-less reasons (the message body lost, marked read) or 403. Every daemon serves this.
-    let wakes = fetch_wakes(&client, timeout).await?;
+    let wakes = fetch_wakes(&client, Some(wake_wait_secs(timeout))).await?;
     if cli.json {
         println!(
             "{}",
