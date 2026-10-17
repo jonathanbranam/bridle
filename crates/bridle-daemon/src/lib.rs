@@ -1030,6 +1030,7 @@ async fn start_inner(
             async move { governor.tick().await }
         }
     });
+    let release_state = tick_state.clone();
     let ci_task = spawn_loop(shutdown_rx.clone(), overrides.ci_tick_interval, {
         let ci = ci.clone();
         move || {
@@ -1037,9 +1038,21 @@ async fn start_inner(
             let state = tick_state.clone();
             async move {
                 ci.tick().await;
-                server::self_upgrade_tick(&state).await;
+                // A release daemon's upgrade ticks below, apart from this loop (br-66qq).
+                if state.self_upgrade == config::SelfUpgrade::Main {
+                    server::self_upgrade_tick(&state).await;
+                }
             }
         }
+    });
+    // Its own loop: `gh` and `git` in the CI tick have no timeout, and one that hangs would
+    // otherwise stop the release check for good with nothing in the log (br-66qq).
+    let release_upgrade_task = (config.self_upgrade == config::SelfUpgrade::Release).then(|| {
+        let state = release_state;
+        spawn_loop(shutdown_rx.clone(), overrides.ci_tick_interval, move || {
+            let state = state.clone();
+            async move { server::self_upgrade_tick(&state).await }
+        })
     });
     let prune_task = spawn_loop(shutdown_rx.clone(), Duration::from_secs(24 * 60 * 60), {
         let store = store.clone();
@@ -1254,6 +1267,9 @@ async fn start_inner(
         tracker_task.abort();
         governor_task.abort();
         ci_task.abort();
+        if let Some(t) = release_upgrade_task {
+            t.abort();
+        }
         if let Some(t) = auto_push_task {
             t.abort();
         }

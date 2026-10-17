@@ -434,9 +434,11 @@ so its other daemons don't install releases over the binary built from `main`, w
 project keeps commit mode. Commit mode (`true`) on a project whose repo has no `crates/bridle`
 doesn't build: `restart --upgrade` answers "this project's repo isn't bridle; set `[daemon]
 self_upgrade = "release"`" and the automatic tick does nothing. On the same
-tick and the same quiet-point test, the daemon asks GitHub (`curl`, unauthenticated; the repo is
+interval (a loop of its own, not the CI watcher's: `gh` in the CI tick has no timeout, and a hang there
+once kept release daemons from ever checking, br-66qq) and the same quiet-point test, the daemon asks GitHub (`curl`, unauthenticated; the repo is
 `[daemon] release_repo`, else bridle's own, `release::BRIDLE_REPO`; never the project's `origin`) for the newest release, at most every 30
-minutes (`release::POLL_EVERY`, counted even when the ask fails, so rate limits back off). A tag
+minutes (`release::POLL_EVERY`, counted even when the ask fails, so rate limits back off; a failed ask is a
+`warn` line, a newer tag found an `info` line). A tag
 newer than the running version (plain `X.Y.Z` compare, a prerelease or odd tag is never newer)
 starts a background upgrade: download `bridle-<tag>-<target>.tar.gz` and `SHA256SUMS` (names from
 the release workflow, `scripts/package-release.sh`), check the SHA256, unpack, keep the running

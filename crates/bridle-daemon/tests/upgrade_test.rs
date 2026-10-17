@@ -865,3 +865,35 @@ async fn commit_mode_refuses_in_a_repo_that_isnt_bridle() {
     daemon.running.shutdown();
     daemon.running.join().await.expect("join");
 }
+
+/// A CI watcher whose `gh` call hangs (it has no timeout).
+struct HungGh;
+
+impl Gh for HungGh {
+    fn branch_runs(&self, _: &str) -> Result<Vec<Run>, String> {
+        std::thread::sleep(Duration::from_secs(8));
+        Ok(Vec::new())
+    }
+    fn runs(&self, _: &str) -> Result<Vec<Run>, String> {
+        Ok(Vec::new())
+    }
+    fn failed_jobs(&self, _: u64) -> Result<Vec<String>, String> {
+        Ok(Vec::new())
+    }
+}
+
+/// br-66qq: the release check doesn't ride on the CI tick, so a hung `gh` can't stop it.
+#[tokio::test]
+async fn a_hung_ci_watch_does_not_stop_the_release_check() {
+    let mut o = release_hooks("v999.0.0");
+    o.upgrade.gh = Some(Arc::new(HungGh));
+    o.ci_tick_interval = Duration::from_millis(100);
+    let (daemon, _tmp) = support::start_daemon_with_config(Some(o), Some(RELEASE_CONFIG)).await;
+    support::wait_for("the release upgrade to start", || async {
+        let ev = upgrade_events(&daemon).await;
+        (!ev.is_empty()).then_some(())
+    })
+    .await;
+    daemon.running.shutdown();
+    daemon.running.join().await.expect("join");
+}

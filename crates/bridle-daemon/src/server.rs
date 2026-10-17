@@ -5284,15 +5284,18 @@ async fn release_upgrade_tick(state: &AppState) {
             return;
         }
         Err(e) => {
-            tracing::debug!(error = %e, "self-upgrade: no release found");
+            // At most one line per poll interval; the only trace of a daemon that can't see releases.
+            tracing::warn!(error = %e, "self-upgrade: could not look up the newest release");
             state.upgrader.release();
             return;
         }
     };
     if state.upgrader.failed_before(&release.tag) {
+        tracing::debug!(tag = %release.tag, "self-upgrade: skipping a release that failed before");
         state.upgrader.release();
         return;
     }
+    tracing::info!(tag = %release.tag, "self-upgrade: newer release found");
     let bg = state.clone();
     tokio::spawn(async move {
         release_upgrade_in_background(bg, release).await;
