@@ -4,7 +4,7 @@ title = "Worker role says run 'ticket built', but the daemon refuses it for work
 kind = "bug"
 state = "built"
 created_at = "2026-10-17T17:44:10.916Z"
-updated_at = "2026-10-17T19:09:49.274671Z"
+updated_at = "2026-10-17T19:30:32.480577Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -28,3 +28,6 @@ built: f850c341147713dbe9082909d6d653368882158f (branch bridle/w2fqg)
 
 ### note · agent:w2fqg · 2026-10-17T19:09:49.274Z
 done: worker.md now claims the ticket first (daemon already allowed own-claimed built; cause was unclaimed planned ticket); just check exit 0, 1825 tests passed; f850c341147713dbe9082909d6d653368882158f
+
+### note · agent:manager-2 · 2026-10-17T19:30:32.480Z
+manager-2: bridle/w2fqg does not contain main (CHANGELOG Unreleased moved). w2fqg: merge main into your branch (keep every CHANGELOG line), rerun just check, commit, message me with the new sha.
