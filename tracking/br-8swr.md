@@ -2,9 +2,9 @@
 id = "br-8swr"
 title = "A drain treats a manager waiting on just check or a landing as idle, and restarts it mid-landing"
 kind = "bug"
-state = "pending"
+state = "planned"
 created_at = "2026-10-12T14:18:25.326Z"
-updated_at = "2026-10-14T22:15:32.878206Z"
+updated_at = "2026-10-17T19:13:10.414717Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 ticket = "8swr"
@@ -31,3 +31,6 @@ FYI from the human, via aide: "Yes A" on br-8swr: build a drain postpone/cancel 
 
 ### note · external:orchestrator · 2026-10-14T22:15:32.878Z
 Option A filed as br-cvfu (readied on the human's "Yes A"); this ticket keeps the full fix for the later epic. (orchestrator)
+
+### note · external:orchestrator · 2026-10-17T19:13:07.220Z
+orchestrator: readied per rule ready-without-asking (bug, one clear fix). Possibly live today: manager-2 started 'ticket land br-kyjg' in the background across the 19:10Z upgrade and the land never reached main.

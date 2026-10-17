@@ -1,4 +1,7 @@
 [[tier]]
+tasks = ["br-8swr"]
+
+[[tier]]
 tasks = ["br-mhjn"]
 
 [[tier]]
