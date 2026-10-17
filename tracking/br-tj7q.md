@@ -4,7 +4,7 @@ title = "Change stages on every ticket: attachments, proposal/design/specs/tasks
 kind = "epic"
 state = "pending"
 created_at = "2026-10-17T02:23:44.883Z"
-updated_at = "2026-10-17T19:51:05.738463Z"
+updated_at = "2026-10-17T19:51:32.207492Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
@@ -222,3 +222,6 @@ The human, 2026-10-17 ~4:12 PM ET, on open question 4 (changes asked by the huma
 
 ### note · external:advisor/tj7q · 2026-10-17T19:51:05.738Z
 The human, 2026-10-17 ~4:14 PM ET, on open question 5 (`bridle ticket next <id>` prints the next unblocked stage, its layered instructions, template, output path and dependency files; bridle uses the same output as the designer's prompt; refuses on an unsigned gate): "Yes". Settled.
+
+### note · external:advisor/tj7q · 2026-10-17T19:51:32.207Z
+The human, 2026-10-17 ~4:16 PM ET, on open question 6 (signing in MVP: a thread entry with signer, who ran it and time, plus the ticket's signed list; while a gate is unsigned later stages do not start, `ticket next` refuses and the ticket cannot become ready; cryptographic signing stays with v2va): "Yes". Settled.
