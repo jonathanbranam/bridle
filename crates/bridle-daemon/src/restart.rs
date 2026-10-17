@@ -15,6 +15,45 @@ use crate::worktree;
 /// absent means this start is not a restart in place; the new process clears it once read.
 const RESUME_KEY: &str = "restart.resume";
 
+/// When the last restart was requested (RFC 3339) and how long it took to come back (seconds).
+const STOPPED_AT_KEY: &str = "restart.stopped_at";
+const LAST_SECS_KEY: &str = "restart.last_secs";
+
+/// Notes that a restart is being requested now; the next start turns it into a duration.
+pub async fn note_stopping(store: &Store) {
+    let _ = store
+        .swap_meta(STOPPED_AT_KEY, &chrono::Utc::now().to_rfc3339())
+        .await;
+}
+
+/// At startup: how long the restart that just ended took, kept for the next upgrade's
+/// `expected_back_secs`. A start that follows no restart request records nothing.
+async fn note_back(store: &Store) {
+    let Some(at) = store.get_meta(STOPPED_AT_KEY).await.ok().flatten() else {
+        return;
+    };
+    if at.is_empty() {
+        return;
+    }
+    let _ = store.swap_meta(STOPPED_AT_KEY, "").await;
+    if let Ok(at) = chrono::DateTime::parse_from_rfc3339(&at) {
+        let secs = (chrono::Utc::now() - at.with_timezone(&chrono::Utc))
+            .num_seconds()
+            .max(0);
+        let _ = store.swap_meta(LAST_SECS_KEY, &secs.to_string()).await;
+    }
+}
+
+/// How long the last restart took, if one has been timed.
+pub async fn last_restart_secs(store: &Store) -> Option<u64> {
+    store
+        .get_meta(LAST_SECS_KEY)
+        .await
+        .ok()
+        .flatten()
+        .and_then(|s| s.parse().ok())
+}
+
 /// The integration branch's head, short, for the wakes (`None` if git can't say).
 pub async fn head(repo: &Path, integration: &str) -> Option<String> {
     worktree::run_git(
@@ -71,6 +110,7 @@ pub async fn resume_all(
     repo: &Path,
     integration: &str,
 ) {
+    note_back(store).await;
     let ids = take(store).await;
     if ids.is_empty() {
         return;

@@ -1040,6 +1040,7 @@ async fn principal_wake(
         reason = state.waiters.stopping() => vec![bridle_api::types::PrincipalWakeReason {
             reason: bridle_api::types::DAEMON_STOPPING_WAKE.to_string(),
             text: Some(reason),
+            detail: state.waiters.stop_detail(),
             ..Default::default()
         }],
     };
@@ -5599,6 +5600,9 @@ async fn drain_and_restart(
         tokio::time::sleep(std::time::Duration::from_millis(500)).await;
     };
     let ids: Vec<String> = running.iter().map(|a| a.id.clone()).collect();
+    let from_commit =
+        crate::restart::running_commit(&state.store, &state.workspace.repo, &state.integration)
+            .await;
     crate::restart::record(&state.store, &ids).await?;
     if let Some(sha) = built {
         crate::rollback::arm(&state.workspace).map_err(|e| {
@@ -5643,13 +5647,19 @@ async fn drain_and_restart(
         })
         .await;
     tracing::warn!(principal = %who, "restart requested via POST /v1/restart");
-    state.waiters.set_stop_reason(match built {
-        Some(sha) => format!(
-            "restarting for an internal upgrade to {} (requested by {who})",
-            sha.chars().take(9).collect::<String>()
-        ),
-        None => format!("restarting by request (requested by {who})"),
-    });
+    let expected_back = crate::restart::last_restart_secs(&state.store).await;
+    crate::restart::note_stopping(&state.store).await;
+    let at = chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, true);
+    match built {
+        Some(sha) => {
+            let (text, detail) = upgrade_stop(&at, who, sha, from_commit.as_deref(), expected_back);
+            state.waiters.set_stop_reason(text);
+            state.waiters.set_stop_detail(detail);
+        }
+        None => state
+            .waiters
+            .set_stop_reason(format!("restarting by request (requested by {who})")),
+    }
     state
         .restart_requested
         .store(true, std::sync::atomic::Ordering::SeqCst);
@@ -5661,6 +5671,33 @@ async fn drain_and_restart(
         restarting: true,
         message: None,
     })
+}
+
+/// What a waiter ended by an upgrade is told: the exit-6 text and the same facts as fields.
+fn upgrade_stop(
+    at: &str,
+    who: &str,
+    sha: &str,
+    from: Option<&str>,
+    expected_back_secs: Option<u64>,
+) -> (String, serde_json::Value) {
+    let to: String = sha.chars().take(9).collect();
+    let mut text =
+        format!("restarting for an internal upgrade to {to} (requested by {who}) at {at}");
+    if let Some(from) = from {
+        text.push_str(&format!(", from {from}"));
+    }
+    if let Some(n) = expected_back_secs {
+        text.push_str(&format!(", back in ~{n} s"));
+    }
+    let detail = serde_json::json!({
+        "reason": "upgrade",
+        "at": at,
+        "from": from,
+        "to": to,
+        "expected_back_secs": expected_back_secs,
+    });
+    (text, detail)
 }
 
 #[derive(serde::Deserialize)]
@@ -5697,6 +5734,32 @@ mod tests {
     //! end-to-end `?claimed_by=` filter is exercised at the `TicketManager`
     //! level instead (`tasks.rs`, `claim_blocks_ready_and_release_unblocks_it`).
     use super::*;
+
+    #[test]
+    fn upgrade_stop_says_when_from_to_and_downtime() {
+        let (text, d) = upgrade_stop(
+            "2026-10-17T01:00:00Z",
+            "system",
+            "0454f3b8bcafe",
+            Some("aaa1111"),
+            Some(12),
+        );
+        assert_eq!(
+            text,
+            "restarting for an internal upgrade to 0454f3b8b (requested by system) at 2026-10-17T01:00:00Z, from aaa1111, back in ~12 s"
+        );
+        assert_eq!(d["reason"], "upgrade");
+        assert_eq!(d["at"], "2026-10-17T01:00:00Z");
+        assert_eq!(d["from"], "aaa1111");
+        assert_eq!(d["to"], "0454f3b8b");
+        assert_eq!(d["expected_back_secs"], 12);
+        let (text, d) = upgrade_stop("t", "system", "abc", None, None);
+        assert!(
+            !text.contains("back in") && !text.contains("from"),
+            "{text}"
+        );
+        assert!(d["expected_back_secs"].is_null());
+    }
 
     #[test]
     fn only_held_role_tokens_count_as_rejected_roles() {

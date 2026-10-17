@@ -50,6 +50,8 @@ pub struct Waiters {
     state: StdMutex<WaiterState>,
     /// Why the daemon is stopping, set by the first planned path to ask; `None` means a signal.
     stop_reason: StdMutex<Option<String>>,
+    /// The structured form of an upgrade stop (`reason`, `at`, `from`, `to`, `expected_back_secs`).
+    stop_detail: StdMutex<Option<serde_json::Value>>,
     /// `Some(reason)` once the stop is announced: every open waiter answers with it.
     stop_tx: tokio::sync::watch::Sender<Option<String>>,
 }
@@ -110,6 +112,7 @@ impl Waiters {
             started,
             state: Default::default(),
             stop_reason: Default::default(),
+            stop_detail: Default::default(),
             stop_tx: tokio::sync::watch::channel(None).0,
         })
     }
@@ -200,6 +203,19 @@ impl Waiters {
             .lock()
             .expect("stop reason lock")
             .get_or_insert(reason);
+    }
+
+    /// Records the structured detail of the stop, for waiters that want fields not text.
+    pub fn set_stop_detail(&self, detail: serde_json::Value) {
+        self.stop_detail
+            .lock()
+            .expect("stop detail lock")
+            .get_or_insert(detail);
+    }
+
+    /// The detail set by [`Self::set_stop_detail`], if the stop gave one.
+    pub fn stop_detail(&self) -> Option<serde_json::Value> {
+        self.stop_detail.lock().expect("stop detail lock").clone()
     }
 
     /// Ends every open waiter with the stop reason (`default` when no planned path gave one).
