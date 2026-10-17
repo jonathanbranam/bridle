@@ -45,7 +45,7 @@ the standard AWS chain, never from bridle's files.
 | `max_attachment_bytes` | 1048576 | per attachment |
 | `poll_secs` | 30 | |
 | `to` | `dev@branam.us` | where question mails and the digest go (SES sandbox: a verified address) |
-| `digest_at` | `06:30` | the digest's time, `HH:MM` on the bridge machine's clock (US Eastern on the human's machines) |
+| `digest_at` | `06:30` | the digest's time, `HH:MM` in US Eastern (America/New_York), whatever the bridge machine's zone |
 
 ## Behaviour
 
@@ -92,8 +92,8 @@ from `<project>@domain`, to `[mail] to`. Nothing is mailed except:
   (`<state dir>/mail/digest` holds the date; a bridge started late sends it at once). It lists the
   open questions, the task questions, the other unread inbox items (blockers and decisions), task
   counts by state, the claimed tasks, and the tickets merged in the last week. Notes and answers
-  are never mailed on their own. Each item carries its times in the bridge machine's local time
-  (US Eastern on the human's machines), `created Thu Oct 15 7:00 AM`, plus `updated ...` when the
+  are never mailed on their own. Each item carries its times in US Eastern (real
+  America/New_York, DST included, even on a UTC host), `created Thu Oct 15 7:00 AM`, plus `updated ...` when the
   last activity is a minute or more later. Within each section items are grouped under Today,
   Yesterday, Last week (2 to 7 days back) and Older by their last activity (empty groups are left
   out), newest first. An inbox item whose whole text is a bare "message sent" and that has no

@@ -216,7 +216,14 @@ impl Bridge {
                 }
                 Err(e) => self.failures.failed("mail poll", &e),
             }
-            match self.poll_outbound(chrono::Local::now().naive_local()).await {
+            match self
+                .poll_outbound(
+                    Utc::now()
+                        .with_timezone(&chrono_tz::America::New_York)
+                        .naive_local(),
+                )
+                .await
+            {
                 Ok(_) => self.failures.ok("mail outbound"),
                 Err(e) => self.failures.failed("mail outbound", &e),
             }
@@ -305,7 +312,7 @@ impl Bridge {
                     &open,
                     &tasks,
                     now,
-                    &chrono::Local,
+                    &chrono_tz::America::New_York,
                 ))
                 .await
             {

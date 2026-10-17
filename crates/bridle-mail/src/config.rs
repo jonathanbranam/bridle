@@ -27,8 +27,8 @@ pub struct MailConfig {
     pub poll_secs: u64,
     /// Where question mails and the digest go (the apex is Google Workspace, not SES).
     pub to: String,
-    /// The daily digest's time, `HH:MM`, on the bridge machine's clock (US Eastern for the
-    /// human's machines, as the budget schedule assumes).
+    /// The daily digest's time, `HH:MM`, in US Eastern (America/New_York), whatever
+    /// the bridge machine's zone.
     pub digest_at: String,
 }
 

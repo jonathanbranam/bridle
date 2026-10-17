@@ -445,3 +445,30 @@ fn merged_tickets_from_the_last_week_are_listed() {
     );
     assert!(mail.body.contains("t-3 merged: title of t-3"));
 }
+
+#[test]
+fn digest_stamps_real_us_eastern_whatever_the_host_zone() {
+    // A UTC host: the digest is handed America/New_York, so 11:00 UTC is 7:00 AM in October
+    // (EDT) and 12:00 UTC is 7:00 AM in January (EST).
+    let tz = chrono_tz::America::New_York;
+    let now = NaiveDate::from_ymd_opt(2026, 10, 16)
+        .expect("date")
+        .and_hms_opt(6, 30, 0)
+        .expect("time");
+    let messages = [
+        message_at("m-1", "note", "Summer", "2026-10-15T11:00:00Z", None),
+        message_at("m-2", "note", "Winter", "2026-01-15T12:00:00Z", None),
+    ];
+    let mail = digest_mail("proj", &cfg(), &messages, &[], &[], now, &tz);
+    assert!(mail.body.contains("Times are US Eastern."), "{}", mail.body);
+    assert!(
+        mail.body.contains("[created Thu Oct 15 7:00 AM]"),
+        "{}",
+        mail.body
+    );
+    assert!(
+        mail.body.contains("[created Thu Jan 15 7:00 AM]"),
+        "{}",
+        mail.body
+    );
+}

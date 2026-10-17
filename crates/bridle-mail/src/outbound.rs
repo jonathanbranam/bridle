@@ -255,8 +255,9 @@ pub fn question_mail(
     }
 }
 
-/// A message whose only text is a bare "message sent" style line and that points at nothing
-/// (no reply, no incident, no ticket id, no link) tells the human nothing, so the digest drops it.
+/// A message whose whole body is a bare "message sent" style line (so it carries no link or
+/// ticket id) and that is neither a reply nor tied to an incident tells the human nothing, so
+/// the digest drops it.
 pub fn is_bare_sent_notice(m: &Message) -> bool {
     let text = m.body.trim().trim_end_matches('.').to_lowercase();
     matches!(text.as_str(), "message sent" | "sent" | "message sent ok")
@@ -355,7 +356,7 @@ pub fn digest_mail<Tz: TimeZone>(
 ) -> OutMail {
     let today = now.date();
     let mut out = format!(
-        "bridle digest for {project}, {}\nTimes are local to the bridge (US Eastern on the human's machines).\n",
+        "bridle digest for {project}, {}\nTimes are US Eastern.\n",
         now.format("%A %Y-%m-%d")
     );
     let msg_item = |m: &Message| {
