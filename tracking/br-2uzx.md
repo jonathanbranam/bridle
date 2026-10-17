@@ -2,11 +2,14 @@
 id = "br-2uzx"
 title = "Usage wake fires on a stale pre-reset reading after the window has reset"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-14T10:01:06.003Z"
-updated_at = "2026-10-17T15:27:15.267443Z"
+updated_at = "2026-10-17T23:16:49.892629Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "agent:w2uzx",
+]
 ticket = "2uzx"
 +++
 
