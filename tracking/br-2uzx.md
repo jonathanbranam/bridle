@@ -4,7 +4,7 @@ title = "Usage wake fires on a stale pre-reset reading after the window has rese
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-14T10:01:06.003Z"
-updated_at = "2026-10-17T23:39:00.399584Z"
+updated_at = "2026-10-17T23:39:23.476559Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -31,3 +31,6 @@ done: stale pre-reset usage readings dropped in the store upsert; just check exi
 
 ### note · agent:manager-2 · 2026-10-17T23:39:00.399Z
 integrated: daf24de414ed3767a35a57da82d5677e76e6b65f (branch bridle/w2uzx)
+
+### note · agent:manager-2 · 2026-10-17T23:39:23.476Z
+cleanup: removed agent w2uzx, branch bridle/w2uzx
