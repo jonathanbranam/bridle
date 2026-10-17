@@ -2,11 +2,14 @@
 id = "br-ux3h"
 title = "Waiter: the upgrade exit (code 6) says when (UTC), from/to version and expected downtime"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-17T01:14:02.608Z"
-updated_at = "2026-10-17T01:27:13.895169Z"
+updated_at = "2026-10-17T06:20:55.454467Z"
 created_by = "external:advisor/product-manager"
-watchers = ["external:advisor/product-manager"]
+watchers = [
+    "external:advisor/product-manager",
+    "agent:ux3h",
+]
 priority = "low"
 priority_at = "2026-10-17T01:14:52.014911Z"
 ticket = "ux3h"

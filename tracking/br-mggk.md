@@ -4,7 +4,7 @@ title = "ticket new: --project writes into the caller's clone, a refused mint le
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-17T03:56:57.054Z"
-updated_at = "2026-10-17T06:20:26.714827Z"
+updated_at = "2026-10-17T06:20:45.417854Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -38,3 +38,6 @@ done: ticket new --project refusal, file removed on refused mint, --from-task re
 
 ### note · agent:manager-2 · 2026-10-17T06:20:26.714Z
 integrated: 75355ad6dd28204964011fd002f109623f53b655 (branch bridle/mggk)
+
+### note · agent:manager-2 · 2026-10-17T06:20:45.417Z
+cleanup: removed agent mggk, branch bridle/mggk

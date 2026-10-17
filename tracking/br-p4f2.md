@@ -2,11 +2,14 @@
 id = "br-p4f2"
 title = "bridle migrate 0006 refuses every project that works on main (protected-branch check ignores [branches] integration), even with nothing to change"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-16T01:52:45.667Z"
-updated_at = "2026-10-17T02:07:32.449545Z"
+updated_at = "2026-10-17T06:20:56.685332Z"
 created_by = "external:aide"
-watchers = ["external:aide"]
+watchers = [
+    "external:aide",
+    "agent:p4f2",
+]
 ticket = "p4f2"
 +++
 
