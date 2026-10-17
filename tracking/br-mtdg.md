@@ -2,11 +2,13 @@
 id = "br-mtdg"
 title = "Self-upgrade defaults to release; commit mode only for bridle's own repo"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-16T21:05:17.647Z"
-updated_at = "2026-10-16T23:18:10.619741Z"
+updated_at = "2026-10-17T01:30:05.348917Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
+branch = "bridle/mtdg"
+commit = "20d94535b1871beb89bff98f5b0b209edda11864"
 summary = """[daemon] self_upgrade now defaults to "release" (config.rs Config::default). Precedence: the machine value still wins over a project's, except a machine false does not override a project's explicit true (the default is release, so Main is always explicit); so dalek sets false in ~/.bridle/config.toml and bridle's own project keeps commit mode. Commit mode where the repo has no crates/bridle refuses: restart --upgrade returns 400 upgrade_failed with the one line, the automatic tick logs at debug and does nothing (upgrade.rs is_bridle_repo/NOT_BRIDLE_REPO, server.rs). Test support now writes self_upgrade = false into test repos unless set (else every test daemon would poll GitHub), and creates crates/bridle. Docs: daemon.md, roles-and-config.md, CHANGELOG. MIGRATION: before deploying on dalek, set [daemon] self_upgrade = false in ~/.bridle/config.toml or its non-bridle daemons install releases over the built binary. Note: br-mtdg is blocked_by br-tvrp and 'ticket claim' refused; proceeded per manager."""
 ticket = "mtdg"
 +++
@@ -24,3 +26,6 @@ done: self_upgrade defaults to release; machine false keeps a project's explicit
 
 ### note · agent:manager-2 · 2026-10-16T23:18:10.619Z
 manager-2: built and clean (ce29ccbb); landing held until the orchestrator confirms dalek's ~/.bridle/config.toml has [daemon] self_upgrade = false (migration), asked on the orchestrator channel.
+
+### note · agent:manager-2 · 2026-10-17T01:30:05.348Z
+integrated: 20d94535b1871beb89bff98f5b0b209edda11864 (branch bridle/mtdg)
