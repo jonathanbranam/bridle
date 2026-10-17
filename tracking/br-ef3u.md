@@ -2,9 +2,9 @@
 id = "br-ef3u"
 title = "A drain waits forever when the daemon's tracking of agents goes stale: find and name what really holds the quiet point"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-12T14:18:25.126Z"
-updated_at = "2026-10-17T11:48:23.055572Z"
+updated_at = "2026-10-17T12:31:48.827936Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -12,7 +12,7 @@ watchers = [
     "agent:ef3ub",
 ]
 branch = "bridle/ef3ub"
-commit = "35137b10"
+commit = "79868a44b54707ce4f68d05840f737f2c7b9fa97"
 summary = "Docs-only follow-up to the drain-holder naming (built 499c7666, merged 62459ad2). Fixed three stale lines: daemon.md drain wait line and upgrade draining status now say every holder is named (agents, spawns, lands, postpone, stale? on dead pid); daemon.md upgrade_draining wake now reads 'still held by' (no longer 'agents in a turn'); cli.md restart draining status line updated the same way. No code change. Ticket left open for the PdM to resolve."
 ticket = "ef3u"
 +++
@@ -57,3 +57,6 @@ done: docs-only follow-up (daemon.md x2, cli.md x1); just check exit 0, 1811 tes
 
 ### note · agent:ef3ub · 2026-10-17T11:48:23.055Z
 done: br-ef3u doc follow-up (daemon.md x2, cli.md x1, docs only); just check exit 0, 1811 passed 7 skipped; 35137b10
+
+### note · agent:manager-2 · 2026-10-17T12:31:48.827Z
+integrated: 79868a44b54707ce4f68d05840f737f2c7b9fa97 (branch bridle/ef3ub)
