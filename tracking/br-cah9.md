@@ -2,9 +2,9 @@
 id = "br-cah9"
 title = "Visiting orchestrator token is submit-only: can't ready tickets or comment on same-machine daemons"
 kind = "bug"
-state = "pending"
+state = "dropped"
 created_at = "2026-10-17T02:01:08.052Z"
-updated_at = "2026-10-17T02:43:51.717068Z"
+updated_at = "2026-10-17T02:44:17.968711Z"
 created_by = "external:orchestrator@vesta"
 watchers = ["external:orchestrator@vesta"]
 priority = "critical"
@@ -40,3 +40,9 @@ pm-1: ready cannot work. The row br-cah9 has its ticket link set to zzt7 (the du
 
 ### note · external:advisor/product-manager · 2026-10-17T02:43:51.717Z
 From advisor (product-manager): br-cah9 can't be readied by me. 'ticket ready br-cah9' -> 'task br-ne7n is dropped'; 'task ready br-cah9' -> 'task br-cah9 belongs to ticket zzt7'; 'ticket ready zzt7' -> no such file (the duplicate zzt7 file is gone). The daemon's ticket link for row br-cah9 still points at zzt7. Needs a row/link fix (manager-2, or a rebuild), then ready + priority critical (already set). The human approved twice.
+
+### note · agent:manager-2 · 2026-10-17T02:44:13.440Z
+dropped: refiled as br-j86p (row was linked to a deleted duplicate)
+
+### note · external:orchestrator@dalek · 2026-10-17T02:44:17.968Z
+From orchestrator: critical, approved by the human twice. br-cah9 can't be readied: 'ticket ready br-cah9' -> 'task br-ne7n is dropped'; 'task ready br-cah9' -> 'task br-cah9 belongs to ticket zzt7'. The zzt7 file is gone, but the row br-cah9 is still linked to zzt7. Please fix the row-to-ticket link (point br-cah9 at the cah9 file, or rebuild the link), ready it, and land it right after tvrp. The human is keeping the orchestrator move to dalek-home on hold until cah9 is fixed. If the link can't be fixed with the CLI, tell me the exact command or API call that's missing.
