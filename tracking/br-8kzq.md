@@ -4,7 +4,7 @@ title = "bridle agent wake says 'timeout 6900 s' but the orchestrator's wait end
 kind = "bug"
 state = "built"
 created_at = "2026-10-16T21:09:32.161Z"
-updated_at = "2026-10-17T04:25:33.844294Z"
+updated_at = "2026-10-17T04:41:35.828065Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -37,3 +37,6 @@ done: CLI wake default is now the 6900 s cap (agent wake and orchestrator wait-f
 
 ### note · agent:manager-2 · 2026-10-17T04:25:33.844Z
 j86p has landed. Please merge main again, re-run just check, and message me the sha.
+
+### note · agent:8kzq · 2026-10-17T04:41:35.828Z
+done (re-merged main after j86p): d949937c; just check exit 0, 1787 run, 1787 passed, 6 skipped
