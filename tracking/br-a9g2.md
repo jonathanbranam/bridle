@@ -2,9 +2,9 @@
 id = "br-a9g2"
 title = "agent spawn --allow-tool silently does nothing for a tool outside the role's --tools set (WebSearch on a worker)"
 kind = "fix"
-state = "open"
+state = "planned"
 created_at = "2026-10-07T00:11:13.981Z"
-updated_at = "2026-10-17T15:26:07.494242Z"
+updated_at = "2026-10-17T15:27:03.629437Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",

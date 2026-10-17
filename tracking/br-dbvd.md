@@ -2,9 +2,9 @@
 id = "br-dbvd"
 title = "Specs: bridle spec id duplicates ledger entries for hand-written IDs"
 kind = "fix"
-state = "open"
+state = "planned"
 created_at = "2026-10-05T02:56:15.131Z"
-updated_at = "2026-10-17T15:26:06.302098Z"
+updated_at = "2026-10-17T15:27:02.682309Z"
 created_by = "external:orchestrator@nuc"
 watchers = [
     "external:orchestrator@nuc",

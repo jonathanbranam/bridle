@@ -2,9 +2,9 @@
 id = "br-sdrw"
 title = "Turn off Claude Code prompt suggestions in every bridle session"
 kind = "chore"
-state = "open"
+state = "planned"
 created_at = "2026-10-07T02:17:09.411Z"
-updated_at = "2026-10-17T15:26:07.879261Z"
+updated_at = "2026-10-17T15:27:03.932578Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",

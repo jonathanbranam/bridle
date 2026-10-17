@@ -2,9 +2,9 @@
 id = "br-bnfs"
 title = "Deep links to a human to-do open the task page and fail; open the to-do page instead, also when a to-do id is typed into the task page"
 kind = "fix"
-state = "open"
+state = "planned"
 created_at = "2026-10-10T02:24:24.483Z"
-updated_at = "2026-10-17T15:26:11.866175Z"
+updated_at = "2026-10-17T15:27:14.205245Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",

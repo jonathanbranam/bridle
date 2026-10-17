@@ -2,9 +2,9 @@
 id = "br-h6h8"
 title = "A worker was spawned for a ticket inside its settle period, before it was planned (dotfiles-local dl-v27w)"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-10-16T01:56:40.359Z"
-updated_at = "2026-10-17T15:26:09.741702Z"
+updated_at = "2026-10-17T15:27:10.818949Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "h6h8"

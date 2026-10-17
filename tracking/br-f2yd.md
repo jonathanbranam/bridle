@@ -2,9 +2,9 @@
 id = "br-f2yd"
 title = "Roles: tell every role that 'bridle ticket submit --project <p>' is how to file a ticket against another project"
 kind = "docs"
-state = "open"
+state = "planned"
 created_at = "2026-10-13T23:22:31.932Z"
-updated_at = "2026-10-17T15:26:13.188948Z"
+updated_at = "2026-10-17T15:27:14.865934Z"
 created_by = "external:aide@aide"
 watchers = ["external:aide@aide"]
 ticket = "f2yd"

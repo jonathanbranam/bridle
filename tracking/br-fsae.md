@@ -2,9 +2,9 @@
 id = "br-fsae"
 title = "token pair: the orchestrator check on a machine with a home passes --home without --machine, so every same-machine orchestrator check is 'refused'"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-10-17T01:57:52.342Z"
-updated_at = "2026-10-17T15:26:10.618733Z"
+updated_at = "2026-10-17T15:27:11.253585Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "fsae"

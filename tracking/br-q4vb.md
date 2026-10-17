@@ -2,9 +2,9 @@
 id = "br-q4vb"
 title = "Wake forwarding sends one agent_exited event 7 times on a daemon restart"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-10-17T03:16:03.081Z"
-updated_at = "2026-10-17T15:26:11.026370Z"
+updated_at = "2026-10-17T15:27:13.588300Z"
 created_by = "external:orchestrator@dalek"
 watchers = ["external:orchestrator@dalek"]
 ticket = "q4vb"

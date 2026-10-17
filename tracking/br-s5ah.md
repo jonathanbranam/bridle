@@ -2,9 +2,9 @@
 id = "br-s5ah"
 title = "A daemon without an aide leaves its orchestrator no route to the human"
 kind = "fix"
-state = "open"
+state = "planned"
 created_at = "2026-10-06T23:09:15.193Z"
-updated_at = "2026-10-17T15:26:06.719835Z"
+updated_at = "2026-10-17T15:27:03.041437Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",

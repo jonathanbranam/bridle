@@ -2,9 +2,9 @@
 id = "br-m5kf"
 title = "Specs: say what happens to unit tests a scenario now covers"
 kind = "chore"
-state = "open"
+state = "planned"
 created_at = "2026-10-05T02:51:25.940Z"
-updated_at = "2026-10-17T15:26:12.732363Z"
+updated_at = "2026-10-17T15:27:14.631011Z"
 created_by = "external:orchestrator@nuc"
 watchers = [
     "external:orchestrator@nuc",

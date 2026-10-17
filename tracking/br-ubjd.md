@@ -2,9 +2,9 @@
 id = "br-ubjd"
 title = "A CHANGELOG line for every landed task, written on the branch, and one section per kind under Unreleased"
 kind = "chore"
-state = "open"
+state = "planned"
 created_at = "2026-10-09T00:54:15.168Z"
-updated_at = "2026-10-17T15:26:08.259716Z"
+updated_at = "2026-10-17T15:27:09.541204Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",

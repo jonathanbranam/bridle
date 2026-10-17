@@ -2,9 +2,9 @@
 id = "br-2d6x"
 title = "Specs: vitest-bridle setup leaves step files untypechecked"
 kind = "chore"
-state = "open"
+state = "planned"
 created_at = "2026-10-05T02:51:25.805Z"
-updated_at = "2026-10-17T15:26:12.295426Z"
+updated_at = "2026-10-17T15:27:14.429212Z"
 created_by = "external:orchestrator@nuc"
 watchers = [
     "external:orchestrator@nuc",

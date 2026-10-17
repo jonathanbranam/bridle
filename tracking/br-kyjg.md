@@ -2,9 +2,9 @@
 id = "br-kyjg"
 title = "'bridle ticket built' fails with a bare 'error: unknown: ' on a bridle-ui ticket"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-10-12T23:15:42.759Z"
-updated_at = "2026-10-17T15:26:09.067907Z"
+updated_at = "2026-10-17T15:27:10.315955Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "kyjg"
