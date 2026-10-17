@@ -2420,3 +2420,4 @@
 {"actor":"agent:tvrp","at":"2026-10-17T02:34:46.084883Z","from":"claimed","task":"br-tvrp","to":"built"}
 {"actor":"human","at":"2026-10-17T02:42:15.662Z","from":"","task":"br-ne7n","to":"pending"}
 {"actor":"external:aide","at":"2026-10-17T02:42:15.673224Z","from":"pending","task":"br-ne7n","to":"open"}
+{"actor":"agent:pm-1","at":"2026-10-17T02:42:49.993105Z","from":"open","task":"br-ne7n","to":"dropped"}
