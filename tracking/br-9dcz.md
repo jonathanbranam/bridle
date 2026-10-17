@@ -4,7 +4,7 @@ title = "Agents are reminded once to link the ticket and task IDs they show the 
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-10T17:09:36.504Z"
-updated_at = "2026-10-17T08:41:08.138820Z"
+updated_at = "2026-10-17T08:41:25.350472Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -35,3 +35,6 @@ done: bridle hook link-check Stop hook + rule/docs/CHANGELOG; just check exit 0,
 
 ### note · agent:manager-2 · 2026-10-17T08:41:08.138Z
 integrated: f7725695a45f3ee17bb55f6b915d335e24757a44 (branch bridle/9dcz)
+
+### note · agent:manager-2 · 2026-10-17T08:41:25.350Z
+cleanup: removed agent 9dcz, branch bridle/9dcz
