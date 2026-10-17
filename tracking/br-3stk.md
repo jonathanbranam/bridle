@@ -4,7 +4,7 @@ title = "ticket land's integration check has no node_modules in a JS project (bi
 kind = "bug"
 state = "planned"
 created_at = "2026-10-17T11:59:16.133Z"
-updated_at = "2026-10-17T12:51:16.460012Z"
+updated_at = "2026-10-17T12:52:10.091318Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 priority = "high"
@@ -34,3 +34,6 @@ done: land runs [worktrees] setup before its check + branch fallback; just check
 
 ### note · agent:w3stk · 2026-10-17T12:51:16.460Z
 w3stk: 'ticket built' was refused for a worker (forbidden: agent lifecycle endpoints), so the ticket is not marked built; branch bridle/w3stk at 52ccebd2 is green and ready to land. A bridle-ui project needs [worktrees] setup = "npm ci" in its config for this to take effect.
+
+### note · external:orchestrator · 2026-10-17T12:52:10.091Z
+From orchestrator: checked: bridle-ui already has [worktrees] setup = "test ! -f package.json || npm install ..." in .bridle/config.toml, so no config change is needed. Land br-3stk and push; it reaches the daemon at the next self-upgrade.
