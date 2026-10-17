@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Fix (br-2fqg): the worker role now says to `bridle ticket claim` the ticket first. A spawned worker's ticket is `planned`, and the daemon lets a worker mark `built` only a ticket it has claimed, so `ticket built` was refused for workers that followed the role. Migration: none.
 - Fix (br-kyjg): a command that hits a daemon without that route (an older daemon) now says `the daemon at <url> (version X) doesn't have this command; upgrade it` instead of a bare `unknown: `; any empty error reply names its HTTP status. Migration: none.
 - Fix (br-z5kz): a spawn refused during a restart drain now tells the agent to end its turn (the daemon resumes it after the restart), and the manager role says so; a manager waiting in its turn for the drain used to deadlock the restart. Migration: none.
 - Feature (br-mhjn): new rule `ready-without-asking`: bugs, fixes, incidents, chores, docs and self-evident tickets are readied by whoever files or first sees them, without asking the human; features, epics, designs and open questions go to the human first, and the human can always hold a ticket (`hold: design`). `ticket new` without a body now warns that the ticket cannot be readied until its ask is written under `## The ask`. Migration: none.

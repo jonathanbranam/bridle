@@ -6,7 +6,7 @@ use bridle_api::types::{
     AgentState, InterruptRequest, RemoveQuery, RenewRequest, ResumeRequest, SendRequest,
     SpawnRequest, StopRequest, Workdir,
 };
-use support::{start_daemon, wait_for_agent, wait_for_state};
+use support::{ClientExt, start_daemon, wait_for_agent, wait_for_state};
 
 #[tokio::test]
 async fn interrupt_during_sleep_ends_the_turn_and_agent_stays_usable() {
@@ -707,4 +707,62 @@ async fn manager_and_orchestrator_principals_keep_agent_lifecycle_authority() {
             .await
             .unwrap_or_else(|e| panic!("{role} rm should succeed: {e}"));
     }
+}
+
+/// br-2fqg: a worker may mark built only a ticket it has claimed (worker.md tells it to
+/// claim first); an unclaimed one is still refused as agent lifecycle authority.
+#[tokio::test]
+async fn worker_may_build_only_its_own_claimed_ticket() {
+    use bridle_api::types::{BuiltTicketRequest, NewTicketRequest, TicketKind, TicketState};
+    let (daemon, _tmp) = start_daemon(None).await;
+    let actor = daemon
+        .client
+        .spawn(&SpawnRequest {
+            ticket: None,
+            components: Vec::new(),
+            role: "worker".to_string(),
+            name: Some("builder".to_string()),
+            prompt: None,
+            workdir: Some(Workdir::Repo),
+            model: None,
+            extra_allowed_tools: Vec::new(),
+            extra_env: Vec::new(),
+            ignore_budget: false,
+        })
+        .await
+        .expect("spawn");
+    wait_for_state(&daemon.client, &actor.id, AgentState::Idle).await;
+    let worker = daemon.agent_client(&actor.id);
+    let mut ids = Vec::new();
+    for title in ["Claimed", "Unclaimed"] {
+        let t = daemon
+            .client
+            .new_open_task(&NewTicketRequest {
+                title: title.to_string(),
+                kind: TicketKind::Feature,
+                body: "x".to_string(),
+                size: None,
+                components: Vec::new(),
+                for_human: false,
+                priority: None,
+                ticket: None,
+                parent: None,
+            })
+            .await
+            .expect("new");
+        daemon.client.plan_task(&t.id).await.expect("plan");
+        ids.push(t.id);
+    }
+    let req = BuiltTicketRequest {
+        branch: "bridle/builder".to_string(),
+        commit: "abc123".to_string(),
+    };
+    let err = worker.built_task(&ids[1], &req).await.unwrap_err();
+    assert!(matches!(
+        err,
+        bridle_api::ClientError::Api { status: 403, .. }
+    ));
+    worker.claim_task(&ids[0]).await.expect("claim");
+    let built = worker.built_task(&ids[0], &req).await.expect("built");
+    assert_eq!(built.state, TicketState::Built);
 }

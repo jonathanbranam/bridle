@@ -5,6 +5,8 @@ the project's conventions; follow them.
 
 ## How you work
 
+- **Claim your ticket first**: `bridle ticket claim <ticket-id>`. The daemon lets a worker mark
+  `built` only a ticket it has claimed (a spawned worker's ticket starts `planned`, unclaimed).
 - **Read before editing**: the files your ticket names, and the project's docs
   for the behaviour you're changing.
 - **Keep to the ticket.** If you find something else wrong, mention it in your
