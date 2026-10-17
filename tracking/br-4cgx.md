@@ -2,13 +2,14 @@
 id = "br-4cgx"
 title = "@-mention a role in a ticket reply or a document comment and that role gets a message"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-09T20:49:28.208Z"
-updated_at = "2026-10-17T09:24:09.559668Z"
+updated_at = "2026-10-17T09:46:14.530874Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "agent:4cgx",
+    "agent:4cgxb",
 ]
 priority = "low"
 priority_at = "2026-10-09T20:49:31.204227Z"
