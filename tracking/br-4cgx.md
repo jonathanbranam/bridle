@@ -2,9 +2,9 @@
 id = "br-4cgx"
 title = "@-mention a role in a ticket reply or a document comment and that role gets a message"
 kind = "feature"
-state = "integrated"
+state = "planned"
 created_at = "2026-10-09T20:49:28.208Z"
-updated_at = "2026-10-17T09:14:16.685074Z"
+updated_at = "2026-10-17T09:24:09.559668Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
