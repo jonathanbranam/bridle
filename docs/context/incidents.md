@@ -26,6 +26,32 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-17 ~19:15Z: bridle's workforce went idle with a land unfinished and 3 tiers startable
+
+- **What happened:** after the 19:10Z self-upgrade resumed it, manager-2 started
+  `bridle ticket land br-kyjg` in the background and ended its turn. Nothing reached `main`, and
+  every agent sat idle with br-kyjg finished, br-2fqg built and the queue's top tiers startable.
+  The orchestrator found it at start-up after a handover.
+- **Impact:** the land and the three worker slots stood still until the orchestrator nudged
+  manager-2.
+- **Cause:** unknown. The land may have died or never woken the manager. This looks like
+  br-8swr (a drain treats a manager waiting on a background land as idle).
+- **Category:** `upgrade`, `coordination`.
+- **Follow-up:** br-8swr, readied and sent to the PdM to schedule high.
+
+## 2026-10-17 ~19:15Z: bridle-ui worker editown stopped in a restart and was never resumed
+
+- **What happened:** editown (ui-qfur, built as a1e2edc and waiting on a browser check) was
+  `stopped` after bridle-ui's restart. manager-4 kept waiting for its report. The orchestrator
+  found it at start-up and resumed it. editown had also reported "no browser tool": the global
+  `playwright-cli` lives under nvm (`~/.nvm/versions/node/v24.12.0/bin`), which is probably not
+  on a worker's PATH.
+- **Impact:** ui-qfur stalled for about an hour.
+- **Cause:** unknown, as with manager-3 vanishing after the 16:08Z restart. The restart's resume
+  is missing agents on bridle-ui.
+- **Category:** `daemon`, `coordination`.
+- **Follow-up:** none yet. File a ticket if it happens again after the next bridle-ui restart.
+
 ## 2026-10-17 12:00Z: a bridle-ui question to the orchestrator sat unseen 2.5 hours
 
 - **What happened:** manager-3 asked the orchestrator (bridle-ui) to clear an uncommitted
