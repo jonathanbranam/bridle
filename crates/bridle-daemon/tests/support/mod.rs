@@ -330,10 +330,19 @@ pub async fn start_daemon_named(
     let tmp = tempfile::tempdir().expect("tempdir");
     let repo = tmp.path().join("repo");
     init_repo(&repo).await;
-    if let Some(text) = config_toml {
-        std::fs::create_dir_all(repo.join(".bridle")).expect("mkdir .bridle");
-        std::fs::write(repo.join(".bridle/config.toml"), text).expect("write config");
+    // Commit-mode upgrades only run in bridle's own repo (br-mtdg).
+    std::fs::create_dir_all(repo.join("crates/bridle")).expect("mkdir crates/bridle");
+    // The default is release self-upgrade, which would poll GitHub and fetch a workflow
+    // checkout; tests that want an upgrade mode set it themselves.
+    let mut text = config_toml.unwrap_or("").to_string();
+    if !text.contains("self_upgrade") {
+        match text.find("[daemon]") {
+            Some(at) => text.insert_str(at + "[daemon]".len(), "\nself_upgrade = false"),
+            None => text.push_str("\n[daemon]\nself_upgrade = false\n"),
+        }
     }
+    std::fs::create_dir_all(repo.join(".bridle")).expect("mkdir .bridle");
+    std::fs::write(repo.join(".bridle/config.toml"), text).expect("write config");
     let workspace = tmp.path().to_path_buf();
 
     let opts = ServeOptions {

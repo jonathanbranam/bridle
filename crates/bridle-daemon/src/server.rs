@@ -4967,6 +4967,15 @@ async fn restart(
         return perform_restart(&state, &principal.id, None).await.map(Json);
     }
 
+    if state.self_upgrade == crate::config::SelfUpgrade::Main
+        && !crate::upgrade::is_bridle_repo(&state.workspace.repo)
+    {
+        return Err(ApiError::new(
+            StatusCode::BAD_REQUEST,
+            "upgrade_failed",
+            crate::upgrade::NOT_BRIDLE_REPO,
+        ));
+    }
     if !state.upgrader.claim() {
         return Err(ApiError::new(
             StatusCode::CONFLICT,
@@ -5079,6 +5088,12 @@ pub async fn self_upgrade_tick_at(state: &AppState, now: DateTime<Utc>) {
         || state.manager.draining()
         || state.manager.postponed_until().is_some()
     {
+        return;
+    }
+    if state.self_upgrade == crate::config::SelfUpgrade::Main
+        && !crate::upgrade::is_bridle_repo(&state.workspace.repo)
+    {
+        tracing::debug!("self-upgrade: {}", crate::upgrade::NOT_BRIDLE_REPO);
         return;
     }
     if !state.upgrader.claim() {

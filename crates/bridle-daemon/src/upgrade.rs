@@ -33,6 +33,14 @@ const CHECK_ATTEMPTS: usize = 3;
 /// Lines of build output kept in a failure report.
 const TAIL_LINES: usize = 15;
 
+/// Commit mode builds `crates/bridle` from the project's repo, so it only makes sense in bridle's.
+pub const NOT_BRIDLE_REPO: &str =
+    "this project's repo isn't bridle; set `[daemon] self_upgrade = \"release\"`";
+
+pub fn is_bridle_repo(repo: &Path) -> bool {
+    repo.join("crates/bridle").is_dir()
+}
+
 /// Test hooks: canned CI status and a stand-in build command (program then args, run in the
 /// checkout of the commit). `None` means the real `gh` and `cargo install --path crates/bridle`.
 #[derive(Clone, Default)]
@@ -386,6 +394,14 @@ async fn is_ancestor(repo: &Path, ancestor: &str, of: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn bridle_repo_is_told_by_its_crate_dir() {
+        let dir = tempfile::tempdir().unwrap();
+        assert!(!is_bridle_repo(dir.path()));
+        std::fs::create_dir_all(dir.path().join("crates/bridle")).unwrap();
+        assert!(is_bridle_repo(dir.path()));
+    }
+
     use super::*;
 
     #[test]

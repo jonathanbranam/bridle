@@ -842,3 +842,21 @@ async fn release_mode_restart_upgrade_installs_a_newer_release() {
     daemon.running.shutdown();
     daemon.running.join().await.expect("join");
 }
+
+/// br-mtdg: commit mode builds `crates/bridle`, so outside bridle's repo it refuses in one line.
+#[tokio::test]
+async fn commit_mode_refuses_in_a_repo_that_isnt_bridle() {
+    let (daemon, _tmp) =
+        support::start_daemon_with_config(Some(auto("true")), Some(SELF_UPGRADE)).await;
+    std::fs::remove_dir(daemon.workspace.join("repo/crates/bridle")).expect("rmdir");
+    let err = daemon
+        .client
+        .restart(&upgrade())
+        .await
+        .expect_err("refused");
+    let text = err.to_string();
+    assert!(text.contains("this project's repo isn't bridle"), "{text}");
+    assert!(text.contains("self_upgrade = \"release\""), "{text}");
+    daemon.running.shutdown();
+    daemon.running.join().await.expect("join");
+}

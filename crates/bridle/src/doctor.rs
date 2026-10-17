@@ -896,7 +896,7 @@ stop_at = 90
         assert_eq!(names, ["release repo", "workflow checkout"]);
         let names = release_check_names("[daemon]\nself_upgrade = \"release\"\n");
         assert_eq!(names, ["workflow checkout"]);
-        assert!(release_check_names("").is_empty());
+        assert!(release_check_names("[daemon]\nself_upgrade = false\n").is_empty());
     }
 
     #[test]

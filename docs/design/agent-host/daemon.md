@@ -374,8 +374,8 @@ candidate as built, records `upgrade.skipped` (no wake) and does not restart. Wi
 git can't diff, it builds. **The restart's commit** (message to agents, `restart` wakes) is the
 built commit (`upgrade.built`), not the integration head, which can have moved during the build.
 
-**Automatic upgrade.** With `[daemon] self_upgrade = true` (default off; on in bridle's own
-`.bridle/config.toml`) the CI watcher's tick (every minute; no loop of its own) looks for a newer
+**Automatic upgrade.** With `[daemon] self_upgrade = true` (commit mode, for bridle's own repo only; on in bridle's own
+`.bridle/config.toml`; the default is `"release"`, see below) the CI watcher's tick (every minute; no loop of its own) looks for a newer
 green commit exactly as above, whatever the agents are doing (the build needs no quiet point), and,
 if there is one and no restart or upgrade is under way, starts the same background upgrade: build,
 then drain, then restart. A turn is never cut off and nothing gives up waiting. A commit whose
@@ -397,10 +397,16 @@ a running `bridle gateway` re-executes itself when it sees that file change (hum
 'Running it detached, and staying current'). The daemon does nothing for it: no hook, no quiet
 point (the gateway holds no agent turns), and it works on machines with no daemon.
 
-**Release upgrade.** `self_upgrade = "release"` is for client machines that don't build. It can be set
-for every daemon on the machine in `~/.bridle/config.toml` (`[daemon] self_upgrade`, `release_repo`,
-`self_upgrade_min_interval`): the machine value wins over a project's, and a key unset there leaves
-the project's value alone, so a project that builds `main` keeps doing so. On the same
+**Release upgrade.** `self_upgrade = "release"` is the default (br-mtdg): every daemon follows
+bridle's releases unless told otherwise, and a machine that isn't building bridle never builds it.
+It can be set for every daemon on the machine in `~/.bridle/config.toml` (`[daemon] self_upgrade`,
+`release_repo`, `self_upgrade_min_interval`): the machine value wins over a project's, and a key
+unset there leaves the project's value alone. The one exception: a machine `false` does not
+override a project's explicit `true`. The machine that hosts bridle sets `self_upgrade = false`
+so its other daemons don't install releases over the binary built from `main`, while bridle's own
+project keeps commit mode. Commit mode (`true`) on a project whose repo has no `crates/bridle`
+doesn't build: `restart --upgrade` answers "this project's repo isn't bridle; set `[daemon]
+self_upgrade = "release"`" and the automatic tick does nothing. On the same
 tick and the same quiet-point test, the daemon asks GitHub (`curl`, unauthenticated; the repo is
 `[daemon] release_repo`, else bridle's own, `release::BRIDLE_REPO`; never the project's `origin`) for the newest release, at most every 30
 minutes (`release::POLL_EVERY`, counted even when the ask fails, so rate limits back off). A tag

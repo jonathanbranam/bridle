@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Change (br-mtdg): `[daemon] self_upgrade` defaults to `"release"` (was off), so every daemon follows bridle's releases; `true` (build green `main`) is for bridle's own repo only, and on a repo with no `crates/bridle` `restart --upgrade` refuses with "this project's repo isn't bridle; set `[daemon] self_upgrade = "release"`". A machine `false` no longer overrides a project's explicit `true`. Migration: on the machine that hosts bridle (dalek), set `[daemon] self_upgrade = false` in `~/.bridle/config.toml` BEFORE deploying this build, or its non-bridle daemons will start installing releases over the built binary; bridle's own project keeps `true`.
 - Fix (br-8rdn): `bridle token check` also names, on a machine with a `<machine>-home`, the projects whose daemon has a missing or refused orchestrator visitor token (they do not forward wakes or mail to the home); the orchestrator role runs it at every start.
 - Fix (br-t9j4): when the gateway cannot reach its own tailnet address after a start, it now raises the incident through each project's daemon (`POST /v1/incidents/notice`, human token): an `orchestrator.incident` event, a note to the human and one to the orchestrator, as the daemon's own check does. It only noted each orchestrator before. Migration: none.
 

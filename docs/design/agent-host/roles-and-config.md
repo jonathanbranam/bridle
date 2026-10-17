@@ -23,12 +23,11 @@ stall_after = "10m"
 stop_grace  = "30s"                # how long `stop` waits after closing stdin
 claim_lease_after = "10m"          # a claimed task is released once its claimant has been
                                    # inactive this long (storage.md, claims)
-self_upgrade = false               # build, drain and restart into a newer green main
-                                   # commit, as `bridle restart --upgrade` (daemon.md, Upgrade);
-                                   # "release" installs the newest GitHub release's binary instead
-                                   # (no build), optionally from `release_repo = "owner/name"`;
-                                   # it also keeps ~/.bridle/workflow/vX.Y.Z as the base layer
-                                   # when no `workflow` is set (daemon.md)
+self_upgrade = "release"           # default: install the newest GitHub release's binary (no build),
+                                   # optionally from `release_repo = "owner/name"`; it also keeps
+                                   # ~/.bridle/workflow/vX.Y.Z as the base layer when no `workflow`
+                                   # is set (daemon.md). true builds green main, as `bridle restart
+                                   # --upgrade` (bridle's own repo only); false = off
 self_upgrade_min_interval = "3h"   # at least this long between automatic upgrades, to batch
                                    # landings; "0s" = at once
 # self_upgrade, release_repo and self_upgrade_min_interval may also be set in the machine's

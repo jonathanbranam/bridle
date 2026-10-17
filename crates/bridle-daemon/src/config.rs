@@ -1575,8 +1575,9 @@ impl CommandsConfig {
     }
 }
 
-/// What `[daemon] self_upgrade` does: `false`/absent nothing, `true` builds the newest green commit
-/// of the integration branch, `"release"` installs the newest GitHub release's binary.
+/// What `[daemon] self_upgrade` does: absent or `"release"` installs the newest GitHub release's
+/// binary (the default), `true` builds the newest green commit of the integration branch (bridle's
+/// own repo only), `false` nothing.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SelfUpgrade {
     Off,
@@ -1707,7 +1708,7 @@ impl Default for Config {
             listen_set: false,
             stall_after: Duration::from_secs(10 * 60),
             claim_lease_after: Duration::from_secs(10 * 60),
-            self_upgrade: SelfUpgrade::Off,
+            self_upgrade: SelfUpgrade::Release,
             release_repo: None,
             self_upgrade_min_interval: Duration::from_secs(3 * 3600),
             stop_grace: Duration::from_secs(30),
@@ -1902,7 +1903,12 @@ impl Config {
         }
         if let Some(d) = machine.daemon {
             if let Some(v) = d.self_upgrade {
-                config.self_upgrade = v.into_mode()?;
+                // A machine `false` opts the machine out of releases; it must not stop a project
+                // that explicitly builds `main` (the default is release, so Main is explicit).
+                let mode = v.into_mode()?;
+                if !(mode == SelfUpgrade::Off && config.self_upgrade == SelfUpgrade::Main) {
+                    config.self_upgrade = mode;
+                }
             }
             if let Some(r) = d.release_repo {
                 config.release_repo = Some(r);
@@ -3721,7 +3727,7 @@ mod tests {
         assert_eq!(cfg.stall_after, Duration::from_secs(5 * 60));
         assert_eq!(cfg.claim_lease_after, Duration::from_secs(15 * 60));
         assert_eq!(cfg.self_upgrade, SelfUpgrade::Main);
-        assert_eq!(Config::default().self_upgrade, SelfUpgrade::Off);
+        assert_eq!(Config::default().self_upgrade, SelfUpgrade::Release);
         assert_eq!(cfg.self_upgrade_min_interval, Duration::from_secs(90 * 60));
         assert_eq!(
             Config::default().self_upgrade_min_interval,
@@ -4974,6 +4980,29 @@ mod tests {
             cfg.workflow.as_deref(),
             Some(format!("{h}/machine-wf").as_str())
         );
+    }
+
+    #[test]
+    fn machine_false_keeps_a_projects_explicit_commit_mode() {
+        let repo = tempfile::tempdir().expect("repo");
+        let home = tempfile::tempdir().expect("home");
+        std::fs::create_dir_all(repo.path().join(".bridle")).expect("mkdir");
+        std::fs::write(
+            home.path().join("config.toml"),
+            "[daemon]\nself_upgrade = false\n",
+        )
+        .expect("write");
+        // No project value: the default is release, so the machine's false turns it off.
+        let cfg = Config::load_with_home(repo.path(), Some(home.path())).expect("load");
+        assert_eq!(cfg.self_upgrade, SelfUpgrade::Off);
+        // A project's explicit true (bridle's own) survives the machine's false.
+        std::fs::write(
+            repo.path().join(".bridle/config.toml"),
+            "[daemon]\nself_upgrade = true\n",
+        )
+        .expect("write");
+        let cfg = Config::load_with_home(repo.path(), Some(home.path())).expect("load");
+        assert_eq!(cfg.self_upgrade, SelfUpgrade::Main);
     }
 
     #[test]
