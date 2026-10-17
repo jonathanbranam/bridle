@@ -2,6 +2,7 @@
 tasks = [
     "br-3stk",
     "br-dg5g",
+    "br-mhjn",
 ]
 
 [[tier]]
