@@ -4,13 +4,14 @@ title = "A daemon without an aide leaves its orchestrator no route to the human"
 kind = "fix"
 state = "claimed"
 created_at = "2026-10-06T23:09:15.193Z"
-updated_at = "2026-10-17T22:48:46.986848Z"
+updated_at = "2026-10-17T23:43:49.415530Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "external:advisor/product-manager",
     "agent:ws5ah",
 ]
+summary = "Sending to external:aide on a daemon with no aide now errors with 'no such recipient: external:aide; this daemon has no aide: send to human, or file a ticket with --for-human' (server.rs resolve_targets_in; test in schedule_test.rs). 'bridle send human' needs no aide (ToTarget::Human, no lookup), unchanged. Orchestrator role, cli.md and CHANGELOG updated."
 ticket = "s5ah"
 +++
 
