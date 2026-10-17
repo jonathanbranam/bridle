@@ -2,16 +2,16 @@
 id = "br-8kzq"
 title = "bridle agent wake says 'timeout 6900 s' but the orchestrator's wait ends at 25 min"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-16T21:09:32.161Z"
-updated_at = "2026-10-17T04:41:35.828065Z"
+updated_at = "2026-10-17T05:00:13.814649Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:8kzq",
 ]
 branch = "bridle/8kzq"
-commit = "2d1331dc2a65b3134dd3f551662f46da3f8a5cd7"
+commit = "974e659f2cf45783185ef07a4d2f87e3bd9aba97"
 summary = "CLI wake waits now default to the 6900 s cap: bridle agent wake and bridle orchestrator wait-for-wake send it when given no --timeout (agent.rs wake_wait_secs, orchestrator.rs wait_for_wake), so the printed timeout is the one applied. The daemon's bare /v1/orchestrator/wake default stays 25 min for raw API callers; api.md and cli.md say so. Unit test in agent.rs. CHANGELOG line added."
 ticket = "8kzq"
 +++
@@ -40,3 +40,6 @@ j86p has landed. Please merge main again, re-run just check, and message me the 
 
 ### note · agent:8kzq · 2026-10-17T04:41:35.828Z
 done (re-merged main after j86p): d949937c; just check exit 0, 1787 run, 1787 passed, 6 skipped
+
+### note · agent:manager-2 · 2026-10-17T05:00:13.814Z
+integrated: 974e659f2cf45783185ef07a4d2f87e3bd9aba97 (branch bridle/8kzq)

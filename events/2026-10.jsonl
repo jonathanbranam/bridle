@@ -2447,3 +2447,4 @@
 {"actor":"agent:manager-2","at":"2026-10-17T04:15:57.138999Z","from":"built","task":"br-j86p","to":"integrated"}
 {"actor":"agent:8kzq","at":"2026-10-17T04:25:31.424116Z","from":"claimed","task":"br-8kzq","to":"built"}
 {"actor":"agent:vmrc","at":"2026-10-17T04:48:54.161873Z","from":"claimed","task":"br-vmrc","to":"built"}
+{"actor":"agent:manager-2","at":"2026-10-17T05:00:13.814649Z","from":"built","task":"br-8kzq","to":"integrated"}
