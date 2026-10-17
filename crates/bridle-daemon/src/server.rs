@@ -1626,6 +1626,20 @@ async fn spawn_agent(
         && principal.id != "human"
     {
         state.tasks.require_settled(ticket)?;
+        // A worker is for a planned, queued ticket (br-h6h8); a re-spawn for a claimed one is fine.
+        if req.role == "worker"
+            && let Some(task) = state.tasks.get_task(ticket)
+            && !matches!(
+                task.state,
+                bridle_api::types::TicketState::Planned | bridle_api::types::TicketState::Claimed
+            )
+        {
+            return Err(TicketError::Conflict(format!(
+                "ticket {ticket} is {:?}, not planned: plan and queue it before spawning a worker",
+                task.state
+            ))
+            .into());
+        }
     }
     if let Some(name) = &req.name {
         require_may_use_name(&state.manager.role_names(), name, &principal)?;

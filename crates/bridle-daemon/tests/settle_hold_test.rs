@@ -51,3 +51,34 @@ async fn a_spawn_for_an_unsettled_pending_ticket_is_held_and_says_when_it_ends()
         .await
         .expect("human spawn");
 }
+
+#[tokio::test]
+async fn a_worker_spawn_for_a_ticket_that_is_not_planned_is_refused() {
+    let (daemon, _repo) = start_daemon_with_config(
+        None,
+        Some("[roles.manager]\nautostart = false\n[tasks]\nsettle = \"0\"\n"),
+    )
+    .await;
+    let id = daemon
+        .client
+        .new_open_task(&NewTicketRequest {
+            ticket: None,
+            parent: None,
+            for_human: false,
+            priority: None,
+            components: Vec::new(),
+            title: "not planned".to_string(),
+            kind: TicketKind::Feature,
+            body: String::new(),
+            size: None,
+        })
+        .await
+        .expect("new ticket")
+        .id;
+
+    let other = daemon.external_client("pm").await;
+    let mut req = spawn_for(&id, "wrk");
+    req.role = "worker".to_string();
+    let err = other.spawn(&req).await.expect_err("refused");
+    assert!(err.to_string().contains("not planned"), "{err}");
+}
