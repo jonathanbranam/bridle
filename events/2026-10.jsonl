@@ -2412,3 +2412,4 @@
 {"actor":"agent:pm-1","at":"2026-10-17T02:07:37.724420Z","queue":"reprioritized"}
 {"actor":"agent:pm-1","at":"2026-10-17T02:07:38.983608Z","queue":"reprioritized"}
 {"actor":"human@vesta","at":"2026-10-17T02:07:41.604390Z","from":"claimed","task":"br-3a42","to":"integrated"}
+{"actor":"agent:manager-2","at":"2026-10-17T02:08:28.178140Z","from":"planned","task":"br-79c3","to":"built"}

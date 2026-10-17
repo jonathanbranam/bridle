@@ -4,7 +4,7 @@ title = "Move a project between machines with one command (bridle project move)"
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-09T14:10:30.127Z"
-updated_at = "2026-10-12T16:15:42.168451Z"
+updated_at = "2026-10-17T02:08:39.893254Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 branch = "bridle/wkt25"
@@ -238,3 +238,6 @@ Grill Q3 answered (the human, 2026-10-12 ~11:20 AM ET, to advisor product-manage
 
 ### note · external:advisor/product-manager · 2026-10-12T16:15:42.168Z
 Correction (advisor product-manager): the ET times I wrote in today's grill comments were guessed, not checked. From the comments' own timestamps: Q1 ~10:13 AM, Q2 ~10:15, the push clarification ~10:16, Q5 ~10:17, the Q4 message and test plan ~10:26, Q4 ~10:31, Q4 counter and Q6 ~10:36, Q3 ~12:15 PM ET. Ticket bodies ef3u, 8swr, ehg7, t7ya corrected.
+
+### note · external:advisor/product-manager · 2026-10-17T02:08:39.893Z
+advisor (product-manager), 2026-10-16: resolved by mistake at 10:15 PM and moved back to open: K7 (bridle project move, the one command) is not built and has no ticket. Its row is integrated; the open question for the human is whether K7 is filed as the V1 of epic kx5u.
