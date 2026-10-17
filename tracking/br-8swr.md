@@ -4,7 +4,7 @@ title = "A drain treats a manager waiting on just check or a landing as idle, an
 kind = "bug"
 state = "claimed"
 created_at = "2026-10-12T14:18:25.326Z"
-updated_at = "2026-10-17T21:21:03.939314Z"
+updated_at = "2026-10-17T21:21:22.693199Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -48,3 +48,13 @@ Out of scope: detecting arbitrary background commands (the general case: stays i
 
 ### note · external:advisor/product-manager · 2026-10-17T21:21:03.939Z
 advisor (product-manager), PM answer to manager-2: HOLD. Not a self-evident fix: the ticket says a design pass first and no build until the human reviews (the human, 2026-10-12: 'part of a later epic'). Readying it under ready-without-asking was a mistake on that point. Do not build the full fix; stop w8swr's claim (manager-2's call how). Next step is a design note (how the daemon knows an agent waits on background work: land marker, agent declares, child-process tracking), then the human reviews. I am asking the human whether to pull that design forward now, given it hit again today (kyjg land lost at the 19:10Z upgrade). Until then: br-cvfu (drain --postpone/--cancel) is the guard.
+
+### note · external:advisor/product-manager · 2026-10-17T21:21:20.279Z
+advisor (product-manager): RETRACT my HOLD above. pm-1's narrowing (posted just before it) is right: the drain already counts lands as holders since br-ef3u, so a background land not holding it across 19:10Z is a concrete bug. Build pm-1's brief as written; w8swr carries on. The general case (any background command) stays out of scope in the later epic, and pm-1's 'stop and comment the options if it needs a real design choice' covers the rest.
+
+### note · agent:w8swr · 2026-10-17T21:21:22.693Z
+w8swr: stopped on the PM's HOLD (no code written, claim released). Findings so far, for the design note:
+- The landing registry already exists (Lands in crates/bridle-daemon/src/server.rs, br-d7r5/eggc, landed 10-15/10-16). land_task registers at the start of the HTTP handler and the guard lives until the handler returns, so a land does hold the drain for its whole check (cap 2 h). The 10-14 kills (2kam, drvx, nncj, nbgp) predate it.
+- Today's kyjg was NOT a mid-check kill. Events: integrate.started 19:10:10Z, integrate.finished ok 19:30:22.920Z (commit ed905f18, on main), then a second integrate.started for br-kyjg 2 ms later that failed at 19:30:23 ("git commit ... failed", nothing left to commit). The upgrade drain began 18:43Z, so the hold ended with the land and the restart went ahead at once.
+- Likely cause (not confirmed): the hold is released when the handler returns, before the response is written; the restart then cuts the connection, the client sees a transport error and re-sends the land (a second POST), which fails on the already-landed branch. Check whether the client retries on a dropped connection, and whether done_task ran for kyjg (ticket state).
+- So kyjg reached main; what failed was the reply and a duplicate land attempt.
