@@ -13,6 +13,15 @@ related: []
 
 ## The ask
 
+The human, 2026-10-17 ~8 AM ET, to advisor (product-manager): "Yes ready that fix for bridle
+hi" (priority high).
+
+`bridle ticket land`'s own check must pass for a JS project (bridle-ui) without
+`--checked-commit`: prepare the project's dependencies in the land's check worktree before the
+check command runs (see "Fix (to decide)"). Also: land finds the ticket's branch by itself (no
+`--branch` needed). Tests; docs (cli.md, the land section of docs/design/agent-host/) and
+CHANGELOG. Acceptance: `just check`, and a bridle-ui land without `--checked-commit` passes.
+
 ## What happened
 
 2026-10-17 ~8:20 AM ET, bridle-ui: manager-3 ran `bridle ticket land ui-3mxz --branch bridle/devport`. The land's own check failed with `sh: biome: command not found`. The worker's worktree and the clone both have `node_modules/.bin/biome`; the worktree the land checks in does not, so no JS project can land without `--checked-commit`.
