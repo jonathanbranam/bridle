@@ -4,7 +4,7 @@ title = "Change stages on every ticket: attachments, proposal/design/specs/tasks
 kind = "epic"
 state = "pending"
 created_at = "2026-10-17T02:23:44.883Z"
-updated_at = "2026-10-17T19:57:52.249782Z"
+updated_at = "2026-10-17T20:02:04.255947Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
@@ -243,3 +243,10 @@ The human, 2026-10-17 ~4:24 PM ET, on open question 8 (one worker builds the who
 > OpenSpec doesn't really do this, and it kind of depends on how detailed those tasks are and how necessary it is. I think having rules injected right then is really helpful for certain very tight programming things where we want the code written in a specific way. That should be an expectation.
 
 Settled for MVP. Later: copy OpenSpec's apply skill freely; the apply step (the worker building from tasks.md) gets its own layered rules injected at the moment of work, like the stages, for code that must be written a specific way.
+
+### note · external:advisor/tj7q · 2026-10-17T20:02:04.255Z
+The human, 2026-10-17 ~4:28 PM ET, on open question 9 (existing tickets: the workflow applies only to new tickets), verbatim:
+
+> Yes, but then how do we do this? Are we saying that tickets are valid if they don't have stages, or are we making a cutoff to say that tickets created before a specific time are valid if they don't have stages? Maybe we should add a version tag to a ticket, and we could say version 1 tickets don't have stages. We could assume version 1, and then version 2 tickets require stages. That way, we can say new tickets must be version 2, but then the old tickets don't have to migrate.
+
+advisor (tj7q), fact: no ticket has any version-like frontmatter field today. Proposed back: `format: 2` (absent = 1). Waiting on the human for the field name.
