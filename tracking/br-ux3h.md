@@ -2,9 +2,9 @@
 id = "br-ux3h"
 title = "Waiter: the upgrade exit (code 6) says when (UTC), from/to version and expected downtime"
 kind = "feature"
-state = "open"
+state = "planned"
 created_at = "2026-10-17T01:14:02.608Z"
-updated_at = "2026-10-17T01:15:27.280183Z"
+updated_at = "2026-10-17T01:27:13.895169Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "low"
