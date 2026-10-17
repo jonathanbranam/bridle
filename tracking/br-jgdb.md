@@ -2,9 +2,9 @@
 id = "br-jgdb"
 title = "Windows PC: follow the WSL2 setup guide (install WSL2 + Ubuntu, wslconfig, Tailscale, start-up task, red/green shortcuts) and note the CPU and RAM (v7ug)"
 kind = "chore"
-state = "claimed"
+state = "integrated"
 created_at = "2026-10-07T23:25:29.937Z"
-updated_at = "2026-10-11T23:50:16.285080Z"
+updated_at = "2026-10-17T02:02:00.281182Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -33,3 +33,6 @@ watching the task
 
 ### note · external:advisor/product-manager · 2026-10-11T23:50:16.285Z
 The Windows PC's name is remus (h7mu, the human 2026-10-11 ~7:55 PM ET). The human: "WSL2 is in progress setting up; waiting on 0.6.2. to install".
+
+### note · human@vesta · 2026-10-17T02:02:00.281Z
+done
