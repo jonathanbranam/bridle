@@ -284,7 +284,7 @@ and comments, queue nudges and wakes are still stored (state `held`, in order) b
 the agent; the end of a turn no longer delivers the next held one. Turns already in progress run to
 their end and nothing is cut off; the queue stays as it is. Interactive sessions (orchestrator,
 aide, advisors) are outside the daemon's turns and are not held. There is no timeout and no 409:
-when no agent is mid-turn, no spawn is in flight and no `bridle ticket land` is running (a land, its check, merge, push and done, runs after its manager's turn ended; it holds the drain for at most 2 h, `LAND_DRAIN_CAP`, so a stuck land cannot block the restart; br-d7r5. At the quiet point the drain closes the lands: a `bridle ticket land` arriving after it is refused 503 "retry once it has restarted", never cut off by the exec. A land still running past the cap is not waited for: the restart records a `restart.land_forced` event and an incident naming the land and how long it ran, and kills the land's check process group (the integrator starts it in its own group) before the exec, so no orphaned `just check` keeps the test lock and the integration worktree; br-eggc) (checked every 500 ms; a spawn is bounded by a 15 min timeout, and one older than that no longer holds the restart: it is logged and recorded as a `restart.stuck_spawn` event; `draining_on` in status names spawn holders as "a spawning agent: <name>, N min") it records the running agents' ids
+when no agent is mid-turn, no spawn is in flight and no `bridle ticket land` is running (a land, its check, merge, push and done, runs after its manager's turn ended; it holds the drain for at most 2 h, `LAND_DRAIN_CAP`, so a stuck land cannot block the restart; br-d7r5. At the quiet point the drain closes the lands: a `bridle ticket land` arriving after it is refused 503 "retry once it has restarted", never cut off by the exec. A land still running past the cap is not waited for: the restart records a `restart.land_forced` event and an incident naming the land and how long it ran, and kills the land's check process group (the integrator starts it in its own group) before the exec, so no orphaned `just check` keeps the test lock and the integration worktree; br-eggc) (checked every 500 ms; a spawn is bounded by a 15 min timeout, and one older than that no longer holds the restart: it is logged and recorded as a `restart.stuck_spawn` event; `draining_on` in status names every holder, see below) it records the running agents' ids
 (`meta` key `restart.resume`), wakes the orchestrator (`restart`, with the commit), sets the
 restart flag and runs the ordinary shutdown sequence above (agents stop as `daemon_shutdown`, the
 state branch is flushed and pushed, `daemon.json` removed). `run` then `exec`s the binary path resolved once at start-up (`exe_path()`: Linux's `<path> (deleted)` suffix, left after a reinstall, is stripped) with
@@ -308,6 +308,17 @@ daemon restarted for an upgrade, to carry on and to re-run any background job it
 `pending` when the agents stopped, so the ordinary resume delivers them, oldest first;
 none are lost or duplicated. It wakes the orchestrator (`restart`: commit, who
 resumed, who failed); the human's inbox gets a message only if some agent failed to resume.
+
+**What holds a drain** (br-ef3u). `draining_on` in status and the `upgrade_draining` wake (after
+`drain_wake_after`) name each holder: an agent mid-turn as `name (state, turn N min)`, a spawn as
+`a spawning agent: name, N min`, a land as `landing <ticket>, N min`, and a postponement as
+`postponed until <time>`. A busy agent whose recorded pid is not running (or that has none) gets
+` stale? ...` appended: its row says busy but nothing is running, so the drain would wait forever.
+Nothing is released automatically; a person cancels, or stops the agent. The ways the tracking
+can go stale (found by reading the code, not all seen in the wild): an agent's process gone without
+its row leaving `working` (flagged `stale?`); a turn that never ends (the turn age shows it); a
+spawn that never returns (bounded, 15 min); a land that never returns (bounded, 2 h); a
+postponement (in memory, expires). Interactive sessions are not counted at all.
 
 **Cancel and postpone** (br-cvfu). A drain's quiet point counts a manager waiting on a background
 `bridle ticket land` as idle (br-8swr, the full fix is later), so a restart or self-upgrade can kill

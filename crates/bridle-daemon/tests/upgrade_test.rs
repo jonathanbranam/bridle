@@ -466,7 +466,12 @@ async fn a_drain_holds_new_turns_and_delivers_them_after_the_restart() {
     })
     .await;
     assert!(status.upgrade_waiting.is_some());
-    assert_eq!(status.draining_on, vec!["busy".to_string()]);
+    assert_eq!(status.draining_on.len(), 1, "{:?}", status.draining_on);
+    assert!(
+        status.draining_on[0].starts_with("busy (working"),
+        "{:?}",
+        status.draining_on
+    );
 
     // Refused while draining: spawns and claims.
     let err = daemon

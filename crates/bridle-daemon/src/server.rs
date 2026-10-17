@@ -247,6 +247,18 @@ impl Lands {
             .collect()
     }
 
+    /// [`Self::holding`] with how many seconds each land has run.
+    pub fn holding_for(&self, cap: std::time::Duration) -> Vec<(String, u64)> {
+        self.0
+            .lock()
+            .expect("lands lock")
+            .live
+            .iter()
+            .filter(|e| e.at.elapsed() <= cap)
+            .map(|e| (e.task.clone(), e.at.elapsed().as_secs()))
+            .collect()
+    }
+
     /// At the quiet point: if no land is within `cap`, refuse new lands from now on and return
     /// the ones past it (still running, to be reported and stopped). `None` if a land holds.
     pub fn close_if_quiet(&self, cap: std::time::Duration) -> Option<Vec<OverdueLand>> {
@@ -1366,15 +1378,20 @@ async fn status(
     let (waiter_open, last_wake_at) = state.waiters.snapshot();
     let draining = state.manager.draining();
     let draining_on: Vec<String> = if draining {
-        state
+        let busy = state
             .store
             .list_agents(false)
             .await?
             .into_iter()
             .filter(|a| a.state.is_running() && a.state != bridle_api::types::AgentState::Idle)
-            .map(|a| a.name)
-            .chain(spawn_holder_labels(&state.manager.spawn_holders()))
-            .collect()
+            .collect::<Vec<_>>();
+        drain_holder_labels(
+            &busy,
+            &state.manager.spawn_holders(),
+            &state.lands.holding_for(state.lands.cap()),
+            state.manager.postponed_until(),
+            pid_alive,
+        )
     } else {
         Vec::new()
     };
@@ -5492,6 +5509,54 @@ fn spawn_holder_labels(holders: &[crate::supervisor::SpawnHolder]) -> Vec<String
         .collect()
 }
 
+/// Whether a process with this pid exists (signal 0). EPERM still means it exists.
+fn pid_alive(pid: i32) -> bool {
+    !matches!(
+        nix::sys::signal::kill(nix::unistd::Pid::from_raw(pid), None),
+        Err(nix::errno::Errno::ESRCH)
+    )
+}
+
+/// What holds a drain's quiet point, by name, for the status line and the `upgrade_draining`
+/// wake: each agent mid-turn (and how long the turn has run), each spawn in flight, each land
+/// and a postponement. A busy agent whose process is gone is marked "stale?": the drain would
+/// wait on it forever. Nothing is released here; a person decides (br-ef3u).
+fn drain_holder_labels(
+    busy: &[bridle_api::types::Agent],
+    spawns: &[crate::supervisor::SpawnHolder],
+    lands: &[(String, u64)],
+    postponed: Option<chrono::DateTime<chrono::Utc>>,
+    alive: impl Fn(i32) -> bool,
+) -> Vec<String> {
+    let now = chrono::Utc::now();
+    let mut out: Vec<String> = busy
+        .iter()
+        .map(|a| {
+            let mut s = format!("{} ({}", a.name, a.state.as_str());
+            if let Some(t) = a.turn_started_at {
+                s.push_str(&format!(", turn {} min", (now - t).num_minutes().max(0)));
+            }
+            s.push(')');
+            match a.pid {
+                Some(pid) if alive(pid) => {}
+                Some(pid) => s.push_str(&format!(" stale? pid {pid} is not running")),
+                None => s.push_str(" stale? no process recorded"),
+            }
+            s
+        })
+        .collect();
+    out.extend(spawn_holder_labels(spawns));
+    out.extend(
+        lands
+            .iter()
+            .map(|(t, secs)| format!("landing {t}, {} min", secs / 60)),
+    );
+    if let Some(t) = postponed {
+        out.push(format!("postponed until {}", t.to_rfc3339()));
+    }
+    out
+}
+
 async fn drain_and_restart(
     state: &AppState,
     who: &str,
@@ -5522,7 +5587,7 @@ async fn drain_and_restart(
         let busy: Vec<_> = running
             .iter()
             .filter(|a| a.state != bridle_api::types::AgentState::Idle)
-            .map(|a| a.name.clone())
+            .cloned()
             .collect();
         let landing = state.lands.holding(state.lands.cap());
         // Last, so the lands close only when everything else is quiet.
@@ -5579,21 +5644,25 @@ async fn drain_and_restart(
         }
         if !woke && started.elapsed() >= state.drain_wake_after {
             woke = true;
-            let still = if busy.is_empty() && !landing.is_empty() {
-                format!("landing {}", landing.join(", "))
-            } else if busy.is_empty() {
-                spawn_holder_labels(&holders).join(", ")
-            } else {
-                busy.join(", ")
-            };
+            let still = drain_holder_labels(
+                &busy,
+                &holders,
+                &state.lands.holding_for(state.lands.cap()),
+                state.manager.postponed_until(),
+                pid_alive,
+            )
+            .join("; ");
             upgrade_wake(
                 state,
                 "upgrade_draining",
                 format!(
-                    "the restart has been draining for {} min; still in a turn: {still}",
+                    "the restart has been draining for {} min; still held by: {still}",
                     started.elapsed().as_secs() / 60
                 ),
-                serde_json::json!({"agents": busy, "spawning": spawning}),
+                serde_json::json!({
+                    "agents": busy.iter().map(|a| a.name.clone()).collect::<Vec<_>>(),
+                    "spawning": spawning,
+                }),
             )
             .await;
         }
@@ -5860,6 +5929,63 @@ mod tests {
             flags.push(stopped_by_daemon_shutdown(&agent));
         }
         assert_eq!(flags, [true, false]);
+    }
+
+    fn fake_agent(name: &str, pid: Option<i32>, turn_min: i64) -> bridle_api::types::Agent {
+        let now = chrono::Utc::now();
+        bridle_api::types::Agent {
+            id: format!("a-{name}"),
+            name: name.to_string(),
+            role: "worker".to_string(),
+            state: bridle_api::types::AgentState::Working,
+            model: "m".to_string(),
+            session_id: "s".to_string(),
+            pid,
+            cwd: "/".to_string(),
+            worktree: None,
+            branch: None,
+            created_at: now,
+            updated_at: now,
+            last_event_at: None,
+            turns: 0,
+            turn_started_at: Some(now - chrono::Duration::minutes(turn_min)),
+            cost_usd_total: 0.0,
+            context_tokens: None,
+            exit: None,
+            created_by: crate::supervisor::system_principal().id,
+            held_messages: 0,
+            unacked_messages: 0,
+            components: Vec::new(),
+        }
+    }
+
+    #[test]
+    fn drain_holders_are_named_and_a_dead_process_is_marked_stale() {
+        let busy = [
+            fake_agent("live", Some(10), 12),
+            fake_agent("dead", Some(11), 90),
+            fake_agent("none", None, 1),
+        ];
+        let spawns = [crate::supervisor::SpawnHolder {
+            name: "slow".to_string(),
+            started: std::time::Instant::now(),
+        }];
+        let lands = [("br-aaaa".to_string(), 125)];
+        let until = chrono::Utc::now() + chrono::Duration::minutes(5);
+        let got = drain_holder_labels(&busy, &spawns, &lands, Some(until), |pid| pid == 10);
+        assert_eq!(got[0], "live (working, turn 12 min)");
+        assert_eq!(
+            got[1],
+            "dead (working, turn 90 min) stale? pid 11 is not running"
+        );
+        assert_eq!(
+            got[2],
+            "none (working, turn 1 min) stale? no process recorded"
+        );
+        assert_eq!(got[3], "a spawning agent: slow, 0 min");
+        assert_eq!(got[4], "landing br-aaaa, 2 min");
+        assert!(got[5].starts_with("postponed until "), "{got:?}");
+        assert!(drain_holder_labels(&[], &[], &[], None, |_| true).is_empty());
     }
 
     #[tokio::test]

@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- A waiting drain now says what holds it by name: `bridle status` (`draining_on`) and the `upgrade_draining` wake list each agent mid-turn with its turn age, spawns, lands and a postponement, and mark an agent whose process is gone as "stale?". Nothing is released automatically. The status line joins holders with "; " (br-ef3u). Migration: none.
 - A waiter (`bridle agent wake`) ended by an upgrade now says when (UTC, RFC 3339), from which commit to which, and (once a restart has been timed) "back in ~N s"; with `--json` the same as `reasons[].detail` (`reason: "upgrade"`, `at`, `from`, `to`, `expected_back_secs`). Exit code 6 and "re-arm once it is back" are unchanged (br-ux3h). Migration: none.
 - Fix (br-p4f2): `bridle migrate` no longer refuses a project that works on `main` when its `[branches] integration` says so (unless that branch is also its release branch), and a migration with nothing to change never refuses. Other protected branches still refuse. Migration: none.
 - Fix (br-r8jf): `token pair-mint --direct` revokes the earlier visitor token only after the direct mint succeeds, so a failed mint no longer leaves the holder with no token; the stall check's marker read runs off the async runtime; `projects sync` never removing a `[mail] projects` name is documented as intended.

@@ -1266,7 +1266,7 @@ fn drain_line(upgrade: Option<&str>, waiting_on: &[String]) -> String {
     let on = if waiting_on.is_empty() {
         "a spawning agent".to_string()
     } else {
-        waiting_on.join(", ")
+        waiting_on.join("; ")
     };
     format!("{what} draining; waiting on {on}")
 }
@@ -1280,7 +1280,7 @@ mod drain_tests {
         let on = ["w1".to_string(), "w2".to_string()];
         assert_eq!(
             drain_line(Some("abc1234"), &on),
-            "upgrade abc1234 draining; waiting on w1, w2"
+            "upgrade abc1234 draining; waiting on w1; w2"
         );
         assert_eq!(
             drain_line(None, &on[..1]),
