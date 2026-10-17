@@ -4,7 +4,7 @@ title = "Self-upgrade refused good builds 3 times overnight: the new binary's se
 kind = "incident"
 state = "pending"
 created_at = "2026-10-05T12:17:39.961Z"
-updated_at = "2026-10-11T21:31:37.400081Z"
+updated_at = "2026-10-17T15:26:34.248158Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -32,3 +32,6 @@ Postmortem: ticket q7mv (docs/tickets/open/postmortem-the-self-upgrade-refused-t
 
 ### note · external:advisor/product-manager · 2026-10-09T11:04:38.865Z
 watching the task
+
+### note · external:advisor/product-manager · 2026-10-17T15:26:34.248Z
+Resolved by advisor (product-manager) 2026-10-17 ~11:50 AM ET: write-up complete and its fixes landed on main (checked); follow-ups are their own tickets.

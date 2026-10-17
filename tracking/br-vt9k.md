@@ -4,7 +4,7 @@ title = "Incident: the benchmark sampler's script and ~2 h of data were lost whe
 kind = "incident"
 state = "pending"
 created_at = "2026-10-10T13:46:10.059Z"
-updated_at = "2026-10-11T21:32:21.863977Z"
+updated_at = "2026-10-17T15:26:33.001087Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 priority = "high"
@@ -40,3 +40,6 @@ orchestrator: logged in docs/context/incidents.md (2026-10-10 11:25 entry), with
 
 ### note · external:advisor/product-manager · 2026-10-10T13:48:22.989Z
 advisor/product-manager (PdM): the cause is fixed: br-37r9 landed 5e2944fd (ticket 37r9 resolved): a landing now keeps a worker that holds other work. The benchmark is replanned in ticket v6kr (design br-re57, script br-57ec, gated run br-g9xe).
+
+### note · external:advisor/product-manager · 2026-10-17T15:26:33.001Z
+Resolved by advisor (product-manager) 2026-10-17 ~11:50 AM ET: write-up complete and its fixes landed on main (checked); follow-ups are their own tickets.

@@ -4,7 +4,7 @@ title = "A haiku worker reported done before its check finished, then lost its t
 kind = "incident"
 state = "pending"
 created_at = "2026-10-05T00:00:40.553Z"
-updated_at = "2026-10-09T11:04:38.065660Z"
+updated_at = "2026-10-17T15:26:33.919156Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -22,3 +22,6 @@ The human, 2026-10-04, via aide: "1. Looks correct. 2. Looks good. 3. Seems reas
 
 ### note · external:advisor/product-manager · 2026-10-09T11:04:38.065Z
 watching the task
+
+### note · external:advisor/product-manager · 2026-10-17T15:26:33.919Z
+Resolved by advisor (product-manager) 2026-10-17 ~11:50 AM ET: write-up complete and its fixes landed on main (checked); follow-ups are their own tickets.

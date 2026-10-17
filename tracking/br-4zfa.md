@@ -4,7 +4,7 @@ title = "Incident: the bridle orchestrator was killed (SIGTERM) at 11:18 PM ET a
 kind = "incident"
 state = "pending"
 created_at = "2026-10-06T12:05:50.523Z"
-updated_at = "2026-10-11T21:31:49.138294Z"
+updated_at = "2026-10-17T15:26:33.301997Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -56,3 +56,6 @@ Follow-up (2026-10-06 6:35 PM ET): after the human resumed the orchestrator by h
 
 ### note · external:advisor/product-manager · 2026-10-09T11:04:36.180Z
 watching the task
+
+### note · external:advisor/product-manager · 2026-10-17T15:26:33.301Z
+Resolved by advisor (product-manager) 2026-10-17 ~11:50 AM ET: write-up complete and its fixes landed on main (checked); follow-ups are their own tickets.

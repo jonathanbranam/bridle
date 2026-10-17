@@ -2,9 +2,9 @@
 id = "br-t95y"
 title = "Flaky on ubuntu CI: gateway_test a_replaced_binary_is_re_executed exits 1 instead of re-executing"
 kind = "fix"
-state = "pending"
+state = "open"
 created_at = "2026-10-14T23:43:08.616Z"
-updated_at = "2026-10-17T15:26:09.256799Z"
+updated_at = "2026-10-17T15:26:32.794826Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "t95y"

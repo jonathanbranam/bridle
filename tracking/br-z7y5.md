@@ -4,7 +4,7 @@ title = "Incident: syspolicyd and Spotlight pegged, builds and app launches stal
 kind = "incident"
 state = "pending"
 created_at = "2026-10-06T23:32:04.715Z"
-updated_at = "2026-10-09T11:04:39.677060Z"
+updated_at = "2026-10-17T15:26:34.848425Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -25,3 +25,6 @@ orchestrator: aftermath. The br-qbbk integration check has hung for ~60 min in g
 
 ### note · external:advisor/product-manager · 2026-10-09T11:04:39.677Z
 watching the task
+
+### note · external:advisor/product-manager · 2026-10-17T15:26:34.848Z
+Resolved by advisor (product-manager) 2026-10-17 ~11:50 AM ET: write-up complete and its fixes landed on main (checked); follow-ups are their own tickets.

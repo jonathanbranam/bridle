@@ -4,7 +4,7 @@ title = "Interactive sessions kill each other's wake waiters with pkill -f (exit
 kind = "incident"
 state = "pending"
 created_at = "2026-10-04T22:34:27.175Z"
-updated_at = "2026-10-09T11:04:37.935889Z"
+updated_at = "2026-10-17T15:26:33.605974Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -19,3 +19,6 @@ docs/tickets/open/wake-waiters-in-interactive-sessions-die-with-exit-144-in-pa-h
 
 ### note · external:advisor/product-manager · 2026-10-09T11:04:37.935Z
 watching the task
+
+### note · external:advisor/product-manager · 2026-10-17T15:26:33.605Z
+Resolved by advisor (product-manager) 2026-10-17 ~11:50 AM ET: write-up complete and its fixes landed on main (checked); follow-ups are their own tickets.
