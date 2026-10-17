@@ -93,6 +93,9 @@ pub struct AppState {
     /// `[integration] check_skip_paths`: paths whose changes on the integration branch during a
     /// check don't fail the landing.
     pub check_skip_paths: Vec<String>,
+    /// `[worktrees] setup` and its timeout, run in the land's check worktree before the check
+    /// (br-3stk), so a JS project has its `node_modules` there.
+    pub check_setup: Option<(String, std::time::Duration)>,
     /// Background build in the integration worktree after each land (`[integration] warm_build`).
     pub warm_build: crate::warm_build::WarmBuild,
     /// Held for the length of a landing: one at a time.
@@ -3824,7 +3827,11 @@ async fn land_task(
             .filter(|_| task.state == TicketState::Built)
         {
             Some(b) => Some(b),
-            None => claimed_branch(&state, &task).await,
+            None => match claimed_branch(&state, &task).await {
+                Some(b) => Some(b),
+                // Whatever branch the ticket last recorded (br-3stk), e.g. after the claim ended.
+                None => task.branch.clone(),
+            },
         }
         .ok_or_else(|| ApiError::bad_request(format!("no branch for {id}; pass --branch")))?,
     };
@@ -3864,6 +3871,7 @@ async fn land_task(
         check,
         checked_commit: req.checked_commit.as_deref(),
         check_skip_paths: &state.check_skip_paths,
+        setup: state.check_setup.as_ref().map(|(c, t)| (c.as_str(), *t)),
         check_pgid: Some(land_hold.pgid()),
     })
     .await;

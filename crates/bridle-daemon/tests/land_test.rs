@@ -465,3 +465,50 @@ async fn a_docs_move_is_refused_when_no_skip_paths_are_set() {
     let e = land_err(&d, &id, &req("b1", Some(&mover))).await;
     assert!(e.contains("main moved, retry"), "{e}");
 }
+
+#[tokio::test]
+async fn worktree_setup_runs_in_the_check_worktree_before_the_check() {
+    let (d, _tmp) =
+        start_daemon_with_config(None, Some("[worktrees]\nsetup = \"touch ready\"\n")).await;
+    let id = moved_main_setup(&d).await;
+    d.client
+        .land_task(&id, &req("b1", Some("test -f ready")))
+        .await
+        .expect("lands: the check saw what setup made");
+}
+
+#[tokio::test]
+async fn a_failing_setup_refuses_the_land() {
+    let (d, _tmp) = start_daemon_with_config(
+        None,
+        Some("[worktrees]\nsetup = \"echo nope >&2; exit 3\"\n"),
+    )
+    .await;
+    let id = moved_main_setup(&d).await;
+    let e = land_err(&d, &id, &req("b1", Some("true"))).await;
+    assert!(e.contains("nope"), "{e}");
+    assert!(!git(&d.repo, &["ls-tree", "--name-only", "main"]).contains("f.txt"));
+}
+
+#[tokio::test]
+async fn land_finds_a_built_tickets_branch_without_branch() {
+    let (d, _tmp) = start_daemon(None).await;
+    branch_with(&d, "b1", "f.txt", "x\n");
+    let id = task(&d, TicketKind::Feature).await;
+    d.client.plan_task(&id).await.expect("plan");
+    let sha = git(&d.repo, &["rev-parse", "b1"]);
+    d.client
+        .built_task(
+            &id,
+            &bridle_api::types::BuiltTicketRequest {
+                branch: "b1".to_string(),
+                commit: sha,
+            },
+        )
+        .await
+        .expect("built");
+    let mut r = req("b1", Some("true"));
+    r.branch = None;
+    d.client.land_task(&id, &r).await.expect("lands");
+    assert_eq!(git(&d.repo, &["show", "main:f.txt"]), "x");
+}

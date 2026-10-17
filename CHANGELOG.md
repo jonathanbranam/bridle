@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Fix (br-3stk): `bridle ticket land` runs `[worktrees] setup` (e.g. `npm ci`) in its check worktree before the check, so a JS project lands without `--checked-commit`; it also falls back to the ticket's last recorded branch when `--branch` is omitted. Migration: none; set `[worktrees] setup` if the check needs installed dependencies.
+
 ## [0.7.6] - 2026-10-17
 
 - Test (br-6byg): `cancel_ends_an_upgrade_drain_quietly` in `crates/bridle-daemon/tests/restart_hold_test.rs` is `#[ignore]`d as flaky until br-6byg's real fix lands; run it with `--run-ignored only` to check it. Migration: none.

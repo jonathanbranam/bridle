@@ -57,6 +57,8 @@ pub struct LandInput<'a> {
     pub checked_commit: Option<&'a str>,
     /// `[integration] check_skip_paths` globs.
     pub check_skip_paths: &'a [String],
+    /// `[worktrees] setup` and timeout: run in the check worktree before the check, when one runs.
+    pub setup: Option<(&'a str, std::time::Duration)>,
     /// Receives the check's process group while it runs (br-eggc), so the daemon can stop it.
     pub check_pgid: Option<std::sync::Arc<std::sync::atomic::AtomicU32>>,
 }
@@ -144,6 +146,9 @@ pub async fn land(i: &LandInput<'_>) -> Result<Landed, LandError> {
             );
         }
         Some(cmd) => {
+            if let Some((setup, timeout)) = i.setup {
+                worktree::run_setup(&wt, setup, timeout).await?;
+            }
             count = run_check(&wt, cmd, i.check_pgid.as_deref()).await?;
             if let Some(n) = count {
                 band_check(n, read_count(i))?;
