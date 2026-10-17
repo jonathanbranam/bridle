@@ -5,10 +5,68 @@ tasks = [
 ]
 
 [[tier]]
+tasks = [
+    "br-66qq",
+    "br-fsae",
+]
+
+[[tier]]
+tasks = ["br-z5kz"]
+
+[[tier]]
+tasks = [
+    "br-kyjg",
+    "br-5j35",
+]
+
+[[tier]]
+tasks = [
+    "br-s5ah",
+    "br-h6h8",
+]
+
+[[tier]]
+tasks = [
+    "br-q4vb",
+    "br-2uzx",
+]
+
+[[tier]]
 tasks = ["br-9qws"]
 
 [[tier]]
 tasks = ["br-ef3u"]
+
+[[tier]]
+tasks = [
+    "br-t95y",
+    "br-6byg",
+]
+
+[[tier]]
+tasks = [
+    "br-a9g2",
+    "br-dbvd",
+]
+
+[[tier]]
+tasks = [
+    "br-p29s",
+    "br-f2yd",
+]
+
+[[tier]]
+tasks = [
+    "br-sdrw",
+    "br-ubjd",
+]
+
+[[tier]]
+tasks = [
+    "br-2d6x",
+    "br-m5kf",
+    "br-bnfs",
+]
 
 [[tier]]
 tasks = ["br-4cgx"]
