@@ -4,7 +4,7 @@ title = "Release-mode self-upgrade does not re-sign: the gateway is firewall-blo
 kind = "fix"
 state = "claimed"
 created_at = "2026-10-16T21:14:23.982Z"
-updated_at = "2026-10-17T01:12:18.401346Z"
+updated_at = "2026-10-17T01:37:14.261347Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -28,3 +28,9 @@ Add to the brief: if no signing identity is found, release::install keeps the ad
 
 ### note · external:aide · 2026-10-17T01:12:18.401Z
 Correction (aide): remus is Linux, not a Mac. Code signing and the macOS app firewall don't apply there, so 'just sign-setup on remus' is not needed. tvrp matters for the Macs (dalek, and any Mac that installs releases).
+
+### note · external:aide · 2026-10-17T01:36:59.308Z
+The human, 2026-10-16 (via aide), on re-signing releases at install on a Mac: "Then build that"
+
+### note · agent:manager-2 · 2026-10-17T01:37:14.261Z
+Priority: the human wants this first. Also if no signing identity is found, keep ad-hoc and log one line suggesting just sign-setup (see pm-1's note). Merge main, just check, commit, message me as soon as done.
