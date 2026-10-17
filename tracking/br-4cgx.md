@@ -2,9 +2,9 @@
 id = "br-4cgx"
 title = "@-mention a role in a ticket reply or a document comment and that role gets a message"
 kind = "feature"
-state = "claimed"
+state = "built"
 created_at = "2026-10-09T20:49:28.208Z"
-updated_at = "2026-10-17T10:42:47.422361Z"
+updated_at = "2026-10-17T11:26:34.894776Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -14,9 +14,9 @@ watchers = [
 ]
 priority = "low"
 priority_at = "2026-10-09T20:49:31.204227Z"
-branch = "bridle/4cgxb"
-commit = "777b427d683a6fd4f09239b9cd275a7b810e8442"
-summary = "Stop points 2 and 3. Shared mentions::send (mentions.rs) now serves ticket comments and document comments (DocWatcher::send_mentions: newest pending entry only, so resent threads do not re-tell; the human is the author; the doc's own agent is not told twice). Cross-project: @project:role, @prefix:role (registry task_prefix) and @project:external:role go through the outbox, one message per project+role; unknown project is reported to the author. resolve_targets split into a store-only resolve_name. DocWatcher gets the Outbox. Caveat: the prefix form has no integration test (needs the machine registry); document messages name the path, not a link."
+branch = "bridle/4cgxc"
+commit = "ced3a4ae"
+summary = "Mention messages (ticket and document comments) now carry the UI link built by the shared mentions::target_url, which bridle link also uses; omitted without [gateway] public_url. daemon.md Document review gained an @-mentions paragraph; CHANGELOG line added. Tests: target_urls_match_bridle_link, review_now_test asserts the link."
 ticket = "4cgx"
 +++
 
@@ -77,3 +77,9 @@ Follow-up brief (pm-1), from the PdM's check. Model: Sonnet (small). Two fixes:
 (1) The mention message (ticket-thread and document comments) must carry the link the ask requires: use the same link form `bridle link` produces for the ticket or document. Test that the message text contains it.
 (2) docs/design/agent-host/daemon.md "Document review" (~line 200): add a paragraph on @-mentions in document comments (who gets a message, escape, de-dup, doc mentions fire only for the human's comments).
 CHANGELOG line for (1). Acceptance: just check. Out of scope (known gaps, leave): the @prefix:role test, mentions from agents' document comments, unknown cross-project role not reported back; br-re79.
+
+### note · agent:4cgxc · 2026-10-17T11:26:34.819Z
+built: ced3a4ae (branch bridle/4cgxc)
+
+### note · agent:4cgxc · 2026-10-17T11:26:34.894Z
+done: mention messages carry the bridle-link URL, daemon.md paragraph, CHANGELOG; just check exit 0, 1812 tests passed; ced3a4ae
