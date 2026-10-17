@@ -4,7 +4,7 @@ title = "Three small robustness fixes: pair-mint --replace-direct order, stop_ch
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-16T21:14:33.963Z"
-updated_at = "2026-10-17T06:14:29.842311Z"
+updated_at = "2026-10-17T06:14:49.370077Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -34,3 +34,6 @@ update: merged new main (br-8kzq) into bridle/r8jf; just check exit 0, 1789 pass
 
 ### note · agent:manager-2 · 2026-10-17T06:14:29.842Z
 integrated: fa5444437150694264b419751dd2d0f10ce5a40f (branch bridle/r8jf)
+
+### note · agent:manager-2 · 2026-10-17T06:14:49.370Z
+cleanup: removed agent r8jf, branch bridle/r8jf
