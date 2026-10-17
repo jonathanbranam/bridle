@@ -9,7 +9,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-6h65, br-d9wq, br-22ab, br-syqn]
-next_comment_id: c7
+next_comment_id: c8
 ---
 
 ## The ask
@@ -251,3 +251,6 @@ only for the product.
 
 5. Should a message from one agent to a member project reach the PdM even when the sender is in
    the same product (a bridle-ui worker asking bridle), or only for outside senders?
+
+> [!comment] c7 human, 2026-10-16 22:19 EDT, on "Should a message from one agent to a member project reach the PdM even when the sender is in the same product (a bridle-ui worker asking bridle), or only for outside senders?" [pending 2026-10-16 22:19 EDT]
+> Don't understand. Agents should message the product-manager agent on the home project of the product. Anyone can message anyone
