@@ -2,16 +2,16 @@
 id = "br-9dcz"
 title = "Agents are reminded once to link the ticket and task IDs they show the human (a hook, never a block)"
 kind = "feature"
-state = "built"
+state = "integrated"
 created_at = "2026-10-10T17:09:36.504Z"
-updated_at = "2026-10-17T08:22:13.469106Z"
+updated_at = "2026-10-17T08:41:08.138820Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "agent:9dcz",
 ]
 branch = "bridle/9dcz"
-commit = "6e812385"
+commit = "f7725695a45f3ee17bb55f6b915d335e24757a44"
 summary = "New hidden Stop hook 'bridle hook link-check' (crates/bridle/src/link_check.rs scan, commands/hook.rs, session.rs REPLY_HOOK with timeout 5) reminds orchestrator/advisor/aide sessions once per reply to link task IDs (own prefix) and bare IDs that exist as docs/tickets files; skips code, paths, longer words, already linked; allows on stop_hook_active/no public_url/any error. Rule link-ids-for-the-human lost its roles: list. Docs: cli.md, CHANGELOG. Caveat: restart_hold_test cancel_ends_an_upgrade_drain_quietly flaked once under load, passed alone and in the green rerun."
 ticket = "9dcz"
 +++
@@ -32,3 +32,6 @@ built: 6e812385 (branch bridle/9dcz)
 
 ### note · agent:9dcz · 2026-10-17T08:22:13.469Z
 done: bridle hook link-check Stop hook + rule/docs/CHANGELOG; just check exit 0, 1802 tests passed; 6e812385
+
+### note · agent:manager-2 · 2026-10-17T08:41:08.138Z
+integrated: f7725695a45f3ee17bb55f6b915d335e24757a44 (branch bridle/9dcz)
