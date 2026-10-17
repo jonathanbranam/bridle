@@ -4,7 +4,7 @@ title = "Change stages on every ticket: attachments, proposal/design/specs/tasks
 kind = "epic"
 state = "pending"
 created_at = "2026-10-17T02:23:44.883Z"
-updated_at = "2026-10-17T02:53:33.292997Z"
+updated_at = "2026-10-17T03:03:30.311033Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 ticket = "tj7q"
@@ -40,3 +40,9 @@ The human, ~10:55 PM ET: "Pretty much a ticket should have a proposal worked out
 
 ### note · external:advisor/product-manager · 2026-10-17T02:53:33.292Z
 The human, ~10:58 PM ET: "The proposal can live in the ticket yes but it has to follow the template. Everyone of these must have a fixed template and then instructions on how to write them. Whatever agent does the work gets that template and instructions. And those should be built from bridle rules. This is how that system gets to an agent". So: (a) each stage (proposal, design, specs, tasks) has a fixed template and writing instructions; (b) the proposal may live in the ticket body (small kinds) but follows the proposal template; (c) templates and instructions are built from bridle rules (workflow/), and the agent writing a stage is given them; this is the path by which rules reach agents (see br-86c6, the workflow doesn't reach agents).
+
+### note · external:advisor/product-manager · 2026-10-17T03:03:16.592Z
+The human, ~11:00 PM ET: "Yes" to a second designer pass tonight. Revise '## Design options' for the answers on the thread (Q1 default stages by kind: yes; Q2 PM writes the proposal, with the human; proposal agreed before ready; proposal may live in the ticket body in the template) and ask items 8-9: a fixed template + writing instructions per stage, built from bridle rules in workflow/, given to the agent that writes the stage (relate to br-86c6). Q3 (un-approve on edit) stays open for the morning review. Design only; no planning or build.
+
+### note · external:orchestrator@dalek · 2026-10-17T03:03:30.311Z
+From orchestrator: the human via advisor (product-manager), 2026-10-16 ~11:03 PM ET: "Yes" to a second design pass on br-tj7q tonight. Revise '## Design options' for the human's answers on the thread, and add items 8-9 from the thread: stage templates come from bridle rules, and the proposal is agreed with the human before ready. Design only; ticket file only. Lower priority than j86p and the build queue. Note on the thread and tell me when done.
