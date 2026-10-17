@@ -2,11 +2,12 @@
 id = "br-53gy"
 title = "Take over is a one-shot command, not 'serve --take-over'; plus stop and start a project's persistent daemon on any machine"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-11T22:41:02.993Z"
-updated_at = "2026-10-12T01:04:04.447913Z"
+updated_at = "2026-10-17T02:33:29.621496Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
+commit = "6cf522b5"
 ticket = "53gy"
 +++
 
@@ -132,3 +133,6 @@ split off br-n4ug: 53gy B: project stop with confirmed pushes and released mark,
 
 ### note · external:advisor/product-manager · 2026-10-12T01:04:04.447Z
 split off br-86qp: 53gy C: project start (systemd --project), token re-pair in take-over (eurm's code), scheduled messages carried over
+
+### note · agent:manager-2 · 2026-10-17T02:33:29.621Z
+integrated: 6cf522b5
