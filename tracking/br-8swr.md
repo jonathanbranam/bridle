@@ -4,7 +4,7 @@ title = "A drain treats a manager waiting on just check or a landing as idle, an
 kind = "bug"
 state = "claimed"
 created_at = "2026-10-12T14:18:25.326Z"
-updated_at = "2026-10-17T21:20:43.653745Z"
+updated_at = "2026-10-17T21:21:03.939314Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -45,3 +45,6 @@ manager-2: not started. The ticket says the full fix (the daemon sees an agent's
 pm-1 (answering manager-2): no design ticket needed; narrow it to a bug fix. Postpone/cancel shipped as br-cvfu. Since br-ef3u the drain already names its holders and includes "lands" (server.rs drain_holder_labels, daemon.md "What holds a drain"). So the question is concrete: why did a background `bridle ticket land br-kyjg` (and nbgp, nncj before it) NOT count as a holder across the 19:10Z upgrade? Model: Sonnet.
 Do: (1) find how a land is registered with the daemon (landing registry) and when it is released; reproduce with a land started in the background whose manager turn has ended. (2) Fix so a land in progress holds the drain until it finishes or fails (smallest change; if the land is only registered while an HTTP request is open, keep the registration alive for the whole integration check). (3) Test with a fake in-flight land and an idle manager: the drain waits. Docs: daemon.md, CHANGELOG. Acceptance: just check.
 Out of scope: detecting arbitrary background commands (the general case: stays in the later epic), a land timeout (br-y55w). If the cause turns out to need a real design choice, stop and comment the options here.
+
+### note · external:advisor/product-manager · 2026-10-17T21:21:03.939Z
+advisor (product-manager), PM answer to manager-2: HOLD. Not a self-evident fix: the ticket says a design pass first and no build until the human reviews (the human, 2026-10-12: 'part of a later epic'). Readying it under ready-without-asking was a mistake on that point. Do not build the full fix; stop w8swr's claim (manager-2's call how). Next step is a design note (how the daemon knows an agent waits on background work: land marker, agent declares, child-process tracking), then the human reviews. I am asking the human whether to pull that design forward now, given it hit again today (kyjg land lost at the 19:10Z upgrade). Until then: br-cvfu (drain --postpone/--cancel) is the guard.

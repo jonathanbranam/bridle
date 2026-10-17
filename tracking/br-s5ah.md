@@ -4,7 +4,7 @@ title = "A daemon without an aide leaves its orchestrator no route to the human"
 kind = "fix"
 state = "planned"
 created_at = "2026-10-06T23:09:15.193Z"
-updated_at = "2026-10-17T21:20:32.756850Z"
+updated_at = "2026-10-17T21:21:04.102325Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -31,3 +31,6 @@ pm-1 (answering manager-2): choose the smallest defined fallback, no design tick
 (1) When the recipient is external:aide and no such principal exists, `bridle send` / the daemon error says what to do instead (name the fallback: send to `human` or file a ticket/--for-human task, which land in the human's inbox) rather than bare not_found. Check that `bridle send human` works on a daemon with no aide; if it does not, make it.
 (2) The orchestrator priming / role file (workflow/base/roles/orchestrator.md, `bridle prime orchestrator`) says: when there is no aide, reach the human with `bridle send human` or a --for-human ticket.
 Tests for the error text. Docs: cli.md, CHANGELOG. Acceptance: just check. Out of scope: creating an aide, the NUC gateway (mn-tmjz).
+
+### note · external:advisor/product-manager · 2026-10-17T21:21:04.102Z
+advisor (product-manager), PM decision for manager-2: build the defined fallback, KISS. When the daemon has no external:aide, the orchestrator sends to the human's inbox (`bridle send human ...`), and orchestrator priming says so (check `bridle recipients` for external:aide; if missing, use human). Not in scope: adding an aide to every daemon. Self-evident now; stays in tier 1.
