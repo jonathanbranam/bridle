@@ -25,6 +25,114 @@ The human, 2026-10-16 ~10:25 PM ET, to advisor (product-manager), verbatim:
 > - agents wrote the files for all stages that are unblocked
 > - specs become bridle specs when ticket is implemented
 
+## Captured intent (2026-10-17, being grilled; supersedes the readings below where they differ)
+
+The human's overview, 2026-10-17 ~11:30 AM ET, is on the thread verbatim. Key lines:
+
+> When we have work to do, there should be a workflow assigned to a ticket. That workflow governs
+> how the ticket is prepared to be built, investigated, researched, planned, designed, and
+> implemented. [...] this workflow is not about scheduling or prioritization. It's about designing
+> the ticket properly and getting approvals that are needed.
+
+> We're just going to copy OpenSpec more or less for now. We'll change this later
+
+> Every ticket has to have a proposal, a design, specs, and tasks before it gets handed to a
+> worker. [...] the proposal always needs a human approval, and the other three are just optional.
+> When we create a ticket, we'll set which ones need approval. If that's all, if we just ship that,
+> we're ready.
+
+> When we tell an agent it is time to write the proposal, we give it all the instructions for
+> writing a proposal and the template right there, every single time.
+
+### Purpose
+
+A workflow on each ticket: the steps that prepare it for a worker, each producing a file, each
+with a gate. Not scheduling, not priority.
+
+### MVP as stated (draft; open questions below may change it)
+
+- **The schema lives on the ticket.** It is the ticket's workflow: which stages (OpenSpec's
+  artifacts) to write, which depend on which, and the gate on each. Standard schemas exist and can
+  be assigned, but for now the ticket carries its own (the human, 2026-10-17: "we're simplifying
+  that for the moment and just saying the schema lives on the ticket. The schema tells you which
+  artifacts to create in what order and which artifacts are dependent on other artifacts").
+- **No rule ahead of time** on which stages a ticket has (not all four, no default by kind):
+  whoever creates the ticket decides its stages and which need the human's approval (the human:
+  "there's no rule. We don't need to make a rule for this ahead of time"). MVP's stages are
+  chosen from proposal, design, specs, tasks. Dependencies copy OpenSpec: proposal first; specs and
+  design each require the proposal; tasks require specs and design.
+- Each stage produces a file (OpenSpec's "artifact"; file, attachment, artifact are one thing).
+- **Each stage has a gate.** MVP gate: the file exists, plus, if the stage needs approval, the
+  gate's owner signs it approved. Nothing after it can go forward until it is signed. MVP owner:
+  the human. Later the owner can be another agent, and it works the same way (the human: "whoever
+  owns the gate, will sign it as approved, and then the rest of the command can't go forward
+  unless it's been signed").
+- Proposal, when listed, needs the human's approval ("the proposal always needs a human
+  approval"). Approval for the others: set per ticket at creation.
+- **One way to write a stage, for any agent.** Like OpenSpec's continue skill: the agent asks
+  bridle for the ticket's next unblocked stage, and bridle prints its instructions (compiled from
+  the layered bridle rules) and its template; the agent writes that one file. It works the same for
+  a background agent and an interactive one (an advisor going through the ticket live with the
+  human). Skill or command, the human does not mind. Instructions and template come at the moment
+  of writing, every time, not in CLAUDE.md or the role prompt (overturns design Q6-A).
+- **Who writes:** most of the time the PM writes the proposal (the human, 2026-10-17: "most of the
+  time, the proposal should be written by the product manager"). The rest: a background agent
+  started for the stage is fine for MVP.
+- With human review: the agent writes the file and says it is ready for review; the human
+  approves, or asks for changes and then approves. Without: it goes straight on.
+- There is a command to approve (sign) a stage. The human does not want to have to run it
+  themselves (open question 2).
+- The ticket is handed to a worker only when every listed stage's file exists and every gate is
+  signed.
+
+Later (named by the human, not MVP): gates owned by agents (other kinds of review); standard
+schemas assigned to tickets; different stage types.
+
+### Settled earlier (still standing unless reopened)
+
+- Editing an approved stage does not withdraw its approval (the human, 2026-10-17 ~8:05 AM ET: "No").
+- Default stages by kind ("Sure", 2026-10-16): withdrawn. No rule; stages are chosen per ticket
+  at creation (the human, 2026-10-17).
+- Who writes the proposal: the PM, most of the time; with an advisor live, or in the background.
+
+### Open questions (advisor tj7q's list; recommendation in brackets)
+
+1. Epic split and names: MVP = the schema on the ticket, files in a folder, the next-stage command
+   for any agent, signed human gates, read in the existing docs viewer. V1 = the ticket page in
+   bridle-ui (tabs, combined task/ticket page, approve button), template-heading check. V2 =
+   attachments of any type (images), gates owned by agents, standard schemas to assign. [yes]
+2. Approving without running a command: the human says "approved" to whoever they are talking to
+   (an advisor, aide or the PM), and that agent runs `bridle ticket approve <id> <stage>` as human
+   via agent; the signature records the human as the signer. In V1 the ticket page has a button.
+   [yes]
+3. Schema shape on the ticket: frontmatter, one entry per stage with its `requires` and `gate`,
+   e.g. `stages: [proposal: {gate: human}, design: {requires: [proposal]}, ...]`.
+   `bridle ticket new --stages proposal,design,specs,tasks --review proposal,specs` writes it with
+   OpenSpec's dependencies filled in; a ticket with no stages goes straight to a worker as today.
+   [yes]
+4. Ticket states: the proposal is written while the ticket is `pending`; the human signing it is
+   what readies it (`open`); the rest are written while `open`; it becomes `planned` (handed to a
+   worker) when every listed stage is written and every gate signed. [yes]
+5. Where files live: a folder beside the ticket on main, `docs/tickets/open/<slug>-<id>/proposal.md`
+   etc. (design Q1-A). [yes]
+6. Starting background writers: when a stage unblocks, the daemon tells the project manager, who
+   writes it or starts an agent for it (design Q3-A; the daemon does not spawn agents itself).
+   [yes]
+7. The next-stage command: `bridle ticket next <id>` prints the next unblocked stage with its
+   instructions (the stage's rule, layered: base, packs, project), template, output path and the
+   files it depends on; it refuses when the stage is blocked by an unsigned gate. A thin skill
+   wraps it, so an interactive agent and a background one run the same thing. [yes]
+8. Signing: an approval is recorded with who signed and when (a thread entry and the ticket's
+   signed list), and the commands that move the ticket on (`next`, `ready`, `plan`) refuse while a
+   gate is unsigned. Cryptographic signing stays with v2va. [yes]
+9. Specs into bridle specs: MVP keeps it cheap (design Q4-A): specs.md is a draft, and the tasks
+   template always starts with "merge specs.md into design/specs". [yes, in MVP]
+10. Tasks: one worker builds the whole ticket, following tasks.md as its checklist (OpenSpec's
+    apply); no child rows. [yes]
+11. Existing tickets: the workflow applies to tickets created after it ships only. [yes]
+12. Names: "stage" for a step, "file" for its output, "gate" for what must be true to pass,
+    "schema" for the ticket's list of stages. [yes]
+
 ## What this means (advisor's reading; the designer confirms or corrects)
 
 1. **Attachments.** A ticket can carry files besides its body (the attachments epic's "several
