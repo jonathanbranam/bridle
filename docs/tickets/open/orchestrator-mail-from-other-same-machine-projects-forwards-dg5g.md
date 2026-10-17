@@ -13,6 +13,9 @@ related: []
 
 ## The ask
 
+The human, 2026-10-17 ~11:30 AM ET, to advisor (product-manager): "dg5g yes, approve it ...
+just get it done. It's fine." Priority high. The ask is the "Ask" section below.
+
 ## What happened
 
 2026-10-17, dalek. The human kept the dalek orchestrator on bridle ("NO! I can't move the dalek orchestrator!", then "revert both"), so its one waiter is on bridle. After the j86p re-pair, other same-machine projects (bridle-ui at least) forward the orchestrator's wakes and mail to dalek-home, where no waiter is open. manager-3's question on bridle-ui (dalek-home m-0122, ~12:00Z) sat unread ~2.5 h and stalled the bridle-ui queue; the orchestrator found it by hand.
