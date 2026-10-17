@@ -188,9 +188,11 @@ token, like `task ready --project`; the outbox is for a project with no such tok
   with the outbox id as the message id. Migration: a visitor token minted before this has no
   home (`principals.home` NULL) and keeps its inbox here as before (`bridle token pair` re-mints
   such a token with a home on its next run, br-eurm); so does one whose home can no
-  longer be forwarded to (no peer token), with a warning in the log. A home is only for visitors.
-  Every principal's home is its own machine's daemon, so a visitor token with a home is the
-  only record needed; `external:orchestrator` itself stays local. A visitor whose recorded home is
+  longer be forwarded to (no peer token), with a warning in the log. A home is recorded on a visitor token, and also on the direct token of the machine's own
+  orchestrator (br-j86p): `external:orchestrator` on a same-machine daemon keeps full
+  orchestrator rights (ready, comment, queue), and the home only tells the daemon where to
+  forward its wakes and mail. Visitors from other machines keep the visitor limits.
+  A visitor whose recorded home is
   this daemon's own project is refused with an error (x8c8): forwarding would deliver to the
   local principal of the same name, a different one.
 - **Exactly once, in order.** Each forward carries its origin (machine, daemon, outbox id); the

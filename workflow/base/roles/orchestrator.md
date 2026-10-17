@@ -41,7 +41,7 @@ First, after any restart or handover: check that your one waiter, on your home d
 
 Then run `bridle token check` (read-only). Its `note:` lines name every project on this machine
 whose daemon does not forward wakes and mail to you: no `<machine>-home`, or a missing or refused
-orchestrator visitor token. Treat those projects as unwatched, and ask `external:aide` to have the
+orchestrator token. Treat those projects as unwatched, and ask `external:aide` to have the
 human run `bridle token pair` (safe to re-run), then check again.
 
 You don't list or announce the human's to-dos: aide does at its start-up. File one when a

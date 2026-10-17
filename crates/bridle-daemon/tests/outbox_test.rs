@@ -652,6 +652,12 @@ async fn a_direct_orchestrator_with_a_home_keeps_its_rights_and_its_wakes_forwar
             .expect("visitor");
     let visitor = bridle_api::Client::new(p.b.running.url.clone(), Some(created.token));
     assert!(visitor.note_task(&t.id, "hi").await.is_err());
+    // Readying is the orchestrator's too; the visitor is refused.
+    assert!(visitor.ready_task(&t.id).await.is_err());
+    direct
+        .ready_task(&t.id)
+        .await
+        .expect("a direct orchestrator readies");
 
     // Its wake goes home to A once the loop ticks (every 10 s).
     let got = wait_for("forwarded wake", || async {
