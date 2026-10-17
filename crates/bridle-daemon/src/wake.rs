@@ -20,6 +20,11 @@ use crate::store::Store;
 
 /// The wake cursor: the seq of the last event scanned when wakes were last delivered.
 const CURSOR_KEY: &str = "orchestrator_wake_cursor";
+/// The forward cursor: the seq of the last event whose wakes were sent to the orchestrator's home.
+/// Apart from the wake cursor, which moves only when a local waiter takes the wakes: a daemon
+/// whose orchestrator is a visitor never has one, and replayed every old event to the home on
+/// each restart (br-q4vb).
+const FORWARD_CURSOR_KEY: &str = "orchestrator_forward_cursor";
 /// The principal the orchestrator's CLI calls act as, and the recipient of its messages.
 pub const ORCHESTRATOR: &str = "external:orchestrator";
 const FIVE_HOUR_WAKE: f64 = 0.93;
@@ -317,6 +322,8 @@ impl Waiters {
 struct State {
     /// Events up to here have been looked at; `None` until the first tick.
     scanned: Option<i64>,
+    /// Events up to here were forwarded home before this start; read once with `scanned`.
+    forwarded: i64,
     pending: Vec<WakeReason>,
     /// Wakes queued since the last tick that haven't been sent home yet.
     unforwarded: Vec<WakeReason>,
@@ -439,8 +446,17 @@ impl Wakes {
             self.notify.notify_one();
         }
         let fresh = std::mem::take(&mut st.unforwarded);
+        let scanned = st.scanned;
         drop(st);
         self.forward_home(&fresh).await;
+        if let Some(seq) = scanned
+            && let Err(e) = self
+                .store
+                .swap_meta(FORWARD_CURSOR_KEY, &seq.to_string())
+                .await
+        {
+            tracing::warn!(error = %e, "saving the wake forward cursor failed");
+        }
     }
 
     async fn scan(&self, st: &mut State) -> Result<(), crate::store::StoreError> {
@@ -455,6 +471,11 @@ impl Wakes {
                         self.store.swap_meta(CURSOR_KEY, &tail.to_string()).await?;
                         tail
                     }
+                };
+                st.forwarded = match self.store.get_meta(FORWARD_CURSOR_KEY).await? {
+                    Some(v) => v.parse().unwrap_or(0),
+                    // Upgrading: what is already past was forwarded by earlier starts.
+                    None => self.tail().await?,
                 };
                 st.scanned = Some(cursor);
                 cursor
@@ -477,7 +498,9 @@ impl Wakes {
             };
             for ev in &events {
                 if let Some(w) = self.wake_for_event(ev).await {
-                    st.unforwarded.push(w.clone());
+                    if ev.seq > st.forwarded {
+                        st.unforwarded.push(w.clone());
+                    }
                     st.pending.push(w);
                 }
             }
@@ -861,6 +884,24 @@ mod tests {
             .expect("woken")
             .expect("join");
         assert_eq!(got.len(), 1);
+    }
+
+    #[tokio::test]
+    async fn a_restart_does_not_forward_old_events_again() {
+        let r = rig().await;
+        r.event(
+            event_kind::AGENT_EXITED,
+            Some("a"),
+            json!({"reason": "daemon_shutdown"}),
+        )
+        .await;
+        r.wakes.tick(Utc::now()).await;
+        // Never taken (no local waiter), so the wake cursor stays; the forward cursor moves.
+        for _ in 0..3 {
+            let again = Wakes::new(r.store.clone());
+            again.tick(Utc::now()).await;
+            assert!(again.state.lock().await.unforwarded.is_empty());
+        }
     }
 
     #[tokio::test]
