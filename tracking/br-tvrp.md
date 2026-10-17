@@ -4,12 +4,13 @@ title = "Release-mode self-upgrade does not re-sign: the gateway is firewall-blo
 kind = "fix"
 state = "claimed"
 created_at = "2026-10-16T21:14:23.982Z"
-updated_at = "2026-10-17T01:38:14.428347Z"
+updated_at = "2026-10-17T02:17:03.953167Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "agent:tvrp",
 ]
+summary = 'release::install now goes through signing::install on macOS (not under cfg(test)), after the rollback stash: the copy is signed -i bridle with the local identity and renamed into place. With no identity it keeps the ad-hoc signature and logs one warning to run `just sign-setup`. A failed sign leaves the installed binary and the stash untouched. Tests: install_signed(sign, ...) takes either branch (failed sign keeps old binary and stash; no-sign copies). Docs: daemon.md "Release upgrade", CHANGELOG. Caveat: the successful-sign path is not unit-tested (codesign of a stand-in file would fail on a Mac with the identity). No CI signing, per the brief.'
 ticket = "tvrp"
 +++
 
