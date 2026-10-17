@@ -9,7 +9,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-6h65, br-d9wq, br-22ab, br-syqn]
-next_comment_id: c4
+next_comment_id: c5
 ---
 
 ## The ask
@@ -182,6 +182,10 @@ The PdM is a seat belonging to the **home project's daemon**, not a separate kin
   so the PdM reads and files tickets in each member daemon and in no others. Product-less
   projects and other products' projects have no key for it. Created when a project joins the
   product (`bridle token create --external product-manager/<product>` on the member).
+
+> [!comment] c4 human, 2026-10-16 22:17 EDT, on "the PdM reads and files tickets in each member daemon and in no others" [pending 2026-10-16 22:17 EDT]
+> Is the token for the daemon? How does the pdm read files? The file system or bridle?
+
 - **Daemons watched.** Exactly the member projects found by section 1, plus none else. Watching
   uses the existing task watcher mechanism (br-519b), not a new poll.
 
