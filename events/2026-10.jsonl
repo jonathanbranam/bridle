@@ -2574,3 +2574,4 @@
 {"actor":"agent:w5j35","at":"2026-10-17T20:00:47.787253Z","from":"claimed","task":"br-5j35","to":"built"}
 {"actor":"agent:pm-1","at":"2026-10-17T20:04:06.392058Z","from":"open","task":"br-4mbd","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-17T20:04:07.476087Z","queue":"reprioritized"}
+{"actor":"agent:manager-2","at":"2026-10-17T20:17:46.645473Z","from":"built","task":"br-5j35","to":"integrated"}
