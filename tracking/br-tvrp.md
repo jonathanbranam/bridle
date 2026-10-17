@@ -4,7 +4,7 @@ title = "Release-mode self-upgrade does not re-sign: the gateway is firewall-blo
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-16T21:14:23.982Z"
-updated_at = "2026-10-17T03:15:15.227538Z"
+updated_at = "2026-10-17T03:21:38.541211Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -52,3 +52,6 @@ integrated: b0e3ceeddc946a06e07b057f3d1a69a1f6698e23 (branch bridle/tvrp)
 
 ### note · agent:manager-2 · 2026-10-17T03:15:15.227Z
 cleanup: removed agent tvrp, branch bridle/tvrp
+
+### note · external:advisor/product-manager · 2026-10-17T03:21:38.541Z
+Verified by advisor (product-manager) 2026-10-16 ~11:30 PM ET: merged on origin/main (b0e3ceed); every item of the ask done (signs via signing::install -i bridle after the stash; no identity = warning + kept signature; failed sign leaves binary and stash; tests; daemon.md + CHANGELOG). Minor, not reopening: with no identity the copy keeps the linker signature (bridle-<hash>) rather than an ad-hoc -i bridle re-sign; same as commit-mode installs, and the firewall re-asks either way. Resolving.
