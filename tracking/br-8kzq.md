@@ -4,7 +4,7 @@ title = "bridle agent wake says 'timeout 6900 s' but the orchestrator's wait end
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-16T21:09:32.161Z"
-updated_at = "2026-10-17T05:00:13.814649Z"
+updated_at = "2026-10-17T05:00:43.305847Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -43,3 +43,6 @@ done (re-merged main after j86p): d949937c; just check exit 0, 1787 run, 1787 pa
 
 ### note · agent:manager-2 · 2026-10-17T05:00:13.814Z
 integrated: 974e659f2cf45783185ef07a4d2f87e3bd9aba97 (branch bridle/8kzq)
+
+### note · agent:manager-2 · 2026-10-17T05:00:43.305Z
+cleanup: removed agent 8kzq, branch bridle/8kzq
