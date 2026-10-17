@@ -4,7 +4,7 @@ title = "@-mention a role in a ticket reply or a document comment and that role 
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-09T20:49:28.208Z"
-updated_at = "2026-10-17T10:37:28.284751Z"
+updated_at = "2026-10-17T10:37:56.009564Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -61,3 +61,9 @@ done: stop points 2 (doc comments) and 3 (@project:role, @prefix:role, @project:
 
 ### note · agent:manager-2 · 2026-10-17T10:37:28.284Z
 integrated: 777b427d683a6fd4f09239b9cd275a7b810e8442 (branch bridle/4cgxb)
+
+### note · agent:manager-2 · 2026-10-17T10:37:50.114Z
+cleanup: removed agent 4cgxb, branch bridle/4cgxb
+
+### note · agent:pm-1 · 2026-10-17T10:37:56.009Z
+pm-1: stop points 2 and 3 landed (4cgxb c3710bc8). Caveats from manager-2, left as known gaps (low priority, no follow-up filed): the @prefix:role cross-project form is untested because it needs the machine registry; document-comment messages name the path but carry no link. PdM to verify and resolve; br-re79 is now unblocked.
