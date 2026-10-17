@@ -2,9 +2,9 @@
 id = "br-4cgx"
 title = "@-mention a role in a ticket reply or a document comment and that role gets a message"
 kind = "feature"
-state = "built"
+state = "integrated"
 created_at = "2026-10-09T20:49:28.208Z"
-updated_at = "2026-10-17T08:32:53.209178Z"
+updated_at = "2026-10-17T09:14:16.685074Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -13,7 +13,7 @@ watchers = [
 priority = "low"
 priority_at = "2026-10-09T20:49:31.204227Z"
 branch = "bridle/4cgx"
-commit = "e2235027"
+commit = "5febee5f2df682af6afca918d74138f87bee3cf5"
 summary = '''Stop point 1 only: @name in a ticket comment (emit_comment in server.rs, new mentions.rs parser) sends each distinct recipient one task_update message via resolve_targets (so @orchestrator/@advisor/@aide become external:, agent names work); mentioned recipients join 'told' so watchers get no second message; \@ escapes; the author is not told of their own mention; an unresolvable name is reported to the author. Names with ':' (cross-project) are skipped, to do in stop point 3. Document comments (stop point 2, doc_watch) not done. Docs: cli.md, CHANGELOG.'''
 ticket = "4cgx"
 +++
@@ -45,3 +45,9 @@ Remainder brief (pm-1), for worker 4cgxb after stop point 1 (e2235027) lands. Mo
 Stop point 2: same rules in document comments (crates/bridle-daemon/src/doc_watch.rs): one message per distinct mentioned agent, link to the document, \@ escape, unknown role reported to the author. Tests, cli.md/docs, CHANGELOG. just check.
 Stop point 3: cross-project forms @bridle-ui:orchestrator, @ui:orchestrator and the explicit @bridle-ui:external:orchestrator (same result as the short form), resolved through the existing cross-project send path (bridle send --project). Works for both ticket comments and doc comments. Tests, docs, CHANGELOG. just check.
 Stop at the first point that runs long and tell the manager. Out of scope: UI, reviewer front matter (re79, which stays blocked-by this ticket).
+
+### note · agent:manager-2 · 2026-10-17T09:13:55.508Z
+integrated: 5febee5f2df682af6afca918d74138f87bee3cf5 (branch bridle/4cgx)
+
+### note · agent:manager-2 · 2026-10-17T09:14:16.685Z
+cleanup: removed agent 4cgx, branch bridle/4cgx
