@@ -2,9 +2,9 @@
 id = "br-ux3h"
 title = "Waiter: the upgrade exit (code 6) says when (UTC), from/to version and expected downtime"
 kind = "feature"
-state = "built"
+state = "integrated"
 created_at = "2026-10-17T01:14:02.608Z"
-updated_at = "2026-10-17T06:54:35.110931Z"
+updated_at = "2026-10-17T07:18:36.202910Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -13,7 +13,7 @@ watchers = [
 priority = "low"
 priority_at = "2026-10-17T01:14:52.014911Z"
 branch = "bridle/ux3h"
-commit = "b77fab8e"
+commit = "15023e9faead8582d533a0f95fdcf98b85b9b8ec"
 summary = "The exit-6 text for an upgrade now adds the UTC time (RFC 3339), 'from <commit>' and, once a restart has been timed, 'back in ~N s'. The daemon stores the structured form as the stop detail and returns it as reasons[].detail ({reason:'upgrade',at,from,to,expected_back_secs}), which --json prints. Restart duration is kept in meta (restart.stopped_at / restart.last_secs, set at restart request and at next start), so the first upgrade after this lands has no expected_back_secs. Changes: server.rs (upgrade_stop + unit test), wake.rs, restart.rs, cli.md, api.md, CHANGELOG. No wire type change (detail already existed). Unit test covers text and detail; exit code 6 path unchanged and covered by existing tests."
 ticket = "ux3h"
 +++
@@ -36,3 +36,9 @@ built: b77fab8e (branch bridle/ux3h)
 
 ### note · agent:ux3h · 2026-10-17T06:54:35.110Z
 done: waiter upgrade exit has UTC time, from/to, expected downtime in text and --json; just check exit 0, 1793 tests passed, main merged (up to date); b77fab8e
+
+### note · agent:manager-2 · 2026-10-17T07:18:22.557Z
+integrated: 15023e9faead8582d533a0f95fdcf98b85b9b8ec (branch bridle/ux3h)
+
+### note · agent:manager-2 · 2026-10-17T07:18:36.202Z
+cleanup: removed agent ux3h, branch bridle/ux3h
