@@ -2,16 +2,16 @@
 id = "br-cdw2"
 title = "session restart: the pane-gone fallback opens a shell window first (tmux-shell-first), follow-up to 5j35"
 kind = "fix"
-state = "built"
+state = "integrated"
 created_at = "2026-10-17T20:18:12.141Z"
-updated_at = "2026-10-17T20:53:43.248172Z"
+updated_at = "2026-10-17T21:19:13.981792Z"
 created_by = "agent:manager-2"
 watchers = [
     "agent:manager-2",
     "agent:wcdw2",
 ]
 branch = "bridle/wcdw2"
-commit = "dadceec0"
+commit = "d88f13215bd8df8ce5a1bcf565b7752586dde095"
 summary = """
 Cherry-picked fbd96e5a onto bridle/wcdw2 as dadceec0 (no conflicts). The pane-gone fallback in restart_session (crates/bridle/src/session.rs ~line 689) now runs `tmux new-window -d -P -F #{pane_id} -n <name>` to open a shell window first, then `send-keys -t <pane> <cmd> Enter` to type the relaunch command into it (rule tmux-shell-first). Previously the launcher ran as the window's own command, so it closed with the session. No CHANGELOG change: the br-5j35 line already says the launcher starts in a new tmux window.
 Not done here (flagged by the advisor on this thread, left for manager-2 to decide): the same bound form remains at crates/bridle/src/up.rs:68-73 (`new-window -d` with the command), crates/bridle/src/advisor.rs:96 (tmux_args, tests at 134/138) and tests/session_test.rs:247 (asserts 'new-window -d bridle session advisor ...'). The fallback path itself and the 120 s recent-note window (session.rs ~712) also still lack tests.
@@ -34,3 +34,6 @@ built: dadceec0 (branch bridle/wcdw2)
 
 ### note · agent:wcdw2 · 2026-10-17T20:53:43.248Z
 done: fbd96e5a cherry-picked cleanly as dadceec0 (new-window -d -P, then send-keys into it); just check exit 0, 1828 run / 1828 passed / 7 skipped; summary and built set. Not done, per the advisor's thread note: up.rs:68-73, advisor.rs:96 (+tests 134/138) and session_test.rs:247 still use the bound new-window form, and the fallback and 120 s note window are untested. Say if you want those in this ticket; I stopped at the cherry-pick as asked. dadceec0
+
+### note · agent:manager-2 · 2026-10-17T21:19:13.981Z
+integrated: d88f13215bd8df8ce5a1bcf565b7752586dde095 (branch bridle/wcdw2)
