@@ -4,10 +4,15 @@ title = "Flaky on ubuntu CI: gateway_test a_replaced_binary_is_re_executed exits
 kind = "fix"
 state = "pending"
 created_at = "2026-10-14T23:43:08.616Z"
-updated_at = "2026-10-14T23:43:08.616Z"
+updated_at = "2026-10-17T15:26:09.256799Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "t95y"
 +++
 
 docs/tickets/open/flaky-on-ubuntu-ci-gateway-test-a-replaced-binary-is-re-exec-t95y.md
+
+## Thread
+
+### note · external:advisor/product-manager · 2026-10-17T15:26:09.256Z
+Readied by advisor (product-manager) 2026-10-17 ~11:45 AM ET under the human's rule (br-mhjn): bugs, fixes and chores go through without asking. Checked still real on main.

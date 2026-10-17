@@ -2,9 +2,9 @@
 id = "br-m5kf"
 title = "Specs: say what happens to unit tests a scenario now covers"
 kind = "chore"
-state = "pending"
+state = "open"
 created_at = "2026-10-05T02:51:25.940Z"
-updated_at = "2026-10-11T21:31:34.461853Z"
+updated_at = "2026-10-17T15:26:12.732363Z"
 created_by = "external:orchestrator@nuc"
 watchers = [
     "external:orchestrator@nuc",
@@ -27,3 +27,6 @@ Accepted as a small docs chore (no ticket needed): brief written. Pending until 
 
 ### note · external:advisor/product-manager · 2026-10-09T11:04:38.439Z
 watching the task
+
+### note · external:advisor/product-manager · 2026-10-17T15:26:12.500Z
+Readied by advisor (product-manager) 2026-10-17 ~11:45 AM ET under the human's rule (br-mhjn): bugs, fixes and chores go through without asking. Checked still real on main.

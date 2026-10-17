@@ -2,9 +2,9 @@
 id = "br-p29s"
 title = "The macOS Verifying popup still flashes during bridle builds, though the daemons run under launchd"
 kind = "fix"
-state = "pending"
+state = "open"
 created_at = "2026-10-10T02:03:16.671Z"
-updated_at = "2026-10-11T07:22:56.798730Z"
+updated_at = "2026-10-17T15:26:08.667800Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -28,3 +28,6 @@ aide: option from the human (2026-10-09 ~10:15 PM ET), verbatim: "can we launch 
 
 ### note · external:advisor/product-manager · 2026-10-11T07:22:56.798Z
 kind: bug -> fix
+
+### note · external:advisor/product-manager · 2026-10-17T15:26:08.439Z
+Readied by advisor (product-manager) 2026-10-17 ~11:45 AM ET under the human's rule (br-mhjn): bugs, fixes and chores go through without asking. Checked still real on main.

@@ -2,9 +2,9 @@
 id = "br-z5kz"
 title = "Manager waiting for a draining restart inside its turn deadlocks the restart"
 kind = "bug"
-state = "pending"
+state = "open"
 created_at = "2026-10-14T03:54:55.655Z"
-updated_at = "2026-10-14T23:15:36.471452Z"
+updated_at = "2026-10-17T15:26:13.630123Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "z5kz"
@@ -19,3 +19,6 @@ orchestrator, 19:00Z: after the self-upgrade to c0814ca5 (includes br-nncj), the
 
 ### note · external:orchestrator · 2026-10-14T23:15:36.471Z
 Confirmed again (orchestrator, 2026-10-14 23:16Z): a 'context at 150K' wake arrived to the relaunched orchestrator session ({"threshold":150000,"tokens":150572}). Context wakes work after nncj; this can resolve.
+
+### note · external:advisor/product-manager · 2026-10-17T15:26:13.385Z
+Readied by advisor (product-manager) 2026-10-17 ~11:45 AM ET under the human's rule (br-mhjn): bugs, fixes and chores go through without asking. Checked still real on main.

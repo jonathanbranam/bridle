@@ -2,9 +2,9 @@
 id = "br-2d6x"
 title = "Specs: vitest-bridle setup leaves step files untypechecked"
 kind = "chore"
-state = "pending"
+state = "open"
 created_at = "2026-10-05T02:51:25.805Z"
-updated_at = "2026-10-11T21:31:31.518602Z"
+updated_at = "2026-10-17T15:26:12.295426Z"
 created_by = "external:orchestrator@nuc"
 watchers = [
     "external:orchestrator@nuc",
@@ -27,3 +27,6 @@ Accepted as a small docs chore (no ticket needed): brief written. Pending until 
 
 ### note · external:advisor/product-manager · 2026-10-09T11:04:38.381Z
 watching the task
+
+### note · external:advisor/product-manager · 2026-10-17T15:26:12.064Z
+Readied by advisor (product-manager) 2026-10-17 ~11:45 AM ET under the human's rule (br-mhjn): bugs, fixes and chores go through without asking. Checked still real on main.

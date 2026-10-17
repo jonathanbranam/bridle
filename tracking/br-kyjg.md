@@ -2,9 +2,9 @@
 id = "br-kyjg"
 title = "'bridle ticket built' fails with a bare 'error: unknown: ' on a bridle-ui ticket"
 kind = "bug"
-state = "pending"
+state = "open"
 created_at = "2026-10-12T23:15:42.759Z"
-updated_at = "2026-10-12T23:47:56.056483Z"
+updated_at = "2026-10-17T15:26:09.067907Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "kyjg"
@@ -26,3 +26,6 @@ Two parts:
 
 ### note · external:orchestrator · 2026-10-12T23:47:56.056Z
 Ops part done (orchestrator, 2026-10-12 23:47Z): bridle-ui, data-contracts and track-web daemons on dalek were all on 0.6.1, because only bridle's own .bridle/config.toml sets self_upgrade = true, so the other daemons never restart onto the shared installed binary. Restarted all three with 'bridle daemon restart --project <p>'; each now reports 0.6.3 and resumed its agents. The ticket's fix (a named error for an unmatched route) stands.
+
+### note · external:advisor/product-manager · 2026-10-17T15:26:08.857Z
+Readied by advisor (product-manager) 2026-10-17 ~11:45 AM ET under the human's rule (br-mhjn): bugs, fixes and chores go through without asking. Checked still real on main.

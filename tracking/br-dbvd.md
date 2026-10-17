@@ -2,9 +2,9 @@
 id = "br-dbvd"
 title = "Specs: bridle spec id duplicates ledger entries for hand-written IDs"
 kind = "fix"
-state = "pending"
+state = "open"
 created_at = "2026-10-05T02:56:15.131Z"
-updated_at = "2026-10-11T07:22:56.703044Z"
+updated_at = "2026-10-17T15:26:06.302098Z"
 created_by = "external:orchestrator@nuc"
 watchers = [
     "external:orchestrator@nuc",
@@ -34,3 +34,6 @@ watching the task
 
 ### note · external:advisor/product-manager · 2026-10-11T07:22:56.703Z
 kind: bug -> fix
+
+### note · external:advisor/product-manager · 2026-10-17T15:26:06.084Z
+Readied by advisor (product-manager) 2026-10-17 ~11:45 AM ET under the human's rule (br-mhjn): bugs, fixes and chores go through without asking. Checked still real on main.
