@@ -6,8 +6,9 @@ created: 2026-10-05
 repos: [bridle, bridle-ui]
 changes: []
 specs: []
-blocked_by: []
+blocked_by: [br-4cgx]
 related: [br-g6v4, br-x8jt, br-wjhp, br-ehv6, br-4cgx]
+resolved: 2026-10-17T15:47:51Z
 ---
 
 ## The ask
