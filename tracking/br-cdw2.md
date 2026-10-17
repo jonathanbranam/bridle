@@ -2,21 +2,18 @@
 id = "br-cdw2"
 title = "session restart: the pane-gone fallback opens a shell window first (tmux-shell-first), follow-up to 5j35"
 kind = "fix"
-state = "claimed"
+state = "built"
 created_at = "2026-10-17T20:18:12.141Z"
-updated_at = "2026-10-17T21:20:23.046720Z"
+updated_at = "2026-10-17T22:31:39.778714Z"
 created_by = "agent:manager-2"
 watchers = [
     "agent:manager-2",
     "agent:wcdw2",
     "agent:wcdw2b",
 ]
-branch = "bridle/wcdw2"
-commit = "d88f13215bd8df8ce5a1bcf565b7752586dde095"
-summary = """
-Cherry-picked fbd96e5a onto bridle/wcdw2 as dadceec0 (no conflicts). The pane-gone fallback in restart_session (crates/bridle/src/session.rs ~line 689) now runs `tmux new-window -d -P -F #{pane_id} -n <name>` to open a shell window first, then `send-keys -t <pane> <cmd> Enter` to type the relaunch command into it (rule tmux-shell-first). Previously the launcher ran as the window's own command, so it closed with the session. No CHANGELOG change: the br-5j35 line already says the launcher starts in a new tmux window.
-Not done here (flagged by the advisor on this thread, left for manager-2 to decide): the same bound form remains at crates/bridle/src/up.rs:68-73 (`new-window -d` with the command), crates/bridle/src/advisor.rs:96 (tmux_args, tests at 134/138) and tests/session_test.rs:247 (asserts 'new-window -d bridle session advisor ...'). The fallback path itself and the 120 s recent-note window (session.rs ~712) also still lack tests.
-Check: just check exit 0; 1828 tests run, 1828 passed, 7 skipped (last full count 1828)."""
+branch = "bridle/wcdw2b"
+commit = "faaea54f4075e4d85986058d2e8b1af3ebe13d7a"
+summary = "Remainder of cdw2: bridle up (orchestrator) and bridle advisor start (window and split) now create the tmux window/pane with -P -F #{pane_id} and no command, then send-keys the launcher into it (rule tmux-shell-first). Tests: up.rs fake-tmux asserts send-keys and no bound command; session_test.rs advisor tests updated; new restart test for the pane-gone fallback (new-window -d -P before send-keys -t %8, bare shell window); is_recent_note extracted in session.rs with a 120 s boundary unit test. CHANGELOG line added. The 120 s window is tested at the predicate, not end to end."
 ticket = "cdw2"
 +++
 
@@ -47,3 +44,9 @@ Remainder brief (pm-1), from manager-2 relaying the advisor's note. Model: Sonne
 (1) Make every session window a shell first, then send-keys the command, at the other bound new-window sites: crates/bridle/src/up.rs:68-73, crates/bridle/src/advisor.rs:96 (and its tests ~134/138), crates/bridle/tests/session_test.rs:247. Reuse the helper/approach from fbd96e5a.
 (2) Add tests in session.rs for the pane-gone fallback and the 120 s recent-note window.
 Acceptance: just check. CHANGELOG line if user-visible. Out of scope: any other session-restart behaviour.
+
+### note · agent:wcdw2b · 2026-10-17T22:31:39.447Z
+built: faaea54f4075e4d85986058d2e8b1af3ebe13d7a (branch bridle/wcdw2b)
+
+### note · agent:wcdw2b · 2026-10-17T22:31:39.778Z
+done: up.rs/advisor.rs/session_test shell-first, tests for pane-gone fallback and 120s window, CHANGELOG; just check exit 0, 1831 run/1831 passed/7 skipped; main merged; faaea54f4075e4d85986058d2e8b1af3ebe13d7a
