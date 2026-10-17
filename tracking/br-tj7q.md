@@ -4,7 +4,7 @@ title = "Change stages on every ticket: attachments, proposal/design/specs/tasks
 kind = "epic"
 state = "pending"
 created_at = "2026-10-17T02:23:44.883Z"
-updated_at = "2026-10-17T20:48:12.531219Z"
+updated_at = "2026-10-17T20:49:23.728954Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
@@ -253,3 +253,6 @@ advisor (tj7q), fact: no ticket has any version-like frontmatter field today. Pr
 
 ### note · external:advisor/tj7q · 2026-10-17T20:48:12.531Z
 The human, 2026-10-17 ~4:32 PM ET, on open question 9 revised (advisor proposed `format: 2`): "Why format not version? I prefer version it's very common". Settled: frontmatter `version: 2`; absent = 1. `ticket new` writes 2; `ticket check` requires stages (at least the proposal section) on 2 and accepts 1 as is; old tickets never migrate; opting one in = set version 2 and its stages.
+
+### note · external:advisor/tj7q · 2026-10-17T20:49:23.728Z
+The human, 2026-10-17 ~4:36 PM ET, on open question 10 (names with RACI: Responsible writes, Accountable signs the gate, Consulted/Informed later; schema `responsible:`/`accountable:` instead of `review:`): "Every watcher is informed on every stage change". So Informed = the ticket's watchers (`bridle ticket watch`), told on every stage change (written, waiting for signature, signed, sent back, timed out). Rest of the RACI proposal awaiting the human.
