@@ -2498,3 +2498,4 @@
 {"actor":"agent:manager-2","at":"2026-10-17T12:31:48.827936Z","from":"built","task":"br-ef3u","to":"integrated"}
 {"actor":"agent:manager-2","at":"2026-10-17T13:09:14.259546Z","from":"planned","task":"br-3stk","to":"integrated"}
 {"actor":"external:aide","at":"2026-10-17T13:28:01.078169Z","from":"claimed","task":"br-fxxz","to":"integrated"}
+{"actor":"human","at":"2026-10-17T15:05:58.343Z","from":"","task":"br-dg5g","to":"pending"}
