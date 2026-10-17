@@ -867,9 +867,9 @@ fn one(
     if let Some(home) = &home {
         mint.extend(args(&["--for", holder, "--home", home]));
         if same {
-            // The holder's old direct token would keep a local orchestrator here, and with
-            // one the daemon forwards nothing (br-gr3v).
-            mint.push("--replace-direct".into());
+            // The machine's own orchestrator keeps full rights here: a direct token that
+            // records its home, replacing a visitor token an earlier pair made (br-j86p).
+            mint.push("--direct".into());
         }
     } else if !same {
         mint.extend(args(&["--for", holder]));
@@ -919,6 +919,8 @@ mod tests {
         refuse_after_mint: bool,
         /// token -> the home it was minted with (visitor tokens only)
         homes: RefCell<HashMap<String, Option<String>>>,
+        /// tokens minted as visitors for the holder's own machine (what a pair before br-j86p made)
+        local_visitors: RefCell<BTreeSet<String>>,
     }
 
     impl Sim {
@@ -969,6 +971,9 @@ mod tests {
                     let creds = self.creds.borrow();
                     let tok = creds.get(&key).ok_or("no entry")?;
                     let valid = self.valid.borrow();
+                    if val("--machine").is_none() && self.local_visitors.borrow().contains(tok) {
+                        return Err("a token on the holder's own machine must be direct".into());
+                    }
                     let visitor_ok = (val("--machine").is_none() && val("--home").is_none()) || {
                         let homes = self.homes.borrow();
                         let have = homes.get(tok).and_then(Option::as_ref);
@@ -988,12 +993,16 @@ mod tests {
                 "pair-mint" => {
                     *self.n.borrow_mut() += 1;
                     let tok = format!("secret-{}", self.n.borrow());
+                    let same_machine = val("--for").as_deref() == Some(here.as_str());
                     let mut valid = self.valid.borrow_mut();
                     let set = valid.entry((here, project)).or_default();
                     // A principal has one active token: the old one is revoked.
                     let _ = a[i + 2].as_str();
                     set.insert(tok.clone());
                     self.homes.borrow_mut().insert(tok.clone(), val("--home"));
+                    if same_machine && !a.iter().any(|x| x == "--direct") {
+                        self.local_visitors.borrow_mut().insert(tok.clone());
+                    }
                     Ok(format!("{tok}\n"))
                 }
                 "pair-store" => {
@@ -1131,7 +1140,7 @@ mod tests {
         );
     }
 
-    /// The pair-mint calls for the orchestrator: (project, --for, --home, --replace-direct).
+    /// The pair-mint calls for the orchestrator: (project, --for, --home, --direct).
     fn orch_mints(s: &Sim) -> Vec<(String, Option<String>, Option<String>, bool)> {
         s.calls
             .borrow()
@@ -1143,7 +1152,7 @@ mod tests {
                     at("--project").unwrap(),
                     at("--for"),
                     at("--home"),
-                    c.iter().any(|x| x == "--replace-direct"),
+                    c.iter().any(|x| x == "--direct"),
                 )
             })
             .collect()
@@ -1177,7 +1186,7 @@ mod tests {
                 .iter()
                 .any(|c| c.iter().any(|x| x == "aide")
                     && c.iter().any(|x| x == "pair-mint")
-                    && c.iter().any(|x| x == "--replace-direct"))
+                    && c.iter().any(|x| x == "--direct"))
         );
         // nuc's orchestrator on mbp's daemons is homed in nuc's first project (nuc has no home).
         assert!(m.iter().any(|(p, f, h, _)| p == "bridle"
@@ -1186,6 +1195,33 @@ mod tests {
         // A second run changes nothing.
         let (_, out) = run(&s, &Options::default());
         assert_eq!(out.matches("(role tokens): minted 0").count(), 2, "{out}");
+    }
+
+    // br-j86p: a pair before this fix left the orchestrator a visitor on its own machine; a
+    // re-pair replaces that token with a direct one that records the home.
+    #[test]
+    fn a_repair_replaces_a_local_visitor_token_with_a_direct_one() {
+        let mut s = sim();
+        s.projects
+            .get_mut("mbp")
+            .unwrap()
+            .push(("mbp-home".into(), 7410));
+        run(&s, &Options::default());
+        let key = (
+            "mbp".to_string(),
+            ORCHESTRATOR.to_string(),
+            None,
+            "bridle".to_string(),
+        );
+        let tok = s.creds.borrow()[&key].clone();
+        assert!(!s.local_visitors.borrow().contains(&tok));
+        s.local_visitors.borrow_mut().insert(tok.clone());
+        let (ok, out) = run(&s, &Options::default());
+        assert!(ok, "{out}");
+        let now = s.creds.borrow()[&key].clone();
+        assert_ne!(now, tok, "{out}");
+        assert!(!s.local_visitors.borrow().contains(&now));
+        assert_eq!(s.homes.borrow()[&now].as_deref(), Some("mbp-home"));
     }
 
     // br-8rdn

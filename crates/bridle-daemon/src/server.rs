@@ -1962,9 +1962,9 @@ async fn forward_to_home(
     let ToTarget::External(id) = target else {
         return Ok(None);
     };
-    let Some((to, _)) = id.split_once('@') else {
-        return Ok(None);
-    };
+    // A direct token with a recorded home (the machine's own orchestrator, br-j86p) forwards
+    // like a visitor's; for it the name is the whole id.
+    let to = id.split_once('@').map_or(id.as_str(), |(to, _)| to);
     let Some(home) = state.store.visitor_home(id).await? else {
         return Ok(None);
     };
@@ -4831,12 +4831,8 @@ async fn create_token(
         }
         Some(m) => format!("{}@{m}", req.name),
     };
-    if req.home.as_deref().is_some_and(str::is_empty)
-        || (req.home.is_some() && req.machine.is_none())
-    {
-        return Err(ApiError::bad_request(
-            "home is a non-empty project, and only a visitor (--machine) has one",
-        ));
+    if req.home.as_deref().is_some_and(str::is_empty) {
+        return Err(ApiError::bad_request("home is a non-empty project"));
     }
     if let Some(home) = &req.home {
         // Mail for the visitor is forwarded there, so it has to be reachable now.

@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Fix (br-j86p): the machine's own orchestrator keeps a direct token on its same-machine daemons (a pair had made it a visitor there, so it could not ready, comment or queue). A direct token can now record a home, so its wakes and mail still forward to `<machine>-home`; visitors from other machines keep their limits. Migration: after upgrading, re-run `bridle token pair` on dalek, vesta and remus; it replaces the visitor tokens with direct ones.
 - Change (br-79c3): Role names are reserved for agent names, by prefix: `orchestrator`, `advisor-Jim`, `manager-3`, `pm-2`, `worker-x`... can be spawned by name only by the human, the orchestrator and the daemon; managers, PMs and workers get a clear error. Resume and renew of existing agents are never blocked (2vja).
 - Fix (br-tvrp): a release self-upgrade on macOS now signs the installed binary `-i bridle` with the local signing identity (as the commit path does), so the firewall's Allow survives it; with no identity it logs that and keeps the ad-hoc signature (run `just sign-setup`). Migration: run `just sign-setup` once on each Mac that upgrades from releases.
 - Fix (br-whce): `bridle project start` keeps `moved-in.json` when the mail step fails, so the next start retries and the old machine's `[mail]` and `mail.key` copy is not lost; it is removed only after mail succeeded. Migration: none.

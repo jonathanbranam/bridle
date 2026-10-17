@@ -915,6 +915,12 @@ async fn token_pair(cli: &Cli, action: &TokenAction) -> Result<(), CliError> {
             let status = Client::new(url, Some(token)).status().await?;
             // A visitor token (held for a daemon on another machine) without a home keeps its
             // replies on the daemon's side: not working, so the broker re-mints it (br-eurm).
+            if machine.is_none() && status.principal.contains('@') {
+                return Err(CliError::Other(anyhow::anyhow!(
+                    "a token on the holder's own machine must be direct, this is {}",
+                    status.principal
+                )));
+            }
             if (machine.is_some() || home.is_some()) && status.visitor_home.is_none() {
                 return Err(CliError::Other(anyhow::anyhow!(
                     "visitor token has no home"
@@ -933,22 +939,23 @@ async fn token_pair(cli: &Cli, action: &TokenAction) -> Result<(), CliError> {
             role,
             for_machine,
             home,
-            replace_direct,
+            direct,
         } => {
             let client = client_for(cli).await?;
-            if *replace_direct {
-                let _ = client.revoke_token(role).await;
+            // A direct token with a home replaces the holder's visitor token from an earlier pair.
+            if let (true, Some(m)) = (*direct, for_machine) {
+                let _ = client.revoke_token(&format!("{role}@{m}")).await;
             }
-            let name = match for_machine {
-                Some(m) => format!("{role}@{m}"),
-                None => role.clone(),
+            let name = match (for_machine, direct) {
+                (Some(m), false) => format!("{role}@{m}"),
+                _ => role.clone(),
             };
             // One active token per principal: drop any old one (it may not exist).
             let _ = client.revoke_token(&name).await;
             let created = client
                 .create_token(&TokenCreateRequest {
                     name: role.clone(),
-                    machine: for_machine.clone(),
+                    machine: if *direct { None } else { for_machine.clone() },
                     home: home.clone(),
                 })
                 .await?;

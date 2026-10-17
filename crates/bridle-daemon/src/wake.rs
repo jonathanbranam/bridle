@@ -327,15 +327,24 @@ impl Wakes {
         // A daemon with its own orchestrator keeps its wakes for it: a visiting orchestrator
         // homed elsewhere (vesta's, on dalek's daemon) supervises nothing here, and a copy
         // would reach it instead of, or besides, the one the wake is about (br-nncj).
-        match self.store.external_exists("orchestrator").await {
-            Ok(false) => {}
-            Ok(true) => return,
+        // The one exception is a local orchestrator whose direct token records a home (the
+        // machine's own orchestrator, br-j86p): its wakes go there like a visitor's.
+        let local = match self.store.external_exists("orchestrator").await {
+            Ok(l) => l,
             Err(e) => {
                 tracing::warn!(error = %e, "looking up the local orchestrator failed");
                 return;
             }
-        }
-        let homes = match self.store.visitor_homes_named("orchestrator").await {
+        };
+        let homes = if local {
+            self.store
+                .visitor_home(ORCHESTRATOR)
+                .await
+                .map(|h| h.into_iter().collect())
+        } else {
+            self.store.visitor_homes_named("orchestrator").await
+        };
+        let homes: Vec<String> = match homes {
             Ok(h) => h,
             Err(e) => {
                 tracing::warn!(error = %e, "looking up the orchestrator's home failed");

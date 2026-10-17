@@ -1775,8 +1775,9 @@ pub enum TokenAction {
         /// The machine the daemon is on, when not this one.
         #[arg(long)]
         machine: Option<String>,
-        /// With `--machine`: the home the visitor token should have recorded (else it is not working).
-        #[arg(long, requires = "machine")]
+        /// The home the token should have recorded (else it is not working). With no `--machine`
+        /// the token must be direct: the machine's own orchestrator (br-j86p).
+        #[arg(long)]
         home: Option<String>,
     },
     /// Helper for `token pair`: print a fresh token for the role on `--project`'s daemon.
@@ -1789,9 +1790,10 @@ pub enum TokenAction {
         /// With `--for`: the visitor's home project on that machine (as `token create --home`).
         #[arg(long)]
         home: Option<String>,
-        /// With `--home` for the holder's own machine: also revoke the role's direct token.
+        /// With `--for` and `--home`, for the holder's own machine: mint a direct token that
+        /// records the home, and revoke the visitor token an earlier pair made (br-j86p).
         #[arg(long)]
-        replace_direct: bool,
+        direct: bool,
     },
     /// Helper for `token pair`: store the token on stdin as the role's entry for `--project`.
     #[command(hide = true)]

@@ -510,6 +510,12 @@ async fn mail_for_a_visitor_whose_home_is_this_project_is_refused() {
 
 /// B holds a visitor `external:orchestrator@m1` whose home is A, and can reach A.
 async fn visiting_orchestrator_on_b(p: &Pair) {
+    orchestrator_on_b(p, Some("m1")).await;
+}
+
+/// B holds an orchestrator token whose home is A: a visitor from `machine`, or with None the
+/// machine's own direct token (br-j86p).
+async fn orchestrator_on_b(p: &Pair, machine: Option<&str>) -> bridle_api::Client {
     let a_project = p.a.running.info.project.clone();
     let a_peer =
         p.a.client
@@ -538,14 +544,16 @@ async fn visiting_orchestrator_on_b(p: &Pair) {
         &a_peer,
     )
     .expect("credentials");
-    p.b.client
-        .create_token(&TokenCreateRequest {
-            name: "orchestrator".to_string(),
-            machine: Some("m1".to_string()),
-            home: Some(a_project),
-        })
-        .await
-        .expect("visitor");
+    let created =
+        p.b.client
+            .create_token(&TokenCreateRequest {
+                name: "orchestrator".to_string(),
+                machine: machine.map(str::to_string),
+                home: Some(a_project),
+            })
+            .await
+            .expect("orchestrator token");
+    bridle_api::Client::new(p.b.running.url.clone(), Some(created.token))
 }
 
 /// Slice 5: a wake B raises for the orchestrator (an incident here) is sent home to A as one
@@ -602,6 +610,74 @@ async fn a_wake_on_a_remote_project_is_forwarded_home_once_as_a_system_message()
         .await
         .expect("messages");
     assert_eq!(again.len(), 1, "{again:?}");
+}
+
+/// br-j86p: the machine's own orchestrator keeps a direct token with a recorded home: it has the
+/// orchestrator's rights on B (a cross-machine visitor does not), and B's wakes still go home.
+#[tokio::test]
+async fn a_direct_orchestrator_with_a_home_keeps_its_rights_and_its_wakes_forward() {
+    let p = pair().await;
+    let direct = orchestrator_on_b(&p, None).await;
+    let orch_home = p.a.external_client("orchestrator").await;
+
+    let t =
+        p.b.client
+            .new_task(&NewTicketRequest {
+                ticket: None,
+                parent: None,
+                for_human: false,
+                priority: None,
+                components: Vec::new(),
+                title: "the build is red".to_string(),
+                kind: TicketKind::Incident,
+                body: "red".to_string(),
+                size: None,
+            })
+            .await
+            .expect("incident");
+    // Rights: it may comment on a ticket it did not file.
+    direct
+        .note_task(&t.id, "looking")
+        .await
+        .expect("a direct orchestrator comments");
+    // The same call as a cross-machine visitor is refused.
+    let created =
+        p.b.client
+            .create_token(&TokenCreateRequest {
+                name: "advisor".to_string(),
+                machine: Some("m9".to_string()),
+                home: None,
+            })
+            .await
+            .expect("visitor");
+    let visitor = bridle_api::Client::new(p.b.running.url.clone(), Some(created.token));
+    assert!(visitor.note_task(&t.id, "hi").await.is_err());
+
+    // Its wake goes home to A once the loop ticks (every 10 s).
+    let got = wait_for("forwarded wake", || async {
+        let m = orch_home
+            .list_messages(&MessageQuery {
+                to: Some("external:orchestrator".to_string()),
+                ..Default::default()
+            })
+            .await
+            .expect("messages");
+        (!m.is_empty()).then_some(m)
+    })
+    .await;
+    assert_eq!(got[0].kind, MessageKind::System);
+    assert_eq!(got[0].from, "system@m2");
+
+    // Mail for it on B is forwarded home too.
+    p.b.client
+        .send(&bridle_api::types::SendRequest {
+            to: Some("external:orchestrator".to_string()),
+            body: "ping".to_string(),
+            ..Default::default()
+        })
+        .await
+        .expect("send");
+    wait_for_bodies(&p.a, "external:orchestrator", 2).await;
 }
 
 /// br-nncj: a daemon with its own orchestrator keeps its wakes for it; a visiting orchestrator
