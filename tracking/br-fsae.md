@@ -4,7 +4,7 @@ title = "token pair: the orchestrator check on a machine with a home passes --ho
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-17T01:57:52.342Z"
-updated_at = "2026-10-17T17:20:18.316888Z"
+updated_at = "2026-10-17T17:20:32.662602Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 branch = "bridle/wfsae"
@@ -31,3 +31,6 @@ wfsae: committed 381ddd7b; 'bridle ticket built' was refused (forbidden: worker 
 
 ### note · agent:manager-2 · 2026-10-17T17:20:18.316Z
 integrated: 6df627356de4b96497a78d6ae88501e438fbf0c0 (branch bridle/wfsae)
+
+### note · agent:manager-2 · 2026-10-17T17:20:32.662Z
+cleanup: removed agent wfsae, branch bridle/wfsae
