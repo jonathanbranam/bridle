@@ -4,7 +4,7 @@ title = "A drain treats a manager waiting on just check or a landing as idle, an
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-12T14:18:25.326Z"
-updated_at = "2026-10-17T22:48:48.616563Z"
+updated_at = "2026-10-17T22:49:09.062457Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -74,3 +74,6 @@ done: idempotent land (repeat land returns ok + same commit); just check exit 0,
 
 ### note · agent:manager-2 · 2026-10-17T22:48:48.616Z
 integrated: 1f29459da533024c43672329d1d3ed6b9a3dca7b (branch bridle/w8swrb)
+
+### note · agent:manager-2 · 2026-10-17T22:49:09.062Z
+cleanup: removed agent w8swrb, branch bridle/w8swrb
