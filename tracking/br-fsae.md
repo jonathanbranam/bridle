@@ -2,11 +2,13 @@
 id = "br-fsae"
 title = "token pair: the orchestrator check on a machine with a home passes --home without --machine, so every same-machine orchestrator check is 'refused'"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-17T01:57:52.342Z"
-updated_at = "2026-10-17T17:08:59.819987Z"
+updated_at = "2026-10-17T17:20:18.316888Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
+branch = "bridle/wfsae"
+commit = "6df627356de4b96497a78d6ae88501e438fbf0c0"
 summary = "The same-machine --home refusal was already fixed by br-j86p. Remaining here: a failed pair-check helper is now reported by its first 'error' stderr line (failure_line in token_pair.rs, used for local and ssh runs) instead of clap's 'For more information' trailer; test added to remote_failures_tell_.... Not changed: add-a-machine section 6 step 4 'run twice' (not verified whether still needed; the human's 0.7.6 pair run should confirm)."
 ticket = "fsae"
 +++
@@ -26,3 +28,6 @@ done: helper failures report the error line, not clap's trailer (main bug was al
 
 ### note · agent:wfsae · 2026-10-17T17:08:59.819Z
 wfsae: committed 381ddd7b; 'bridle ticket built' was refused (forbidden: worker agents cannot use agent lifecycle endpoints), so the manager needs to mark it built.
+
+### note · agent:manager-2 · 2026-10-17T17:20:18.316Z
+integrated: 6df627356de4b96497a78d6ae88501e438fbf0c0 (branch bridle/wfsae)
