@@ -14,4 +14,8 @@ related: [br-63nr]
 
 ## The ask
 
+What the title says; the details are in the sections below and the planner's brief on the
+thread (`bridle ticket show`). Readied 2026-10-17 under the human's rule (br-mhjn): bugs, fixes
+and chores go through without asking.
+
 Seen 2026-10-14: the seven_day window reset at 07:00Z and bridle usage budget showed 0% (resets 2026-10-21). At 07:05:39Z the home daemon still raised 'seven_day usage at 89%' from a reading with resets_at 2026-10-14T07:00:00.422Z, already in the past (wake event observed_at 07:05:39Z). vesta's daemon sent the same wake at 07:11Z (m-12469). The post-reset 0% reading had re-armed the wake (br-63nr's hysteresis), so one late or stale reading from before the reset fired it again. Likely fix: drop a usage reading whose resets_at is already past (or older than the newest window seen) before check_usage looks at it, for the wake and for the governor. Add a test: reading at 89% for the old window after a 0% reading for the new one fires nothing. Cost of not doing it: one spurious wake per reset per daemon, so low priority.
