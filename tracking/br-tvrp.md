@@ -4,7 +4,7 @@ title = "Release-mode self-upgrade does not re-sign: the gateway is firewall-blo
 kind = "fix"
 state = "claimed"
 created_at = "2026-10-16T21:14:23.982Z"
-updated_at = "2026-10-17T01:10:53.934412Z"
+updated_at = "2026-10-17T01:12:18.401346Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -25,3 +25,6 @@ pm-1: reading the human's note. The brief stands (re-sign on install). Two facts
 - Re-signing on the Mac at install time with the local "bridle local signing" identity is what keeps the firewall's Allow across upgrades (the entry is identifier + certificate leaf). It needs `just sign-setup` once on each Mac; remus has not run it, so run it there before switching bridle work to remus, or each release install gets an ad-hoc signature and the firewall re-asks.
 - Signing in CI with a self-signed certificate would give a different leaf than each machine's local identity, so it would not help; only an Apple Developer ID certificate (paid) signed in CI gives one identity everywhere, and it adds notarization work. Recommend: stay with local signing at install (this ticket), no CI signing. The human decides if they want Developer ID later (a separate ticket).
 Add to the brief: if no signing identity is found, release::install keeps the ad-hoc signature and logs one line saying the firewall may ask again and to run `just sign-setup`.
+
+### note · external:aide · 2026-10-17T01:12:18.401Z
+Correction (aide): remus is Linux, not a Mac. Code signing and the macOS app firewall don't apply there, so 'just sign-setup on remus' is not needed. tvrp matters for the Macs (dalek, and any Mac that installs releases).
