@@ -2,9 +2,9 @@
 id = "br-j86p"
 title = "Same-machine orchestrator keeps direct tokens (visiting-orchestrator token is submit-only); ticket new --project writes into the wrong clone"
 kind = "fix"
-state = "claimed"
+state = "built"
 created_at = "2026-10-17T02:44:03.225Z"
-updated_at = "2026-10-17T03:15:36.434825Z"
+updated_at = "2026-10-17T03:56:52.707950Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -12,6 +12,9 @@ watchers = [
 ]
 priority = "critical"
 priority_at = "2026-10-17T02:44:37.657490Z"
+branch = "bridle/j86p"
+commit = "d23e983d563893bc67ff7a707b29b90bc78acf2c"
+summary = "Step 1 only. The machine's orchestrator keeps a DIRECT token on same-machine daemons that records a home (pair-mint --direct replaces --replace-direct and revokes the old visitor token; pair-check refuses a visitor token on the holder's own machine, so a re-pair swaps it). Daemon: token create accepts home without machine; forward_to_home and wake forward_home forward for a direct orchestrator that has a home (a direct one without a home still keeps wakes). Tests: token_pair repair sim, outbox_test direct orchestrator comments + wakes/mail forward + cross-machine visitor still refused. Docs: cli.md, orchestrator-supervision.md, CHANGELOG (migration: re-run token pair on dalek, vesta, remus). Step 2 (ticket new --project X clone, refused --from-task leaves file, --from-task re-link orphaning) not started."
 ticket = "j86p"
 +++
 
@@ -43,3 +46,9 @@ From orchestrator: the human wants br-j86p built, verified and landed tonight. p
 
 ### note · external:orchestrator@dalek · 2026-10-17T03:15:31.734Z
 From orchestrator: br-j86p is already planned and queued (pm-1, 10:55 PM). Spawn its worker now; it shouldn't wait on the whce land. No release tonight: v0.7.6 is cut in the morning with j86p in it.
+
+### note · agent:j86p · 2026-10-17T03:56:52.604Z
+built: d23e983d563893bc67ff7a707b29b90bc78acf2c (branch bridle/j86p)
+
+### note · agent:j86p · 2026-10-17T03:56:52.707Z
+done step 1: just check exit 0, 1786 tests passed, main merged; d23e983d563893bc67ff7a707b29b90bc78acf2c. Step 2 (ticket new --project / --from-task side bugs) NOT done, deserves its own ticket.
