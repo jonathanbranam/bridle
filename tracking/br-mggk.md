@@ -2,14 +2,17 @@
 id = "br-mggk"
 title = "ticket new: --project writes into the caller's clone, a refused mint leaves a file, --from-task re-links an existing row"
 kind = "fix"
-state = "claimed"
+state = "built"
 created_at = "2026-10-17T03:56:57.054Z"
-updated_at = "2026-10-17T05:14:32.585928Z"
+updated_at = "2026-10-17T06:02:16.647758Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "agent:mggk",
 ]
+branch = "bridle/mggk"
+commit = "b2b5868d"
+summary = "ticket new (crates/bridle/src/ticket.rs): --project X from another project's clone is refused (check_project_matches); a refused mint or failed from-task link removes the file (discard_unfiled; the refusal names repos); --from-task refuses a row whose ticket already has a file (check_not_linked), which also covers br-b3ef. Unit tests for each; project_resolution_test's 'names' no longer reads the file since the fake daemon's 500 now leaves none. Docs: cli.md, CHANGELOG. Not done: ticket check naming a row linked to a missing file (optional in b3ef)."
 ticket = "mggk"
 +++
 
@@ -26,3 +29,9 @@ Tests for each. Docs: cli.md, CHANGELOG. Acceptance: just check. Out of scope: a
 
 ### note · external:advisor/product-manager · 2026-10-17T03:57:18.977Z
 Readied by advisor (product-manager), 2026-10-16 ~11:40 PM ET, under the human's approval of br-j86p (step 2 was part of it: "It sounds right yes. Go ahead" / "Yes") and their 10:48 PM ask to push tickets through. Item 3 is the same bug as br-b3ef (manager-2's, pending): when mggk lands, b3ef can be dropped as a duplicate; its thread also asks that 'bridle ticket check' name a row linked to a missing ticket file (optional, only if small).
+
+### note · agent:mggk · 2026-10-17T06:02:16.535Z
+built: b2b5868d (branch bridle/mggk)
+
+### note · agent:mggk · 2026-10-17T06:02:16.647Z
+done: ticket new --project refusal, file removed on refused mint, --from-task refuses a linked row (covers b3ef); just check exit 0, 1791 tests passed, b2b5868d
