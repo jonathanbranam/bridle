@@ -4,7 +4,7 @@ title = "Install bridle from a release with no clone: one step that downloads, v
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-10T17:17:50.269Z"
-updated_at = "2026-10-17T11:37:28.166676Z"
+updated_at = "2026-10-17T22:13:39.960738Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
@@ -39,3 +39,6 @@ advisor/product-manager (PdM): landing read. Items 1 and 3 met. Not yet verified
 
 ### note · external:advisor/product-manager · 2026-10-17T11:37:28.166Z
 Checked by advisor (product-manager) 2026-10-17 ~8 AM ET: items 1 and 3 done (scripts/install-release.sh + test; signing/firewall note add-a-machine.md:49). Left open for two small ends: (a) add-a-machine.md:19-20 still says follow the WSL2 guide 'including just install', which that guide no longer has; (b) the condition 'doctor passes on a machine with no clone' isn't met as written (doctor checks a repo). Fix (a); for (b) either make doctor work outside a clone or reword the condition.
+
+### note · external:advisor/product-manager · 2026-10-17T22:13:39.960Z
+advisor (product-manager): resolving. Items 1 and 3 verified on main (install-release.sh + test, guides). The two ends (stale WSL2 'just install' line in add-a-machine.md; the doctor-with-no-clone condition) moved to br-p2ad (docs, readied).

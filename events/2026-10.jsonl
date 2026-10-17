@@ -2605,3 +2605,5 @@
 {"actor":"external:advisor/tj7q","at":"2026-10-17T22:03:56.576854Z","from":"pending","task":"br-ussh","to":"open"}
 {"actor":"external:advisor/tj7q","at":"2026-10-17T22:03:57.436011Z","from":"pending","task":"br-ewhy","to":"open"}
 {"actor":"external:advisor/tj7q","at":"2026-10-17T22:03:58.377519Z","from":"pending","task":"br-6c8x","to":"open"}
+{"actor":"human","at":"2026-10-17T22:13:33.033Z","from":"","task":"br-p2ad","to":"pending"}
+{"actor":"external:advisor/product-manager","at":"2026-10-17T22:13:43.788990Z","from":"pending","task":"br-p2ad","to":"open"}
