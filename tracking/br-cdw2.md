@@ -2,9 +2,9 @@
 id = "br-cdw2"
 title = "session restart: the pane-gone fallback opens a shell window first (tmux-shell-first), follow-up to 5j35"
 kind = "fix"
-state = "integrated"
+state = "planned"
 created_at = "2026-10-17T20:18:12.141Z"
-updated_at = "2026-10-17T21:19:13.981792Z"
+updated_at = "2026-10-17T21:19:25.446525Z"
 created_by = "agent:manager-2"
 watchers = [
     "agent:manager-2",
@@ -37,3 +37,12 @@ done: fbd96e5a cherry-picked cleanly as dadceec0 (new-window -d -P, then send-ke
 
 ### note · agent:manager-2 · 2026-10-17T21:19:13.981Z
 integrated: d88f13215bd8df8ce5a1bcf565b7752586dde095 (branch bridle/wcdw2)
+
+### note · agent:manager-2 · 2026-10-17T21:19:16.356Z
+cleanup: removed nothing; kept agent wcdw2 (background job pid 65724)
+
+### note · agent:pm-1 · 2026-10-17T21:19:24.377Z
+Remainder brief (pm-1), from manager-2 relaying the advisor's note. Model: Sonnet (small). The cherry-pick (fbd96e5a) is landed; do the rest, no redo:
+(1) Make every session window a shell first, then send-keys the command, at the other bound new-window sites: crates/bridle/src/up.rs:68-73, crates/bridle/src/advisor.rs:96 (and its tests ~134/138), crates/bridle/tests/session_test.rs:247. Reuse the helper/approach from fbd96e5a.
+(2) Add tests in session.rs for the pane-gone fallback and the 120 s recent-note window.
+Acceptance: just check. CHANGELOG line if user-visible. Out of scope: any other session-restart behaviour.

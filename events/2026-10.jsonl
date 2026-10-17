@@ -2583,3 +2583,5 @@
 {"actor":"agent:wcdw2","at":"2026-10-17T20:53:40.509908Z","from":"claimed","task":"br-cdw2","to":"built"}
 {"actor":"agent:manager-2","at":"2026-10-17T21:08:15.368134Z","from":"built","task":"br-h6h8","to":"integrated"}
 {"actor":"agent:manager-2","at":"2026-10-17T21:19:13.981792Z","from":"built","task":"br-cdw2","to":"integrated"}
+{"actor":"agent:pm-1","at":"2026-10-17T21:19:21.731193Z","from":"integrated","task":"br-cdw2","to":"reopened"}
+{"actor":"agent:pm-1","at":"2026-10-17T21:19:25.446525Z","from":"reopened","task":"br-cdw2","to":"planned"}
