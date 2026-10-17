@@ -9,7 +9,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-6h65, br-d9wq, br-22ab, br-syqn]
-next_comment_id: c3
+next_comment_id: c4
 ---
 
 ## The ask
@@ -194,6 +194,10 @@ The PdM is a seat belonging to the **home project's daemon**, not a separate kin
   `[product]` table, falling back to the aide when it is absent. The member's aide keeps its
   own inbox for project-internal matters, so nothing is lost if the PdM is not running (and
   per br-6h65, the PdM need not be standing: a message to its inbox starts it).
+
+> [!comment] c3 human, 2026-10-16 22:16 EDT, on "One inbox on the home daemon, address product-manager/<product>@<home>. Requests for a member project go there instead of the project aide (the decided routing)" [pending 2026-10-16 22:16 EDT]
+> Since the pdm runs on the project home it already has a name external:product-manager of the bridle project.
+
 - Rejected: one PdM with a "current product" switch. That keeps every product in one context,
   the problem this epic exists to remove.
 
