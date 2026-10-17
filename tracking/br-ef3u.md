@@ -2,16 +2,16 @@
 id = "br-ef3u"
 title = "A drain waits forever when the daemon's tracking of agents goes stale: find and name what really holds the quiet point"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-12T14:18:25.126Z"
-updated_at = "2026-10-17T07:42:22.658445Z"
+updated_at = "2026-10-17T08:03:02.195241Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "agent:ef3u",
 ]
 branch = "bridle/ef3u"
-commit = "499c7666"
+commit = "62459ad202647d9e23f9e1a4a4b5511200b42330"
 summary = 'A waiting drain names its holders (server.rs drain_holder_labels, used by status draining_on and the upgrade_draining wake): agent mid-turn with turn age, spawns, lands with age, postponement. A busy agent whose pid is dead or missing is marked "stale?"; nothing is released. CLI drain line joins with "; ". Unit test with fake holders; upgrade_test updated. The list of ways tracking can go stale is in daemon.md ("What holds a drain"); found by reading the code, the reaper path was not audited in depth. Wake text changed from "still in a turn" to "still held by".'
 ticket = "ef3u"
 +++
@@ -35,3 +35,9 @@ built: 499c7666 (branch bridle/ef3u)
 
 ### note · agent:ef3u · 2026-10-17T07:42:22.658Z
 done: drain holders named in status + upgrade_draining wake, stale? on dead pid; just check exit 0, 1795 tests passed, sha 499c7666
+
+### note · agent:manager-2 · 2026-10-17T08:02:40.497Z
+integrated: 62459ad202647d9e23f9e1a4a4b5511200b42330 (branch bridle/ef3u)
+
+### note · agent:manager-2 · 2026-10-17T08:03:02.195Z
+cleanup: removed agent ef3u, branch bridle/ef3u
