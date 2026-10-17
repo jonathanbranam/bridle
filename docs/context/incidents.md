@@ -26,6 +26,18 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-17 12:00Z: a bridle-ui question to the orchestrator sat unseen 2.5 hours
+
+- **What happened:** manager-3 asked the orchestrator (bridle-ui) to clear an uncommitted
+  `.gitignore` edit in the clone that blocked the ui-3mxz land. The message forwarded to
+  dalek-home (m-0122); the orchestrator's only waiter is on bridle, so nothing woke it. Found by
+  the orchestrator at a waiter timeout, checking the bridle-ui queue by hand.
+- **Impact:** ui-3mxz and the bridle-ui queue stalled about 2.5 hours.
+- **Cause:** forwarding targets `<host>-home` by name; on dalek the orchestrator stays on bridle
+  (the human's call), and dalek-home doesn't relay.
+- **Category:** `messaging`, `coordination`.
+- **Follow-up:** br-dg5g (to the human via aide: where the waiter lives).
+
 ## 2026-10-17 12:20Z: bridle-ui can't land: the land check has no node_modules
 
 - **What happened:** manager-3's `bridle ticket land ui-3mxz --branch bridle/devport` failed its
