@@ -2,9 +2,9 @@
 id = "br-4cgx"
 title = "@-mention a role in a ticket reply or a document comment and that role gets a message"
 kind = "feature"
-state = "claimed"
+state = "built"
 created_at = "2026-10-09T20:49:28.208Z"
-updated_at = "2026-10-17T09:46:14.530874Z"
+updated_at = "2026-10-17T10:13:44.177856Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -13,9 +13,9 @@ watchers = [
 ]
 priority = "low"
 priority_at = "2026-10-09T20:49:31.204227Z"
-branch = "bridle/4cgx"
-commit = "5febee5f2df682af6afca918d74138f87bee3cf5"
-summary = '''Stop point 1 only: @name in a ticket comment (emit_comment in server.rs, new mentions.rs parser) sends each distinct recipient one task_update message via resolve_targets (so @orchestrator/@advisor/@aide become external:, agent names work); mentioned recipients join 'told' so watchers get no second message; \@ escapes; the author is not told of their own mention; an unresolvable name is reported to the author. Names with ':' (cross-project) are skipped, to do in stop point 3. Document comments (stop point 2, doc_watch) not done. Docs: cli.md, CHANGELOG.'''
+branch = "bridle/4cgxb"
+commit = "c3710bc8"
+summary = "Stop points 2 and 3. Shared mentions::send (mentions.rs) now serves ticket comments and document comments (DocWatcher::send_mentions: newest pending entry only, so resent threads do not re-tell; the human is the author; the doc's own agent is not told twice). Cross-project: @project:role, @prefix:role (registry task_prefix) and @project:external:role go through the outbox, one message per project+role; unknown project is reported to the author. resolve_targets split into a store-only resolve_name. DocWatcher gets the Outbox. Caveat: the prefix form has no integration test (needs the machine registry); document messages name the path, not a link."
 ticket = "4cgx"
 +++
 
@@ -52,3 +52,9 @@ integrated: 5febee5f2df682af6afca918d74138f87bee3cf5 (branch bridle/4cgx)
 
 ### note · agent:manager-2 · 2026-10-17T09:14:16.685Z
 cleanup: removed agent 4cgx, branch bridle/4cgx
+
+### note · agent:4cgxb · 2026-10-17T10:13:42.598Z
+built: c3710bc8 (branch bridle/4cgxb)
+
+### note · agent:4cgxb · 2026-10-17T10:13:44.177Z
+done: stop points 2 (doc comments) and 3 (@project:role, @prefix:role, @project:external:role via outbox); just check exit 0, 1811 tests run/passed (last full 1808); c3710bc8 (main merged). Caveats: prefix form untested (needs machine registry); doc messages name the path, no link.
