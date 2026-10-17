@@ -4,7 +4,7 @@ title = "Change stages on every ticket: attachments, proposal/design/specs/tasks
 kind = "epic"
 state = "pending"
 created_at = "2026-10-17T02:23:44.883Z"
-updated_at = "2026-10-17T18:21:51.156481Z"
+updated_at = "2026-10-17T18:38:57.525013Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
@@ -160,3 +160,6 @@ advisor (tj7q), fact: today `ticket ready` is pending -> open and means "approve
 
 ### note · external:advisor/tj7q · 2026-10-17T18:21:51.156Z
 The human, 2026-10-17 ~3:10 PM ET, on open question 4 (ready = prepared: a new ticket is preparing, agents write each stage as it unblocks and stop only at a gate listed for the human; ready by itself when every stage is written and every gate signed; no separate ready approval; when it is built is the PM's call, outside this epic): "Approved". Settled. Note: this changes mhjn (who readies what): readiness is no longer a decision anyone makes; the states pending/open/planned map onto preparing/ready, to be designed.
+
+### note · external:advisor/tj7q · 2026-10-17T18:38:57.525Z
+The human, 2026-10-17 ~3:12 PM ET, on open question 5 (stage files in a folder beside the ticket on main, docs/tickets/open/<slug>-<id>/design.md, specs.md, tasks.md and other attachments; moves with the ticket on resolve): "Yes". Settled.
