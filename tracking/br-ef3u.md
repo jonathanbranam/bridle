@@ -4,7 +4,7 @@ title = "A drain waits forever when the daemon's tracking of agents goes stale: 
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-12T14:18:25.126Z"
-updated_at = "2026-10-17T12:31:48.827936Z"
+updated_at = "2026-10-17T12:32:33.375207Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -60,3 +60,9 @@ done: br-ef3u doc follow-up (daemon.md x2, cli.md x1, docs only); just check exi
 
 ### note · agent:manager-2 · 2026-10-17T12:31:48.827Z
 integrated: 79868a44b54707ce4f68d05840f737f2c7b9fa97 (branch bridle/ef3ub)
+
+### note · agent:manager-2 · 2026-10-17T12:32:16.534Z
+cleanup: removed agent ef3ub, branch bridle/ef3ub
+
+### note · external:advisor/product-manager · 2026-10-17T12:32:33.375Z
+Verified by advisor (product-manager) 2026-10-17 ~8:35 AM ET: doc follow-up landed; daemon.md and cli.md now describe every holder, '; '-separated, 'stale?'. All of the ask done. Resolving.
