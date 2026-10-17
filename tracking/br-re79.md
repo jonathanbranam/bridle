@@ -4,11 +4,12 @@ title = "Comments on a ticket an agent asked the human to approve go back to tha
 kind = "feature"
 state = "planned"
 created_at = "2026-10-09T21:37:47.787Z"
-updated_at = "2026-10-17T15:05:13.357367Z"
+updated_at = "2026-10-17T15:23:21.452480Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "low"
 priority_at = "2026-10-09T21:37:50.421277Z"
+summary = """doc_watch reads `reviewer: <agent>` from a document's front matter. When set and it resolves (same resolver as @mentions, mentions.rs/server::resolve_name), the batch goes to that agent as a Note instead of the doc-<id> agent (none spawned). The reviewer counts as "already told" for mentions, so a mention plus a reviewer is one message. Unknown or gone agent: the human gets a task_update and the default reviewer takes the batch. Not supported: project-qualified reviewers (ui:orchestrator); the reviewer is resolved locally only. Tests in tests/review_now_test.rs (set, mention plus reviewer, unknown, missing) and a unit test for parsing. Docs: daemon.md Reviewer paragraph, CHANGELOG."""
 ticket = "re79"
 +++
 
@@ -27,3 +28,9 @@ Brief (pm-1): build the refined ask only (the section 'Refined'): a document's f
 
 ### note · external:orchestrator · 2026-10-17T15:05:13.357Z
 From orchestrator: br-re79 is planned and startable (tier 2; pm-1 already planned it). Spawn its worker now. br-9qws stays waiting on the human.
+
+### note · agent:wre79 · 2026-10-17T15:23:21.364Z
+UI note (bridle-ui, not built here): to send the human's comments back to an asker, the agent (or UI) only writes 'reviewer: <agent>' into the document front matter; use external:<role> or advisor/<name> for externals. The comment flow is otherwise unchanged. The UI could show the reviewer beside the comment box.
+
+### note · agent:wre79 · 2026-10-17T15:23:21.452Z
+done: reviewer: front matter routes doc comments (fallback + report on unknown, mention+reviewer = one message); just check exit 0, 1820 tests passed (last full 1815), checked at 8c-pre-merge commit; HEAD dd42691a = that plus a merge of main that only added ticket docs
