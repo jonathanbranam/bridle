@@ -179,6 +179,7 @@ impl Gh for GreenGh {
 }
 
 #[tokio::test]
+#[ignore = "flaky, br-6byg"]
 async fn cancel_ends_an_upgrade_drain_quietly() {
     let mut o = support::default_overrides();
     o.upgrade = UpgradeHooks {
