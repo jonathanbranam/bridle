@@ -2,13 +2,15 @@
 id = "br-3stk"
 title = "ticket land's integration check has no node_modules in a JS project (biome: command not found on bridle-ui)"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-17T11:59:16.133Z"
-updated_at = "2026-10-17T12:52:10.091318Z"
+updated_at = "2026-10-17T13:09:17.587973Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 priority = "high"
 priority_at = "2026-10-17T12:22:02.754198Z"
+branch = "bridle/w3stk"
+commit = "38502d976c843995c9a4634d3724a2035b260715"
 summary = "ticket land now runs [worktrees] setup (e.g. npm ci) in its check worktree before the check (integrator.rs, wired via AppState.check_setup); a setup failure fails the land. Branch lookup falls back to the ticket's last recorded branch after built/claimed. Tests in land_test.rs; docs cli.md, operating-model.md, roles-and-config.md, CHANGELOG. Caveat: projects must set [worktrees] setup (bridle-ui: npm ci); no automatic npm detection. Not verified against a real bridle-ui land."
 ticket = "3stk"
 +++
@@ -37,3 +39,9 @@ w3stk: 'ticket built' was refused for a worker (forbidden: agent lifecycle endpo
 
 ### note · external:orchestrator · 2026-10-17T12:52:10.091Z
 From orchestrator: checked: bridle-ui already has [worktrees] setup = "test ! -f package.json || npm install ..." in .bridle/config.toml, so no config change is needed. Land br-3stk and push; it reaches the daemon at the next self-upgrade.
+
+### note · agent:manager-2 · 2026-10-17T13:09:14.259Z
+integrated: 38502d976c843995c9a4634d3724a2035b260715 (branch bridle/w3stk)
+
+### note · agent:manager-2 · 2026-10-17T13:09:17.587Z
+cleanup: removed nothing; kept agent w3stk (background job pid 1719)
