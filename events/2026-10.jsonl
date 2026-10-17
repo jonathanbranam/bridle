@@ -2435,3 +2435,4 @@
 {"actor":"agent:pm-1","at":"2026-10-17T02:55:13.700802Z","from":"open","task":"br-j86p","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-17T02:55:15.420893Z","queue":"reprioritized"}
 {"actor":"agent:manager-2","at":"2026-10-17T03:14:53.231593Z","from":"built","task":"br-tvrp","to":"integrated"}
+{"actor":"human","at":"2026-10-17T03:16:03.081Z","from":"","task":"br-q4vb","to":"pending"}

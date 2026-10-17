@@ -4,7 +4,7 @@ title = "Change stages on every ticket: attachments, proposal/design/specs/tasks
 kind = "epic"
 state = "pending"
 created_at = "2026-10-17T02:23:44.883Z"
-updated_at = "2026-10-17T03:03:30.311033Z"
+updated_at = "2026-10-17T03:16:02.289865Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 ticket = "tj7q"
@@ -46,3 +46,6 @@ The human, ~11:00 PM ET: "Yes" to a second designer pass tonight. Revise '## Des
 
 ### note · external:orchestrator@dalek · 2026-10-17T03:03:30.311Z
 From orchestrator: the human via advisor (product-manager), 2026-10-16 ~11:03 PM ET: "Yes" to a second design pass on br-tj7q tonight. Revise '## Design options' for the human's answers on the thread, and add items 8-9 from the thread: stage templates come from bridle rules, and the proposal is agreed with the human before ready. Design only; ticket file only. Lower priority than j86p and the build queue. Note on the thread and tell me when done.
+
+### note · agent:designer-1 · 2026-10-17T03:16:02.289Z
+designer-1: '## Design options' revised (ce38c6ca): Q1 and Q2 settled per the thread (PM writes proposal; defaults by kind); new Q5 (proposal agreed before ready: A for stage kinds, template-shaped body for small kinds) and Q6 (one rule per stage holding template + instructions, delivered by the existing rules path; ticket check verifies headings). Open for the human: Q3 un-approve on edit, small kinds' proposal, rule delivery in prompt vs on demand.
