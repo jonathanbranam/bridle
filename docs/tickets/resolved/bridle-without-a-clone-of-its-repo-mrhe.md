@@ -8,6 +8,7 @@ specs: []
 blocked_by: []
 related: [where-the-knowledge-root-lives-and-migrating-to-it-ew97]
 kind: feature
+resolved: 2026-10-17T02:08:19Z
 ---
 
 ## The ask

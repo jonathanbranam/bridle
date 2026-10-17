@@ -11,6 +11,7 @@ specs: []
 blocked_by: []
 related: [br-kx5u, br-kt25, br-53gy, br-rjd5]
 parent: br-kx5u
+resolved: 2026-10-17T02:08:19Z
 ---
 
 The human, 2026-10-11 ~8:47 PM ET (to advisor product-manager), verbatim: "I will test with a smaller proejct firs, but this needs to work; also, i'm concerned about everything that is not moving oer". Part of epic br-kx5u (set up a new machine, transfer a project).

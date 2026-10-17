@@ -11,6 +11,7 @@ blocked_by: [br-2wnn]
 related: [br-kt25, br-hw6c, br-evy6, br-r2nr]
 theme: multi-machine
 parent: br-kx5u
+resolved: 2026-10-17T02:08:19Z
 ---
 
 ## The ask

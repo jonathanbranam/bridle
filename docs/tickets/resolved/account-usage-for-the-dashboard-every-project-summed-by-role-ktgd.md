@@ -11,6 +11,7 @@ blocked_by: []
 related: [br-qhsa, br-xxw9, ui-h79b, br-xfsp]
 theme: performance
 parent: br-rdkn
+resolved: 2026-10-17T02:08:19Z
 ---
 
 The bridle half of the account usage dashboard (UI half: the bridle-ui ticket linked below). Epic br-rdkn.
