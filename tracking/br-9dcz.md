@@ -2,9 +2,9 @@
 id = "br-9dcz"
 title = "Agents are reminded once to link the ticket and task IDs they show the human (a hook, never a block)"
 kind = "feature"
-state = "open"
+state = "planned"
 created_at = "2026-10-10T17:09:36.504Z"
-updated_at = "2026-10-17T02:07:21.421055Z"
+updated_at = "2026-10-17T02:07:32.845467Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 ticket = "9dcz"

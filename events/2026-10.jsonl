@@ -2402,3 +2402,13 @@
 {"actor":"external:advisor/product-manager","at":"2026-10-17T02:06:33.084542Z","from":"pending","task":"br-4cgx","to":"open"}
 {"actor":"external:advisor/product-manager","at":"2026-10-17T02:06:33.462913Z","from":"pending","task":"br-9dcz","to":"open"}
 {"actor":"external:advisor/product-manager","at":"2026-10-17T02:06:37.499175Z","from":"pending","task":"br-d9wq","to":"dropped"}
+{"actor":"agent:pm-1","at":"2026-10-17T02:07:32.449545Z","from":"open","task":"br-p4f2","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-17T02:07:32.845467Z","from":"open","task":"br-9dcz","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-17T02:07:33.004733Z","from":"open","task":"br-ef3u","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-17T02:07:33.165884Z","from":"open","task":"br-4cgx","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-17T02:07:33.310337Z","from":"open","task":"br-re79","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-17T02:07:34.934300Z","queue":"reprioritized"}
+{"actor":"agent:pm-1","at":"2026-10-17T02:07:36.101320Z","queue":"reprioritized"}
+{"actor":"agent:pm-1","at":"2026-10-17T02:07:37.724420Z","queue":"reprioritized"}
+{"actor":"agent:pm-1","at":"2026-10-17T02:07:38.983608Z","queue":"reprioritized"}
+{"actor":"human@vesta","at":"2026-10-17T02:07:41.604390Z","from":"claimed","task":"br-3a42","to":"integrated"}
