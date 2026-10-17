@@ -76,6 +76,9 @@ with a gate. Not scheduling, not priority.
   chosen from proposal, design, specs, tasks. Dependencies copy OpenSpec: proposal first; specs and
   design each require the proposal; tasks require specs and design.
 - Each stage produces a file (OpenSpec's "artifact"; file, attachment, artifact are one thing).
+- **Where the files live** (settled 3:12 PM ET, "Yes"): a folder beside the ticket on main,
+  `docs/tickets/open/<slug>-<id>/design.md`, `specs.md`, `tasks.md`, plus any other attachment;
+  it moves with the ticket on resolve. The docs viewer already reads and comments on them.
 - **Each stage has a gate.** MVP gate: the file exists, plus, if the stage needs approval, the
   gate's owner signs it approved. Nothing after it can go forward until it is signed. MVP owner:
   the human. Later the owner can be another agent, and it works the same way (the human: "whoever
@@ -106,9 +109,24 @@ with a gate. Not scheduling, not priority.
   a background agent and an interactive one (an advisor going through the ticket live with the
   human). Skill or command, the human does not mind. Instructions and template come at the moment
   of writing, every time, not in CLAUDE.md or the role prompt (overturns design Q6-A).
-- **Who writes:** most of the time the PM writes the proposal (the human, 2026-10-17: "most of the
-  time, the proposal should be written by the product manager"). The rest: a background agent
-  started for the stage is fine for MVP.
+- **Who writes (MVP): bridle starts a background agent for every stage** (the human, 3:25 PM ET:
+  "Let's just decide right now for the MVP: all the artifacts, all the stages are written by a
+  background agent"; "I don't think the product manager does anything. Bridle should do this").
+  The flow: when a ticket's next stage is unblocked and the ticket is unclaimed, bridle spawns an
+  agent whose prompt is the ticket, the stage, the stage's instructions and its template. The
+  agent writes the file and marks the stage done. Bridle sees it and works out what is next: if
+  the stage needs the human's approval, the ticket is assigned to (claimed by) the human; when
+  the human approves, it goes back to bridle; otherwise bridle starts the next stage's writer.
+  Overturns design Q3-A (notify the PM) for Q3-B (bridle spawns). Interactive and PM-written
+  stages come later.
+- **The writer is the `designer` role** (settled 3:45 PM ET; the human: "that's originally what I
+  thought of as the designer: to write the tickets"). Its role file widens from "a proposal into
+  the ticket" to every stage, each stage's rule supplying the specifics; it still builds nothing.
+  A UI designer later will be `ui-designer`.
+- **The proposal exception: claiming.** The agent filing a ticket may write the proposal itself at
+  once. A ticket waiting for a stage is claimed or unclaimed: claimed means its claimant is
+  writing it, and bridle waits; unclaimed means bridle sends it straight to a background writer
+  ("an unclaimed ticket waiting for a proposal should go").
 - With human review: the agent writes the file and says it is ready for review; the human
   approves, or asks for changes and then approves. Without: it goes straight on.
 - **Approving**: `bridle ticket approve <id> <stage>`. The human need not type it: they say
@@ -145,11 +163,15 @@ schemas assigned to tickets; different stage types.
    for any agent, signed human gates, read in the existing docs viewer. V1 = the ticket page in
    bridle-ui (tabs, combined task/ticket page, approve button), template-heading check. V2 =
    attachments of any type (images), gates owned by agents, standard schemas to assign. [yes]
-5. Where files live: a folder beside the ticket on main, `docs/tickets/open/<slug>-<id>/design.md`
-   etc. (design Q1-A). [yes]
-6. Starting background writers: when a stage unblocks, the daemon tells the project manager, who
-   writes it or starts an agent for it (design Q3-A; the daemon does not spawn agents itself).
-   [yes]
+6b. Marking a stage done: the writer runs `bridle ticket stage-done <id> <stage>`; bridle checks the
+   file exists (the proposal: the delimited section in the body), records it and moves on. An
+   agent that exits without it leaves the stage unwritten and bridle retries once, then raises it
+   to the PM. [yes]
+6c. The filer's claim: `bridle ticket new --claim` (or a body that already holds the proposal)
+   keeps the proposal with the filer; without either, bridle starts a writer at once. [yes]
+6d. Changes asked by the human: the human comments on the thread or the file and says "changes";
+   the stage goes back to unclaimed and bridle starts a fresh writer, whose prompt adds the
+   human's comments. [yes]
 7. The next-stage command: `bridle ticket next <id>` prints the next unblocked stage with its
    instructions (the stage's rule, layered: base, packs, project), template, output path and the
    files it depends on; it refuses when the stage is blocked by an unsigned gate. A thin skill
