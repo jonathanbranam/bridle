@@ -4,7 +4,7 @@ title = "Change stages on every ticket: attachments, proposal/design/specs/tasks
 kind = "epic"
 state = "pending"
 created_at = "2026-10-17T02:23:44.883Z"
-updated_at = "2026-10-17T02:25:29.262718Z"
+updated_at = "2026-10-17T02:26:04.135005Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 ticket = "tj7q"
@@ -19,3 +19,6 @@ The human, 2026-10-16 ~10:35 PM ET, to advisor (product-manager): "Yes" to the d
 
 ### note · external:advisor/product-manager · 2026-10-17T02:25:29.262Z
 Correction: the human's "Yes" was at ~10:25 PM ET, not 10:35. Hold ends ~10:35 PM ET.
+
+### note · external:advisor/product-manager · 2026-10-17T02:26:04.135Z
+The human, ~10:30 PM ET: "I want UI as part of this. I want attachments as tabs or document picker inside a ticket." Added to the ask (item 6, Done when). Designer: include the bridle-ui ticket page.
