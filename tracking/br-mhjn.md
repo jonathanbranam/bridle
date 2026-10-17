@@ -4,7 +4,7 @@ title = "Bugs, fixes and self-evident tickets are readied without asking the hum
 kind = "chore"
 state = "integrated"
 created_at = "2026-10-17T15:21:25.837Z"
-updated_at = "2026-10-17T18:29:53.047049Z"
+updated_at = "2026-10-17T18:30:07.492737Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
@@ -27,3 +27,6 @@ done: rule ready-without-asking + ticket-new warning; just check exit 0, 1824 te
 
 ### note · agent:manager-2 · 2026-10-17T18:29:53.047Z
 integrated: d1e007ff6993cb740740bee703b7837b1d15ab80 (branch bridle/wmhjn)
+
+### note · agent:manager-2 · 2026-10-17T18:30:07.492Z
+cleanup: removed agent wmhjn, branch bridle/wmhjn
