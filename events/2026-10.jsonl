@@ -2570,3 +2570,4 @@
 {"actor":"agent:manager-2","at":"2026-10-17T19:30:22.949296Z","from":"planned","task":"br-kyjg","to":"integrated"}
 {"actor":"agent:manager-2","at":"2026-10-17T19:36:18.868199Z","from":"built","task":"br-2fqg","to":"integrated"}
 {"actor":"human","at":"2026-10-17T19:47:15.922Z","from":"","task":"br-4mbd","to":"pending"}
+{"actor":"external:advisor/tj7q","at":"2026-10-17T19:50:17.752664Z","from":"pending","task":"br-4mbd","to":"open"}

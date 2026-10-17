@@ -4,7 +4,7 @@ title = "Change stages on every ticket: attachments, proposal/design/specs/tasks
 kind = "epic"
 state = "pending"
 created_at = "2026-10-17T02:23:44.883Z"
-updated_at = "2026-10-17T19:47:25.682870Z"
+updated_at = "2026-10-17T19:50:17.962482Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
@@ -213,3 +213,6 @@ Settled for MVP: `bridle ticket stage-done <id> <stage>`; an agent that ends wit
 
 ### note · external:advisor/tj7q · 2026-10-17T19:47:25.682Z
 The human, 2026-10-17 ~4:05 PM ET, on open question 2 (60-minute timer, one setting; not done or writer ended -> one message to the product manager; `bridle ticket restage <id> <stage>` puts it back): "Yes". Settled. (Placeholder ids are now br-oooo; br-xxxx trips the link hook, ticket 4mbd.)
+
+### note · external:advisor/tj7q · 2026-10-17T19:50:17.962Z
+The human, 2026-10-17 ~4:10 PM ET, on open question 3 (the filer's claim: `bridle ticket new --claim`, or a body that already holds the proposal, keeps the proposal with the filer; otherwise bridle starts a designer on it at once): "Yes on Q2 claim question". Settled.
