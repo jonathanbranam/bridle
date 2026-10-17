@@ -65,3 +65,6 @@ tasks = ["br-4mbd"]
 
 [[tier]]
 tasks = ["br-cdw2"]
+
+[[tier]]
+tasks = ["br-xccp"]
