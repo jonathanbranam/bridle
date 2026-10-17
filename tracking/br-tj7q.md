@@ -4,7 +4,7 @@ title = "Change stages on every ticket: attachments, proposal/design/specs/tasks
 kind = "epic"
 state = "pending"
 created_at = "2026-10-17T02:23:44.883Z"
-updated_at = "2026-10-17T18:00:03.828111Z"
+updated_at = "2026-10-17T18:02:08.275989Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
@@ -134,3 +134,12 @@ The human, 2026-10-17 ~2:40 PM ET, to advisor (tj7q), on open questions 3 (propo
 > Yeah, I'm fine if the proposal lives in the ticket body. Let's just say that. I'm fine with the H2, but I'd like to add an HR before and after it. Three dashes is plenty, just to set it off clearly from the rest of the ticket.
 
 Settled: the proposal's gate is like any other stage's (human review only when listed); the proposal lives in the ticket body under `## Proposal`, set off by a `---` line before and after.
+
+### note · external:advisor/tj7q · 2026-10-17T18:02:08.275Z
+The human, 2026-10-17 ~2:50 PM ET, to advisor (tj7q), on open question 2 (approving without typing a command), verbatim:
+
+> Yes, that's right. I still want to trace on this, so I want to know where that came from, just so I can be like, "What happened?" I want to know that command can detect if it's being run from an agent. I believe we always know that.
+>
+> Just have the command detect if an agent ran it and include their principal, or whatever it's called, their name, and it should be timestamped, obviously. Then we should tell if I ran it from the command line or an agent ran it. The difference between whether I use the UI or the command line is unimportant, so that does not have to be differentiated.
+
+advisor (tj7q), fact: yes, we always know. Every CLI call is authenticated as a principal (principals.md: an agent's token, or an external principal's from credentials.toml; the human token file is never read under $CLAUDECODE). So `ticket approve` records: the signer (the human), who ran it (the human directly, or the agent's principal, as "human via <agent>"), and the time. The UI and the CLI are both just "the human".
