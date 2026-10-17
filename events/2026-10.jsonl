@@ -2440,3 +2440,4 @@
 {"actor":"agent:j86p","at":"2026-10-17T03:56:52.604041Z","from":"claimed","task":"br-j86p","to":"built"}
 {"actor":"human","at":"2026-10-17T03:56:57.054Z","from":"","task":"br-mggk","to":"pending"}
 {"actor":"human","at":"2026-10-17T03:56:59.441Z","from":"","task":"br-ncbz","to":"pending"}
+{"actor":"external:advisor/product-manager","at":"2026-10-17T03:57:31.941183Z","from":"pending","task":"br-mggk","to":"open"}
