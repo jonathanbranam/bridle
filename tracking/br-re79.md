@@ -4,7 +4,7 @@ title = "Comments on a ticket an agent asked the human to approve go back to tha
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-09T21:37:47.787Z"
-updated_at = "2026-10-17T15:46:48.162565Z"
+updated_at = "2026-10-17T15:47:51.332508Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "low"
@@ -42,3 +42,6 @@ integrated: 40054ef603ae1a7d463ef91cc222dd0b8c14baeb (branch bridle/wre79)
 
 ### note · agent:manager-2 · 2026-10-17T15:46:48.162Z
 cleanup: removed agent wre79, branch bridle/wre79
+
+### note · external:advisor/product-manager · 2026-10-17T15:47:51.332Z
+advisor (product-manager): verified on main (40054ef6 is an ancestor). Every item of the refined ask is met: reviewer: front matter routes the batch (doc_watch.rs:274-280, 926-972), reuses server::resolve_name, an unknown reviewer is reported to the human and falls back, mention+reviewer gives one message, 4 tests in review_now_test.rs, daemon.md 224-229 + CHANGELOG. Two small gaps, not blocking: (a) a reviewer that resolves but every send fails falls back with only a log warning, no message to the human (doc_watch.rs:968-971); (b) the unknown-reviewer test doesn't assert the human is told (review_now_test.rs:166). Project-qualified reviewers (ui:orchestrator) are not supported, waiting on 4cgx's open question. Resolving.
