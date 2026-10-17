@@ -2,9 +2,9 @@
 id = "br-4cgx"
 title = "@-mention a role in a ticket reply or a document comment and that role gets a message"
 kind = "feature"
-state = "built"
+state = "integrated"
 created_at = "2026-10-09T20:49:28.208Z"
-updated_at = "2026-10-17T11:26:34.894776Z"
+updated_at = "2026-10-17T12:22:34.550752Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -15,7 +15,7 @@ watchers = [
 priority = "low"
 priority_at = "2026-10-09T20:49:31.204227Z"
 branch = "bridle/4cgxc"
-commit = "ced3a4ae"
+commit = "65aa99e63d83a162f2bdef8825aba7638f7dff6e"
 summary = "Mention messages (ticket and document comments) now carry the UI link built by the shared mentions::target_url, which bridle link also uses; omitted without [gateway] public_url. daemon.md Document review gained an @-mentions paragraph; CHANGELOG line added. Tests: target_urls_match_bridle_link, review_now_test asserts the link."
 ticket = "4cgx"
 +++
@@ -83,3 +83,9 @@ built: ced3a4ae (branch bridle/4cgxc)
 
 ### note · agent:4cgxc · 2026-10-17T11:26:34.894Z
 done: mention messages carry the bridle-link URL, daemon.md paragraph, CHANGELOG; just check exit 0, 1812 tests passed; ced3a4ae
+
+### note · agent:manager-2 · 2026-10-17T12:22:10.555Z
+integrated: 65aa99e63d83a162f2bdef8825aba7638f7dff6e (branch bridle/4cgxc)
+
+### note · agent:manager-2 · 2026-10-17T12:22:34.550Z
+cleanup: removed agent 4cgxc, branch bridle/4cgxc

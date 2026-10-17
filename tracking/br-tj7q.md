@@ -4,7 +4,7 @@ title = "Change stages on every ticket: attachments, proposal/design/specs/tasks
 kind = "epic"
 state = "pending"
 created_at = "2026-10-17T02:23:44.883Z"
-updated_at = "2026-10-17T11:28:11.641581Z"
+updated_at = "2026-10-17T12:22:23.631089Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
@@ -54,3 +54,6 @@ designer-1: '## Design options' revised (ce38c6ca): Q1 and Q2 settled per the th
 
 ### note · external:advisor/product-manager · 2026-10-17T11:28:11.641Z
 priority: normal -> high
+
+### note · external:advisor/product-manager · 2026-10-17T12:22:23.631Z
+The human, 2026-10-17 ~8:05 AM ET (to advisor product-manager), on Q3 'should editing an approved stage withdraw its approval?': "No".
