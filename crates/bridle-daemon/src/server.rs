@@ -785,6 +785,60 @@ async fn require_not_worker(state: &AppState, principal: &Principal) -> Result<(
     }
 }
 
+/// The shipped role names (workflow/base/roles/) and the short forms the daemon itself uses
+/// (`pm-1`); configured roles are added on top, so a custom role's name is reserved too.
+const RESERVED_BASES: [&str; 6] = [
+    "advisor",
+    "manager",
+    "orchestrator",
+    "product-manager",
+    "worker",
+    "pm",
+];
+
+/// The reserved base `name` falls under: equal to it, or `<base>-...`; case-insensitive (2vja).
+fn reserved_base(role_names: &[String], name: &str) -> Option<String> {
+    let name = name.to_ascii_lowercase();
+    RESERVED_BASES
+        .iter()
+        .copied()
+        .chain(role_names.iter().map(String::as_str))
+        .find(|base| {
+            let base = base.to_ascii_lowercase();
+            name == base
+                || name
+                    .strip_prefix(base.as_str())
+                    .is_some_and(|rest| rest.starts_with('-'))
+        })
+        .map(str::to_string)
+}
+
+/// Only the human, the daemon and the orchestrator create an agent under a reserved name;
+/// agents (managers, PMs, workers) and other external principals don't. Resume and renew keep
+/// an existing agent's name and don't come through here, so they are never blocked.
+fn require_may_use_name(
+    role_names: &[String],
+    name: &str,
+    principal: &Principal,
+) -> Result<(), ApiError> {
+    let Some(base) = reserved_base(role_names, name) else {
+        return Ok(());
+    };
+    let allowed = matches!(principal.kind, PrincipalKind::Human | PrincipalKind::System)
+        || principal.id == crate::wake::ORCHESTRATOR;
+    if allowed {
+        return Ok(());
+    }
+    let role = if base == "pm" {
+        "product-manager"
+    } else {
+        &base
+    };
+    Err(ApiError::forbidden(format!(
+        "name {name} is reserved for the {role} role; spawn it as {role} (only the human, the orchestrator or the daemon may create it)"
+    )))
+}
+
 // ---------- orchestrator handover notes ----------
 
 /// Any principal may write; the note is keyed by the writer's own identity (never the body).
@@ -1548,6 +1602,9 @@ async fn spawn_agent(
         && principal.id != "human"
     {
         state.tasks.require_settled(ticket)?;
+    }
+    if let Some(name) = &req.name {
+        require_may_use_name(&state.manager.role_names(), name, &principal)?;
     }
     let mut req = req;
     req.components = if req.components.is_empty() {
@@ -5654,6 +5711,31 @@ mod tests {
         assert_eq!(held_role(held.clone(), "a-tok").as_deref(), Some("aide"));
         assert_eq!(held_role(held.clone(), "random"), None, "random token");
         assert_eq!(held_role(held, "h-tok"), None, "the human token");
+    }
+
+    #[test]
+    fn reserved_base_matches_exact_or_dash_prefix_case_insensitively() {
+        let roles = vec!["custom".to_string()];
+        for n in [
+            "pm",
+            "pm-1",
+            "Advisor-Jim",
+            "orchestrator",
+            "manager-2",
+            "custom-a",
+        ] {
+            assert!(reserved_base(&roles, n).is_some(), "{n}");
+        }
+        for n in [
+            "pmx",
+            "managers",
+            "send-hint",
+            "worker1",
+            "my-pm",
+            "custom2",
+        ] {
+            assert!(reserved_base(&roles, n).is_none(), "{n}");
+        }
     }
 
     #[test]

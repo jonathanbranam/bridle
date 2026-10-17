@@ -67,6 +67,16 @@ lifecycle authority ([[docs/design/agent-host/roles-and-config|roles and
 config]]), even over other agents it didn't spawn itself. Manager,
 orchestrator, human and external principals are unaffected.
 
+Role names are reserved for agent names, by prefix (2vja): a name equal to a role name, or
+starting with `<role>-`, case-insensitive, is reserved. The bases are the roles (`advisor`,
+`manager`, `orchestrator`, `product-manager`, `worker`, plus any configured role) and the short
+form `pm` (`pm-1`). Only the human, the daemon and the orchestrator may spawn an agent under an
+explicit reserved name (so `advisor-Jim` is an advisor and `orchestrator` is that role); any
+agent principal (manager, PM, worker) or other external principal gets a 403 "name X is reserved
+for the R role". A spawn with no `--name` gets a generated name and is never refused. Resume and
+renew keep an existing agent's name and are never blocked, so a restart still resumes
+`manager-2` and `pm-1`. Names with no reserved base (`send-hint`, `worker1`, `pmx`) stay open.
+
 An agent's token is also kept in `.bridle/agents/<id>/token` (0600), so
 `resume` can re-inject the same identity; the store keeps only hashes.
 

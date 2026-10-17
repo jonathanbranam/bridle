@@ -873,6 +873,11 @@ impl AgentManager {
             .map_err(SupervisorError::BadRequest)
     }
 
+    /// Names of the configured roles (reserved as agent-name bases, 2vja).
+    pub fn role_names(&self) -> Vec<String> {
+        self.0.config.roles.keys().cloned().collect()
+    }
+
     pub fn components_match(&self, named: &[String], filter: &str) -> bool {
         self.0.config.components_match(named, filter)
     }

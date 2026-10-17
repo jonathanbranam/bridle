@@ -457,6 +457,10 @@ bridle task skip-settle <id> --reason TEXT                            skip the s
 bridle ticket comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comment on the task's thread; tells the watchers and the claimant (not the author); no effect on readiness
 ```
 
+- **`--name N`** on `spawn`: a name that is a role name or starts with `<role>-` (or `pm`,
+  `pm-...`) is reserved; only the human, the orchestrator and the daemon may create it, anyone
+  else gets "name N is reserved for the R role; spawn it as R"
+  ([[docs/design/agent-host/principals|principals.md]]). Resume and renew are unaffected.
 - **`--allow-tool TOOL`** on `spawn` (repeatable) grants a tool beyond the
   role's `allowed_tools` for this one spawn only — no config or role change,
   and it never touches `disallowed_tools`
