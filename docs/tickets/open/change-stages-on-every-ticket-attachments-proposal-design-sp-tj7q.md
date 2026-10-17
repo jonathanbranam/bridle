@@ -172,7 +172,8 @@ A stage is unblocked when the stage before it exists (non-empty file) and, if it
   approval wakes nobody. This is today's failure (br-95mu).
 
 Recommend **A**. "Without being asked again" holds from the human's side: they approve, the PM is
-told, an agent writes. Who writes: proposal, design, specs = designer; tasks = project manager. The
+told, an agent writes. Who writes (the human, 2026-10-16: "PM writes proposal"): proposal = project
+manager, with the human (see Q5); design and specs = designer; tasks = project manager. The
 designer's `## Design options` moves from the ticket body to `design.md` (the body keeps the ask).
 
 Stage contents, one line each: proposal = why, what changes, what does not; design = options and a
@@ -181,8 +182,9 @@ bridle spec syntax; tasks = the worker briefs, in order, each small enough for o
 
 Which tickets get stages: the ask says every ticket, but a typo fix does not need four files
 (cost-of-not-doing). Recommend a ticket field `stages` defaulting by kind (feature, arch-revision,
-epic: all four; fix, docs, chore: none; `bridle ticket set <id> stages ...` to override). Question
-for the human: is that default right?
+epic: all four; fix, docs, chore: none; `bridle ticket set <id> stages ...` to override). Settled by
+the human (2026-10-16, "Sure. It doesn't matter that much we can change it later"). The default
+lives in one table in the code or config, so changing it later is a one-line edit.
 
 ### Q4. How specs.md maps into `design/specs/`
 
@@ -231,15 +233,87 @@ br-xxxx  Title                         state  priority  [actions: ready, hold, d
 
 ### Recommendation and trade-offs accepted
 
-A + A + A + A: folder beside the ticket; `review:`/`approved:` fields with `bridle ticket approve`;
+A + A + A + A, plus Q5 (A for stage kinds, B for small kinds) and Q6-A: folder beside the ticket; `review:`/`approved:` fields with `bridle ticket approve`;
 `bridle ticket stages` plus one daemon notice to the PM; specs.md as a draft merged by the first
-task. Accepted costs: approval is not invalidated when an approved file is edited; the daemon never
+task; `ticket ready` requires an approved proposal; one rule per stage holds its template and
+instructions and reaches the writing role through the existing rules path. Accepted costs: approval is not invalidated when an approved file is edited; the daemon never
 spawns agents itself; spec draft can drift until merged; markdown-only attachments for now.
 Smallest first slice that proves it: folder + fields + `stages` command, the designer writing
 `design.md`, then the UI tabs (the epic's "one real ticket end to end").
 
+### Q5. The proposal is agreed with the human before the ticket is ready (item 8)
+
+The human, 2026-10-16: "a ticket should have a proposal worked out with human. A ticket without a
+proposal isn't a ticket ready to be worked." And: "The proposal can live in the ticket yes but it
+has to follow the template."
+
+- **A. The proposal is a stage like the others, and `ticket ready` requires it.** For a ticket with
+  stages, `bridle ticket ready` refuses unless `proposal` is written and in `approved:`. So the
+  proposal is always a reviewed stage: for these kinds `review:` implicitly contains `proposal`
+  (the human can still drop the other stages from review). The PM drafts it, talks it through with
+  the human (the thread, or the Proposal tab with highlight-to-comment), then `ticket approve
+  <id> proposal`. Cost: `ready` learns one more check, next to its existing "empty ask" and
+  "uncommitted" refusals. Falls short: none for stage kinds.
+- **B. Small kinds (fix, docs, chore) have no stage files; the proposal lives in the ticket body.**
+  The body must follow the proposal template (headings below). `ticket ready` for these kinds
+  checks the template headings are present and non-empty (the PM writes them with the human), and
+  the human's ready/approve is the agreement. Same rule for everyone: no proposal, not ready. Cost:
+  a heading check in `ready`. This answers the thread's open point: the ask alone is not the
+  proposal, but a three-line body in the template is enough.
+- **C. Only the human's `ready` is the agreement** (today). No mechanism; a ticket can be ready with
+  nothing agreed. This is the failure the human described. Rejected.
+
+Recommend **A for stage kinds and B for small kinds**: one rule ("not ready without an agreed
+proposal"), two places the proposal can live. For B the template is deliberately short.
+
+### Q6. Templates and writing instructions come from bridle rules (item 9)
+
+The human, 2026-10-16: "Everyone of these must have a fixed template and then instructions on how to
+write them. Whatever agent does the work gets that template and instructions. And those should be
+built from bridle rules. This is how that system gets to an agent."
+
+What exists: rules are files in `workflow/base/rules/<id>.md` (frontmatter `id`, `severity`,
+`roles`), resolved over base, packs and the project, and delivered in a spawned agent's system prompt
+for its role (workflow-layers.md: built and in use). `bridle rules explain` shows the result. Roles
+already say which rules they get via `roles:`. So the delivery path exists; the gap (br-86c6) is
+that nothing in the rules says how to write a proposal, design, spec or task list.
+
+- **A. One rule per stage, delivered to the writing role.** `workflow/base/rules/stage-proposal.md`
+  (`roles: [project-manager]`), `stage-design.md` and `stage-specs.md` (`roles: [designer]`),
+  `stage-tasks.md` (`roles: [project-manager]`). Each rule body has two parts under fixed headings:
+  `## Template` (the exact headings the file must have, with a one-line prompt under each) and
+  `## How to write it` (the instructions). A project overrides a stage by shadowing the rule in
+  `.bridle/rules/` (layering already does this). Cost: four rule files; the writer's prompt grows by
+  about one page each, only for the roles that write that stage. Falls short: an agent has all of its
+  role's templates in its prompt even when writing one stage; a long-lived PM carries two.
+- **B. The unblock notice carries the rule.** Same four rule files, but delivered on demand: the
+  Q3 notice names the stage, and `bridle rules explain stage-<name>` (or `bridle ticket stages <id>
+  --template`) prints the template and instructions for the agent to read when it starts the stage.
+  Smaller prompts, but depends on the agent running the command: the same "convention, not
+  mechanism" gap as br-86c6, and workers do not run `prime` today.
+- **C. The template as a file the daemon copies into the ticket folder** (`design.md` created with
+  the headings filled in). Gives the human a visible skeleton and makes "follows the template"
+  checkable, but the instructions still need a delivery path, so it is A or B plus this. Add only if
+  A's check (below) is not enough.
+- **D. Templates in the role prompts** (`workflow/base/roles/*.md`). Not overridable per rule, mixed
+  with the role's other text, and the human asked for rules. Rejected.
+
+Recommend **A**, plus a light check: `bridle ticket check` verifies a stage file has the template's
+headings (parsed from the rule's `## Template` block), so "follows the template" is enforced, not
+asked. B is the fallback if prompt size becomes a problem. This is the first real use of the rules
+path to an agent for an artifact, and it closes the "writes the stage but invents the format" gap
+that br-95mu's "well-written prompts" asked for.
+
+Proposal template headings (so the human can react to them now): Why; What changes; What does not
+change; Risk and impact; Out of scope; Open questions. Design: Problem; What exists today; Options
+(each with user view, internals, cost, shortfall); Recommendation; Rejected. Specs: one block per
+capability in spec syntax, as in Q4. Tasks: ordered checklist, each item one worker brief with its
+check. These are the first draft of the rule bodies, to be reviewed as the rules, not now.
+
 ### Open questions for the human
 
-1. Default stages by kind (all four for feature/arch-revision/epic, none for small kinds): ok?
-2. Is the proposal stage the designer's, or should the PM write it before design starts?
-3. Does editing an approved stage need to un-approve it now (option 2C), or only when it bites?
+1. Q3 (unchanged, for the morning): does editing an approved stage un-approve it now (option 2C), or
+   only when it bites?
+2. For small kinds (fix, docs, chore), is a short template-shaped body enough as the agreed proposal
+   (Q5-B)?
+3. Rule delivery: all of a role's stage rules in its prompt (Q6-A), or on demand (Q6-B)?
