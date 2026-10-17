@@ -67,8 +67,25 @@ with a gate. Not scheduling, not priority.
   the human. Later the owner can be another agent, and it works the same way (the human: "whoever
   owns the gate, will sign it as approved, and then the rest of the command can't go forward
   unless it's been signed").
-- Proposal, when listed, needs the human's approval ("the proposal always needs a human
-  approval"). Approval for the others: set per ticket at creation.
+- **Every ticket has a proposal, no matter what** (a default for now, not yet a rule; the human,
+  2026-10-17 ~2:30 PM ET: "every ticket needs a properly written proposal, no matter what" and
+  "even a critical bug fix should have a properly written proposal for what the work is going to
+  be"). Not a list of problems ending in "fix it": what the problem is, the approach and the scope,
+  clear enough that a worker does not guess. Written when the ticket is created, or someone is
+  due to write it then.
+- **The proposal may be the ticket body**, written in the proposal template ("it's not a separate
+  artifact. That's just how the ticket should be written"). Where it starts and ends must be
+  marked, so it can be validated later; validation itself is not MVP ("I don't want to get too in
+  the weeds on validating these templates at this point").
+- **The proposal's writer gets its instructions and template** ("That's super important").
+- **The proposal's gate is like any other stage's**: human review only when the ticket lists it
+  (the human, 2:40 PM ET: "The gate for proposal is the same as the others. Every ticket gets one,
+  but it only needs a human review if we've added that. Agents can still file bugs in critical
+  things, write a proper proposal, and get to work on them"). Approval for every stage is set per
+  ticket at creation.
+- **Where the proposal sits**: in the ticket body, under `## Proposal` with the template's headings
+  beneath it, set off by a `---` line before and after ("I'm fine with the H2, but I'd like to add
+  an HR before and after it. Three dashes is plenty"). Design, specs and tasks are files.
 - **One way to write a stage, for any agent.** Like OpenSpec's continue skill: the agent asks
   bridle for the ticket's next unblocked stage, and bridle prints its instructions (compiled from
   the layered bridle rules) and its template; the agent writes that one file. It works the same for
@@ -113,7 +130,7 @@ schemas assigned to tickets; different stage types.
 4. Ticket states: the proposal is written while the ticket is `pending`; the human signing it is
    what readies it (`open`); the rest are written while `open`; it becomes `planned` (handed to a
    worker) when every listed stage is written and every gate signed. [yes]
-5. Where files live: a folder beside the ticket on main, `docs/tickets/open/<slug>-<id>/proposal.md`
+5. Where files live: a folder beside the ticket on main, `docs/tickets/open/<slug>-<id>/design.md`
    etc. (design Q1-A). [yes]
 6. Starting background writers: when a stage unblocks, the daemon tells the project manager, who
    writes it or starts an agent for it (design Q3-A; the daemon does not spawn agents itself).
