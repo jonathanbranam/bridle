@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.7.6] - 2026-10-17
+
 - Test (br-6byg): `cancel_ends_an_upgrade_drain_quietly` in `crates/bridle-daemon/tests/restart_hold_test.rs` is `#[ignore]`d as flaky until br-6byg's real fix lands; run it with `--run-ignored only` to check it. Migration: none.
 - `@role` mentions now also work in document comments (the human's new comment on a document under review) and across projects: `@bridle-ui:orchestrator`, `@ui:orchestrator` (the project's ticket ID prefix) and `@bridle-ui:external:orchestrator` all reach that project's orchestrator through the outbox, once. A ticket comment that mentions `@orchestrator`, `@advisor/product-manager` or an agent name sends that recipient one message (who, which ticket or document, the text); a watcher who is also mentioned gets only the mention. `\@name` is plain text and sends nothing; a name that resolves to nobody is reported to the author (br-4cgx). Migration: none.
 - A waiting drain now says what holds it by name: `bridle status` (`draining_on`) and the `upgrade_draining` wake list each agent mid-turn with its turn age, spawns, lands and a postponement, and mark an agent whose process is gone as "stale?". Nothing is released automatically. The status line joins holders with "; " (br-ef3u). Migration: none.
