@@ -58,6 +58,18 @@ document picker inside a ticket."
    ticket page shows the document, state and thread together (what lives on the task page
    today), with the attachments as tabs or a picker; no separate task page to click through to.
 
+8. **Templates and instructions per stage, from bridle rules** (the human, 2026-10-16 ~10:58 PM
+   ET: "Everyone of these must have a fixed template and then instructions on how to write them.
+   Whatever agent does the work gets that template and instructions. And those should be built
+   from bridle rules. This is how that system gets to an agent"). Each stage has a fixed template
+   and writing instructions in the workflow (`workflow/base/`, beside rules and roles), and the
+   agent writing a stage is given both. Related: br-86c6 (the workflow doesn't reach agents).
+9. **A proposal, agreed with the human, before ready** (the human: "a ticket should have a
+   proposal worked out with human. A ticket without a proposal isn't a ticket ready to be
+   worked"; "PM writes proposal"; "The proposal can live in the ticket yes but it has to follow
+   the template"). The PM writes it with the human; `ticket ready` needs it. For small kinds it
+   may be the ticket body, in the proposal template.
+
 ## Supersedes or absorbs
 
 - The scheduler ladder (roadmap, 2026-10-09), steps 2-8: this epic is the pipeline the ladder
