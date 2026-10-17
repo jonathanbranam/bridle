@@ -39,3 +39,23 @@ Reminder for the human (part 2), per machine (dalek, vesta, remus, NUC):
 `git remote -v` in each clone shows `git@github.com:` (SSH key) or `https://github.com/` (PAT).
 Switch with `git remote set-url origin https://github.com/jonathanbranam/<repo>.git`; then the
 first push asks for the PAT once (osxkeychain/credential manager keeps it).
+
+## Decision (the human, 2026-10-17 ~5:20 PM ET): the email
+
+The human, verbatim (to advisor product-manager): "4a4v - different emails is fine too or a single
+email for all bridle work. But it should be a google email like bridle@branam.us not at
+dev.branam.us"
+
+So part 1 is decided (this replaces "email still dev@branam.us" above): agents commit with a single
+email, `bridle@branam.us` (a Google mailbox or alias on branam.us), and a name that says which agent
+and machine, e.g. `bridle <agent-name> (<machine>)`. Simplest build: bridle sets
+`GIT_AUTHOR_NAME`, `GIT_AUTHOR_EMAIL`, `GIT_COMMITTER_NAME`, `GIT_COMMITTER_EMAIL` in the
+environment of every agent it spawns (workers, managers, document reviewers; also the state-branch
+commits now made as `bridle <bridle@localhost>`). The human's own commits keep their identity.
+Tests; docs (cli.md or agent-host), CHANGELOG.
+
+The human, by hand: create `bridle@branam.us` in Google (mailbox or alias), and add it to the
+GitHub account's emails if agent commits should link to the account (otherwise they show unlinked,
+which is fine).
+
+Part 2 (per-machine PAT push) stays the human's set-up work; reminder sent via aide.
