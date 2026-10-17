@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Fix (br-z5kz): a spawn refused during a restart drain now tells the agent to end its turn (the daemon resumes it after the restart), and the manager role says so; a manager waiting in its turn for the drain used to deadlock the restart. Migration: none.
 - Fix (br-dg5g): mail and wakes for the machine's orchestrator follow its waiter. The daemon holding a `wait-for-wake` notes its project in `$BRIDLE_HOME/orchestrator-waiter`, and same-machine daemons forward to that project instead of `<host>-home`, so a question on another project is no longer unseen when the orchestrator waits elsewhere. No re-pair needed.
 - Fix (br-66qq): a `self_upgrade = "release"` daemon checks for releases on its own loop, no longer after the CI watcher, whose `gh` call has no timeout and could hang and keep the daemon from ever upgrading; a failed release lookup now logs a warning and a newer release found logs an info line. Migration: none.
 - Feature (br-re79): a document under review may set `reviewer: <agent>` in its front matter; its comments then go to that agent instead of the default `doc-<id>` reviewer (an unknown agent is reported and the default takes the batch). Migration: none.

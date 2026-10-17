@@ -295,7 +295,7 @@ Whether workers should resume too after a *crash* or plain restart is open:
 
 `POST /v1/restart` (`bridle restart`; the human and `external:orchestrator` only) upgrades the
 daemon without the human: it **drains** first. From the request on the daemon is `draining`: spawns
-are refused, task claims are refused, and no running agent gets a new turn. Messages, task updates
+are refused (the refusal tells the agent to end its turn: the drain waits for turns to end, so an agent waiting inside its turn would deadlock the restart; br-z5kz), task claims are refused, and no running agent gets a new turn. Messages, task updates
 and comments, queue nudges and wakes are still stored (state `held`, in order) but not written to
 the agent; the end of a turn no longer delivers the next held one. Turns already in progress run to
 their end and nothing is cut off; the queue stays as it is. Interactive sessions (orchestrator,

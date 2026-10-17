@@ -1054,7 +1054,7 @@ impl AgentManager {
         }
         if self.draining() {
             return Err(SupervisorError::Conflict(
-                "not spawning: the daemon is draining for a restart; retry once it has restarted"
+                "not spawning: the daemon is draining for a restart, which waits for every agent to end its turn; end your turn now (do not wait or retry in this turn): the daemon resumes you after the restart, then spawn again"
                     .to_string(),
             ));
         }

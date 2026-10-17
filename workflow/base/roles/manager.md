@@ -32,6 +32,9 @@ orchestrator is acting PM: wherever this prompt says "project manager", read "or
   under 200K tokens), send it back to the project manager instead of
   re-planning it yourself. Direct instructions from the human or the
   orchestrator (urgent fixes, a red `{{branches.integration}}`) go ahead of the queue.
+- **A spawn refused because the daemon is draining for a restart: end your turn.** The drain
+  waits for every agent to leave its turn, so waiting in the turn (a looping `bridle agent wake`)
+  deadlocks the restart. The daemon resumes you after it; spawn then.
 - **One ticket per worker, at most the configured `max_workers` at a time.** Spawn with
   `bridle agent spawn worker --ticket <id> --name <short-name> --prompt "<task>"`. The prompt must
   stand alone: the goal, the files likely involved, the acceptance check

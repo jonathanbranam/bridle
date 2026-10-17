@@ -480,6 +480,8 @@ async fn a_drain_holds_new_turns_and_delivers_them_after_the_restart() {
         .await
         .expect_err("refused");
     assert!(err.to_string().contains("draining"), "{err}");
+    // br-z5kz: the refusal must tell the agent to end its turn, or it waits and deadlocks the drain.
+    assert!(err.to_string().contains("end your turn"), "{err}");
     let err = daemon
         .client
         .claim_task("t-0000")
