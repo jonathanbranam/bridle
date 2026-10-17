@@ -193,7 +193,7 @@ impl Client {
         if status.is_success() {
             serde_json::from_slice(&bytes).map_err(|e| ClientError::Decode(e.to_string()))
         } else {
-            Err(parse_api_error(status, &bytes))
+            Err(self.api_error(status, &bytes).await)
         }
     }
 
@@ -207,7 +207,34 @@ impl Client {
                 .bytes()
                 .await
                 .map_err(|e| ClientError::Decode(e.to_string()))?;
-            Err(parse_api_error(status, &bytes))
+            Err(self.api_error(status, &bytes).await)
+        }
+    }
+
+    async fn health_version(&self) -> Option<String> {
+        let req = self.request(Method::GET, &["v1", "health"]).ok()?;
+        let resp = req.send().await.ok()?;
+        resp.json::<Health>().await.ok().map(|h| h.version)
+    }
+
+    /// An unmatched route (404, empty body, after the old-path fallback) means an older daemon
+    /// without the command: say so, with its version when `/v1/health` answers.
+    async fn api_error(&self, status: StatusCode, body: &[u8]) -> ClientError {
+        if status != StatusCode::NOT_FOUND || !body.is_empty() {
+            return parse_api_error(status, body);
+        }
+        // Not `self.health()`: that goes through this path, and an async fn can't recurse.
+        let version = match self.health_version().await {
+            Some(v) => format!(" (version {v})"),
+            None => String::new(),
+        };
+        ClientError::Api {
+            status: status.as_u16(),
+            code: "unsupported".to_string(),
+            message: format!(
+                "the daemon at {}{version} doesn't have this command; upgrade it",
+                self.base_url
+            ),
         }
     }
 
@@ -1202,11 +1229,19 @@ fn parse_api_error(status: StatusCode, body: &[u8]) -> ClientError {
             code: e.error.code,
             message: e.error.message,
         },
-        Err(_) => ClientError::Api {
-            status: status.as_u16(),
-            code: "unknown".to_string(),
-            message: String::from_utf8_lossy(body).into_owned(),
-        },
+        Err(_) => {
+            let text = String::from_utf8_lossy(body);
+            let message = if text.trim().is_empty() {
+                format!("empty reply, HTTP {status}")
+            } else {
+                text.into_owned()
+            };
+            ClientError::Api {
+                status: status.as_u16(),
+                code: "unknown".to_string(),
+                message,
+            }
+        }
     }
 }
 
@@ -1232,6 +1267,30 @@ mod tests {
             axum::serve(listener, app).await.unwrap();
         });
         addr
+    }
+
+    #[tokio::test]
+    async fn unmatched_route_names_the_daemon_and_its_version() {
+        let app = axum::Router::new().route(
+            "/v1/health",
+            get(|| async { Json(json!({"ok": true, "version": "0.6.1", "agent_count": 0})) }),
+        );
+        let addr = spawn_test_server(app).await;
+        let client = Client::new(format!("http://{addr}"), None);
+        let err = client
+            .post_empty::<serde_json::Value>(&["v1", "tickets", "x", "built"])
+            .await
+            .unwrap_err();
+        let msg = err.to_string();
+        assert!(msg.contains("(version 0.6.1)"), "{msg}");
+        assert!(msg.contains("upgrade it"), "{msg}");
+        assert!(msg.contains(&addr.to_string()), "{msg}");
+    }
+
+    #[test]
+    fn empty_error_body_is_never_bare() {
+        let msg = parse_api_error(StatusCode::BAD_GATEWAY, b"").to_string();
+        assert!(msg.contains("502"), "{msg}");
     }
 
     #[tokio::test]
