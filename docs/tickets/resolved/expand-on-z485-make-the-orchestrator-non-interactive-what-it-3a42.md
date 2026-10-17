@@ -1,6 +1,6 @@
 ---
-id: br-h7mu
-title: Pick a name for the Windows PC (docs/context/naming.md) (v7ug)
+id: br-3a42
+title: "Expand on z485: make the orchestrator non-interactive (what it gives you, who you talk to instead)"
 kind: chore
 created: 2026-10-11
 created_by: external:orchestrator
@@ -9,8 +9,7 @@ changes: []
 specs: []
 blocked_by: []
 related: []
-parent: br-du7e
-theme: multi-machine
+resolved: 2026-10-17T11:37:12Z
 ---
 
 ## The ask

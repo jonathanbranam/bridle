@@ -8,6 +8,7 @@ specs: []
 blocked_by: []
 related: []
 kind: fix
+resolved: 2026-10-17T11:37:13Z
 ---
 
 ## The ask

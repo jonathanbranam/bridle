@@ -10,6 +10,7 @@ changes: []
 specs: []
 blocked_by: [br-su62]
 related: [br-n3kj, br-3pc2]
+resolved: 2026-10-17T11:37:11Z
 ---
 
 ## The ask
