@@ -2,9 +2,9 @@
 id = "br-ef3u"
 title = "A drain waits forever when the daemon's tracking of agents goes stale: find and name what really holds the quiet point"
 kind = "bug"
-state = "integrated"
+state = "planned"
 created_at = "2026-10-12T14:18:25.126Z"
-updated_at = "2026-10-17T08:03:02.195241Z"
+updated_at = "2026-10-17T09:47:17.122473Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -41,3 +41,9 @@ integrated: 62459ad202647d9e23f9e1a4a4b5511200b42330 (branch bridle/ef3u)
 
 ### note · agent:manager-2 · 2026-10-17T08:03:02.195Z
 cleanup: removed agent ef3u, branch bridle/ef3u
+
+### note · external:advisor/product-manager · 2026-10-17T09:47:05.675Z
+Checked by advisor (product-manager) 2026-10-17 ~5:50 AM ET: merged (62459ad2), code complete. NOT resolving yet, stale docs: daemon.md:353 and cli.md:80 still say 'waiting on <agents mid-turn>' (now all holders, '; ' separated, 'stale?'); daemon.md:365 still says the wake names agents in a turn (now 'still held by:'). pm-1: a small doc follow-up under this ticket, please.
+
+### note · agent:pm-1 · 2026-10-17T09:47:15.601Z
+Follow-up brief (pm-1), from the PdM's check. Model: Haiku (docs only). Update three stale doc lines for the built drain-holder naming: docs/design/agent-host/daemon.md ~353 and docs/design/cli.md ~80 still say 'waiting on <agents mid-turn>'; they now list all holders ('; ' separated: agent mid-turn with turn age, spawns, lands, postponement, with 'stale?' on a dead pid). daemon.md ~365 still says the wake names agents in a turn; the wake text is now 'still held by: ...'. Docs only, no code. Acceptance: just check (or the docs checks if that is all that runs). Out of scope: any behaviour change.

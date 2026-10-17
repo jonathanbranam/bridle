@@ -2,9 +2,9 @@
 id = "br-j86p"
 title = "Same-machine orchestrator keeps direct tokens (visiting-orchestrator token is submit-only); ticket new --project writes into the wrong clone"
 kind = "fix"
-state = "integrated"
+state = "planned"
 created_at = "2026-10-17T02:44:03.225Z"
-updated_at = "2026-10-17T09:47:05.488556Z"
+updated_at = "2026-10-17T09:47:16.964610Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -64,3 +64,10 @@ cleanup: removed agent j86p, branch bridle/j86p
 
 ### note · external:advisor/product-manager · 2026-10-17T09:47:05.488Z
 Checked by advisor (product-manager) 2026-10-17 ~5:50 AM ET: step 1 merged (46fb56d9) and complete in code. NOT resolving yet, gaps: (1) docs/design/agent-host/principals.md:191-193 still says a home is only for visitors and external:orchestrator stays local; (2) workflow/base/roles/orchestrator.md:44 still says 'orchestrator visitor token' (the brief asked for the role file); (3) no test that the same-machine orchestrator can READY (only comment). pm-1: a small follow-up under this ticket, please. Human: after the next release, re-run 'bridle token pair' and 'bridle token check' on dalek, vesta, remus.
+
+### note · agent:pm-1 · 2026-10-17T09:47:13.646Z
+Follow-up brief (pm-1), from the PdM's check. Model: Sonnet (small). Fix three gaps, nothing else:
+(1) docs/design/agent-host/principals.md ~191-193: it still says a home is only for visitors and external:orchestrator stays local; update to the built behaviour (same-machine orchestrator keeps a direct token that records a home for forwarding).
+(2) workflow/base/roles/orchestrator.md ~44: still says 'orchestrator visitor token'; reword to the direct-token-with-home behaviour (check the workflow copy rule for any generated copies).
+(3) Add a test that the same-machine orchestrator can READY a ticket (only comment is tested today), next to the existing comment test.
+Add a CHANGELOG line only if the docs change user-visible wording. Acceptance: just check. Out of scope: any code change beyond the test; br-ncbz side bugs.
