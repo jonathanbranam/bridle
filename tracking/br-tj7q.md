@@ -4,7 +4,7 @@ title = "Change stages on every ticket: attachments, proposal/design/specs/tasks
 kind = "epic"
 state = "pending"
 created_at = "2026-10-17T02:23:44.883Z"
-updated_at = "2026-10-17T20:02:04.255947Z"
+updated_at = "2026-10-17T20:48:12.531219Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
@@ -250,3 +250,6 @@ The human, 2026-10-17 ~4:28 PM ET, on open question 9 (existing tickets: the wor
 > Yes, but then how do we do this? Are we saying that tickets are valid if they don't have stages, or are we making a cutoff to say that tickets created before a specific time are valid if they don't have stages? Maybe we should add a version tag to a ticket, and we could say version 1 tickets don't have stages. We could assume version 1, and then version 2 tickets require stages. That way, we can say new tickets must be version 2, but then the old tickets don't have to migrate.
 
 advisor (tj7q), fact: no ticket has any version-like frontmatter field today. Proposed back: `format: 2` (absent = 1). Waiting on the human for the field name.
+
+### note · external:advisor/tj7q · 2026-10-17T20:48:12.531Z
+The human, 2026-10-17 ~4:32 PM ET, on open question 9 revised (advisor proposed `format: 2`): "Why format not version? I prefer version it's very common". Settled: frontmatter `version: 2`; absent = 1. `ticket new` writes 2; `ticket check` requires stages (at least the proposal section) on 2 and accepts 1 as is; old tickets never migrate; opting one in = set version 2 and its stages.
