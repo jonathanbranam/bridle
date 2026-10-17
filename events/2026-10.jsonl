@@ -2432,3 +2432,5 @@
 {"actor":"human","at":"2026-10-17T02:48:09.832Z","from":"","task":"br-fxxz","to":"pending"}
 {"actor":"external:aide","at":"2026-10-17T02:48:09.833509Z","from":"pending","task":"br-fxxz","to":"open"}
 {"actor":"external:aide","at":"2026-10-17T02:48:09.833850Z","from":"open","task":"br-fxxz","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-17T02:55:13.700802Z","from":"open","task":"br-j86p","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-17T02:55:15.420893Z","queue":"reprioritized"}
