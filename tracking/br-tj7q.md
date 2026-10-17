@@ -4,7 +4,7 @@ title = "Change stages on every ticket: attachments, proposal/design/specs/tasks
 kind = "epic"
 state = "pending"
 created_at = "2026-10-17T02:23:44.883Z"
-updated_at = "2026-10-17T15:28:57.597466Z"
+updated_at = "2026-10-17T17:38:35.356873Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
@@ -84,3 +84,10 @@ The human, 2026-10-17 ~11:30 AM ET, to advisor (tj7q), verbatim:
 > Take all that down, clear it, read it, clarify, and fold that into the document as needed. Then bring back all the open questions for clarification so that we're sure that we have MVP and that the first epic is clear on the scope and requirements.
 
 advisor (tj7q): folded into the body as '## Captured intent (2026-10-17)'. Note two shifts from the night's design: every ticket gets all four stages (Q1's "none for fix/docs/chore" is reopened), and instructions + template are given at the moment of writing, not in the role's prompt (the designer's Q6-A is overturned; this is Q6-B / OpenSpec's `openspec instructions`).
+
+### note · external:advisor/tj7q · 2026-10-17T17:38:35.356Z
+The human, 2026-10-17 ~12:15 PM ET, to advisor (tj7q), correcting advisor's "every ticket gets all four stages", verbatim:
+
+> No, that's not what I said. I said we list the stages for each ticket on the ticket, and we list which stages require human review. That doesn't mean every ticket gets all four stages. It means that there's no rule. We don't need to make a rule for this ahead of time. When we create the ticket, we'll decide which stages it needs and which of those need a human approval.
+
+advisor (tj7q): body corrected. No default-by-kind table and no all-four rule: the ticket's creator decides its stages and which need the human's approval. Open question 3 replaced.
