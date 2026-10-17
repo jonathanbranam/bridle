@@ -270,6 +270,10 @@ bridle projects sync [--apply]               compare the [machines] and [project
                                              this machine's [mail] section the same way (key by key, `[machine]`
                                              never), with `projects` derived: `bridle` first, then every [projects]
                                              name; this machine's own file is fixed too with --apply (afzu).
+                                             It adds names to `[mail] projects` and never removes one,
+                                             on purpose: nothing records which entries were hand-added, so a
+                                             project dropped from [projects] stays enrolled until its name is
+                                             deleted from `[mail] projects` by hand (br-r8jf).
 bridle machine tools-only-check [--repo P]   exit 1, saying why, if the clone is listed in ~/.bridle/config.toml
                                              `[machine] tools_only = [paths]` (~ and $VAR expand); the
                                              launch scripts call it. `bridle daemon serve` refuses there too

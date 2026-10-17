@@ -942,10 +942,6 @@ async fn token_pair(cli: &Cli, action: &TokenAction) -> Result<(), CliError> {
             direct,
         } => {
             let client = client_for(cli).await?;
-            // A direct token with a home replaces the holder's visitor token from an earlier pair.
-            if let (true, Some(m)) = (*direct, for_machine) {
-                let _ = client.revoke_token(&format!("{role}@{m}")).await;
-            }
             let name = match (for_machine, direct) {
                 (Some(m), false) => format!("{role}@{m}"),
                 _ => role.clone(),
@@ -959,6 +955,11 @@ async fn token_pair(cli: &Cli, action: &TokenAction) -> Result<(), CliError> {
                     home: home.clone(),
                 })
                 .await?;
+            // A direct token with a home replaces the holder's visitor token from an earlier
+            // pair. Revoked only after the mint worked: a failed mint must not leave no token.
+            if let (true, Some(m)) = (*direct, for_machine) {
+                let _ = client.revoke_token(&format!("{role}@{m}")).await;
+            }
             println!("{}", created.token);
         }
         TokenAction::PairStore { role, machine } => {

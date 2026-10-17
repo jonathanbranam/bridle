@@ -697,7 +697,12 @@ impl AgentManager {
             if Utc::now() - last < stall_after {
                 continue;
             }
-            if stop_check_running(&a.cwd) {
+            // File reads: keep them off the runtime.
+            let cwd = a.cwd.clone();
+            if tokio::task::spawn_blocking(move || stop_check_running(&cwd))
+                .await
+                .unwrap_or(false)
+            {
                 continue;
             }
             let Some(rt) = self.get_runtime(&a.id) else {

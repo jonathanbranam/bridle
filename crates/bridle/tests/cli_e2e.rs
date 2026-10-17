@@ -1855,3 +1855,67 @@ fn ticket_ready_makes_a_missing_row_and_skips_dropped_ones() {
     let (ok, _, err) = run_cli(&repo, &home, &["ticket", "ready", "zz9q"]);
     assert!(ok || err.contains("not pending"), "unexpected: {err}");
 }
+
+/// `pair-mint --direct` must not leave the holder with no token when the mint fails: the
+/// visitor token an earlier pair made is revoked only after the direct one exists (br-r8jf).
+#[test]
+fn a_failed_direct_pair_mint_keeps_the_visitor_token() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let repo = tmp.path().join("repo");
+    init_repo(&repo);
+    let home = tmp.path().join("home");
+
+    let mut serve_cmd = Command::new(bridle_bin());
+    serve_cmd
+        .arg("serve")
+        .arg("--repo")
+        .arg(&repo)
+        .arg("--listen")
+        .arg("127.0.0.1:0")
+        .env("BRIDLE_CLAUDE_BIN", fake_claude_path())
+        .env("BRIDLE_HOME", &home)
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::inherit());
+    strip_bridle_env(&mut serve_cmd);
+    let mut guard = DaemonGuard(serve_cmd.spawn().expect("spawn bridle serve"));
+    wait_for_daemon(&mut guard.0, &tmp.path().join(".bridle/daemon.json"));
+
+    let (ok, _, err) = run_cli(
+        &repo,
+        &home,
+        &["token", "pair-mint", "orchestrator", "--for", "m1"],
+    );
+    assert!(ok, "visitor mint failed: {err}");
+    // The home project does not exist, so the daemon refuses the direct mint.
+    let (ok, _, _) = run_cli(
+        &repo,
+        &home,
+        &[
+            "token",
+            "pair-mint",
+            "orchestrator",
+            "--for",
+            "m1",
+            "--home",
+            "no-such-project",
+            "--direct",
+        ],
+    );
+    assert!(!ok, "the direct mint should have failed");
+
+    let (ok, out, err) = run_cli(&repo, &home, &["token", "list", "--json"]);
+    assert!(ok, "token list failed: {err}");
+    let tokens: serde_json::Value = serde_json::from_str(&out).expect("token list json");
+    let visitor = tokens
+        .as_array()
+        .expect("array")
+        .iter()
+        .find(|t| {
+            t["principal"]
+                .as_str()
+                .is_some_and(|p| p.contains("orchestrator@m1"))
+        })
+        .expect("visitor token listed");
+    assert_eq!(visitor["revoked"], false, "{visitor}");
+}
