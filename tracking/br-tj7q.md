@@ -4,7 +4,7 @@ title = "Change stages on every ticket: attachments, proposal/design/specs/tasks
 kind = "epic"
 state = "pending"
 created_at = "2026-10-17T02:23:44.883Z"
-updated_at = "2026-10-17T17:45:29.030140Z"
+updated_at = "2026-10-17T17:49:18.062002Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
@@ -108,3 +108,20 @@ The human, 2026-10-17 ~2:00 PM ET, to advisor (tj7q), verbatim:
 > What else did you have in there that was wrong? There should definitely be a command for me to approve it, but I don't want to run a command. I do.
 
 advisor (tj7q), facts looked up: OpenSpec (/Volumes/Data/work/bridle/OpenSpec) has schemas/spec-driven/schema.yaml: each artifact has id, generates, template, instruction and requires (proposal: none; specs: proposal; design: proposal; tasks: specs and design), plus apply (requires tasks, tracks tasks.md). Skill openspec-continue-change runs `openspec status --change <name> --json` (each artifact done/ready/blocked), picks the first ready one, runs `openspec instructions <artifact> --change <name> --json` (context, rules, template, instruction, output path, dependencies), writes ONE artifact and stops. Bridle's analysis: ../workflow/research/10 and 11. Signing: gates.md has no signing built; signed reviews are v2va. Body updated: who writes, the schema on the ticket, the next-artifact command for any agent, signed gates; open questions renumbered.
+
+### note · external:advisor/tj7q · 2026-10-17T17:49:18.062Z
+The human, 2026-10-17 ~2:30 PM ET, to advisor (tj7q), verbatim:
+
+> I want to make something clear here: every ticket needs a properly written proposal, no matter what. A lot of our tickets explain the problem, just like they look like a bug report, and that's too wishy-washy. They list a bunch of problems, and then, I don't know, "fix it." That's not what I want at all.
+>
+> Any ticket that is going to be worked on needs a proposal at a minimum. I don't want to make rules, though. I don't want to make a bunch of rules right yet. I'm not quite ready to make all of these rules, but let's just start with that.
+>
+> When we create a ticket that's going to result in a change, we should be writing a proposal right then, or somebody needs to write a proposal. That should be on the ticket. I've opened up some of these tickets to see what was given to the agent to implement them. I don't know what the agent's going to do with it because they're just making guesses about what the actual problem is, how to approach it, what the scope of the change is, or something. They're just not clear enough.
+>
+> Call that what you want. I'm tempted to say that's not a proposal, but let me just say it's not a separate artifact. That's just how the ticket should be written. The ticket should be written using the proposal template, but a lot of our tickets are not necessarily changes. There is some mapping to tickets that are going to result in a change, but even a critical bug fix should have a properly written proposal for what the work is going to be.
+>
+> I'm still sort of not sure. Let's just make that the default for now. I think that's fine. Let's just say every ticket has a proposal, no matter what. That doesn't mean it needs a human review, but it just has to have a proposal. We said a minute ago that the proposal for a small ticket can just live inside of the body of the ticket. Again, I'm fine with that, but it needs to be a properly written proposal.
+>
+> We need to know where that starts and ends so that it can be validated, and it needs to follow the template. Again, I don't want to get too in the weeds on validating these templates at this point, but we need to build things so that whoever is writing this proposal gets the instructions. That's super important, and they get the template, and then they put it on there.
+
+advisor (tj7q): body updated. Every ticket has a proposal (default, not yet a rule); it may live in the body, delimited so it can be validated later; the writer gets instructions + template. Open: this says the proposal "doesn't mean it needs a human review", while ~11:30 AM said "the proposal always needs a human approval" (new open question 3).
