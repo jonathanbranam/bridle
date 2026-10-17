@@ -4,7 +4,7 @@ title = "Change stages on every ticket: attachments, proposal/design/specs/tasks
 kind = "epic"
 state = "pending"
 created_at = "2026-10-17T02:23:44.883Z"
-updated_at = "2026-10-17T17:49:18.062002Z"
+updated_at = "2026-10-17T18:00:03.828111Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
@@ -125,3 +125,12 @@ The human, 2026-10-17 ~2:30 PM ET, to advisor (tj7q), verbatim:
 > We need to know where that starts and ends so that it can be validated, and it needs to follow the template. Again, I don't want to get too in the weeds on validating these templates at this point, but we need to build things so that whoever is writing this proposal gets the instructions. That's super important, and they get the template, and then they put it on there.
 
 advisor (tj7q): body updated. Every ticket has a proposal (default, not yet a rule); it may live in the body, delimited so it can be validated later; the writer gets instructions + template. Open: this says the proposal "doesn't mean it needs a human review", while ~11:30 AM said "the proposal always needs a human approval" (new open question 3).
+
+### note · external:advisor/tj7q · 2026-10-17T18:00:03.828Z
+The human, 2026-10-17 ~2:40 PM ET, to advisor (tj7q), on open questions 3 (proposal review) and 3b (where the proposal lives), verbatim:
+
+> Yeah, I think that's fine for the proposal delineation. Yes, proposal. The gate for proposal is the same as the others. Every ticket gets one, but it only needs a human review if we've added that. Agents can still file bugs in critical things, write a proper proposal, and get to work on them. If the orchestrator or somebody decides this is important, or if the product manager says this is important and needs to get fixed now and it's unambiguous, then that's fine.
+>
+> Yeah, I'm fine if the proposal lives in the ticket body. Let's just say that. I'm fine with the H2, but I'd like to add an HR before and after it. Three dashes is plenty, just to set it off clearly from the rest of the ticket.
+
+Settled: the proposal's gate is like any other stage's (human review only when listed); the proposal lives in the ticket body under `## Proposal`, set off by a `---` line before and after.
