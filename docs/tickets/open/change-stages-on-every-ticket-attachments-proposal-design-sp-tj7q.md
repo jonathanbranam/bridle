@@ -8,7 +8,7 @@ repos: [bridle]
 changes: []
 specs: []
 blocked_by: []
-related: []
+related: [ui-fwsx]
 theme: product-process
 ---
 
@@ -51,6 +51,12 @@ document picker inside a ticket."
    a document picker inside the ticket (the designer proposes which, or both). The human reads,
    comments on and approves a stage there. bridle-ui work is part of this epic (child tickets in
    bridle-ui).
+
+7. **One ticket page: task and ticket combined** (bridle-ui ui-fwsx, now part of this epic).
+   The human, ~10:30 PM ET: "where is the ticket to combine task and ticket in the UI? File that
+   here as well" and "Put that in this epic as well. It's several clicks every time now". The
+   ticket page shows the document, state and thread together (what lives on the task page
+   today), with the attachments as tabs or a picker; no separate task page to click through to.
 
 ## Supersedes or absorbs
 
