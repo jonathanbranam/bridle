@@ -2,13 +2,14 @@
 id = "br-j86p"
 title = "Same-machine orchestrator keeps direct tokens (visiting-orchestrator token is submit-only); ticket new --project writes into the wrong clone"
 kind = "fix"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-17T02:44:03.225Z"
-updated_at = "2026-10-17T09:47:16.964610Z"
+updated_at = "2026-10-17T10:42:39.988499Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "agent:j86p",
+    "agent:j86pb",
 ]
 priority = "critical"
 priority_at = "2026-10-17T02:44:37.657490Z"

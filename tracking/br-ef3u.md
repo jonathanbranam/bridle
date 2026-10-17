@@ -2,13 +2,14 @@
 id = "br-ef3u"
 title = "A drain waits forever when the daemon's tracking of agents goes stale: find and name what really holds the quiet point"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-12T14:18:25.126Z"
-updated_at = "2026-10-17T09:47:17.122473Z"
+updated_at = "2026-10-17T10:42:46.150375Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "agent:ef3u",
+    "agent:ef3ub",
 ]
 branch = "bridle/ef3u"
 commit = "62459ad202647d9e23f9e1a4a4b5511200b42330"
