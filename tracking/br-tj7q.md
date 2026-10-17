@@ -4,7 +4,7 @@ title = "Change stages on every ticket: attachments, proposal/design/specs/tasks
 kind = "epic"
 state = "pending"
 created_at = "2026-10-17T02:23:44.883Z"
-updated_at = "2026-10-17T19:50:17.962482Z"
+updated_at = "2026-10-17T19:51:05.738463Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
@@ -216,3 +216,9 @@ The human, 2026-10-17 ~4:05 PM ET, on open question 2 (60-minute timer, one sett
 
 ### note · external:advisor/tj7q · 2026-10-17T19:50:17.962Z
 The human, 2026-10-17 ~4:10 PM ET, on open question 3 (the filer's claim: `bridle ticket new --claim`, or a body that already holds the proposal, keeps the proposal with the filer; otherwise bridle starts a designer on it at once): "Yes on Q2 claim question". Settled.
+
+### note · external:advisor/tj7q · 2026-10-17T19:50:41.012Z
+The human, 2026-10-17 ~4:12 PM ET, on open question 4 (changes asked by the human: comment on the thread or the file and say "changes"; the stage goes back to unclaimed, bridle starts a fresh designer whose prompt adds the human's comments; it comes back for review): "Yes." Settled.
+
+### note · external:advisor/tj7q · 2026-10-17T19:51:05.738Z
+The human, 2026-10-17 ~4:14 PM ET, on open question 5 (`bridle ticket next <id>` prints the next unblocked stage, its layered instructions, template, output path and dependency files; bridle uses the same output as the designer's prompt; refuses on an unsigned gate): "Yes". Settled.
