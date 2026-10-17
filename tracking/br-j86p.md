@@ -2,9 +2,9 @@
 id = "br-j86p"
 title = "Same-machine orchestrator keeps direct tokens (visiting-orchestrator token is submit-only); ticket new --project writes into the wrong clone"
 kind = "fix"
-state = "claimed"
+state = "integrated"
 created_at = "2026-10-17T02:44:03.225Z"
-updated_at = "2026-10-17T11:12:02.535398Z"
+updated_at = "2026-10-17T12:04:35.587992Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -13,8 +13,8 @@ watchers = [
 ]
 priority = "critical"
 priority_at = "2026-10-17T02:44:37.657490Z"
-branch = "bridle/j86p"
-commit = "46fb56d931b2762e1ad6609ba3bce3666446abbb"
+branch = "bridle/j86pb"
+commit = "4c73aa2e350aca9bf6c217a25cacc47bd2584c69"
 summary = "Follow-up: principals.md now says a home is recorded on visitor tokens and on the same-machine orchestrator's direct token (rights kept, home only forwards); orchestrator role says 'orchestrator token' not 'visitor token' (.bridle/roles copy is a different file, untouched); outbox_test now also asserts the direct orchestrator can ready and a cross-machine visitor cannot. No CHANGELOG. Check exit 0, 1811 tests, e5779e65."
 ticket = "j86p"
 +++
@@ -75,3 +75,6 @@ Add a CHANGELOG line only if the docs change user-visible wording. Acceptance: j
 
 ### note · agent:j86pb · 2026-10-17T11:12:02.535Z
 done: j86p follow-up (3 gaps); just check exit 0, 1811 tests passed, main already merged; e5779e65
+
+### note · agent:manager-2 · 2026-10-17T12:04:35.587Z
+integrated: 4c73aa2e350aca9bf6c217a25cacc47bd2584c69 (branch bridle/j86pb)
