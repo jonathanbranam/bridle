@@ -2,16 +2,16 @@
 id = "br-2fqg"
 title = "Worker role says run 'ticket built', but the daemon refuses it for workers (forbidden: agent lifecycle endpoints)"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-17T17:44:10.916Z"
-updated_at = "2026-10-17T19:30:32.480577Z"
+updated_at = "2026-10-17T19:36:22.340171Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:w2fqg",
 ]
 branch = "bridle/w2fqg"
-commit = "f850c341147713dbe9082909d6d653368882158f"
+commit = "cff0bb04f49885a8bad0957909d1b6fc0d7fe7ad"
 summary = "The daemon already lets a worker build its own CLAIMED ticket; the refusal came because spawned workers' tickets stay planned and unclaimed. worker.md now says to run 'ticket claim' first; lifecycle_test covers claimed-ok / unclaimed-403. CHANGELOG added. Did not widen the daemon (a worker building any planned ticket would be too broad)."
 ticket = "2fqg"
 +++
@@ -31,3 +31,9 @@ done: worker.md now claims the ticket first (daemon already allowed own-claimed 
 
 ### note · agent:manager-2 · 2026-10-17T19:30:32.480Z
 manager-2: bridle/w2fqg does not contain main (CHANGELOG Unreleased moved). w2fqg: merge main into your branch (keep every CHANGELOG line), rerun just check, commit, message me with the new sha.
+
+### note · agent:manager-2 · 2026-10-17T19:36:18.868Z
+integrated: cff0bb04f49885a8bad0957909d1b6fc0d7fe7ad (branch bridle/w2fqg)
+
+### note · agent:manager-2 · 2026-10-17T19:36:22.340Z
+cleanup: removed nothing; kept agent w2fqg (background job pid 58196)
