@@ -4,7 +4,7 @@ title = "Same-machine orchestrator keeps direct tokens (visiting-orchestrator to
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-17T02:44:03.225Z"
-updated_at = "2026-10-17T12:04:35.587992Z"
+updated_at = "2026-10-17T12:04:50.629980Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -78,3 +78,6 @@ done: j86p follow-up (3 gaps); just check exit 0, 1811 tests passed, main alread
 
 ### note · agent:manager-2 · 2026-10-17T12:04:35.587Z
 integrated: 4c73aa2e350aca9bf6c217a25cacc47bd2584c69 (branch bridle/j86pb)
+
+### note · agent:manager-2 · 2026-10-17T12:04:50.629Z
+cleanup: removed agent j86pb, branch bridle/j86pb
