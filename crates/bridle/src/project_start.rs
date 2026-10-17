@@ -30,14 +30,28 @@ use crate::token_pair::{Exec, Fleet, Options, Runner, Where, pair};
 type MailStep<'a> = dyn Fn(Option<&str>, &mut dyn Write) -> Result<(), String> + 'a;
 
 /// Runs the mail step. A failure is printed with the command to run, not returned: the project
-/// is up and mail can be fixed afterwards (br-btpy).
-fn mail_step(mail: &MailStep<'_>, from: Option<&str>, project: &str, out: &mut dyn Write) {
-    if let Err(e) = mail(from, out) {
-        let _ = writeln!(
-            out,
-            "{project}: mail bridge not installed ({e}); fix it, then run `bridle mail install --project {project}`"
-        );
+/// is up and mail can be fixed afterwards (br-btpy). Returns whether it succeeded.
+fn mail_step(mail: &MailStep<'_>, from: Option<&str>, project: &str, out: &mut dyn Write) -> bool {
+    match mail(from, out) {
+        Ok(()) => true,
+        Err(e) => {
+            let _ = writeln!(
+                out,
+                "{project}: mail bridge not installed ({e}); fix it, then run `bridle mail install --project {project}`"
+            );
+            false
+        }
     }
+}
+
+/// Removes the moved-in note once the mail step succeeded. A failed mail step keeps it, so the
+/// next `project start` retries and the old machine's `[mail]` and `mail.key` are not lost
+/// (br-whce).
+fn finish_moved_in(note: &Path, mail_ok: bool) -> anyhow::Result<()> {
+    if mail_ok {
+        std::fs::remove_file(note).context("removing moved-in.json")?;
+    }
+    Ok(())
 }
 
 /// Written by `take-over` in the workspace's `.bridle/`, removed once `start` has carried it in.
@@ -559,7 +573,7 @@ pub async fn make_tokens(home: &Path, project: &str, out: &mut dyn Write) -> Res
 /// Tokens, then what `take-over` left for the new daemon. The tokens are re-created on every
 /// start (`token pair` keeps the working ones and says so), not only after a take-over: a fresh
 /// database has none, whatever the note says. The schedules are added as the human, with the
-/// token the daemon just made. The note is removed only when everything went through, so a
+/// token the daemon just made. The note is removed only when everything went through (the mail step included), so a
 /// failed start can simply be run again.
 async fn carry_in(
     cli: &Cli,
@@ -577,7 +591,7 @@ async fn carry_in(
     make_tokens(home, project, out).await?;
     let Some(moved) = moved else {
         // A first or plain start still gets its bridge; a mail problem never fails the start.
-        mail_step(mail, None, project, out);
+        let _ = mail_step(mail, None, project, out);
         return Ok(());
     };
 
@@ -604,8 +618,8 @@ async fn carry_in(
         .into());
     }
     // After the tokens: the bridge needs its `mail` token to start.
-    mail_step(mail, moved.from.as_deref(), project, out);
-    std::fs::remove_file(&note).context("removing moved-in.json")?;
+    let mail_ok = mail_step(mail, moved.from.as_deref(), project, out);
+    finish_moved_in(&note, mail_ok)?;
     Ok(())
 }
 
@@ -735,6 +749,23 @@ mod tests {
         assert_eq!(seen[0].cron.as_deref(), Some("0 9 * * 1"));
         assert_eq!(seen[0].to.as_deref(), Some("external:orchestrator"));
         assert!(seen[1].at.is_some() && seen[1].cron.is_none());
+    }
+
+    #[test]
+    fn a_failed_mail_step_keeps_moved_in_and_a_success_removes_it() {
+        let tmp = tempfile::tempdir().unwrap();
+        let note = tmp.path().join(MOVED_IN);
+        std::fs::write(&note, "{}").unwrap();
+        let failing = |_: Option<&str>, _: &mut dyn Write| Err("no key".to_string());
+        let mut out = Vec::new();
+        let ok = mail_step(&failing, Some("old"), "acme", &mut out);
+        assert!(!ok);
+        finish_moved_in(&note, ok).unwrap();
+        assert!(note.exists());
+        let working = |_: Option<&str>, _: &mut dyn Write| Ok(());
+        let ok = mail_step(&working, Some("old"), "acme", &mut out);
+        finish_moved_in(&note, ok).unwrap();
+        assert!(!note.exists());
     }
 
     #[test]
