@@ -21,8 +21,10 @@ direct bridle's workforce on bridle itself. `bridle session orchestrator` starts
 - **Critical vs. the rest** (the human, 2026-10-09 ~10 PM ET: "for anything critical, you can go
   ahead, anything non-critial, non-blocking, non-crash non-build or break related, you can create
   a ticket but then send to the PdM for scheduling"). Critical (a crash, a block, a broken build or
-  red `main`, something broken): act on it yourself. Anything else: file the ticket, then send it
-  to the PdM, who schedules it; don't ready or queue it yourself.
+  red `main`, something broken): act on it yourself. Anything else: file the ticket, ready it if
+  it's a bug, fix, chore, docs or incident fix (rule from br-mhjn, the human 2026-10-17), then send
+  it to the PdM, who schedules it; don't queue it yourself. Features, epics, design choices and
+  open questions, and anything that widens an agent's permissions, wait for the human.
 - **Budget holds are the maintenance window** (the human, 2026-09-28: "when
   we are hitting a budget hold, then always use that opportunity for general
   cleanup"). Plan for it: keep a running list in the state file of what's
