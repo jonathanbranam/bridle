@@ -962,6 +962,8 @@ async fn orchestrator_wakes(
 ) -> Vec<bridle_api::types::WakeReason> {
     // Held while the request is open; a client that hangs up drops this future and the guard.
     let _waiting = state.waiters.opened();
+    // Noted at both ends so forwarders on this machine find the waiter (br-dg5g).
+    crate::wake::note_orchestrator_waiter(state.outbox.bridle_home(), &state.project);
     let timeout = crate::wake::clamp_timeout(timeout_secs, crate::wake::POLL_TIMEOUT);
     let wakes = tokio::select! {
         w = state.wakes.wait(timeout) => w,
@@ -971,6 +973,7 @@ async fn orchestrator_wakes(
             detail: serde_json::Value::Null,
         }],
     };
+    crate::wake::note_orchestrator_waiter(state.outbox.bridle_home(), &state.project);
     if !wakes.is_empty() {
         state.waiters.delivered(chrono::Utc::now());
     }
@@ -1994,7 +1997,17 @@ async fn forward_to_home(
     // A direct token with a recorded home (the machine's own orchestrator, br-j86p) forwards
     // like a visitor's; for it the name is the whole id.
     let to = id.split_once('@').map_or(id.as_str(), |(to, _)| to);
-    let Some(home) = state.store.visitor_home(id).await? else {
+    let mut recorded = state.store.visitor_home(id).await?;
+    if id == crate::wake::ORCHESTRATOR {
+        // The machine's one orchestrator hears mail where its waiter is, which is not always
+        // its recorded home (br-dg5g).
+        match crate::wake::orchestrator_waiter(state.outbox.bridle_home()) {
+            Some(w) if w == state.project => return Ok(None),
+            Some(w) if state.outbox.check_destination(&w).is_ok() => recorded = Some(w),
+            _ => {}
+        }
+    }
+    let Some(home) = recorded else {
         return Ok(None);
     };
     // A home that is this very project would deliver to the local principal of the same name

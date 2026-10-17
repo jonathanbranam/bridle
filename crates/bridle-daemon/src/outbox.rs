@@ -201,6 +201,11 @@ impl Outbox {
             .map_err(|e| e.to_string())
     }
 
+    /// The machine's bridle home, shared by its daemons.
+    pub fn bridle_home(&self) -> &std::path::Path {
+        &self.home
+    }
+
     /// This daemon's project: how a peer names it as a watcher's home.
     pub fn project(&self) -> &str {
         &self.project

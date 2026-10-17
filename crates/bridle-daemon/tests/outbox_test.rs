@@ -686,6 +686,43 @@ async fn a_direct_orchestrator_with_a_home_keeps_its_rights_and_its_wakes_forwar
     wait_for_bodies(&p.a, "external:orchestrator", 2).await;
 }
 
+/// br-dg5g: mail for the machine's orchestrator goes where its waiter is, not to its recorded
+/// home. B's direct token records A as home, but a waiter held on B keeps B's mail on B; with the
+/// waiter's note gone, the mail goes home again.
+#[tokio::test]
+async fn orchestrator_mail_follows_the_waiter_not_the_recorded_home() {
+    let p = pair().await;
+    orchestrator_on_b(&p, None).await;
+    p.a.external_client("orchestrator").await;
+    let home = machine_home_dir(p._tmp_b.path());
+    let b_project = p.b.running.info.project.clone();
+    let now = chrono::Utc::now().timestamp();
+    std::fs::write(
+        home.join("orchestrator-waiter"),
+        format!("{b_project} {now}\n"),
+    )
+    .expect("note");
+
+    async fn send(p: &Pair, body: &str) -> Result<(), bridle_api::ClientError> {
+        p.b.client
+            .send(&bridle_api::types::SendRequest {
+                to: Some("external:orchestrator".to_string()),
+                body: body.to_string(),
+                ..Default::default()
+            })
+            .await
+            .map(|_| ())
+    }
+    send(&p, "stays").await.expect("send");
+    let kept = inbox_bodies(&p.b, "external:orchestrator").await;
+    assert_eq!(kept.len(), 1, "{kept:?}");
+    assert!(inbox_bodies(&p.a, "external:orchestrator").await.is_empty());
+
+    std::fs::remove_file(home.join("orchestrator-waiter")).expect("note");
+    send(&p, "goes home").await.expect("send");
+    wait_for_bodies(&p.a, "external:orchestrator", 1).await;
+}
+
 /// br-nncj: a daemon with its own orchestrator keeps its wakes for it; a visiting orchestrator
 /// homed on another machine gets no copy.
 #[tokio::test]

@@ -192,6 +192,18 @@ token, like `task ready --project`; the outbox is for a project with no such tok
   orchestrator (br-j86p): `external:orchestrator` on a same-machine daemon keeps full
   orchestrator rights (ready, comment, queue), and the home only tells the daemon where to
   forward its wakes and mail. Visitors from other machines keep the visitor limits.
+  **The orchestrator's mail follows its waiter (br-dg5g).** The machine's orchestrator holds one
+  waiter, on whichever project it was kept (dalek: `bridle`), which need not be its recorded home
+  (`<host>-home`). The daemon that holds the open `wait-for-wake` writes `<project> <unix time>`
+  to `$BRIDLE_HOME/orchestrator-waiter` (shared by the machine's daemons) when the wait opens and
+  when it closes; a note older than the longest wait plus 2 minutes is ignored. For
+  `external:orchestrator`, `forward_to_home` and the wake forwarder use that project instead of
+  the recorded home: the waiter's own daemon keeps the mail and wakes local, another project's
+  daemon forwards to it. No note, a stale one, or an unreachable project: the recorded home as
+  before. Rejected: pairing the home as "the project that supervises the orchestrator" (pair
+  cannot see which project that is, and it would go wrong again whenever the orchestrator
+  moves); a relay from `<host>-home` to the waiter (a second hop and a second queue to get
+  stuck, and the home still has to learn where the waiter is).
   A visitor whose recorded home is
   this daemon's own project is refused with an error (x8c8): forwarding would deliver to the
   local principal of the same name, a different one.

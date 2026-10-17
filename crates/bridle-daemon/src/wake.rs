@@ -36,6 +36,33 @@ pub const POLL_TIMEOUT: Duration = Duration::from_secs(25 * 60);
 /// background tasks. Both wake routes clamp a caller's `timeout_secs` to it.
 pub const MAX_WAKE_TIMEOUT: Duration = Duration::from_secs(6900);
 
+/// Where the orchestrator's waiter is: the machine's daemons share `$BRIDLE_HOME`, and the one
+/// that holds a `wait-for-wake` writes its project here on opening and closing it (br-dg5g).
+const WAITER_FILE: &str = "orchestrator-waiter";
+/// A note older than this is ignored: the longest wait plus slack for the re-wait after it.
+const WAITER_NOTE_TTL_SECS: u64 = MAX_WAKE_TIMEOUT.as_secs() + 120;
+
+/// Records that `project`'s daemon holds (or just held) the orchestrator's waiter.
+pub fn note_orchestrator_waiter(home: &std::path::Path, project: &str) {
+    let now = Utc::now().timestamp();
+    let tmp = home.join(format!("{WAITER_FILE}.{}.tmp", std::process::id()));
+    let written = std::fs::write(&tmp, format!("{project} {now}\n"))
+        .and_then(|()| std::fs::rename(&tmp, home.join(WAITER_FILE)));
+    if let Err(e) = written {
+        tracing::warn!(error = %e, "recording the orchestrator's waiter failed");
+    }
+}
+
+/// The project whose daemon holds the orchestrator's waiter, if one was noted recently.
+pub fn orchestrator_waiter(home: &std::path::Path) -> Option<String> {
+    let text = std::fs::read_to_string(home.join(WAITER_FILE)).ok()?;
+    let (project, at) = text.trim().split_once(' ')?;
+    let age = Utc::now().timestamp() - at.parse::<i64>().ok()?;
+    (0..=WAITER_NOTE_TTL_SECS as i64)
+        .contains(&age)
+        .then(|| project.to_string())
+}
+
 /// A wake request's wait: `requested` seconds, or `default` when absent, never over
 /// [`MAX_WAKE_TIMEOUT`]. Shared by both wake routes.
 pub fn clamp_timeout(requested: Option<u64>, default: Duration) -> Duration {
@@ -352,7 +379,14 @@ impl Wakes {
                 return;
             }
         };
-        let homes = if local {
+        let waiter = orchestrator_waiter(outbox.bridle_home());
+        let homes = if local && waiter.as_deref() == Some(outbox.project()) {
+            // The waiter is on this daemon: it hears the wakes itself.
+            Ok(Vec::new())
+        } else if local && let Some(w) = waiter.filter(|w| outbox.check_destination(w).is_ok()) {
+            // The waiter is on another project of this machine, wherever that is (br-dg5g).
+            Ok(vec![w])
+        } else if local {
             self.store
                 .visitor_home(ORCHESTRATOR)
                 .await
@@ -613,6 +647,17 @@ impl Wakes {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn the_waiter_note_names_its_project_until_it_goes_stale() {
+        let dir = tempfile::tempdir().expect("tmp");
+        assert_eq!(orchestrator_waiter(dir.path()), None);
+        note_orchestrator_waiter(dir.path(), "bridle");
+        assert_eq!(orchestrator_waiter(dir.path()).as_deref(), Some("bridle"));
+        let old = Utc::now().timestamp() - WAITER_NOTE_TTL_SECS as i64 - 1;
+        std::fs::write(dir.path().join(WAITER_FILE), format!("bridle {old}\n")).expect("write");
+        assert_eq!(orchestrator_waiter(dir.path()), None);
+    }
+
     use bridle_api::types::{RateLimit, When};
     use serde_json::json;
 
