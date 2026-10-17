@@ -2,11 +2,14 @@
 id = "br-j86p"
 title = "Same-machine orchestrator keeps direct tokens (visiting-orchestrator token is submit-only); ticket new --project writes into the wrong clone"
 kind = "fix"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-17T02:44:03.225Z"
-updated_at = "2026-10-17T02:55:13.700802Z"
+updated_at = "2026-10-17T03:15:36.434825Z"
 created_by = "agent:pm-1"
-watchers = ["agent:pm-1"]
+watchers = [
+    "agent:pm-1",
+    "agent:j86p",
+]
 priority = "critical"
 priority_at = "2026-10-17T02:44:37.657490Z"
 ticket = "j86p"
@@ -37,3 +40,6 @@ From orchestrator: the human, via aide (going to sleep): 'Try to get these ticke
 
 ### note · external:orchestrator@dalek · 2026-10-17T02:48:10.422Z
 From orchestrator: the human wants br-j86p built, verified and landed tonight. pm-1 is planning it now. Spawn a worker on it as soon as it's planned, ahead of everything else; tvrp lands first since it's built. Anything that needs the human goes on a --for-human ticket for the morning, not a blocking question.
+
+### note · external:orchestrator@dalek · 2026-10-17T03:15:31.734Z
+From orchestrator: br-j86p is already planned and queued (pm-1, 10:55 PM). Spawn its worker now; it shouldn't wait on the whce land. No release tonight: v0.7.6 is cut in the morning with j86p in it.
