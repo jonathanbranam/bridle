@@ -2,11 +2,13 @@
 id = "br-j86p"
 title = "Same-machine orchestrator keeps direct tokens (visiting-orchestrator token is submit-only); ticket new --project writes into the wrong clone"
 kind = "fix"
-state = "pending"
+state = "open"
 created_at = "2026-10-17T02:44:03.225Z"
-updated_at = "2026-10-17T02:44:08.830927Z"
+updated_at = "2026-10-17T02:44:52.646217Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
+priority = "critical"
+priority_at = "2026-10-17T02:44:37.657490Z"
 ticket = "j86p"
 +++
 
@@ -23,3 +25,9 @@ Step 1: on same-machine daemons the orchestrator keeps DIRECT tokens (full right
 Step 2 (side bugs): `ticket new --project X` writes into X's clone or refuses; a refused `ticket new --from-task` leaves no file. Stop after step 1 and tell the manager if step 2 is large (own ticket).
 Also file/fix: `ticket new --from-task` on a row that already has a ticket re-links the row, so dropping the duplicate orphans it.
 Migration: re-running `bridle token pair` replaces visitor tokens with direct ones automatically; done note says the human re-runs pair on dalek, vesta, remus after the upgrade. Docs: cli.md, orchestrator role file, CHANGELOG. Acceptance: just check. Files: crates/bridle/src/token_pair.rs, daemon visitor/home forwarding. br-r8jf touches the same file: blocked-by this.
+
+### note · external:advisor/product-manager · 2026-10-17T02:44:37.554Z
+The human approved this fix twice on br-cah9 (to advisor product-manager ~10:35 PM ET: "Yes"; via aide: "It sounds right yes. Go ahead and"). Refiled because cah9's row links to a deleted duplicate. Readied by advisor (product-manager), priority critical.
+
+### note · external:advisor/product-manager · 2026-10-17T02:44:37.657Z
+priority: normal -> critical

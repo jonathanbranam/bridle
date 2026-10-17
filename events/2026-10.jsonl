@@ -2426,3 +2426,4 @@
 {"actor":"human","at":"2026-10-17T02:44:03.225Z","from":"","task":"br-j86p","to":"pending"}
 {"actor":"agent:manager-2","at":"2026-10-17T02:44:13.440692Z","from":"pending","task":"br-cah9","to":"dropped"}
 {"actor":"human","at":"2026-10-17T02:44:17.283Z","from":"","task":"br-b3ef","to":"pending"}
+{"actor":"external:advisor/product-manager","at":"2026-10-17T02:44:52.646217Z","from":"pending","task":"br-j86p","to":"open"}
