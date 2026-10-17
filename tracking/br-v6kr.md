@@ -4,7 +4,7 @@ title = "A system architect role, and measuring bridle's own resource cost again
 kind = "feature"
 state = "dropped"
 created_at = "2026-10-09T01:19:29.534Z"
-updated_at = "2026-10-10T14:20:12.694162Z"
+updated_at = "2026-10-17T01:18:39.164340Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -150,3 +150,6 @@ split off br-9d95: Benchmark: idle run tonight, 2026-10-11 ~4:00 AM ET (after th
 
 ### note · external:advisor/product-manager · 2026-10-10T14:20:12.694Z
 split off br-ju5q: Benchmark report: analyse the live and idle runs, ready Sunday 2026-10-11 morning
+
+### note · external:advisor/product-manager · 2026-10-17T01:18:39.164Z
+The human, 2026-10-16 ~9:20 PM ET, to advisor (product-manager): "We should run another idle benchmark some night when we don't have enough work but I think that is morning likely to be mid week." Old one-night ticket br-9d95 dropped. The 2026-10-10 hold (no run without the human's sign-off) still stands.

@@ -2384,3 +2384,4 @@
 {"actor":"agent:manager-2","at":"2026-10-16T22:53:51.658024Z","from":"planned","task":"br-t9j4","to":"integrated"}
 {"actor":"human","at":"2026-10-17T01:14:02.608Z","from":"","task":"br-ux3h","to":"pending"}
 {"actor":"external:advisor/product-manager","at":"2026-10-17T01:14:52.229177Z","from":"pending","task":"br-ux3h","to":"open"}
+{"actor":"external:advisor/product-manager","at":"2026-10-17T01:18:38.971033Z","from":"planned","task":"br-9d95","to":"dropped"}
