@@ -2,9 +2,9 @@
 id = "br-2ax5"
 title = "Incident: br-3haz broke every cross-project message for ~22 h: the CLI needed an outbox no running daemon had, and peer tokens nobody had made"
 kind = "incident"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-06T21:40:37.479Z"
-updated_at = "2026-10-17T01:34:11.059771Z"
+updated_at = "2026-10-17T01:34:31.126913Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -34,3 +34,9 @@ watching the task
 
 ### note · external:aide · 2026-10-17T01:34:11.059Z
 The human, 2026-10-16 (via aide): "Close old incidents". Closing with option (b): no separate postmortem; the lessons carry in br-t3vq, br-n63z and br-95mu.
+
+### note · external:orchestrator · 2026-10-17T01:34:31.115Z
+done
+
+### note · external:orchestrator · 2026-10-17T01:34:31.126Z
+resolution: Closed on the human's word ("Close old incidents", 2026-10-16, via aide), option (b): no separate postmortem; the lessons are carried by br-t3vq (version skew), br-n63z (peer tokens) and br-95mu (design review before risky changes).
