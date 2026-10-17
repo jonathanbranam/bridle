@@ -4,7 +4,7 @@ title = "Change stages on every ticket: attachments, proposal/design/specs/tasks
 kind = "epic"
 state = "pending"
 created_at = "2026-10-17T02:23:44.883Z"
-updated_at = "2026-10-17T17:38:35.356873Z"
+updated_at = "2026-10-17T17:45:29.030140Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
@@ -91,3 +91,20 @@ The human, 2026-10-17 ~12:15 PM ET, to advisor (tj7q), correcting advisor's "eve
 > No, that's not what I said. I said we list the stages for each ticket on the ticket, and we list which stages require human review. That doesn't mean every ticket gets all four stages. It means that there's no rule. We don't need to make a rule for this ahead of time. When we create the ticket, we'll decide which stages it needs and which of those need a human approval.
 
 advisor (tj7q): body corrected. No default-by-kind table and no all-four rule: the ticket's creator decides its stages and which need the human's approval. Open question 3 replaced.
+
+### note · external:advisor/tj7q · 2026-10-17T17:45:29.030Z
+The human, 2026-10-17 ~2:00 PM ET, to advisor (tj7q), verbatim:
+
+> Yeah, I'm reading through some of your stuff here. I think that most of the time, the proposal should be written by the product manager. That means the skills, whatever we're doing with Bridle here, need to work in background or foreground, with agents, background or interactive agents. I don't know how that works. I don't know how to make that work, but that's the requirement we have.
+>
+> If I want to pull up an advisor and go through the ticket with an advisor live, then that should work, and it should work exactly the same as with the background agents. The way this works in OpenSpec is it's a skill. When the agent invokes the skill, the skill then compiles all the rules and then outputs the instructions, which include all the layered rules. Those layers should come from Bridle, and then it outputs the template as well, and the agent does the work.
+>
+> I don't care if it's a skill. What OpenSpec does, you should look at it. If you go up a couple levels in this folder, there's a summary, our analysis of how OpenSpec works. OpenSpec has a skill, and it says you need to create the next artifact. The way it works in OpenSpec is there's a schema, and the schema is our workflow. I think there's a corollary there, but every ticket gets its own schema. There are standard schemas, but you can assign those.
+>
+> Essentially, we're simplifying that for the moment and just saying the schema lives on the ticket. The schema tells you which artifacts to create in what order and which artifacts are dependent on other artifacts. For OpenSpec, there's actually a split here where the proposals come first, and then specs and design depend on the proposal. Approval that we're specifying on the ticket and metadata, and then, again, in the future, that gate could be other agents as well.
+>
+> We've talked all about this and how it's supposed to work somewhere, but essentially it should work the same as the human or the agent. The human, the gate, whoever owns the gate, will sign it as approved, and then the rest of the command can't go forward unless it's been signed.
+>
+> What else did you have in there that was wrong? There should definitely be a command for me to approve it, but I don't want to run a command. I do.
+
+advisor (tj7q), facts looked up: OpenSpec (/Volumes/Data/work/bridle/OpenSpec) has schemas/spec-driven/schema.yaml: each artifact has id, generates, template, instruction and requires (proposal: none; specs: proposal; design: proposal; tasks: specs and design), plus apply (requires tasks, tracks tasks.md). Skill openspec-continue-change runs `openspec status --change <name> --json` (each artifact done/ready/blocked), picks the first ready one, runs `openspec instructions <artifact> --change <name> --json` (context, rules, template, instruction, output path, dependencies), writes ONE artifact and stops. Bridle's analysis: ../workflow/research/10 and 11. Signing: gates.md has no signing built; signed reviews are v2va. Body updated: who writes, the schema on the ticket, the next-artifact command for any agent, signed gates; open questions renumbered.
