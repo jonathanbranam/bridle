@@ -4,7 +4,7 @@ title = "Change stages on every ticket: attachments, proposal/design/specs/tasks
 kind = "epic"
 state = "pending"
 created_at = "2026-10-17T02:23:44.883Z"
-updated_at = "2026-10-17T18:05:32.454145Z"
+updated_at = "2026-10-17T18:21:51.156481Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
@@ -157,3 +157,6 @@ The human, 2026-10-17 ~3:05 PM ET, to advisor (tj7q), on open question 4 (how st
 > Once it's been through these stages, if none of them require human review, the ticket should just plow through all the stages. Agents should fill out everything, and then the ticket's ready. The product manager, or someone similar, should decide when it gets implemented, which is a different question.
 
 advisor (tj7q), fact: today `ticket ready` is pending -> open and means "approved for work" (mhjn decides who may give it); the PM then plans it, open -> planned, which puts it in the queue a worker claims from (storage.md, state branch). So today "ready" mixes approval with entry to the pipeline. Reworded open question 4 on the human's meaning: ready = prepared.
+
+### note · external:advisor/tj7q · 2026-10-17T18:21:51.156Z
+The human, 2026-10-17 ~3:10 PM ET, on open question 4 (ready = prepared: a new ticket is preparing, agents write each stage as it unblocks and stop only at a gate listed for the human; ready by itself when every stage is written and every gate signed; no separate ready approval; when it is built is the PM's call, outside this epic): "Approved". Settled. Note: this changes mhjn (who readies what): readiness is no longer a decision anyone makes; the states pending/open/planned map onto preparing/ready, to be designed.
