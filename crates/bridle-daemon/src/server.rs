@@ -4395,6 +4395,9 @@ async fn emit_comment(
     told: &[ToTarget],
 ) {
     let change = format!("comment by {actor}: {}", excerpt(body));
+    let mut told = told.to_vec();
+    told.extend(send_mentions(state, &actor, task, body, &told).await);
+    let told = &told[..];
     // The claimant is told like a watcher (a send-back comment must reach the worker doing the
     // task); `emit_task_change` skips the author and `told`, so there is one message each.
     let mut notified = task.clone();
@@ -4413,6 +4416,85 @@ async fn emit_comment(
         told,
     )
     .await;
+}
+
+/// Tells each agent or role `body` mentions with `@name` (br-4cgx) and returns who was told, so
+/// the watcher notice skips them: the mention is the more explicit message. A name that resolves
+/// to nobody is reported back to the author; a project-qualified name is not resolved yet.
+async fn send_mentions(
+    state: &AppState,
+    actor: &PrincipalId,
+    task: &Ticket,
+    body: &str,
+    already: &[ToTarget],
+) -> Vec<ToTarget> {
+    let mut told: Vec<ToTarget> = Vec::new();
+    let mut unknown: Vec<String> = Vec::new();
+    for name in crate::mentions::mentioned(body) {
+        if name.contains(':') {
+            continue;
+        }
+        let Ok(targets) = resolve_targets(state, &name).await else {
+            unknown.push(name);
+            continue;
+        };
+        for target in targets {
+            if already.contains(&target) || told.contains(&target) {
+                continue;
+            }
+            if let Ok(Some(own)) = target_for_principal(state, actor).await
+                && own == target
+            {
+                continue;
+            }
+            let line = format!(
+                "{} ({}): {actor} mentioned you: {}",
+                task.id,
+                task.title,
+                excerpt(body)
+            );
+            match state
+                .manager
+                .send(
+                    actor.clone(),
+                    target.clone(),
+                    MessageKind::TaskUpdate,
+                    line,
+                    Default::default(),
+                    None,
+                )
+                .await
+            {
+                Ok(_) => told.push(target),
+                Err(e) => tracing::warn!(task = %task.id, %name, "mention not sent: {e}"),
+            }
+        }
+    }
+    if !unknown.is_empty()
+        && let Ok(Some(author)) = target_for_principal(state, actor).await
+    {
+        let names = unknown
+            .iter()
+            .map(|n| format!("@{n}"))
+            .collect::<Vec<_>>()
+            .join(", ");
+        let line = format!(
+            "{} ({}): no such recipient for {names}; nobody was told (write \\@name for plain text)",
+            task.id, task.title
+        );
+        let _ = state
+            .manager
+            .send(
+                actor.clone(),
+                author,
+                MessageKind::TaskUpdate,
+                line,
+                Default::default(),
+                None,
+            )
+            .await;
+    }
+    told
 }
 
 /// Sends the recipients of a question or answer a short pointer to the task

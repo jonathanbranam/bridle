@@ -664,3 +664,54 @@ async fn notifying_the_claimant_or_watching_it_is_still_one_message() {
     daemon.client.note_task(&task, "again").await.expect("note");
     assert_eq!(updates(&worker, "me").await.len(), 1);
 }
+
+#[tokio::test]
+async fn a_mention_tells_that_role_once_even_when_it_also_watches() {
+    let (daemon, _tmp) = support::start_daemon(None).await;
+    let orch = daemon.external_client("orchestrator").await;
+    let task = new_task(&daemon.client).await;
+    daemon
+        .client
+        .note_task(&task, "@orchestrator I approve, again @orchestrator")
+        .await
+        .expect("note");
+    let lines = updates(&orch, "me").await;
+    assert_eq!(lines.len(), 1, "{lines:?}");
+    assert!(lines[0].contains("human mentioned you"), "{lines:?}");
+    // A watcher who is mentioned gets the mention, not a watcher notice as well.
+    orch.watch_task(&task).await.expect("watch");
+    daemon
+        .client
+        .note_task(&task, "@orchestrator please land")
+        .await
+        .expect("note");
+    let lines = updates(&orch, "me").await;
+    assert_eq!(lines.len(), 2, "{lines:?}");
+    assert!(
+        lines.iter().all(|l| l.contains("mentioned you")),
+        "{lines:?}"
+    );
+}
+
+#[tokio::test]
+async fn an_escaped_mention_tells_nobody_and_an_unknown_one_is_reported_to_the_author() {
+    let (daemon, _tmp) = support::start_daemon(None).await;
+    let orch = daemon.external_client("orchestrator").await;
+    let advisor = daemon.external_client("advisor").await;
+    let task = new_task(&daemon.client).await;
+    advisor
+        .note_task(&task, r"\@orchestrator is plain text")
+        .await
+        .expect("note");
+    assert!(updates(&orch, "me").await.is_empty());
+    advisor
+        .note_task(&task, "@nobody-here please look")
+        .await
+        .expect("note");
+    let lines = updates(&advisor, "me").await;
+    assert_eq!(lines.len(), 1, "{lines:?}");
+    assert!(
+        lines[0].contains("no such recipient for @nobody-here"),
+        "{lines:?}"
+    );
+}
