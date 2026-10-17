@@ -1,15 +1,5 @@
 [[tier]]
-tasks = [
-    "br-3stk",
-    "br-dg5g",
-    "br-mhjn",
-]
-
-[[tier]]
-tasks = [
-    "br-66qq",
-    "br-fsae",
-]
+tasks = ["br-mhjn"]
 
 [[tier]]
 tasks = ["br-z5kz"]
@@ -17,6 +7,7 @@ tasks = ["br-z5kz"]
 [[tier]]
 tasks = [
     "br-kyjg",
+    "br-2fqg",
     "br-5j35",
 ]
 
@@ -34,9 +25,6 @@ tasks = [
 
 [[tier]]
 tasks = ["br-9qws"]
-
-[[tier]]
-tasks = ["br-ef3u"]
 
 [[tier]]
 tasks = [
@@ -68,9 +56,3 @@ tasks = [
     "br-m5kf",
     "br-bnfs",
 ]
-
-[[tier]]
-tasks = ["br-4cgx"]
-
-[[tier]]
-tasks = ["br-re79"]

@@ -2,9 +2,9 @@
 id = "br-2fqg"
 title = "Worker role says run 'ticket built', but the daemon refuses it for workers (forbidden: agent lifecycle endpoints)"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-10-17T17:44:10.916Z"
-updated_at = "2026-10-17T17:44:48.901209Z"
+updated_at = "2026-10-17T17:58:02.107294Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "2fqg"
