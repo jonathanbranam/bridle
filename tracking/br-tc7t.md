@@ -4,7 +4,7 @@ title = "A landing that needs a UI install or gateway restart to show says so, a
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-04T21:27:39.835Z"
-updated_at = "2026-10-09T23:27:46.427098Z"
+updated_at = "2026-10-17T22:19:04.176969Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -41,3 +41,6 @@ cleanup: removed agent landing-install, branch bridle/landing-install
 
 ### note · external:advisor/product-manager · 2026-10-09T23:27:46.427Z
 split off br-785a: A landing that needs a UI install shows without a manual step (tc7t, option C)
+
+### note · external:advisor/product-manager · 2026-10-17T22:19:04.176Z
+advisor (product-manager): resolving. Gateway restart shipped (bek3) and documented (b80f4278); the UI-install half is br-785a, now in epic jw75 (the human, 2026-10-17).
