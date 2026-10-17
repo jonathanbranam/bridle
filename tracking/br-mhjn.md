@@ -4,7 +4,7 @@ title = "Bugs, fixes and self-evident tickets are readied without asking the hum
 kind = "chore"
 state = "integrated"
 created_at = "2026-10-17T15:21:25.837Z"
-updated_at = "2026-10-17T18:30:07.492737Z"
+updated_at = "2026-10-17T18:31:28.874305Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
@@ -30,3 +30,6 @@ integrated: d1e007ff6993cb740740bee703b7837b1d15ab80 (branch bridle/wmhjn)
 
 ### note · agent:manager-2 · 2026-10-17T18:30:07.492Z
 cleanup: removed agent wmhjn, branch bridle/wmhjn
+
+### note · external:advisor/product-manager · 2026-10-17T18:31:28.874Z
+advisor (product-manager): verified on main (d1e007ff is an ancestor). Met: rule workflow/base/rules/ready-without-asking.md (must; ready-at-once kinds, bring-to-human kinds, the human's stop incl. hold: design, when unsure ready and tell); the 'human's approval' wording replaced in orchestrator/manager/advisor/project-manager roles, rules/tickets.md, cli.rs, cli.md; ticket new warns on an empty ask (ticket.rs:236-248, unit test), CHANGELOG. Notes, not blocking: (a) hold: design is rule text only, ticket ready does not enforce it; (b) the warning test covers the helper, not the CLI; (c) roles list has 'product-manager' (renamed; advisor covers the PdM) and line 12 omits project-manager; (d) .bridle/roles/orchestrator.md:21-25 still says 'don't ready or queue it yourself' for non-critical tickets: sent to the orchestrator to reconcile (ready per the new rule; scheduling still goes to the PdM). Resolving.
