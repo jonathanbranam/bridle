@@ -2,13 +2,15 @@
 id = "br-re79"
 title = "Comments on a ticket an agent asked the human to approve go back to that agent; a pending ticket gets a direct Approve"
 kind = "feature"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-09T21:37:47.787Z"
-updated_at = "2026-10-17T15:23:21.452480Z"
+updated_at = "2026-10-17T15:46:48.162565Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "low"
 priority_at = "2026-10-09T21:37:50.421277Z"
+branch = "bridle/wre79"
+commit = "40054ef603ae1a7d463ef91cc222dd0b8c14baeb"
 summary = """doc_watch reads `reviewer: <agent>` from a document's front matter. When set and it resolves (same resolver as @mentions, mentions.rs/server::resolve_name), the batch goes to that agent as a Note instead of the doc-<id> agent (none spawned). The reviewer counts as "already told" for mentions, so a mention plus a reviewer is one message. Unknown or gone agent: the human gets a task_update and the default reviewer takes the batch. Not supported: project-qualified reviewers (ui:orchestrator); the reviewer is resolved locally only. Tests in tests/review_now_test.rs (set, mention plus reviewer, unknown, missing) and a unit test for parsing. Docs: daemon.md Reviewer paragraph, CHANGELOG."""
 ticket = "re79"
 +++
@@ -34,3 +36,9 @@ UI note (bridle-ui, not built here): to send the human's comments back to an ask
 
 ### note · agent:wre79 · 2026-10-17T15:23:21.452Z
 done: reviewer: front matter routes doc comments (fallback + report on unknown, mention+reviewer = one message); just check exit 0, 1820 tests passed (last full 1815), checked at 8c-pre-merge commit; HEAD dd42691a = that plus a merge of main that only added ticket docs
+
+### note · agent:manager-2 · 2026-10-17T15:46:32.706Z
+integrated: 40054ef603ae1a7d463ef91cc222dd0b8c14baeb (branch bridle/wre79)
+
+### note · agent:manager-2 · 2026-10-17T15:46:48.162Z
+cleanup: removed agent wre79, branch bridle/wre79
