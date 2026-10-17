@@ -35,7 +35,7 @@ ui-qfur readied, d9wq dropped).
 | 3 | One orchestrator per machine | In progress (homes run orchestrators; 9966 queued) | Decision: confirm done-when; "second orchestrator can't start" and "coordinate a takeover" undefined. Hands-on: reboot test (mru4) |
 | 4 | Machine admin role (j6d3) | Not started | Approve gb97's design pass |
 | 5 | Products | Blocked, low | Decision: g5dm's 5 questions |
-| 6 | Change stages on every ticket (br-tj7q): NEXT PRIORITY (the human, 2026-10-17) | Design pass written (Design options in the ticket); absorbs attachments, ladder steps 2-8, 95mu | Review the design: Q3 un-approve on edit, small kinds' proposal, rule delivery in the prompt or on demand; then approve |
+| 6 | Stages MVP: tickets prepare themselves (br-tj7q): NEXT PRIORITY (the human, 2026-10-17) | Grilled and scoped 2026-10-17 (advisor tj7q): MVP tj7q (7 children, 9mqh first), V1 ej8y, V2 ckbt; all pending | Ready the MVP children (the human wants it done today, to use tomorrow); step 6 (ewk8) is the human's hands-on try; step 7 (u2r8) waits for their go |
 | 7 | Gates (reviews-enforced) | Design-before-build half moves into tj7q (95mu); review-before-landing (v2va slices A-D) held | Re-review v2va once 22ab ends |
 | 8 | Machine sync | In progress | Reboot test (as 3); fold or drop rjd5 |
 | 9-11 | Machine-transparent, background agents, security | Not started by choice | Nothing now |
@@ -86,7 +86,7 @@ migrations.
 3. **One orchestrator per machine** (`orchestrator-per-machine`)
 4. **Machine admin role** (j6d3; gb97)
 5. **Products: formalize the PdM role** (`products`)
-6. **Change stages on every ticket** (br-tj7q; the human, 2026-10-17 ~7:25 AM ET: "tj7q should be the next priority"). Absorbs `attachments` and scheduler ladder steps 2-8, and 95mu from gates.
+6. **Stages MVP: tickets prepare themselves** (br-tj7q; the human, 2026-10-17 ~7:25 AM ET: "tj7q should be the next priority"; grilled and split into MVP, V1 ej8y, V2 ckbt ~5:00 PM ET). Absorbs `attachments` and scheduler ladder steps 2-8, and 95mu from gates.
 7. **Gates: design before build, review before landing: the per-ticket workflow** (`reviews-enforced`; stx8 first)
 8. **Machine sync and recovery** (`machine-sync`)
 9. **Projects become machine-transparent** (`machine-transparent`)
@@ -298,19 +298,44 @@ Agents use bridle correctly: commands, help, roles, the workflow reaching every 
 
 How work gets from an idea to ready: the PdM, the designer, change specs, reviews, task states.
 
-#### Epic `change-stages` (br-tj7q): Change stages on every ticket
+#### Epic `change-stages` (br-tj7q): Stages MVP: tickets prepare themselves
 
-- Outcome: Every ticket carries attachments, among them the stage files proposal, design, specs
-  and tasks; the human lists the stages they review per ticket; agents write each stage as it
-  unblocks from fixed templates built from bridle rules; a proposal agreed with the human is
-  needed for ready; specs become bridle specs on landing; one ticket page in bridle-ui shows the
-  attachments as tabs or a picker (ui-fwsx folded in). Replaces epic `attachments` and scheduler
-  ladder steps 2-8; takes 95mu from gates.
-- Done when: (from the ticket) a new ticket gets the four stage files; the human can list the
-  stages to review; agents write each stage as it unblocks and wait only on the listed reviews;
-  when the ticket lands its specs are in the project's bridle specs; the ticket page shows the
-  attachments as tabs or a picker. Proven on one real ticket end to end.
-- Next: the human reviews the design (three open questions), then planning.
+- Outcome: A version 2 ticket prepares itself: bridle starts a designer for each stage (proposal in
+  the body; design, specs, tasks as files beside the ticket) as it unblocks, giving it the stage's
+  instructions and template at the moment of writing; it stops only at the gates the ticket lists
+  for the human, who signs (traced) or sends back; prepared means ready; a worker builds from
+  tasks.md and the specs land in bridle specs. Version 1 tickets keep today's workflow. Grilled
+  with the human 2026-10-17 (advisor tj7q); replaces epic `attachments` and scheduler ladder steps
+  2-8; takes 95mu from gates.
+- Done when: version 1 and version 2 tickets can both be created and each follows its own
+  workflow; one real version 2 ticket filed to landed with the human signing a gate (ewk8);
+  version 2 is the default for new tickets (u2r8).
+- Next: the human readies the children; 9mqh first, then quvh and ussh side by side, ewhy, 6c8x,
+  ewk8 (the human's try), u2r8 (on their go).
+
+| Step | Ticket | What | After |
+|---|---|---|---|
+| 1 | br-9mqh | version, `stages:` schema, proposal section, stage folder, check, stages.md | - |
+| 2 | br-quvh | stage rules and templates; `bridle ticket next` | 1 |
+| 3 | br-ussh | stage-done, approve, changes, restage; ready means prepared; watchers | 1 |
+| 4 | br-ewhy | bridle spawns a designer per unblocked stage; timer to the PdM | 2, 3 |
+| 5 | br-6c8x | a worker builds from tasks.md | 2 |
+| 6 | br-ewk8 | one real version 2 ticket end to end, with the human | 4, 5 |
+| 7 | br-u2r8 | version 2 becomes the default | 6 |
+
+#### Epic `stages-v1` (br-ej8y): Stages you can see and steer
+
+- Outcome: the bridle-ui ticket page with stage tabs and a picker (ui-fwsx folded in); review like
+  a PR (highlight and overall comments; approve or request changes, sent to a fresh writer); a
+  template-heading check; a designer can send a stage back as blocked; the interactive path.
+- Next: after the MVP lands.
+
+#### Epic `stages-v2` (br-ckbt): Gates beyond the human
+
+- Outcome (to be grilled): approve with feedback; agent-signed gates and consulted reviewers;
+  standard schemas and other stage types; attachments of any type; spec re-review on drift; rules
+  injected into the apply step; mhjn reworked around "ready means prepared".
+- Next: after V1.
 
 #### Epic `reviews-enforced`: Gates: design before build, review before landing
 
