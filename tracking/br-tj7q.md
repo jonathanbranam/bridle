@@ -4,7 +4,7 @@ title = "Change stages on every ticket: attachments, proposal/design/specs/tasks
 kind = "epic"
 state = "pending"
 created_at = "2026-10-17T02:23:44.883Z"
-updated_at = "2026-10-17T18:02:08.275989Z"
+updated_at = "2026-10-17T18:03:10.554545Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
@@ -143,3 +143,6 @@ The human, 2026-10-17 ~2:50 PM ET, to advisor (tj7q), on open question 2 (approv
 > Just have the command detect if an agent ran it and include their principal, or whatever it's called, their name, and it should be timestamped, obviously. Then we should tell if I ran it from the command line or an agent ran it. The difference between whether I use the UI or the command line is unimportant, so that does not have to be differentiated.
 
 advisor (tj7q), fact: yes, we always know. Every CLI call is authenticated as a principal (principals.md: an agent's token, or an external principal's from credentials.toml; the human token file is never read under $CLAUDECODE). So `ticket approve` records: the signer (the human), who ran it (the human directly, or the agent's principal, as "human via <agent>"), and the time. The UI and the CLI are both just "the human".
+
+### note · external:advisor/tj7q · 2026-10-17T18:03:10.554Z
+The human, 2026-10-17 ~2:55 PM ET, on open question 3 (schema shape: frontmatter `stages:` map, each stage with `requires` and `review`; `ticket new --stages ... --review ...` fills in OpenSpec dependencies; proposal always included): "Approve". Settled.
