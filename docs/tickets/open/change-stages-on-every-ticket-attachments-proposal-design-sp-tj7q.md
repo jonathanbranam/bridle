@@ -123,6 +123,18 @@ with a gate. Not scheduling, not priority.
   thought of as the designer: to write the tickets"). Its role file widens from "a proposal into
   the ticket" to every stage, each stage's rule supplying the specifics; it still builds nothing.
   A UI designer later will be `ui-designer`.
+- **Done, or not done** (settled 3:55 PM ET): the writer runs `bridle ticket stage-done <id>
+  <stage>`; bridle checks the file is there and moves on. A writer that ends without it, or a
+  stage not done in time, goes to the product manager with no retry ("Just send it straight back
+  to the PDM if the agent doesn't finish it. No reason to try again"); the PdM can put the stage
+  back for bridle ("the authority to re-ready the ticket for that stage"). Later, not MVP: the
+  writer can send a stage back as blocked or needing input, with its reason on the thread, for a
+  human review, and the stage instructions say so ("the proposal as written is not something we
+  can implement, or the implementation is very complex").
+- **Timer and redo** (settled 4:05 PM ET, "Yes"): a stage not marked done 60 minutes after its
+  writer started (one setting), or whose writer ended without marking it, sends one message to
+  the product manager (`external:advisor/product-manager`); the PdM runs `bridle ticket restage
+  <id> <stage>` to put it back for bridle, or handles it otherwise.
 - **The proposal exception: claiming.** The agent filing a ticket may write the proposal itself at
   once. A ticket waiting for a stage is claimed or unclaimed: claimed means its claimant is
   writing it, and bridle waits; unclaimed means bridle sends it straight to a background writer
@@ -163,28 +175,24 @@ schemas assigned to tickets; different stage types.
    for any agent, signed human gates, read in the existing docs viewer. V1 = the ticket page in
    bridle-ui (tabs, combined task/ticket page, approve button), template-heading check. V2 =
    attachments of any type (images), gates owned by agents, standard schemas to assign. [yes]
-6b. Marking a stage done: the writer runs `bridle ticket stage-done <id> <stage>`; bridle checks the
-   file exists (the proposal: the delimited section in the body), records it and moves on. An
-   agent that exits without it leaves the stage unwritten and bridle retries once, then raises it
-   to the PM. [yes]
-6c. The filer's claim: `bridle ticket new --claim` (or a body that already holds the proposal)
+3. The filer's claim: `bridle ticket new --claim` (or a body that already holds the proposal)
    keeps the proposal with the filer; without either, bridle starts a writer at once. [yes]
-6d. Changes asked by the human: the human comments on the thread or the file and says "changes";
+4. Changes asked by the human: the human comments on the thread or the file and says "changes";
    the stage goes back to unclaimed and bridle starts a fresh writer, whose prompt adds the
    human's comments. [yes]
-7. The next-stage command: `bridle ticket next <id>` prints the next unblocked stage with its
+5. The next-stage command: `bridle ticket next <id>` prints the next unblocked stage with its
    instructions (the stage's rule, layered: base, packs, project), template, output path and the
    files it depends on; it refuses when the stage is blocked by an unsigned gate. A thin skill
    wraps it, so an interactive agent and a background one run the same thing. [yes]
-8. Signing: an approval is recorded with who signed and when (a thread entry and the ticket's
+6. Signing: an approval is recorded with who signed and when (a thread entry and the ticket's
    signed list), and the commands that move the ticket on (`next`, `ready`, `plan`) refuse while a
    gate is unsigned. Cryptographic signing stays with v2va. [yes]
-9. Specs into bridle specs: MVP keeps it cheap (design Q4-A): specs.md is a draft, and the tasks
+7. Specs into bridle specs: MVP keeps it cheap (design Q4-A): specs.md is a draft, and the tasks
    template always starts with "merge specs.md into design/specs". [yes, in MVP]
-10. Tasks: one worker builds the whole ticket, following tasks.md as its checklist (OpenSpec's
+8. Tasks: one worker builds the whole ticket, following tasks.md as its checklist (OpenSpec's
     apply); no child rows. [yes]
-11. Existing tickets: the workflow applies to tickets created after it ships only. [yes]
-12. Names: "stage" for a step, "file" for its output, "gate" for what must be true to pass,
+9. Existing tickets: the workflow applies to tickets created after it ships only. [yes]
+10. Names: "stage" for a step, "file" for its output, "gate" for what must be true to pass,
     "schema" for the ticket's list of stages. [yes]
 
 ## What this means (advisor's reading; the designer confirms or corrects)
@@ -324,7 +332,7 @@ A stage is unblocked when the stage before it exists (non-empty file) and, if it
 
 - **A. A read command plus a daemon notice.** `bridle ticket stages [<id>]` prints per stage:
   `waiting | unblocked | written | in review | approved`. The daemon computes the same on ticket
-  write/approve and, when a stage becomes unblocked, messages the project manager once ("br-xxxx:
+  write/approve and, when a stage becomes unblocked, messages the project manager once ("br-oooo:
   design unblocked"). The PM spawns the stage's writer with the existing `bridle agent spawn`.
   Cost: one command, one event; the daemon decides nothing about who runs.
 - **B. The daemon spawns the writer itself.** Fully hands-off, but it puts the spawn policy (role,
@@ -375,7 +383,7 @@ one-line update (the proposal/design/tasks files are the task record).
 Ticket page, one route per ticket (replaces the task page; the old task URL redirects):
 
 ```
-br-xxxx  Title                         state  priority  [actions: ready, hold, drop ...]
+br-oooo  Title                         state  priority  [actions: ready, hold, drop ...]
 [ Ticket | Proposal | Design | Specs | Tasks | Thread | Attachments v ]
 ```
 
