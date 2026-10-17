@@ -686,11 +686,21 @@ async fn restart_session(
             let (ok, where_) = if typed {
                 (true, format!("pane {pane}"))
             } else {
+                // A shell window first, then the command typed into it (rule tmux-shell-first):
+                // a window running the launcher itself would close with the session again.
                 let name = info.identity.replace('/', "-");
                 let w = Command::new("tmux")
-                    .args(["new-window", "-d", "-n", &name, &cmd])
-                    .status()
-                    .is_ok_and(|s| s.success());
+                    .args(["new-window", "-d", "-P", "-F", "#{pane_id}", "-n", &name])
+                    .output()
+                    .ok()
+                    .filter(|o| o.status.success())
+                    .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
+                    .is_some_and(|new| {
+                        Command::new("tmux")
+                            .args(["send-keys", "-t", &new, &cmd, "Enter"])
+                            .status()
+                            .is_ok_and(|s| s.success())
+                    });
                 (w, "a new tmux window".to_string())
             };
             if ok {
