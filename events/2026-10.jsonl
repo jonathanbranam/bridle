@@ -2421,3 +2421,6 @@
 {"actor":"human","at":"2026-10-17T02:42:15.662Z","from":"","task":"br-ne7n","to":"pending"}
 {"actor":"external:aide","at":"2026-10-17T02:42:15.673224Z","from":"pending","task":"br-ne7n","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-17T02:42:49.993105Z","from":"open","task":"br-ne7n","to":"dropped"}
+{"actor":"agent:manager-2","at":"2026-10-17T02:43:43.462627Z","from":"dropped","task":"br-ne7n","to":"reopened"}
+{"actor":"agent:manager-2","at":"2026-10-17T02:43:48.406117Z","from":"reopened","task":"br-ne7n","to":"dropped"}
+{"actor":"human","at":"2026-10-17T02:44:03.225Z","from":"","task":"br-j86p","to":"pending"}
