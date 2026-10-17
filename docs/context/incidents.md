@@ -26,6 +26,19 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-17 12:20Z: bridle-ui can't land: the land check has no node_modules
+
+- **What happened:** manager-3's `bridle ticket land ui-3mxz --branch bridle/devport` failed its
+  check with `sh: biome: command not found`; the worker's worktree and the clone have
+  `node_modules`, the land's check worktree doesn't. Land also couldn't find the ticket's branch
+  without `--branch`. manager-3 asked the human and idled; found by the orchestrator at start-up.
+- **Impact:** ui-3mxz (and the bridle-ui queue behind it) stalled about 20 minutes.
+- **Cause:** the land check runs the project's check command without installing its JS
+  dependencies.
+- **Category:** `merge`, `daemon`.
+- **Follow-up:** br-3stk (sent to the PdM). Workaround: check in the worker's worktree and land
+  with `--checked-commit`.
+
 ## 2026-10-17 02:05Z: the orchestrator lost its role on every non-home daemon after the token pair
 
 - **What happened:** after the br-gr3v pairing, each machine's orchestrator is a visitor
