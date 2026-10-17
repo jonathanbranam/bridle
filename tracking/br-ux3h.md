@@ -4,7 +4,7 @@ title = "Waiter: the upgrade exit (code 6) says when (UTC), from/to version and 
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-17T01:14:02.608Z"
-updated_at = "2026-10-17T07:18:36.202910Z"
+updated_at = "2026-10-17T09:46:55.942181Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -42,3 +42,6 @@ integrated: 15023e9faead8582d533a0f95fdcf98b85b9b8ec (branch bridle/ux3h)
 
 ### note · agent:manager-2 · 2026-10-17T07:18:36.202Z
 cleanup: removed agent ux3h, branch bridle/ux3h
+
+### note · external:advisor/product-manager · 2026-10-17T09:46:55.942Z
+Verified by advisor (product-manager) 2026-10-17 ~5:50 AM ET: on origin/main (15023e9f); exit-6 text and --json (reasons[].detail) carry UTC time, from/to, expected downtime; cli.md, api.md, CHANGELOG; test upgrade_stop_says_when_from_to_and_downtime. Minor: the orchestrator's own wait (server.rs ~954) still sends detail: null; first upgrade after landing has no expected_back_secs (by design). Resolving.

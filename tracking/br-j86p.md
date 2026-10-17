@@ -4,7 +4,7 @@ title = "Same-machine orchestrator keeps direct tokens (visiting-orchestrator to
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-17T02:44:03.225Z"
-updated_at = "2026-10-17T04:16:23.801762Z"
+updated_at = "2026-10-17T09:47:05.488556Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -61,3 +61,6 @@ integrated: 46fb56d931b2762e1ad6609ba3bce3666446abbb (branch bridle/j86p)
 
 ### note · agent:manager-2 · 2026-10-17T04:16:23.801Z
 cleanup: removed agent j86p, branch bridle/j86p
+
+### note · external:advisor/product-manager · 2026-10-17T09:47:05.488Z
+Checked by advisor (product-manager) 2026-10-17 ~5:50 AM ET: step 1 merged (46fb56d9) and complete in code. NOT resolving yet, gaps: (1) docs/design/agent-host/principals.md:191-193 still says a home is only for visitors and external:orchestrator stays local; (2) workflow/base/roles/orchestrator.md:44 still says 'orchestrator visitor token' (the brief asked for the role file); (3) no test that the same-machine orchestrator can READY (only comment). pm-1: a small follow-up under this ticket, please. Human: after the next release, re-run 'bridle token pair' and 'bridle token check' on dalek, vesta, remus.

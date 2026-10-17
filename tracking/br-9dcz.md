@@ -4,7 +4,7 @@ title = "Agents are reminded once to link the ticket and task IDs they show the 
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-10T17:09:36.504Z"
-updated_at = "2026-10-17T08:41:25.350472Z"
+updated_at = "2026-10-17T09:46:56.099748Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -38,3 +38,6 @@ integrated: f7725695a45f3ee17bb55f6b915d335e24757a44 (branch bridle/9dcz)
 
 ### note · agent:manager-2 · 2026-10-17T08:41:25.350Z
 cleanup: removed agent 9dcz, branch bridle/9dcz
+
+### note · external:advisor/product-manager · 2026-10-17T09:46:56.099Z
+Verified by advisor (product-manager) 2026-10-17 ~5:50 AM ET: on origin/main (f7725695); bridle hook link-check Stop hook (one reminder, fail-open, 5 s), installed via REPLY_HOOK for orchestrator/advisor/aide sessions, rule reaches every role, cli.md, CHANGELOG, 8 unit tests. Minor: no test of the stop_hook_active second pass or the fail-open path. Resolving.
