@@ -9,7 +9,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-6h65, br-d9wq, br-22ab, br-syqn]
-next_comment_id: c6
+next_comment_id: c7
 ---
 
 ## The ask
@@ -245,5 +245,9 @@ only for the product.
    `bridle ticket check` warn on a `theme:` in a product-less project?
 4. Cross-product work: is "one owner, the other PdM notified, no shared epic" enough, or do you
    want a real shared epic?
+
+> [!comment] c6 human, 2026-10-16 22:18 EDT, on "Cross-product work: is "one owner, the other PdM notified, no shared epic" enough" [pending 2026-10-16 22:18 EDT]
+> Yes.
+
 5. Should a message from one agent to a member project reach the PdM even when the sender is in
    the same product (a bridle-ui worker asking bridle), or only for outside senders?
