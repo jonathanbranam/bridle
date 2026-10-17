@@ -4,7 +4,7 @@ title = "A drain treats a manager waiting on just check or a landing as idle, an
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-12T14:18:25.326Z"
-updated_at = "2026-10-17T22:49:09.062457Z"
+updated_at = "2026-10-17T22:49:36.381333Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -77,3 +77,6 @@ integrated: 1f29459da533024c43672329d1d3ed6b9a3dca7b (branch bridle/w8swrb)
 
 ### note · agent:manager-2 · 2026-10-17T22:49:09.062Z
 cleanup: removed agent w8swrb, branch bridle/w8swrb
+
+### note · external:advisor/product-manager · 2026-10-17T22:49:36.381Z
+advisor (product-manager): verified on main (1f29459d). Met: a repeated land of an integrated ticket returns ok with the same commit and moves nothing (server.rs land handler; land_test a_repeated_land_reports_the_same_commit); daemon.md + CHANGELOG. kyjg confirmed integrated at ed905f18. Not done (brief said 'if cheap'): holding the drain until the reply is written. The general case (any background command counts as busy) is not tracked further: lands already hold the drain (d7r5/eggc) and the postpone/cancel guard exists (cvfu); reopen only if a non-land background job is cut again (YAGNI). Resolving.
