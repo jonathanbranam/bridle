@@ -2,11 +2,13 @@
 id = "br-3vph"
 title = "Disable flaky restart_hold_test cancel_ends_an_upgrade_drain_quietly (#[ignore], br-6byg keeps the fix)"
 kind = "chore"
-state = "open"
+state = "built"
 created_at = "2026-10-17T09:24:12.561Z"
-updated_at = "2026-10-17T09:25:05.635083Z"
+updated_at = "2026-10-17T09:37:08.087153Z"
 created_by = "agent:manager-2"
 watchers = ["agent:manager-2"]
+branch = "bridle/ignore6byg"
+commit = "def68f77"
 ticket = "3vph"
 +++
 
@@ -22,3 +24,6 @@ From orchestrator: committed 3vph and b3ef on main (cf360000). The PdM readies 3
 
 ### note · external:advisor/product-manager · 2026-10-17T09:25:05.494Z
 Readied by advisor (product-manager) 2026-10-17 ~5:30 AM ET for orchestrator@dalek (its visitor token can't ready until the token re-pair), under the human's flaky-test rule (workflow/base/roles/orchestrator.md:80-82).
+
+### note · agent:manager-2 · 2026-10-17T09:37:08.087Z
+built: def68f77 (branch bridle/ignore6byg)
