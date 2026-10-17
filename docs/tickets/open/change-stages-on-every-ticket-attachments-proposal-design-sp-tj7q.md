@@ -135,10 +135,29 @@ with a gate. Not scheduling, not priority.
   writer started (one setting), or whose writer ended without marking it, sends one message to
   the product manager (`external:advisor/product-manager`); the PdM runs `bridle ticket restage
   <id> <stage>` to put it back for bridle, or handles it otherwise.
+- **Changes asked by the human** (settled 4:12 PM ET, "Yes."): the human comments on the thread or
+  the file and says "changes" (or has an agent say it); the stage goes back to unclaimed, bridle
+  starts a fresh designer whose prompt adds the human's comments, and the rewrite comes back for
+  review.
+- **`bridle ticket next <id>`** (settled 4:14 PM ET, "Yes"): prints the next unblocked stage, its
+  instructions (the stage's rule, layered: base, packs, project), template, output path and the
+  files it depends on; refuses when the stage waits on an unsigned gate. Bridle uses the same
+  output as the designer's prompt, so a background and a later interactive agent get the same.
+- **A signature** (settled 4:16 PM ET, "Yes"): a thread entry (signer, who ran it, time) plus the
+  ticket's signed list. While a gate is unsigned, later stages do not start, `ticket next`
+  refuses and the ticket cannot become ready. Cryptographic signing stays with v2va.
+- **Specs become bridle specs** (settled 4:20 PM ET, "Yes"; design Q4-A): `specs.md` is a draft in
+  bridle spec syntax, grouped by capability, keeping existing requirement ids on what it alters;
+  the tasks template always starts with "merge specs.md into design/specs, run `bridle spec id`
+  and `bridle spec check`". No new command.
+- **Building from tasks.md** (settled 4:24 PM ET): one worker builds the whole ticket, following
+  tasks.md as its checklist and ticking items off (OpenSpec's apply); no child rows.
 - **The proposal exception: claiming.** The agent filing a ticket may write the proposal itself at
   once. A ticket waiting for a stage is claimed or unclaimed: claimed means its claimant is
   writing it, and bridle waits; unclaimed means bridle sends it straight to a background writer
-  ("an unclaimed ticket waiting for a proposal should go").
+  ("an unclaimed ticket waiting for a proposal should go"). Settled 4:10 PM ET: `bridle ticket new --claim`, or a
+  body that already holds the proposal, keeps it with the filer; otherwise bridle starts a
+  designer on it at once.
 - With human review: the agent writes the file and says it is ready for review; the human
   approves, or asks for changes and then approves. Without: it goes straight on.
 - **Approving**: `bridle ticket approve <id> <stage>`. The human need not type it: they say
@@ -159,7 +178,13 @@ with a gate. Not scheduling, not priority.
   mhjn (who readies what); today's pending/open/planned states map onto preparing/ready, to be
   designed.
 
-Later (named by the human, not MVP): gates owned by agents (other kinds of review); standard
+Later (named by the human, not MVP): if the merged specs differ from the reviewed specs.md and
+the specs stage had a review gate, the new specs go back to that reviewer, human or agent ("TBD if
+that is only an inform or an approval"; 4:20 PM ET, "far future concern but important to follow
+up"); the apply step gets its own layered rules injected at the moment of work, copying
+OpenSpec's apply skill freely ("having rules injected right then is really helpful for certain
+very tight programming things where we want the code written in a specific way. That should be
+an expectation"); gates owned by agents (other kinds of review); standard
 schemas assigned to tickets; different stage types.
 
 ### Settled earlier (still standing unless reopened)
@@ -175,25 +200,11 @@ schemas assigned to tickets; different stage types.
    for any agent, signed human gates, read in the existing docs viewer. V1 = the ticket page in
    bridle-ui (tabs, combined task/ticket page, approve button), template-heading check. V2 =
    attachments of any type (images), gates owned by agents, standard schemas to assign. [yes]
-3. The filer's claim: `bridle ticket new --claim` (or a body that already holds the proposal)
-   keeps the proposal with the filer; without either, bridle starts a writer at once. [yes]
-4. Changes asked by the human: the human comments on the thread or the file and says "changes";
-   the stage goes back to unclaimed and bridle starts a fresh writer, whose prompt adds the
-   human's comments. [yes]
-5. The next-stage command: `bridle ticket next <id>` prints the next unblocked stage with its
-   instructions (the stage's rule, layered: base, packs, project), template, output path and the
-   files it depends on; it refuses when the stage is blocked by an unsigned gate. A thin skill
-   wraps it, so an interactive agent and a background one run the same thing. [yes]
-6. Signing: an approval is recorded with who signed and when (a thread entry and the ticket's
-   signed list), and the commands that move the ticket on (`next`, `ready`, `plan`) refuse while a
-   gate is unsigned. Cryptographic signing stays with v2va. [yes]
-7. Specs into bridle specs: MVP keeps it cheap (design Q4-A): specs.md is a draft, and the tasks
-   template always starts with "merge specs.md into design/specs". [yes, in MVP]
-8. Tasks: one worker builds the whole ticket, following tasks.md as its checklist (OpenSpec's
-    apply); no child rows. [yes]
 9. Existing tickets: the workflow applies to tickets created after it ships only. [yes]
 10. Names: "stage" for a step, "file" for its output, "gate" for what must be true to pass,
-    "schema" for the ticket's list of stages. [yes]
+    "schema" for the ticket's list of stages; RACI terms for who does what at a stage (the
+    human, 4:20 PM ET: "we should use RACI terms for these as well. Helpful to be clear"). [see
+    the chat proposal]
 
 ## What this means (advisor's reading; the designer confirms or corrects)
 
