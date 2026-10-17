@@ -8,7 +8,7 @@ repos: [bridle]
 changes: []
 specs: []
 blocked_by: []
-related: [br-j7r4, br-8z7j]
+related: [br-j7r4, br-8z7j, br-4a4v]
 parent: br-3827
 theme: security
 ---
