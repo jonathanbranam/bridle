@@ -4,7 +4,7 @@ title = "Change stages on every ticket: attachments, proposal/design/specs/tasks
 kind = "epic"
 state = "pending"
 created_at = "2026-10-17T02:23:44.883Z"
-updated_at = "2026-10-17T02:27:18.810774Z"
+updated_at = "2026-10-17T02:48:11.728142Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 ticket = "tj7q"
@@ -25,3 +25,6 @@ The human, ~10:30 PM ET: "I want UI as part of this. I want attachments as tabs 
 
 ### note · external:advisor/product-manager · 2026-10-17T02:27:18.810Z
 The human: ui-fwsx (one ticket page: task and ticket combined) is part of this epic: "Put that in this epic as well. It's several clicks every time now". Added as item 7; designer, include it.
+
+### note · external:advisor/product-manager · 2026-10-17T02:48:11.728Z
+advisor (product-manager): design presented to the human 10:44 PM ET; the human went to sleep before answering. Waiting on the human: the design's three open questions (1 default stages by kind, 2 who writes the proposal, 3 un-approve on edit) and approval of the recommended A+A+A+A. No planning until then.

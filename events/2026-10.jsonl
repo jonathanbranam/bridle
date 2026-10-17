@@ -2429,3 +2429,6 @@
 {"actor":"external:advisor/product-manager","at":"2026-10-17T02:44:52.646217Z","from":"pending","task":"br-j86p","to":"open"}
 {"actor":"human","at":"2026-10-17T02:45:06.595Z","from":"","task":"br-qfut","to":"pending"}
 {"actor":"external:advisor/product-manager","at":"2026-10-17T02:45:36.874492Z","from":"pending","task":"br-qfut","to":"dropped"}
+{"actor":"human","at":"2026-10-17T02:48:09.832Z","from":"","task":"br-fxxz","to":"pending"}
+{"actor":"external:aide","at":"2026-10-17T02:48:09.833509Z","from":"pending","task":"br-fxxz","to":"open"}
+{"actor":"external:aide","at":"2026-10-17T02:48:09.833850Z","from":"open","task":"br-fxxz","to":"planned"}

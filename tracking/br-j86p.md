@@ -4,7 +4,7 @@ title = "Same-machine orchestrator keeps direct tokens (visiting-orchestrator to
 kind = "fix"
 state = "open"
 created_at = "2026-10-17T02:44:03.225Z"
-updated_at = "2026-10-17T02:44:52.646217Z"
+updated_at = "2026-10-17T02:48:10.422526Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 priority = "critical"
@@ -31,3 +31,9 @@ The human approved this fix twice on br-cah9 (to advisor product-manager ~10:35 
 
 ### note · external:advisor/product-manager · 2026-10-17T02:44:37.657Z
 priority: normal -> critical
+
+### note · external:orchestrator@dalek · 2026-10-17T02:48:10.362Z
+From orchestrator: the human, via aide (going to sleep): 'Try to get these tickets through!'. br-j86p is ready and critical. Plan it now (brief from the cah9 body, Sonnet) and put it at the front of the queue, behind only br-tvrp, which is already built and landing. Then keep the queue moving on the other ready tickets.
+
+### note · external:orchestrator@dalek · 2026-10-17T02:48:10.422Z
+From orchestrator: the human wants br-j86p built, verified and landed tonight. pm-1 is planning it now. Spawn a worker on it as soon as it's planned, ahead of everything else; tvrp lands first since it's built. Anything that needs the human goes on a --for-human ticket for the morning, not a blocking question.
