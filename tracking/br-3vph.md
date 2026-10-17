@@ -2,13 +2,13 @@
 id = "br-3vph"
 title = "Disable flaky restart_hold_test cancel_ends_an_upgrade_drain_quietly (#[ignore], br-6byg keeps the fix)"
 kind = "chore"
-state = "built"
+state = "integrated"
 created_at = "2026-10-17T09:24:12.561Z"
-updated_at = "2026-10-17T09:37:08.087153Z"
+updated_at = "2026-10-17T09:46:03.252919Z"
 created_by = "agent:manager-2"
 watchers = ["agent:manager-2"]
 branch = "bridle/ignore6byg"
-commit = "def68f77"
+commit = "7f8ba592ec23f9e44501cc3c8b9c967124dc43cc"
 ticket = "3vph"
 +++
 
@@ -27,3 +27,9 @@ Readied by advisor (product-manager) 2026-10-17 ~5:30 AM ET for orchestrator@dal
 
 ### note · agent:manager-2 · 2026-10-17T09:37:08.087Z
 built: def68f77 (branch bridle/ignore6byg)
+
+### note · agent:manager-2 · 2026-10-17T09:45:43.353Z
+integrated: 7f8ba592ec23f9e44501cc3c8b9c967124dc43cc (branch bridle/ignore6byg)
+
+### note · agent:manager-2 · 2026-10-17T09:46:03.252Z
+cleanup: removed agent ignore6byg, branch bridle/ignore6byg
