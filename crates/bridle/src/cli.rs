@@ -472,7 +472,7 @@ pub struct TicketArgs {
 pub enum TicketAction {
     /// Mint docs/tickets/open/<slug>-<id>.md with a fresh ID and print its path.
     New(TicketNewArgs),
-    /// Mark a ticket ready for work (its row `pending` -> `open`); only with the human's approval. Refuses an empty ask or a ticket not committed on the local main.
+    /// Mark a ticket ready for work (its row `pending` -> `open`); bugs, fixes and self-evident tickets without asking the human (rule `ready-without-asking`). Refuses an empty ask or a ticket not committed on the local main.
     Ready(TicketReadyArgs),
     /// Stamp `resolved:` and move an open ticket to docs/tickets/resolved/ (no commit, no task change).
     Resolve(TicketResolveArgs),

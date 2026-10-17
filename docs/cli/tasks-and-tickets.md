@@ -12,8 +12,8 @@ pending -> open -> planned -> (ready) -> claimed -> integrated
                       any state -> dropped (reason required)      integrated -> reopened
 ```
 
-- `pending`: just filed. `bridle ticket ready <id>` (`task ready <id>` for a row with no ticket; orchestrator, or an advisor with the
-  human's approval) makes it `open`.
+- `pending`: just filed. `bridle ticket ready <id>` (`task ready <id>` for a row with no ticket; orchestrator, advisor, aide or PdM; see rule
+  `ready-without-asking`) makes it `open`.
 - `open`: the project manager triages it; `bridle task plan <id>` makes it `planned`.
 - `ready` is derived: planned, with no open blockers and no unanswered question.
 - `claimed`: a worker holds it under a lease renewed by the agent's activity; a lapsed
@@ -41,7 +41,7 @@ the frontmatter):
 ```
 bridle ticket new "title" --kind feature [--body-file F]
 bridle ticket new --from-task <task-id>     # a task that needs design discussion
-bridle ticket ready <id>                    # mark a committed ticket with an ask ready (human's approval)
+bridle ticket ready <id>                    # mark a committed ticket with an ask ready (rule `ready-without-asking`)
 bridle ticket set <id> <field> <value>
 bridle ticket resolve <id>
 bridle ticket check

@@ -325,7 +325,7 @@ bridle workflow spec coverage [--root DIR] [--tests DIR ...] [--require-all] [--
                                              and the unbound list as 'file:line: s-id title'; exits 1
                                              with --require-all if any unbound (default exit 0); local
                                              only, no daemon call
-bridle ticket new "<title>" --kind <kind> [--repos a,b] [--blocked-by ids] [--related ids] [--theme slug] [--body t | --body-file f] [--for-human [--priority P]]   mints
+bridle ticket new "<title>" --kind <kind> [--repos a,b] [--blocked-by ids] [--related ids] [--theme slug] [--body t | --body-file f] [--for-human [--priority P]]   mints (without a body, warns on stderr that the ticket cannot be readied until its ask is written under `## The ask`)
                                              `docs/tickets/open/<slug>-<id>.md` (repo root found via git): a
                                              fresh 4-character ID unique across `open/` and `resolved/`,
                                              frontmatter id, title, kind (required, no default: the task kinds), created (UTC date), created_by (the calling principal, optional; omitted when no daemon answers), repos (default: the
@@ -350,8 +350,8 @@ bridle ticket new --from-task <task-id> [--kind k] [title]   as `ticket new`, fr
                                              Refused when the row's `ticket` already has a file
                                              (re-linking would orphan the row; br-mggk)
 bridle ticket ready <id>                     marks the ticket's row ready (`pending` -> `open`; the PM plans only open
-                                             rows). Taken only with the human's approval (orchestrator or an advisor in
-                                             a conversation with them; a manager for its own small fix). Refuses an
+                                             rows). Bugs, fixes and self-evident tickets are readied without asking the
+                                             human; the rest wait for them (rule `ready-without-asking`). Refuses an
                                              empty `## The ask` and a ticket file not in the tip of local `main`
                                              (commit it first; k7tm's race fix); needs a daemon; prints the task id. A ticket
                                              file with no row gets one filed from its title and kind; a pending row is

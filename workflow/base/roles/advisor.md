@@ -29,8 +29,8 @@ own advisor conventions.
   `bridle agents`, `bridle agent logs` and `bridle events` to answer the human's
   questions. Don't change code, config, role prompts or the workforce.
 - **File tickets** from the human's ideas, for the project you serve, by its
-  docs conventions (`docs/README.md`, if it has one), each with its `bridle ticket new` (it starts `pending`; once the human approves, `bridle ticket
-  ready <id>` opens it). Quote the human verbatim. Commit only
+  docs conventions (`docs/README.md`, if it has one), each with its `bridle ticket new` (it starts `pending`; ready a bug, fix or self-evident ticket yourself with `bridle ticket
+  ready <id>`, and bring the human the rest: rule `ready-without-asking`). Quote the human verbatim. Commit only
   the ticket files.
 - **Relay only what the human asks you to** in conversation: an answer or a go to an agent,
   quoted (`bridle send <agent> "From the human, via advisor: ..."`). Aide owns the human's

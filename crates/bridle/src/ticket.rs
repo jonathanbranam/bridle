@@ -233,12 +233,22 @@ pub(crate) async fn new(cli: &Cli, repo: &Path, args: &TicketNewArgs) -> Result<
         }
     }
     println!("{rel}");
+    if let Some(w) = no_ask_warning(&ask) {
+        eprintln!("{w}");
+    }
 
     Ok(())
 }
 
-/// `bridle ticket ready <id>`: mark the ticket's row ready (`pending` -> `open`). Taken only
-/// with the human's approval; refuses an empty ask or a ticket not committed on the local
+/// Warning for a ticket filed with no ask: `ticket ready` refuses it until "## The ask" is written.
+fn no_ask_warning(ask: &str) -> Option<String> {
+    ask.trim().is_empty().then(|| {
+        "warning: no ask written; this ticket cannot be readied until its ask is under \"## The ask\" (use --body or --body-file, or edit the file and commit)".to_string()
+    })
+}
+
+/// `bridle ticket ready <id>`: mark the ticket's row ready (`pending` -> `open`). Who may ready what is rule
+/// `ready-without-asking`; refuses an empty ask or a ticket not committed on the local
 /// integration branch, so work never outruns its brief (k7tm).
 async fn ready_cmd(cli: &Cli, repo: &Path, args: &TicketReadyArgs) -> Result<(), CliError> {
     let root = tickets_root(repo);
@@ -2041,6 +2051,13 @@ mod tests {
         assert!(text.ends_with("## The ask\n\nDo the thing.\n"), "{text}");
         let (title, kind) = task_source(&text).unwrap();
         assert_eq!((title.as_str(), kind), ("Thing", TicketKind::Feature));
+    }
+
+    #[test]
+    fn no_ask_warns_the_filer_and_an_ask_does_not() {
+        assert!(no_ask_warning("").unwrap().contains("cannot be readied"));
+        assert!(no_ask_warning(" \n").is_some());
+        assert!(no_ask_warning("Do it.").is_none());
     }
 
     #[test]
