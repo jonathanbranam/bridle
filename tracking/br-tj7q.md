@@ -4,7 +4,7 @@ title = "Change stages on every ticket: attachments, proposal/design/specs/tasks
 kind = "epic"
 state = "pending"
 created_at = "2026-10-17T02:23:44.883Z"
-updated_at = "2026-10-17T19:29:21.704819Z"
+updated_at = "2026-10-17T19:37:58.839638Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
@@ -190,3 +190,10 @@ The human, 2026-10-17 ~3:25 PM ET, to advisor (tj7q), on open question 6 (who st
 > I think what we're saying is that an unclaimed ticket waiting for a proposal should go. The bridle should notice that transition and immediately send it to a background worker to get done.
 
 advisor (tj7q): settled as stated; design Q3-A (daemon notifies the PM) is overturned in favour of the rejected Q3-B (bridle spawns the writer). Body updated; follow-up questions added (which role writes, how a stage is marked done, the filer's claim, revisions after the human asks for changes).
+
+### note · external:advisor/tj7q · 2026-10-17T19:37:58.839Z
+The human, 2026-10-17 ~3:45 PM ET, to advisor (tj7q), on open question 6 (which agent writes the stages), after naming options (preparer, shaper, tech-lead, refiner, analyst, change-author, designer), verbatim:
+
+> Yeah, I think that's good because that's originally what I thought of as the designer: to write the tickets. Later, we'll have a UI designer. That's okay. That'll be separate, and I'm okay adding UI to the front of designer. It is very short and understandable, so I'm good with that.
+
+Settled: the existing `designer` role (workflow/base/roles/designer.md) writes every stage in MVP; its role file widens from "proposal into the ticket" to all four stages, the stage rule supplying each stage's specifics; it still builds nothing. A future UI designer role will be `ui-designer`.
