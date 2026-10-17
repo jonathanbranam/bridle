@@ -143,6 +143,10 @@ mod tests {
         ("stop-check", Daemon),
         ("arch-guard", NoProject("reads the cwd's repo")),
         ("kill-guard", NoProject("reads only the hook's stdin")),
+        (
+            "link-check",
+            NoProject("reads the cwd's repo and the hook's stdin"),
+        ),
         ("orchestrator", Daemon),
         ("focus", NoProject("the human's own focus gate")),
         ("wait-for-wake", Daemon),

@@ -163,3 +163,48 @@ pub(super) fn kill_guard() -> Result<(), CliError> {
     }
     Ok(())
 }
+
+/// Claude Code's Stop hook for the orchestrator, advisor and aide sessions (ticket 9dcz): blocks
+/// once when the reply names task or ticket IDs without a link (rule `link-ids-for-the-human`).
+/// Allows (prints nothing) on the second pass, with no `public_url`, with nothing to flag, and on
+/// any error or after 5 s.
+pub(super) async fn link_check(cli: &Cli) -> Result<(), CliError> {
+    let input: serde_json::Value = std::io::read_to_string(std::io::stdin())
+        .ok()
+        .and_then(|s| serde_json::from_str(&s).ok())
+        .unwrap_or(serde_json::Value::Null);
+    if input["stop_hook_active"].as_bool().unwrap_or(false) {
+        return Ok(());
+    }
+    let Some(text) = input["last_assistant_message"].as_str() else {
+        return Ok(());
+    };
+    let work = async {
+        let repo = crate::ticket::repo_root().ok()?;
+        let base =
+            bridle_daemon::config::ui_base_url(&bridle_api::discovery::bridle_home(), Some(&repo))
+                .ok()??;
+        let prefix = crate::ticket::own_prefix(cli, &repo).await.ok()?;
+        let known = crate::link_check::ticket_ids(&repo);
+        let ids = crate::link_check::unlinked_ids(text, &prefix, |id| known.contains(id));
+        if ids.is_empty() {
+            return None;
+        }
+        let mut links = Vec::new();
+        for id in ids {
+            let target = if crate::ticket::is_bare_id(&id) {
+                format!("{prefix}-{id}")
+            } else {
+                id.clone()
+            };
+            let url =
+                crate::link::url(&base, &target, || crate::project::resolve(cli), |_| None).ok()?;
+            links.push((id, url));
+        }
+        Some(crate::link_check::reason(&links))
+    };
+    if let Ok(Some(reason)) = tokio::time::timeout(std::time::Duration::from_secs(5), work).await {
+        println!("{}", crate::stop_check::block_json(&reason));
+    }
+    Ok(())
+}

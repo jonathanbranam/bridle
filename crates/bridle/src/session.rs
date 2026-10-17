@@ -23,9 +23,8 @@ const FOCUS_GATE: &str =
     r#""UserPromptSubmit":[{"hooks":[{"type":"command","command":"bridle focus gate"}]}]"#;
 
 /// The Stop hook records when the agent finishes replying, the other end of the human's reading
-/// time (ticket u6w9).
-const REPLY_HOOK: &str =
-    r#""Stop":[{"hooks":[{"type":"command","command":"bridle focus reply"}]}]"#;
+/// time (ticket u6w9), and reminds once to link the IDs it named (ticket 9dcz).
+const REPLY_HOOK: &str = r#""Stop":[{"hooks":[{"type":"command","command":"bridle focus reply"},{"type":"command","command":"bridle hook link-check","timeout":5}]}]"#;
 
 /// The orchestrator restarts the daemon itself (its role), which auto mode otherwise refuses
 /// (docs/context/auto-mode-blocks.md). Merged into LEAN's permissions: a second key would replace them.
@@ -945,6 +944,8 @@ mod tests {
     fn session_settings_have_the_reply_hook() {
         for s in [orchestrator_settings(), advisor_settings()] {
             assert!(s.contains("bridle focus reply"));
+            assert!(s.contains("bridle hook link-check"));
+            serde_json::from_str::<serde_json::Value>(&s).expect("json");
         }
     }
 

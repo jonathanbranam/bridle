@@ -218,6 +218,7 @@ bridle mail install [--force]                 write a launchd plist (macOS, `dev
 bridle mail uninstall                        remove that file, print the unload command
 bridle orchestrator wait-for-wake [--timeout SECS]                  the orchestrator's background watcher: waits for a wake condition, prints it and exits 0 (6 with the reason on stderr when the daemon is restarting or shutting down; `nothing` at the timeout, default and cap 6900 s); external:orchestrator only
 bridle hook arch-guard                      Claude Code PreToolUse hook: blocks design/architecture/ edits outside an arch-revision task
+bridle hook link-check                      Claude Code Stop hook (orchestrator, advisor, aide sessions): once per reply, asks the agent to link task/ticket IDs it named without a link
 bridle hook kill-guard                      Claude Code PreToolUse hook (Bash): refuses kill-by-name (pgrep | xargs kill, kill $(pgrep), pkill in a compound command)
 bridle hook stop-check                      Claude Code Stop hook for the worker role; refuses to stop
                                              with an unreleased claim and no thread entry since claiming
@@ -975,6 +976,15 @@ bridle ticket comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain com
   `pkill *`/`killall *` are also in every role's `disallowed_tools` and the session settings' deny list; the
   hook covers what those prefix rules miss. `kill <pid>`, `kill $!` and `kill %1` are allowed.
   Rule `no-kill-by-name`; ticket 75h2.
+- **`link-check`** is Claude Code's `Stop` hook, installed with `bridle focus reply` in the
+  orchestrator, advisor and aide session settings (`REPLY_HOOK` in `session.rs`, `timeout` 5 s;
+  ticket 9dcz, rule `link-ids-for-the-human`). It reads `last_assistant_message` and blocks once
+  with the IDs and their `bridle link` URLs when the reply names IDs outside any Markdown link,
+  `[[wiki]]` link or URL. Counted: the project's task IDs (`br-xxxx`) always, and a bare 4-character
+  ID only when it is in the ID alphabet and a file in `docs/tickets/open` or `resolved` ends in it.
+  Skipped: code, paths, longer words, capitals. Allows (prints nothing) on `stop_hook_active`, with
+  no `[gateway] public_url`, with nothing to flag, and on any error or timeout. It does not see
+  `bridle send` or comment text.
 - **`stop-check`** is Claude Code's `Stop` hook, registered only for the worker role
   ([[docs/design/coordination#How agents actually hear things (Claude Code integration)|coordination.md]],
   [[docs/spikes/05-stop-hook-findings|spike 05]]). It reads the hook's JSON on stdin; if

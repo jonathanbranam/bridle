@@ -15,6 +15,7 @@ mod init;
 mod kill_guard;
 mod launchd;
 mod link;
+mod link_check;
 mod mail_install;
 mod migrate;
 mod orchestrator;

@@ -221,6 +221,10 @@ pub enum Command {
     /// `kill $(pgrep ...)`, `pkill` inside a compound command). Never fails.
     #[command(hide = true)]
     KillGuard,
+    /// Claude Code's Stop hook for the interactive sessions: once per reply, asks the agent to
+    /// link task and ticket IDs it named without a link. Never blocks twice; any error allows.
+    #[command(hide = true)]
+    LinkCheck,
     /// The orchestrator's supervision hooks (docs/design/agent-host/orchestrator-supervision.md).
     Orchestrator(OrchestratorArgs),
     /// Print the bridle UI link for a ticket ID, a document path or a spec ID; nothing when no
@@ -371,6 +375,8 @@ pub enum HookAction {
     ArchGuard,
     /// Claude Code's PreToolUse hook refusing kill-by-name in Bash.
     KillGuard,
+    /// Claude Code's Stop hook reminding once to link ticket IDs.
+    LinkCheck,
 }
 
 #[derive(Debug, Subcommand)]

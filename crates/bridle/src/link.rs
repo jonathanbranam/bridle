@@ -25,7 +25,7 @@ fn encode(s: &str, keep_slash: bool) -> String {
 }
 
 /// The URL for `target` under `base`. A spec ID needs `spec_path` to find the file it lives in.
-fn url(
+pub(crate) fn url(
     base: &str,
     target: &str,
     project: impl FnOnce() -> Result<String, CliError>,
