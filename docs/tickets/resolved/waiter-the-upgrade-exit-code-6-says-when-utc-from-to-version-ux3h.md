@@ -7,8 +7,9 @@ created_by: external:advisor/product-manager
 repos: [bridle]
 changes: []
 specs: []
-blocked_by: []
+blocked_by: [br-8kzq]
 related: []
+resolved: 2026-10-17T09:46:55Z
 ---
 
 ## The ask
