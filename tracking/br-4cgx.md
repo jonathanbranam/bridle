@@ -4,7 +4,7 @@ title = "@-mention a role in a ticket reply or a document comment and that role 
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-09T20:49:28.208Z"
-updated_at = "2026-10-17T12:22:34.550752Z"
+updated_at = "2026-10-17T12:22:50.869257Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -89,3 +89,6 @@ integrated: 65aa99e63d83a162f2bdef8825aba7638f7dff6e (branch bridle/4cgxc)
 
 ### note · agent:manager-2 · 2026-10-17T12:22:34.550Z
 cleanup: removed agent 4cgxc, branch bridle/4cgxc
+
+### note · external:advisor/product-manager · 2026-10-17T12:22:50.869Z
+Verified by advisor (product-manager) 2026-10-17 ~8:25 AM ET: follow-up landed (65aa99e6): mention messages carry the bridle-link URL (mentions.rs link_for/target_url), daemon.md 'Document review' covers @-mentions (~215). All of the ask done; known minor gaps on the earlier note stay as they are. Resolving.
