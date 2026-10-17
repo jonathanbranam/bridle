@@ -13,6 +13,9 @@ related: []
 
 ## The ask
 
+What the title says; details below and on the thread. Readied 2026-10-17 under the human's rule
+(br-mhjn): bugs, fixes and chores go through without asking.
+
 ## What happened
 
 CI run https://github.com/jonathanbranam/bridle/actions/runs/38654228501 (main, 8edb2bdc "Release 0.7.3", 2026-10-14 23:35Z) failed on ubuntu-latest only:
