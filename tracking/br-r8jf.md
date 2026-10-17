@@ -4,7 +4,7 @@ title = "Three small robustness fixes: pair-mint --replace-direct order, stop_ch
 kind = "fix"
 state = "built"
 created_at = "2026-10-16T21:14:33.963Z"
-updated_at = "2026-10-17T05:28:32.040863Z"
+updated_at = "2026-10-17T05:28:36.036317Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -25,3 +25,6 @@ The human, 2026-10-16 ~5:35 PM ET (via aide), approving tvrp, whce, 8kzq, 9qws, 
 
 ### note · agent:r8jf · 2026-10-17T05:28:32.040Z
 built: 763037e1 (branch bridle/r8jf)
+
+### note · agent:r8jf · 2026-10-17T05:28:36.036Z
+done: pair-mint --direct revokes the visitor token after the mint (+test), stall-check file read in spawn_blocking, sync-never-removes-[mail] documented as intended; just check exit 0, 1787 tests passed (6 skipped), commit 763037e1 (main already merged). Note: stop_check_running has no ps, only file reads; and the same-name revoke before mint stays (daemon refuses a mint over an active token). One earlier run failed restart_land_test a_land_past_the_cap... under load; passes alone and in the re-run.
