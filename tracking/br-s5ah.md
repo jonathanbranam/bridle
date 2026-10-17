@@ -2,13 +2,14 @@
 id = "br-s5ah"
 title = "A daemon without an aide leaves its orchestrator no route to the human"
 kind = "fix"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-06T23:09:15.193Z"
-updated_at = "2026-10-17T21:21:04.102325Z"
+updated_at = "2026-10-17T22:48:46.986848Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "external:advisor/product-manager",
+    "agent:ws5ah",
 ]
 ticket = "s5ah"
 +++

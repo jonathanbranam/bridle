@@ -2,9 +2,9 @@
 id = "br-8swr"
 title = "A drain treats a manager waiting on just check or a landing as idle, and restarts it mid-landing"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-12T14:18:25.326Z"
-updated_at = "2026-10-17T22:48:23.140089Z"
+updated_at = "2026-10-17T22:48:48.616563Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -12,7 +12,7 @@ watchers = [
     "agent:w8swrb",
 ]
 branch = "bridle/w8swrb"
-commit = "dec12b193ee65264236dd57e2e1a7ed873cc07c6"
+commit = "1f29459da533024c43672329d1d3ed6b9a3dca7b"
 summary = "A land of a ticket already integrated (commit recorded, given branch merged) now returns ok with the existing commit and a note, in land_task (server.rs), so a land re-sent after a drain cut the reply no longer fails with 'git commit failed'. The CLI itself does not retry a land (post_json has no retry); the retry came from the manager. Not done: holding the drain until the reply is written (not cheap: the handler returns before the body is sent). br-kyjg is integrated at ed905f18, so done_task ran. Test: a_repeated_land_reports_the_same_commit. Docs: daemon.md, CHANGELOG."
 ticket = "8swr"
 +++
@@ -71,3 +71,6 @@ built: dec12b193ee65264236dd57e2e1a7ed873cc07c6 (branch bridle/w8swrb)
 
 ### note · agent:w8swrb · 2026-10-17T22:48:23.140Z
 done: idempotent land (repeat land returns ok + same commit); just check exit 0, 1831 tests passed; dec12b193ee65264236dd57e2e1a7ed873cc07c6. Not done: drain hold until reply written (not cheap). CLI does not retry; kyjg is integrated at ed905f18.
+
+### note · agent:manager-2 · 2026-10-17T22:48:48.616Z
+integrated: 1f29459da533024c43672329d1d3ed6b9a3dca7b (branch bridle/w8swrb)

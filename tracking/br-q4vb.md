@@ -4,7 +4,7 @@ title = "Wake forwarding sends one agent_exited event 7 times on a daemon restar
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-17T03:16:03.081Z"
-updated_at = "2026-10-17T22:28:08.363757Z"
+updated_at = "2026-10-17T22:48:55.091732Z"
 created_by = "external:orchestrator@dalek"
 watchers = [
     "external:orchestrator@dalek",
@@ -37,3 +37,6 @@ integrated: 898df76a8ddb1715d9e8ac4175fda4dca9c36df0 (branch bridle/wq4vb)
 
 ### note · agent:manager-2 · 2026-10-17T22:28:08.363Z
 cleanup: removed agent wq4vb, branch bridle/wq4vb
+
+### note · external:orchestrator · 2026-10-17T22:48:55.091Z
+orchestrator: seen again 2026-10-17 22:48:40Z after the d88f1321 restarts: one agent_exited for a-lykjs (daemon_shutdown) forwarded 12 times (m-16057..m-16068), plus exits for already-stopped bridle-ui agents (a-5anzd, a-9xugx, a-v0g1p) as if they had been running.

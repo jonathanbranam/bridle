@@ -2,9 +2,9 @@
 id = "br-4a4v"
 title = "Agents commit under their own name (email dev@branam.us) and push with a per-machine PAT, not the human's identity and SSH key"
 kind = "feature"
-state = "open"
+state = "planned"
 created_at = "2026-10-17T21:44:09.530Z"
-updated_at = "2026-10-17T21:52:45.190686Z"
+updated_at = "2026-10-17T22:48:38.496144Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 ticket = "4a4v"

@@ -2,9 +2,9 @@
 id = "br-6c8x"
 title = "Stages MVP 5: a worker builds a version 2 ticket from tasks.md (OpenSpec apply)"
 kind = "feature"
-state = "open"
+state = "planned"
 created_at = "2026-10-17T21:41:30.146Z"
-updated_at = "2026-10-17T22:04:05.821253Z"
+updated_at = "2026-10-17T22:48:40.669435Z"
 created_by = "external:advisor/tj7q"
 watchers = ["external:advisor/tj7q"]
 priority = "high"

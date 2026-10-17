@@ -2,9 +2,9 @@
 id = "br-quvh"
 title = "Stages MVP 2: stage rules and templates, and bridle ticket next"
 kind = "feature"
-state = "open"
+state = "planned"
 created_at = "2026-10-17T21:41:28.365Z"
-updated_at = "2026-10-17T22:04:05.723275Z"
+updated_at = "2026-10-17T22:48:40.143561Z"
 created_by = "external:advisor/tj7q"
 watchers = ["external:advisor/tj7q"]
 priority = "high"

@@ -2,9 +2,9 @@
 id = "br-9mqh"
 title = "Stages MVP 1: ticket version 2, the stages schema, the proposal section and the stage folder"
 kind = "feature"
-state = "open"
+state = "planned"
 created_at = "2026-10-17T21:41:27.823Z"
-updated_at = "2026-10-17T22:04:05.691568Z"
+updated_at = "2026-10-17T22:48:39.794011Z"
 created_by = "external:advisor/tj7q"
 watchers = ["external:advisor/tj7q"]
 priority = "high"
