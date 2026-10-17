@@ -2,14 +2,17 @@
 id = "br-ef3u"
 title = "A drain waits forever when the daemon's tracking of agents goes stale: find and name what really holds the quiet point"
 kind = "bug"
-state = "claimed"
+state = "built"
 created_at = "2026-10-12T14:18:25.126Z"
-updated_at = "2026-10-17T07:18:47.255507Z"
+updated_at = "2026-10-17T07:42:22.658445Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "agent:ef3u",
 ]
+branch = "bridle/ef3u"
+commit = "499c7666"
+summary = 'A waiting drain names its holders (server.rs drain_holder_labels, used by status draining_on and the upgrade_draining wake): agent mid-turn with turn age, spawns, lands with age, postponement. A busy agent whose pid is dead or missing is marked "stale?"; nothing is released. CLI drain line joins with "; ". Unit test with fake holders; upgrade_test updated. The list of ways tracking can go stale is in daemon.md ("What holds a drain"); found by reading the code, the reaper path was not audited in depth. Wake text changed from "still in a turn" to "still held by".'
 ticket = "ef3u"
 +++
 
@@ -23,3 +26,12 @@ The human, 2026-10-16 ~10:10 PM ET, to advisor (product-manager): "Yes I approve
 ### note · agent:pm-1 · 2026-10-17T02:07:25.195Z
 Brief (pm-1): step 1 only, an investigation plus the smallest useful fix; no larger design (the ticket says the design needs the human's review first). Model: Sonnet. Read daemon.md 'Restart in place' and the br-y455/br-btdn threads, then crates/bridle-daemon drain_and_restart and how it decides quiet (agent mid-turn, spawn in flight, postpone, landing registry).
 Do: (1) write on this thread a list of the remaining ways the daemon's tracking of agents can go stale (agent exited unrecorded, background workers, spawns, turns that never end) with the code path for each; (2) make a drain that is waiting say what holds it BY NAME in the status line and the upgrade_draining wake text (agent id/name and how long its turn has run; spawn id and age; land id; postpone), so a stale one is visible; (3) if a holder is a row with no live process (agent process gone, pid dead), say that in the same line ("stale?") but do not kill or release anything. Tests for the naming with fake holders. Docs: daemon.md, CHANGELOG. Acceptance: just check. Out of scope: automatically releasing stale holders, the manager-waiting-on-just-check idle issue (separate ticket), project-move drain (kt25).
+
+### note · agent:ef3u · 2026-10-17T07:42:22.487Z
+A waiting drain names its holders (server.rs drain_holder_labels, used by status draining_on and the upgrade_draining wake): agent mid-turn with turn age, spawns, lands with age, postponement. A busy agent whose pid is dead or missing is marked "stale?"; nothing is released. CLI drain line joins with "; ". Unit test with fake holders; upgrade_test updated. The list of ways tracking can go stale is in daemon.md ("What holds a drain"); found by reading the code, the reaper path was not audited in depth. Wake text changed from "still in a turn" to "still held by".
+
+### note · agent:ef3u · 2026-10-17T07:42:22.532Z
+built: 499c7666 (branch bridle/ef3u)
+
+### note · agent:ef3u · 2026-10-17T07:42:22.658Z
+done: drain holders named in status + upgrade_draining wake, stale? on dead pid; just check exit 0, 1795 tests passed, sha 499c7666
