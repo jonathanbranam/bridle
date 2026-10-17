@@ -4,7 +4,7 @@ title = "A worker was spawned for a ticket inside its settle period, before it w
 kind = "bug"
 state = "built"
 created_at = "2026-10-16T01:56:40.359Z"
-updated_at = "2026-10-17T20:37:39.461564Z"
+updated_at = "2026-10-17T20:38:02.816551Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -28,3 +28,6 @@ built: 8f9e62f8 (branch bridle/wh6h8)
 
 ### note · agent:wh6h8 · 2026-10-17T20:37:39.461Z
 done: worker spawn --ticket refused unless planned/claimed (settle gate already existed); just check exit 0, 1829 tests passed, ran on pre-merge commit (main merge was docs only); 8f9e62f8
+
+### note · external:orchestrator · 2026-10-17T20:38:02.816Z
+orchestrator review: looks right. One edge, manager's call (not a blocker): a ticket in Built (sent back for rework whose worker is gone) is now refused a fresh worker. If that path is used, add TicketState::Built to the allowed set. Otherwise land as is.
