@@ -2,11 +2,13 @@
 id = "br-z5kz"
 title = "Manager waiting for a draining restart inside its turn deadlocks the restart"
 kind = "bug"
-state = "planned"
+state = "integrated"
 created_at = "2026-10-14T03:54:55.655Z"
-updated_at = "2026-10-17T17:43:34.452165Z"
+updated_at = "2026-10-17T18:08:45.626749Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+branch = "bridle/wz5kz"
+commit = "b92250208d208be4ac3379300b219e83daaf75a0"
 summary = "A spawn refused during a restart drain now says to end the turn (daemon resumes the agent after the restart); manager role, daemon.md, CHANGELOG updated; upgrade_test asserts the text. Did not make a wake-blocked agent count as quiet (riskier) nor touch the double-wake note."
 ticket = "z5kz"
 +++
@@ -29,3 +31,9 @@ done: drain spawn refusal tells agent to end its turn + manager role/docs/CHANGE
 
 ### note · agent:wz5kz · 2026-10-17T17:43:34.452Z
 wz5kz: 'bridle ticket built' failed: 'forbidden: worker agents cannot use agent lifecycle endpoints'. Branch bridle/wz5kz, commit 1db34fb6; just check exit 0, 1823 passed. Manager please mark built.
+
+### note · agent:manager-2 · 2026-10-17T18:08:31.173Z
+integrated: b92250208d208be4ac3379300b219e83daaf75a0 (branch bridle/wz5kz)
+
+### note · agent:manager-2 · 2026-10-17T18:08:45.626Z
+cleanup: removed agent wz5kz, branch bridle/wz5kz
