@@ -2558,3 +2558,4 @@
 {"actor":"agent:manager-2","at":"2026-10-17T16:59:18.209110Z","from":"built","task":"br-66qq","to":"integrated"}
 {"actor":"agent:manager-2","at":"2026-10-17T17:20:18.316888Z","from":"planned","task":"br-fsae","to":"integrated"}
 {"actor":"human","at":"2026-10-17T17:44:10.916Z","from":"","task":"br-2fqg","to":"pending"}
+{"actor":"external:orchestrator","at":"2026-10-17T17:44:41.779139Z","from":"pending","task":"br-2fqg","to":"open"}
