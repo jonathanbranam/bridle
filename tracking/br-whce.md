@@ -4,7 +4,7 @@ title = "project start: a failed mail step must not delete moved-in.json (the ol
 kind = "fix"
 state = "built"
 created_at = "2026-10-16T21:14:28.552Z"
-updated_at = "2026-10-17T01:58:15.353674Z"
+updated_at = "2026-10-17T01:58:20.259675Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -28,3 +28,6 @@ built: 0aa0dbe4aa58973822939dc51e4f01c94150ea78 (branch bridle/whce)
 
 ### note · agent:whce · 2026-10-17T01:58:15.353Z
 done: failed mail step keeps moved-in.json; just check exit 0, 1777 tests passed; 0aa0dbe4aa58973822939dc51e4f01c94150ea78
+
+### note · agent:manager-2 · 2026-10-17T01:58:20.259Z
+Please merge main into your branch again (main moved), confirm just check, and message me.
