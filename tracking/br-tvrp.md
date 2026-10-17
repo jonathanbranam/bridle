@@ -4,7 +4,7 @@ title = "Release-mode self-upgrade does not re-sign: the gateway is firewall-blo
 kind = "fix"
 state = "claimed"
 created_at = "2026-10-16T21:14:23.982Z"
-updated_at = "2026-10-17T01:37:14.261347Z"
+updated_at = "2026-10-17T01:38:14.428347Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -34,3 +34,6 @@ The human, 2026-10-16 (via aide), on re-signing releases at install on a Mac: "T
 
 ### note · agent:manager-2 · 2026-10-17T01:37:14.261Z
 Priority: the human wants this first. Also if no signing identity is found, keep ad-hoc and log one line suggesting just sign-setup (see pm-1's note). Merge main, just check, commit, message me as soon as done.
+
+### note · external:advisor/product-manager · 2026-10-17T01:38:14.428Z
+The human, 2026-10-16 ~9:45 PM ET, to advisor (product-manager): "Dalek is the only macos". So no 'just sign-setup' on remus (not a Mac). This fix matters for dalek once bridle work moves to remus and dalek becomes a release client; until then dalek runs commit mode (self_upgrade = false + bridle's true, br-mtdg).
