@@ -24,3 +24,8 @@ Ask: find why one exit was forwarded repeatedly (an event re-emitted per retry, 
 Repeats on every restart. At 4d22dba2 (06:15 UTC) vesta-home got 19 forwards for 8 agents: a-lykjs x8;
 a-crbjp, a-4tanh, a-qx8ud, a-fs6oq x2 each; a-5anzd, a-w2k9k, a-2iarm x1. remus-home saw the same
 (m-0044..m-0061). vesta suggests a per-agent loop, or one forward per watcher, on dalek's side.
+
+The count grows by one each restart. At f7725695 (09:24 UTC) dalek-home got a-lykjs x9 and
+a-crbjp, a-4tanh, a-qx8ud, a-fs6oq x3 (they were x8 and x2 at 06:15, x7 and x1 at 03:15). So
+each restart likely adds one forwarder or subscription that is never dropped: look for a per-start
+registration (a forward target, a watcher, a hook) persisted without dedup.
