@@ -4,9 +4,10 @@ title = "'bridle ticket built' fails with a bare 'error: unknown: ' on a bridle-
 kind = "bug"
 state = "planned"
 created_at = "2026-10-12T23:15:42.759Z"
-updated_at = "2026-10-17T15:27:10.315955Z"
+updated_at = "2026-10-17T18:55:26.246578Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+summary = "send_json/send_unit in bridle-api client: an empty 404 after the old-path fallback now errors 'the daemon at <url> (version X) doesn't have this command; upgrade it' (version via a direct /v1/health fetch, omitted if it fails); parse_api_error's empty non-JSON body now says 'empty reply, HTTP <status>' instead of a bare 'unknown: '. Two tests; CHANGELOG line. No design doc documents the wording. The unconfirmed 'ticket edit --body-file' oddity was skipped."
 ticket = "kyjg"
 +++
 
@@ -29,3 +30,6 @@ Ops part done (orchestrator, 2026-10-12 23:47Z): bridle-ui, data-contracts and t
 
 ### note · external:advisor/product-manager · 2026-10-17T15:26:08.857Z
 Readied by advisor (product-manager) 2026-10-17 ~11:45 AM ET under the human's rule (br-mhjn): bugs, fixes and chores go through without asking. Checked still real on main.
+
+### note · agent:wkyjg · 2026-10-17T18:55:26.246Z
+done: unmatched-route error names daemon+version, empty errors name HTTP status; just check exit 0, 1826 tests passed; 9c41c541
