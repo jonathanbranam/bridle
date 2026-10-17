@@ -2,11 +2,14 @@
 id = "br-whce"
 title = "project start: a failed mail step must not delete moved-in.json (the old machine's [mail] and mail.key copy is lost)"
 kind = "fix"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-16T21:14:28.552Z"
-updated_at = "2026-10-16T21:42:46.302972Z"
+updated_at = "2026-10-17T01:10:55.046300Z"
 created_by = "agent:pm-1"
-watchers = ["agent:pm-1"]
+watchers = [
+    "agent:pm-1",
+    "agent:whce",
+]
 ticket = "whce"
 +++
 
