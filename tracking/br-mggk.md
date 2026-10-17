@@ -2,16 +2,16 @@
 id = "br-mggk"
 title = "ticket new: --project writes into the caller's clone, a refused mint leaves a file, --from-task re-links an existing row"
 kind = "fix"
-state = "built"
+state = "integrated"
 created_at = "2026-10-17T03:56:57.054Z"
-updated_at = "2026-10-17T06:02:16.647758Z"
+updated_at = "2026-10-17T06:20:26.714827Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "agent:mggk",
 ]
 branch = "bridle/mggk"
-commit = "b2b5868d"
+commit = "75355ad6dd28204964011fd002f109623f53b655"
 summary = "ticket new (crates/bridle/src/ticket.rs): --project X from another project's clone is refused (check_project_matches); a refused mint or failed from-task link removes the file (discard_unfiled; the refusal names repos); --from-task refuses a row whose ticket already has a file (check_not_linked), which also covers br-b3ef. Unit tests for each; project_resolution_test's 'names' no longer reads the file since the fake daemon's 500 now leaves none. Docs: cli.md, CHANGELOG. Not done: ticket check naming a row linked to a missing file (optional in b3ef)."
 ticket = "mggk"
 +++
@@ -35,3 +35,6 @@ built: b2b5868d (branch bridle/mggk)
 
 ### note · agent:mggk · 2026-10-17T06:02:16.647Z
 done: ticket new --project refusal, file removed on refused mint, --from-task refuses a linked row (covers b3ef); just check exit 0, 1791 tests passed, b2b5868d
+
+### note · agent:manager-2 · 2026-10-17T06:20:26.714Z
+integrated: 75355ad6dd28204964011fd002f109623f53b655 (branch bridle/mggk)
