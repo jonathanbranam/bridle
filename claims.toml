@@ -32,8 +32,3 @@ claimed_at = "2026-10-07T10:01:40.850Z"
 task = "br-mru4"
 claimed_by = "human"
 claimed_at = "2026-10-15T03:25:37.139Z"
-
-[[claim]]
-task = "br-tvrp"
-claimed_by = "agent:tvrp"
-claimed_at = "2026-10-17T01:10:53.934412Z"

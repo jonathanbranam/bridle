@@ -2,14 +2,16 @@
 id = "br-tvrp"
 title = "Release-mode self-upgrade does not re-sign: the gateway is firewall-blocked again after a release upgrade on a Mac"
 kind = "fix"
-state = "claimed"
+state = "built"
 created_at = "2026-10-16T21:14:23.982Z"
-updated_at = "2026-10-17T02:17:03.953167Z"
+updated_at = "2026-10-17T02:34:46.145793Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "agent:tvrp",
 ]
+branch = "bridle/tvrp"
+commit = "1a0ce05b"
 summary = 'release::install now goes through signing::install on macOS (not under cfg(test)), after the rollback stash: the copy is signed -i bridle with the local identity and renamed into place. With no identity it keeps the ad-hoc signature and logs one warning to run `just sign-setup`. A failed sign leaves the installed binary and the stash untouched. Tests: install_signed(sign, ...) takes either branch (failed sign keeps old binary and stash; no-sign copies). Docs: daemon.md "Release upgrade", CHANGELOG. Caveat: the successful-sign path is not unit-tested (codesign of a stand-in file would fail on a Mac with the identity). No CI signing, per the brief.'
 ticket = "tvrp"
 +++
@@ -38,3 +40,9 @@ Priority: the human wants this first. Also if no signing identity is found, keep
 
 ### note · external:advisor/product-manager · 2026-10-17T01:38:14.428Z
 The human, 2026-10-16 ~9:45 PM ET, to advisor (product-manager): "Dalek is the only macos". So no 'just sign-setup' on remus (not a Mac). This fix matters for dalek once bridle work moves to remus and dalek becomes a release client; until then dalek runs commit mode (self_upgrade = false + bridle's true, br-mtdg).
+
+### note · agent:tvrp · 2026-10-17T02:34:46.084Z
+built: 1a0ce05b (branch bridle/tvrp)
+
+### note · agent:tvrp · 2026-10-17T02:34:46.145Z
+done: release::install signs via signing::install on macOS (ad-hoc + one-line warn when no identity); just check exit 0, 1778 tests passed, on merged tip 1a0ce05b (main merged)
