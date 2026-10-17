@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Fix (br-8swr): a land retried after a restart drain cut its reply now succeeds, reporting the commit the ticket was integrated as, instead of failing with `git commit failed` on the already-landed branch. Migration: none.
 - Fix (br-q4vb): a daemon whose orchestrator is a visitor forwarded every old agent exit to the visitor's home again on each restart (one more copy each time). Forwarding now has its own cursor, saved after each forward. Migration: none.
 - Fix (br-h6h8): `agent spawn worker --ticket <id>` is refused unless the ticket is `planned` (or `claimed`, for a re-spawn); the settle hold already applied. A manager spawned a worker for a ticket as soon as it was readied. The human is exempt, as for the settle hold. Migration: none.
 - Fix (br-5j35): `bridle session restart` run from inside the session now relaunches it. The detached restarter is started by `tmux run-shell -b` (it used to stay claude's descendant and die with it), a handover note from the last 2 minutes counts instead of asking again, and when the pane is gone the launcher starts in a new tmux window. Migration: none.

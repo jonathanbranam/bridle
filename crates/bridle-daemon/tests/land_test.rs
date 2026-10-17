@@ -120,6 +120,27 @@ async fn clean_land_moves_main_and_integrates_the_task() {
 }
 
 #[tokio::test]
+async fn a_repeated_land_reports_the_same_commit() {
+    let (d, _tmp) = start_daemon(None).await;
+    branch_with(&d, "b1", "f.txt", "x\n");
+    let id = task(&d, TicketKind::Feature).await;
+    let first = d
+        .client
+        .land_task(&id, &req("b1", None))
+        .await
+        .expect("land");
+    let main = git(&d.repo, &["rev-parse", "main"]);
+    let again = d
+        .client
+        .land_task(&id, &req("b1", None))
+        .await
+        .expect("repeat land is ok");
+    assert_eq!(again.commit, first.commit);
+    assert_eq!(again.task.state, TicketState::Integrated);
+    assert_eq!(git(&d.repo, &["rev-parse", "main"]), main, "nothing moved");
+}
+
+#[tokio::test]
 async fn conflict_lands_nothing() {
     let (d, _tmp) = start_daemon(None).await;
     branch_with(&d, "b1", "f.txt", "branch\n");

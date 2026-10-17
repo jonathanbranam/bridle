@@ -336,6 +336,12 @@ its row leaving `working` (flagged `stale?`); a turn that never ends (the turn a
 spawn that never returns (bounded, 15 min); a land that never returns (bounded, 2 h); a
 postponement (in memory, expires). Interactive sessions are not counted at all.
 
+A land holds the drain until its handler returns, not until the reply is written, so a restart can
+cut the reply of a land that succeeded. The client then re-sends it; a land of a ticket already
+`integrated` (with its commit recorded, and the given branch merged) answers ok with that commit and
+a note, and changes nothing (br-8swr). `bridle` itself does not retry a land; the retry is the
+manager's.
+
 **Cancel and postpone** (br-cvfu). A drain's quiet point counts a manager waiting on a background
 `bridle ticket land` as idle (br-8swr, the full fix is later), so a restart or self-upgrade can kill
 a land mid-check. `POST /v1/restart/hold` (`bridle daemon restart --cancel` / `--postpone <dur>`; the

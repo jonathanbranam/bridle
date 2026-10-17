@@ -3841,6 +3841,30 @@ async fn land_task(
         .tasks
         .get_task(&id)
         .ok_or_else(|| ApiError::not_found(format!("no such task: {id}")))?;
+    // A land retried after a drain cut the first reply (br-8swr) finds the ticket integrated:
+    // report the commit it landed as, instead of failing on "nothing to commit".
+    if task.state == TicketState::Integrated
+        && let Some(commit) = task.commit.clone()
+    {
+        let merged = match req
+            .branch
+            .as_deref()
+            .map(str::trim)
+            .filter(|b| !b.is_empty())
+        {
+            Some(b) => crate::worktree::is_merged(&state.workspace.repo, b)
+                .await
+                .unwrap_or(false),
+            None => true,
+        };
+        if merged {
+            return Ok(Json(bridle_api::types::LandResult {
+                task,
+                commit,
+                notes: vec!["already integrated: nothing landed this time".to_string()],
+            }));
+        }
+    }
     let branch = match req
         .branch
         .as_deref()
