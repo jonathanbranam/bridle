@@ -42,6 +42,16 @@ The human, 2026-10-16 ~10:25 PM ET, to advisor (product-manager), verbatim:
    becomes part of the project's bridle specs (`design/specs/`, docs/design/specs.md and
    spec-flow.md), so the specs outlive the ticket.
 
+## UI (the human, 2026-10-16)
+
+The human, ~10:30 PM ET, verbatim: "I want UI as part of this. I want attachments as tabs or
+document picker inside a ticket."
+
+6. **The ticket page in bridle-ui shows its attachments**, the stage files among them, as tabs or
+   a document picker inside the ticket (the designer proposes which, or both). The human reads,
+   comments on and approves a stage there. bridle-ui work is part of this epic (child tickets in
+   bridle-ui).
+
 ## Supersedes or absorbs
 
 - The scheduler ladder (roadmap, 2026-10-09), steps 2-8: this epic is the pipeline the ladder
@@ -54,7 +64,7 @@ The human, 2026-10-16 ~10:25 PM ET, to advisor (product-manager), verbatim:
 
 A new ticket gets the four stage files; the human can list the stages to review; agents write
 each stage as it unblocks and wait only on the listed reviews; when the ticket lands its specs
-are in the project's bridle specs. Proven on one real ticket end to end.
+are in the project's bridle specs; the ticket page shows the attachments as tabs or a picker. Proven on one real ticket end to end.
 
 ## First step
 
