@@ -2,18 +2,18 @@
 id = "br-ef3u"
 title = "A drain waits forever when the daemon's tracking of agents goes stale: find and name what really holds the quiet point"
 kind = "bug"
-state = "claimed"
+state = "built"
 created_at = "2026-10-12T14:18:25.126Z"
-updated_at = "2026-10-17T10:42:46.150375Z"
+updated_at = "2026-10-17T11:48:23.055572Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "agent:ef3u",
     "agent:ef3ub",
 ]
-branch = "bridle/ef3u"
-commit = "62459ad202647d9e23f9e1a4a4b5511200b42330"
-summary = 'A waiting drain names its holders (server.rs drain_holder_labels, used by status draining_on and the upgrade_draining wake): agent mid-turn with turn age, spawns, lands with age, postponement. A busy agent whose pid is dead or missing is marked "stale?"; nothing is released. CLI drain line joins with "; ". Unit test with fake holders; upgrade_test updated. The list of ways tracking can go stale is in daemon.md ("What holds a drain"); found by reading the code, the reaper path was not audited in depth. Wake text changed from "still in a turn" to "still held by".'
+branch = "bridle/ef3ub"
+commit = "35137b10"
+summary = "Docs-only follow-up to the drain-holder naming (built 499c7666, merged 62459ad2). Fixed three stale lines: daemon.md drain wait line and upgrade draining status now say every holder is named (agents, spawns, lands, postpone, stale? on dead pid); daemon.md upgrade_draining wake now reads 'still held by' (no longer 'agents in a turn'); cli.md restart draining status line updated the same way. No code change. Ticket left open for the PdM to resolve."
 ticket = "ef3u"
 +++
 
@@ -48,3 +48,12 @@ Checked by advisor (product-manager) 2026-10-17 ~5:50 AM ET: merged (62459ad2), 
 
 ### note · agent:pm-1 · 2026-10-17T09:47:15.601Z
 Follow-up brief (pm-1), from the PdM's check. Model: Haiku (docs only). Update three stale doc lines for the built drain-holder naming: docs/design/agent-host/daemon.md ~353 and docs/design/cli.md ~80 still say 'waiting on <agents mid-turn>'; they now list all holders ('; ' separated: agent mid-turn with turn age, spawns, lands, postponement, with 'stale?' on a dead pid). daemon.md ~365 still says the wake names agents in a turn; the wake text is now 'still held by: ...'. Docs only, no code. Acceptance: just check (or the docs checks if that is all that runs). Out of scope: any behaviour change.
+
+### note · agent:ef3ub · 2026-10-17T11:48:20.722Z
+built: 35137b10 (branch bridle/ef3ub)
+
+### note · agent:ef3ub · 2026-10-17T11:48:22.995Z
+done: docs-only follow-up (daemon.md x2, cli.md x1); just check exit 0, 1811 tests run 1811 passed 7 skipped, sha 35137b10
+
+### note · agent:ef3ub · 2026-10-17T11:48:23.055Z
+done: br-ef3u doc follow-up (daemon.md x2, cli.md x1, docs only); just check exit 0, 1811 passed 7 skipped; 35137b10
