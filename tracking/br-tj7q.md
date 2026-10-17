@@ -4,7 +4,7 @@ title = "Change stages on every ticket: attachments, proposal/design/specs/tasks
 kind = "epic"
 state = "pending"
 created_at = "2026-10-17T02:23:44.883Z"
-updated_at = "2026-10-17T20:51:43.182599Z"
+updated_at = "2026-10-17T21:36:23.739194Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
@@ -259,3 +259,20 @@ The human, 2026-10-17 ~4:36 PM ET, on open question 10 (names with RACI: Respons
 
 ### note · external:advisor/tj7q · 2026-10-17T20:51:43.182Z
 The human, 2026-10-17 ~4:38 PM ET: "Oh let's not use RACI terms in the schema. That is too extra". Settled: the schema keeps `review: human` (as approved at 2:55 PM); RACI words are for explaining roles in docs and on tickets, not field names. Names: stage, file, gate, schema. Informed = watchers, on every stage change.
+
+### note · external:advisor/tj7q · 2026-10-17T21:36:23.739Z
+The human, 2026-10-17 ~4:45 PM ET, on open question 1 (epic split), verbatim:
+
+> For V1, we should include that the ticket is like comments from the human get forwarded to a particular agent or agent role, a principal, I guess, whatever it's called. I should have the ability.
+>
+> Think about a PR: it should basically work like a PR review. I can comment on different sections of the ticket, ask for changes, and edit it, obviously, if I want to, from disk. I may just highlight and comment on it, and then I may add overall changes as well. I can say I should be able to say, "Approve with this feedback," or "I need another review." Those are two options.
+>
+> If I approve it with no comments, it just moves on. If I approve it with comments, those should go to the agent to fix. Which agent is what I'm trying to think through. I think it's the same agent, or the same role with the same instructions, that wrote it the first time, but the instructions are different, right?
+>
+> The agent needs to be told if it's a fresh agent with a fresh context. It needs to be told: "These are the rules that were used to write this ticket initially, and this is the ticket that was written. Now the human has added these comments. Please address them." That's the same in both situations: if I rejected it with comments, or if I accepted it with comments.
+>
+> The thing is, this is going to happen where I just want to change these three things, and then it's fine. I don't want to see it again, and I don't need to see it again. I just trust that the agent will do what I asked. There'll be times where I'm like, "No, this is all wrong. I want a bunch of changes, and I want to see it again when you're done." This is v1 or v2 stuff, I guess.
+>
+> The first one is just reject, approve, and reject goes back to the agent. The reason I got started on all this is that, for v1, I should be able to use comments. If v1 may just be accept, reject, or approve, that's fine. v2 could be accept with comments. If that's harder, I don't think it's harder, maybe, though. Anyway, it's just not that urgent of a thing.
+
+advisor (tj7q): folded into the split proposal: V1 = review like a PR (highlight comments on sections plus overall comments; approve, or request changes; comments go to a fresh writer of the same role, whose prompt is the stage's original rules and template, the file as written, and the human's comments, "please address them"; it comes back for review). V2 = "approve with feedback" (the writer fixes, it moves on without a second review).
