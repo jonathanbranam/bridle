@@ -4,7 +4,7 @@ title = "Change stages on every ticket: attachments, proposal/design/specs/tasks
 kind = "epic"
 state = "pending"
 created_at = "2026-10-17T02:23:44.883Z"
-updated_at = "2026-10-17T21:40:18.440037Z"
+updated_at = "2026-10-17T22:03:59.160243Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
@@ -289,3 +289,6 @@ The human, 2026-10-17 ~4:55 PM ET, on open question 1 (epic split), verbatim:
 > Let's do that: fold that in, and make sure that we add the version 2 stuff and that tickets that are version 2 get handled by the new workflow. Tickets that are version 1 still go through the old workflow, and then we'll revise. I think I would add to the "when done" for that epic that version 2 becomes the default.
 
 Settled: the split (MVP / V1 / V2) and the description. Version 2 is opt-in through the MVP (`ticket new --version 2`); version 1 tickets keep today's workflow untouched; making version 2 the default is the MVP's last child, after the human has tried a version 2 ticket, and is in the MVP's done-when. advisor (tj7q) now rewrites tj7q as the MVP epic, files the sequenced children and the V1/V2 epics (all pending), and updates the roadmap. Nothing readied without the human's go.
+
+### note · external:advisor/tj7q · 2026-10-17T22:03:59.160Z
+The human, 2026-10-17 ~5:15 PM ET: "Yes approved. Let's go". Shared understanding; children 9mqh, quvh, ussh, ewhy, 6c8x readied (human via advisor tj7q). ewk8 (the human's try) and u2r8 (v2 default) stay pending.
