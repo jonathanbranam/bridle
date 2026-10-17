@@ -4,7 +4,7 @@ title = "Change stages on every ticket: attachments, proposal/design/specs/tasks
 kind = "epic"
 state = "pending"
 created_at = "2026-10-17T02:23:44.883Z"
-updated_at = "2026-10-17T19:37:58.839638Z"
+updated_at = "2026-10-17T19:41:09.608796Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
@@ -197,3 +197,16 @@ The human, 2026-10-17 ~3:45 PM ET, to advisor (tj7q), on open question 6 (which 
 > Yeah, I think that's good because that's originally what I thought of as the designer: to write the tickets. Later, we'll have a UI designer. That's okay. That'll be separate, and I'm okay adding UI to the front of designer. It is very short and understandable, so I'm good with that.
 
 Settled: the existing `designer` role (workflow/base/roles/designer.md) writes every stage in MVP; its role file widens from "proposal into the ticket" to all four stages, the stage rule supplying each stage's specifics; it still builds nothing. A future UI designer role will be `ui-designer`.
+
+### note · external:advisor/tj7q · 2026-10-17T19:41:09.608Z
+The human, 2026-10-17 ~3:55 PM ET, to advisor (tj7q), on open question 7 (marking a stage done), verbatim:
+
+> I think there is a situation that is probably not important to capture in the MVP. If an agent feels that it cannot complete the stage, they should build a market as something other than done, incomplete, or failed, or something with some sort of reasoning behind it. The reasoning could be in a thread or a comment on the ticket.
+>
+> I think they should be able to write "needs more input. They should be able to do something like that and kick it out or send it back. That should be an explicit part of the instructions. If you encounter something that is just not solvable, is a problem for some reason, or the proposal as written is not something we can implement, or the implementation is very complex, the agent should be able to kick it back for probably a human review. That can definitely come later, but it's something to think about.
+>
+> Just send it straight back to the PDM if the agent doesn't finish it. No reason to try again. We'll have somebody investigate what happened.
+>
+> Something else: we need to have timers on this. Bridle needs to observe if that agent is done, marks it done, or is moving on to something else. This is somehow probably the easiest thing right now: just a timer. If it's not been done for an hour or 30 minutes, then set a message to the PDM or the orchestrator (I don't know which PDM, I guess), saying that that agent didn't work on it. What should we do? The PDM can decide. The PDM should be able to then have the authority to re-ready the ticket for that stage, whatever that means, so that it gets picked up again by Bridle.
+
+Settled for MVP: `bridle ticket stage-done <id> <stage>`; an agent that ends without it, or a stage not done within a timeout, goes to the product manager (PdM) with no retry; the PdM can put the stage back for bridle to pick up again. Later (not MVP): the writer can mark a stage blocked / needs input with a reason on the thread, sending it back for a human review; this goes in the stage instructions.
