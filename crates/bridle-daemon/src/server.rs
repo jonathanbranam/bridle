@@ -1870,10 +1870,10 @@ async fn list_messages(
 
 /// A bare external name (`advisor`, `advisor/<name>`, `aide`, `orchestrator`, optional
 /// `@machine`) is `external:<name>` when no agent has that name; anything else is unchanged.
-async fn canonical_target(state: &AppState, to_raw: &str) -> Result<String, ApiError> {
+async fn canonical_target(store: &Store, to_raw: &str) -> Result<String, ApiError> {
     let base = to_raw.split(['/', '@']).next().unwrap_or(to_raw);
     if matches!(base, "advisor" | "orchestrator" | "aide")
-        && state.store.get_agent(to_raw).await?.is_none()
+        && store.get_agent(to_raw).await?.is_none()
     {
         return Ok(format!("external:{to_raw}"));
     }
@@ -1882,13 +1882,13 @@ async fn canonical_target(state: &AppState, to_raw: &str) -> Result<String, ApiE
 
 /// Resolves a `to` string (`human`, `external:NAME`, `role:NAME` or an agent) to
 /// its delivery targets; unknown recipients are a 404.
-async fn resolve_targets(state: &AppState, to_raw: &str) -> Result<Vec<ToTarget>, ApiError> {
-    let to_raw = canonical_target(state, to_raw).await?;
+async fn resolve_targets_in(store: &Store, to_raw: &str) -> Result<Vec<ToTarget>, ApiError> {
+    let to_raw = canonical_target(store, to_raw).await?;
     let to_raw = to_raw.as_str();
     Ok(if to_raw == "human" {
         vec![ToTarget::Human]
     } else if to_raw.starts_with("human@") {
-        if !state.store.external_exists(to_raw).await? {
+        if !store.external_exists(to_raw).await? {
             return Err(ApiError::not_found(format!("no such recipient: {to_raw}")));
         }
         vec![ToTarget::External(to_raw.to_string())]
@@ -1898,7 +1898,7 @@ async fn resolve_targets(state: &AppState, to_raw: &str) -> Result<Vec<ToTarget>
             None => (name.to_string(), None),
         };
         if advisor.as_deref().is_some_and(|a| !valid_advisor_name(a))
-            || !state.store.external_exists(&owner).await?
+            || !store.external_exists(&owner).await?
         {
             return Err(ApiError::not_found(format!("no such recipient: {to_raw}")));
         }
@@ -1911,8 +1911,7 @@ async fn resolve_targets(state: &AppState, to_raw: &str) -> Result<Vec<ToTarget>
             _ => vec![ToTarget::External(to_raw.to_string())],
         }
     } else if let Some(role) = to_raw.strip_prefix("role:") {
-        let matching: Vec<ToTarget> = state
-            .store
+        let matching: Vec<ToTarget> = store
             .list_agents(false)
             .await?
             .into_iter()
@@ -1928,13 +1927,22 @@ async fn resolve_targets(state: &AppState, to_raw: &str) -> Result<Vec<ToTarget>
     } else {
         // `agent:<name>` is the form agents carry as their own id, so it works as an address.
         let name = to_raw.strip_prefix("agent:").unwrap_or(to_raw);
-        let agent = state
-            .store
+        let agent = store
             .get_agent(name)
             .await?
             .ok_or_else(|| ApiError::not_found(format!("no such recipient: {to_raw}")))?;
         vec![ToTarget::Agent(agent.id)]
     })
+}
+
+/// `resolve_targets` for callers with no HTTP error to give (`@name` mentions): `None` for a
+/// recipient that does not exist.
+pub(crate) async fn resolve_name(store: &Store, name: &str) -> Option<Vec<ToTarget>> {
+    resolve_targets_in(store, name).await.ok()
+}
+
+async fn resolve_targets(state: &AppState, to_raw: &str) -> Result<Vec<ToTarget>, ApiError> {
+    resolve_targets_in(&state.store, to_raw).await
 }
 
 /// Queues one message for `home`'s daemon in this daemon's outbox and starts a delivery try in
@@ -2131,7 +2139,7 @@ async fn add_schedule(
         return Err(ApiError::bad_request("message text must not be empty"));
     }
     let target = match req.to.as_deref() {
-        Some(t) => canonical_target(&state, t).await?,
+        Some(t) => canonical_target(&state.store, t).await?,
         None if principal.kind != PrincipalKind::Human => principal.id.clone(),
         None => return Err(ApiError::bad_request("`to` is required")),
     };
@@ -4299,7 +4307,7 @@ async fn reopen_task(
 const CHANGE_EXCERPT_CHARS: usize = 200;
 
 /// `text` on one line, cut to [`CHANGE_EXCERPT_CHARS`].
-fn excerpt(text: &str) -> String {
+pub(crate) fn excerpt(text: &str) -> String {
     let flat = text.split_whitespace().collect::<Vec<_>>().join(" ");
     match flat.char_indices().nth(CHANGE_EXCERPT_CHARS) {
         Some((end, _)) => format!("{}…", &flat[..end]),
@@ -4420,7 +4428,7 @@ async fn emit_comment(
 
 /// Tells each agent or role `body` mentions with `@name` (br-4cgx) and returns who was told, so
 /// the watcher notice skips them: the mention is the more explicit message. A name that resolves
-/// to nobody is reported back to the author; a project-qualified name is not resolved yet.
+/// to nobody is reported back to the author.
 async fn send_mentions(
     state: &AppState,
     actor: &PrincipalId,
@@ -4428,71 +4436,21 @@ async fn send_mentions(
     body: &str,
     already: &[ToTarget],
 ) -> Vec<ToTarget> {
-    let mut told: Vec<ToTarget> = Vec::new();
-    let mut unknown: Vec<String> = Vec::new();
-    for name in crate::mentions::mentioned(body) {
-        if name.contains(':') {
-            continue;
-        }
-        let Ok(targets) = resolve_targets(state, &name).await else {
-            unknown.push(name);
-            continue;
-        };
-        for target in targets {
-            if already.contains(&target) || told.contains(&target) {
-                continue;
-            }
-            if let Ok(Some(own)) = target_for_principal(state, actor).await
-                && own == target
-            {
-                continue;
-            }
-            let line = format!(
-                "{} ({}): {actor} mentioned you: {}",
-                task.id,
-                task.title,
-                excerpt(body)
-            );
-            match state
-                .manager
-                .send(
-                    actor.clone(),
-                    target.clone(),
-                    MessageKind::TaskUpdate,
-                    line,
-                    Default::default(),
-                    None,
-                )
-                .await
-            {
-                Ok(_) => told.push(target),
-                Err(e) => tracing::warn!(task = %task.id, %name, "mention not sent: {e}"),
-            }
-        }
-    }
-    if !unknown.is_empty()
-        && let Ok(Some(author)) = target_for_principal(state, actor).await
-    {
-        let names = unknown
-            .iter()
-            .map(|n| format!("@{n}"))
-            .collect::<Vec<_>>()
-            .join(", ");
-        let line = format!(
-            "{} ({}): no such recipient for {names}; nobody was told (write \\@name for plain text)",
-            task.id, task.title
-        );
-        let _ = state
-            .manager
-            .send(
-                actor.clone(),
-                author,
-                MessageKind::TaskUpdate,
-                line,
-                Default::default(),
-                None,
-            )
-            .await;
+    let author = target_for_principal(state, actor).await.ok().flatten();
+    let here = format!("{} ({})", task.id, task.title);
+    let (told, unknown) = crate::mentions::send(
+        &state.store,
+        &state.manager,
+        Some(&state.outbox),
+        actor,
+        author.as_ref(),
+        &here,
+        body,
+        already,
+    )
+    .await;
+    if let Some(author) = author {
+        crate::mentions::report_unknown(&state.manager, actor, author, &here, &unknown).await;
     }
     told
 }

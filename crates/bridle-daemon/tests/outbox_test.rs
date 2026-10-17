@@ -10,7 +10,7 @@ use bridle_api::types::{
     PeerTokenCreateRequest, PeerWatchRequest, RemoteWatchRequest, TicketKind, TokenCreateRequest,
     When,
 };
-use support::{TestDaemon, machine_home_dir, start_daemon_named, wait_for};
+use support::{ClientExt, TestDaemon, machine_home_dir, start_daemon_named, wait_for};
 
 const NO_MANAGER: &str = "[roles.manager]\nautostart = false\n";
 
@@ -950,4 +950,56 @@ async fn a_visitor_cannot_use_the_cross_project_watch() {
         .await
         .expect_err("not a peer");
     assert!(err.to_string().contains("forbidden"), "{err}");
+}
+
+/// br-4cgx: `@project:role` in a ticket comment goes to that project's role through the outbox,
+/// in the short and the explicit `external:` form alike; an unknown project is reported back.
+#[tokio::test]
+async fn a_project_qualified_mention_reaches_the_role_on_that_project() {
+    let p = pair().await;
+    let orch_b = p.b.external_client("orchestrator").await;
+    let task =
+        p.a.client
+            .new_open_task(&NewTicketRequest {
+                ticket: None,
+                parent: None,
+                title: "t".to_string(),
+                kind: TicketKind::Feature,
+                body: String::new(),
+                size: None,
+                components: Vec::new(),
+                for_human: false,
+                priority: None,
+            })
+            .await
+            .expect("new task");
+    let b = &p.b_project;
+    p.a.client
+        .note_task(
+            &task.id,
+            &format!("@{b}:orchestrator hi, also @{b}:external:orchestrator and @nowhere:aide"),
+        )
+        .await
+        .expect("note");
+    let got = wait_for("forwarded mention", || async {
+        let msgs = orch_b
+            .list_messages(&MessageQuery {
+                to: Some("me".to_string()),
+                ..Default::default()
+            })
+            .await
+            .expect("messages");
+        (!msgs.is_empty()).then_some(msgs)
+    })
+    .await;
+    // Both spellings are one recipient: one message.
+    assert_eq!(got.len(), 1, "{got:?}");
+    assert!(got[0].from.starts_with("human@"), "{got:?}");
+    assert!(got[0].body.contains("mentioned you"), "{got:?}");
+    let own = inbox_bodies(&p.a, "me").await;
+    assert!(
+        own.iter()
+            .any(|(_, b)| b.contains("no such recipient for @nowhere:aide")),
+        "{own:?}"
+    );
 }

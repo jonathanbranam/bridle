@@ -869,12 +869,23 @@ async fn start_inner(
         overrides.open_watch_debounce,
         config.tasks_open_stale,
     );
+    let outbox = outbox::Outbox::new(
+        store.clone(),
+        overrides
+            .bridle_home
+            .clone()
+            .unwrap_or_else(discovery::bridle_home),
+        project.clone(),
+        outbox::notifier(store.clone(), manager.clone()),
+    )
+    .with_report_after(config.messages.undelivered_report);
     let doc_watch = doc_watch::DocWatcher::new(
         store.clone(),
         manager.clone(),
         ws.repo.clone(),
         config.review.clone(),
     )
+    .with_outbox(outbox.clone())
     // A project that doesn't push has no owner file; its one clone is the owner.
     .with_owner(!config.state_push || state_branch::owned_by(&ws.state_branch_dir(), &names));
     let state = server::AppState {
@@ -917,16 +928,7 @@ async fn start_inner(
         lands: Default::default(),
         queue_nudge: queue_nudge.clone(),
         open_watch: open_watch.clone(),
-        outbox: outbox::Outbox::new(
-            store.clone(),
-            overrides
-                .bridle_home
-                .clone()
-                .unwrap_or_else(discovery::bridle_home),
-            project.clone(),
-            outbox::notifier(store.clone(), manager.clone()),
-        )
-        .with_report_after(config.messages.undelivered_report),
+        outbox,
         self_upgrade: config.self_upgrade,
         release_repo: config.release_repo.clone(),
         self_upgrade_min_interval: config.self_upgrade_min_interval,

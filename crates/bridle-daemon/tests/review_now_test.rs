@@ -55,3 +55,46 @@ async fn review_now_sends_marks_and_skips_marked() {
         .await;
     assert!(e.is_err());
 }
+
+#[tokio::test]
+async fn a_mention_in_a_document_comment_tells_that_role_once_and_an_escaped_one_nobody() {
+    let (daemon, _dir) = start_daemon(None).await;
+    let orch = daemon.external_client("orchestrator").await;
+    let aide = daemon.external_client("aide").await;
+    let doc = "Line.\n\n\
+        > [!comment] c1 human, 2026-10-03 14:05, on \"Line\"\n\
+        > @orchestrator please look, again @orchestrator; but \\@aide is plain text. @nobody-here?\n";
+    std::fs::create_dir_all(daemon.repo.join(".bridle")).expect("mkdir");
+    std::fs::write(daemon.repo.join("doc.md"), doc).expect("doc");
+    std::fs::write(daemon.repo.join(".bridle/review-documents.txt"), "doc.md\n").expect("list");
+    let req = ReviewNowRequest {
+        path: "doc.md".into(),
+        resend: false,
+    };
+    daemon.client.review_now(&req).await.expect("now");
+    let told = |c: &bridle_api::Client, to: &str| {
+        let (c, to) = (c.clone(), to.to_string());
+        async move {
+            c.list_messages(&bridle_api::types::MessageQuery {
+                to: Some(to),
+                ..Default::default()
+            })
+            .await
+            .expect("messages")
+            .into_iter()
+            .map(|m| m.body)
+            .collect::<Vec<_>>()
+        }
+    };
+    let lines = told(&orch, "me").await;
+    assert_eq!(lines.len(), 1, "{lines:?}");
+    assert!(
+        lines[0].contains("document doc.md: human mentioned you"),
+        "{lines:?}"
+    );
+    assert!(told(&aide, "me").await.is_empty());
+
+    // Marked sent, so a plain second look tells nobody again.
+    daemon.client.review_now(&req).await.expect("again");
+    assert_eq!(told(&orch, "me").await.len(), 1);
+}

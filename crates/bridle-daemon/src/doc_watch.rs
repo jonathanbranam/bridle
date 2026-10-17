@@ -15,6 +15,7 @@ use chrono::{DateTime, Datelike, Duration, NaiveDate, Utc, Weekday};
 use sha2::Digest;
 
 use crate::config::ReviewConfig;
+use crate::outbox::Outbox;
 use crate::store::Store;
 use crate::supervisor::{AgentManager, ToTarget, system_principal};
 
@@ -213,6 +214,34 @@ pub fn pending_threads(text: &str, resend: bool) -> Vec<String> {
         .filter(|t| !t.resolved && is_human(all[t.newest]))
         .filter(|t| resend || matches!(split_mark(all[t.newest]).1, None | Some("pending")))
         .map(|t| t.block(&all))
+        .collect()
+}
+
+/// The text of each pending thread's newest entry (what the human just wrote), for `@name`
+/// mentions (br-4cgx): a reply's text after its `> **who, when:**` header, or the lines under a
+/// `[!comment]` header (the header itself only carries the anchored quote). Selected like
+/// [`pending_threads`], so a thread's earlier replies are not read again.
+pub fn pending_entries(text: &str, resend: bool) -> Vec<String> {
+    let all: Vec<&str> = text.split('\n').collect();
+    scan(&all)
+        .iter()
+        .filter(|t| !t.resolved && is_human(all[t.newest]))
+        .filter(|t| resend || matches!(split_mark(all[t.newest]).1, None | Some("pending")))
+        .map(|t| {
+            let first = split_mark(all[t.newest]).0;
+            let head = first
+                .strip_prefix("> **")
+                .and_then(|r| r.split_once("**"))
+                .map_or("", |(_, rest)| rest);
+            let mut parts = vec![head.to_string()];
+            parts.extend(
+                t.lines
+                    .iter()
+                    .filter(|&&i| i > t.newest)
+                    .map(|&i| split_mark(all[i]).0.trim_start_matches('>').to_string()),
+            );
+            parts.join("\n")
+        })
         .collect()
 }
 
@@ -599,6 +628,8 @@ pub struct DocWatcher {
     /// False on a clone that is not the project's owner: it edits, but never commits.
     owner: bool,
     edits: std::sync::Arc<std::sync::Mutex<EditCommits>>,
+    /// Forwards `@project:role` mentions to another project's daemon.
+    outbox: Option<Outbox>,
 }
 
 /// What `review now` did.
@@ -620,7 +651,13 @@ impl DocWatcher {
             sending: Default::default(),
             owner: true,
             edits: Default::default(),
+            outbox: None,
         }
+    }
+
+    pub fn with_outbox(mut self, outbox: Outbox) -> Self {
+        self.outbox = Some(outbox);
+        self
     }
 
     /// Whether this clone is the project's owner, the only one that commits (fd8e).
@@ -797,6 +834,7 @@ impl DocWatcher {
                 .map_err(|e| format!("writing {path}: {e}"))?;
         }
         let threads = pending_threads(&with_ids, resend);
+        let entries = pending_entries(&with_ids, resend);
         let mut batch = threads.join("\n\n");
         let dups = duplicate_ids(&with_ids);
         if !dups.is_empty() {
@@ -820,12 +858,47 @@ impl DocWatcher {
         {
             return Err("the document's agent could not be started; see the daemon log".into());
         }
+        self.send_mentions(path, &entries).await;
         // Read again: the agent may already have edited the file.
         let latest = std::fs::read_to_string(&file).map_err(|e| format!("{path}: {e}"))?;
         let marked = mark_threads(&latest, &threads, "sent", &stamp(now));
         self.write_marked(path, &marked, now)
             .map_err(|e| format!("marking {path}: {e}"))?;
         Ok(threads.len())
+    }
+
+    /// Tells whoever the newly delivered comments `@mention` (br-4cgx). The author is the human
+    /// (only their entries are pending); the document's own agent already has the comment, so
+    /// it is not told twice.
+    async fn send_mentions(&self, path: &str, entries: &[String]) {
+        let here = format!("document {path}");
+        let own = self
+            .store
+            .get_agent(&agent_name(path))
+            .await
+            .ok()
+            .flatten()
+            .map(|a| ToTarget::Agent(a.id));
+        let already: Vec<ToTarget> = own.into_iter().collect();
+        let author = ToTarget::Human;
+        let mut unknown = Vec::new();
+        let mut told: Vec<ToTarget> = already.clone();
+        for entry in entries {
+            let (t, u) = crate::mentions::send(
+                &self.store,
+                &self.manager,
+                self.outbox.as_ref(),
+                "human",
+                Some(&author),
+                &here,
+                entry,
+                &told,
+            )
+            .await;
+            told.extend(t);
+            unknown.extend(u);
+        }
+        crate::mentions::report_unknown(&self.manager, "human", author, &here, &unknown).await;
     }
 
     /// Start, resume or message the document's agent. False when it didn't go.
