@@ -4,7 +4,7 @@ title = "Self-upgrade defaults to release; commit mode only for bridle's own rep
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-16T21:05:17.647Z"
-updated_at = "2026-10-17T01:30:05.348917Z"
+updated_at = "2026-10-17T01:30:37.040461Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 branch = "bridle/mtdg"
@@ -29,3 +29,6 @@ manager-2: built and clean (ce29ccbb); landing held until the orchestrator confi
 
 ### note · agent:manager-2 · 2026-10-17T01:30:05.348Z
 integrated: 20d94535b1871beb89bff98f5b0b209edda11864 (branch bridle/mtdg)
+
+### note · agent:manager-2 · 2026-10-17T01:30:37.040Z
+cleanup: removed agent mtdg, branch bridle/mtdg
