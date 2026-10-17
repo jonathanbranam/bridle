@@ -2,11 +2,14 @@
 id = "br-r8jf"
 title = "Three small robustness fixes: pair-mint --replace-direct order, stop_check ps in async, sync never removes a [mail] entry"
 kind = "fix"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-16T21:14:33.963Z"
-updated_at = "2026-10-16T21:42:46.766935Z"
+updated_at = "2026-10-17T04:25:44.554105Z"
 created_by = "agent:pm-1"
-watchers = ["agent:pm-1"]
+watchers = [
+    "agent:pm-1",
+    "agent:r8jf",
+]
 ticket = "r8jf"
 +++
 
