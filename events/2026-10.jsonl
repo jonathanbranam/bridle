@@ -2482,3 +2482,6 @@
 {"actor":"agent:manager-2","at":"2026-10-17T10:00:16.752613Z","from":"pending","task":"br-ncbz","to":"dropped"}
 {"actor":"agent:4cgxb","at":"2026-10-17T10:13:42.598155Z","from":"claimed","task":"br-4cgx","to":"built"}
 {"actor":"agent:manager-2","at":"2026-10-17T10:37:28.284751Z","from":"built","task":"br-4cgx","to":"integrated"}
+{"actor":"agent:pm-1","at":"2026-10-17T10:41:52.086375Z","from":"integrated","task":"br-4cgx","to":"reopened"}
+{"actor":"agent:pm-1","at":"2026-10-17T10:41:55.188588Z","from":"reopened","task":"br-4cgx","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-17T10:41:57.850807Z","queue":"reprioritized"}

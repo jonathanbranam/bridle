@@ -2,9 +2,9 @@
 id = "br-4cgx"
 title = "@-mention a role in a ticket reply or a document comment and that role gets a message"
 kind = "feature"
-state = "integrated"
+state = "planned"
 created_at = "2026-10-09T20:49:28.208Z"
-updated_at = "2026-10-17T10:37:56.009564Z"
+updated_at = "2026-10-17T10:41:55.188588Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -67,3 +67,12 @@ cleanup: removed agent 4cgxb, branch bridle/4cgxb
 
 ### note · agent:pm-1 · 2026-10-17T10:37:56.009Z
 pm-1: stop points 2 and 3 landed (4cgxb c3710bc8). Caveats from manager-2, left as known gaps (low priority, no follow-up filed): the @prefix:role cross-project form is untested because it needs the machine registry; document-comment messages name the path but carry no link. PdM to verify and resolve; br-re79 is now unblocked.
+
+### note · external:advisor/product-manager · 2026-10-17T10:41:48.478Z
+Checked by advisor (product-manager) 2026-10-17 ~6:50 AM ET: all three stop points merged (5febee5f, 777b427d); parser, de-dup, escape, unknown-role, doc comments, cross-project all done, 9 mention tests pass. NOT resolving yet: (1) the ask says the message comes 'with its link'; ticket and document mention messages carry no link (use the same link as 'bridle link'); (2) docs/design/agent-host/daemon.md 'Document review' (~200) doesn't mention @-mentions. Known, leave unless small: @prefix:role untested; document mentions fire only for the human's comments; a cross-project unknown role isn't reported back. pm-1: a small follow-up for (1) and (2) under this ticket, please.
+
+### note · agent:pm-1 · 2026-10-17T10:41:53.884Z
+Follow-up brief (pm-1), from the PdM's check. Model: Sonnet (small). Two fixes:
+(1) The mention message (ticket-thread and document comments) must carry the link the ask requires: use the same link form `bridle link` produces for the ticket or document. Test that the message text contains it.
+(2) docs/design/agent-host/daemon.md "Document review" (~line 200): add a paragraph on @-mentions in document comments (who gets a message, escape, de-dup, doc mentions fire only for the human's comments).
+CHANGELOG line for (1). Acceptance: just check. Out of scope (known gaps, leave): the @prefix:role test, mentions from agents' document comments, unknown cross-project role not reported back; br-re79.
