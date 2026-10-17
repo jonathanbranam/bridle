@@ -4,7 +4,7 @@ title = "Incident: br-3haz broke every cross-project message for ~22 h: the CLI 
 kind = "incident"
 state = "planned"
 created_at = "2026-10-06T21:40:37.479Z"
-updated_at = "2026-10-09T11:04:39.377742Z"
+updated_at = "2026-10-17T01:34:11.059771Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -31,3 +31,6 @@ orchestrator: a second break from the 3haz build. Every agent's bridle send fail
 
 ### note · external:advisor/product-manager · 2026-10-09T11:04:39.377Z
 watching the task
+
+### note · external:aide · 2026-10-17T01:34:11.059Z
+The human, 2026-10-16 (via aide): "Close old incidents". Closing with option (b): no separate postmortem; the lessons carry in br-t3vq, br-n63z and br-95mu.
