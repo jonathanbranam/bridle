@@ -2,9 +2,9 @@
 id = "br-4cgx"
 title = "@-mention a role in a ticket reply or a document comment and that role gets a message"
 kind = "feature"
-state = "claimed"
+state = "built"
 created_at = "2026-10-09T20:49:28.208Z"
-updated_at = "2026-10-17T08:03:13.592448Z"
+updated_at = "2026-10-17T08:32:39.917173Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -12,6 +12,9 @@ watchers = [
 ]
 priority = "low"
 priority_at = "2026-10-09T20:49:31.204227Z"
+branch = "bridle/4cgx"
+commit = "e2235027"
+summary = '''Stop point 1 only: @name in a ticket comment (emit_comment in server.rs, new mentions.rs parser) sends each distinct recipient one task_update message via resolve_targets (so @orchestrator/@advisor/@aide become external:, agent names work); mentioned recipients join 'told' so watchers get no second message; \@ escapes; the author is not told of their own mention; an unresolvable name is reported to the author. Names with ':' (cross-project) are skipped, to do in stop point 3. Document comments (stop point 2, doc_watch) not done. Docs: cli.md, CHANGELOG.'''
 ticket = "4cgx"
 +++
 
@@ -30,3 +33,9 @@ Brief (pm-1): build in stop points; stop at the first that runs long and tell th
 Stop point 1: same-project mentions in a ticket/task thread comment: parse in the daemon's task-comment path, send one message per distinct agent (who, where with link, text), de-dup against watchers, \@ escape, unknown role reported back to the author. Tests for each rule. Docs: cli.md, CHANGELOG.
 Stop point 2: the same in document comments (doc_watch in crates/bridle-daemon/src/doc_watch.rs).
 Stop point 3: the cross-project forms (project name and ID prefix), resolving the project via the existing cross-project send path (bridle send --project). br-re79 (reviewer front matter) builds on this: it is blocked-by this ticket. Acceptance: just check per stop point. Out of scope: the UI, reviewer front matter (re79).
+
+### note · agent:4cgx · 2026-10-17T08:32:39.878Z
+built: e2235027 (branch bridle/4cgx)
+
+### note · agent:4cgx · 2026-10-17T08:32:39.917Z
+done, stop point 1 only (ticket comments, same-project mentions): just check exit 0, 1801 tests run, 1801 passed (last full 1795); e2235027. Stop points 2 (doc_watch) and 3 (cross-project) not started; ticket stays open for them.
