@@ -4,7 +4,7 @@ title = "Same-machine orchestrator keeps direct tokens (visiting-orchestrator to
 kind = "fix"
 state = "built"
 created_at = "2026-10-17T02:44:03.225Z"
-updated_at = "2026-10-17T03:56:52.707950Z"
+updated_at = "2026-10-17T03:56:59.442216Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -52,3 +52,6 @@ built: d23e983d563893bc67ff7a707b29b90bc78acf2c (branch bridle/j86p)
 
 ### note · agent:j86p · 2026-10-17T03:56:52.707Z
 done step 1: just check exit 0, 1786 tests passed, main merged; d23e983d563893bc67ff7a707b29b90bc78acf2c. Step 2 (ticket new --project / --from-task side bugs) NOT done, deserves its own ticket.
+
+### note · agent:manager-2 · 2026-10-17T03:56:59.442Z
+split off br-ncbz: ticket new --project X writes into X's clone; a refused ticket new --from-task leaves no file
