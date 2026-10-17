@@ -31,7 +31,7 @@ ui-qfur readied, d9wq dropped).
 | 1b | Transfer a project (kx5u) | In progress: code built, trial 1 done (data-contracts on remus) | Hands-on: trial 2 (back), trial 3 (work in flight). Decision: is K7, the one `bridle project move` (kt25), part of V1? |
 | 1c | Bridle to remus (jw75) | Not started, after 1b | Decision: when the design pass starts. Hands-on: dalek-home |
 | - | One-command project setup (dffz) | Nearly done: all built | Hands-on: one real `bridle project setup` |
-| 2 | UI ships with releases | Nearly done | Decision: design tc7t (dev machine follows landings, 785a) now, or fold into 1c |
+| 2 | UI ships with releases | Done (2026-10-17: 785a folded into 1c) | - |
 | 3 | One orchestrator per machine | In progress (homes run orchestrators; 9966 queued) | Decision: confirm done-when; "second orchestrator can't start" and "coordinate a takeover" undefined. Hands-on: reboot test (mru4) |
 | 4 | Machine admin role (j6d3) | Not started | Approve gb97's design pass |
 | 5 | Products | Blocked, low | Decision: g5dm's 5 questions |
@@ -81,7 +81,7 @@ migrations.
 1. **Human work: bring the three machines onto bridle** (du7e; the human's to-dos h7mu, jgdb, r2nr)
    - The builds it waits on are epic kx5u (below).
 1b. **Machines: set up a new machine and transfer a project to it, nothing left behind** (kx5u; the human, 2026-10-11 ~8:45 PM ET: transfer bridle and bridle-ui to remus, a smaller project first). Order: 3pc2 inventory, eurm, 2wnn, 53gy, kt25 (carry bridle.db, mail bridge, gateway; overrides kt25's wait for orchestrator-per-machine). Then rjd5, n63z folded in or dropped.
-1c. **Move bridle and bridle-ui to remus: remus the dev machine, dalek a release client** (jw75; the human, 2026-10-11 ~9:05 PM ET). After kx5u, proven first on a small project (data-contracts). First step a design (orchestrator home, workflow source, upgrades, UI).
+1c. **Move bridle and bridle-ui to remus: remus the dev machine, dalek a release client** (jw75; the human, 2026-10-11 ~9:05 PM ET). After kx5u, proven first on a small project (data-contracts). First step a design (orchestrator home, workflow source, upgrades, UI). Absorbs br-785a: the dev machine (remus) installs bridle-ui landings itself (tc7t option C); dalek, a release client, gets the UI from releases (t3dr). The human, 2026-10-17 ~6:20 PM ET: "Ok sure".
 2. **bridle-ui ships with bridle releases** (`ui-releases`; t3dr landed 2026-10-11, in v0.6.2: done)
 3. **One orchestrator per machine** (`orchestrator-per-machine`)
 4. **Machine admin role** (j6d3; gb97)
@@ -465,7 +465,7 @@ What the human sees and touches: web UI, documents and comments, to-dos, links, 
 #### Epic `ui-releases`: bridle-ui ships with bridle releases
 
 - Outcome: The UI is installed and upgraded with bridle, fixed to the bridle version, so a machine installed from a release has the matching UI (t3dr). The human, 2026-10-10: "the bridle-ui as part of that, all fixed to a version that comes from bridle ... If the UI is not done, that could be a separate epic".
-- Done when: (PdM draft) A machine installed from a release (fv86) serves the UI that matches its bridle version, and a self-upgrade moves both; the dev machine follows landings (tc7t).
+- Done when: (PdM draft) A machine installed from a release (fv86) serves the UI that matches its bridle version, and a self-upgrade moves both. (The dev machine following landings, tc7t/785a, moved to 1c jw75 on 2026-10-17, the human's OK.) Done 2026-10-17.
 
 | Task | Title | Pri | State | Next |
 |---|---|---|---|---|
@@ -759,3 +759,4 @@ Chores assigned to the human: expand on an idea, review a ticket or branch.
 - 2026-10-12 6:50 PM ET: new epic `usage` (br-rdkn, theme performance), first in order: 9y7v (negative costs), hd28 (count external sessions; answers 368g), yydm (limit charts), all readied on the human's go.
 - 2026-10-12 6:55 PM ET: usage epic: yydm narrowed to the gateway route, ui-u6uz filed (UI page); new xfy7 + ui-mxkj (chart one agent instance; the human), done-when item 4.
 - 2026-10-12 7:16 PM ET: br-yydm and ui-u6uz delivered and resolved (the Usage page shows on dalek after its next self-upgrade). New br-kyjg (bug: `ticket built` fails with a bare 'unknown' on bridle-ui; from the orchestrator) in reliability, not in an epic, pending the human.
+- 2026-10-17 6:20 PM ET: epic 2 `ui-releases` done: br-785a (dev machine installs bridle-ui landings, tc7t option C) folded into 1c (jw75), the human: "Ok sure". tc7t resolved. Stages MVP (tj7q) children 9mqh, quvh, ussh, ewhy, 6c8x readied high and first in the work order (the human, ~5:15 PM ET).
