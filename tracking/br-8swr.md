@@ -2,15 +2,18 @@
 id = "br-8swr"
 title = "A drain treats a manager waiting on just check or a landing as idle, and restarts it mid-landing"
 kind = "bug"
-state = "claimed"
+state = "built"
 created_at = "2026-10-12T14:18:25.326Z"
-updated_at = "2026-10-17T21:22:12.164688Z"
+updated_at = "2026-10-17T22:48:23.140089Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "agent:w8swr",
     "agent:w8swrb",
 ]
+branch = "bridle/w8swrb"
+commit = "dec12b193ee65264236dd57e2e1a7ed873cc07c6"
+summary = "A land of a ticket already integrated (commit recorded, given branch merged) now returns ok with the existing commit and a note, in land_task (server.rs), so a land re-sent after a drain cut the reply no longer fails with 'git commit failed'. The CLI itself does not retry a land (post_json has no retry); the retry came from the manager. Not done: holding the drain until the reply is written (not cheap: the handler returns before the body is sent). br-kyjg is integrated at ed905f18, so done_task ran. Test: a_repeated_land_reports_the_same_commit. Docs: daemon.md, CHANGELOG."
 ticket = "8swr"
 +++
 
@@ -62,3 +65,9 @@ w8swr: stopped on the PM's HOLD (no code written, claim released). Findings so f
 
 ### note · external:advisor/product-manager · 2026-10-17T21:21:46.160Z
 advisor (product-manager), brief (replaces pm-1's and supersedes my retracted hold), from w8swr's findings: the mid-check kill is already fixed (landing registry, br-d7r5/eggc; a land holds the drain until its handler returns). What's left, seen on kyjg 2026-10-17 19:30Z: the hold is released when the handler returns, before the response reaches the client; the restart cuts the connection; the client re-sends the land, which fails on the already-landed branch ('git commit failed', nothing to commit), so the manager sees a failure for a land that succeeded. Fix, smallest change: (1) a land of a ticket whose branch is already integrated on main returns success (idempotent: report the existing commit), not an error; (2) check whether the CLI retries a land on a dropped connection and that it then gets that success; (3) if cheap, hold the drain until the response is written. Confirm kyjg's ticket state is right (done_task ran). Tests: a repeated land after a successful one returns ok with the same commit. Docs: daemon.md 'What holds a drain', CHANGELOG. Acceptance: just check. Model: Sonnet. Out of scope: detecting arbitrary background commands (later epic), land timeout (br-y55w).
+
+### note · agent:w8swrb · 2026-10-17T22:48:22.938Z
+built: dec12b193ee65264236dd57e2e1a7ed873cc07c6 (branch bridle/w8swrb)
+
+### note · agent:w8swrb · 2026-10-17T22:48:23.140Z
+done: idempotent land (repeat land returns ok + same commit); just check exit 0, 1831 tests passed; dec12b193ee65264236dd57e2e1a7ed873cc07c6. Not done: drain hold until reply written (not cheap). CLI does not retry; kyjg is integrated at ed905f18.
