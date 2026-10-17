@@ -2428,3 +2428,4 @@
 {"actor":"human","at":"2026-10-17T02:44:17.283Z","from":"","task":"br-b3ef","to":"pending"}
 {"actor":"external:advisor/product-manager","at":"2026-10-17T02:44:52.646217Z","from":"pending","task":"br-j86p","to":"open"}
 {"actor":"human","at":"2026-10-17T02:45:06.595Z","from":"","task":"br-qfut","to":"pending"}
+{"actor":"external:advisor/product-manager","at":"2026-10-17T02:45:36.874492Z","from":"pending","task":"br-qfut","to":"dropped"}
