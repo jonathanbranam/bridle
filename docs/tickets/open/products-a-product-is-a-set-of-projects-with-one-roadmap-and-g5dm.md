@@ -9,7 +9,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-6h65, br-d9wq, br-22ab, br-syqn]
-next_comment_id: c5
+next_comment_id: c6
 ---
 
 ## The ask
@@ -237,6 +237,10 @@ only for the product.
    do you want a machine-level registry despite the drift problem?
 2. Should the roadmap file move to a fixed `docs/roadmap.md`, or keep the configurable path
    (bridle's stays `docs/notes/roadmap.md`)?
+
+> [!comment] c5 human, 2026-10-16 22:17 EDT, on "Should the roadmap file move to a fixed docs/roadmap.md" [pending 2026-10-16 22:17 EDT]
+> Yes docs roadmap
+
 3. Are themes per product with the qualified form `<product>/<slug>` right, and should
    `bridle ticket check` warn on a `theme:` in a product-less project?
 4. Cross-product work: is "one owner, the other PdM notified, no shared epic" enough, or do you
