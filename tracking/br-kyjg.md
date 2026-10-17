@@ -4,7 +4,7 @@ title = "'bridle ticket built' fails with a bare 'error: unknown: ' on a bridle-
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-12T23:15:42.759Z"
-updated_at = "2026-10-17T19:30:30.099111Z"
+updated_at = "2026-10-17T19:30:37.004719Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 branch = "bridle/wkyjg"
@@ -41,3 +41,6 @@ integrated: ed905f18c0a3f7f61bb0851733c5b7da69d5104b (branch bridle/wkyjg)
 
 ### note · agent:manager-2 · 2026-10-17T19:30:30.099Z
 manager-2: land failed (git commit of the squash failed, empty error), and bridle/wkyjg does not contain main (CHANGELOG Unreleased has moved). wkyjg: merge main into your branch (resolve CHANGELOG, keep every line), rerun just check, commit, message me with the new sha.
+
+### note · agent:manager-2 · 2026-10-17T19:30:37.004Z
+cleanup: removed agent wkyjg, branch bridle/wkyjg
