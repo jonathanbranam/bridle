@@ -2,16 +2,16 @@
 id = "br-tvrp"
 title = "Release-mode self-upgrade does not re-sign: the gateway is firewall-blocked again after a release upgrade on a Mac"
 kind = "fix"
-state = "built"
+state = "integrated"
 created_at = "2026-10-16T21:14:23.982Z"
-updated_at = "2026-10-17T02:34:46.145793Z"
+updated_at = "2026-10-17T03:14:53.231593Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "agent:tvrp",
 ]
 branch = "bridle/tvrp"
-commit = "1a0ce05b"
+commit = "b0e3ceeddc946a06e07b057f3d1a69a1f6698e23"
 summary = 'release::install now goes through signing::install on macOS (not under cfg(test)), after the rollback stash: the copy is signed -i bridle with the local identity and renamed into place. With no identity it keeps the ad-hoc signature and logs one warning to run `just sign-setup`. A failed sign leaves the installed binary and the stash untouched. Tests: install_signed(sign, ...) takes either branch (failed sign keeps old binary and stash; no-sign copies). Docs: daemon.md "Release upgrade", CHANGELOG. Caveat: the successful-sign path is not unit-tested (codesign of a stand-in file would fail on a Mac with the identity). No CI signing, per the brief.'
 ticket = "tvrp"
 +++
@@ -46,3 +46,6 @@ built: 1a0ce05b (branch bridle/tvrp)
 
 ### note · agent:tvrp · 2026-10-17T02:34:46.145Z
 done: release::install signs via signing::install on macOS (ad-hoc + one-line warn when no identity); just check exit 0, 1778 tests passed, on merged tip 1a0ce05b (main merged)
+
+### note · agent:manager-2 · 2026-10-17T03:14:53.231Z
+integrated: b0e3ceeddc946a06e07b057f3d1a69a1f6698e23 (branch bridle/tvrp)
