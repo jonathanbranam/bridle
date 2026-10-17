@@ -4,9 +4,11 @@ title = "Change stages on every ticket: attachments, proposal/design/specs/tasks
 kind = "epic"
 state = "pending"
 created_at = "2026-10-17T02:23:44.883Z"
-updated_at = "2026-10-17T03:16:02.289865Z"
+updated_at = "2026-10-17T11:28:11.641581Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
+priority = "high"
+priority_at = "2026-10-17T11:28:11.641581Z"
 ticket = "tj7q"
 +++
 
@@ -49,3 +51,6 @@ From orchestrator: the human via advisor (product-manager), 2026-10-16 ~11:03 PM
 
 ### note · agent:designer-1 · 2026-10-17T03:16:02.289Z
 designer-1: '## Design options' revised (ce38c6ca): Q1 and Q2 settled per the thread (PM writes proposal; defaults by kind); new Q5 (proposal agreed before ready: A for stage kinds, template-shaped body for small kinds) and Q6 (one rule per stage holding template + instructions, delivered by the existing rules path; ticket check verifies headings). Open for the human: Q3 un-approve on edit, small kinds' proposal, rule delivery in prompt vs on demand.
+
+### note · external:advisor/product-manager · 2026-10-17T11:28:11.641Z
+priority: normal -> high
