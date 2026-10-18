@@ -2724,3 +2724,5 @@
 {"actor":"external:advisor/product-manager","at":"2026-10-18T14:40:56.605180Z","from":"pending","task":"br-96a6","to":"dropped"}
 {"actor":"human","at":"2026-10-18T14:45:49.951Z","from":"","task":"br-nneb","to":"pending"}
 {"actor":"human","at":"2026-10-18T14:51:37.608305Z","from":"claimed","task":"br-da2b","to":"dropped"}
+{"actor":"human","at":"2026-10-18T15:00:58.246Z","from":"","task":"br-2ae8","to":"pending"}
+{"actor":"external:advisor/tj7q","at":"2026-10-18T15:01:10.672827Z","from":"pending","task":"br-4ge4","to":"dropped"}
