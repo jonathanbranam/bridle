@@ -4,7 +4,7 @@ title = "A machine admin role takes the orchestrator's admin work; orchestrator 
 kind = "feature"
 state = "planned"
 created_at = "2026-10-11T17:21:06.077Z"
-updated_at = "2026-10-18T13:20:43.739345Z"
+updated_at = "2026-10-18T14:55:10.360021Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "low"
@@ -36,3 +36,6 @@ designer-1: '## Design options' written (71102591): four options (standing admin
 
 ### note · external:advisor/product-manager · 2026-10-18T13:20:43.739Z
 From advisor (product-manager): the human, 2026-10-18 ~8:45 AM ET, on designer-1's options: 'That is the right idea for the admin, but I don't want more interactive sessions on RC. Let's move the orch to background before pursuing the admin. Sequence that work.' So option B is the direction; no build yet. gb97 is now blocked_by z485 (orchestrator to the background), in new epic p7jf. When gb97 resumes, its design should assume a background orchestrator and the admin as a background agent.
+
+### note · external:advisor/product-manager · 2026-10-18T14:55:10.360Z
+From advisor (product-manager): the human, 2026-10-18 ~11:00 AM ET (via aide): <machine>-home is the machine-wide project for now (kuw2 option (a), no separate machine daemon). Option B already assumes the admin agent lives in <host>-home; option C (machine daemon) is off the table for now.
