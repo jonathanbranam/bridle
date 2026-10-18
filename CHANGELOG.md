@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 - Stages MVP 4 (br-ewhy): the daemon spawns a `designer` for each unblocked stage of a pending, unclaimed version 2 ticket (through the usual spawn path, budget governor and caps) and sends one message to `external:advisor/product-manager` when a stage is not done within `[stages] timeout` (default 60m, 0 turns it off) or its writer ended without `stage-done`; no retry, `ticket restage` puts it back. The `designer` role now also writes any stage.
+- Fix (br-uysm): an orchestrator relaunch no longer re-runs the pane's previous launcher (tmux `respawn-pane` with no command); the first attempt respawns an explicit shell, so a moved orchestrator keeps its own project.
+
 - Stages (br-quvh): `bridle ticket next <id>` prints the next unblocked stage of a version 2 ticket with its layered rule (`stage-proposal`, `-design`, `-specs`, `-tasks`), template, output path and dependencies; `--comments` adds the human's comments since the stage was written; `--json`.
 - Stages MVP 3 (br-ussh): `ticket stage-done`, `approve` (signed and traced), `changes` and `restage` for version 2 tickets; a version 2 ticket opens itself once every stage is written and every gate signed, and `ticket ready` refuses it before that.
 
