@@ -473,7 +473,11 @@ bridle ticket comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain com
   ([[docs/design/agent-host/principals|principals.md]]). Resume and renew are unaffected.
 - **`--allow-tool TOOL`** on `spawn` (repeatable) grants a tool beyond the
   role's `allowed_tools` for this one spawn only — no config or role change,
-  and it never touches `disallowed_tools`
+  and it never touches `disallowed_tools`. A bare built-in tool name the role's
+  `--tools` set leaves out (e.g. `WebSearch` on a worker) is refused, "WebSearch
+  isn't in the worker role's tool set; use the researcher role": it would be
+  permitted but never offered, and widening a role's tool set is the role
+  file's call (br-a9g2). Patterns like `Bash(git *)` are not checked
   ([[docs/design/agent-host/roles-and-config#Per-spawn tool overrides|roles-and-config.md]]).
 - **`--env KEY=VALUE`** on `spawn` (repeatable) sets an environment variable
   in this one spawn's process only, e.g. a secret — no config or role

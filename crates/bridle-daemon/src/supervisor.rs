@@ -1038,6 +1038,20 @@ impl AgentManager {
             self.0.config.roles.get(&req.role).cloned().ok_or_else(|| {
                 SupervisorError::BadRequest(format!("unknown role {:?}", req.role))
             })?;
+        // br-a9g2: `--allow-tool` only grants permission; a bare built-in tool
+        // the role's `--tools` set leaves out never reaches the agent. Widening
+        // the set from the spawn line is the role file's call, so refuse.
+        if let Some(tools) = &role.tools
+            && let Some(t) = req
+                .extra_allowed_tools
+                .iter()
+                .find(|t| !t.contains('(') && !tools.contains(t))
+        {
+            return Err(SupervisorError::BadRequest(format!(
+                "{t} isn't in the {} role's tool set; use the researcher role",
+                req.role
+            )));
+        }
         let model = match &req.model {
             Some(m) => m.clone(),
             None => self.choose_model(&req.role, &role),

@@ -209,7 +209,7 @@ async fn renew_reapplies_the_spawn_s_extra_allowed_tools_and_env() {
             prompt: None,
             workdir: Some(Workdir::Worktree { base: None }),
             model: None,
-            extra_allowed_tools: vec!["WebSearch".to_string()],
+            extra_allowed_tools: vec!["Glob".to_string()],
             extra_env: vec![("PIXELLAB_TOKEN".to_string(), "secret-1".to_string())],
             ignore_budget: false,
         })
@@ -235,8 +235,8 @@ async fn renew_reapplies_the_spawn_s_extra_allowed_tools_and_env() {
             .position(|a| a == "--allowedTools")
             .unwrap_or_else(|| panic!("--allowedTools flag present, got {argv:?}"));
         assert!(
-            argv[flag_idx + 1..].iter().any(|a| a == "WebSearch"),
-            "expected WebSearch among allowed tools, got {argv:?}"
+            argv[flag_idx + 1..].iter().any(|a| a == "Glob"),
+            "expected Glob among allowed tools, got {argv:?}"
         );
         let env: std::collections::HashMap<String, String> = support::wait_for_dump(
             "fake-claude env dump for w1",

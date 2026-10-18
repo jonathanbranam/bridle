@@ -14,9 +14,9 @@ use support::{
 };
 
 /// k8dw: `extra_allowed_tools` grants a tool beyond the role's own
-/// `allowed_tools` for this one spawn, without touching the role.
+/// `allowed_tools` (when it is already in the role's `--tools` set) for this one spawn, without touching the role.
 #[tokio::test]
-async fn spawn_extra_allowed_tools_grants_a_tool_the_role_lacks() {
+async fn spawn_extra_allowed_tools_grants_a_tool_in_the_role_tool_set() {
     let argv_dir = tempfile::tempdir().expect("argv tempdir");
     let argv_path = argv_dir.path().join("argv.json");
     let wrapper = fake_claude_argv_dump_wrapper(argv_dir.path(), &argv_path);
@@ -37,7 +37,7 @@ async fn spawn_extra_allowed_tools_grants_a_tool_the_role_lacks() {
             prompt: None,
             workdir: Some(Workdir::Repo),
             model: None,
-            extra_allowed_tools: vec!["WebSearch".to_string()],
+            extra_allowed_tools: vec!["Glob".to_string()],
             extra_env: Vec::new(),
             ignore_budget: false,
         })
@@ -67,11 +67,39 @@ async fn spawn_extra_allowed_tools_grants_a_tool_the_role_lacks() {
         .position(|a| a == "--allowedTools")
         .expect("--allowedTools flag present");
     assert!(
-        argv[flag_idx + 1..].iter().any(|a| a == "WebSearch"),
-        "expected WebSearch among allowed tools, got {argv:?}"
+        argv[flag_idx + 1..].iter().any(|a| a == "Glob"),
+        "expected Glob among allowed tools, got {argv:?}"
     );
     // The role's own tools are still there too: this only adds.
     assert!(argv[flag_idx + 1..].iter().any(|a| a == "Read"));
+}
+
+/// br-a9g2: a built-in tool outside the role's `--tools` set would be
+/// permitted but never offered, so the spawn is refused.
+#[tokio::test]
+async fn spawn_extra_allowed_tool_outside_role_tools_is_refused() {
+    let (daemon, _tmp) = start_daemon_with_config(None, None).await;
+    let err = daemon
+        .client
+        .spawn(&SpawnRequest {
+            ticket: None,
+            components: Vec::new(),
+            role: "worker".to_string(),
+            name: Some("w1".to_string()),
+            prompt: None,
+            workdir: Some(Workdir::Repo),
+            model: None,
+            extra_allowed_tools: vec!["WebSearch".to_string()],
+            extra_env: Vec::new(),
+            ignore_budget: false,
+        })
+        .await
+        .expect_err("spawn refused");
+    let msg = err.to_string();
+    assert!(
+        msg.contains("WebSearch isn't in the worker role's tool set; use the researcher role"),
+        "{msg}"
+    );
 }
 
 /// 2ty9: `extra_env` sets an env var in this one spawn's process only, and
