@@ -26,7 +26,8 @@ agent:manager-2 had to mark it built for the worker (its note reads `planned -> 
 
 ## Done when
 
-- A worker can always mark built the ticket it was spawned to build, including after a daemon restart or a lost row claim (for example, also accept the worker whose agent record names the ticket).
-- Find and fix what dropped w4mbd's claim, or show it wasn't dropped.
-- The refusal, when one is right, names the actual rule (not "agent lifecycle endpoints").
-- A test covers a worker marking its own ticket built after its row claim is lost.
+The rule stays: a worker may change only a ticket it has claimed. The human (2026-10-18, to advisor tj7q): "This rule on a worker changing state on a ticket it has not claimed sounds correct. Let's find and fix the underlying bug instead of changing that rule"
+
+- Find what dropped w4mbd's claim on br-4mbd between `planned -> claimed` and its `ticket built`, and fix it. If it wasn't dropped, find why the guard didn't see it.
+- A test reproduces the cause (for example, a claim surviving a daemon restart, if that was it) and passes after the fix.
+- The refusal names the actual rule (the ticket isn't claimed by you), not "agent lifecycle endpoints".
