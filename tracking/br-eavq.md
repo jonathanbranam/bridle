@@ -2,9 +2,9 @@
 id = "br-eavq"
 title = "project preflight falsely fails claude, gh and tmux on a macOS target: ssh's bare PATH"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-10-18T23:31:21.326Z"
-updated_at = "2026-10-18T23:32:12.356141Z"
+updated_at = "2026-10-18T23:46:10.778299Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 ticket = "eavq"
