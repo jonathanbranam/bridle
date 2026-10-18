@@ -2,13 +2,14 @@
 id = "br-ubjd"
 title = "A CHANGELOG line for every landed task, written on the branch, and one section per kind under Unreleased"
 kind = "chore"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-09T00:54:15.168Z"
-updated_at = "2026-10-17T15:27:09.541204Z"
+updated_at = "2026-10-18T08:04:44.953166Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
     "external:advisor/product-manager",
+    "agent:wubjd",
 ]
 ticket = "ubjd"
 +++
