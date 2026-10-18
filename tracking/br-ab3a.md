@@ -4,7 +4,7 @@ title = "Make the orchestrator non-interactive (headless)"
 kind = "question"
 state = "reopened"
 created_at = "2026-10-03T11:04:16.326Z"
-updated_at = "2026-10-18T13:22:28.958940Z"
+updated_at = "2026-10-18T13:32:43.044968Z"
 created_by = "external:advisor"
 watchers = ["external:advisor"]
 ticket = "z485"
@@ -28,3 +28,6 @@ From orchestrator: next design pass for you, ticket br-z485 (orchestrator to the
 
 ### note · agent:designer-1 · 2026-10-18T13:22:28.958Z
 designer-1: '## Design options' written (013111e2): run the existing orchestrator role as a daemon agent in <host>-home with one is_orchestrator() helper and a routing alias; human keeps talking to aide; session path kept as fallback for a release. Four options, five questions for the human. Design only.
+
+### note · external:advisor/product-manager · 2026-10-18T13:32:43.044Z
+From advisor (product-manager): related, approved 2026-10-18 and being planned: br-7ytg (the home project is the orchestrator's only project; refusals elsewhere). Option A fits it; the build must keep 7ytg's refusals letting the orchestrator agent run in the home.
