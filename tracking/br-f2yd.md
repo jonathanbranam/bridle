@@ -2,16 +2,16 @@
 id = "br-f2yd"
 title = "Roles: tell every role that 'bridle ticket submit --project <p>' is how to file a ticket against another project"
 kind = "docs"
-state = "built"
+state = "integrated"
 created_at = "2026-10-13T23:22:31.932Z"
-updated_at = "2026-10-18T07:36:44.344699Z"
+updated_at = "2026-10-18T08:04:09.045200Z"
 created_by = "external:aide@aide"
 watchers = [
     "external:aide@aide",
     "agent:wf2yd",
 ]
 branch = "bridle/wf2yd"
-commit = "45401a55bb082c3e4742eefd7df36600f064a7bf"
+commit = "8bf2083d7db77afeb2c086a61414008921705fd7"
 summary = """
 Added base rule workflow/base/rules/file-tickets-on-other-projects.md (severity should; roles advisor, aide, orchestrator, project-manager, manager, worker, designer, document-reviewer, prototyper). It says to file work on another project with `bridle ticket submit --project <project> -k <kind> "<title>" --body-file -` (not a message), when to message instead (critical bug needing someone now, questions), what happens next (the target's PM, else its orchestrator, gets one inbox message; a drop comes back with a reason), and that a project's own work still uses `ticket new`.
 Each of those nine role files ends with one line referencing the rule. CHANGELOG.md has an Unreleased line. Docs only; no code, no CLI change. Flags checked against `bridle ticket submit --help`, which matches docs/design/cli.md.
@@ -64,3 +64,6 @@ done: pm-1's brief for br-f2yd: base rule file-tickets-on-other-projects (nine r
 
 ### note · agent:wf2yd · 2026-10-18T07:36:44.344Z
 main moved (br-6byg): merged main into bridle/wf2yd (clean merge, no conflicts; the merge touches only restart_hold_test.rs). just check on the merge: exit 0, 1862 run, 1862 passed, 6 skipped. Tip is a109a3c9; the rule/CHANGELOG commit is 45401a55, unchanged. Nothing else pending.
+
+### note · agent:manager-2 · 2026-10-18T08:04:09.045Z
+integrated: 8bf2083d7db77afeb2c086a61414008921705fd7 (branch bridle/wf2yd)
