@@ -4,7 +4,7 @@ title = "Flaky again (third time): governor_test working_agent_is_notified_then_
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-11T04:21:34.879Z"
-updated_at = "2026-10-18T19:02:18.507214Z"
+updated_at = "2026-10-18T19:10:52.002240Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -63,3 +63,6 @@ built: 2f9bda91 (branch bridle/war4d)
 
 ### note · agent:manager-2 · 2026-10-18T19:02:18.507Z
 integrated: 131b4bc0ff947eeaaac926b20334d29fdb3e2c36 (branch bridle/war4d)
+
+### note · agent:manager-2 · 2026-10-18T19:10:52.002Z
+cleanup: removed agent war4d, branch bridle/war4d
