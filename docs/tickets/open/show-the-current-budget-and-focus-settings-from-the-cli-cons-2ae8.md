@@ -16,6 +16,8 @@ stages:
   design: {requires: [proposal]}
   specs: {requires: [proposal], review: human}
   tasks: {requires: [design, specs]}
+written: [proposal]
+claimed_by: human
 ---
 
 ## The ask
@@ -45,14 +47,35 @@ So the two read the same way: either `bridle budget show` and `bridle focus show
 
 ### Why
 
+`bridle budget` with no verb already prints the governor's status, and `--schedule` prints every period. `bridle focus` has nothing: only the two hooks. So the human cannot check their focus hours from the CLI, and the two commands read differently. The human asked for them to match (2026-10-08), and agents cannot read `~/.bridle/config.toml`.
+
 ### What changes
+
+- Add a read for focus with the same shape budget already has: bare `bridle focus` prints the configured `[[focus]]` periods, the period in effect now and when it ends, and any override. The human said either spelling is fine if both match; budget's bare form is already built, so use it (no `show` verb, no rename).
+- Give focus the `--schedule` flag budget has, with the same layout (every period, its span and settings), and `--json` on both, one layout.
+- Make budget's output match: configured periods, period in effect now and its end, active override or hold. Fill any gap the current status leaves.
+- Make the change verbs match in naming if they differ. Focus has none today (no override); budget keeps `hold`, `release`, `override`, `override-clear`, `max-workers`. Adding a focus override is not part of this.
+- Capabilities touched: `docs/design/cli.md`, `docs/design/usage-and-budget.md`, `docs/design/agent-host/roles-and-config.md`. No spec file exists for either command; the specs stage decides whether to add one.
 
 ### What does not change
 
+- The hooks `focus gate` and `focus reply`, and their silence rules.
+- Budget's verbs and the governor's behaviour (hold, wind down, stop).
+- The config format of `[[focus]]` and `[[budget.schedule]]`.
+- No **BREAKING** change: bare `bridle budget` and `--schedule` keep working.
+
 ### Risk and impact
+
+Low. Mostly read-only output in the CLI crate and the docs. Focus is read from the human's config by the CLI or daemon; the design must decide which, and agents must get the answer without reading the file. Risk is a changed budget layout breaking a script that parses `--json`; keep existing JSON fields.
 
 ### Out of scope
 
+- A focus override or hold: not yet, because nobody asked and focus has no state to override.
+- A combined `bridle status` section for focus: not yet, because the two commands are the ask; add it when wanted.
+- A `show` verb on both: not needed, bare form already exists on budget (KISS, one name per action).
+
 ### Open questions
+
+None.
 
 ---
