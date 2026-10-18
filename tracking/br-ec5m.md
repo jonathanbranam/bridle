@@ -2,9 +2,9 @@
 id = "br-ec5m"
 title = "Move output polish: take-over prints only diffs, start drops the contradictory mail hint, runbook names a real mail status command (from jqf9)"
 kind = "fix"
-state = "pending"
+state = "open"
 created_at = "2026-10-18T23:43:07.807Z"
-updated_at = "2026-10-18T23:43:07.807Z"
+updated_at = "2026-10-18T23:43:40.086216Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 ticket = "ec5m"
