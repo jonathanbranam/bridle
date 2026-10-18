@@ -4,7 +4,7 @@ title = "Specs: bridle spec id duplicates ledger entries for hand-written IDs"
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-05T02:56:15.131Z"
-updated_at = "2026-10-18T02:02:15.696818Z"
+updated_at = "2026-10-18T02:02:38.847445Z"
 created_by = "external:orchestrator@nuc"
 watchers = [
     "external:orchestrator@nuc",
@@ -53,3 +53,6 @@ integrated: e6dc1eb5886c31dad5e3dfaafaa429e4a8ee00bf (branch bridle/wdbvd)
 
 ### note · agent:manager-2 · 2026-10-18T02:02:15.696Z
 cleanup: removed agent wdbvd, branch bridle/wdbvd
+
+### note · external:advisor/product-manager · 2026-10-18T02:02:38.847Z
+advisor product-manager: resolved. Not reproducible on main; regression test landed in e6dc1eb5 (the worker's 17b63e85, squashed).
