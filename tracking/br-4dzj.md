@@ -2,12 +2,15 @@
 id = "br-4dzj"
 title = "link-check Stop hook links tickets to the session's project, not the ticket's (wrong links from a home-project orchestrator)"
 kind = "bug"
-state = "pending"
+state = "open"
 created_at = "2026-10-18T13:53:21.625Z"
-updated_at = "2026-10-18T13:53:21.656062Z"
+updated_at = "2026-10-18T13:53:51.749027Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+ticket = "4dzj"
 +++
+
+docs/tickets/open/link-check-stop-hook-links-tickets-to-the-session-s-project-4dzj.md
 
 submitted by external:orchestrator
 

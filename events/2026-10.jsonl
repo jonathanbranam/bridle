@@ -2714,3 +2714,6 @@
 {"actor":"agent:pm-1","at":"2026-10-18T13:40:17.309679Z","queue":"reprioritized"}
 {"actor":"external:aide","at":"2026-10-18T13:52:42.573237Z","from":"claimed","task":"br-e7s5","to":"integrated"}
 {"actor":"human","at":"2026-10-18T13:53:21.625Z","from":"","task":"br-4dzj","to":"pending"}
+{"actor":"human","at":"2026-10-18T13:53:44.516Z","from":"","task":"br-jn8p","to":"pending"}
+{"actor":"external:aide","at":"2026-10-18T13:53:44.954375Z","from":"pending","task":"br-jn8p","to":"open"}
+{"actor":"external:orchestrator","at":"2026-10-18T13:53:51.749027Z","from":"pending","task":"br-4dzj","to":"open"}
