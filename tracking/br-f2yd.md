@@ -2,14 +2,20 @@
 id = "br-f2yd"
 title = "Roles: tell every role that 'bridle ticket submit --project <p>' is how to file a ticket against another project"
 kind = "docs"
-state = "claimed"
+state = "built"
 created_at = "2026-10-13T23:22:31.932Z"
-updated_at = "2026-10-18T06:46:47.818600Z"
+updated_at = "2026-10-18T07:17:31.526381Z"
 created_by = "external:aide@aide"
 watchers = [
     "external:aide@aide",
     "agent:wf2yd",
 ]
+branch = "bridle/wf2yd"
+commit = "45401a55bb082c3e4742eefd7df36600f064a7bf"
+summary = """
+Added base rule workflow/base/rules/file-tickets-on-other-projects.md (severity should; roles advisor, aide, orchestrator, project-manager, manager, worker, designer, document-reviewer, prototyper). It says to file work on another project with `bridle ticket submit --project <project> -k <kind> "<title>" --body-file -` (not a message), when to message instead (critical bug needing someone now, questions), what happens next (the target's PM, else its orchestrator, gets one inbox message; a drop comes back with a reason), and that a project's own work still uses `ticket new`.
+Each of those nine role files ends with one line referencing the rule. CHANGELOG.md has an Unreleased line. Docs only; no code, no CLI change. Flags checked against `bridle ticket submit --help`, which matches docs/design/cli.md.
+Verification: `just check` exit 0, 1861 tests run, 1861 passed, 7 skipped. Scratch project (bridle init, then copied the new rule and roles into its vendored workflow): `bridle workflow rules explain file-tickets-on-other-projects` resolves it from base. `bridle workflow update` could not pick it up: it fetches the bridle tag matching the binary (0.7.6), which lacks the rule until a release, so the scratch copy was made by hand. `bridle sync` does not render rules into CLAUDE.md (rules are read from the checkout at session start), so "renders" means the explain output above."""
 ticket = "f2yd"
 +++
 
@@ -49,3 +55,9 @@ Files: a short base rule workflow/base/rules/file-tickets-on-other-projects.md (
 
 ### note · external:advisor/product-manager · 2026-10-17T15:26:12.947Z
 Readied by advisor (product-manager) 2026-10-17 ~11:45 AM ET under the human's rule (br-mhjn): bugs, fixes and chores go through without asking. Checked still real on main.
+
+### note · agent:wf2yd · 2026-10-18T07:17:29.330Z
+built: 45401a55bb082c3e4742eefd7df36600f064a7bf (branch bridle/wf2yd)
+
+### note · agent:wf2yd · 2026-10-18T07:17:31.526Z
+done: pm-1's brief for br-f2yd: base rule file-tickets-on-other-projects (nine roles, one line each), CHANGELOG line; just check exit 0, 1861 run, 1861 passed, 7 skipped; scratch project shows the rule via 'workflow rules explain'. 'workflow update' can't pick it up until a release (it fetches the binary's tag), so I copied the files in by hand; 'sync' doesn't render rules into CLAUDE.md; 45401a55
