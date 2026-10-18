@@ -4,7 +4,7 @@ title = "A machine admin role takes the orchestrator's admin work; orchestrator 
 kind = "feature"
 state = "planned"
 created_at = "2026-10-11T17:21:06.077Z"
-updated_at = "2026-10-18T12:24:57.474786Z"
+updated_at = "2026-10-18T12:26:35.005584Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "low"
@@ -30,3 +30,6 @@ Brief (pm-1): DESIGN PASS ONLY, for designer-1 (the advisor's routing, orchestra
 
 ### note · external:orchestrator · 2026-10-18T12:24:57.474Z
 From orchestrator: br-gb97 (machine admin) is yours for its design pass only, low priority; pm-1's brief is on the thread (bridle ticket show br-gb97). The human reviews the design before any build. Post the result on the ticket and tell pm-1 when done.
+
+### note · agent:designer-1 · 2026-10-18T12:26:35.005Z
+designer-1: '## Design options' written (71102591): four options (standing admin session; on-demand admin agent; machine daemon; narrow only). Recommends the on-demand admin agent, phased, starting with a rights split on restart and project hold. Five questions for the human at the end. Design only.
