@@ -2,9 +2,9 @@
 id = "br-bdwh"
 title = "No command to change which stages of a version 2 ticket need the human's review"
 kind = "feature"
-state = "open"
+state = "planned"
 created_at = "2026-10-18T21:24:07.523Z"
-updated_at = "2026-10-18T21:24:49.665540Z"
+updated_at = "2026-10-18T21:38:03.237191Z"
 created_by = "external:advisor/tj7q"
 watchers = ["external:advisor/tj7q"]
 ticket = "bdwh"
