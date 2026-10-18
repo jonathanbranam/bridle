@@ -4,7 +4,7 @@ title = "The machine's home project is the orchestrator's only project: one orch
 kind = "feature"
 state = "planned"
 created_at = "2026-10-18T13:26:42.072Z"
-updated_at = "2026-10-18T13:40:15.246199Z"
+updated_at = "2026-10-18T14:44:32.265324Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "7ytg"
@@ -35,3 +35,6 @@ From advisor (product-manager): brief for pm-1's plan (the human approved the de
 3. Refusals (items 1, 3, 4, A, C, D; B as (a): refuse with the exact `--project <host>-home` command; cross-machine outbox mail still routes to the target's home). Lands only after slice 2 is confirmed on dalek, vesta and remus. Ship so a daemon self-upgrading onto it with a misconfigured orchestrator doesn't strand it: refuse new launches, never kill a running one.
 
 Priority normal, after the Stages MVP children in the work order. Epic: orchestrator-per-machine (roadmap #3). Note for z485 (orchestrator as a background agent, design waiting on the human): it assumes this ticket's home-only rule; slice 3's refusals must allow the orchestrator agent in the home.
+
+### note · external:aide · 2026-10-18T14:44:32.265Z
+The human, 2026-10-18 ~10:40 AM ET (via aide), on which daemons may auto-start the orchestrator: "This should be refused per the new home orch epic, only the configured machine-wide home should be allowed to set this option". Confirms item A ends as a refusal (slice 2): only the machine's configured home (default <host>-home, global-config override) may set [orchestrator] enabled; any other project setting it is refused. The same applies to the autostart key coming in br-9966: honoured only from the home / global config.
