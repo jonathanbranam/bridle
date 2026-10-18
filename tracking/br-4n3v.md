@@ -4,7 +4,7 @@ title = "A worker's ticket claim disappears mid-work, so its 'ticket built' is r
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-18T10:18:25.985Z"
-updated_at = "2026-10-18T11:11:30.763014Z"
+updated_at = "2026-10-18T11:15:57.865784Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -39,3 +39,6 @@ note: the background wrapper reported exit 1, but the log has no failure and end
 
 ### note · agent:manager-2 · 2026-10-18T11:11:30.763Z
 integrated: 595f4991366877ed93ad4999b1c628f17bf89181 (branch bridle/w4n3v)
+
+### note · agent:manager-2 · 2026-10-18T11:15:57.865Z
+cleanup: removed agent w4n3v, branch bridle/w4n3v
