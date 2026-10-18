@@ -1938,12 +1938,17 @@ mod sync {
     /// see `random_base36` above for why there's no `rand` dependency here). The modulo bias
     /// (256 % 31) is irrelevant for ids.
     fn random_id_chars(len: usize) -> String {
-        Uuid::new_v4()
-            .as_bytes()
-            .iter()
-            .take(len)
-            .map(|b| ID_ALPHABET[*b as usize % ID_ALPHABET.len()] as char)
-            .collect()
+        loop {
+            let id: String = Uuid::new_v4()
+                .as_bytes()
+                .iter()
+                .take(len)
+                .map(|b| ID_ALPHABET[*b as usize % ID_ALPHABET.len()] as char)
+                .collect();
+            if !bridle_api::types::is_reserved_id(&id) {
+                return id;
+            }
+        }
     }
 
     fn new_task_id(prefix: &str) -> String {

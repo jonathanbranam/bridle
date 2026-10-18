@@ -7,6 +7,7 @@ use std::collections::BTreeSet;
 use std::path::Path;
 
 use crate::ticket::is_bare_id;
+use bridle_api::types::is_reserved_id;
 
 /// Blank out fenced and inline code so IDs inside it are skipped.
 fn without_code(text: &str) -> Vec<char> {
@@ -104,9 +105,9 @@ fn words(text: &str) -> Vec<(String, bool)> {
 pub fn unlinked_ids(text: &str, prefix: &str, exists: impl Fn(&str) -> bool) -> Vec<String> {
     let tail = |w: &str| -> Option<String> {
         if let Some(rest) = w.strip_prefix(prefix).and_then(|r| r.strip_prefix('-')) {
-            return is_bare_id(rest).then(|| rest.to_string());
+            return (is_bare_id(rest) && !is_reserved_id(rest)).then(|| rest.to_string());
         }
-        (is_bare_id(w) && exists(w)).then(|| w.to_string())
+        (is_bare_id(w) && !is_reserved_id(w) && exists(w)).then(|| w.to_string())
     };
     let mut linked = BTreeSet::new();
     let mut found: Vec<(String, String)> = Vec::new();
@@ -160,6 +161,11 @@ mod tests {
 
     fn real(id: &str) -> bool {
         id == "9dcz" || id == "rest"
+    }
+
+    #[test]
+    fn the_reserved_placeholder_is_never_flagged() {
+        assert!(unlinked_ids("br-xxxx and xxxx", "br", |_| true).is_empty());
     }
 
     #[test]

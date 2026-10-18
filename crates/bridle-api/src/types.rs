@@ -357,6 +357,15 @@ pub struct CiStatus {
     pub completed_at: DateTime<Utc>,
 }
 
+/// Ids that are never minted and never count as a real id: agents write them as placeholders
+/// ("br-xxxx: design unblocked"). One list so ticket and task minting, `ticket check` and the
+/// link-check hook agree.
+pub const RESERVED_IDS: &[&str] = &["xxxx"];
+
+pub fn is_reserved_id(id: &str) -> bool {
+    RESERVED_IDS.contains(&id)
+}
+
 // ---------- orchestrator wakes ----------
 
 /// The wake reason a waiter gets when the daemon is stopping or restarting; its text says why.

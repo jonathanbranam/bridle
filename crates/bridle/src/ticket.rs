@@ -1491,6 +1491,12 @@ pub fn check_in(root: &Path, docs: &Path, projects: &Projects) -> Report {
             }
         };
         let file_id = id_of(path);
+        if file_id
+            .as_deref()
+            .is_some_and(bridle_api::types::is_reserved_id)
+        {
+            note(true, "id is reserved (placeholder); mint another".into());
+        }
         if file_id.is_none() {
             note(true, "file name doesn't end in -<4-character id>.md".into());
         }
@@ -1637,7 +1643,8 @@ fn check_stages(text: &str, version: Option<&str>, err: &mut dyn FnMut(String)) 
 fn reusable_id(root: &Path, task_id: &str) -> Option<String> {
     let tail = task_id.rsplit_once('-')?.1;
     let ok = tail.len() == ID_LEN && tail.bytes().all(|b| ID_ALPHABET.contains(&b));
-    (ok && !existing_ids(root).contains(tail)).then(|| tail.to_string())
+    (ok && !bridle_api::types::is_reserved_id(tail) && !existing_ids(root).contains(tail))
+        .then(|| tail.to_string())
 }
 
 fn existing_ids(root: &Path) -> HashSet<String> {
@@ -1660,7 +1667,7 @@ fn mint_id(taken: &HashSet<String>) -> String {
                 c
             })
             .collect();
-        if !taken.contains(&id) {
+        if !taken.contains(&id) && !bridle_api::types::is_reserved_id(&id) {
             return id;
         }
     }
@@ -2096,6 +2103,15 @@ mod tests {
             "",
         );
         assert_eq!(problems(dir.path()), "");
+    }
+
+    #[test]
+    fn a_reserved_id_is_reported_and_never_reused() {
+        let dir = tempfile::tempdir().unwrap();
+        let t = dir.path().join("docs/tickets");
+        write(&t, "open", "a-thing-xxxx.md", "xxxx", "", "");
+        assert!(problems(dir.path()).contains("reserved"));
+        assert_eq!(reusable_id(&t, "br-xxxx"), None);
     }
 
     #[test]
