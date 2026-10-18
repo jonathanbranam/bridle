@@ -8,6 +8,12 @@ tasks = ["br-upxq"]
 tasks = ["br-eavq"]
 
 [[tier]]
+tasks = ["br-rdag"]
+
+[[tier]]
+tasks = ["br-jqf9"]
+
+[[tier]]
 tasks = ["br-bdwh"]
 
 [[tier]]
@@ -24,6 +30,12 @@ tasks = [
 
 [[tier]]
 tasks = ["br-4dzj"]
+
+[[tier]]
+tasks = ["br-ec5m"]
+
+[[tier]]
+tasks = ["br-df8w"]
 
 [[tier]]
 tasks = ["br-163f"]

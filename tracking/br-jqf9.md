@@ -2,9 +2,9 @@
 id = "br-jqf9"
 title = "kx5u trial 2 findings: idle manager blocks the drain, migration leaves checkout dirty, noisy and contradictory move output"
 kind = "fix"
-state = "open"
+state = "planned"
 created_at = "2026-10-18T23:42:19.316Z"
-updated_at = "2026-10-18T23:47:23.098748Z"
+updated_at = "2026-10-18T23:58:11.563117Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 ticket = "jqf9"
