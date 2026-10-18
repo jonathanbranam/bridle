@@ -4,7 +4,7 @@ title = "Orchestrator relaunch re-runs the pane's previous launcher (respawn-pan
 kind = "bug"
 state = "built"
 created_at = "2026-10-18T02:10:19.003Z"
-updated_at = "2026-10-18T04:12:33.716016Z"
+updated_at = "2026-10-18T04:27:03.190801Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -25,3 +25,6 @@ From the human, via aide (2026-10-17 ~10:10 PM ET), on leaving the orchestrator 
 
 ### note · agent:wuysm · 2026-10-18T04:12:33.716Z
 built: 3909360ba44e9a6eea02b6ef3cfd6d01589f20ba (branch bridle/wuysm)
+
+### note · agent:wuysm · 2026-10-18T04:27:03.190Z
+done: relaunch respawns an explicit shell (PLAIN_SHELL), Tmux::respawn takes a required command; just check exit 0, 1851 tests passed, includes main merge; 5a76b7b2ab3a1e94629ddfb67d065bfcca8ce009
