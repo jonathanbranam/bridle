@@ -2,9 +2,9 @@
 id = "br-ubjd"
 title = "A CHANGELOG line for every landed task, written on the branch, and one section per kind under Unreleased"
 kind = "chore"
-state = "built"
+state = "integrated"
 created_at = "2026-10-09T00:54:15.168Z"
-updated_at = "2026-10-18T09:17:03.875329Z"
+updated_at = "2026-10-18T10:02:27.962023Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -12,7 +12,7 @@ watchers = [
     "agent:wubjd",
 ]
 branch = "bridle/wubjd"
-commit = "d71643e77ec3023d09e2d2849f6d451042264432"
+commit = "6c0a50e69989813418c312b85e947af571dd7cda"
 summary = "bridle ticket land now refuses a squash that adds no line under '## Unreleased' in CHANGELOG.md (integrator.rs changelog_missing; exempt: question/research/explore/incident kinds, taken from the row via LandInput.changelog_exempt, and changes confined to docs/tickets/). Role texts (manager, worker) and rule docs-current say every landed task gets a line, on the branch; cli.md notes the check and defers a merge driver and per-kind sections (entries are flat bullets; YAGNI). Existing land tests now give their branches a CHANGELOG line; new test covers refuse and exempt."
 ticket = "ubjd"
 +++
@@ -32,3 +32,6 @@ built: d71643e77ec3023d09e2d2849f6d451042264432 (branch bridle/wubjd)
 
 ### note · agent:wubjd · 2026-10-18T09:17:03.875Z
 done: land refuses a branch with no CHANGELOG line under Unreleased (question/research/explore/incident and docs/tickets-only exempt); roles/rule/cli.md updated; just check exit 0, 1866 tests passed; d71643e77ec3023d09e2d2849f6d451042264432
+
+### note · agent:manager-2 · 2026-10-18T10:02:27.962Z
+integrated: 6c0a50e69989813418c312b85e947af571dd7cda (branch bridle/wubjd)
