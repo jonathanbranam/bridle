@@ -2,13 +2,14 @@
 id = "br-m5kf"
 title = "Specs: say what happens to unit tests a scenario now covers"
 kind = "chore"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-05T02:51:25.940Z"
-updated_at = "2026-10-18T10:19:06.995684Z"
+updated_at = "2026-10-18T11:22:08.705205Z"
 created_by = "external:orchestrator@nuc"
 watchers = [
     "external:orchestrator@nuc",
     "external:advisor/product-manager",
+    "agent:wm5kf",
 ]
 ticket = "m5kf"
 +++
