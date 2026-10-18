@@ -27,6 +27,7 @@ agent:manager-2 had to mark it built for the worker (its note reads `planned -> 
 ## Done when
 
 The rule stays: a worker may change only a ticket it has claimed. The human (2026-10-18, to advisor tj7q): "This rule on a worker changing state on a ticket it has not claimed sounds correct. Let's find and fix the underlying bug instead of changing that rule"
+And: "The solution that the manager could do it feels right. Instead of changing the rule, let's fix the claim issue." When a worker's claim is gone, its manager marking the ticket built stays the fallback.
 
 - Find what dropped w4mbd's claim on br-4mbd between `planned -> claimed` and its `ticket built`, and fix it. If it wasn't dropped, find why the guard didn't see it.
 - A test reproduces the cause (for example, a claim surviving a daemon restart, if that was it) and passes after the fix.
