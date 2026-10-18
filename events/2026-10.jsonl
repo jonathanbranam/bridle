@@ -2703,3 +2703,4 @@
 {"actor":"external:advisor/tj7q","at":"2026-10-18T13:10:06.860434Z","from":"pending","task":"br-65qh","to":"open"}
 {"actor":"human","at":"2026-10-18T13:19:11.414Z","from":"","task":"br-p7jf","to":"pending"}
 {"actor":"human","at":"2026-10-18T13:19:31.649Z","from":"","task":"br-dy6a","to":"pending"}
+{"actor":"external:advisor/product-manager","at":"2026-10-18T13:20:13.053753Z","from":"dropped","task":"br-ab3a","to":"reopened"}

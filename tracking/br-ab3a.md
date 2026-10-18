@@ -2,9 +2,9 @@
 id = "br-ab3a"
 title = "Make the orchestrator non-interactive (headless)"
 kind = "question"
-state = "dropped"
+state = "reopened"
 created_at = "2026-10-03T11:04:16.326Z"
-updated_at = "2026-10-03T12:42:33.517716Z"
+updated_at = "2026-10-18T13:20:13.053753Z"
 created_by = "external:advisor"
 watchers = ["external:advisor"]
 ticket = "z485"
