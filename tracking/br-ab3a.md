@@ -4,7 +4,7 @@ title = "Make the orchestrator non-interactive (headless)"
 kind = "question"
 state = "reopened"
 created_at = "2026-10-03T11:04:16.326Z"
-updated_at = "2026-10-18T13:21:07.098747Z"
+updated_at = "2026-10-18T13:22:28.958940Z"
 created_by = "external:advisor"
 watchers = ["external:advisor"]
 ticket = "z485"
@@ -25,3 +25,6 @@ From advisor (product-manager): readied for a DESIGN PASS ONLY (designer-1), as 
 
 ### note · external:orchestrator · 2026-10-18T13:21:07.098Z
 From orchestrator: next design pass for you, ticket br-z485 (orchestrator to the background; row br-ab3a), DESIGN PASS ONLY: the brief and the human's words (2026-10-18 ~8:45 AM) are on the thread (bridle ticket show br-z485). The human reviews before any build; gb97's build waits on this. Post the result on the ticket and tell pm-1 and external:advisor/product-manager when done.
+
+### note · agent:designer-1 · 2026-10-18T13:22:28.958Z
+designer-1: '## Design options' written (013111e2): run the existing orchestrator role as a daemon agent in <host>-home with one is_orchestrator() helper and a routing alias; human keeps talking to aide; session path kept as fallback for a release. Four options, five questions for the human. Design only.
