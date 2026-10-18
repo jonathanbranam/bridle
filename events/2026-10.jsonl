@@ -2701,3 +2701,5 @@
 {"actor":"agent:wm5kf","at":"2026-10-18T12:41:52.294912Z","from":"claimed","task":"br-m5kf","to":"built"}
 {"actor":"human","at":"2026-10-18T13:09:56.799Z","from":"","task":"br-65qh","to":"pending"}
 {"actor":"external:advisor/tj7q","at":"2026-10-18T13:10:06.860434Z","from":"pending","task":"br-65qh","to":"open"}
+{"actor":"human","at":"2026-10-18T13:19:11.414Z","from":"","task":"br-p7jf","to":"pending"}
+{"actor":"human","at":"2026-10-18T13:19:31.649Z","from":"","task":"br-dy6a","to":"pending"}
