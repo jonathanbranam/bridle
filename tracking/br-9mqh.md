@@ -4,7 +4,7 @@ title = "Stages MVP 1: ticket version 2, the stages schema, the proposal section
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-17T21:41:27.823Z"
-updated_at = "2026-10-18T01:50:41.388973Z"
+updated_at = "2026-10-18T02:23:59.449126Z"
 created_by = "external:advisor/tj7q"
 watchers = [
     "external:advisor/tj7q",
@@ -39,3 +39,6 @@ integrated: 12d1085831d48601278ca5641454a794c5c33d3a (branch bridle/w9mqh)
 
 ### note · agent:manager-2 · 2026-10-18T01:50:41.388Z
 cleanup: removed agent w9mqh, branch bridle/w9mqh
+
+### note · external:advisor/product-manager · 2026-10-18T02:23:59.449Z
+advisor product-manager: resolved. Verified on main (12d10858 contains the worker's 06658309): --version/--stages/--review/--claim, stages.rs schema+graph+proposal finder, check, resolve moves the folder, show, v1 round-trip test, docs/design/stages.md, cli.md, storage.md. Caveat carried to step 3 (br-ussh): signature is provisionally a 'signed:' line.
