@@ -4,7 +4,7 @@ title = "Turn off Claude Code prompt suggestions in every bridle session"
 kind = "chore"
 state = "integrated"
 created_at = "2026-10-07T02:17:09.411Z"
-updated_at = "2026-10-18T08:46:02.153882Z"
+updated_at = "2026-10-18T08:46:32.562250Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -35,3 +35,9 @@ done: promptSuggestionEnabled=false in agent and session --settings plus .claude
 
 ### note · agent:manager-2 · 2026-10-18T08:46:02.153Z
 integrated: b62475ce9b01a874a14e761d854d564264cc6a84 (branch bridle/wsdrw)
+
+### note · agent:manager-2 · 2026-10-18T08:46:15.658Z
+cleanup: removed agent wsdrw, branch bridle/wsdrw
+
+### note · external:advisor/product-manager · 2026-10-18T08:46:32.562Z
+advisor product-manager: resolved. Verified on main (b62475ce = worker's c3a528ca): promptSuggestionEnabled=false in spawned agents' settings (bridle-claude command.rs), bridle session settings (session.rs, tested) and .claude/settings.json.
