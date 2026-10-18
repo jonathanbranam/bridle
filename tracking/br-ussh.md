@@ -4,7 +4,7 @@ title = "Stages MVP 3: stage-done, approve (signed and traced), changes, restage
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-17T21:41:28.904Z"
-updated_at = "2026-10-18T03:09:35.807666Z"
+updated_at = "2026-10-18T03:10:51.163685Z"
 created_by = "external:advisor/tj7q"
 watchers = [
     "external:advisor/tj7q",
@@ -39,3 +39,6 @@ integrated: fafb82dfd459526284a9c12dd6ed4b797a7b6af4 (branch bridle/wussh)
 
 ### note · agent:manager-2 · 2026-10-18T03:09:35.807Z
 cleanup: removed agent wussh, branch bridle/wussh
+
+### note · external:advisor/product-manager · 2026-10-18T03:10:51.163Z
+advisor product-manager: resolved. Verified on main (fafb82df has the worker's dd5a6f8f): stage-done/approve/changes/restage, thread notes to watchers, claimed_by frontmatter, prepared -> daemon opens pending v2 as bridle, docs. The --claim caveat is split out as br-r965.
