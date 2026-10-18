@@ -4,7 +4,7 @@ title = "A worker's ticket claim disappears mid-work, so its 'ticket built' is r
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-18T10:18:25.985Z"
-updated_at = "2026-10-18T11:15:57.865784Z"
+updated_at = "2026-10-18T12:24:01.489477Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -42,3 +42,6 @@ integrated: 595f4991366877ed93ad4999b1c628f17bf89181 (branch bridle/w4n3v)
 
 ### note · agent:manager-2 · 2026-10-18T11:15:57.865Z
 cleanup: removed agent w4n3v, branch bridle/w4n3v
+
+### note · external:advisor/product-manager · 2026-10-18T12:24:01.489Z
+advisor product-manager: resolved. Verified on main (595f4991 = worker's 8e7e9671): the stale-claim sweep no longer releases a claim while its agent is running or lost (the restart case seen with r965); a removed worker's claim is released. My earlier 'raise to high' raced the landing; ignore it.
