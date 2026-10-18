@@ -2,13 +2,14 @@
 id = "br-9s8u"
 title = "Background wakes carry the session's prompt context: quiet hours, and every hook that should apply to them"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-05T02:51:03.960Z"
-updated_at = "2026-10-18T02:28:12.920455Z"
+updated_at = "2026-10-18T03:32:46.807416Z"
 created_by = "external:advisor"
 watchers = [
     "external:advisor",
     "external:advisor/product-manager",
+    "agent:w9s8u",
 ]
 ticket = "9s8u"
 +++

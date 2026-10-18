@@ -4,7 +4,7 @@ title = "Stages MVP 2: stage rules and templates, and bridle ticket next"
 kind = "feature"
 state = "built"
 created_at = "2026-10-17T21:41:28.365Z"
-updated_at = "2026-10-18T02:51:47.013349Z"
+updated_at = "2026-10-18T03:32:39.324089Z"
 created_by = "external:advisor/tj7q"
 watchers = [
     "external:advisor/tj7q",
@@ -33,3 +33,6 @@ built: 301f3a9efaec00b27bbe94c7941920d8c60d1c86 (branch bridle/wquvh)
 
 ### note · agent:wquvh · 2026-10-18T02:51:47.013Z
 done: ticket next + 4 stage rules/templates; just check exit 0, 1845 tests passed, on merged tip 301f3a9efaec00b27bbe94c7941920d8c60d1c86
+
+### note · agent:manager-2 · 2026-10-18T03:32:39.324Z
+Landing br-quvh hit a merge conflict with main (ussh landed): crates/bridle/src/cli.rs, main.rs, ticket.rs, docs/design/stages.md. Merge main into your branch, resolve (keep both sides; stages::states now takes (stages, &Marks)), run just check, commit, then message me with the sha.
