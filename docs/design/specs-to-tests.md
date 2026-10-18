@@ -56,3 +56,16 @@ comes from the committed generated file.
   valuable part of today's tool, and that moves into the Rust parser. Re-parsing
   the output is no longer needed because the emitter and the validator share
   one AST.
+
+## Unit tests a scenario covers
+
+When an executable scenario covers behaviour that a hand-written unit test also
+covers, the unit test is decided in the same change that adds the scenario:
+
+- A scenario covers the behaviour at the user-visible level. A unit test is kept
+  only if it covers an edge the scenario does not: a fast branch or error case, or
+  a pure function with many inputs.
+- A unit test that only repeats the scenario's happy path is deleted in that
+  change, and the commit message says so.
+- Coverage (`bridle spec coverage`) only checks that a scenario id is mentioned in
+  a test, so it does not tell you whether a unit test is still needed.
