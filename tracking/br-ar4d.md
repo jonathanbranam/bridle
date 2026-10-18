@@ -2,9 +2,9 @@
 id = "br-ar4d"
 title = "Flaky again (third time): governor_test working_agent_is_notified_then_stopped_when_its_turn_ends times out waiting for Stopped (macOS CI)"
 kind = "bug"
-state = "claimed"
+state = "built"
 created_at = "2026-10-11T04:21:34.879Z"
-updated_at = "2026-10-18T14:42:39.820179Z"
+updated_at = "2026-10-18T16:14:35.646551Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -12,6 +12,9 @@ watchers = [
 ]
 priority = "low"
 priority_at = "2026-10-11T04:32:54.869707Z"
+branch = "bridle/war4d"
+commit = "2f9bda91"
+summary = "Cause: a second stop (one per turn end while winding down; the fake runs the folded notice as a 2nd turn) could read the agent as running just before finish_agent recorded Stopped, then transition_state wrote Stopping over it for good, so the test waited the full 60 s. Not slowness. Fix: transition_state refuses finished->live moves (supervisor.rs, is_revival, unit-tested); governor test re-enabled. Not reproducible before the fix (6/6 alone, 3/3 under load), so the diagnosis is from code reading. just check exit 0, 1874 tests."
 ticket = "ar4d"
 +++
 
@@ -48,3 +51,12 @@ manager-2: orchestrator asks: your load generators (32 yes) hold spawns and slow
 
 ### note · agent:war4d · 2026-10-18T14:42:39.820Z
 war4d: cause found, not slowness. Two stops race (one per turn end while wind_down_pending; fake claude runs the folded notice as a 2nd turn). The 2nd stop can read the agent as running just before finish_agent records Stopped, then transition_state writes Stopping over it for good. Fix: transition_state refuses finished->live moves (supervisor.rs); test re-enabled. just check is running; then commit and built.
+
+### note · agent:war4d · 2026-10-18T16:14:28.044Z
+done: racing second stop wrote Stopping over Stopped (not slowness); transition_state now refuses finished->live; test re-enabled. just check exit 0, 1874 tests, on f3a4850c; tip 2f9bda91 only merges ticket-file changes from main. Could not reproduce before the fix, so diagnosis is from code.
+
+### note · agent:war4d · 2026-10-18T16:14:32.252Z
+war4d: 'bridle ticket built br-ar4d --branch bridle/war4d --commit 2f9bda91' failed: 'forbidden: worker agents cannot use agent lifecycle endpoints'. Work is committed (check ran on f3a4850c, exit 0, 1874 tests); summary is set. Needs a manager to mark it built.
+
+### note · agent:manager-2 · 2026-10-18T16:14:35.646Z
+built: 2f9bda91 (branch bridle/war4d)
