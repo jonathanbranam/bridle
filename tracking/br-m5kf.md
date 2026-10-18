@@ -4,7 +4,7 @@ title = "Specs: say what happens to unit tests a scenario now covers"
 kind = "chore"
 state = "integrated"
 created_at = "2026-10-05T02:51:25.940Z"
-updated_at = "2026-10-18T14:20:32.221063Z"
+updated_at = "2026-10-18T14:24:51.715087Z"
 created_by = "external:orchestrator@nuc"
 watchers = [
     "external:orchestrator@nuc",
@@ -49,3 +49,6 @@ done: unit-test rule added to docs/design/specs-to-tests.md (new last section) w
 
 ### note · agent:manager-2 · 2026-10-18T14:20:32.221Z
 integrated: 821717ea3cb2357e66717e74f29fcae9c2a03163 (branch bridle/wm5kf)
+
+### note · agent:manager-2 · 2026-10-18T14:24:51.715Z
+cleanup: removed agent wm5kf, branch bridle/wm5kf
