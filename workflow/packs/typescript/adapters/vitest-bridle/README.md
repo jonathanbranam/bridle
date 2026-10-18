@@ -34,6 +34,19 @@ await registerBridleSpecs({ steps }); // options: root, capability, scenarios
 - If any spec has errors, `bridle spec export` refuses and registration throws
   with its diagnostics. Run vitest from the project root (or pass `root`).
 
+## Typecheck the step files
+
+vitest transpiles without typechecking, so a type error in a step file never fails a run.
+Add a separate step to the project's checks:
+
+```
+tsc --noEmit
+```
+
+with a `tsconfig.json` whose `include` covers the step files (e.g. `"include": ["specs.test.ts",
+"steps/**/*.ts"]`) and `"moduleResolution": "bundler"` so `vitest-bridle` resolves to its
+`index.d.ts`. `vitest --typecheck` is not a substitute: it only checks `*.test-d.ts` files.
+
 ## Tests
 
 `node --test test/adapter.test.mjs` (no npm install; the vitest runner is injected). `just check`

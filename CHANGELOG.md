@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Docs (br-2d6x): the vitest-bridle README and `docs/design/specs-to-tests.md` say step files are not typechecked by vitest and show the `tsc --noEmit` step and tsconfig `include` that cover them.
 - Fix (br-4n3v): a worker's ticket claim is no longer released by the stale-claim sweep while its agent is running or `lost` (a daemon restart marks every agent `lost` with its old activity time, and a long silent check made a running one look stale), so the worker's own `ticket built` works. A removed worker's claim is released. Migration: none.
 - Docs (br-p2ad): the add-a-machine guide installs WSL2 from the release script like Linux and macOS (no `just install` step), and states the check for a release install (`bridle --version`, and `bridle doctor` in a project clone). Migration: none.
 - Fix (br-4mbd): `xxxx` is a reserved id: never minted for a ticket or task, reported by `bridle ticket check`, and ignored (`br-xxxx` or bare) by the link-check hook, so the placeholder no longer draws a link reminder.
