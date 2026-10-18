@@ -2,11 +2,14 @@
 id = "br-6byg"
 title = "Flaky: restart_hold_test cancel_ends_an_upgrade_drain_quietly hit its 60 s hang guard on CI"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-17T01:43:51.292Z"
-updated_at = "2026-10-17T15:27:11.040863Z"
+updated_at = "2026-10-18T06:16:19.626261Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "agent:w6byg",
+]
 ticket = "6byg"
 +++
 

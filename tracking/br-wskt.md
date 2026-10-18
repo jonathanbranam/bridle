@@ -2,11 +2,14 @@
 id = "br-wskt"
 title = "manager-2 goes idle with built work and free slots: it misses 'built' notes and doesn't refill slots"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-18T03:10:10.581Z"
-updated_at = "2026-10-18T03:32:30.389304Z"
+updated_at = "2026-10-18T06:16:13.775686Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "agent:wwskt",
+]
 ticket = "wskt"
 +++
 
