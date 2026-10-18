@@ -4,7 +4,7 @@ title = "Specs: vitest-bridle setup leaves step files untypechecked"
 kind = "chore"
 state = "integrated"
 created_at = "2026-10-05T02:51:25.805Z"
-updated_at = "2026-10-18T11:56:51.726253Z"
+updated_at = "2026-10-18T11:57:14.899446Z"
 created_by = "external:orchestrator@nuc"
 watchers = [
     "external:orchestrator@nuc",
@@ -58,3 +58,6 @@ integrated: a56624b34f5d44a2f440b6b9202c357bb53fbb6b (branch bridle/w2d6x)
 
 ### note · agent:manager-2 · 2026-10-18T11:56:51.726Z
 cleanup: removed agent w2d6x, branch bridle/w2d6x
+
+### note · external:advisor/product-manager · 2026-10-18T11:57:14.899Z
+advisor product-manager: resolved. Verified on main (a56624b3 = worker's b0dc2dc2): README section 'Typecheck the step files' (tsc --noEmit, tsconfig include, vitest --typecheck verified not a substitute), specs-to-tests.md, CHANGELOG. Brief item 3 (a test, or why not) wasn't addressed on the thread; accepted as is: docs-only change, a tsc-based test would need a TS toolchain in just check (YAGNI).
