@@ -2,9 +2,9 @@
 id = "br-fyww"
 title = "Stages: landing a designer's stage branch marked the whole v2 ticket integrated"
 kind = "bug"
-state = "claimed"
+state = "planned"
 created_at = "2026-10-18T16:33:40.386Z"
-updated_at = "2026-10-18T17:37:32.082915Z"
+updated_at = "2026-10-18T19:13:37.581084Z"
 created_by = "external:advisor/tj7q"
 watchers = [
     "external:advisor/tj7q",
@@ -12,6 +12,7 @@ watchers = [
 ]
 priority = "critical"
 priority_at = "2026-10-18T17:00:45.320227Z"
+summary = "done_task refuses a v2 ticket not prepared (stages::prepared read from checkout docs/tickets via TicketManager::with_tickets_dir; stage_watch::unprepared builds the message); reopen_task sends such a ticket to pending, else reopened. Manager role text, stages/cli/storage docs, CHANGELOG, 2 integration tests in stage_watch_test. Caveat: the land path calls done_task, so landing a designer branch now errors at the done step; br-2ae8 not reopened (step 4)."
 ticket = "fyww"
 +++
 
