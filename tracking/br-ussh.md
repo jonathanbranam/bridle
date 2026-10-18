@@ -4,7 +4,7 @@ title = "Stages MVP 3: stage-done, approve (signed and traced), changes, restage
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-17T21:41:28.904Z"
-updated_at = "2026-10-18T03:09:21.650151Z"
+updated_at = "2026-10-18T03:09:35.807666Z"
 created_by = "external:advisor/tj7q"
 watchers = [
     "external:advisor/tj7q",
@@ -36,3 +36,6 @@ done: stage-done/approve/changes/restage + ready-means-prepared (daemon opens pr
 
 ### note · agent:manager-2 · 2026-10-18T03:09:21.650Z
 integrated: fafb82dfd459526284a9c12dd6ed4b797a7b6af4 (branch bridle/wussh)
+
+### note · agent:manager-2 · 2026-10-18T03:09:35.807Z
+cleanup: removed agent wussh, branch bridle/wussh
