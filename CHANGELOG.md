@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Flaky governor_test `working_agent_is_notified_then_stopped_when_its_turn_ends` (br-ar4d): a second racing `stop` (one per turn end while winding down) could write `stopping` over an agent `finish_agent` had just recorded `stopped`, leaving it there; a finished runtime no longer moves back to a live state. The test is re-enabled.
 - A link to a human's to-do opens the to-do page (br-bnfs): `bridle link <id>` of a task the human holds (claimed by `human`) prints `<base>/p/<project>/todos/<id>` when the daemon answers, and the gateway's task summary and detail carry `todo: true` so the UI can open the to-do page, scrolled to it, instead of "not found" on the ticket page. The UI side is a separate change (bridle-ui).
 - Fix (br-4n3v): a worker's ticket claim is no longer released by the stale-claim sweep while its agent is running or `lost` (a daemon restart marks every agent `lost` with its old activity time, and a long silent check made a running one look stale), so the worker's own `ticket built` works. A removed worker's claim is released. Migration: none.
 - Fix (br-4mbd): `xxxx` is a reserved id: never minted for a ticket or task, reported by `bridle ticket check`, and ignored (`br-xxxx` or bare) by the link-check hook, so the placeholder no longer draws a link reminder.

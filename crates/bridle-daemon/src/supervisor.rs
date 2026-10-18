@@ -2004,6 +2004,14 @@ impl AgentManager {
         let from = {
             let mut st = runtime.state.lock().await;
             let from = st.current_state;
+            // A process that has exited never comes back to life in this
+            // runtime (a resume makes a new one). A second, racing `stop`
+            // (one per turn end while wind_down_pending) reading the agent
+            // as running just before `finish_agent` records Stopped would
+            // otherwise write Stopping over it and leave it there (ar4d).
+            if is_revival(from, to) {
+                return;
+            }
             st.current_state = to;
             from
         };
@@ -3593,8 +3601,21 @@ fn stop_check_running(cwd: &str) -> bool {
         .is_some_and(|age| age < STOP_CHECK_MARKER_MAX_AGE)
 }
 
+/// A move from a finished state back to a live one (see `transition_state`).
+fn is_revival(from: AgentState, to: AgentState) -> bool {
+    !from.is_running() && to.is_running()
+}
+
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn finished_state_is_not_revived() {
+        assert!(is_revival(AgentState::Stopped, AgentState::Stopping));
+        assert!(is_revival(AgentState::Crashed, AgentState::Idle));
+        assert!(!is_revival(AgentState::Stopping, AgentState::Stopped));
+        assert!(!is_revival(AgentState::Idle, AgentState::Working));
+    }
+
     use super::*;
 
     #[test]
