@@ -27,9 +27,33 @@ And: "this needs to be filed and fixed with a real solution somehow." So the fix
 - docs/design/stages.md already says a stage counts as done for the daemon only once it's on the project checkout, "so the branch must land first", but nothing makes that happen, and the "waiting for signature" note goes out before it.
 - Smaller: the designer's spawn prompt says "tell your manager with `bridle send`" without a name; `bridle send manager` failed and the designer had to look up manager-2 itself.
 
+## Decision (the human, 2026-10-18)
+
+Chosen with advisor tj7q from three options (rejected: designers commit straight to main, which shares the human's checkout and drops isolation; the manager lands designer branches, which is what failed). The human: "agree with A" and, on the steps below, "agree, yes, approved and ready to work". The human's own outline, verbatim:
+
+> 1. agents work on worktrees; they shouldn't build bridle or any project, just work on documents on the branch
+> 2. there is an existing command the agent uses to say "this stage is done"
+> 3. the daemon receives that command, verifies the only chnages are to the ticket the agent is working on
+> 4. the daemon merges the worktree branch to main
+> 5. any failures in 3-4 are sent where? manager?
+> 6. then the daemon updates the stage as per existing rules (move to next stage, send to human, etc)
+
+The design, as agreed:
+
+1. The designer works in its own worktree and branch and writes documents only (the ticket file and its stage folder). It builds nothing.
+2. The designer commits first, then runs `bridle ticket stage-done <id> <stage>`. Today `stage-done` runs only in the designer's checkout: it marks `written` in the frontmatter and posts the "waiting for the human's signature" note before anything is committed (crates/bridle/src/stage_cmds.rs `stage_done`). That changes: `stage-done` asks the daemon to verify the commit and land it.
+3. The daemon checks that the branch's changes (against main) touch only this ticket's file and its stage folder, and that main's checkout has no uncommitted edits to those paths.
+4. The daemon merges the designer's branch into main.
+5. Failures:
+   - First, back to the designer: `stage-done` fails at once with the reason (for example "touches crates/foo.rs" or "conflicts with main"). The designer fixes its branch and runs it again.
+   - If the designer can't fix it, or ends without a successful `stage-done`: a note on the ticket's thread and one message to `external:advisor/product-manager`, the same route as stage timeouts (br-ewhy).
+   - Not to the manager.
+6. Only after the merge does the daemon record the stage as written and apply the existing rules: the next stage's writer, or the signature wait and its note, now naming the commit on main.
+
 ## Done when
 
-- A stage a designer writes is on main before anyone is asked to review or sign it. Every stage, not only the ones with `review: human`. The design picks how: for example, stage writes commit straight to main the way ticket files do, or the stage watch lands the designer's branch itself as soon as `stage-done` is committed.
+- A stage a designer writes is on main before anyone is asked to review or sign it, for every stage, not only `review: human` ones, by the decision above.
+- The designer role (workflow/base/roles/designer.md), the spawn prompt (stage_watch.rs `writer_prompt`) and docs/design/stages.md say: commit, then `stage-done`; no manager step.
 - The "waiting for the human's signature" note (and any message to an advisor or the human) goes out only once the stage is on main, and names the main commit.
 - The designer's prompt names its manager (or the land step needs none).
 - A test: a designer stage with `review: human` is readable on main (`ticket show`) when the signature request is sent.
