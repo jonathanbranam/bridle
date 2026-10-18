@@ -2,9 +2,9 @@
 id = "br-vsp9"
 title = "Role text and orchestrator startup steps name a nonexistent --state flag on ticket/task list"
 kind = "fix"
-state = "open"
+state = "planned"
 created_at = "2026-10-18T22:42:13.528Z"
-updated_at = "2026-10-18T22:55:20.665141Z"
+updated_at = "2026-10-18T22:55:27.357741Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "vsp9"
