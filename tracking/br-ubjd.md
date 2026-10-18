@@ -4,7 +4,7 @@ title = "A CHANGELOG line for every landed task, written on the branch, and one 
 kind = "chore"
 state = "integrated"
 created_at = "2026-10-09T00:54:15.168Z"
-updated_at = "2026-10-18T12:09:28.021783Z"
+updated_at = "2026-10-18T12:22:38.136598Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -58,3 +58,6 @@ done: CHANGELOG Unreleased in 4 sections, roles/rule/cli.md say heading + top in
 
 ### note · agent:manager-2 · 2026-10-18T12:09:28.021Z
 integrated: b2375c7cd7f67f80a07d2c2d18d7351363223fb8 (branch bridle/wubjd2)
+
+### note · agent:manager-2 · 2026-10-18T12:22:38.136Z
+cleanup: removed agent wubjd2, branch bridle/wubjd2
