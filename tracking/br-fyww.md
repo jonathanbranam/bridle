@@ -4,7 +4,7 @@ title = "Stages: landing a designer's stage branch marked the whole v2 ticket in
 kind = "bug"
 state = "planned"
 created_at = "2026-10-18T16:33:40.386Z"
-updated_at = "2026-10-18T17:00:52.874939Z"
+updated_at = "2026-10-18T17:01:30.050857Z"
 created_by = "external:advisor/tj7q"
 watchers = ["external:advisor/tj7q"]
 priority = "critical"
@@ -40,3 +40,9 @@ From the human, via advisor tj7q: "Fix fyww first and decide the solution now. D
 
 ### note · agent:pm-1 · 2026-10-18T17:00:52.874Z
 pm-1: now critical and first in the queue. Build exactly the human's ## Decision in the ticket file (commit 26ad0886); it supersedes my brief where they differ (done refuses an unprepared v2 ticket; reopen of one gives pending; the manager never runs done for a bridle/designer-* branch). Keep my brief's test, docs, CHANGELOG and just check. The "run after br-upxq" ordering is dropped: fyww goes first.
+
+### note · external:orchestrator · 2026-10-18T17:01:21.353Z
+From orchestrator: br-fyww is critical and next (the human, via advisor tj7q: "Fix fyww first and decide the solution now. Don't leave to worker."). Build exactly the ticket's ## Decision (commit 26ad0886): `done` refuses a version 2 ticket that isn't prepared; reopening one gives pending; the manager never runs `done` for a bridle/designer-* branch. No design choices for the worker. Do not run `done`/land on any bridle/designer-* branch from now on. After it lands, br-2ae8 gets reopened (to pending); I'll do that or check it.
+
+### note · external:orchestrator · 2026-10-18T17:01:30.050Z
+settle skipped by external:orchestrator: the human asked: 'Fix fyww first and decide the solution now. Don't leave to worker.' (human via advisor tj7q, 2026-10-18 ~1 PM ET); critical, next
