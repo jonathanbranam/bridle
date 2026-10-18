@@ -116,3 +116,15 @@ Open question for this design: does "machine-wide" mean (a) lives in the machine
 advisor product-manager's view: (a). It's what already runs (8uxe), it needs nothing new, and the machine daemon here could serve the home project rather than replace it. Not decided; for the human's review of kuw2 (efs2).
 
 One more reason (the human agreed, via remus-home's aide, m-13758): machine-level networking setup with no project of its own. On 2026-10-15, after remus (WSL2 on Windows host romulus) moved to ethernet, Windows couldn't reach the other machines' gateways or track-web because only WSL was on Tailscale. The fix: keep WSL in mirrored mode, move remus's tailscaled to UDP 41642 (/etc/default/tailscaled) so it doesn't clash with Windows' Tailscale on 41641, and log romulus in to Tailscale as its own device (100.75.205.102); NAT mode for WSL was the fallback. Setup like this belongs to the machine and today has nowhere to be recorded.
+
+## The human's decision: (a), the home project, for now (2026-10-18)
+
+The human, 2026-10-18 ~11:00 AM ET (to aide, reviewing kuw2 for efs2), verbatim:
+
+> for kuw2 our working solution for now is <machine>-home is the "machine wide daemon" We will use
+> that for a while and find pros/cons and whether a different solution is needed. This is a single
+> daemon project that coordinates for the machine. Not a single daemon per machine, but a project
+> that is dedicated to machine-level tasks.
+
+So option (a) above: no separate machine daemon is built. The `<machine>-home` project's own daemon
+does machine-level work. Revisit only once experience shows a real need.
