@@ -2480,6 +2480,36 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn a_prepared_version_2_ticket_opens_itself_and_a_version_1_does_not() {
+        let (tm, tmp) = manager().await;
+        let v2 = tm
+            .new_task("V2", TicketKind::Feature, String::new(), vec![], None)
+            .await
+            .expect("v2");
+        let v1 = tm
+            .new_task("V1", TicketKind::Feature, String::new(), vec![], None)
+            .await
+            .expect("v1");
+        let open = tmp.path().join("tickets/open");
+        std::fs::create_dir_all(&open).expect("dir");
+        let file = |id: &str, extra: &str| format!("---\nid: {id}\ntitle: t\n{extra}---\n\nbody\n");
+        std::fs::write(
+            open.join("a.md"),
+            file(&v2.id, "version: 2\nprepared: true\n"),
+        )
+        .expect("v2");
+        std::fs::write(open.join("b.md"), file(&v1.id, "prepared: true\n")).expect("v1");
+        tm.sync_ticket_links(&tmp.path().join("tickets")).await;
+        let v2 = tm.get_task(&v2.id).expect("v2 row");
+        assert_eq!(v2.state, TicketState::Open);
+        assert!(v2.thread.iter().any(|e| e.from == "bridle"));
+        assert_eq!(
+            tm.get_task(&v1.id).expect("v1 row").state,
+            TicketState::Pending
+        );
+    }
+
+    #[tokio::test]
     async fn integrating_a_blocker_frees_the_blocked_task_and_leaves_the_queue() {
         let (tm, _tmp) = manager().await;
         let human = "human".to_string();

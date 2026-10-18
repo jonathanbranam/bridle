@@ -341,7 +341,11 @@ bridle ticket new "<title>" --kind <kind> [--repos a,b] [--blocked-by ids] [--re
                                              (one id space). `--project X` from another project's clone
                                              is refused (the file would land there); a refused mint
                                              (the daemon said no) removes the file it wrote (br-mggk)
-bridle ticket new ... --version 2 [--stages design,specs,tasks] [--review proposal,specs] [--claim]   a version 2 ticket (default 1): `version: 2`, a `stages:` block (proposal always; `requires` filled from OpenSpec's graph) and a proposal section; `--claim` claims it for the filer. See [[docs/design/stages]]. `ticket check` validates `stages:` on version 2 only; `ticket resolve` moves the stage folder; `ticket show` prints stage states
+bridle ticket new ... --version 2 [--stages design,specs,tasks] [--review proposal,specs] [--claim]   a version 2 ticket (default 1): `version: 2`, a `stages:` block (proposal always; `requires` filled from OpenSpec's graph) and a proposal section; `--claim` claims it for the filer. See [[docs/design/stages]]. `ticket check` validates `stages:` on version 2 only; `ticket resolve` moves the stage folder; `ticket show` prints stage states; `ticket ready` refuses a version 2 ticket until it is prepared (the daemon opens it)
+bridle ticket stage-done <id> <stage>   marks a stage of a version 2 ticket written (the proposal section or `design.md`/`specs.md`/`tasks.md` must exist and say something; a stage whose requirements are not done is refused); ends the writer's claim, sets `claimed_by: human` while a stage waits for signature. See [[docs/design/stages]]
+bridle ticket approve <id> <stage>   signs a `review: human` stage that is written: `signed:` list, and a thread note "signed by human [via <caller>] at <time>" (the caller is the token's principal)
+bridle ticket changes <id> <stage> [text]   sends a written stage back: unwritten, unclaimed, the text on the thread
+bridle ticket restage <id> <stage>   puts a stage back for bridle (unwritten, unclaimed); refused for a signed stage (use `changes`)
 bridle ticket new --from-task <task-id> [--kind k] [title]   as `ticket new`, from an existing task (needs a daemon):
                                              title and kind default to the task's; the ticket takes the
                                              task's id, or a fresh one when the task's tail has a character

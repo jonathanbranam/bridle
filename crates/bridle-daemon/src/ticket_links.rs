@@ -21,6 +21,8 @@ pub struct TicketLinks {
     pub related: Vec<String>,
     /// The ticket version (1 when absent); 2 tickets have stages (br-9mqh).
     pub version: u32,
+    /// Every stage written and every gate signed (`prepared: true`, br-ussh): the ticket opens.
+    pub prepared: bool,
 }
 
 /// The links in a ticket's text; `None` without a frontmatter block or an `id`. The old field
@@ -57,6 +59,7 @@ pub fn parse_links(text: &str) -> Option<TicketLinks> {
             }
             "see" => old_related = list(value),
             "version" => links.version = value.parse().unwrap_or(1),
+            "prepared" => links.prepared = value == "true",
             "parent" => links.parent = Some(unquote(value)).filter(|p| !p.is_empty()),
             _ => {}
         }
@@ -116,8 +119,21 @@ impl TicketManager {
             .unwrap_or_default();
         let (mut added, mut removed) = (0, 0);
         for t in links {
-            if self.get_task(&t.id).is_none() {
+            let Some(row) = self.get_task(&t.id) else {
                 continue;
+            };
+            // Ready means prepared: a version 2 ticket opens itself, as by bridle.
+            if t.version >= 2 && t.prepared && row.state == bridle_api::TicketState::Pending {
+                let bridle = "bridle".to_string();
+                if self.ready_task(&t.id, &bridle).await.is_ok() {
+                    let _ = self
+                        .note_task(
+                            &t.id,
+                            &bridle,
+                            "prepared: every stage is written and every gate signed; ready",
+                        )
+                        .await;
+                }
             }
             // (from, to, kind) the file asks for.
             let mut want: HashSet<(String, String, &'static str)> = HashSet::new();
@@ -186,5 +202,8 @@ mod tests {
         assert_eq!(old.blocked_by, ["bbbb"]);
         assert_eq!(old.related, ["cccc"]);
         assert!(parse_links("no frontmatter").is_none());
+        let v2 = parse_links("---\nid: br-aaaa\nversion: 2\nprepared: true\n---\n").unwrap();
+        assert!(v2.prepared && v2.version == 2);
+        assert!(!old.prepared);
     }
 }

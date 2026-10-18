@@ -493,6 +493,14 @@ pub enum TicketAction {
     Answer(TicketAnswerArgs),
     /// Print the ticket file, then its thread (and the threads of older tasks made from it).
     Show(TicketShowArgs),
+    /// Mark a stage of a version 2 ticket written (checks its file or proposal section); releases the writer's claim.
+    StageDone(TicketStageArgs),
+    /// Sign a stage that waits for the human's signature; recorded with who ran it and when (human via <agent> when an agent does).
+    Approve(TicketStageArgs),
+    /// Send a stage back for changes: it becomes unwritten and unclaimed, the text goes on the thread.
+    Changes(TicketChangesArgs),
+    /// Put a stage back for bridle (unwritten, unclaimed), e.g. after it failed or timed out.
+    Restage(TicketStageArgs),
     #[command(flatten)]
     Row(TicketRowAction),
 }
@@ -679,6 +687,21 @@ pub struct TicketNewArgs {
     /// Claim the new ticket for yourself, the writer of its proposal. With --version 2.
     #[arg(long)]
     pub claim: bool,
+}
+
+#[derive(Debug, Args)]
+pub struct TicketStageArgs {
+    pub id: String,
+    /// proposal, design, specs or tasks.
+    pub stage: String,
+}
+
+#[derive(Debug, Args)]
+pub struct TicketChangesArgs {
+    pub id: String,
+    pub stage: String,
+    /// What to change; the next writer reads it on the thread.
+    pub text: Option<String>,
 }
 
 #[derive(Debug, Args)]

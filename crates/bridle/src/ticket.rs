@@ -45,6 +45,10 @@ pub async fn run(cli: &Cli, args: &TicketArgs) -> Result<(), CliError> {
         TicketAction::Ask(a) => ask_cmd(cli, &repo, a).await,
         TicketAction::Answer(a) => answer_cmd(cli, &repo, a).await,
         TicketAction::Show(a) => show_cmd(cli, &repo, a).await,
+        TicketAction::StageDone(a) => crate::stage_cmds::stage_done(cli, &repo, a).await,
+        TicketAction::Approve(a) => crate::stage_cmds::approve(cli, &repo, a).await,
+        TicketAction::Changes(a) => crate::stage_cmds::changes(cli, &repo, a).await,
+        TicketAction::Restage(a) => crate::stage_cmds::restage(cli, &repo, a).await,
         TicketAction::Submit(_) => unreachable!("handled above"),
         TicketAction::Row(_) => unreachable!("normalized to the task handlers"),
     }
@@ -268,6 +272,7 @@ async fn ready_cmd(cli: &Cli, repo: &Path, args: &TicketReadyArgs) -> Result<(),
     let path = find_by_id(&root.join("open"), &id)?;
     let text =
         std::fs::read_to_string(&path).with_context(|| format!("reading {}", path.display()))?;
+    crate::stage_cmds::check_ready_allowed(&text)?;
     let (title, kind) = task_source(&text)?;
     let rel = path.strip_prefix(repo).unwrap_or(&path).to_path_buf();
     ensure_committed(repo, &rel)?;
@@ -331,7 +336,7 @@ async fn thread_rows(
 }
 
 /// The row a new comment, question or answer goes on: the first of [`thread_rows`].
-async fn thread_row_id(cli: &Cli, repo: &Path, id: &str) -> Result<String, CliError> {
+pub(crate) async fn thread_row_id(cli: &Cli, repo: &Path, id: &str) -> Result<String, CliError> {
     Ok(thread_rows(cli, repo, id).await?.remove(0).id)
 }
 
@@ -387,7 +392,7 @@ async fn show_cmd(cli: &Cli, repo: &Path, args: &TicketShowArgs) -> Result<(), C
         let text = std::fs::read_to_string(&path)
             .with_context(|| format!("reading {}", path.display()))?;
         println!("{}", text.trim_end());
-        print_stage_states(&text, &path);
+        print_stage_states(&text);
     }
     for row in &rows {
         println!();
@@ -406,15 +411,14 @@ async fn show_cmd(cli: &Cli, repo: &Path, args: &TicketShowArgs) -> Result<(), C
 }
 
 /// Under `ticket show`: each stage of a version 2 ticket and its state.
-fn print_stage_states(text: &str, path: &Path) {
+fn print_stage_states(text: &str) {
     let front: Vec<&str> = text.lines().skip(1).take_while(|l| *l != "---").collect();
     let Ok(Some(stages)) = crate::stages::parse(&front) else {
         return;
     };
-    let body = split_front(text).map(|(_, b)| b).unwrap_or_default();
     println!();
     println!("Stages:");
-    for (name, state) in crate::stages::states(&stages, &body, &crate::stages::folder_of(path)) {
+    for (name, state) in crate::stages::states(&stages, &crate::stages::marks(text)) {
         println!("  {name}: {state}");
     }
 }
@@ -580,7 +584,7 @@ fn pick_prefix(
     }
 }
 
-async fn projects(cli: &Cli, repo: &Path) -> Result<Projects, CliError> {
+pub(crate) async fn projects(cli: &Cli, repo: &Path) -> Result<Projects, CliError> {
     Ok(Projects::from_registry(&own_prefix(cli, repo).await?))
 }
 
@@ -1138,7 +1142,7 @@ fn set_text(
 
 /// `text` with frontmatter `key: value` replaced, or added last before the closing `---`
 /// (and before `resolved:`/`closed:`, which stay last); `None` without a frontmatter block.
-fn set_line(text: &str, key: &str, value: &str) -> Option<String> {
+pub(crate) fn set_line(text: &str, key: &str, value: &str) -> Option<String> {
     let mut lines: Vec<String> = text.lines().map(str::to_string).collect();
     let end = front_end(&lines)?;
     let prefix = format!("{key}:");
@@ -1185,7 +1189,7 @@ pub(crate) fn drop_line(text: &str, key: &str) -> String {
 }
 
 /// Index of the closing `---` of a leading frontmatter block.
-fn front_end(lines: &[String]) -> Option<usize> {
+pub(crate) fn front_end(lines: &[String]) -> Option<usize> {
     if lines.first().map(String::as_str) != Some("---") {
         return None;
     }

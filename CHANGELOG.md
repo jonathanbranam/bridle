@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Stages MVP 3 (br-ussh): `ticket stage-done`, `approve` (signed and traced), `changes` and `restage` for version 2 tickets; a version 2 ticket opens itself once every stage is written and every gate signed, and `ticket ready` refuses it before that.
+
 - Feature (br-9mqh): version 2 tickets. `ticket new --version 2 [--stages design,specs,tasks] [--review proposal,specs] [--claim]` writes `version: 2`, a `stages:` block and a proposal section; `ticket check` validates the stages, `ticket resolve` moves the ticket's stage folder with it, `ticket show` prints each stage's state. Version 1 tickets (the default) are unchanged. Migration: none.
 - Fix (br-a9g2): `agent spawn --allow-tool WebSearch` (a built-in tool outside the role's `--tools` set) is now refused with a message naming the researcher role, instead of permitting a tool that is never offered to the agent.
 - Fix (br-s5ah): sending to `external:aide` on a daemon with no aide now says so and names the fallback (`bridle send human`, or a `--for-human` ticket) instead of a bare not_found; the orchestrator role says the same. Migration: none.

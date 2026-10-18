@@ -235,38 +235,64 @@ pub fn folder_of(ticket: &Path) -> PathBuf {
 }
 
 /// A stage's file in the ticket's folder; the proposal has none (it is in the body).
-fn file_of(folder: &Path, stage: &str) -> Option<PathBuf> {
+pub fn file_of(folder: &Path, stage: &str) -> Option<PathBuf> {
     (stage != "proposal").then(|| folder.join(format!("{stage}.md")))
 }
 
-/// A stage file's text carries `signed:` in its frontmatter (provisional; the signing step may
-/// change where the signature is recorded).
-fn is_signed(text: &str) -> bool {
-    let mut lines = text.lines();
-    lines.next() == Some("---")
-        && lines
-            .take_while(|l| *l != "---")
-            .any(|l| l.starts_with("signed:"))
+/// What a ticket's frontmatter records about its stages: `written: [..]` (set by `stage-done`,
+/// cleared by `changes` and `restage`) and `signed: [..]` (set by `approve`). A signature is the
+/// human's: who ran it and when are on the thread (br-ussh).
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub struct Marks {
+    pub written: Vec<String>,
+    pub signed: Vec<String>,
 }
 
-/// The state of every stage of a ticket whose body is `body` and whose folder is `folder`.
-pub fn states(stages: &[Stage], body: &str, folder: &Path) -> Vec<(String, State)> {
+/// The `written` and `signed` lists of a ticket file's text.
+pub fn marks(text: &str) -> Marks {
+    let mut m = Marks::default();
+    for line in text.lines().skip(1).take_while(|l| *l != "---") {
+        let Some((key, value)) = line.split_once(':') else {
+            continue;
+        };
+        let items = || -> Vec<String> {
+            value
+                .trim()
+                .trim_start_matches('[')
+                .trim_end_matches(']')
+                .split(',')
+                .map(|s| s.trim().to_string())
+                .filter(|s| !s.is_empty())
+                .collect()
+        };
+        match key {
+            "written" => m.written = items(),
+            "signed" => m.signed = items(),
+            _ => {}
+        }
+    }
+    m
+}
+
+/// A frontmatter flow list for `items`, as `set_line` writes it.
+pub fn render_list(items: &[String]) -> String {
+    format!("[{}]", items.join(", "))
+}
+
+/// The state of every stage, from the ticket's marks. A stage is unblocked once everything it
+/// requires is done: written with no review, or signed.
+pub fn states(stages: &[Stage], marks: &Marks) -> Vec<(String, State)> {
     let mut known: Vec<(String, State)> = Vec::new();
     for s in stages {
-        let (written, signed) = match file_of(folder, &s.name) {
-            Some(f) => match std::fs::read_to_string(f) {
-                Ok(t) => (true, is_signed(&t)),
-                Err(_) => (false, false),
-            },
-            None => (find_proposal(body).is_some(), is_signed_front(body)),
-        };
-        let all_signed = |r: &String| {
+        let written = marks.written.contains(&s.name);
+        let signed = marks.signed.contains(&s.name);
+        let done = |r: &String| {
             known
                 .iter()
                 .any(|(n, st)| n == r && matches!(st, State::Signed | State::Written))
         };
         let state = if !written {
-            if s.requires.iter().all(all_signed) {
+            if s.requires.iter().all(done) {
                 State::Unblocked
             } else {
                 State::Waiting
@@ -283,14 +309,41 @@ pub fn states(stages: &[Stage], body: &str, folder: &Path) -> Vec<(String, State
     known
 }
 
-/// The proposal has no file of its own; its signature is a `signed:` line inside its section.
-fn is_signed_front(body: &str) -> bool {
-    find_proposal(body).is_some_and(|(s, e)| {
-        body.lines()
-            .skip(s + 1)
-            .take(e - s - 1)
-            .any(|l| l.starts_with("signed:"))
-    })
+/// Every stage is written and every gate signed: the ticket is prepared (it becomes `open` by
+/// itself).
+pub fn prepared(stages: &[Stage], marks: &Marks) -> bool {
+    states(stages, marks)
+        .iter()
+        .all(|(_, s)| matches!(s, State::Written | State::Signed))
+}
+
+/// Why `stage` cannot be marked written yet, or `Ok`: the proposal's section (or the stage's
+/// file) must be there and say something.
+pub fn check_written(text: &str, folder: &Path, stage: &str) -> Result<(), String> {
+    match file_of(folder, stage) {
+        Some(f) => match std::fs::read_to_string(&f) {
+            Ok(t) if !t.trim().is_empty() => Ok(()),
+            Ok(_) => Err(format!("{} is empty", f.display())),
+            Err(_) => Err(format!("{} does not exist", f.display())),
+        },
+        None => {
+            let body: String = text
+                .lines()
+                .skip(1)
+                .skip_while(|l| *l != "---")
+                .skip(1)
+                .collect::<Vec<_>>()
+                .join("\n");
+            let (s, e) = find_proposal(&body).ok_or("the body has no ## Proposal section")?;
+            let said = body
+                .lines()
+                .skip(s + 1)
+                .take(e - s - 1)
+                .any(|l| !l.trim().is_empty() && !l.starts_with('#'));
+            said.then_some(())
+                .ok_or_else(|| "the proposal section is empty".to_string())
+        }
+    }
 }
 
 #[cfg(test)]
@@ -357,25 +410,64 @@ mod tests {
     }
 
     #[test]
-    fn states_follow_the_files() {
-        let dir = tempfile::tempdir().unwrap();
+    fn states_follow_the_marks() {
         let st = build(
             &["design".into(), "specs".into()],
             &["proposal".into(), "specs".into()],
         )
         .unwrap();
-        let body = "---\n\n## Proposal\n\nwhy\n\n---\n";
-        let get = |body: &str| -> Vec<State> {
-            let s = states(&st, body, dir.path());
-            s.into_iter().map(|(_, s)| s).collect()
+        let get = |w: &[&str], sg: &[&str]| -> Vec<State> {
+            let m = Marks {
+                written: w.iter().map(|s| s.to_string()).collect(),
+                signed: sg.iter().map(|s| s.to_string()).collect(),
+            };
+            states(&st, &m).into_iter().map(|(_, s)| s).collect()
         };
         use State::*;
-        assert_eq!(get(body), [WaitingForSignature, Waiting, Waiting]);
-        let signed = "---\n\n## Proposal\nsigned: human\n\n---\n";
-        assert_eq!(get(signed), [Signed, Unblocked, Unblocked]);
+        assert_eq!(get(&[], &[]), [Unblocked, Waiting, Waiting]);
+        assert_eq!(
+            get(&["proposal"], &[]),
+            [WaitingForSignature, Waiting, Waiting]
+        );
+        assert_eq!(
+            get(&["proposal"], &["proposal"]),
+            [Signed, Unblocked, Unblocked]
+        );
+        let all = get(&["proposal", "design", "specs"], &["proposal"]);
+        assert_eq!(all, [Signed, Written, WaitingForSignature]);
+        let m = |w: &[&str], sg: &[&str]| Marks {
+            written: w.iter().map(|s| s.to_string()).collect(),
+            signed: sg.iter().map(|s| s.to_string()).collect(),
+        };
+        assert!(!prepared(
+            &st,
+            &m(&["proposal", "design", "specs"], &["proposal"])
+        ));
+        assert!(prepared(
+            &st,
+            &m(&["proposal", "design", "specs"], &["proposal", "specs"])
+        ));
+    }
+
+    #[test]
+    fn marks_are_read_from_the_frontmatter() {
+        let m = marks(
+            "---\nid: x\nwritten: [proposal, design]\nsigned: [proposal]\n---\nsigned: [x]\n",
+        );
+        assert_eq!(m.written, ["proposal", "design"]);
+        assert_eq!(m.signed, ["proposal"]);
+        assert_eq!(marks("---\nid: x\n---\n"), Marks::default());
+    }
+
+    #[test]
+    fn check_written_wants_content() {
+        let dir = tempfile::tempdir().unwrap();
+        let empty = "---\nid: x\n---\n\n---\n\n## Proposal\n\n### Why\n\n---\n";
+        assert!(check_written(empty, dir.path(), "proposal").is_err());
+        let said = "---\nid: x\n---\n\n---\n\n## Proposal\n\n### Why\n\nbecause\n\n---\n";
+        assert!(check_written(said, dir.path(), "proposal").is_ok());
+        assert!(check_written(said, dir.path(), "design").is_err());
         std::fs::write(dir.path().join("design.md"), "x").unwrap();
-        std::fs::write(dir.path().join("specs.md"), "x").unwrap();
-        assert_eq!(get(signed), [Signed, Written, WaitingForSignature]);
-        assert_eq!(get("no proposal yet")[0], Unblocked);
+        assert!(check_written(said, dir.path(), "design").is_ok());
     }
 }
