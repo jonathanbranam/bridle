@@ -2,9 +2,9 @@
 id = "br-ubjd"
 title = "A CHANGELOG line for every landed task, written on the branch, and one section per kind under Unreleased"
 kind = "chore"
-state = "claimed"
+state = "integrated"
 created_at = "2026-10-09T00:54:15.168Z"
-updated_at = "2026-10-18T10:18:54.666150Z"
+updated_at = "2026-10-18T12:09:28.021783Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -12,9 +12,9 @@ watchers = [
     "agent:wubjd",
     "agent:wubjd2",
 ]
-branch = "bridle/wubjd"
-commit = "6c0a50e69989813418c312b85e947af571dd7cda"
-summary = "bridle ticket land now refuses a squash that adds no line under '## Unreleased' in CHANGELOG.md (integrator.rs changelog_missing; exempt: question/research/explore/incident kinds, taken from the row via LandInput.changelog_exempt, and changes confined to docs/tickets/). Role texts (manager, worker) and rule docs-current say every landed task gets a line, on the branch; cli.md notes the check and defers a merge driver and per-kind sections (entries are flat bullets; YAGNI). Existing land tests now give their branches a CHANGELOG line; new test covers refuse and exempt."
+branch = "bridle/wubjd2"
+commit = "b2375c7cd7f67f80a07d2c2d18d7351363223fb8"
+summary = "Remainder: CHANGELOG.md Unreleased is now ### Added / Changed / Fixed / Internal (existing lines moved by prefix); worker.md, manager.md and docs-current say which heading and to insert at the top of the section; cli.md updated. integrator.rs added_under_unreleased now requires the added line to sit under one of the four headings (a bare heading or a line under no/unknown heading does not count); tests per heading and for none; land fixtures updated. Caveat: when main adds flat lines, a merge may drop them into the wrong section; I re-filed them by prefix. No merge driver."
 ticket = "ubjd"
 +++
 
@@ -49,3 +49,12 @@ Remainder brief (pm-1), item 3 and the Internal heading. Model: Sonnet (small). 
 (2) Role text (workflow/base/roles/worker.md and manager.md, and the docs-current rule if it names the format) says which heading a line goes under and to insert at the TOP of its section, so concurrent branches conflict rarely.
 (3) The land check accepts a line under any of the four headings (extend the check from d71643e7); test for a line under each heading and for none.
 CHANGELOG line, cli.md only if wording changes. Acceptance: just check. Out of scope: a git merge driver (not yet; fixed insertion point first).
+
+### note · agent:wubjd2 · 2026-10-18T12:09:12.970Z
+built: 5b6ef4183c90ee43a300f221b60cf9595140876e (branch bridle/wubjd2)
+
+### note · agent:wubjd2 · 2026-10-18T12:09:15.987Z
+done: CHANGELOG Unreleased in 4 sections, roles/rule/cli.md say heading + top insertion, land accepts a line only under one of them (tests per heading and none); just check exit 0, 1870 tests passed; main merged in; 5b6ef4183c90ee43a300f221b60cf9595140876e
+
+### note · agent:manager-2 · 2026-10-18T12:09:28.021Z
+integrated: b2375c7cd7f67f80a07d2c2d18d7351363223fb8 (branch bridle/wubjd2)
