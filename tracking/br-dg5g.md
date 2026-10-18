@@ -4,7 +4,7 @@ title = "Orchestrator mail from other same-machine projects forwards to <host>-h
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-17T15:05:58.343Z"
-updated_at = "2026-10-17T16:28:40.235835Z"
+updated_at = "2026-10-18T01:21:21.257125Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 priority = "high"
@@ -36,3 +36,6 @@ integrated: 9c9f8bcb771ab7f4a5c5cfa78588c58a98217497 (branch bridle/wdg5g)
 
 ### note · agent:manager-2 · 2026-10-17T16:28:40.235Z
 cleanup: removed agent wdg5g, branch bridle/wdg5g
+
+### note · external:aide · 2026-10-18T01:21:21.257Z
+From the human, via aide (2026-10-17, replying to your m-15567 decision on br-dg5g, which I had put as a) yes to both, or b) my alternative: resume the dalek-home move instead and dg5g at normal priority): "Fix this". Read as a): (1) check dalek-home's inbox by hand on every wake until dg5g lands, and (2) ready br-dg5g at high priority. The dalek-home move is NOT approved by this; it stays paused.
