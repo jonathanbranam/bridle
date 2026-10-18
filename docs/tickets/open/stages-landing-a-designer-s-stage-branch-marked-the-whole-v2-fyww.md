@@ -28,4 +28,5 @@ Found in the human's first version 2 try (br-ewk8, ticket br-2ae8). The human, 2
 - Landing a branch that carries only a stage of a not-yet-prepared version 2 ticket never changes the row's state; the daemon refuses `pending -> integrated` (or any transition to `integrated`) for a v2 ticket that isn't prepared and built. br-upxq makes the daemon land stage branches itself; that path must not change the state either, and the manager's land path must refuse this case too.
 - The manager rule/land step tells a designer branch from a worker branch (or never gets designer branches, once br-upxq lands).
 - A test: landing a proposal-only branch of a pending v2 ticket leaves it `pending`.
-- br-2ae8 is back to `pending` (done by hand now by the orchestrator).
+- An authorised way to put a wrongly moved row back to `pending` (the orchestrator, m-16835: no command or API call moves a row to pending; the only move is the daemon's own stale `open -> pending`, `unready_stale` in crates/bridle-daemon/src/tasks.rs; `ticket reopen` gives `reopened`, which the stage watch ignores). Either a guarded reopen-to-pending, or the stage watch treating a `reopened` v2 ticket that isn't prepared like `pending`; the design picks.
+- br-2ae8 is back to `pending` with it. The orchestrator would not edit the database by hand, so 2ae8 stays `integrated` until this lands.
