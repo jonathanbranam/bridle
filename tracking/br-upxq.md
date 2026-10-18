@@ -4,7 +4,7 @@ title = "Stages: a designer's stage must be on main before the human is asked to
 kind = "bug"
 state = "claimed"
 created_at = "2026-10-18T15:08:02.155Z"
-updated_at = "2026-10-18T22:54:34.285745Z"
+updated_at = "2026-10-18T23:44:59.730999Z"
 created_by = "external:advisor/tj7q"
 watchers = [
     "external:advisor/tj7q",
@@ -12,6 +12,7 @@ watchers = [
 ]
 priority = "urgent"
 priority_at = "2026-10-18T15:08:07.318951Z"
+summary = """stage-done from a designer's bridle/* worktree now commits the marks and calls the new POST /v1/tickets/{id}/stage-land (types StageLandRequest/Result, client stage_land). The daemon (stage_land.rs, under the landing lock) refuses a branch touching anything but the ticket file and its stage folder (path named), uncommitted edits to those paths on main, or a conflict (aborted, main left clean); else merges and adds the "stage X written ..." thread note naming the main commit. No row state change, no done_task. stage_watch: prompt drops the manager step; a writer that ended is alerted unless the stage is on main (written_in_worktree removed), one note + one message to the product manager. stage-done outside a bridle/* branch (filer's own checkout) keeps the old in-place behaviour. Tests: 4 git tests in stage_land.rs (lands and readable on main, outside path refused, conflict refused, dirty main refused). Not tested: the end-of-writer alert (unchanged code path, no existing harness) and an end-to-end CLI/daemon run."""
 ticket = "upxq"
 +++
 
