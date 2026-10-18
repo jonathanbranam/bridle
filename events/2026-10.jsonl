@@ -2704,3 +2704,5 @@
 {"actor":"human","at":"2026-10-18T13:19:11.414Z","from":"","task":"br-p7jf","to":"pending"}
 {"actor":"human","at":"2026-10-18T13:19:31.649Z","from":"","task":"br-dy6a","to":"pending"}
 {"actor":"external:advisor/product-manager","at":"2026-10-18T13:20:13.053753Z","from":"dropped","task":"br-ab3a","to":"reopened"}
+{"actor":"agent:pm-1","at":"2026-10-18T13:23:15.124009Z","from":"open","task":"br-65qh","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-18T13:23:19.938334Z","queue":"reprioritized"}
