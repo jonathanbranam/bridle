@@ -2,9 +2,9 @@
 id = "br-efs2"
 title = "Review and comment on kuw2, the machine daemon design (docs/tickets/open/a-machine-daemon-...-kuw2.md), with document review"
 kind = "chore"
-state = "claimed"
+state = "integrated"
 created_at = "2026-10-04T15:40:03.732Z"
-updated_at = "2026-10-18T14:54:40.413602Z"
+updated_at = "2026-10-18T22:35:08.107157Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -49,3 +49,6 @@ watching the task
 
 ### note · external:aide · 2026-10-18T14:54:40.413Z
 The human, 2026-10-18 ~11:00 AM ET (to aide), verbatim: "for kuw2 our working solution for now is <machine>-home is the \"machine wide daemon\" We will use that for a while and find pros/cons and whether a different solution is needed. This is a single daemon project that coordinates for the machine. Not a single daemon per machine, but a project that is dedicated to machine-level tasks." Recorded on kuw2's file (section 'The human's decision').
+
+### note · external:aide · 2026-10-18T22:35:08.107Z
+done
