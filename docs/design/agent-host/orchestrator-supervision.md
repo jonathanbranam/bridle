@@ -97,7 +97,7 @@ key**.
 ```toml
 [orchestrator]
 enabled            = true
-# launcher        = "..."   # unset: `bridle session orchestrator --project <project>`; else typed verbatim
+# launcher        = "..."   # unset: `cd <repo> && bridle session orchestrator --project <project>`; else typed verbatim
 note_tokens        = "150k"    # "context at N"
 plan_tokens        = "180k"    # "plan a handover at the next quiet point"
 handover_tokens    = "200k"    # "hand over now"; starts the deadline
@@ -138,7 +138,7 @@ same incident.
 
 To relaunch: first `tmux respawn-pane -k -t <pane_id>` (br-vynr: a fresh shell in a fresh pty; it
 needs no attached client, and typed text had sat as `^M` in a pane until a human focused tmux; the
-cause was not reproduced), then `tmux send-keys -t <pane_id> -l 'bridle session orchestrator --project <project>'` (or `[orchestrator] launcher`, verbatim; the
+cause was not reproduced), then `tmux send-keys -t <pane_id> -l 'cd <repo> && bridle session orchestrator --project <project>'` (or `[orchestrator] launcher`, verbatim; the
 pane's shell finds `bridle` on its PATH, as the advisor relaunch does), then a separate
 `tmux send-keys -t <pane_id> Enter` (spike #7; the two calls are the tested form). The launcher
 does `cd`, writes the pid file and starts `claude` with a one-line prompt telling it to run

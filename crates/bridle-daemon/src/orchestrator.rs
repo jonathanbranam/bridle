@@ -807,13 +807,15 @@ fn chrono_dur(d: Duration) -> chrono::Duration {
 }
 
 /// The line typed into the pane to relaunch. The pane's shell finds `bridle` on its PATH, as the
-/// advisor relaunch (`bridle session advisor`) already assumes. A configured launcher is typed
-/// verbatim.
-pub fn launch_line(launcher: Option<&str>, project: &str) -> String {
+/// advisor relaunch (`bridle session advisor`) already assumes. The default starts with
+/// `cd <repo> &&`: `bridle session` takes its repo from the cwd, and the pane's folder may be
+/// another project's (br-jn8p). A configured launcher is typed verbatim.
+pub fn launch_line(launcher: Option<&str>, project: &str, repo: &std::path::Path) -> String {
     match launcher {
         Some(l) => l.to_string(),
         None => format!(
-            "bridle session orchestrator --project {}",
+            "cd {} && bridle session orchestrator --project {}",
+            shell_word(&repo.to_string_lossy()),
             shell_word(project)
         ),
     }
@@ -1203,7 +1205,7 @@ mod tests {
             let emitter = Arc::new(FakeEmitter::default());
             let sup = Supervisor::new(
                 dir.path().to_path_buf(),
-                launch_line(None, "proj"),
+                launch_line(None, "proj", std::path::Path::new("/w/proj")),
                 &cfg,
                 waiters.clone(),
                 handover.clone(),
@@ -1319,11 +1321,15 @@ mod tests {
     #[test]
     fn launch_line_defaults_to_the_session_command_and_types_a_custom_one_verbatim() {
         assert_eq!(
-            launch_line(None, "bridle"),
-            "bridle session orchestrator --project bridle"
+            launch_line(None, "bridle", std::path::Path::new("/w/bridle")),
+            "cd /w/bridle && bridle session orchestrator --project bridle"
         );
         assert_eq!(
-            launch_line(Some("my launch --x 'y'"), "bridle"),
+            launch_line(
+                Some("my launch --x 'y'"),
+                "bridle",
+                std::path::Path::new("/w/bridle")
+            ),
             "my launch --x 'y'"
         );
     }
@@ -1378,7 +1384,7 @@ mod tests {
             *r.tmux.typed.lock().unwrap(),
             vec![(
                 "%2".to_string(),
-                "bridle session orchestrator --project proj".to_string()
+                "cd /w/proj && bridle session orchestrator --project proj".to_string()
             )]
         );
         assert!(r.incidents()[0].contains("not running"));
@@ -1471,7 +1477,7 @@ mod tests {
         let respawned = r.tmux.respawned.lock().unwrap().clone();
         let (pane, cmd) = respawned.last().unwrap();
         assert_eq!(pane, "%2");
-        assert!(cmd.starts_with("bridle session orchestrator --project proj; exec"));
+        assert!(cmd.starts_with("cd /w/proj && bridle session orchestrator --project proj; exec"));
     }
 
     #[tokio::test]

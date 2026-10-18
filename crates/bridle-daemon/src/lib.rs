@@ -1175,7 +1175,8 @@ async fn start_inner(
             .bridle_home
             .clone()
             .unwrap_or_else(discovery::bridle_home);
-        let launcher = orchestrator::launch_line(config.orchestrator.launcher.as_deref(), &project);
+        let launcher =
+            orchestrator::launch_line(config.orchestrator.launcher.as_deref(), &project, &ws.repo);
         let sup = orchestrator::real(
             home,
             launcher,
