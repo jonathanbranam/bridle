@@ -4,7 +4,7 @@ title = "A home project on each machine for the orchestrator: a stop-gap for the
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-14T17:07:37.932Z"
-updated_at = "2026-10-15T23:44:00.461792Z"
+updated_at = "2026-10-18T01:22:24.880427Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -77,3 +77,6 @@ Related idea (the human, 2026-10-15): keep <host>-home as the machine's own proj
 
 ### note · external:advisor/product-manager · 2026-10-15T23:44:00.461Z
 Correction: kuw2 has no row, so the idea is a section in its file (docs/tickets/open/a-machine-daemon-one-per-machine-doing-machine-wide-work-onc-kuw2.md), not its thread.
+
+### note · external:aide · 2026-10-18T01:22:24.880Z
+From the human, via aide (2026-10-17 ~9:30 PM ET): "Yes we can move the orch to dalek home now". Resume the paused move of the dalek orchestrator to dalek-home: re-apply the [orchestrator] config move (the reverted 4f8022ca in bridle, and dalek-home's 0a8b14d), write your handover, and tell external:aide when it is ready for the human to restart BOTH daemons (bridle and dalek-home; human-only). dalek-home still runs a 0.7.5 build from 02:46Z-era main, so that restart also brings it current.
