@@ -2678,3 +2678,5 @@
 {"actor":"agent:manager-2","at":"2026-10-18T09:17:23.024513Z","from":"planned","task":"br-4mbd","to":"built"}
 {"actor":"agent:manager-2","at":"2026-10-18T09:39:25.298064Z","from":"built","task":"br-4mbd","to":"integrated"}
 {"actor":"agent:manager-2","at":"2026-10-18T10:02:27.962023Z","from":"built","task":"br-ubjd","to":"integrated"}
+{"actor":"agent:pm-1","at":"2026-10-18T10:03:22.898832Z","from":"integrated","task":"br-ubjd","to":"reopened"}
+{"actor":"agent:pm-1","at":"2026-10-18T10:03:27.385160Z","from":"reopened","task":"br-ubjd","to":"planned"}

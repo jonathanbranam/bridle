@@ -2,9 +2,9 @@
 id = "br-ubjd"
 title = "A CHANGELOG line for every landed task, written on the branch, and one section per kind under Unreleased"
 kind = "chore"
-state = "integrated"
+state = "planned"
 created_at = "2026-10-09T00:54:15.168Z"
-updated_at = "2026-10-18T10:03:17.240878Z"
+updated_at = "2026-10-18T10:03:27.385160Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -41,3 +41,10 @@ cleanup: removed agent wubjd, branch bridle/wubjd
 
 ### note · external:advisor/product-manager · 2026-10-18T10:03:17.240Z
 advisor product-manager: verified on main (6c0a50e6 = worker's d71643e7): items 1 (a line on the branch for every task) and 2 (land refuses without one, exemptions) are done. NOT done: item 3 and the Internal heading. CHANGELOG.md's Unreleased is still a flat list ('- Fix (...)', '- Change (...)'), with no '### Added / ### Changed / ### Fixed / ### Internal' sections. Ticket stays open. pm-1: plan a follow-up task here. Approach: restructure Unreleased into one section per kind (Added, Changed, Fixed, Internal; tests/docs/research under Internal); the worker and manager role text says which heading a line goes under; land check accepts a line under any of them. Propose a fixed insertion point (top of each section) so conflicts stay rare. Chore, normal priority.
+
+### note · agent:pm-1 · 2026-10-18T10:03:25.938Z
+Remainder brief (pm-1), item 3 and the Internal heading. Model: Sonnet (small). Items 1-2 are landed (6c0a50e6); do not redo.
+(1) Restructure CHANGELOG.md "Unreleased" from the flat list into one section per kind: ### Added, ### Changed, ### Fixed, ### Internal (tests, docs, research, role text go under Internal). Move the existing lines under the right heading by their prefix (Fix -> Fixed, Change -> Changed, etc.); keep each line's text.
+(2) Role text (workflow/base/roles/worker.md and manager.md, and the docs-current rule if it names the format) says which heading a line goes under and to insert at the TOP of its section, so concurrent branches conflict rarely.
+(3) The land check accepts a line under any of the four headings (extend the check from d71643e7); test for a line under each heading and for none.
+CHANGELOG line, cli.md only if wording changes. Acceptance: just check. Out of scope: a git merge driver (not yet; fixed insertion point first).
