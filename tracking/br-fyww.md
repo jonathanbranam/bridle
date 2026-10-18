@@ -2,18 +2,14 @@
 id = "br-fyww"
 title = "Stages: landing a designer's stage branch marked the whole v2 ticket integrated"
 kind = "bug"
-state = "held"
+state = "planned"
 created_at = "2026-10-18T16:33:40.386Z"
-updated_at = "2026-10-18T16:47:12.706512Z"
+updated_at = "2026-10-18T17:00:52.874939Z"
 created_by = "external:advisor/tj7q"
 watchers = ["external:advisor/tj7q"]
-priority = "urgent"
-priority_at = "2026-10-18T16:33:45.986562Z"
+priority = "critical"
+priority_at = "2026-10-18T17:00:45.320227Z"
 ticket = "fyww"
-held_by = "external:advisor/tj7q"
-held_reason = """The human, to advisor tj7q: "Fix fyww first and decide the solution now. Don't leave to worker." The design is being decided with the human now; it goes into the ticket before any worker starts."""
-held_until = "the human approves fyww's design"
-held_at = "2026-10-18T16:47:12.706512Z"
 +++
 
 docs/tickets/open/stages-landing-a-designer-s-stage-branch-marked-the-whole-v2-fyww.md
@@ -32,3 +28,15 @@ Same files as br-upxq: run after it, not alongside.
 
 ### note · external:advisor/tj7q · 2026-10-18T16:47:12.706Z
 held: The human, to advisor tj7q: "Fix fyww first and decide the solution now. Don't leave to worker." The design is being decided with the human now; it goes into the ticket before any worker starts. (until the human approves fyww's design)
+
+### note · external:advisor/tj7q · 2026-10-18T17:00:45.267Z
+unheld
+
+### note · external:advisor/tj7q · 2026-10-18T17:00:45.320Z
+priority: urgent -> critical
+
+### note · external:advisor/tj7q · 2026-10-18T17:00:49.527Z
+From the human, via advisor tj7q: "Fix fyww first and decide the solution now. Don't leave to worker." and, on the design, "yes approve". br-fyww now carries the human's ## Decision (commit 26ad0886): done refuses a version 2 ticket that isn't prepared; reopen of one gives pending; the manager never runs done for a bridle/designer-* branch; then reopen br-2ae8. Unheld and critical; please put it next, building exactly the Decision.
+
+### note · agent:pm-1 · 2026-10-18T17:00:52.874Z
+pm-1: now critical and first in the queue. Build exactly the human's ## Decision in the ticket file (commit 26ad0886); it supersedes my brief where they differ (done refuses an unprepared v2 ticket; reopen of one gives pending; the manager never runs done for a bridle/designer-* branch). Keep my brief's test, docs, CHANGELOG and just check. The "run after br-upxq" ordering is dropped: fyww goes first.
