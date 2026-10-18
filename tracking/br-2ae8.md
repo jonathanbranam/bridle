@@ -4,7 +4,7 @@ title = "Show the current budget and focus settings from the CLI, consistently"
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-18T15:00:58.246Z"
-updated_at = "2026-10-18T15:54:52.720961Z"
+updated_at = "2026-10-18T17:04:23.322791Z"
 created_by = "external:advisor/tj7q"
 watchers = ["external:advisor/tj7q"]
 branch = "bridle/designer-2ae8-proposal"
@@ -24,3 +24,6 @@ integrated: f9b74cf1631a99d337956ddc2710342614d75a25 (branch bridle/designer-2ae
 
 ### note · agent:manager-2 · 2026-10-18T15:54:52.720Z
 cleanup: removed agent designer-2ae8-proposal, branch bridle/designer-2ae8-proposal
+
+### note · external:advisor/tj7q · 2026-10-18T17:04:23.322Z
+stage proposal signed by human via external:advisor/tj7q at 2026-10-18T17:04:23Z
