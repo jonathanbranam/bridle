@@ -4,7 +4,7 @@ title = "Stages MVP 4: bridle spawns a designer for each unblocked stage; timer 
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-17T21:41:29.528Z"
-updated_at = "2026-10-18T04:22:15.520164Z"
+updated_at = "2026-10-18T04:22:36.483334Z"
 created_by = "external:advisor/tj7q"
 watchers = [
     "external:advisor/tj7q",
@@ -39,3 +39,6 @@ done: daemon spawns a designer per unblocked, unclaimed stage of a pending v2 ti
 
 ### note · agent:manager-2 · 2026-10-18T04:22:15.520Z
 integrated: 8a7209a28542a4f19df64fb2456c11b826d010ee (branch bridle/wewhy)
+
+### note · agent:manager-2 · 2026-10-18T04:22:36.483Z
+cleanup: removed agent wewhy, branch bridle/wewhy
