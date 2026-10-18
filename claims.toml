@@ -1,27 +1,12 @@
 [[claim]]
-task = "br-mru4"
-claimed_by = "human"
-claimed_at = "2026-10-15T03:25:37.139Z"
-
-[[claim]]
-task = "br-efs2"
-claimed_by = "human"
-claimed_at = "2026-10-04T15:40:03.734Z"
-
-[[claim]]
-task = "br-7575"
-claimed_by = "human"
-claimed_at = "2026-10-03T11:04:49.732Z"
-
-[[claim]]
-task = "br-cfb2"
-claimed_by = "human"
-claimed_at = "2026-10-07T10:01:40.850Z"
-
-[[claim]]
 task = "br-wt4f"
 claimed_by = "human"
 claimed_at = "2026-10-17T09:46:32.367Z"
+
+[[claim]]
+task = "br-z64p"
+claimed_by = "human"
+claimed_at = "2026-10-18T02:15:14.743Z"
 
 [[claim]]
 task = "br-9667"
@@ -29,6 +14,26 @@ claimed_by = "human"
 claimed_at = "2026-10-03T11:04:49.804Z"
 
 [[claim]]
-task = "br-z64p"
+task = "br-efs2"
 claimed_by = "human"
-claimed_at = "2026-10-18T02:15:14.743Z"
+claimed_at = "2026-10-04T15:40:03.734Z"
+
+[[claim]]
+task = "br-r627"
+claimed_by = "human"
+claimed_at = "2026-10-18T21:13:06.876023Z"
+
+[[claim]]
+task = "br-cfb2"
+claimed_by = "human"
+claimed_at = "2026-10-07T10:01:40.850Z"
+
+[[claim]]
+task = "br-7575"
+claimed_by = "human"
+claimed_at = "2026-10-03T11:04:49.732Z"
+
+[[claim]]
+task = "br-mru4"
+claimed_by = "human"
+claimed_at = "2026-10-15T03:25:37.139Z"
