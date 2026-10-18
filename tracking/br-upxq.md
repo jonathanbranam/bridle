@@ -2,9 +2,9 @@
 id = "br-upxq"
 title = "Stages: a designer's stage must be on main before the human is asked to review it"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-10-18T15:08:02.155Z"
-updated_at = "2026-10-18T15:15:08.201567Z"
+updated_at = "2026-10-18T15:28:05.134631Z"
 created_by = "external:advisor/tj7q"
 watchers = ["external:advisor/tj7q"]
 priority = "urgent"
