@@ -190,6 +190,10 @@ pub(super) async fn task_new(cli: &Cli, args: &RowNewArgs) -> Result<(), CliErro
             body_file: args.body_file.clone(),
             for_human: true,
             priority: args.priority,
+            version: 1,
+            stages: Vec::new(),
+            review: Vec::new(),
+            claim: false,
         };
         return crate::ticket::new(cli, &repo, &ticket_args).await;
     }

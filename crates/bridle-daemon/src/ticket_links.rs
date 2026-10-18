@@ -19,6 +19,8 @@ pub struct TicketLinks {
     pub blocked_by: Vec<String>,
     pub parent: Option<String>,
     pub related: Vec<String>,
+    /// The ticket version (1 when absent); 2 tickets have stages (br-9mqh).
+    pub version: u32,
 }
 
 /// The links in a ticket's text; `None` without a frontmatter block or an `id`. The old field
@@ -28,7 +30,10 @@ pub fn parse_links(text: &str) -> Option<TicketLinks> {
     if lines.next()? != "---" {
         return None;
     }
-    let mut links = TicketLinks::default();
+    let mut links = TicketLinks {
+        version: 1,
+        ..Default::default()
+    };
     let (mut old_blocked, mut old_related) = (Vec::new(), Vec::new());
     let (mut has_blocked, mut has_related) = (false, false);
     for line in lines {
@@ -51,6 +56,7 @@ pub fn parse_links(text: &str) -> Option<TicketLinks> {
                 has_related = true;
             }
             "see" => old_related = list(value),
+            "version" => links.version = value.parse().unwrap_or(1),
             "parent" => links.parent = Some(unquote(value)).filter(|p| !p.is_empty()),
             _ => {}
         }

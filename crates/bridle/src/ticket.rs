@@ -155,6 +155,14 @@ pub(crate) async fn new(cli: &Cli, repo: &Path, args: &TicketNewArgs) -> Result<
         v.iter().map(|i| projects.qualify(&root, i)).collect()
     };
     let (blocked_by, related) = (qualify(&args.blocked_by)?, qualify(&args.related)?);
+    let stages = if args.version == 2 {
+        crate::stages::build(&args.stages, &args.review)?
+    } else {
+        if !args.stages.is_empty() || !args.review.is_empty() || args.claim {
+            return Err(anyhow!("--stages, --review and --claim need --version 2").into());
+        }
+        Vec::new()
+    };
     let fields = Fields {
         title: &title,
         id: id.as_deref(),
@@ -166,6 +174,7 @@ pub(crate) async fn new(cli: &Cli, repo: &Path, args: &TicketNewArgs) -> Result<
         created_by: created_by.as_deref(),
         theme: args.theme.as_deref(),
         prefix: Some(&prefix),
+        stages: &stages,
     };
     if let Some(t) = fields.theme {
         check_theme(t)?;
@@ -230,6 +239,9 @@ pub(crate) async fn new(cli: &Cli, repo: &Path, args: &TicketNewArgs) -> Result<
         }
         if args.for_human {
             crate::commands::notify_human_todo(cli, &task).await?;
+        }
+        if args.claim {
+            client_for(cli).await?.claim_task(&task.id).await?;
         }
     }
     println!("{rel}");
@@ -375,6 +387,7 @@ async fn show_cmd(cli: &Cli, repo: &Path, args: &TicketShowArgs) -> Result<(), C
         let text = std::fs::read_to_string(&path)
             .with_context(|| format!("reading {}", path.display()))?;
         println!("{}", text.trim_end());
+        print_stage_states(&text, &path);
     }
     for row in &rows {
         println!();
@@ -390,6 +403,20 @@ async fn show_cmd(cli: &Cli, repo: &Path, args: &TicketShowArgs) -> Result<(), C
         }
     }
     Ok(())
+}
+
+/// Under `ticket show`: each stage of a version 2 ticket and its state.
+fn print_stage_states(text: &str, path: &Path) {
+    let front: Vec<&str> = text.lines().skip(1).take_while(|l| *l != "---").collect();
+    let Ok(Some(stages)) = crate::stages::parse(&front) else {
+        return;
+    };
+    let body = split_front(text).map(|(_, b)| b).unwrap_or_default();
+    println!();
+    println!("Stages:");
+    for (name, state) in crate::stages::states(&stages, &body, &crate::stages::folder_of(path)) {
+        println!("  {name}: {state}");
+    }
 }
 
 /// The title and kind of a ticket's text; refuses an empty "The ask".
@@ -737,6 +764,8 @@ pub struct Fields<'a> {
     /// The project's id prefix: the new ticket's `id:` is then written `<prefix>-<id>` (syqn).
     /// File names stay bare.
     pub prefix: Option<&'a str>,
+    /// The stages of a version 2 ticket (`stages::build`); empty writes a version 1 ticket.
+    pub stages: &'a [crate::stages::Stage],
 }
 
 /// Write a new ticket into `<root>/open/`, creating the folders; returns its path.
@@ -768,16 +797,22 @@ pub fn create(
     };
     let qualified = f.prefix.map_or(id.clone(), |p| format!("{p}-{id}"));
     let text = format!(
-        "---\nid: {qualified}\ntitle: {}\nkind: {}\ncreated: {today}\n{}{}repos: {}\nchanges: []\nspecs: []\nblocked_by: {}\nrelated: {}\n---\n\n{}{}",
+        "---\nid: {qualified}\ntitle: {}\nkind: {}\ncreated: {today}\n{}{}{}repos: {}\nchanges: []\nspecs: []\nblocked_by: {}\nrelated: {}\n{}---\n\n{}{}{}",
         yaml_scalar(f.title),
         f.kind,
         f.created_by
             .map(|p| format!("created_by: {}\n", yaml_scalar(p)))
             .unwrap_or_default(),
         f.theme.map(|t| format!("theme: {t}\n")).unwrap_or_default(),
+        if f.stages.is_empty() {
+            ""
+        } else {
+            "version: 2\n"
+        },
         list(f.repos),
         list(f.blocked_by),
         list(f.related),
+        crate::stages::render(f.stages),
         // A body with its own heading is not put under a second, empty one.
         if f.ask.lines().any(|l| l.trim_end() == "## The ask") {
             ""
@@ -788,6 +823,11 @@ pub fn create(
             String::new()
         } else {
             format!("{}\n", f.ask.trim_end())
+        },
+        if f.stages.is_empty() {
+            ""
+        } else {
+            crate::stages::PROPOSAL_TEMPLATE
         },
     );
     let path = open.join(name);
@@ -811,6 +851,13 @@ pub fn resolve(root: &Path, id: &str, resolved: &str) -> anyhow::Result<PathBuf>
     std::fs::create_dir_all(root.join("resolved")).context("creating resolved/")?;
     std::fs::write(&dest, stamped).with_context(|| format!("writing {}", dest.display()))?;
     std::fs::remove_file(&found).with_context(|| format!("removing {}", found.display()))?;
+    // The stage folder (design.md, attachments) travels with the file.
+    let folder = crate::stages::folder_of(&found);
+    if folder.is_dir() {
+        let to = crate::stages::folder_of(&dest);
+        std::fs::rename(&folder, &to)
+            .with_context(|| format!("moving {} to {}", folder.display(), to.display()))?;
+    }
     Ok(dest)
 }
 
@@ -1250,6 +1297,8 @@ fn split_front(text: &str) -> Option<(Vec<(String, String)>, String)> {
     let end = front_end(&lines)?;
     let pairs = lines[1..end]
         .iter()
+        // Indented lines belong to a block (`stages:`), whose keys must not read as fields.
+        .filter(|l| !l.starts_with([' ', '\t']))
         .filter_map(|l| l.split_once(':'))
         .map(|(k, v)| (k.trim().to_string(), v.trim().to_string()))
         .collect();
@@ -1465,6 +1514,7 @@ pub fn check_in(root: &Path, docs: &Path, projects: &Projects) -> Report {
                 note(true, format!("id {id} is also used by {}", shown(&other)));
             }
         }
+        check_stages(&text, get("version"), &mut |m| note(true, m));
         for k in LIST_FIELDS {
             let Some(raw) = get(k) else { continue };
             let Some(items) = list_items(raw) else {
@@ -1502,6 +1552,26 @@ pub fn check_in(root: &Path, docs: &Path, projects: &Projects) -> Report {
     Report {
         errors: problems,
         warnings,
+    }
+}
+
+/// Version 2 needs a well-formed `stages:`; version 1 is not looked at (its `stages`, if any,
+/// is just another key).
+fn check_stages(text: &str, version: Option<&str>, err: &mut dyn FnMut(String)) {
+    match version {
+        None | Some("1") => return,
+        Some("2") => {}
+        Some(v) => return err(format!("unknown version {v}")),
+    }
+    let front: Vec<&str> = text.lines().skip(1).take_while(|l| *l != "---").collect();
+    match crate::stages::parse(&front) {
+        Ok(None) => err("version 2 needs a stages: block".into()),
+        Ok(Some(s)) => {
+            if let Err(e) = crate::stages::validate(&s) {
+                err(e);
+            }
+        }
+        Err(e) => err(e),
     }
 }
 
@@ -1614,6 +1684,7 @@ mod tests {
             created_by: None,
             theme: None,
             prefix: None,
+            stages: &[],
         }
     }
 
@@ -1821,6 +1892,84 @@ mod tests {
             "{text}"
         );
         assert!(resolve(dir.path(), &id, "x").is_err());
+    }
+
+    #[test]
+    fn a_version_1_ticket_is_written_as_before() {
+        let dir = tempfile::tempdir().unwrap();
+        let repos = vec!["p".to_string()];
+        let p = create(
+            dir.path(),
+            &fields("Thing", &repos),
+            "2026-09-30",
+            &HashSet::new(),
+        )
+        .unwrap();
+        let text = std::fs::read_to_string(&p).unwrap();
+        assert!(
+            !text.contains("version") && !text.contains("stages") && !text.contains("Proposal")
+        );
+        assert!(
+            text.ends_with("related: []\n---\n\n## The ask\n\n"),
+            "{text}"
+        );
+        let r = check(dir.path(), dir.path());
+        assert!(r.errors.is_empty(), "{:?}", r.errors);
+    }
+
+    #[test]
+    fn a_version_2_ticket_checks_resolves_with_its_folder_and_rejects_bad_stages() {
+        let dir = tempfile::tempdir().unwrap();
+        let repos = vec!["p".to_string()];
+        let stages = crate::stages::build(
+            &["design".into(), "specs".into(), "tasks".into()],
+            &["proposal".into(), "specs".into()],
+        )
+        .unwrap();
+        let f = Fields {
+            stages: &stages,
+            ..fields("Thing", &repos)
+        };
+        let p = create(dir.path(), &f, "2026-10-17", &HashSet::new()).unwrap();
+        let text = std::fs::read_to_string(&p).unwrap();
+        assert!(text.contains("version: 2\nrepos:"), "{text}");
+        assert!(
+            text.contains("  tasks: {requires: [design, specs]}\n---\n"),
+            "{text}"
+        );
+        let (front, body) = split_front(&text).unwrap();
+        assert!(
+            !front.iter().any(|(k, _)| k == "design"),
+            "indented keys are not fields"
+        );
+        assert!(crate::stages::find_proposal(&body).is_some());
+        let r = check(dir.path(), dir.path());
+        assert!(r.errors.is_empty(), "{:?}", r.errors);
+
+        let folder = crate::stages::folder_of(&p);
+        std::fs::create_dir_all(&folder).unwrap();
+        std::fs::write(folder.join("design.md"), "d").unwrap();
+        let dest = resolve(dir.path(), &id_of(&p).unwrap(), "2026-10-18T00:00:00Z").unwrap();
+        assert!(!folder.exists());
+        assert!(crate::stages::folder_of(&dest).join("design.md").is_file());
+
+        let bad = text
+            .replace(
+                "  design: {requires: [proposal]}",
+                "  design: {requires: [tasks]}",
+            )
+            .replace("resolved", "");
+        std::fs::write(
+            &dest,
+            bad.replace("---\n\n## The ask", "resolved: x\n---\n\n## The ask"),
+        )
+        .unwrap();
+        let r = check(dir.path(), dir.path());
+        assert!(
+            r.errors.iter().any(|e| e.contains("cycle")),
+            "{:?}",
+            r.errors
+        );
     }
 
     #[test]

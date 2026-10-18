@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Feature (br-9mqh): version 2 tickets. `ticket new --version 2 [--stages design,specs,tasks] [--review proposal,specs] [--claim]` writes `version: 2`, a `stages:` block and a proposal section; `ticket check` validates the stages, `ticket resolve` moves the ticket's stage folder with it, `ticket show` prints each stage's state. Version 1 tickets (the default) are unchanged. Migration: none.
 - Fix (br-s5ah): sending to `external:aide` on a daemon with no aide now says so and names the fallback (`bridle send human`, or a `--for-human` ticket) instead of a bare not_found; the orchestrator role says the same. Migration: none.
 - Fix (br-2uzx): a late usage reading from before a window reset (its `resets_at` older than the stored one) is dropped, so it no longer re-fires the usage wake or misleads the budget governor. Migration: none.
 - Fix (br-8swr): a land retried after a restart drain cut its reply now succeeds, reporting the commit the ticket was integrated as, instead of failing with `git commit failed` on the already-landed branch. Migration: none.

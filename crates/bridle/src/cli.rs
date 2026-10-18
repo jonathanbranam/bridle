@@ -667,6 +667,18 @@ pub struct TicketNewArgs {
     /// How soon it's wanted; ranks the human's to-dos (default normal). With --for-human.
     #[arg(long, value_enum, ignore_case = true, requires = "for_human")]
     pub priority: Option<TicketPriorityArg>,
+    /// Ticket version: 1 (default) or 2 (a ticket with stages, br-tj7q).
+    #[arg(long, default_value_t = 1, value_parser = clap::value_parser!(u8).range(1..=2))]
+    pub version: u8,
+    /// Stages after the proposal (design, specs, tasks), comma-separated. With --version 2.
+    #[arg(long, value_delimiter = ',')]
+    pub stages: Vec<String>,
+    /// Stages that need the human's signature, comma-separated. With --version 2.
+    #[arg(long, value_delimiter = ',')]
+    pub review: Vec<String>,
+    /// Claim the new ticket for yourself, the writer of its proposal. With --version 2.
+    #[arg(long)]
+    pub claim: bool,
 }
 
 #[derive(Debug, Args)]
