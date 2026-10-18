@@ -2,11 +2,14 @@
 id = "br-9mqh"
 title = "Stages MVP 1: ticket version 2, the stages schema, the proposal section and the stage folder"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-17T21:41:27.823Z"
-updated_at = "2026-10-17T22:48:39.794011Z"
+updated_at = "2026-10-18T00:37:48.404179Z"
 created_by = "external:advisor/tj7q"
-watchers = ["external:advisor/tj7q"]
+watchers = [
+    "external:advisor/tj7q",
+    "agent:w9mqh",
+]
 priority = "high"
 priority_at = "2026-10-17T22:04:05.691568Z"
 ticket = "9mqh"
