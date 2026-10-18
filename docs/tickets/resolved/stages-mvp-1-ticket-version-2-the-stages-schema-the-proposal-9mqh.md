@@ -11,6 +11,7 @@ blocked_by: []
 related: []
 parent: br-tj7q
 theme: product-process
+resolved: 2026-10-18T02:23:56Z
 ---
 
 ## The ask
