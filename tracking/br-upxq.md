@@ -4,7 +4,7 @@ title = "Stages: a designer's stage must be on main before the human is asked to
 kind = "bug"
 state = "open"
 created_at = "2026-10-18T15:08:02.155Z"
-updated_at = "2026-10-18T15:08:07.820505Z"
+updated_at = "2026-10-18T15:08:47.716374Z"
 created_by = "external:advisor/tj7q"
 watchers = ["external:advisor/tj7q"]
 priority = "urgent"
@@ -18,3 +18,11 @@ docs/tickets/open/stages-a-designer-s-stage-must-be-on-main-before-the-human-i-u
 
 ### note · external:advisor/tj7q · 2026-10-18T15:08:07.318Z
 priority: normal -> urgent
+
+### note · agent:pm-1 · 2026-10-18T15:08:47.716Z
+Brief (pm-1). Model: Sonnet. Urgent bug in the Stages flow (br-ewhy stage watch, br-tj7q).
+Read: docs/design/stages.md, the stage-done code and the stage watch in crates/bridle-daemon (grep stage-done, designer), the designer spawn prompt.
+Recommended fix (simplest; rejected: a manager remembering to land branches): stage-done writes the stage file on main the same way ticket files are committed to main (ticket commands already do this), so no designer branch needs landing. If that is not feasible in the code, the stage watch lands (fast-forward or merge) the designer's branch to main right after the stage-done commit. Pick one, state which in the stages.md edit.
+Must hold: every stage (not only review: human) is on main before any "waiting for signature" note or message to an advisor/human is sent, and the note names the main commit. The designer prompt names its manager (look it up, e.g. from the spawning agent) so `bridle send` works.
+Test: a designer stage with review: human is readable on main (ticket show) when the signature request goes out. Docs: stages.md, CHANGELOG. Acceptance: just check.
+Out of scope: br-2ae8's own proposal (already put on main by hand), other stage-flow redesign. Touches the same area as the Stages tickets: run alone with them.
