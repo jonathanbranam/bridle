@@ -2,13 +2,14 @@
 id = "br-sdrw"
 title = "Turn off Claude Code prompt suggestions in every bridle session"
 kind = "chore"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-07T02:17:09.411Z"
-updated_at = "2026-10-17T15:27:03.932578Z"
+updated_at = "2026-10-18T07:47:23.435277Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
     "external:advisor/product-manager",
+    "agent:wsdrw",
 ]
 ticket = "sdrw"
 +++
