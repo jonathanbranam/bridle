@@ -22,7 +22,8 @@ listen      = "127.0.0.1:0"        # 0 = any free port; the chosen URL goes in d
 stall_after = "10m"
 stop_grace  = "30s"                # how long `stop` waits after closing stdin
 claim_lease_after = "10m"          # a claimed task is released once its claimant has been
-                                   # inactive this long (storage.md, claims)
+                                   # inactive this long and is stopped, exited, crashed or
+                                   # removed; never while running or lost (storage.md, claims)
 self_upgrade = "release"           # default: install the newest GitHub release's binary (no build),
                                    # optionally from `release_repo = "owner/name"`; it also keeps
                                    # ~/.bridle/workflow/vX.Y.Z as the base layer when no `workflow`

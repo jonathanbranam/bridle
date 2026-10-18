@@ -30,9 +30,9 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 use bridle_api::types::{
-    Edge, EdgeKind, Handover, Impact, MessageKind, MessageState, OpenQuestion, PrincipalId,
-    ThreadEntry, ThreadEntryKind, Ticket, TicketKind, TicketPriority, TicketSize, TicketState,
-    UNKNOWN_CREATOR, When,
+    AgentState, Edge, EdgeKind, Handover, Impact, MessageKind, MessageState, OpenQuestion,
+    PrincipalId, ThreadEntry, ThreadEntryKind, Ticket, TicketKind, TicketPriority, TicketSize,
+    TicketState, UNKNOWN_CREATOR, When,
 };
 use chrono::{DateTime, Utc};
 
@@ -1724,12 +1724,29 @@ impl TicketManager {
             // rows are keyed by id/name, not this prefixed form (mirrors the
             // same lookup in server.rs).
             let name = claimant.strip_prefix("agent:").unwrap_or(&claimant);
-            let Ok(Some(agent)) = self.store.get_agent(name).await else {
+            let agent = match self.store.get_agent(name).await {
+                Ok(Some(agent)) => agent,
+                // The worker was removed: nobody will build this, so free it.
+                Ok(None) if claimant.starts_with("agent:") => {
+                    let _ = self.release_claim(&task_id).await;
+                    continue;
+                }
                 // Not an agent claimant (e.g. `human`), or a lookup error:
                 // nothing to measure activity against, so leave the claim as
                 // is rather than guessing.
-                continue;
+                _ => continue,
             };
+            // br-4n3v: a live agent can be silent for longer than the lease (a
+            // long `just check`), and a restart marks every agent `lost` with
+            // its pre-restart `last_event_at`, so the first sweep after it saw
+            // them all as stale. Only a claimant that has stopped for good
+            // loses its claim; `lost` is about to be resumed.
+            if !matches!(
+                agent.state,
+                AgentState::Stopped | AgentState::Exited | AgentState::Crashed
+            ) {
+                continue;
+            }
             let Some(last) = agent.last_event_at.or(agent.turn_started_at) else {
                 continue;
             };
@@ -3614,7 +3631,25 @@ mod tests {
             .await;
         assert!(!tm.ready_tasks().iter().any(|t| t.id == task.id));
 
-        // Past the lease with no further activity: the tick releases it.
+        // br-4n3v: a lost (restarting) or running claimant keeps its claim however quiet.
+        let late = last_activity + tm.claim_lease_after + chrono::Duration::seconds(1);
+        for state in [AgentState::Lost, AgentState::Working, AgentState::Idle] {
+            store
+                .set_agent_state(&agent.id, state)
+                .await
+                .expect("set state");
+            tm.tick_claim_lease_check(late).await;
+            assert!(
+                !tm.ready_tasks().iter().any(|t| t.id == task.id),
+                "a {state:?} claimant keeps the claim"
+            );
+        }
+
+        // Stopped for good and past the lease with no further activity: the tick releases it.
+        store
+            .set_agent_state(&agent.id, AgentState::Stopped)
+            .await
+            .expect("set state");
         tm.tick_claim_lease_check(
             last_activity + tm.claim_lease_after + chrono::Duration::seconds(1),
         )
@@ -3623,6 +3658,33 @@ mod tests {
             tm.ready_tasks().iter().any(|t| t.id == task.id),
             "a stale claim's lease expiry re-enables readiness"
         );
+    }
+
+    /// br-4n3v: another ticket landing, and a restart, leave a worker's claim and its
+    /// own `built` working.
+    #[tokio::test]
+    async fn a_claim_survives_another_ticket_landing_and_built_still_works() {
+        let (tm, _tmp) = manager().await;
+        let human = "human".to_string();
+        let w = "agent:w1".to_string();
+        let a = planned(&tm, "A").await;
+        let b = planned(&tm, "B").await;
+        tm.claim_task(&a.id, &w).await.expect("claim a");
+        tm.claim_task(&b.id, &"agent:w2".to_string())
+            .await
+            .expect("claim b");
+        tm.built_task(&b.id, "bridle/w2", "abc", &"agent:w2".to_string())
+            .await
+            .expect("b built");
+        tm.done_task(&b.id, "abc", Some("bridle/w2"), &human)
+            .await
+            .expect("b lands");
+        let got = tm.get_task(&a.id).expect("a");
+        assert_eq!(got.state, TicketState::Claimed);
+        assert_eq!(got.claimed_by.as_deref(), Some("agent:w1"));
+        tm.built_task(&a.id, "bridle/w1", "def", &w)
+            .await
+            .expect("w1's own built");
     }
 
     #[tokio::test]
