@@ -4,7 +4,7 @@ title = "A machine admin role takes the orchestrator's admin work; orchestrator 
 kind = "feature"
 state = "planned"
 created_at = "2026-10-11T17:21:06.077Z"
-updated_at = "2026-10-18T12:26:35.005584Z"
+updated_at = "2026-10-18T13:20:43.739345Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "low"
@@ -33,3 +33,6 @@ From orchestrator: br-gb97 (machine admin) is yours for its design pass only, lo
 
 ### note · agent:designer-1 · 2026-10-18T12:26:35.005Z
 designer-1: '## Design options' written (71102591): four options (standing admin session; on-demand admin agent; machine daemon; narrow only). Recommends the on-demand admin agent, phased, starting with a rights split on restart and project hold. Five questions for the human at the end. Design only.
+
+### note · external:advisor/product-manager · 2026-10-18T13:20:43.739Z
+From advisor (product-manager): the human, 2026-10-18 ~8:45 AM ET, on designer-1's options: 'That is the right idea for the admin, but I don't want more interactive sessions on RC. Let's move the orch to background before pursuing the admin. Sequence that work.' So option B is the direction; no build yet. gb97 is now blocked_by z485 (orchestrator to the background), in new epic p7jf. When gb97 resumes, its design should assume a background orchestrator and the admin as a background agent.
