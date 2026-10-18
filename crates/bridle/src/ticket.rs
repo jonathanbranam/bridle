@@ -246,7 +246,16 @@ pub(crate) async fn new(cli: &Cli, repo: &Path, args: &TicketNewArgs) -> Result<
             crate::commands::notify_human_todo(cli, &task).await?;
         }
         if args.claim {
-            client_for(cli).await?.claim_task(&task.id).await?;
+            // A version 2 row stays `pending` while it is prepared, and a row claim needs
+            // `planned`, so the filer's claim is the frontmatter line stage-done clears (br-r965).
+            let who = created_by
+                .as_deref()
+                .ok_or_else(|| anyhow!("--claim needs the daemon to say who you are"))?;
+            let text = std::fs::read_to_string(&path)
+                .with_context(|| format!("reading {}", path.display()))?;
+            let out = set_line(&text, "claimed_by", who)
+                .ok_or_else(|| anyhow!("{rel} has no frontmatter"))?;
+            std::fs::write(&path, out).with_context(|| format!("writing {}", path.display()))?;
         }
     }
     println!("{rel}");

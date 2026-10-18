@@ -1919,3 +1919,34 @@ fn a_failed_direct_pair_mint_keeps_the_visitor_token() {
         .expect("visitor token listed");
     assert_eq!(visitor["revoked"], false, "{visitor}");
 }
+
+/// `ticket new --version 2 --claim` writes `claimed_by` in the frontmatter and leaves the
+/// `pending` row unclaimed (br-r965).
+#[test]
+fn version_2_claim_is_a_frontmatter_line_not_a_row_claim() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let (_guard, repo, home) = start_daemon(tmp.path());
+    let (ok, out, err) = run_cli(
+        &repo,
+        &home,
+        &[
+            "ticket",
+            "new",
+            "-k",
+            "feature",
+            "--version",
+            "2",
+            "--claim",
+            "staged",
+        ],
+    );
+    assert!(ok, "ticket new failed: {err}");
+    let text = std::fs::read_to_string(repo.join(out.trim())).expect("ticket file");
+    assert!(text.contains("\nclaimed_by: "), "{text}");
+    let (ok, out, err) = run_cli(&repo, &home, &["task", "list", "--json"]);
+    assert!(ok, "list failed: {err}");
+    let rows: serde_json::Value = serde_json::from_str(&out).expect("rows json");
+    let row = &rows.as_array().expect("array")[0];
+    assert_eq!(row["state"], "pending", "{row}");
+    assert!(row["claimed_by"].is_null(), "{row}");
+}

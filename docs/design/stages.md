@@ -62,7 +62,8 @@ The ticket's frontmatter records the marks (the files only hold the content):
   the human's; the thread note says who ran it ("signed by human at <time>", or "signed by human
   via <principal>" when the token is an agent's) and when. Editing an approved stage does not
   withdraw its signature; only `changes` does. Cryptographic signing is a later ticket (v2va).
-- `claimed_by: human` while any stage waits for the human's signature; `stage-done` ends the
+- `claimed_by: human` while any stage waits for the human's signature; `ticket new --version 2
+  --claim` writes `claimed_by: <filer>` the same way (br-r965), and `stage-done` ends the
   writer's claim and `approve`, `changes` and `restage` recompute it. This is a frontmatter line,
   not a row claim: a version 2 ticket stays `pending` while it is prepared and the row claim
   needs `planned`.
