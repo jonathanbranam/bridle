@@ -4,7 +4,7 @@ title = "Roles: tell every role that 'bridle ticket submit --project <p>' is how
 kind = "docs"
 state = "integrated"
 created_at = "2026-10-13T23:22:31.932Z"
-updated_at = "2026-10-18T08:04:09.045200Z"
+updated_at = "2026-10-18T08:04:27.500160Z"
 created_by = "external:aide@aide"
 watchers = [
     "external:aide@aide",
@@ -67,3 +67,6 @@ main moved (br-6byg): merged main into bridle/wf2yd (clean merge, no conflicts; 
 
 ### note · agent:manager-2 · 2026-10-18T08:04:09.045Z
 integrated: 8bf2083d7db77afeb2c086a61414008921705fd7 (branch bridle/wf2yd)
+
+### note · agent:manager-2 · 2026-10-18T08:04:27.500Z
+cleanup: removed agent wf2yd, branch bridle/wf2yd
