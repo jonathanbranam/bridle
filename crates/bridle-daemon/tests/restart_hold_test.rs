@@ -179,7 +179,6 @@ impl Gh for GreenGh {
 }
 
 #[tokio::test]
-#[ignore = "flaky, br-6byg"]
 async fn cancel_ends_an_upgrade_drain_quietly() {
     let mut o = support::default_overrides();
     o.upgrade = UpgradeHooks {
@@ -191,17 +190,37 @@ async fn cancel_ends_an_upgrade_drain_quietly() {
     o.ci_tick_interval = Duration::from_millis(100);
     let (daemon, _tmp) =
         support::start_daemon_with_config(Some(o), Some("[daemon]\nself_upgrade = true\n")).await;
+    // The 100 ms tick would drain before the agent's first turn starts and the agent would never
+    // be Working (br-6byg): hold upgrades off until it is, then let the tick through.
+    daemon
+        .client
+        .restart_hold(&postpone(600))
+        .await
+        .expect("postpone");
     let agent = daemon
         .client
         .spawn(&worker("SLEEP 4"))
         .await
         .expect("spawn");
     support::wait_for_state(&daemon.client, &agent.id, AgentState::Working).await;
+    daemon
+        .client
+        .restart_hold(&postpone(0))
+        .await
+        .expect("lift postpone");
     support::wait_for("the upgrade drain", || async {
         let s = daemon.client.status().await.ok()?;
         (s.draining && s.upgrade_waiting.is_some()).then_some(())
     })
     .await;
+    // The cancelled upgrade's built binary stays for the next cycle, so the 100 ms tick would
+    // start a new drain at once and a slow poller could miss the gap (br-6byg). Postpone first so
+    // nothing re-drains once the cancel lifts this one.
+    daemon
+        .client
+        .restart_hold(&postpone(600))
+        .await
+        .expect("postpone");
     daemon.client.restart_hold(&cancel()).await.expect("cancel");
     support::wait_for("the drain to lift", || async {
         let s = daemon.client.status().await.ok()?;
