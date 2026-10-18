@@ -2682,3 +2682,5 @@
 {"actor":"agent:pm-1","at":"2026-10-18T10:03:27.385160Z","from":"reopened","task":"br-ubjd","to":"planned"}
 {"actor":"human","at":"2026-10-18T10:18:25.985Z","from":"","task":"br-4n3v","to":"pending"}
 {"actor":"external:orchestrator","at":"2026-10-18T10:18:32.245932Z","from":"pending","task":"br-4n3v","to":"open"}
+{"actor":"agent:wp2ad","at":"2026-10-18T10:26:00.565053Z","from":"claimed","task":"br-p2ad","to":"built"}
+{"actor":"agent:manager-2","at":"2026-10-18T10:26:10.775456Z","from":"built","task":"br-p2ad","to":"integrated"}
