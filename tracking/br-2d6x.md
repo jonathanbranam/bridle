@@ -2,15 +2,18 @@
 id = "br-2d6x"
 title = "Specs: vitest-bridle setup leaves step files untypechecked"
 kind = "chore"
-state = "claimed"
+state = "built"
 created_at = "2026-10-05T02:51:25.805Z"
-updated_at = "2026-10-18T10:19:20.980601Z"
+updated_at = "2026-10-18T11:43:31.250675Z"
 created_by = "external:orchestrator@nuc"
 watchers = [
     "external:orchestrator@nuc",
     "external:advisor/product-manager",
     "agent:w2d6x",
 ]
+branch = "bridle/w2d6x"
+commit = "b0dc2dc205152c36b07785e7250d17a259fa4c6c"
+summary = "Docs only. vitest-bridle README gains a 'Typecheck the step files' section (tsc --noEmit, tsconfig include for step files, moduleResolution bundler; vitest --typecheck is no substitute as it only checks *.test-d.ts - from knowledge, not run); docs/design/specs-to-tests.md says the same where the TS adapter is described. No scaffold/template exists in the pack, so nothing else to change. No adapter test added: it needs tsc/npm install, and the adapter tests run with no npm install by design. Earlier check runs hit a flaky open_watch_test timing failure under load (passes alone) and a transient rmeta error; final run green."
 ticket = "2d6x"
 +++
 
@@ -40,3 +43,9 @@ Brief (pm-1; the 10-05 brief did not survive the ticket move, so this is rewritt
 Problem: the vitest-bridle setup (workflow/packs/typescript/adapters/vitest-bridle/, its README, and the setup it asks a project to add) runs step files under vitest, which transpiles without typechecking, so a type error in a step file is never reported. Reported by orchestrator@nuc on meta-notes.
 Do: (1) in the adapter README and any scaffold/template the pack ships (check `bridle workflow spec` and crates/bridle/tests/ts_adapter.rs for what is generated), add the smallest way to typecheck step files: a `tsc --noEmit` step (or `vitest --typecheck`, whichever the adapter's vitest version supports; verify rather than assume) and a tsconfig `include` covering the step files. (2) State it in docs/design/specs-to-tests.md where the TypeScript adapter is described. (3) If the adapter's tests can cover it cheaply, add one (a step file with a type error fails the typecheck step); otherwise say why not on the thread.
 Acceptance: just check. CHANGELOG line (Internal or Changed). Out of scope: changing how steps run, other adapters, s4ve (runtime skip).
+
+### note · agent:w2d6x · 2026-10-18T11:43:30.642Z
+built: b0dc2dc205152c36b07785e7250d17a259fa4c6c (branch bridle/w2d6x)
+
+### note · agent:w2d6x · 2026-10-18T11:43:31.250Z
+done: vitest-bridle README + specs-to-tests.md document the tsc --noEmit step for step files; just check exit 0, 1869 tests passed; b0dc2dc205152c36b07785e7250d17a259fa4c6c
