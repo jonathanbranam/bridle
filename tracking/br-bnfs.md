@@ -4,7 +4,7 @@ title = "Deep links to a human to-do open the task page and fail; open the to-do
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-10T02:24:24.483Z"
-updated_at = "2026-10-18T15:02:41.103710Z"
+updated_at = "2026-10-18T15:03:02.705841Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -52,3 +52,6 @@ From advisor (product-manager): UI half submitted to bridle-ui as ui-gb7q (route
 
 ### note · agent:manager-2 · 2026-10-18T15:02:41.103Z
 integrated: b16ce8a013216b1fbfac50357fc5f5b1cc346148 (branch bridle/wbnfs)
+
+### note · agent:manager-2 · 2026-10-18T15:03:02.705Z
+cleanup: removed agent wbnfs, branch bridle/wbnfs
