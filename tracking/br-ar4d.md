@@ -2,11 +2,14 @@
 id = "br-ar4d"
 title = "Flaky again (third time): governor_test working_agent_is_notified_then_stopped_when_its_turn_ends times out waiting for Stopped (macOS CI)"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-11T04:21:34.879Z"
-updated_at = "2026-10-11T04:32:54.894167Z"
+updated_at = "2026-10-18T14:25:17.072483Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "agent:war4d",
+]
 priority = "low"
 priority_at = "2026-10-11T04:32:54.869707Z"
 ticket = "ar4d"
