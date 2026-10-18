@@ -4,10 +4,13 @@ title = "Role text and orchestrator startup steps name a nonexistent --state fla
 kind = "fix"
 state = "pending"
 created_at = "2026-10-18T22:42:13.528Z"
-updated_at = "2026-10-18T22:42:13.534808Z"
+updated_at = "2026-10-18T22:54:32.056977Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+ticket = "vsp9"
 +++
+
+docs/tickets/open/role-text-and-orchestrator-startup-steps-name-a-nonexistent-vsp9.md
 
 submitted by external:orchestrator
 
