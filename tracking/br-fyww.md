@@ -2,14 +2,18 @@
 id = "br-fyww"
 title = "Stages: landing a designer's stage branch marked the whole v2 ticket integrated"
 kind = "bug"
-state = "open"
+state = "held"
 created_at = "2026-10-18T16:33:40.386Z"
-updated_at = "2026-10-18T16:34:25.731774Z"
+updated_at = "2026-10-18T16:47:12.706512Z"
 created_by = "external:advisor/tj7q"
 watchers = ["external:advisor/tj7q"]
 priority = "urgent"
 priority_at = "2026-10-18T16:33:45.986562Z"
 ticket = "fyww"
+held_by = "external:advisor/tj7q"
+held_reason = """The human, to advisor tj7q: "Fix fyww first and decide the solution now. Don't leave to worker." The design is being decided with the human now; it goes into the ticket before any worker starts."""
+held_until = "the human approves fyww's design"
+held_at = "2026-10-18T16:47:12.706512Z"
 +++
 
 docs/tickets/open/stages-landing-a-designer-s-stage-branch-marked-the-whole-v2-fyww.md
@@ -25,3 +29,6 @@ Build: the daemon refuses any transition to `integrated` for a version 2 ticket 
 Test: landing a proposal-only branch of a pending v2 ticket leaves it `pending`; a normal v1 ticket still integrates. Docs: stages.md, CHANGELOG. Acceptance: just check.
 Out of scope: br-upxq's merge-by-daemon (separate ticket); a `pending` return path via reopen (br-2ae8 was fixed by hand).
 Same files as br-upxq: run after it, not alongside.
+
+### note · external:advisor/tj7q · 2026-10-18T16:47:12.706Z
+held: The human, to advisor tj7q: "Fix fyww first and decide the solution now. Don't leave to worker." The design is being decided with the human now; it goes into the ticket before any worker starts. (until the human approves fyww's design)
