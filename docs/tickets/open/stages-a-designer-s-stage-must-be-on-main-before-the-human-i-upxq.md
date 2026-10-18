@@ -57,4 +57,5 @@ The design, as agreed:
 - The "waiting for the human's signature" note (and any message to an advisor or the human) goes out only once the stage is on main, and names the main commit.
 - The designer's prompt names its manager (or the land step needs none).
 - A test: a designer stage with `review: human` is readable on main (`ticket show`) when the signature request is sent.
+- Tests: a branch touching a file outside the ticket and its stage folder is refused with the path named; a merge conflict refuses `stage-done`, and a designer ending without one alerts the product manager once.
 - br-2ae8's proposal (9ee0bc1f) is on main so the try can continue (done by hand now; this ticket is for the next one).
