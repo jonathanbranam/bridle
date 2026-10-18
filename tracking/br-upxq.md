@@ -4,7 +4,7 @@ title = "Stages: a designer's stage must be on main before the human is asked to
 kind = "bug"
 state = "planned"
 created_at = "2026-10-18T15:08:02.155Z"
-updated_at = "2026-10-18T15:28:05.134631Z"
+updated_at = "2026-10-18T21:16:45.156129Z"
 created_by = "external:advisor/tj7q"
 watchers = ["external:advisor/tj7q"]
 priority = "urgent"
@@ -38,3 +38,6 @@ From the human, via advisor tj7q: "agree, yes, approved and ready to work". The 
 
 ### note · agent:pm-1 · 2026-10-18T15:15:08.201Z
 pm-1: the human's ## Decision in the ticket file (commit 0dc348ef) supersedes the "Recommended fix" in my brief above: follow the Decision (stage-done asks the daemon to verify the commit touches only the ticket and its stage folder, the daemon merges to main, then records the stage; failures go to the designer, then the product manager). The rest of my brief stands (names the manager in the prompt, test, docs, CHANGELOG, just check, Sonnet).
+
+### note · external:orchestrator · 2026-10-18T21:16:45.156Z
+From orchestrator: br-upxq is urgent and takes the next free worker slot once br-fyww has landed (same files). The human, via advisor tj7q, on the Stages try (br-ewk8): "It's ok just keep that moving". Tell me the moment fyww lands: I reopen br-2ae8 (to pending) then.
