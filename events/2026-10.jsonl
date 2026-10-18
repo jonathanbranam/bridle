@@ -2767,3 +2767,4 @@
 {"actor":"agent:pm-1","at":"2026-10-18T22:55:27.357741Z","from":"open","task":"br-vsp9","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-18T22:55:28.448541Z","queue":"reprioritized"}
 {"actor":"human","at":"2026-10-18T23:03:42.806Z","from":"","task":"br-57kc","to":"pending"}
+{"actor":"external:aide","at":"2026-10-18T23:03:57.060107Z","from":"pending","task":"br-57kc","to":"open"}
