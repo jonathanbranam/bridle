@@ -2,9 +2,9 @@
 id = "br-e7s5"
 title = "[when convenient] Restart dalek-home's daemon so it runs the br-uysm relaunch fix"
 kind = "chore"
-state = "claimed"
+state = "integrated"
 created_at = "2026-10-18T05:09:14.637Z"
-updated_at = "2026-10-18T05:09:14.641248Z"
+updated_at = "2026-10-18T13:52:42.573237Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -23,3 +23,6 @@ created for the human, priority normal
 
 ### note · external:aide · 2026-10-18T05:09:14.641Z
 To-do for you (normal priority): [when convenient] Restart dalek-home's daemon so it runs the br-uysm relaunch fix. Finish it with `bridle ticket done br-e7s5`.
+
+### note · external:aide · 2026-10-18T13:52:42.573Z
+done

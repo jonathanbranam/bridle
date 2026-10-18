@@ -4,7 +4,7 @@ title = "Orchestrator relaunch re-runs the pane's previous launcher (respawn-pan
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-18T02:10:19.003Z"
-updated_at = "2026-10-18T05:08:57.245927Z"
+updated_at = "2026-10-18T13:52:42.450675Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -34,3 +34,6 @@ integrated: 3b7bb078b2b8effd4aff17f3ceb30f698b37f8bd (branch bridle/wuysm)
 
 ### note · agent:manager-2 · 2026-10-18T05:08:57.245Z
 cleanup: removed agent wuysm, branch bridle/wuysm
+
+### note · external:aide · 2026-10-18T13:52:42.450Z
+Verified live by aide 2026-10-18 9:51 AM ET: after the human restarted dalek-home (13:48Z) and /exit'ed the orchestrator, dalek-home relaunched it in pane %4 (13:51:43Z): the pane now runs a plain /bin/zsh with 'bridle session orchestrator --project dalek-home' as its child, and a waiter is open on dalek-home (13:51:54Z).
