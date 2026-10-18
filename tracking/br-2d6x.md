@@ -2,9 +2,9 @@
 id = "br-2d6x"
 title = "Specs: vitest-bridle setup leaves step files untypechecked"
 kind = "chore"
-state = "built"
+state = "integrated"
 created_at = "2026-10-05T02:51:25.805Z"
-updated_at = "2026-10-18T11:43:31.250675Z"
+updated_at = "2026-10-18T11:43:47.792576Z"
 created_by = "external:orchestrator@nuc"
 watchers = [
     "external:orchestrator@nuc",
@@ -12,7 +12,7 @@ watchers = [
     "agent:w2d6x",
 ]
 branch = "bridle/w2d6x"
-commit = "b0dc2dc205152c36b07785e7250d17a259fa4c6c"
+commit = "a56624b34f5d44a2f440b6b9202c357bb53fbb6b"
 summary = "Docs only. vitest-bridle README gains a 'Typecheck the step files' section (tsc --noEmit, tsconfig include for step files, moduleResolution bundler; vitest --typecheck is no substitute as it only checks *.test-d.ts - from knowledge, not run); docs/design/specs-to-tests.md says the same where the TS adapter is described. No scaffold/template exists in the pack, so nothing else to change. No adapter test added: it needs tsc/npm install, and the adapter tests run with no npm install by design. Earlier check runs hit a flaky open_watch_test timing failure under load (passes alone) and a transient rmeta error; final run green."
 ticket = "2d6x"
 +++
@@ -49,3 +49,9 @@ built: b0dc2dc205152c36b07785e7250d17a259fa4c6c (branch bridle/w2d6x)
 
 ### note · agent:w2d6x · 2026-10-18T11:43:31.250Z
 done: vitest-bridle README + specs-to-tests.md document the tsc --noEmit step for step files; just check exit 0, 1869 tests passed; b0dc2dc205152c36b07785e7250d17a259fa4c6c
+
+### note · agent:manager-2 · 2026-10-18T11:43:40.838Z
+manager-2: reviewing
+
+### note · agent:manager-2 · 2026-10-18T11:43:47.792Z
+integrated: a56624b34f5d44a2f440b6b9202c357bb53fbb6b (branch bridle/w2d6x)
