@@ -892,6 +892,10 @@ bridle ticket comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain com
   its own session ([[orchestrator-supervision]]). It reads the hook JSON on stdin and writes
   `$BRIDLE_HOME/orchestrator.session` as `<session id> <transcript path>` (`/clear` gives the same
   process a new id). Local, silent, never fails.
+- **Wakes carry the gate** (br-9s8u): background turns never run `UserPromptSubmit`, so `agent wake`
+  and `orchestrator wait-for-wake` print the text `focus gate` would add (`focus::wake_text`, over
+  `focus::gate`, sharing its per-session nudge throttle) before the wake reasons, for a message, a
+  task change or a timeout. Nothing extra outside quiet hours; with `--json` the text goes to stderr.
 - **`focus gate`** is the `UserPromptSubmit` hook `bridle session` passes for the advisor and
   orchestrator. It does nothing on a `<task-notification>` prompt (not the human), and its quiet-hours text
   says restarting watchers is always allowed. Inside a `quiet` `[[focus]]` period ([[roles-and-config]], Focus hours) it prints

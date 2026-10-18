@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 - Stages MVP 5 (br-6c8x): a worker on a version 2 ticket is told (rule `stage-apply`, after OpenSpec's apply skill) to read the proposal, design, specs and tasks, merge specs.md into `design/specs/` first, and tick `tasks.md` as it goes; landing refuses a version 2 ticket whose `tasks.md` has unticked items. Version 1 is unchanged.
+- Fix (br-9s8u, P1): `bridle agent wake` and `bridle orchestrator wait-for-wake` print the focus gate text (the same `focus::gate` as `bridle focus gate`) before the wake reasons, so quiet hours reach turns that start from a background wake. Nothing extra outside quiet hours; with `--json` the text goes to stderr.
+
 - Stages MVP 4 (br-ewhy): the daemon spawns a `designer` for each unblocked stage of a pending, unclaimed version 2 ticket (through the usual spawn path, budget governor and caps) and sends one message to `external:advisor/product-manager` when a stage is not done within `[stages] timeout` (default 60m, 0 turns it off) or its writer ended without `stage-done`; no retry, `ticket restage` puts it back. The `designer` role now also writes any stage.
 - Fix (br-uysm): an orchestrator relaunch no longer re-runs the pane's previous launcher (tmux `respawn-pane` with no command); the first attempt respawns an explicit shell, so a moved orchestrator keeps its own project.
 

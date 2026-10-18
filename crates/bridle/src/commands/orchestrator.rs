@@ -416,6 +416,14 @@ pub(super) async fn wait_for_wake(cli: &Cli, timeout: Option<u64>) -> Result<(),
     // The old route, not `GET /v1/wake`: daemons from before br-2672 answer the new one with
     // text-less reasons (the message body lost, marked read) or 403. Every daemon serves this.
     let wakes = fetch_wakes(&client, Some(wake_wait_secs(timeout))).await?;
+    // The focus gate rides on the wake (br-9s8u); on stderr with --json so the JSON stays clean.
+    if let Some(text) = crate::focus::wake_text_now() {
+        if cli.json {
+            eprintln!("{text}");
+        } else {
+            println!("{text}");
+        }
+    }
     if cli.json {
         println!(
             "{}",

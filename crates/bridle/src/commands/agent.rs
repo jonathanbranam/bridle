@@ -302,6 +302,15 @@ pub(super) async fn wake(cli: &Cli, args: &WakeArgs) -> Result<(), CliError> {
             r.text.as_deref().unwrap_or("restarting or shutting down")
         )));
     }
+    // Background turns never run the UserPromptSubmit hook, so the focus gate rides on the wake
+    // (br-9s8u). On stderr with --json so the JSON stays clean.
+    if let Some(text) = crate::focus::wake_text_now() {
+        if cli.json {
+            eprintln!("{text}");
+        } else {
+            println!("{text}");
+        }
+    }
     if got.reasons.is_empty() {
         if cli.json {
             println!("{{\"reasons\":[]}}");

@@ -81,6 +81,36 @@ pub fn gate(
     )))
 }
 
+/// What `gate` adds to a prompt, as plain text, for the output of a background wake (br-9s8u):
+/// those turns never run the `UserPromptSubmit` hook. `None` outside quiet hours.
+pub fn wake_text(
+    home: &Path,
+    repo: &Path,
+    now: DateTime<Local>,
+    session: Option<&str>,
+) -> Option<String> {
+    let out: serde_json::Value = serde_json::from_str(&gate(home, repo, now, session)?).ok()?;
+    out.pointer("/hookSpecificOutput/additionalContext")
+        .or_else(|| out.get("reason"))
+        .and_then(|t| t.as_str())
+        .map(str::to_string)
+}
+
+/// `wake_text` for now, on this machine, for the project the command runs in.
+pub fn wake_text_now() -> Option<String> {
+    let repo = std::env::var_os("CLAUDE_PROJECT_DIR")
+        .map(std::path::PathBuf::from)
+        .or_else(|| std::env::current_dir().ok())
+        .unwrap_or_default();
+    let session = std::env::var("BRIDLE_SESSION_PID").ok();
+    wake_text(
+        &bridle_api::discovery::bridle_home(),
+        &repo,
+        Local::now(),
+        session.as_deref(),
+    )
+}
+
 /// The session's own file, or the machine-wide one when there is no (usable) session id.
 fn state_path(home: &Path, session: Option<&str>) -> PathBuf {
     let safe = session.filter(|s| {
@@ -373,6 +403,24 @@ mod tests {
         let empty = home_with(Some("[budget]\nmax_workers = 3\n"));
         assert_eq!(
             gate(empty.path(), empty.path(), at(2026, 9, 30, 10, 0), None),
+            None
+        );
+    }
+
+    #[test]
+    fn wake_text_is_the_gate_text_in_quiet_hours_only() {
+        let home = home_with(Some(WORK));
+        let w = |h, m| wake_text(home.path(), home.path(), at(2026, 9, 30, h, m), Some("w1"));
+        let text = w(10, 0).expect("quiet hours add text");
+        assert!(
+            text.contains("QUIET HOURS (work) until 6:00 PM ET"),
+            "{text}"
+        );
+        assert!(!text.contains("hookSpecificOutput"), "{text}");
+        assert_eq!(w(20, 0), None, "outside quiet hours: nothing extra");
+        let none = home_with(None);
+        assert_eq!(
+            wake_text(none.path(), none.path(), at(2026, 9, 30, 10, 0), None),
             None
         );
     }
