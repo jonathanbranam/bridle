@@ -2680,3 +2680,5 @@
 {"actor":"agent:manager-2","at":"2026-10-18T10:02:27.962023Z","from":"built","task":"br-ubjd","to":"integrated"}
 {"actor":"agent:pm-1","at":"2026-10-18T10:03:22.898832Z","from":"integrated","task":"br-ubjd","to":"reopened"}
 {"actor":"agent:pm-1","at":"2026-10-18T10:03:27.385160Z","from":"reopened","task":"br-ubjd","to":"planned"}
+{"actor":"human","at":"2026-10-18T10:18:25.985Z","from":"","task":"br-4n3v","to":"pending"}
+{"actor":"external:orchestrator","at":"2026-10-18T10:18:32.245932Z","from":"pending","task":"br-4n3v","to":"open"}
