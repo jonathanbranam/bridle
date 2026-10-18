@@ -2,14 +2,15 @@
 id = "br-ubjd"
 title = "A CHANGELOG line for every landed task, written on the branch, and one section per kind under Unreleased"
 kind = "chore"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-09T00:54:15.168Z"
-updated_at = "2026-10-18T10:03:27.385160Z"
+updated_at = "2026-10-18T10:18:54.666150Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
     "external:advisor/product-manager",
     "agent:wubjd",
+    "agent:wubjd2",
 ]
 branch = "bridle/wubjd"
 commit = "6c0a50e69989813418c312b85e947af571dd7cda"

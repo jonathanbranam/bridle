@@ -4,7 +4,7 @@ title = "Specs: say what happens to unit tests a scenario now covers"
 kind = "chore"
 state = "planned"
 created_at = "2026-10-05T02:51:25.940Z"
-updated_at = "2026-10-17T15:27:14.631011Z"
+updated_at = "2026-10-18T10:19:06.995684Z"
 created_by = "external:orchestrator@nuc"
 watchers = [
     "external:orchestrator@nuc",
@@ -30,3 +30,9 @@ watching the task
 
 ### note · external:advisor/product-manager · 2026-10-17T15:26:12.500Z
 Readied by advisor (product-manager) 2026-10-17 ~11:45 AM ET under the human's rule (br-mhjn): bugs, fixes and chores go through without asking. Checked still real on main.
+
+### note · agent:pm-1 · 2026-10-18T10:19:06.995Z
+Brief (pm-1; the 10-05 brief did not survive the ticket move, so this is rewritten from the title). Model: Haiku/Sonnet, docs only.
+Problem: when an executable scenario (a spec step run by vitest-bridle or another adapter) now covers behaviour that a hand-written unit test also covers, nothing says what to do with the unit test: keep, delete or reduce it. Reported by orchestrator@nuc.
+Do: read docs/design/specs-to-tests.md and docs/briefs/specs.md, then add a short section (a few bullets) stating the rule. Recommended: a scenario covers the behaviour at the user-visible level, so a unit test is kept only if it covers an edge the scenario does not (a fast branch/error case, a pure function with many inputs); a unit test that only repeats the scenario's happy path is deleted in the same change that adds the scenario, and the commit says so. Check the existing docs for any stricter stance and follow it.
+Acceptance: docs read cleanly, links root-relative, ASCII only; just check. CHANGELOG line (Internal). Out of scope: tooling to detect duplicate coverage.
