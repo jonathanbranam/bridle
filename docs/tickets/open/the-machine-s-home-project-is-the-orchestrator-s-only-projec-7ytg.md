@@ -40,7 +40,7 @@ orchestrator lives, until the machine daemon (br-kuw2) replaces it, if ever.
   command, and checking cross-machine mail (outbox) still routes to the target machine's home.
 - **C. Every launcher uses the home.** `bridle session orchestrator`, `bridle up`, the supervisor's
   relaunch and `bridle prime orchestrator` resolve the project from the home (item 2's override
-  included) and refuse `--project <not-home>`. Roles and docs (CLAUDE.md, orchestrator.md) say so.
+  included) and refuse `--project <not-home>`. Roles and docs say so: CLAUDE.md, orchestrator.md, and the advisor primer's "Messaging the orchestrator" (`workflow/base/roles/advisor.md`), which still offers `--project bridle` "until the machine has its home" (advisor tj7q's primer question, m-16617: its 5:15 PM ET note to dalek-home on 10-17 reached the orchestrator at 9:20 PM ET).
 - **D. A machine with no home project.** `bridle up` / `session orchestrator` refuse with how to
   create one (or a `bridle machine init-home`), instead of falling back to the cwd's project
   (see br-8rdn for the token side).
