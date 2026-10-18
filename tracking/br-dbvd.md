@@ -2,13 +2,14 @@
 id = "br-dbvd"
 title = "Specs: bridle spec id duplicates ledger entries for hand-written IDs"
 kind = "fix"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-05T02:56:15.131Z"
-updated_at = "2026-10-17T15:27:02.682309Z"
+updated_at = "2026-10-18T00:37:16.880285Z"
 created_by = "external:orchestrator@nuc"
 watchers = [
     "external:orchestrator@nuc",
     "external:advisor/product-manager",
+    "agent:wdbvd",
 ]
 ticket = "dbvd"
 +++
