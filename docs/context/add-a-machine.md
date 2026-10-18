@@ -16,9 +16,9 @@ network of `dalek` (the Mac) and `nuc`. Replace the names with yours. A machine 
 
 Before step 1, the machine needs its OS side done:
 
-- **WSL2 on the Windows PC:** follow [[docs/context/windows-wsl2-host|the WSL2 guide]] up to and
-  including `just install`, then come back here at step 1. (Tailscale, linger and SSH are in
-  that guide.)
+- **WSL2 on the Windows PC:** follow [[docs/context/windows-wsl2-host|the WSL2 guide]] for the OS
+  side (Tailscale, linger and SSH are in that guide), then install bridle with the release script
+  below, as the Linux and macOS bullets say, and come back here at step 1.
 - **Linux (like the NUC):** [[docs/context/nuc-host|the NUC host]], "How it's reached": Tailscale,
   SSH, `gh`, Node, Claude Code. Install bridle with the release script below.
 - **macOS:** install with the release script below (macOS note after it).
@@ -55,6 +55,10 @@ self-upgrade replaces the file and loses it). Nothing else is needed for it to r
 `bridle --version` and `tailscale status` must both work before you go on. The machines reach each
 other by the host name in `[machines]` (a Tailscale MagicDNS name); `ping <host>` from each other
 machine is the check.
+
+The check for a release install: `bridle --version` prints the release you asked for, and
+`bridle doctor` run inside a project clone exits 0. Outside a clone doctor has no repo to check and
+is not expected to pass there.
 
 ## 1. GitHub and git
 

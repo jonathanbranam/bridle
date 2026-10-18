@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Docs (br-p2ad): the add-a-machine guide installs WSL2 from the release script like Linux and macOS (no `just install` step), and states the check for a release install (`bridle --version`, and `bridle doctor` in a project clone). Migration: none.
 - Fix (br-4mbd): `xxxx` is a reserved id: never minted for a ticket or task, reported by `bridle ticket check`, and ignored (`br-xxxx` or bare) by the link-check hook, so the placeholder no longer draws a link reminder.
 - Change (br-ubjd): `bridle ticket land` refuses a branch that adds no line under `## Unreleased` in CHANGELOG.md. Exempt: question/research/explore/incident tickets, and changes confined to `docs/tickets/`. Roles and `docs-current` now say every landed task gets a line, written on its branch.
 - Fix (br-wskt): a drain whose restart is postponed (`bridle daemon restart --postpone`) no longer holds messages to agents, so a manager that postponed to finish a land still hears `built` notes; messages held before the postpone are delivered when it is set.
