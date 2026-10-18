@@ -2,9 +2,9 @@
 id = "br-m5kf"
 title = "Specs: say what happens to unit tests a scenario now covers"
 kind = "chore"
-state = "built"
+state = "integrated"
 created_at = "2026-10-05T02:51:25.940Z"
-updated_at = "2026-10-18T13:10:47.354412Z"
+updated_at = "2026-10-18T14:20:32.221063Z"
 created_by = "external:orchestrator@nuc"
 watchers = [
     "external:orchestrator@nuc",
@@ -12,7 +12,7 @@ watchers = [
     "agent:wm5kf",
 ]
 branch = "bridle/wm5kf"
-commit = "9c635d3452868cdf0205a8bd190f40d13aeb8dbb"
+commit = "821717ea3cb2357e66717e74f29fcae9c2a03163"
 summary = 'docs/design/specs-to-tests.md gets a short section, "Unit tests a scenario covers", at the end: when an executable scenario covers behaviour a hand-written unit test also covers, the unit test is decided in the same change. Keep it only for an edge the scenario misses (a fast branch or error case, a pure function with many inputs); a unit test that only repeats the happy path is deleted in that change, and the commit says so. Coverage (bridle spec coverage) checks only that an id is mentioned, so it does not show whether a unit test is still needed. No stricter stance existed in the docs. CHANGELOG line added under Unreleased (Internal). Merged main (a56624b3, br-2d6x) cleanly; the doc edits did not conflict. The Status line at the top of the doc already contains U+00B7 middle dots from before this change; left alone (out of scope).'
 ticket = "m5kf"
 +++
@@ -46,3 +46,6 @@ built: 9c635d3452868cdf0205a8bd190f40d13aeb8dbb (branch bridle/wm5kf)
 
 ### note · agent:wm5kf · 2026-10-18T12:41:55.307Z
 done: unit-test rule added to docs/design/specs-to-tests.md (new last section) with CHANGELOG (Internal) line; just check exit 0 on merged tip after merging main (a56624b3), 1870 run, 0 failed; 9c635d3452868cdf0205a8bd190f40d13aeb8dbb
+
+### note · agent:manager-2 · 2026-10-18T14:20:32.221Z
+integrated: 821717ea3cb2357e66717e74f29fcae9c2a03163 (branch bridle/wm5kf)
