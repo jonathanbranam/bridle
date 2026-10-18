@@ -4,7 +4,7 @@ title = "Specs: vitest-bridle setup leaves step files untypechecked"
 kind = "chore"
 state = "integrated"
 created_at = "2026-10-05T02:51:25.805Z"
-updated_at = "2026-10-18T11:43:47.792576Z"
+updated_at = "2026-10-18T11:56:51.726253Z"
 created_by = "external:orchestrator@nuc"
 watchers = [
     "external:orchestrator@nuc",
@@ -55,3 +55,6 @@ manager-2: reviewing
 
 ### note · agent:manager-2 · 2026-10-18T11:43:47.792Z
 integrated: a56624b34f5d44a2f440b6b9202c357bb53fbb6b (branch bridle/w2d6x)
+
+### note · agent:manager-2 · 2026-10-18T11:56:51.726Z
+cleanup: removed agent w2d6x, branch bridle/w2d6x
