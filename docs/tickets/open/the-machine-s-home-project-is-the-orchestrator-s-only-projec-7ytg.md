@@ -47,6 +47,28 @@ orchestrator lives, until the machine daemon (br-kuw2) replaces it, if ever.
 - **E. One check.** `bridle doctor` (or `status`) reports the machine's home, the override if any,
   any non-home project with `[orchestrator]`, and where the orchestrator's waiter actually is.
 
-## Open for the human
+## Decided
 
-Accept/drop A to E; for B, pick (a) or (b). Then this can be planned.
+The human, 2026-10-18 ~8:30 AM ET (to the aide), verbatim: "Yes all five and (a) for B. Approved.
+Be sure the work is sequenced so no machines lose their orch - if I have to stop or restart
+something make sure it happens".
+
+So: items 1-4 plus A-E, and B is (a): a message to `external:orchestrator` on a non-home project is
+refused with an error giving the exact `--project <host>-home` command (cross-machine mail still
+routes to the target machine's home).
+
+## Rollout (a requirement, not a nicety)
+
+No machine (dalek, vesta, remus, and any other in `[projects]`) may be left without a running,
+reachable orchestrator at any step. The plan must:
+
+- Order the slices so the refusals (3, 4, A, C, D) land only after every machine's orchestrator
+  already runs in, waits on and is configured in its home, and every sender (roles, primers,
+  skills, scripts) uses the home address. Check each machine first (`bridle status --project
+  <host>-home`, the pane's `bridle session orchestrator --project ...`, which configs have
+  `[orchestrator]`); dalek's needs br-e7s5 (restart dalek-home for br-uysm) and a relaunch first.
+- Name every stop, restart, `/exit` or config edit the human must do, per machine, in order, and
+  file each as a human to-do (`--for-human`) at the point it is needed, with the exact commands,
+  so it happens; the aide tracks them and checks each machine's orchestrator after each step.
+- Say what happens to each machine's orchestrator when its daemons self-upgrade onto the
+  refusing build, and make that safe (e.g. warn-only first, refuse in a later slice).
