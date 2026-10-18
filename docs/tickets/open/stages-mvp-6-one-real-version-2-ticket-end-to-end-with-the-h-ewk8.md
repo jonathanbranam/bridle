@@ -51,3 +51,7 @@ Making version 2 the default (step 7).
 Which ticket: the human's choice when steps 1-5 land.
 
 ---
+
+## The try (2026-10-18)
+
+The ticket is br-2ae8 (replaces br-4ge4). The human, to advisor tj7q: "I want review each step of the test ticket. Otherwise keep all the other tickets moving. fix things the right way. That's the point of the manual walkthrough". So every stage of 2ae8 needs the human's signature (commit c3bd2bfc). What broke so far, each filed as a version 1 ticket and fixed properly, not worked around: br-upxq (a stage must be on main before review; the human's design), br-fyww (landing a stage branch marked 2ae8 integrated; the human's design), br-65qh (a worker lost its claim; cause br-4n3v, which the daemon only ran from 20:54Z).
