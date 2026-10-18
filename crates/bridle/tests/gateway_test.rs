@@ -204,19 +204,27 @@ fn a_replaced_binary_is_re_executed() {
     .unwrap();
     let exe = bin_dir.path().join("bridle");
     std::fs::copy(env!("CARGO_BIN_EXE_bridle"), &exe).unwrap();
+    let stderr_path = home.path().join("gateway.stderr");
     let mut child = Command::new(&exe)
         .env("BRIDLE_HOME", home.path())
         .env("BRIDLE_GATEWAY_BINARY_CHECK_SECS", "1")
         .env_remove("INVOCATION_ID")
         .env_remove("XPC_SERVICE_NAME")
         .arg("gateway")
-        .stderr(std::process::Stdio::null())
+        .stderr(std::fs::File::create(&stderr_path).unwrap())
         .spawn()
         .unwrap();
     // Wait until it listens: the change check starts from the binary as it was by then.
     for _ in 0..300 {
         if std::net::TcpStream::connect(("127.0.0.1", port)).is_ok() {
             break;
+        }
+        // An early exit (a bind error, say) must show its stderr, not a later wrong-status panic.
+        if let Some(status) = child.try_wait().unwrap() {
+            panic!(
+                "the gateway exited before listening: {status}\n{}",
+                std::fs::read_to_string(&stderr_path).unwrap_or_default()
+            );
         }
         std::thread::sleep(std::time::Duration::from_millis(100));
     }
@@ -237,7 +245,8 @@ fn a_replaced_binary_is_re_executed() {
     let status = child.wait().unwrap();
     assert!(
         status.success(),
-        "the fake ran in place of the gateway: {status}"
+        "the fake ran in place of the gateway: {status}\n{}",
+        std::fs::read_to_string(&stderr_path).unwrap_or_default()
     );
     assert_eq!(std::fs::read_to_string(&marker).unwrap().trim(), "gateway");
 }
