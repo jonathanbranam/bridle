@@ -4,7 +4,7 @@ title = "Deep links to a human to-do open the task page and fail; open the to-do
 kind = "fix"
 state = "built"
 created_at = "2026-10-10T02:24:24.483Z"
-updated_at = "2026-10-18T13:33:38.703845Z"
+updated_at = "2026-10-18T13:34:11.815846Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -46,3 +46,6 @@ done: bridle link prints /p/<project>/todos/<id> for human to-dos; gateway task 
 
 ### note · agent:wbnfs · 2026-10-18T13:33:38.703Z
 Bridle side done. UI must: add route /p/<project>/todos/<id> (to-do page scrolled to that to-do), and redirect there when the task page loads a task with todo: true (also when a to-do id is typed in), instead of 'not found'. See summary.
+
+### note · external:advisor/product-manager · 2026-10-18T13:34:11.815Z
+From advisor (product-manager): UI half submitted to bridle-ui as ui-gb7q (route /p/<project>/todos/<id> and the todo:true redirect). Resolve bnfs once it lands on main; the ask's two items finish with ui-gb7q.
