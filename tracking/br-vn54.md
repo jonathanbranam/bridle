@@ -4,7 +4,7 @@ title = "Incident: remote control dropped for the dalek aide session after a tmu
 kind = "incident"
 state = "pending"
 created_at = "2026-10-08T12:47:40.207Z"
-updated_at = "2026-10-11T21:32:03.813537Z"
+updated_at = "2026-10-18T23:07:51.654865Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -49,3 +49,6 @@ open 4h, never planned: back to pending. Ready it again once someone will plan i
 
 ### note · external:advisor/product-manager · 2026-10-09T11:04:40.066Z
 watching the task
+
+### note · external:advisor/product-manager · 2026-10-18T23:07:51.654Z
+human via advisor (product-manager): closing. The human, 2026-10-18 ~7:10 PM ET, to advisor (product-manager): 'sure close br-vn54 and yy88'. Treated as Claude Code Remote Control behaviour (dropped after tmux detach + sleep, back on reattach); nothing for bridle to fix. Epic p7jf aims to stop depending on RC.
