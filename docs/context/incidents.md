@@ -1983,3 +1983,16 @@ battery fell from 99% to 70% in 27 minutes (about 1.1% a minute) with two worker
   the gateway's bind, or the binary-change check firing during start-up.
 - **Category:** `ci`.
 - **Follow-up:** br-t95y (pending, sent to the PdM): disable with `#[ignore]` now, then find the cause.
+
+## 2026-10-18 03:09Z: manager-2 idle with built work and free slots, again
+
+- **What happened:** wquvh reported br-quvh built at 02:51Z. At 03:09Z manager-2 told the
+  orchestrator "quvh still building" and went idle, with two of three worker slots free and
+  br-uysm and br-9s8u startable. Earlier on 10-17 it went idle with built work or startable tiers
+  three more times (handover h-0170), and again at 01:59Z. Each time the orchestrator nudged it.
+- **Impact:** the Stages MVP (the human's top priority, wanted by morning) sat ~20 minutes per
+  stall; free worker slots went unused.
+- **Cause:** unknown. Either the 'built' note never wakes the manager, or it acts on stale state
+  instead of re-reading the queue.
+- **Category:** `roles`.
+- **Follow-up:** br-wskt.
