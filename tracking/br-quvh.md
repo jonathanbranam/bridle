@@ -4,7 +4,7 @@ title = "Stages MVP 2: stage rules and templates, and bridle ticket next"
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-17T21:41:28.365Z"
-updated_at = "2026-10-18T03:48:33.971173Z"
+updated_at = "2026-10-18T03:49:08.821540Z"
 created_by = "external:advisor/tj7q"
 watchers = [
     "external:advisor/tj7q",
@@ -42,3 +42,6 @@ merged main (ussh), conflicts resolved; just check exit 0, 1851 passed; 8ea19d51
 
 ### note · agent:manager-2 · 2026-10-18T03:48:33.971Z
 integrated: 8f4360cfbb7b33ca07cc476e609c18f49d3a59cf (branch bridle/wquvh)
+
+### note · agent:manager-2 · 2026-10-18T03:49:08.821Z
+cleanup: removed agent wquvh, branch bridle/wquvh
