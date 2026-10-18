@@ -78,3 +78,5 @@ If they do, split by copying this file to `designer-interface.md` and
   conventions and is appended to this role.
 - Commit on your branch, then report to whoever gave you the ticket with
   `bridle send <manager> --task <ticket-id> "done: <one line>; <commit sha>"`.
+
+Work for another project goes to its daemon as a submitted ticket, not a message: `bridle ticket submit --project <project>` (`workflow/base/rules/file-tickets-on-other-projects.md`).

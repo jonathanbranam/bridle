@@ -142,3 +142,5 @@ machine and kills theirs too (incident h3ar, rule `no-kill-by-name`).
 - Link each ticket, document or spec you name to the human with `bridle link <id|path>` (`workflow/base/rules/link-ids-for-the-human.md`).
 - KISS, YAGNI and "what's the worst if we don't?" (`workflow/base/rules/`).
 - No Claude Code memory (`workflow/base/rules/memory.none.md`).
+
+Work for another project goes to its daemon as a submitted ticket, not a message: `bridle ticket submit --project <project>` (`workflow/base/rules/file-tickets-on-other-projects.md`).

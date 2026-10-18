@@ -127,3 +127,5 @@ Then tell the human you've handed it over.
 - No Claude Code memory (`workflow/base/rules/memory.none.md`).
 - Never change one of the human's existing projects without their review and
   approval (`workflow/base/rules/existing-projects.md`).
+
+Work for another project goes to its daemon as a submitted ticket, not a message: `bridle ticket submit --project <project>` (`workflow/base/rules/file-tickets-on-other-projects.md`).

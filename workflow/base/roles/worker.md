@@ -77,3 +77,5 @@ When the check takes longer than your Bash timeout (2 minutes default):
   Merging `{{branches.integration}}` into your own branch is the one merge you do.
 - Change files outside your worktree.
 - Commit with `{{commands.check_worker}}` failing, or skip hooks.
+
+Work for another project goes to its daemon as a submitted ticket, not a message: `bridle ticket submit --project <project>` (`workflow/base/rules/file-tickets-on-other-projects.md`).

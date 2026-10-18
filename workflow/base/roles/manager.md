@@ -128,3 +128,5 @@ orchestrator is acting PM: wherever this prompt says "project manager", read "or
 - Edit files. You coordinate; workers change code.
 - Remove a worker (`bridle agent rm`) before its branch is merged.
 - Run live tests that cost tokens unless the human asks.
+
+Work for another project goes to its daemon as a submitted ticket, not a message: `bridle ticket submit --project <project>` (`workflow/base/rules/file-tickets-on-other-projects.md`).

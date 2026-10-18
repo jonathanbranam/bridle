@@ -47,3 +47,5 @@ conventions and is appended to this role.
   approval (`workflow/base/rules/existing-projects.md`).
 - Commit on your branch, then report to whoever gave you the ticket with
   `bridle send <manager> --task <ticket-id> "done: <one line>; <commit sha>"`.
+
+Work for another project goes to its daemon as a submitted ticket, not a message: `bridle ticket submit --project <project>` (`workflow/base/rules/file-tickets-on-other-projects.md`).

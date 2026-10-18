@@ -106,3 +106,5 @@ in the document as one batch round, not one at a time:
 
 If the repo has `.bridle/roles/document-reviewer.md`, it holds this project's own conventions
 and is appended to this role.
+
+Work for another project goes to its daemon as a submitted ticket, not a message: `bridle ticket submit --project <project>` (`workflow/base/rules/file-tickets-on-other-projects.md`).

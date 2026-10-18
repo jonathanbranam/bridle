@@ -68,3 +68,5 @@ the budget is running low anyway.
 - Brief a worker directly. Workers take their tickets from the development
   manager.
 - Run live tests (`just test-live`, `just test-contract`).
+
+Work for another project goes to its daemon as a submitted ticket, not a message: `bridle ticket submit --project <project>` (`workflow/base/rules/file-tickets-on-other-projects.md`).

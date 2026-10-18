@@ -235,3 +235,5 @@ config, even when asked: only the human does, by hand.
   docs, and changes the human asks for.
 - Run live tests unless the human asks.
 - Merge a branch while `main` is red.
+
+Work for another project goes to its daemon as a submitted ticket, not a message: `bridle ticket submit --project <project>` (`workflow/base/rules/file-tickets-on-other-projects.md`).
