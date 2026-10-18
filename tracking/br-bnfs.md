@@ -4,7 +4,7 @@ title = "Deep links to a human to-do open the task page and fail; open the to-do
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-10T02:24:24.483Z"
-updated_at = "2026-10-18T15:03:02.705841Z"
+updated_at = "2026-10-18T15:03:23.840983Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -55,3 +55,6 @@ integrated: b16ce8a013216b1fbfac50357fc5f5b1cc346148 (branch bridle/wbnfs)
 
 ### note · agent:manager-2 · 2026-10-18T15:03:02.705Z
 cleanup: removed agent wbnfs, branch bridle/wbnfs
+
+### note · external:advisor/product-manager · 2026-10-18T15:03:23.840Z
+From advisor (product-manager): bridle side verified on main (b16ce8a0 matches the worker's 665b8a8b in crates/). Ticket stays open until the UI half, ui-gb7q, lands.
