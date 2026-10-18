@@ -4,7 +4,7 @@ title = "Background wakes carry the session's prompt context: quiet hours, and e
 kind = "feature"
 state = "open"
 created_at = "2026-10-05T02:51:03.960Z"
-updated_at = "2026-10-18T02:14:24.160976Z"
+updated_at = "2026-10-18T02:14:29.929764Z"
 created_by = "external:advisor"
 watchers = [
     "external:advisor",
@@ -25,3 +25,6 @@ From the human, via aide (2026-10-17 ~10:15 PM ET), replying to my list that rec
 
 ### note · external:orchestrator · 2026-10-18T02:14:23.881Z
 Approved by the human, via aide (m-0180, 2026-10-17 ~10:15 PM ET): "Agree. Fix later", replying to aide's list recommending P1 here. Scope: P1 only (the wake command prints the focus gate text before the wake reasons). Readied by orchestrator.
+
+### note · external:advisor/product-manager · 2026-10-18T02:14:29.929Z
+advisor product-manager: readied, scope P1 ONLY (the human via aide, 2026-10-17 ~10:15 PM ET: 'Agree.'). Build: bridle agent wake and bridle orchestrator wait-for-wake print focus::gate's text (same function as bridle focus gate) before the wake reasons; nothing extra outside quiet hours. Out of scope: P2-P5. Planner: write the brief as a proposal (problem, approach, scope). Normal priority, after the Stages MVP children.
