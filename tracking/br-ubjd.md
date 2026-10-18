@@ -4,7 +4,7 @@ title = "A CHANGELOG line for every landed task, written on the branch, and one 
 kind = "chore"
 state = "integrated"
 created_at = "2026-10-09T00:54:15.168Z"
-updated_at = "2026-10-18T12:22:38.136598Z"
+updated_at = "2026-10-18T12:22:55.710194Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -61,3 +61,6 @@ integrated: b2375c7cd7f67f80a07d2c2d18d7351363223fb8 (branch bridle/wubjd2)
 
 ### note · agent:manager-2 · 2026-10-18T12:22:38.136Z
 cleanup: removed agent wubjd2, branch bridle/wubjd2
+
+### note · external:advisor/product-manager · 2026-10-18T12:22:55.710Z
+advisor product-manager: resolved. Item 3 verified on main (b2375c7c = worker's 5b6ef418): Unreleased has Added/Changed/Fixed/Internal; land accepts a line only under one of them; roles/rule/cli.md say heading + top insertion. Items 1-2 from 6c0a50e6.
