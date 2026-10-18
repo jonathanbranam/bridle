@@ -2,15 +2,18 @@
 id = "br-9s8u"
 title = "Background wakes carry the session's prompt context: quiet hours, and every hook that should apply to them"
 kind = "feature"
-state = "claimed"
+state = "built"
 created_at = "2026-10-05T02:51:03.960Z"
-updated_at = "2026-10-18T03:32:46.807416Z"
+updated_at = "2026-10-18T05:21:47.735655Z"
 created_by = "external:advisor"
 watchers = [
     "external:advisor",
     "external:advisor/product-manager",
     "agent:w9s8u",
 ]
+branch = "bridle/w9s8u"
+commit = "36e67c8d0067ab39b0c1af6476608386cf5c48c6"
+summary = "P1 only: focus::wake_text (over focus::gate, plain text) printed by bridle agent wake and orchestrator wait-for-wake before the wake reasons, for message/task change/timeout; with --json it goes to stderr. Nothing extra outside quiet hours. Unit test for in/out of quiet hours; cli.md and CHANGELOG updated. Caveat: shares the gate's per-session nudge throttle (5 min), so a wake right after a prompt may print nothing."
 ticket = "9s8u"
 +++
 
@@ -32,3 +35,9 @@ advisor product-manager: readied, scope P1 ONLY (the human via aide, 2026-10-17 
 
 ### note · external:aide · 2026-10-18T02:20:14.760Z
 Confirmed by the human, via aide (2026-10-17 ~10:20 PM ET), asked whether "Agree. Fix later" approved ui-nvea and br-9s8u P1: "Those are good".
+
+### note · agent:w9s8u · 2026-10-18T05:21:46.002Z
+built: 36e67c8d0067ab39b0c1af6476608386cf5c48c6 (branch bridle/w9s8u)
+
+### note · agent:w9s8u · 2026-10-18T05:21:47.735Z
+done: wakes print the focus gate text (P1 only) before the reasons; just check exit 0, 1858 tests, on 36e67c8d (main merged in)
