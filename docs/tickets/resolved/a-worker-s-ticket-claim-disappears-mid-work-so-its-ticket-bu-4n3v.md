@@ -9,6 +9,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-2fqg]
+resolved: 2026-10-18T12:23:56Z
 ---
 
 ## What happened
