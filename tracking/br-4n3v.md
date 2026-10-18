@@ -2,11 +2,14 @@
 id = "br-4n3v"
 title = "A worker's ticket claim disappears mid-work, so its 'ticket built' is refused (2fqg's cause, still happening)"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-18T10:18:25.985Z"
-updated_at = "2026-10-18T10:32:05.034235Z"
+updated_at = "2026-10-18T10:32:59.318655Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "agent:w4n3v",
+]
 priority = "high"
 priority_at = "2026-10-18T10:19:09.007276Z"
 ticket = "4n3v"
