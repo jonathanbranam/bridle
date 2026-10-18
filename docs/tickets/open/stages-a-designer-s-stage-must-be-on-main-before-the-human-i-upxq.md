@@ -18,6 +18,8 @@ Found in the human's first version 2 try (br-ewk8, ticket br-2ae8). The human, 2
 
 > OK this is a failure. that is not how this can work. I'm not checking a branch to review a proposal. It has to be on main for me to review it.
 
+And: "this needs to be filed and fixed with a real solution somehow." So the fix is in the stage flow itself, not a manager remembering to land designer branches.
+
 ## What happened
 
 - The daemon spawned `designer-2ae8-proposal` (stage watch, br-ewhy). It wrote the proposal, ran `ticket stage-done br-2ae8 proposal`, committed 9ee0bc1f on `bridle/designer-2ae8-proposal`, messaged manager-2 and ended.
