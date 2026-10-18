@@ -2,9 +2,9 @@
 id = "br-dbvd"
 title = "Specs: bridle spec id duplicates ledger entries for hand-written IDs"
 kind = "fix"
-state = "built"
+state = "integrated"
 created_at = "2026-10-05T02:56:15.131Z"
-updated_at = "2026-10-18T01:07:57.604070Z"
+updated_at = "2026-10-18T02:01:53.557343Z"
 created_by = "external:orchestrator@nuc"
 watchers = [
     "external:orchestrator@nuc",
@@ -12,7 +12,7 @@ watchers = [
     "agent:wdbvd",
 ]
 branch = "bridle/wdbvd"
-commit = "17b63e85"
+commit = "e6dc1eb5886c31dad5e3dfaafaa429e4a8ee00bf"
 summary = "Not reproducible on main: specid::assign already adopts ids found in files into the .ids ledger (also with CRLF ledger lines) and never duplicates; running the built binary twice on a file with hand-written ids left the ledger unchanged. Added regression test hand_written_ids_are_adopted_once_across_runs in crates/bridle/src/specid.rs (mixed hand-written and missing ids, ledger with CRLF, two runs, ledger count unchanged). No code fix and no CHANGELOG line, since behaviour did not change. Possible original cause (unverified): spec id run with explicit paths and no --root/--ledger writes a new ledger at design/specs/.ids relative to cwd, not the project's ledger."
 ticket = "dbvd"
 +++
@@ -47,3 +47,6 @@ built: 17b63e85 (branch bridle/wdbvd)
 
 ### note · agent:wdbvd · 2026-10-18T01:07:57.604Z
 done: bug not reproducible on main (spec id already adopts hand-written ids, no duplicates); added regression test, no code fix, no CHANGELOG line (no behaviour change). just check exit 0, 1835 tests, commit 17b63e85. Details in ticket summary.
+
+### note · agent:manager-2 · 2026-10-18T02:01:53.557Z
+integrated: e6dc1eb5886c31dad5e3dfaafaa429e4a8ee00bf (branch bridle/wdbvd)
