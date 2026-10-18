@@ -313,6 +313,12 @@ closed the listener and stopped the agents, so `run` starts the daemon again in 
 and starts with no drain, so the messages held meanwhile (kept in the store) are delivered. The error is
 logged, recorded as a `restart.failed` event and woken to the orchestrator (`restart_failed`).
 
+A **postponed** drain (`bridle daemon restart --postpone`) holds no message delivery: a manager
+postpones to finish a land and must still hear `built` notes and nudges (br-wskt). While the
+postponement lasts (`holds_turns()`), messages go to idle agents as usual, and those held before
+the postpone are delivered when it is set. Spawns and claims stay refused; the drain's quiet point
+still waits for any turn that starts meanwhile.
+
 A spawn already in flight when the drain begins has its first prompt held like any message, so no
 turn starts; the spawn then returns at once rather than waiting out its 8 s readiness wait, and the
 prompt is delivered after the restart's resume. If the restart fails before the exec, the drain is

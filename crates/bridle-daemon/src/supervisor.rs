@@ -967,8 +967,19 @@ impl AgentManager {
         self.0.draining.load(std::sync::atomic::Ordering::SeqCst)
     }
 
-    pub fn postpone_until(&self, at: chrono::DateTime<chrono::Utc>) {
+    /// A drain holds new turns and message delivery, except while it is postponed: a manager
+    /// postpones a restart to finish a land and must still hear `built` notes (br-wskt). The
+    /// drain's quiet point still waits for any turn that starts meanwhile.
+    pub fn holds_turns(&self) -> bool {
+        self.draining() && self.postponed_until().is_none()
+    }
+
+    /// Postpones drains; messages a drain already held go out now.
+    pub async fn postpone_until(&self, at: chrono::DateTime<chrono::Utc>) {
         *self.0.postponed_until.lock().expect("postponed_until lock") = Some(at);
+        for id in self.running_ids() {
+            self.deliver_oldest_held(&id).await;
+        }
     }
 
     /// The postponement, if it hasn't expired.
@@ -2270,7 +2281,7 @@ impl AgentManager {
                 }
                 // A drain holds every new turn, and a `now` message folding into a running
                 // turn too: it is delivered after the restart's resume, in order.
-                if self.draining() {
+                if self.holds_turns() {
                     write_now = false;
                 }
                 if write_now {
@@ -2561,7 +2572,7 @@ impl AgentManager {
     /// it recovers to `normal` (so an agent that's already idle at that
     /// point isn't left holding forever with no turn ending to trigger it).
     pub async fn deliver_oldest_held(&self, id: &str) {
-        if self.draining() {
+        if self.holds_turns() {
             return;
         }
         let Some(rt) = self.get_runtime(id) else {

@@ -5094,7 +5094,7 @@ async fn restart_hold(
         }
         (false, Some(secs)) => {
             let until = Utc::now() + chrono::Duration::seconds(secs.min(7 * 86_400) as i64);
-            state.manager.postpone_until(until);
+            state.manager.postpone_until(until).await;
             format!(
                 "restarts and self-upgrades postponed until {}",
                 until.format("%Y-%m-%d %H:%M UTC")

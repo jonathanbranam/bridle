@@ -7,7 +7,10 @@ mod support;
 use std::sync::Arc;
 use std::time::Duration;
 
-use bridle_api::types::{AgentState, RestartHoldRequest, RestartRequest, SpawnRequest, Workdir};
+use bridle_api::types::{
+    AgentState, MessageKind, MessageState, RestartHoldRequest, RestartRequest, SendRequest,
+    SpawnRequest, When, Workdir,
+};
 use bridle_daemon::UpgradeHooks;
 use bridle_daemon::ci::{Gh, Run};
 
@@ -155,6 +158,53 @@ async fn a_postponement_delays_a_pending_drain_past_its_quiet_point() {
     assert!(!daemon.running.restart_requested(), "quiet but postponed");
     asked.await.expect("task").expect("restart after expiry");
     assert!(daemon.running.restart_requested());
+    daemon.running.join().await.expect("join");
+}
+
+#[tokio::test]
+async fn a_postponed_drain_still_delivers_messages_to_an_idle_agent() {
+    let (daemon, _tmp) = support::start_daemon(None).await;
+    let busy = daemon
+        .client
+        .spawn(&worker("SLEEP 4"))
+        .await
+        .expect("spawn");
+    support::wait_for_state(&daemon.client, &busy.id, AgentState::Working).await;
+    let mut idle_req = worker("");
+    idle_req.name = Some("idle".to_string());
+    let idle = daemon.client.spawn(&idle_req).await.expect("spawn");
+    support::wait_for_state(&daemon.client, &idle.id, AgentState::Idle).await;
+    let orch = daemon.external_client("orchestrator").await;
+    let o2 = orch.clone();
+    let asked = tokio::spawn(async move { o2.restart(&RestartRequest::default()).await });
+    support::wait_for("the drain", || async {
+        daemon.client.status().await.ok()?.draining.then_some(())
+    })
+    .await;
+    orch.restart_hold(&postpone(30)).await.expect("postponed");
+    let sent = daemon
+        .client
+        .send_to_agent(
+            &idle.id,
+            &SendRequest {
+                to: None,
+                body: "built".to_string(),
+                kind: MessageKind::Note,
+                when: When::Idle,
+                reply_to: None,
+                task: None,
+            },
+        )
+        .await
+        .expect("send");
+    assert_ne!(
+        sent.state,
+        MessageState::Held,
+        "a postponed drain holds nothing"
+    );
+    orch.restart_hold(&cancel()).await.expect("cancel");
+    let _ = asked.await;
+    daemon.running.shutdown();
     daemon.running.join().await.expect("join");
 }
 

@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Fix (br-wskt): a drain whose restart is postponed (`bridle daemon restart --postpone`) no longer holds messages to agents, so a manager that postponed to finish a land still hears `built` notes; messages held before the postpone are delivered when it is set.
 - Fix (br-r965): `ticket new --version 2 --claim` writes `claimed_by: <filer>` in the ticket's frontmatter instead of claiming the row (a `pending` row cannot be claimed); `stage-done` ends it.
 - Stages MVP 5 (br-6c8x): a worker on a version 2 ticket is told (rule `stage-apply`, after OpenSpec's apply skill) to read the proposal, design, specs and tasks, merge specs.md into `design/specs/` first, and tick `tasks.md` as it goes; landing refuses a version 2 ticket whose `tasks.md` has unticked items. Version 1 is unchanged.
 - Fix (br-9s8u, P1): `bridle agent wake` and `bridle orchestrator wait-for-wake` print the focus gate text (the same `focus::gate` as `bridle focus gate`) before the wake reasons, so quiet hours reach turns that start from a background wake. Nothing extra outside quiet hours; with `--json` the text goes to stderr.
