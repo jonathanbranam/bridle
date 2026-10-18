@@ -4,7 +4,7 @@ title = "Stages MVP 3: stage-done, approve (signed and traced), changes, restage
 kind = "feature"
 state = "built"
 created_at = "2026-10-17T21:41:28.904Z"
-updated_at = "2026-10-18T02:29:59.731650Z"
+updated_at = "2026-10-18T02:30:04.326867Z"
 created_by = "external:advisor/tj7q"
 watchers = [
     "external:advisor/tj7q",
@@ -30,3 +30,6 @@ priority: normal -> high
 
 ### note · agent:wussh · 2026-10-18T02:29:59.731Z
 built: dd5a6f8f (branch bridle/wussh)
+
+### note · agent:wussh · 2026-10-18T02:30:04.326Z
+done: stage-done/approve/changes/restage + ready-means-prepared (daemon opens prepared v2 tickets as bridle); just check exit 0, 1847 tests passed; dd5a6f8f. Caveats in the summary: 'claimed by human' is a claimed_by frontmatter line (row claims need planned, ticket is pending; step 1's ticket new --claim likely conflicts for the same reason); stages::states signature is now (stages, &Marks) for quvh.
