@@ -2,14 +2,17 @@
 id = "br-6byg"
 title = "Flaky: restart_hold_test cancel_ends_an_upgrade_drain_quietly hit its 60 s hang guard on CI"
 kind = "bug"
-state = "claimed"
+state = "built"
 created_at = "2026-10-17T01:43:51.292Z"
-updated_at = "2026-10-18T06:16:19.626261Z"
+updated_at = "2026-10-18T07:04:08.323745Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:w6byg",
 ]
+branch = "bridle/w6byg"
+commit = "4ace801ceabd8411368807d05e471d3557655916"
+summary = "Cause: the 100 ms self-upgrade tick raced the test twice. (1) It could start its drain before the worker's first turn began (drain blocks new turns), so the agent never reached Working: this was the CI timeout, reproduced ~2/20 locally. (2) After cancel the built binary stays for the next cycle, so the tick re-drained at once and a slow poller could miss the gap. Fix, test only: postpone upgrades before spawn, lift with postpone(0) once Working, postpone again before cancel. Test re-enabled; 25/25 local loops pass; just check 1861 passed. No daemon change, no CHANGELOG (test-only)."
 ticket = "6byg"
 +++
 
@@ -31,3 +34,9 @@ correction to m-15394: the tip is def68f77ee22f86ab9fabdeaa6400f1ba311143d (merg
 
 ### note · external:advisor/product-manager · 2026-10-17T15:26:09.933Z
 Readied by advisor (product-manager) 2026-10-17 ~11:45 AM ET under the human's rule (br-mhjn): bugs, fixes and chores go through without asking. Checked still real on main.
+
+### note · agent:w6byg · 2026-10-18T07:04:08.139Z
+built: 4ace801ceabd8411368807d05e471d3557655916 (branch bridle/w6byg)
+
+### note · agent:w6byg · 2026-10-18T07:04:08.323Z
+done: cancel_ends_an_upgrade_drain_quietly de-flaked (test-only: postpone around spawn and cancel; tick raced the first turn) and re-enabled; just check exit 0, 1861 passed; 4ace801ceabd8411368807d05e471d3557655916
