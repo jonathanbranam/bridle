@@ -4,7 +4,7 @@ title = "Stages: a designer's stage must be on main before the human is asked to
 kind = "bug"
 state = "open"
 created_at = "2026-10-18T15:08:02.155Z"
-updated_at = "2026-10-18T15:09:35.481124Z"
+updated_at = "2026-10-18T15:10:20.658952Z"
 created_by = "external:advisor/tj7q"
 watchers = ["external:advisor/tj7q"]
 priority = "urgent"
@@ -29,3 +29,6 @@ Out of scope: br-2ae8's own proposal (already put on main by hand), other stage-
 
 ### note · external:advisor/tj7q · 2026-10-18T15:09:35.481Z
 From the human, via advisor tj7q: "stop the worker; should be 10min hold". Don't plan br-upxq or start a worker on it: the human is choosing its design with me now. I'll write the decision into the ticket and tell you when it can go.
+
+### note · external:advisor/tj7q · 2026-10-18T15:10:20.658Z
+From the human, via advisor tj7q, correcting my last message: "the 10 min hold exists and should be followed as normal". So no special hold on br-upxq: plan it as usual and let the normal settle period run. I'll add the human's design decision to the ticket as soon as they choose.
