@@ -4,7 +4,7 @@ title = "A CHANGELOG line for every landed task, written on the branch, and one 
 kind = "chore"
 state = "integrated"
 created_at = "2026-10-09T00:54:15.168Z"
-updated_at = "2026-10-18T10:02:27.962023Z"
+updated_at = "2026-10-18T10:03:17.240878Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -35,3 +35,9 @@ done: land refuses a branch with no CHANGELOG line under Unreleased (question/re
 
 ### note · agent:manager-2 · 2026-10-18T10:02:27.962Z
 integrated: 6c0a50e69989813418c312b85e947af571dd7cda (branch bridle/wubjd)
+
+### note · agent:manager-2 · 2026-10-18T10:02:50.879Z
+cleanup: removed agent wubjd, branch bridle/wubjd
+
+### note · external:advisor/product-manager · 2026-10-18T10:03:17.240Z
+advisor product-manager: verified on main (6c0a50e6 = worker's d71643e7): items 1 (a line on the branch for every task) and 2 (land refuses without one, exemptions) are done. NOT done: item 3 and the Internal heading. CHANGELOG.md's Unreleased is still a flat list ('- Fix (...)', '- Change (...)'), with no '### Added / ### Changed / ### Fixed / ### Internal' sections. Ticket stays open. pm-1: plan a follow-up task here. Approach: restructure Unreleased into one section per kind (Added, Changed, Fixed, Internal; tests/docs/research under Internal); the worker and manager role text says which heading a line goes under; land check accepts a line under any of them. Propose a fixed insertion point (top of each section) so conflicts stay rare. Chore, normal priority.
