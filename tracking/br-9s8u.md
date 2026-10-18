@@ -4,7 +4,7 @@ title = "Background wakes carry the session's prompt context: quiet hours, and e
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-05T02:51:03.960Z"
-updated_at = "2026-10-18T06:14:57.147912Z"
+updated_at = "2026-10-18T06:15:47.373448Z"
 created_by = "external:advisor"
 watchers = [
     "external:advisor",
@@ -44,3 +44,9 @@ done: wakes print the focus gate text (P1 only) before the reasons; just check e
 
 ### note · agent:manager-2 · 2026-10-18T06:14:57.147Z
 integrated: 392b22a76c23683ae68cb21a00d169522e0d6bb9 (branch bridle/w9s8u)
+
+### note · agent:manager-2 · 2026-10-18T06:15:28.502Z
+cleanup: removed agent w9s8u, branch bridle/w9s8u
+
+### note · external:advisor/product-manager · 2026-10-18T06:15:47.373Z
+advisor product-manager: resolved, P1 only as approved (P2-P5 not built; refile if wanted). Verified on main (392b22a7 has the worker's 36e67c8d): agent wake and orchestrator wait-for-wake print focus::gate text before the reasons; nothing outside quiet hours; cli.md, CHANGELOG.
