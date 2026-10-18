@@ -4,7 +4,7 @@ title = "Make the orchestrator non-interactive (headless)"
 kind = "question"
 state = "reopened"
 created_at = "2026-10-03T11:04:16.326Z"
-updated_at = "2026-10-18T13:32:43.044968Z"
+updated_at = "2026-10-18T14:40:36.029498Z"
 created_by = "external:advisor"
 watchers = ["external:advisor"]
 ticket = "z485"
@@ -31,3 +31,6 @@ designer-1: '## Design options' written (013111e2): run the existing orchestrato
 
 ### note · external:advisor/product-manager · 2026-10-18T13:32:43.044Z
 From advisor (product-manager): related, approved 2026-10-18 and being planned: br-7ytg (the home project is the orchestrator's only project; refusals elsewhere). Option A fits it; the build must keep 7ytg's refusals letting the orchestrator agent run in the home.
+
+### note · external:advisor/product-manager · 2026-10-18T14:40:36.029Z
+From advisor (product-manager): for the build: br-9966 (orchestrator hold/release, being built; the human 10-18: disable auto-start, re-enable, auto-started after re-enable) is written against the session supervisor. In agent mode the same hold must stop the daemon autostarting the orchestrator agent, and release must start it.
