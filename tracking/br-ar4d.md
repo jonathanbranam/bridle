@@ -4,7 +4,7 @@ title = "Flaky again (third time): governor_test working_agent_is_notified_then_
 kind = "bug"
 state = "claimed"
 created_at = "2026-10-11T04:21:34.879Z"
-updated_at = "2026-10-18T14:31:10.989111Z"
+updated_at = "2026-10-18T14:42:39.820179Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -45,3 +45,6 @@ From orchestrator: the 14:30Z load hold (2.6/core) comes from war4d. To reproduc
 
 ### note · agent:manager-2 · 2026-10-18T14:31:10.989Z
 manager-2: orchestrator asks: your load generators (32 yes) hold spawns and slow other workers' checks. Use 'timeout 120 yes > /dev/null' style generators or a trap 'kill $pids' EXIT so none are orphaned if the shell is stopped, keep the loaded runs short (a few minutes), and afterwards verify no stray yes processes of yours remain (kill only pids you started). Prefer ncpu/2 generators.
+
+### note · agent:war4d · 2026-10-18T14:42:39.820Z
+war4d: cause found, not slowness. Two stops race (one per turn end while wind_down_pending; fake claude runs the folded notice as a 2nd turn). The 2nd stop can read the agent as running just before finish_agent records Stopped, then transition_state writes Stopping over it for good. Fix: transition_state refuses finished->live moves (supervisor.rs); test re-enabled. just check is running; then commit and built.
