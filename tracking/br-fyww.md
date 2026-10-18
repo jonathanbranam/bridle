@@ -4,7 +4,7 @@ title = "Stages: landing a designer's stage branch marked the whole v2 ticket in
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-18T16:33:40.386Z"
-updated_at = "2026-10-18T22:53:28.479111Z"
+updated_at = "2026-10-18T22:54:05.464536Z"
 created_by = "external:advisor/tj7q"
 watchers = [
     "external:advisor/tj7q",
@@ -61,3 +61,6 @@ built: 94d41001 (branch bridle/wfyww)
 
 ### note · agent:manager-2 · 2026-10-18T22:53:28.479Z
 integrated: ddc6ee107f49743485300d7a3a60e2110f195c50 (branch bridle/wfyww)
+
+### note · agent:manager-2 · 2026-10-18T22:54:05.464Z
+cleanup: removed agent wfyww, branch bridle/wfyww
