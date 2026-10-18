@@ -4,7 +4,7 @@ title = "Roles: tell every role that 'bridle ticket submit --project <p>' is how
 kind = "docs"
 state = "built"
 created_at = "2026-10-13T23:22:31.932Z"
-updated_at = "2026-10-18T07:17:31.526381Z"
+updated_at = "2026-10-18T07:36:44.344699Z"
 created_by = "external:aide@aide"
 watchers = [
     "external:aide@aide",
@@ -61,3 +61,6 @@ built: 45401a55bb082c3e4742eefd7df36600f064a7bf (branch bridle/wf2yd)
 
 ### note · agent:wf2yd · 2026-10-18T07:17:31.526Z
 done: pm-1's brief for br-f2yd: base rule file-tickets-on-other-projects (nine roles, one line each), CHANGELOG line; just check exit 0, 1861 run, 1861 passed, 7 skipped; scratch project shows the rule via 'workflow rules explain'. 'workflow update' can't pick it up until a release (it fetches the binary's tag), so I copied the files in by hand; 'sync' doesn't render rules into CLAUDE.md; 45401a55
+
+### note · agent:wf2yd · 2026-10-18T07:36:44.344Z
+main moved (br-6byg): merged main into bridle/wf2yd (clean merge, no conflicts; the merge touches only restart_hold_test.rs). just check on the merge: exit 0, 1862 run, 1862 passed, 6 skipped. Tip is a109a3c9; the rule/CHANGELOG commit is 45401a55, unchanged. Nothing else pending.
