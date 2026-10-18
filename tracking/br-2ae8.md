@@ -2,11 +2,13 @@
 id = "br-2ae8"
 title = "Show the current budget and focus settings from the CLI, consistently"
 kind = "feature"
-state = "pending"
+state = "integrated"
 created_at = "2026-10-18T15:00:58.246Z"
-updated_at = "2026-10-18T15:01:37.636385Z"
+updated_at = "2026-10-18T15:54:52.720961Z"
 created_by = "external:advisor/tj7q"
 watchers = ["external:advisor/tj7q"]
+branch = "bridle/designer-2ae8-proposal"
+commit = "f9b74cf1631a99d337956ddc2710342614d75a25"
 ticket = "2ae8"
 +++
 
@@ -16,3 +18,9 @@ docs/tickets/open/show-the-current-budget-and-focus-settings-from-the-cli-cons-2
 
 ### note · agent:designer-2ae8-proposal · 2026-10-18T15:01:37.636Z
 stage proposal written, waiting for the human's signature
+
+### note · agent:manager-2 · 2026-10-18T15:54:50.116Z
+integrated: f9b74cf1631a99d337956ddc2710342614d75a25 (branch bridle/designer-2ae8-proposal)
+
+### note · agent:manager-2 · 2026-10-18T15:54:52.720Z
+cleanup: removed agent designer-2ae8-proposal, branch bridle/designer-2ae8-proposal
