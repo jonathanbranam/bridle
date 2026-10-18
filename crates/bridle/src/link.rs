@@ -39,6 +39,28 @@ pub(crate) fn url(
     Ok(target_url(base, &project, target))
 }
 
+/// The to-do page URL for a task id: a human's to-do is a task claimed by `human`, and the ticket
+/// page does not show it (br-bnfs). The UI scrolls that to-do into view.
+pub(crate) fn todo_url(base: &str, project: &str, id: &str) -> String {
+    format!(
+        "{base}/p/{}/todos/{}",
+        encode(project, false),
+        encode(id, false)
+    )
+}
+
+/// Whether the daemon holds `id` as a to-do of the human. Any lookup failure is "no": the link
+/// must still print with the daemon down.
+async fn is_human_todo(cli: &Cli, id: &str) -> bool {
+    let Ok(client) = crate::commands::client_for_read(cli).await else {
+        return false;
+    };
+    client.get_task(id).await.is_ok_and(|t| {
+        t.claimed_by.as_deref() == Some("human")
+            && t.state == bridle_api::types::TicketState::Claimed
+    })
+}
+
 pub async fn run(cli: &Cli, args: &LinkArgs) -> Result<(), CliError> {
     let repo = crate::ticket::repo_root().ok();
     let Some(base) = ui_base_url(&bridle_home(), repo.as_deref()).map_err(anyhow::Error::from)?
@@ -58,9 +80,26 @@ pub async fn run(cli: &Cli, args: &LinkArgs) -> Result<(), CliError> {
     {
         target = format!("{prefix}-{target}");
     }
-    println!(
-        "{}",
-        url(&base, &target, || project::resolve(cli), spec_path)?
-    );
+    let link = url(&base, &target, || project::resolve(cli), spec_path)?;
+    let is_ticket =
+        !target.contains('/') && !target.ends_with(".md") && !specs::is_spec_id(&target);
+    if is_ticket && is_human_todo(cli, &target).await {
+        println!("{}", todo_url(&base, &project::resolve(cli)?, &target));
+    } else {
+        println!("{link}");
+    }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_todo_links_to_the_todo_page() {
+        assert_eq!(
+            todo_url("http://ui", "bridle", "br-q7ua"),
+            "http://ui/p/bridle/todos/br-q7ua"
+        );
+    }
 }

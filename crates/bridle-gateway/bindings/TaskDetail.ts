@@ -16,6 +16,11 @@ blocks: Array<string>,
  */
 blocked_by: Array<string>, id: string, title: string, kind: string, state: string, priority: string, claimed_by: string | null, 
 /**
+ * A human's to-do (claimed by `human`): the UI opens the to-do page for it, not the ticket
+ * page (br-bnfs).
+ */
+todo: boolean, 
+/**
  * Set when `claimed_by` is `agent:<name>` and the daemon knows that agent.
  */
 agent: ClaimAgent | null, 

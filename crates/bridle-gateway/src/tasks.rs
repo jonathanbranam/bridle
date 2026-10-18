@@ -58,6 +58,9 @@ pub struct TicketSummary {
     pub state: String,
     pub priority: String,
     pub claimed_by: Option<String>,
+    /// A human's to-do (claimed by `human`): the UI opens the to-do page for it, not the ticket
+    /// page (br-bnfs).
+    pub todo: bool,
     /// Set when `claimed_by` is `agent:<name>` and the daemon knows that agent.
     pub agent: Option<ClaimAgent>,
     /// RFC 3339, UTC.
@@ -141,6 +144,7 @@ fn summary(t: &Ticket, agent: Option<ClaimAgent>) -> TicketSummary {
         state: t.state.as_str().to_string(),
         priority: format!("{:?}", t.priority).to_lowercase(),
         claimed_by: t.claimed_by.clone(),
+        todo: t.claimed_by.as_deref() == Some("human") && t.state == TicketState::Claimed,
         agent,
         updated: t.updated_at.to_rfc3339(),
         held_by: t.held_by.as_ref().map(|p| p.to_string()),
@@ -357,6 +361,19 @@ mod tests {
         let agent = l.tasks[1].agent.as_ref().expect("agent");
         assert_eq!((agent.name.as_str(), agent.role.as_str()), ("w1", "worker"));
         assert_eq!(l.tasks[0].agent, None);
+    }
+
+    #[test]
+    fn a_task_the_human_holds_is_marked_a_todo() {
+        let of = |state, by| {
+            let t: Ticket =
+                serde_json::from_value(task("t-9", state, by, "2026-01-02T00:00:00Z")).expect("t");
+            summary(&t, None).todo
+        };
+        assert!(of("claimed", Some("human")));
+        assert!(!of("integrated", Some("human")));
+        assert!(!of("claimed", Some("agent:w1")));
+        assert!(!of("planned", None));
     }
 
     #[test]
