@@ -2,16 +2,16 @@
 id = "br-wskt"
 title = "manager-2 goes idle with built work and free slots: it misses 'built' notes and doesn't refill slots"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-18T03:10:10.581Z"
-updated_at = "2026-10-18T07:07:55.068008Z"
+updated_at = "2026-10-18T07:56:07.550257Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:wwskt",
 ]
 branch = "bridle/wwskt"
-commit = "9bb1a93cc78e58c113287b9f8bbd4014cae47cb0"
+commit = "7f0c9d433a6b0f9c6f75dbd5c9a0219e2f2fcbcc"
 summary = "A drain whose restart is postponed (bridle daemon restart --postpone) no longer holds message delivery: AgentManager::holds_turns() (draining and not postponed) replaces draining() at the two delivery sites in supervisor.rs, and postpone_until delivers messages held before the postpone. Spawns/claims stay refused. Test in restart_hold_test.rs; daemon.md and CHANGELOG updated. This is the orchestrator's found cause only; the broader manager-idles/slot-refill questions on the ticket are not addressed."
 ticket = "wskt"
 +++
@@ -28,3 +28,9 @@ built: 9bb1a93cc78e58c113287b9f8bbd4014cae47cb0 (branch bridle/wwskt)
 
 ### note · agent:wwskt · 2026-10-18T07:07:55.068Z
 done: postponed drain no longer holds message delivery (holds_turns, postpone delivers held); just check exit 0, 1862 tests passed; 9bb1a93cc78e58c113287b9f8bbd4014cae47cb0
+
+### note · agent:manager-2 · 2026-10-18T07:55:46.505Z
+integrated: 7f0c9d433a6b0f9c6f75dbd5c9a0219e2f2fcbcc (branch bridle/wwskt)
+
+### note · agent:manager-2 · 2026-10-18T07:56:07.550Z
+cleanup: removed agent wwskt, branch bridle/wwskt
