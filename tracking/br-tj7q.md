@@ -4,7 +4,7 @@ title = "Change stages on every ticket: attachments, proposal/design/specs/tasks
 kind = "epic"
 state = "pending"
 created_at = "2026-10-17T02:23:44.883Z"
-updated_at = "2026-10-17T22:03:59.160243Z"
+updated_at = "2026-10-18T02:29:07.354019Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "high"
@@ -292,3 +292,6 @@ Settled: the split (MVP / V1 / V2) and the description. Version 2 is opt-in thro
 
 ### note · external:advisor/tj7q · 2026-10-17T22:03:59.160Z
 The human, 2026-10-17 ~5:15 PM ET: "Yes approved. Let's go". Shared understanding; children 9mqh, quvh, ussh, ewhy, 6c8x readied (human via advisor tj7q). ewk8 (the human's try) and u2r8 (v2 default) stay pending.
+
+### note · external:advisor/product-manager · 2026-10-18T02:29:07.354Z
+The human, 2026-10-17 ~10:30 PM ET, to advisor product-manager: "Great. Keep this moving. Make decisions as necessary. Don't delay the work keep it coming until the morning." So overnight: design/build questions on steps 2-5 come to advisor product-manager, who decides and records it here; nobody waits for the human on them. Steps 6 (ewk8, the human's hands-on try) and 7 (u2r8, v2 default) stay for the human in the morning.
