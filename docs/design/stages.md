@@ -1,9 +1,10 @@
 # Stages
 
 Status: built and in use as each step of epic br-tj7q lands. Step 1 (br-9mqh) is built: the
-schema, the proposal section, the stage folder, `check`, `resolve` and `show`. Step 3 (br-ussh) is
-built: `stage-done`, `approve`, `changes`, `restage` and ready-means-prepared. Spawning designers
-and the timer are later steps and are not built yet.
+schema, the proposal section, the stage folder, `check`, `resolve` and `show`. Step 2 (br-quvh) is
+built: the stage rules, templates and `ticket next`. Step 3 (br-ussh) is built: `stage-done`,
+`approve`, `changes`, `restage` and ready-means-prepared. Spawning designers and the timer are
+later steps and are not built yet.
 
 A version 2 ticket prepares itself in stages before a worker builds it. Version 1 tickets (no
 `version:`, or `version: 1`) have no stages and behave as before; version 2 is opt-in
@@ -80,4 +81,19 @@ back), and a note reaches the ticket's watchers. A timed-out stage is step 4.
   forward until then.
 - **Watchers** (informed): agents and people following the ticket.
 
-Code: `crates/bridle/src/stages.rs`; `stage_cmds.rs` has the four commands; `ticket.rs` has `check`, `create`, `resolve` and `show`.
+## Instructions and templates
+
+Each stage has a rule `stage-<stage>` in `workflow/base/rules/` (tagged `roles: [stage-writer]`,
+a role no agent has, so it reaches a writer only through `ticket next`) and a template
+`stage-<stage>.template` beside it. Both layer like any rule: base, packs, project
+(`.bridle/rules/`); the last layer with a template file wins, and a rule is overridden with the
+usual `override:`. The `.template` extension keeps templates out of the rule loader.
+
+`bridle ticket next <id>` picks the first unblocked stage (schema order) and prints its rule
+body, its template, the output path (the ticket file for the proposal, else
+`<folder>/<stage>.md`) and the files of the stages it requires. A stage waiting on an unsigned
+gate is refused (exit 1, naming the stage); with nothing left it says "prepared". `--comments`
+adds the human's thread comments newer than the output file's mtime (the ticket file's, for the
+proposal), for a redo. `--json` is for bridle's own use.
+
+Code: `crates/bridle/src/stages.rs`, `stage_next.rs`; `stage_cmds.rs` has the four writing commands; `ticket.rs` has `check`, `create`, `resolve` and `show`.

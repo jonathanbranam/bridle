@@ -493,6 +493,8 @@ pub enum TicketAction {
     Answer(TicketAnswerArgs),
     /// Print the ticket file, then its thread (and the threads of older tasks made from it).
     Show(TicketShowArgs),
+    /// Print the next unblocked stage of a version 2 ticket: its instructions, template, output path and the files it depends on.
+    Next(TicketNextArgs),
     /// Mark a stage of a version 2 ticket written (checks its file or proposal section); releases the writer's claim.
     StageDone(TicketStageArgs),
     /// Sign a stage that waits for the human's signature; recorded with who ran it and when (human via <agent> when an agent does).
@@ -616,6 +618,14 @@ pub struct TicketAskArgs {
 pub struct TicketAnswerArgs {
     pub id: String,
     pub text: String,
+}
+
+#[derive(Debug, Args)]
+pub struct TicketNextArgs {
+    pub id: String,
+    /// Also print the human's comments on the ticket since the stage was last written (for a redo).
+    #[arg(long)]
+    pub comments: bool,
 }
 
 #[derive(Debug, Args)]

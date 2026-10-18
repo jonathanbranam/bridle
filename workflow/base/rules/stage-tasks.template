@@ -1,0 +1,9 @@
+# Tasks
+
+## 1. Specs
+
+- [ ] 1.1 Merge specs.md into design/specs, then run `bridle spec id` and `bridle spec check` (both pass)
+
+## 2. <group>
+
+- [ ] 2.1 <step> (check: <test or command>)

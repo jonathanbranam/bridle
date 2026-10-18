@@ -45,6 +45,7 @@ pub async fn run(cli: &Cli, args: &TicketArgs) -> Result<(), CliError> {
         TicketAction::Ask(a) => ask_cmd(cli, &repo, a).await,
         TicketAction::Answer(a) => answer_cmd(cli, &repo, a).await,
         TicketAction::Show(a) => show_cmd(cli, &repo, a).await,
+        TicketAction::Next(a) => next_cmd(cli, &repo, a).await,
         TicketAction::StageDone(a) => crate::stage_cmds::stage_done(cli, &repo, a).await,
         TicketAction::Approve(a) => crate::stage_cmds::approve(cli, &repo, a).await,
         TicketAction::Changes(a) => crate::stage_cmds::changes(cli, &repo, a).await,
@@ -407,6 +408,49 @@ async fn show_cmd(cli: &Cli, repo: &Path, args: &TicketShowArgs) -> Result<(), C
             );
         }
     }
+    Ok(())
+}
+
+async fn next_cmd(
+    cli: &Cli,
+    repo: &Path,
+    args: &crate::cli::TicketNextArgs,
+) -> Result<(), CliError> {
+    let tail = projects(cli, repo).await?.local(&args.id)?.to_string();
+    let path = find_by_id(&tickets_root(repo).join("open"), &tail)?;
+    let text =
+        std::fs::read_to_string(&path).with_context(|| format!("reading {}", path.display()))?;
+    let front: Vec<&str> = text.lines().skip(1).take_while(|l| *l != "---").collect();
+    let stages = crate::stages::parse(&front)
+        .map_err(|e| anyhow!("{}: {e}", args.id))?
+        .ok_or_else(|| anyhow!("{} is a version 1 ticket: it has no stages", args.id))?;
+    let states = crate::stages::states(&stages, &crate::stages::marks(&text));
+    // Fetched only for a redo; the stage file's (or the proposal's ticket file's) mtime stands
+    // for "last written".
+    let rows = if args.comments {
+        thread_rows(cli, repo, &args.id).await?
+    } else {
+        Vec::new()
+    };
+    let next = crate::stage_next::build(repo, &path, &args.id, &stages, &states, |out| {
+        let since = std::fs::metadata(out)
+            .and_then(|m| m.modified())
+            .ok()
+            .map(chrono::DateTime::<chrono::Utc>::from);
+        Ok(rows
+            .iter()
+            .flat_map(|r| &r.thread)
+            .filter(|e| e.from.contains("human") && since.is_none_or(|s| e.at > s))
+            .map(|e| crate::stage_next::Comment {
+                at: e.at,
+                body: e.body.clone(),
+            })
+            .collect())
+    })?;
+    if cli.json {
+        return Ok(crate::render::print_json(&next)?);
+    }
+    print!("{}", crate::stage_next::render(&next));
     Ok(())
 }
 

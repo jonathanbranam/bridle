@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Stages (br-quvh): `bridle ticket next <id>` prints the next unblocked stage of a version 2 ticket with its layered rule (`stage-proposal`, `-design`, `-specs`, `-tasks`), template, output path and dependencies; `--comments` adds the human's comments since the stage was written; `--json`.
 - Stages MVP 3 (br-ussh): `ticket stage-done`, `approve` (signed and traced), `changes` and `restage` for version 2 tickets; a version 2 ticket opens itself once every stage is written and every gate signed, and `ticket ready` refuses it before that.
 
 - Feature (br-9mqh): version 2 tickets. `ticket new --version 2 [--stages design,specs,tasks] [--review proposal,specs] [--claim]` writes `version: 2`, a `stages:` block and a proposal section; `ticket check` validates the stages, `ticket resolve` moves the ticket's stage folder with it, `ticket show` prints each stage's state. Version 1 tickets (the default) are unchanged. Migration: none.

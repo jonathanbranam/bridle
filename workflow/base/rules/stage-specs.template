@@ -1,0 +1,11 @@
+## design/specs/<capability>.md
+
+### Requirement: <name>
+
+The system SHALL <observable behaviour>.
+
+#### Scenario: <name>
+*Verification*: **executable**
+- **GIVEN** <state>
+- **WHEN** <action>
+- **THEN** <result>

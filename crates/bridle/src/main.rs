@@ -41,6 +41,7 @@ mod spec_import;
 mod specid;
 mod stable;
 mod stage_cmds;
+mod stage_next;
 mod stages;
 mod statusline;
 mod stop_check;
