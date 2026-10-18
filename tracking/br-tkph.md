@@ -2,9 +2,9 @@
 id = "br-tkph"
 title = "Follow up on the workflow review: 6 decisions, 2 waiting on others (34bw, vp9e, sk52, 7r2c, xfb3, ma2x, ntca, 98xt)"
 kind = "chore"
-state = "claimed"
+state = "integrated"
 created_at = "2026-10-04T12:49:58.213Z"
-updated_at = "2026-10-11T21:31:22.387940Z"
+updated_at = "2026-10-18T15:22:14.478224Z"
 created_by = "external:advisor/workflow"
 watchers = [
     "external:advisor/workflow",
@@ -42,3 +42,6 @@ To-do for you (normal priority): Follow up on the workflow review: 6 decisions, 
 
 ### note · external:advisor/product-manager · 2026-10-09T11:04:37.765Z
 watching the task
+
+### note · external:advisor/product-manager · 2026-10-18T15:22:14.478Z
+done
