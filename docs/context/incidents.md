@@ -26,6 +26,22 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-17 22:04Z: the human's Stages MVP go sat in dalek-home's inbox for 3 hours
+
+- **What happened:** advisor/tj7q and advisor/product-manager sent the human's "Yes approved.
+  Let's go" for the Stages MVP (epic br-tj7q, wanted done tonight) to `--project dalek-home`, as
+  the role file says senders should. The orchestrator waits on bridle, and br-dg5g (mail follows
+  the waiter) only went live at the 22:48Z restart, so nothing woke it. Found at 01:21Z, checking
+  dalek-home by hand. Meanwhile br-9mqh was built at 01:17Z and manager-2 sat idle without
+  landing it or starting quvh and ussh.
+- **Impact:** about 3 hours of the human's same-day MVP push without the orchestrator steering
+  it; the chain's first land was delayed.
+- **Cause:** the orchestrator was waiting on bridle, not on dalek-home, before dg5g was live, and
+  the handover note recorded dg5g as live since 19:10Z.
+- **Category:** `messaging`, `coordination`.
+- **Follow-up:** dalek-home is checked by hand on every wake. Senders were told to address the
+  orchestrator on bridle. br-dg5g covers mail sent from now on.
+
 ## 2026-10-17 ~19:15Z: bridle's workforce went idle with a land unfinished and 3 tiers startable
 
 - **What happened:** after the 19:10Z self-upgrade resumed it, manager-2 started
