@@ -81,7 +81,8 @@ orchestrator is acting PM: wherever this prompt says "project manager", read "or
   `git merge-base --is-ancestor {{branches.integration}} bridle/<name>`; a clean worktree
   (`git -C ../wt/<name> status --short`); the diff with `git diff {{branches.integration}}...bridle/<name>`;
   and `git grep -nE '^(<<<<<<< |>>>>>>> )' bridle/<name>` (refuse if found). Every
-  landed task needs a line under "## Unreleased" in CHANGELOG.md, written on the worker's
+  landed task needs a line under "## Unreleased" in CHANGELOG.md, under `### Added`, `### Changed`, `### Fixed` or `### Internal`
+  (at the top of the section), written on the worker's
   branch (not separately); `bridle ticket land` refuses a branch without one (question,
   research, explore and incident tickets and docs/tickets-only changes are exempt). Verify the check before landing, never on the worker's word alone: pass
   `--checked-commit <sha>` to `bridle ticket land` only when the worker's done quotes exit 0 and a

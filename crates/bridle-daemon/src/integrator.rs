@@ -232,15 +232,17 @@ async fn changelog_missing(wt: &Path, exempt: bool, old: &str) -> Option<String>
         return None;
     }
     Some(
-        "the branch adds no line under \"## Unreleased\" in CHANGELOG.md; every landed task gets \
+        "the branch adds no line under \"## Unreleased\" in CHANGELOG.md (under ### Added, Changed, Fixed or Internal); every landed task gets \
          one, written on its branch (only question/research/explore/incident tickets and \
          changes confined to docs/tickets/ are exempt)"
             .to_string(),
     )
 }
 
-/// Whether a `-U0` diff of CHANGELOG.md adds a non-blank line inside the `## Unreleased` section
-/// of the new text.
+const CHANGELOG_HEADINGS: [&str; 4] = ["### Added", "### Changed", "### Fixed", "### Internal"];
+
+/// Whether a `-U0` diff of CHANGELOG.md adds a non-blank, non-heading line inside the
+/// `## Unreleased` section of the new text, under one of the four `###` headings.
 fn added_under_unreleased(diff: &str, new_text: &str) -> bool {
     let lines: Vec<&str> = new_text.lines().collect();
     let Some(start) = lines.iter().position(|l| l.trim_end() == "## Unreleased") else {
@@ -261,7 +263,14 @@ fn added_under_unreleased(diff: &str, new_text: &str) -> bool {
                 .unwrap_or(0);
         } else if l.starts_with('+') && !l.starts_with("+++") {
             let idx = at.saturating_sub(1);
-            if idx > start && idx < end && !l[1..].trim().is_empty() {
+            let under_heading = idx > start
+                && idx < end
+                && lines[start + 1..idx]
+                    .iter()
+                    .rev()
+                    .find(|x| x.starts_with("### "))
+                    .is_some_and(|x| CHANGELOG_HEADINGS.contains(&x.trim_end()));
+            if under_heading && !l[1..].trim().is_empty() && !l[1..].starts_with('#') {
                 return true;
             }
             at += 1;
@@ -561,14 +570,27 @@ mod tests {
     }
 
     #[test]
-    fn changelog_line_under_unreleased_is_found() {
-        let text = "# C\n\n## Unreleased\n\n- new\n- old\n\n## 1.0\n\n- v1\n";
-        let added = "@@ -4,0 +5 @@\n+- new\n";
-        assert!(added_under_unreleased(added, text));
-        // A line added to a released section does not count.
-        let released = "@@ -9,0 +10 @@\n+- v1\n";
-        assert!(!added_under_unreleased(released, text));
-        assert!(!added_under_unreleased("", text));
+    fn changelog_line_under_each_heading_is_found() {
+        for h in ["Added", "Changed", "Fixed", "Internal"] {
+            let text =
+                format!("# C\n\n## Unreleased\n\n### {h}\n\n- new\n- old\n\n## 1.0\n\n- v1\n");
+            let added = "@@ -6,0 +7 @@\n+- new\n";
+            assert!(added_under_unreleased(added, &text), "{h}");
+            // A line added to a released section does not count.
+            let released = "@@ -10,0 +11 @@\n+- v1\n";
+            assert!(!added_under_unreleased(released, &text));
+            // Nor does a bare heading.
+            assert!(!added_under_unreleased("@@ -4,0 +5 @@\n+### x\n", &text));
+        }
+    }
+
+    #[test]
+    fn changelog_line_without_a_known_heading_is_not_found() {
+        let none = "# C\n\n## Unreleased\n\n- new\n\n## 1.0\n";
+        assert!(!added_under_unreleased("@@ -4,0 +5 @@\n+- new\n", none));
+        let other = "# C\n\n## Unreleased\n\n### Docs\n\n- new\n\n## 1.0\n";
+        assert!(!added_under_unreleased("@@ -6,0 +7 @@\n+- new\n", other));
+        assert!(!added_under_unreleased("", none));
     }
 
     #[test]

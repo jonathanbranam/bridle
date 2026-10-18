@@ -39,7 +39,7 @@ fn branch_with_changelog(d: &TestDaemon, branch: &str, file: &str, content: &str
     std::fs::create_dir_all(path.parent().expect("parent")).expect("mkdir");
     std::fs::write(path, content).expect("write");
     if log && file != "CHANGELOG.md" {
-        let line = format!("# Changelog\n\n## Unreleased\n\n- {branch}\n");
+        let line = format!("# Changelog\n\n## Unreleased\n\n### Internal\n\n- {branch}\n");
         std::fs::write(wt.join("CHANGELOG.md"), line).expect("changelog");
     }
     git(&wt, &["add", "."]);

@@ -33,7 +33,7 @@ async fn branch_and_task(d: &support::TestDaemon, branch: &str) -> String {
     // Landing needs a CHANGELOG line (br-ubjd).
     std::fs::write(
         wt.join("CHANGELOG.md"),
-        format!("## Unreleased\n\n- {branch}\n"),
+        format!("## Unreleased\n\n### Internal\n\n- {branch}\n"),
     )
     .expect("changelog");
     git(&wt, &["add", "."]);

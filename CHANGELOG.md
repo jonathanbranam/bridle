@@ -7,25 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-- Docs (br-2d6x): the vitest-bridle README and `docs/design/specs-to-tests.md` say step files are not typechecked by vitest and show the `tsc --noEmit` step and tsconfig `include` that cover them.
-- Fix (br-4n3v): a worker's ticket claim is no longer released by the stale-claim sweep while its agent is running or `lost` (a daemon restart marks every agent `lost` with its old activity time, and a long silent check made a running one look stale), so the worker's own `ticket built` works. A removed worker's claim is released. Migration: none.
-- Docs (br-p2ad): the add-a-machine guide installs WSL2 from the release script like Linux and macOS (no `just install` step), and states the check for a release install (`bridle --version`, and `bridle doctor` in a project clone). Migration: none.
-- Fix (br-4mbd): `xxxx` is a reserved id: never minted for a ticket or task, reported by `bridle ticket check`, and ignored (`br-xxxx` or bare) by the link-check hook, so the placeholder no longer draws a link reminder.
-- Change (br-ubjd): `bridle ticket land` refuses a branch that adds no line under `## Unreleased` in CHANGELOG.md. Exempt: question/research/explore/incident tickets, and changes confined to `docs/tickets/`. Roles and `docs-current` now say every landed task gets a line, written on its branch.
-- Fix (br-wskt): a drain whose restart is postponed (`bridle daemon restart --postpone`) no longer holds messages to agents, so a manager that postponed to finish a land still hears `built` notes; messages held before the postpone are delivered when it is set.
-- Docs (br-f2yd): every role is told that `bridle ticket submit --project <project>` files work on another project's daemon, and when to use it instead of a message (new base rule `file-tickets-on-other-projects`). Migration: none; existing projects get it through `bridle workflow update` and `bridle sync`.
-- Chore (br-sdrw): every session and agent bridle launches runs with `promptSuggestionEnabled: false`, so a greyed suggestion is never mistaken for typed text in a tmux pane.
-- Fix (br-r965): `ticket new --version 2 --claim` writes `claimed_by: <filer>` in the ticket's frontmatter instead of claiming the row (a `pending` row cannot be claimed); `stage-done` ends it.
+### Added
+
 - Stages MVP 5 (br-6c8x): a worker on a version 2 ticket is told (rule `stage-apply`, after OpenSpec's apply skill) to read the proposal, design, specs and tasks, merge specs.md into `design/specs/` first, and tick `tasks.md` as it goes; landing refuses a version 2 ticket whose `tasks.md` has unticked items. Version 1 is unchanged.
-- Fix (br-9s8u, P1): `bridle agent wake` and `bridle orchestrator wait-for-wake` print the focus gate text (the same `focus::gate` as `bridle focus gate`) before the wake reasons, so quiet hours reach turns that start from a background wake. Nothing extra outside quiet hours; with `--json` the text goes to stderr.
-
 - Stages MVP 4 (br-ewhy): the daemon spawns a `designer` for each unblocked stage of a pending, unclaimed version 2 ticket (through the usual spawn path, budget governor and caps) and sends one message to `external:advisor/product-manager` when a stage is not done within `[stages] timeout` (default 60m, 0 turns it off) or its writer ended without `stage-done`; no retry, `ticket restage` puts it back. The `designer` role now also writes any stage.
-- Fix (br-uysm): an orchestrator relaunch no longer re-runs the pane's previous launcher (tmux `respawn-pane` with no command); the first attempt respawns an explicit shell, so a moved orchestrator keeps its own project.
-
 - Stages (br-quvh): `bridle ticket next <id>` prints the next unblocked stage of a version 2 ticket with its layered rule (`stage-proposal`, `-design`, `-specs`, `-tasks`), template, output path and dependencies; `--comments` adds the human's comments since the stage was written; `--json`.
 - Stages MVP 3 (br-ussh): `ticket stage-done`, `approve` (signed and traced), `changes` and `restage` for version 2 tickets; a version 2 ticket opens itself once every stage is written and every gate signed, and `ticket ready` refuses it before that.
-
 - Feature (br-9mqh): version 2 tickets. `ticket new --version 2 [--stages design,specs,tasks] [--review proposal,specs] [--claim]` writes `version: 2`, a `stages:` block and a proposal section; `ticket check` validates the stages, `ticket resolve` moves the ticket's stage folder with it, `ticket show` prints each stage's state. Version 1 tickets (the default) are unchanged. Migration: none.
+- Feature (br-mhjn): new rule `ready-without-asking`: bugs, fixes, incidents, chores, docs and self-evident tickets are readied by whoever files or first sees them, without asking the human; features, epics, designs and open questions go to the human first, and the human can always hold a ticket (`hold: design`). `ticket new` without a body now warns that the ticket cannot be readied until its ask is written under `## The ask`. Migration: none.
+- Feature (br-re79): a document under review may set `reviewer: <agent>` in its front matter; its comments then go to that agent instead of the default `doc-<id>` reviewer (an unknown agent is reported and the default takes the batch). Migration: none.
+
+### Changed
+
+- Change (br-ubjd): `bridle ticket land` refuses a branch that adds no line under `## Unreleased` in CHANGELOG.md. Exempt: question/research/explore/incident tickets, and changes confined to `docs/tickets/`. Roles and `docs-current` now say every landed task gets a line, written on its branch.
+
+### Fixed
+
+- Fix (br-4n3v): a worker's ticket claim is no longer released by the stale-claim sweep while its agent is running or `lost` (a daemon restart marks every agent `lost` with its old activity time, and a long silent check made a running one look stale), so the worker's own `ticket built` works. A removed worker's claim is released. Migration: none.
+- Fix (br-4mbd): `xxxx` is a reserved id: never minted for a ticket or task, reported by `bridle ticket check`, and ignored (`br-xxxx` or bare) by the link-check hook, so the placeholder no longer draws a link reminder.
+- Fix (br-wskt): a drain whose restart is postponed (`bridle daemon restart --postpone`) no longer holds messages to agents, so a manager that postponed to finish a land still hears `built` notes; messages held before the postpone are delivered when it is set.
+- Fix (br-r965): `ticket new --version 2 --claim` writes `claimed_by: <filer>` in the ticket's frontmatter instead of claiming the row (a `pending` row cannot be claimed); `stage-done` ends it.
+- Fix (br-4mbd): `xxxx` is a reserved id: never minted for a ticket or task, reported by `bridle ticket check`, and ignored (`br-xxxx` or bare) by the link-check hook, so the placeholder no longer draws a link reminder.
+- Fix (br-wskt): a drain whose restart is postponed (`bridle daemon restart --postpone`) no longer holds messages to agents, so a manager that postponed to finish a land still hears `built` notes; messages held before the postpone are delivered when it is set.
+- Fix (br-r965): `ticket new --version 2 --claim` writes `claimed_by: <filer>` in the ticket's frontmatter instead of claiming the row (a `pending` row cannot be claimed); `stage-done` ends it.
+- Fix (br-9s8u, P1): `bridle agent wake` and `bridle orchestrator wait-for-wake` print the focus gate text (the same `focus::gate` as `bridle focus gate`) before the wake reasons, so quiet hours reach turns that start from a background wake. Nothing extra outside quiet hours; with `--json` the text goes to stderr.
+- Fix (br-uysm): an orchestrator relaunch no longer re-runs the pane's previous launcher (tmux `respawn-pane` with no command); the first attempt respawns an explicit shell, so a moved orchestrator keeps its own project.
 - Fix (br-a9g2): `agent spawn --allow-tool WebSearch` (a built-in tool outside the role's `--tools` set) is now refused with a message naming the researcher role, instead of permitting a tool that is never offered to the agent.
 - Fix (br-s5ah): sending to `external:aide` on a daemon with no aide now says so and names the fallback (`bridle send human`, or a `--for-human` ticket) instead of a bare not_found; the orchestrator role says the same. Migration: none.
 - Fix (br-2uzx): a late usage reading from before a window reset (its `resets_at` older than the stored one) is dropped, so it no longer re-fires the usage wake or misleads the budget governor. Migration: none.
@@ -37,11 +43,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix (br-2fqg): the worker role now says to `bridle ticket claim` the ticket first. A spawned worker's ticket is `planned`, and the daemon lets a worker mark `built` only a ticket it has claimed, so `ticket built` was refused for workers that followed the role. Migration: none.
 - Fix (br-kyjg): a command that hits a daemon without that route (an older daemon) now says `the daemon at <url> (version X) doesn't have this command; upgrade it` instead of a bare `unknown: `; any empty error reply names its HTTP status. Migration: none.
 - Fix (br-z5kz): a spawn refused during a restart drain now tells the agent to end its turn (the daemon resumes it after the restart), and the manager role says so; a manager waiting in its turn for the drain used to deadlock the restart. Migration: none.
-- Feature (br-mhjn): new rule `ready-without-asking`: bugs, fixes, incidents, chores, docs and self-evident tickets are readied by whoever files or first sees them, without asking the human; features, epics, designs and open questions go to the human first, and the human can always hold a ticket (`hold: design`). `ticket new` without a body now warns that the ticket cannot be readied until its ask is written under `## The ask`. Migration: none.
 - Fix (br-dg5g): mail and wakes for the machine's orchestrator follow its waiter. The daemon holding a `wait-for-wake` notes its project in `$BRIDLE_HOME/orchestrator-waiter`, and same-machine daemons forward to that project instead of `<host>-home`, so a question on another project is no longer unseen when the orchestrator waits elsewhere. No re-pair needed.
 - Fix (br-66qq): a `self_upgrade = "release"` daemon checks for releases on its own loop, no longer after the CI watcher, whose `gh` call has no timeout and could hang and keep the daemon from ever upgrading; a failed release lookup now logs a warning and a newer release found logs an info line. Migration: none.
-- Feature (br-re79): a document under review may set `reviewer: <agent>` in its front matter; its comments then go to that agent instead of the default `doc-<id>` reviewer (an unknown agent is reported and the default takes the batch). Migration: none.
 - Fix (br-3stk): `bridle ticket land` runs `[worktrees] setup` (e.g. `npm ci`) in its check worktree before the check, so a JS project lands without `--checked-commit`; it also falls back to the ticket's last recorded branch when `--branch` is omitted. Migration: none; set `[worktrees] setup` if the check needs installed dependencies.
+
+### Internal
+
+- Docs (br-2d6x): the vitest-bridle README and `docs/design/specs-to-tests.md` say step files are not typechecked by vitest and show the `tsc --noEmit` step and tsconfig `include` that cover them.
+- Docs (br-p2ad): the add-a-machine guide installs WSL2 from the release script like Linux and macOS (no `just install` step), and states the check for a release install (`bridle --version`, and `bridle doctor` in a project clone). Migration: none.
+- Change (br-ubjd): `bridle ticket land` refuses a branch that adds no line under `## Unreleased` in CHANGELOG.md. Exempt: question/research/explore/incident tickets, and changes confined to `docs/tickets/`. Roles and `docs-current` now say every landed task gets a line, written on its branch.
+- Docs (br-f2yd): every role is told that `bridle ticket submit --project <project>` files work on another project's daemon, and when to use it instead of a message (new base rule `file-tickets-on-other-projects`). Migration: none; existing projects get it through `bridle workflow update` and `bridle sync`.
+- Chore (br-sdrw): every session and agent bridle launches runs with `promptSuggestionEnabled: false`, so a greyed suggestion is never mistaken for typed text in a tmux pane.
+- Internal (br-ubjd): CHANGELOG.md "Unreleased" is one section per kind (Added, Changed, Fixed, Internal); roles and `docs-current` say which heading a line goes under and to insert it at the top of its section; `bridle ticket land` accepts a line only under one of those four headings.
+- Docs (br-f2yd): every role is told that `bridle ticket submit --project <project>` files work on another project's daemon, and when to use it instead of a message (new base rule `file-tickets-on-other-projects`). Migration: none; existing projects get it through `bridle workflow update` and `bridle sync`.
+- Chore (br-sdrw): every session and agent bridle launches runs with `promptSuggestionEnabled: false`, so a greyed suggestion is never mistaken for typed text in a tmux pane.
 
 ## [0.7.6] - 2026-10-17
 

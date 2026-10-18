@@ -11,7 +11,7 @@ For this project, the docs to check are:
 - `docs/design/agent-host/` and related design docs
 - `docs/design/cli.md` and `docs/design/storage.md` (the database)
 - `docs/briefs/` (product briefs)
-- `CHANGELOG` (every landed task gets a line under "Unreleased", written on the branch; `bridle ticket land` refuses without one)
+- `CHANGELOG` (every landed task gets a line under "Unreleased", under `### Added`, `### Changed`, `### Fixed` or `### Internal`, at the top of that section, written on the branch; `bridle ticket land` refuses without one)
 
 Include doc edits in the commit for your change, so they travel together.
 
