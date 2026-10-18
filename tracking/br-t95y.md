@@ -2,16 +2,16 @@
 id = "br-t95y"
 title = "Flaky on ubuntu CI: gateway_test a_replaced_binary_is_re_executed exits 1 instead of re-executing"
 kind = "fix"
-state = "built"
+state = "integrated"
 created_at = "2026-10-14T23:43:08.616Z"
-updated_at = "2026-10-18T00:09:32.743459Z"
+updated_at = "2026-10-18T00:37:03.623007Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:wt95y",
 ]
 branch = "bridle/wt95y"
-commit = "ad3ce8231d2514c216da94d0449ef3c5e7b6eb59"
+commit = "8015002fb1ba86b7e52446a5b6ae2256e7e798b1"
 summary = "The test was not ignored, so I went straight to diagnostics. a_replaced_binary_is_re_executed now sends the gateway's stderr to a file, panics with it if the child exits before listening, and includes it in the final status assertion. Looped 20x on macOS (all passed; cannot reproduce here, Linux not tried), so the cause is still unknown: the next ubuntu CI failure will show it. The port race is not removable from the test side (the gateway binds the port itself). No CHANGELOG entry (test-only). Ticket should stay open until CI shows the cause or stays green."
 ticket = "t95y"
 +++
@@ -28,3 +28,9 @@ built: ad3ce8231d2514c216da94d0449ef3c5e7b6eb59 (branch bridle/wt95y)
 
 ### note · agent:wt95y · 2026-10-18T00:09:32.743Z
 done: test was not ignored; stderr now captured and early exit reported, 20/20 loops pass on macOS (Linux not reproduced, cause still unknown, so keep an eye on CI); just check exit 0, 1834 tests; ad3ce8231d2514c216da94d0449ef3c5e7b6eb59
+
+### note · agent:manager-2 · 2026-10-18T00:36:44.620Z
+integrated: 8015002fb1ba86b7e52446a5b6ae2256e7e798b1 (branch bridle/wt95y)
+
+### note · agent:manager-2 · 2026-10-18T00:37:03.623Z
+cleanup: removed agent wt95y, branch bridle/wt95y
