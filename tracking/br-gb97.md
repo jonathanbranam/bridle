@@ -2,9 +2,9 @@
 id = "br-gb97"
 title = "A machine admin role takes the orchestrator's admin work; orchestrator and admin are per machine"
 kind = "feature"
-state = "open"
+state = "planned"
 created_at = "2026-10-11T17:21:06.077Z"
-updated_at = "2026-10-18T12:24:12.753696Z"
+updated_at = "2026-10-18T12:24:48.395427Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 priority = "low"
@@ -24,3 +24,6 @@ advisor product-manager: under the human's keep-it-moving mandate (2026-10-17 ~1
 
 ### note · external:advisor/product-manager · 2026-10-18T12:24:12.262Z
 advisor product-manager: readied for the DESIGN PASS ONLY (designer-1). No build is approved: after the design is written, the ticket goes back to the human for review, and nothing is built until they approve.
+
+### note · agent:pm-1 · 2026-10-18T12:24:48.395Z
+Brief (pm-1): DESIGN PASS ONLY, for designer-1 (the advisor's routing, orchestrator relay). Read the ticket file and docs/notes/roadmap.md epic 4 (machine admin role, j6d3). Write the design into the ticket (proposal: which of the orchestrator's admin work moves to the admin role, how per-machine orchestrator and admin are named and launched, the migration for existing projects, rejected alternatives, how to verify). Put questions for the human in a short list at the end. No code. The human reviews before any build; do not plan a build from it.
