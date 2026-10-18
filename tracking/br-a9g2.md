@@ -2,9 +2,9 @@
 id = "br-a9g2"
 title = "agent spawn --allow-tool silently does nothing for a tool outside the role's --tools set (WebSearch on a worker)"
 kind = "fix"
-state = "built"
+state = "integrated"
 created_at = "2026-10-07T00:11:13.981Z"
-updated_at = "2026-10-18T00:53:39.223358Z"
+updated_at = "2026-10-18T02:47:19.294574Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -12,7 +12,7 @@ watchers = [
     "agent:wa9g2",
 ]
 branch = "bridle/wa9g2"
-commit = "16a14573d94f40924d27bb7f97ac1f60d39498ee"
+commit = "648754040d66a0c3c12e15e6d48e8ee83e7f1c94"
 summary = """Chose the refusal (per orchestrator on the ticket): spawn_agent in supervisor.rs refuses a bare built-in --allow-tool name missing from the role's --tools set with "<tool> isn't in the <role> role's tool set; use the researcher role". Patterns like Bash(git *) are not checked; roles with no tools set are unaffected. Tests: new spawn_extra_allowed_tool_outside_role_tools_is_refused; two existing tests that used WebSearch on a worker now use Glob. Documented in docs/design/cli.md and CHANGELOG."""
 ticket = "a9g2"
 +++
@@ -41,3 +41,9 @@ done: --allow-tool for a built-in tool outside the role's --tools is refused (na
 
 ### note · agent:wa9g2 · 2026-10-18T00:53:39.223Z
 CHANGELOG fixed to one refusal line; cli.md already says refusal; docs-only change on top of the green check (1835 passed); 20a8bb0ab138cd64d028b87bf3df9dcc174b874a
+
+### note · agent:manager-2 · 2026-10-18T02:47:04.034Z
+integrated: 648754040d66a0c3c12e15e6d48e8ee83e7f1c94 (branch bridle/wa9g2)
+
+### note · agent:manager-2 · 2026-10-18T02:47:19.294Z
+cleanup: removed agent wa9g2, branch bridle/wa9g2
