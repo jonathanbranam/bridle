@@ -2706,3 +2706,4 @@
 {"actor":"external:advisor/product-manager","at":"2026-10-18T13:20:13.053753Z","from":"dropped","task":"br-ab3a","to":"reopened"}
 {"actor":"agent:pm-1","at":"2026-10-18T13:23:15.124009Z","from":"open","task":"br-65qh","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-18T13:23:19.938334Z","queue":"reprioritized"}
+{"actor":"human","at":"2026-10-18T13:26:42.072Z","from":"","task":"br-7ytg","to":"pending"}
