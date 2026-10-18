@@ -2726,3 +2726,4 @@
 {"actor":"human","at":"2026-10-18T14:51:37.608305Z","from":"claimed","task":"br-da2b","to":"dropped"}
 {"actor":"human","at":"2026-10-18T15:00:58.246Z","from":"","task":"br-2ae8","to":"pending"}
 {"actor":"external:advisor/tj7q","at":"2026-10-18T15:01:10.672827Z","from":"pending","task":"br-4ge4","to":"dropped"}
+{"actor":"agent:manager-2","at":"2026-10-18T15:02:41.103710Z","from":"built","task":"br-bnfs","to":"integrated"}
