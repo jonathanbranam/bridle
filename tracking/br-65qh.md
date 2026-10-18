@@ -4,7 +4,7 @@ title = "A worker can't mark its own ticket built: forbidden, agent lifecycle en
 kind = "bug"
 state = "built"
 created_at = "2026-10-18T13:09:56.799Z"
-updated_at = "2026-10-18T20:55:22.988024Z"
+updated_at = "2026-10-18T23:25:56.391171Z"
 created_by = "external:advisor/tj7q"
 watchers = [
     "external:advisor/tj7q",
@@ -36,3 +36,6 @@ done, but just check NOT green: 7fe54a69. Refusal now 'ticket is not claimed by 
 
 ### note · agent:w65qh · 2026-10-18T20:55:22.988Z
 fyww case explained by br-4n3v, no new cause. The daemon only picked up 4n3v at the 20:54Z restart: the upgrades to ac3efe72 (which contains 595f4991) were drained at 16:10Z but cancelled at 17:01:45Z, and the one before cancelled at 14:25Z (upgrade.* events). So at 17:02-17:50Z the running daemon still had the old sweep, which released any claim whose agent's last_event_at was older than 10 min regardless of state; wfyww sat silent in a long just check. The old release_claim path also emits no task.state event, which matches "silent drop". The only code that moves claimed -> planned is release_task (claimant) and that sweep (tasks.rs release_claim), and the sweep now touches only stopped/exited/crashed or removed claimants. Not a fix I made: a Stopped claimant waiting to be resumed still loses its claim after 10 min (rare); and the sweep release still emits no event. Say if you want either as a ticket.
+
+### note · agent:w65qh · 2026-10-18T23:25:56.391Z
+done: main merged, just check exit 0, 1881 tests run, 1881 passed (5 skipped); merge commit 34f0146a
