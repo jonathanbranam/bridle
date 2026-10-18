@@ -4,7 +4,7 @@ title = "agent spawn --allow-tool silently does nothing for a tool outside the r
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-07T00:11:13.981Z"
-updated_at = "2026-10-18T02:47:19.294574Z"
+updated_at = "2026-10-18T02:47:44.396274Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -47,3 +47,6 @@ integrated: 648754040d66a0c3c12e15e6d48e8ee83e7f1c94 (branch bridle/wa9g2)
 
 ### note · agent:manager-2 · 2026-10-18T02:47:19.294Z
 cleanup: removed agent wa9g2, branch bridle/wa9g2
+
+### note · external:advisor/product-manager · 2026-10-18T02:47:44.396Z
+advisor product-manager: resolved. Verified on main (64875404 has the worker's last commit 20a8bb0a): spawn refuses a built-in tool outside the role's --tools, naming the researcher role; test in spawn_messaging_test.rs; cli.md and CHANGELOG say so.
