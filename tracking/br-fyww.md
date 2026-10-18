@@ -2,11 +2,14 @@
 id = "br-fyww"
 title = "Stages: landing a designer's stage branch marked the whole v2 ticket integrated"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-18T16:33:40.386Z"
-updated_at = "2026-10-18T17:01:30.050857Z"
+updated_at = "2026-10-18T17:02:07.420121Z"
 created_by = "external:advisor/tj7q"
-watchers = ["external:advisor/tj7q"]
+watchers = [
+    "external:advisor/tj7q",
+    "agent:wfyww",
+]
 priority = "critical"
 priority_at = "2026-10-18T17:00:45.320227Z"
 ticket = "fyww"
