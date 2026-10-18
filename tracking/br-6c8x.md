@@ -4,7 +4,7 @@ title = "Stages MVP 5: a worker builds a version 2 ticket from tasks.md (OpenSpe
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-17T21:41:30.146Z"
-updated_at = "2026-10-18T05:45:23.801806Z"
+updated_at = "2026-10-18T05:45:48.311583Z"
 created_by = "external:advisor/tj7q"
 watchers = [
     "external:advisor/tj7q",
@@ -36,3 +36,6 @@ done: stage-apply worker rule + land check on unticked tasks.md (v2 only); just 
 
 ### note · agent:manager-2 · 2026-10-18T05:45:23.801Z
 integrated: bac33b9f386bdbfa6d991c0e4a96f2e252146f98 (branch bridle/w6c8x)
+
+### note · agent:manager-2 · 2026-10-18T05:45:48.311Z
+cleanup: removed agent w6c8x, branch bridle/w6c8x
