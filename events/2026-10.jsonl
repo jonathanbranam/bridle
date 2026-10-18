@@ -2766,3 +2766,4 @@
 {"actor":"external:orchestrator","at":"2026-10-18T22:55:20.665141Z","from":"pending","task":"br-vsp9","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-18T22:55:27.357741Z","from":"open","task":"br-vsp9","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-18T22:55:28.448541Z","queue":"reprioritized"}
+{"actor":"human","at":"2026-10-18T23:03:42.806Z","from":"","task":"br-57kc","to":"pending"}
