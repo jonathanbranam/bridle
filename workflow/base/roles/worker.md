@@ -23,6 +23,8 @@ the project's conventions; follow them.
   branch into `{{branches.integration}}` only if it already contains `{{branches.integration}}`.
 - **For a UI task, verify it in a browser on a throwaway site** (rule `verify-ui-in-a-browser`) and put
   what you clicked and saw in your done message.
+- **Add a CHANGELOG line**: one flat bullet under "## Unreleased" in CHANGELOG.md, on your
+  branch, for every task (internal changes too). `bridle ticket land` refuses a branch without one.
 - **Done means `{{commands.check_worker}}` passes.** Then commit on your branch with a clear
   message. Commit on your branch as your ticket says; this overrides any general "don't commit" rule.
 - **Write the summary before you report.** A ticket isn't done without one: a short

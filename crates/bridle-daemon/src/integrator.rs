@@ -52,6 +52,8 @@ pub struct LandInput<'a> {
     pub title: &'a str,
     pub summary: Option<&'a str>,
     pub is_arch_revision: bool,
+    /// The ticket's kind needs no CHANGELOG line (question, research, explore, incident).
+    pub changelog_exempt: bool,
     pub check: Option<&'a str>,
     /// The commit the worker reported a green check on.
     pub checked_commit: Option<&'a str>,
@@ -124,6 +126,11 @@ pub async fn land(i: &LandInput<'_>) -> Result<Landed, LandError> {
     }
 
     if let Some(msg) = unticked_tasks(&wt, i.task) {
+        let _ = run_git(&wt, &["reset", "-q", "--hard", &old]).await;
+        return Err(LandError::Refused(msg));
+    }
+
+    if let Some(msg) = changelog_missing(&wt, i.changelog_exempt, &old).await {
         let _ = run_git(&wt, &["reset", "-q", "--hard", &old]).await;
         return Err(LandError::Refused(msg));
     }
@@ -202,6 +209,65 @@ pub async fn land(i: &LandInput<'_>) -> Result<Landed, LandError> {
         let _ = std::fs::write(count_path(i), format!("{n}\n"));
     }
     Ok(Landed { commit: new, notes })
+}
+
+/// Every landed task adds a line under `## Unreleased` in CHANGELOG.md, written on its branch
+/// (br-ubjd). `Some(reason)` refuses the landing. Exempt: `exempt` (the ticket's kind), and a
+/// squash that touches nothing outside `docs/tickets/`.
+async fn changelog_missing(wt: &Path, exempt: bool, old: &str) -> Option<String> {
+    if exempt {
+        return None;
+    }
+    let names = run_git(wt, &["diff", "--name-only", old, "HEAD"])
+        .await
+        .ok()?;
+    if names.lines().all(|p| p.starts_with("docs/tickets/")) {
+        return None;
+    }
+    let diff = run_git(wt, &["diff", "-U0", old, "HEAD", "--", "CHANGELOG.md"])
+        .await
+        .unwrap_or_default();
+    let text = std::fs::read_to_string(wt.join("CHANGELOG.md")).unwrap_or_default();
+    if added_under_unreleased(&diff, &text) {
+        return None;
+    }
+    Some(
+        "the branch adds no line under \"## Unreleased\" in CHANGELOG.md; every landed task gets \
+         one, written on its branch (only question/research/explore/incident tickets and \
+         changes confined to docs/tickets/ are exempt)"
+            .to_string(),
+    )
+}
+
+/// Whether a `-U0` diff of CHANGELOG.md adds a non-blank line inside the `## Unreleased` section
+/// of the new text.
+fn added_under_unreleased(diff: &str, new_text: &str) -> bool {
+    let lines: Vec<&str> = new_text.lines().collect();
+    let Some(start) = lines.iter().position(|l| l.trim_end() == "## Unreleased") else {
+        return false;
+    };
+    let end = lines[start + 1..]
+        .iter()
+        .position(|l| l.starts_with("## "))
+        .map_or(lines.len(), |n| start + 1 + n);
+    let mut at = 0usize; // 1-based number of the next new-file line
+    for l in diff.lines() {
+        if let Some(h) = l.strip_prefix("@@ ") {
+            at = h
+                .split('+')
+                .nth(1)
+                .and_then(|r| r.split([',', ' ']).next())
+                .and_then(|n| n.parse().ok())
+                .unwrap_or(0);
+        } else if l.starts_with('+') && !l.starts_with("+++") {
+            let idx = at.saturating_sub(1);
+            if idx > start && idx < end && !l[1..].trim().is_empty() {
+                return true;
+            }
+            at += 1;
+        }
+    }
+    false
 }
 
 /// For a version 2 ticket (stages, br-tj7q) the landed tree's `tasks.md` must be fully ticked:
@@ -492,6 +558,17 @@ mod tests {
         assert!(unticked_tasks(v1.path(), "br-6c8x").is_none());
         let none = ticket_tree("version: 2\n", None);
         assert!(unticked_tasks(none.path(), "br-6c8x").is_none());
+    }
+
+    #[test]
+    fn changelog_line_under_unreleased_is_found() {
+        let text = "# C\n\n## Unreleased\n\n- new\n- old\n\n## 1.0\n\n- v1\n";
+        let added = "@@ -4,0 +5 @@\n+- new\n";
+        assert!(added_under_unreleased(added, text));
+        // A line added to a released section does not count.
+        let released = "@@ -9,0 +10 @@\n+- v1\n";
+        assert!(!added_under_unreleased(released, text));
+        assert!(!added_under_unreleased("", text));
     }
 
     #[test]

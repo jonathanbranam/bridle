@@ -80,9 +80,10 @@ orchestrator is acting PM: wherever this prompt says "project manager", read "or
   landing, check: the ticket has a summary written (`bridle ticket show <id>`);
   `git merge-base --is-ancestor {{branches.integration}} bridle/<name>`; a clean worktree
   (`git -C ../wt/<name> status --short`); the diff with `git diff {{branches.integration}}...bridle/<name>`;
-  and `git grep -nE '^(<<<<<<< |>>>>>>> )' bridle/<name>` (refuse if found). For each
-  user-visible change, add one line under "## Unreleased" in CHANGELOG.md in the worker's
-  branch (not separately). Verify the check before landing, never on the worker's word alone: pass
+  and `git grep -nE '^(<<<<<<< |>>>>>>> )' bridle/<name>` (refuse if found). Every
+  landed task needs a line under "## Unreleased" in CHANGELOG.md, written on the worker's
+  branch (not separately); `bridle ticket land` refuses a branch without one (question,
+  research, explore and incident tickets and docs/tickets-only changes are exempt). Verify the check before landing, never on the worker's word alone: pass
   `--checked-commit <sha>` to `bridle ticket land` only when the worker's done quotes exit 0 and a
   test count for exactly that sha; otherwise, let `bridle ticket land` run the check. `bridle ticket land <ticket-id> [--checked-commit <sha>]` lands one squash commit (subject `<ticket id>: <title>`, the summary as body, `Task:`/`Branch:` trailers), runs the
   `[integration] check` if configured (skipped, with a note, only for a fast-forward whose tip is

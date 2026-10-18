@@ -23,8 +23,12 @@ fn git(dir: &std::path::Path, args: &[&str]) -> String {
         .to_string()
 }
 
-/// A branch off main's tip with one commit adding `file`.
+/// A branch off main's tip with one commit adding `file` and a CHANGELOG line (landing needs one).
 fn branch_with(d: &TestDaemon, branch: &str, file: &str, content: &str) {
+    branch_with_changelog(d, branch, file, content, true);
+}
+
+fn branch_with_changelog(d: &TestDaemon, branch: &str, file: &str, content: &str, log: bool) {
     git(&d.repo, &["branch", branch, "main"]);
     let wt = d.workspace.join(format!("scratch-{branch}"));
     git(
@@ -34,6 +38,10 @@ fn branch_with(d: &TestDaemon, branch: &str, file: &str, content: &str) {
     let path = wt.join(file);
     std::fs::create_dir_all(path.parent().expect("parent")).expect("mkdir");
     std::fs::write(path, content).expect("write");
+    if log && file != "CHANGELOG.md" {
+        let line = format!("# Changelog\n\n## Unreleased\n\n- {branch}\n");
+        std::fs::write(wt.join("CHANGELOG.md"), line).expect("changelog");
+    }
     git(&wt, &["add", "."]);
     git(&wt, &["commit", "-qm", "work"]);
     git(
@@ -532,4 +540,24 @@ async fn land_finds_a_built_tickets_branch_without_branch() {
     r.branch = None;
     d.client.land_task(&id, &r).await.expect("lands");
     assert_eq!(git(&d.repo, &["show", "main:f.txt"]), "x");
+}
+
+#[tokio::test]
+async fn a_branch_without_a_changelog_line_is_refused_unless_exempt() {
+    let (d, _tmp) = start_daemon(None).await;
+    branch_with_changelog(&d, "b1", "f.txt", "x\n", false);
+    let id = task(&d, TicketKind::Feature).await;
+    let before = git(&d.repo, &["rev-parse", "main"]);
+    let e = land_err(&d, &id, &req("b1", None)).await;
+    assert!(
+        e.contains("CHANGELOG.md") && e.contains("Unreleased"),
+        "{e}"
+    );
+    assert_eq!(git(&d.repo, &["rev-parse", "main"]), before);
+    // A research ticket needs no line.
+    let research = task(&d, TicketKind::Research).await;
+    d.client
+        .land_task(&research, &req("b1", None))
+        .await
+        .expect("exempt kind lands");
 }

@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 - Fix (br-4mbd): `xxxx` is a reserved id: never minted for a ticket or task, reported by `bridle ticket check`, and ignored (`br-xxxx` or bare) by the link-check hook, so the placeholder no longer draws a link reminder.
+- Change (br-ubjd): `bridle ticket land` refuses a branch that adds no line under `## Unreleased` in CHANGELOG.md. Exempt: question/research/explore/incident tickets, and changes confined to `docs/tickets/`. Roles and `docs-current` now say every landed task gets a line, written on its branch.
 - Fix (br-wskt): a drain whose restart is postponed (`bridle daemon restart --postpone`) no longer holds messages to agents, so a manager that postponed to finish a land still hears `built` notes; messages held before the postpone are delivered when it is set.
 - Docs (br-f2yd): every role is told that `bridle ticket submit --project <project>` files work on another project's daemon, and when to use it instead of a message (new base rule `file-tickets-on-other-projects`). Migration: none; existing projects get it through `bridle workflow update` and `bridle sync`.
 - Chore (br-sdrw): every session and agent bridle launches runs with `promptSuggestionEnabled: false`, so a greyed suggestion is never mistaken for typed text in a tmux pane.

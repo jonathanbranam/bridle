@@ -3926,6 +3926,13 @@ async fn land_task(
         title: &task.title,
         summary: task.summary.as_deref(),
         is_arch_revision: task.kind == bridle_api::types::TicketKind::ArchRevision,
+        changelog_exempt: matches!(
+            task.kind,
+            bridle_api::types::TicketKind::Question
+                | bridle_api::types::TicketKind::Research
+                | bridle_api::types::TicketKind::Explore
+                | bridle_api::types::TicketKind::Incident
+        ),
         check,
         checked_commit: req.checked_commit.as_deref(),
         check_skip_paths: &state.check_skip_paths,
