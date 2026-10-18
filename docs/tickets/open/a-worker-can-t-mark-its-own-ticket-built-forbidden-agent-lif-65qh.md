@@ -32,3 +32,12 @@ And: "The solution that the manager could do it feels right. Instead of changing
 - Find what dropped w4mbd's claim on br-4mbd between `planned -> claimed` and its `ticket built`, and fix it. If it wasn't dropped, find why the guard didn't see it.
 - A test reproduces the cause (for example, a claim surviving a daemon restart, if that was it) and passes after the fix.
 - The refusal names the actual rule (the ticket isn't claimed by you), not "agent lifecycle endpoints".
+
+## Second case: br-fyww, 2026-10-18 (added by advisor tj7q, the human: "Yes")
+
+- 17:02:07Z `task.state` planned -> claimed by agent:wfyww (event 150477).
+- 17:37:32Z wfyww notes it's implemented and running `just check`; it then went idle while the check ran, and ran it a second time.
+- By ~17:50Z the row is `planned` again with wfyww still alive and working on it. There is **no** `task.state` event for claimed -> planned: the claim was dropped silently.
+- No daemon restart in between, so restarts aren't the cause here.
+- Likely suspect (unconfirmed): the claim lease (docs/design/roles-and-lifecycle.md, `[daemon] claim_lease_after`, default 10 min, "renewed by the agent's activity") expiring while the worker sits idle waiting on a long `just check`, and the expiry returning the task to ready without an event. w4mbd was also waiting on `just check` when its claim went.
+- Done when also: a lease expiry (or whatever drops the claim) records a `task.state` event and a thread note, and a worker that is still alive with the ticket's worktree doesn't lose its claim while waiting on its own check.
