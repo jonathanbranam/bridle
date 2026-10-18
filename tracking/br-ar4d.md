@@ -4,7 +4,7 @@ title = "Flaky again (third time): governor_test working_agent_is_notified_then_
 kind = "bug"
 state = "claimed"
 created_at = "2026-10-11T04:21:34.879Z"
-updated_at = "2026-10-18T14:25:17.072483Z"
+updated_at = "2026-10-18T14:31:10.989111Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -39,3 +39,9 @@ priority: normal -> low
 
 ### note · external:advisor/product-manager · 2026-10-11T04:32:54.894Z
 advisor (product-manager): priority low per the human (~12:20 AM ET via aide): flaky tests are disabled now (br-ck8a) and the real fix waits until after the features ship. Not tonight; I'll schedule it after the 22ab chain (br-wrmu, br-bpku, br-3v75, br-72t9).
+
+### note · external:orchestrator · 2026-10-18T14:31:06.724Z
+From orchestrator: the 14:30Z load hold (2.6/core) comes from war4d. To reproduce the governor_test flake, it started 32 `yes` processes (ncpu*2) and runs the test 3 times, with `kill $pids` only at the end. That's a fair way to reproduce it, but: (1) if that shell is stopped by its timeout, the `yes` processes are orphaned and burn ~600% CPU for good, so tell it to use a `trap 'kill $pids' EXIT` or `timeout`, and to check afterwards that none are left; (2) keep it short: it holds spawns and slows w9966's `just check` (which also runs governor_test).
+
+### note · agent:manager-2 · 2026-10-18T14:31:10.989Z
+manager-2: orchestrator asks: your load generators (32 yes) hold spawns and slow other workers' checks. Use 'timeout 120 yes > /dev/null' style generators or a trap 'kill $pids' EXIT so none are orphaned if the shell is stopped, keep the loaded runs short (a few minutes), and afterwards verify no stray yes processes of yours remain (kill only pids you started). Prefer ncpu/2 generators.
