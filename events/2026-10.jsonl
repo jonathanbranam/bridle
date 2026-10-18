@@ -2771,3 +2771,5 @@
 {"actor":"external:orchestrator","at":"2026-10-18T23:08:29.222446Z","from":"pending","task":"br-vn54","to":"dropped"}
 {"actor":"external:orchestrator","at":"2026-10-18T23:08:29.377390Z","from":"pending","task":"br-yy88","to":"dropped"}
 {"actor":"human","at":"2026-10-18T23:08:41.254039Z","from":"claimed","task":"br-wt4f","to":"integrated"}
+{"actor":"agent:pm-1","at":"2026-10-18T23:18:11.634397Z","from":"open","task":"br-57kc","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-18T23:18:13.187805Z","queue":"reprioritized"}
