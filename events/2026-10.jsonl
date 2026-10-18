@@ -2782,3 +2782,4 @@
 {"actor":"agent:pm-1","at":"2026-10-18T23:46:10.778299Z","from":"open","task":"br-eavq","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-18T23:46:13.613877Z","queue":"reprioritized"}
 {"actor":"human","at":"2026-10-18T23:46:34.284Z","from":"","task":"br-rdag","to":"pending"}
+{"actor":"external:aide","at":"2026-10-18T23:46:40.298476Z","from":"pending","task":"br-rdag","to":"open"}
