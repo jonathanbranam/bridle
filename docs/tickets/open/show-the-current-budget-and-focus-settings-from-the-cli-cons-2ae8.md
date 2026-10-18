@@ -13,9 +13,9 @@ blocked_by: []
 related: [br-4ge4, br-ewk8, br-cvaq]
 stages:
   proposal: {review: human}
-  design: {requires: [proposal]}
+  design: {requires: [proposal], review: human}
   specs: {requires: [proposal], review: human}
-  tasks: {requires: [design, specs]}
+  tasks: {requires: [design, specs], review: human}
 written: [proposal]
 signed: [proposal]
 ---
