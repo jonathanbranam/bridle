@@ -4,7 +4,8 @@ Status: built and in use as each step of epic br-tj7q lands. Step 1 (br-9mqh) is
 schema, the proposal section, the stage folder, `check`, `resolve` and `show`. Step 2 (br-quvh) is
 built: the stage rules, templates and `ticket next`. Step 3 (br-ussh) is built: `stage-done`,
 `approve`, `changes`, `restage` and ready-means-prepared. Step 4 (br-ewhy) is built: the daemon
-spawns the designers and runs the timer (below).
+spawns the designers and runs the timer (below). Step 5 (br-6c8x) is built: the worker rule and
+the land check (below).
 
 A version 2 ticket prepares itself in stages before a worker builds it. Version 1 tickets (no
 `version:`, or `version: 1`) have no stages and behave as before; version 2 is opt-in
@@ -120,5 +121,15 @@ that is not prepared:
   later edit of the ticket file lets the next tick start a writer.
 - The writers are tracked in memory; after a restart a running `designer-<id>-<stage>` agent is
   taken back by its name.
+
+## The worker and the land check (br-6c8x)
+
+The rule `stage-apply` (`roles: [worker]`, copied from OpenSpec's apply skill) tells a worker on
+a version 2 ticket to read the proposal, `design.md`, `specs.md` and `tasks.md`, merge specs.md
+into `design/specs/` as the first task, work through `tasks.md` in order ticking each item
+(`- [x]`), and pause on a blocker. Version 1 workers ignore it. `integrator::land` refuses a
+version 2 ticket whose landed `tasks.md` has `- [ ]` items (`Refused`, naming the first); version 1
+tickets, and a version 2 ticket with no `tasks.md`, are not checked. Rules injected into the apply
+step are V2.
 
 Code: `crates/bridle-daemon/src/stages.rs` and `stage_watch.rs`; in `crates/bridle/src/`, `stage_next.rs`; `stage_cmds.rs` has the four writing commands; `ticket.rs` has `check`, `create`, `resolve` and `show`.

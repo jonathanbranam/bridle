@@ -123,6 +123,11 @@ pub async fn land(i: &LandInput<'_>) -> Result<Landed, LandError> {
         });
     }
 
+    if let Some(msg) = unticked_tasks(&wt, i.task) {
+        let _ = run_git(&wt, &["reset", "-q", "--hard", &old]).await;
+        return Err(LandError::Refused(msg));
+    }
+
     // When the integration branch is an ancestor of the task tip, the squash tree equals the tip
     // tree, so the worker's green check covers it if it was on this very tip. A moved base means
     // a real merge. A git error here reads as "not an ancestor", so the check runs.
@@ -197,6 +202,47 @@ pub async fn land(i: &LandInput<'_>) -> Result<Landed, LandError> {
         let _ = std::fs::write(count_path(i), format!("{n}\n"));
     }
     Ok(Landed { commit: new, notes })
+}
+
+/// For a version 2 ticket (stages, br-tj7q) the landed tree's `tasks.md` must be fully ticked:
+/// the worker works through it item by item. Version 1 tickets and tasks without a ticket file
+/// pass. `Some(reason)` refuses the landing.
+fn unticked_tasks(wt: &Path, task: &str) -> Option<String> {
+    let bare = task.rsplit('-').next().unwrap_or(task);
+    let open = wt.join("docs/tickets/open");
+    for entry in std::fs::read_dir(&open).ok()?.flatten() {
+        let name = entry.file_name().to_string_lossy().into_owned();
+        let Some(stem) = name.strip_suffix(".md") else {
+            continue;
+        };
+        if !stem.ends_with(&format!("-{bare}")) {
+            continue;
+        }
+        let text = std::fs::read_to_string(entry.path()).ok()?;
+        let version_2 = text
+            .lines()
+            .skip(1)
+            .take_while(|l| l.trim_end() != "---")
+            .any(|l| l.trim_end() == "version: 2");
+        if !version_2 {
+            return None;
+        }
+        let tasks = std::fs::read_to_string(open.join(stem).join("tasks.md")).ok()?;
+        let open_items: Vec<&str> = tasks
+            .lines()
+            .map(str::trim_start)
+            .filter(|l| l.starts_with("- [ ]"))
+            .collect();
+        if open_items.is_empty() {
+            return None;
+        }
+        return Some(format!(
+            "{stem}/tasks.md has {} unticked item(s) (first: {}); a version 2 ticket lands with every task done",
+            open_items.len(),
+            open_items[0]
+        ));
+    }
+    None
 }
 
 /// The integration branch's new tip, when it moved past `old` and every path changed since
@@ -415,6 +461,38 @@ pub async fn run_check_for_test(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn ticket_tree(version: &str, tasks: Option<&str>) -> tempfile::TempDir {
+        let d = tempfile::tempdir().unwrap();
+        let open = d.path().join("docs/tickets/open");
+        std::fs::create_dir_all(open.join("x-6c8x")).unwrap();
+        std::fs::write(
+            open.join("x-6c8x.md"),
+            format!("---\nid: br-6c8x\n{version}---\nbody\n"),
+        )
+        .unwrap();
+        if let Some(t) = tasks {
+            std::fs::write(open.join("x-6c8x/tasks.md"), t).unwrap();
+        }
+        d
+    }
+
+    #[test]
+    fn version_2_with_unticked_tasks_is_refused() {
+        let d = ticket_tree("version: 2\n", Some("- [x] 1.1 a\n- [ ] 1.2 b\n"));
+        let msg = unticked_tasks(d.path(), "br-6c8x").expect("refused");
+        assert!(msg.contains("1 unticked") && msg.contains("1.2 b"), "{msg}");
+    }
+
+    #[test]
+    fn version_2_with_all_ticked_or_version_1_lands() {
+        let done = ticket_tree("version: 2\n", Some("- [x] 1.1 a\n"));
+        assert!(unticked_tasks(done.path(), "br-6c8x").is_none());
+        let v1 = ticket_tree("", Some("- [ ] 1.1 a\n"));
+        assert!(unticked_tasks(v1.path(), "br-6c8x").is_none());
+        let none = ticket_tree("version: 2\n", None);
+        assert!(unticked_tasks(none.path(), "br-6c8x").is_none());
+    }
 
     #[test]
     fn globs_match_paths() {
