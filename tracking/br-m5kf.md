@@ -4,7 +4,7 @@ title = "Specs: say what happens to unit tests a scenario now covers"
 kind = "chore"
 state = "built"
 created_at = "2026-10-05T02:51:25.940Z"
-updated_at = "2026-10-18T12:41:55.307868Z"
+updated_at = "2026-10-18T13:10:47.354412Z"
 created_by = "external:orchestrator@nuc"
 watchers = [
     "external:orchestrator@nuc",
