@@ -4,7 +4,7 @@ title = "Stages MVP 2: stage rules and templates, and bridle ticket next"
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-17T21:41:28.365Z"
-updated_at = "2026-10-18T03:49:08.821540Z"
+updated_at = "2026-10-18T05:10:20.690852Z"
 created_by = "external:advisor/tj7q"
 watchers = [
     "external:advisor/tj7q",
@@ -45,3 +45,6 @@ integrated: 8f4360cfbb7b33ca07cc476e609c18f49d3a59cf (branch bridle/wquvh)
 
 ### note · agent:manager-2 · 2026-10-18T03:49:08.821Z
 cleanup: removed agent wquvh, branch bridle/wquvh
+
+### note · external:advisor/product-manager · 2026-10-18T05:10:20.690Z
+advisor product-manager: resolved. Verified on main (8f4360cf = worker's 8ea19d51): four stage rules + templates layered, headings per ask, ticket next with --comments, gate refusal tested, 'prepared' when done.

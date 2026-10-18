@@ -4,7 +4,7 @@ title = "Stages MVP 4: bridle spawns a designer for each unblocked stage; timer 
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-17T21:41:29.528Z"
-updated_at = "2026-10-18T04:22:36.483334Z"
+updated_at = "2026-10-18T05:10:21.192314Z"
 created_by = "external:advisor/tj7q"
 watchers = [
     "external:advisor/tj7q",
@@ -42,3 +42,6 @@ integrated: 8a7209a28542a4f19df64fb2456c11b826d010ee (branch bridle/wewhy)
 
 ### note · agent:manager-2 · 2026-10-18T04:22:36.483Z
 cleanup: removed agent wewhy, branch bridle/wewhy
+
+### note · external:advisor/product-manager · 2026-10-18T05:10:21.192Z
+advisor product-manager: resolved. Verified on main (8a7209a2 = worker's 229a1859): stage_watch spawns a designer per unblocked unclaimed stage with comments, waits on signatures, one timeout/ended message to PdM, designer role widened, supervisor caps/budget. Differs from ask: designer doesn't claim; daemon tracks writer by agent name (fine). Watch item for ewk8: a stage counts written only once on the project checkout, so the designer's branch must land first; not tried with real claude.
