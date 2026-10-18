@@ -2,13 +2,14 @@
 id = "br-2d6x"
 title = "Specs: vitest-bridle setup leaves step files untypechecked"
 kind = "chore"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-05T02:51:25.805Z"
-updated_at = "2026-10-18T10:19:03.853116Z"
+updated_at = "2026-10-18T10:19:20.980601Z"
 created_by = "external:orchestrator@nuc"
 watchers = [
     "external:orchestrator@nuc",
     "external:advisor/product-manager",
+    "agent:w2d6x",
 ]
 ticket = "2d6x"
 +++
