@@ -2,11 +2,14 @@
 id = "br-65qh"
 title = "A worker can't mark its own ticket built: forbidden, agent lifecycle endpoints (its claim was gone)"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-18T13:09:56.799Z"
-updated_at = "2026-10-18T13:23:15.124009Z"
+updated_at = "2026-10-18T19:05:31.221285Z"
 created_by = "external:advisor/tj7q"
-watchers = ["external:advisor/tj7q"]
+watchers = [
+    "external:advisor/tj7q",
+    "agent:w65qh",
+]
 priority = "urgent"
 priority_at = "2026-10-18T13:10:06.455979Z"
 ticket = "65qh"

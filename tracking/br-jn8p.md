@@ -2,11 +2,14 @@
 id = "br-jn8p"
 title = "Orchestrator relaunch starts the session in the pane's old folder, not the home project's repo"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-18T13:53:44.516Z"
-updated_at = "2026-10-18T14:54:40.079041Z"
+updated_at = "2026-10-18T19:05:28.595651Z"
 created_by = "external:aide"
-watchers = ["external:aide"]
+watchers = [
+    "external:aide",
+    "agent:wjn8p",
+]
 ticket = "jn8p"
 +++
 
