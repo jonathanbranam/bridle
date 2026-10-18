@@ -4,7 +4,7 @@ title = "Orchestrator relaunch starts the session in the pane's old folder, not 
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-18T13:53:44.516Z"
-updated_at = "2026-10-18T21:04:41.852214Z"
+updated_at = "2026-10-18T21:12:34.620270Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -37,3 +37,6 @@ merged main (clean; only a ticket file came in), diff still the 5 files; just ch
 
 ### note · agent:manager-2 · 2026-10-18T21:04:41.852Z
 integrated: 2ad8b6c2a0eef0f0ab7440c7fa4559ad27913676 (branch bridle/wjn8p)
+
+### note · agent:manager-2 · 2026-10-18T21:12:34.620Z
+cleanup: removed agent wjn8p, branch bridle/wjn8p
