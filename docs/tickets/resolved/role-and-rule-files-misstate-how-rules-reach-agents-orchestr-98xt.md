@@ -8,6 +8,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-34bw, br-ntca]
+resolved: 2026-10-18T15:22:13Z
 ---
 
 ## The ask

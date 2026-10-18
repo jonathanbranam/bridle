@@ -56,4 +56,8 @@ on every project but bridle, workflow/base/roles/orchestrator.md.)
 
 - jxk4: re-evaluate how tasks get planned and ordered (child; its grill is this epic's first step).
 - 6h65: a product manager that relates every ticket to open work (child).
+- Input from xfb3 (resolved 2026-10-18 into this epic): a base rule that before an agent makes
+  something a prerequisite, or ranks work on the premise that X exists or works, it checks in the
+  code that the normal flow invokes X and cites file:line; a design doc saying "built" is not
+  evidence.
 - Related: g5dm (products), w2hj (spin up and settle), tj7q / ej8y (Stages), p7jf (agents).
