@@ -7,7 +7,7 @@ created_by: external:advisor/product-manager
 repos: [bridle]
 changes: []
 specs: []
-blocked_by: []
+blocked_by: [br-z485]
 related: [br-kuw2, br-ma8e, br-j2vq, br-3827]
 parent: br-j6d3
 theme: agents-and-cli

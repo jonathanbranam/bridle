@@ -15,7 +15,7 @@ before it moves: "waits on the human" is a pending task only the human can appro
 is the project manager's; "ready to build" is in the queue; "HELD" is planned in bridle but
 stopped by the human.
 
-Last updated: 2026-10-17 7:30 AM ET. "Epic status" below is current (checked against live
+Last updated: 2026-10-18 9:00 AM ET. "Epic status" below is current (checked against live
 ticket states); the theme tables further down were last regenerated 2026-10-12 and are stale.
 
 ## Epic status (2026-10-16), in the human's order
@@ -84,13 +84,15 @@ migrations.
 1c. **Move bridle and bridle-ui to remus: remus the dev machine, dalek a release client** (jw75; the human, 2026-10-11 ~9:05 PM ET). After kx5u, proven first on a small project (data-contracts). First step a design (orchestrator home, workflow source, upgrades, UI). Absorbs br-785a: the dev machine (remus) installs bridle-ui landings itself (tc7t option C); dalek, a release client, gets the UI from releases (t3dr). The human, 2026-10-17 ~6:20 PM ET: "Ok sure".
 2. **bridle-ui ships with bridle releases** (`ui-releases`; t3dr landed 2026-10-11, in v0.6.2: done)
 3. **One orchestrator per machine** (`orchestrator-per-machine`)
-4. **Machine admin role** (j6d3; gb97)
+3b. **Agents as their number grows** (br-p7jf; the human, 2026-10-18 ~8:45 AM ET: "I don't want more interactive sessions on RC. Let's move the orch to background before pursuing the admin"). First step z485 (orchestrator to the background: design pass, then the human's review); then a grill and a design for every interactive and background role. Absorbs epic 10 `background-agents` (ae9f).
+4. **Machine admin role** (j6d3; gb97). Design written 2026-10-18 (option B, an on-demand admin agent; the human: "That is the right idea for the admin"); its build waits on z485 (blocked_by).
 5. **Products: formalize the PdM role** (`products`)
 6. **Stages MVP: tickets prepare themselves** (br-tj7q; the human, 2026-10-17 ~7:25 AM ET: "tj7q should be the next priority"; grilled and split into MVP, V1 ej8y, V2 ckbt ~5:00 PM ET). Absorbs `attachments` and scheduler ladder steps 2-8, and 95mu from gates.
+6b. **Product and project planning** (br-dy6a; the human, 2026-10-18: "The other important thing after the current stages epics is the product/project planning work"). After Stages MVP, V1 and V2. Five questions (PM vs PdM, sharing a PM, small projects). Children jxk4, 6h65; products (5) related.
 7. **Gates: design before build, review before landing: the per-ticket workflow** (`reviews-enforced`; stx8 first)
 8. **Machine sync and recovery** (`machine-sync`)
 9. **Projects become machine-transparent** (`machine-transparent`)
-10. **Interactive agents move to the background** (`background-agents`; waits)
+10. ~~Interactive agents move to the background~~: moved into 3b (br-p7jf), 2026-10-18
 11. **Security and hardening** (3827; low)
 
 Anytime, when the queue is waiting on the human: **Comments and mentions reach the right agent**
@@ -760,3 +762,4 @@ Chores assigned to the human: expand on an idea, review a ticket or branch.
 - 2026-10-12 6:55 PM ET: usage epic: yydm narrowed to the gateway route, ui-u6uz filed (UI page); new xfy7 + ui-mxkj (chart one agent instance; the human), done-when item 4.
 - 2026-10-12 7:16 PM ET: br-yydm and ui-u6uz delivered and resolved (the Usage page shows on dalek after its next self-upgrade). New br-kyjg (bug: `ticket built` fails with a bare 'unknown' on bridle-ui; from the orchestrator) in reliability, not in an epic, pending the human.
 - 2026-10-17 6:20 PM ET: epic 2 `ui-releases` done: br-785a (dev machine installs bridle-ui landings, tc7t option C) folded into 1c (jw75), the human: "Ok sure". tc7t resolved. Stages MVP (tj7q) children 9mqh, quvh, ussh, ewhy, 6c8x readied high and first in the work order (the human, ~5:15 PM ET).
+- 2026-10-18 09:00 ET: new epics p7jf (agents as their number grows; z485 first, absorbs background-agents) as 3b, and dy6a (product and project planning) as 6b, after the Stages epics; gb97's build blocked on z485 (the human).
