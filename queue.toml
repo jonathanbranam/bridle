@@ -21,3 +21,6 @@ tasks = [
     "br-xccp",
     "br-4a4v",
 ]
+
+[[tier]]
+tasks = ["br-163f"]
