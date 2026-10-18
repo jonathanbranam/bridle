@@ -2747,3 +2747,4 @@
 {"actor":"external:advisor/tj7q","at":"2026-10-18T17:00:45.267597Z","from":"held","task":"br-fyww","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-18T17:00:53.442870Z","queue":"reprioritized"}
 {"actor":"agent:manager-2","at":"2026-10-18T17:33:22.512667Z","from":"built","task":"br-9966","to":"integrated"}
+{"actor":"agent:manager-2","at":"2026-10-18T19:02:18.507214Z","from":"built","task":"br-ar4d","to":"integrated"}

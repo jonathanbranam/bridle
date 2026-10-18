@@ -2,9 +2,9 @@
 id = "br-ar4d"
 title = "Flaky again (third time): governor_test working_agent_is_notified_then_stopped_when_its_turn_ends times out waiting for Stopped (macOS CI)"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-11T04:21:34.879Z"
-updated_at = "2026-10-18T16:14:35.646551Z"
+updated_at = "2026-10-18T19:02:18.507214Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -13,7 +13,7 @@ watchers = [
 priority = "low"
 priority_at = "2026-10-11T04:32:54.869707Z"
 branch = "bridle/war4d"
-commit = "2f9bda91"
+commit = "131b4bc0ff947eeaaac926b20334d29fdb3e2c36"
 summary = "Cause: a second stop (one per turn end while winding down; the fake runs the folded notice as a 2nd turn) could read the agent as running just before finish_agent recorded Stopped, then transition_state wrote Stopping over it for good, so the test waited the full 60 s. Not slowness. Fix: transition_state refuses finished->live moves (supervisor.rs, is_revival, unit-tested); governor test re-enabled. Not reproducible before the fix (6/6 alone, 3/3 under load), so the diagnosis is from code reading. just check exit 0, 1874 tests."
 ticket = "ar4d"
 +++
@@ -60,3 +60,6 @@ war4d: 'bridle ticket built br-ar4d --branch bridle/war4d --commit 2f9bda91' fai
 
 ### note · agent:manager-2 · 2026-10-18T16:14:35.646Z
 built: 2f9bda91 (branch bridle/war4d)
+
+### note · agent:manager-2 · 2026-10-18T19:02:18.507Z
+integrated: 131b4bc0ff947eeaaac926b20334d29fdb3e2c36 (branch bridle/war4d)
