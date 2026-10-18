@@ -75,6 +75,7 @@ fn settings_json(
     let mut settings = serde_json::json!({
         "autoMemoryEnabled": false,
         "autoDreamEnabled": false,
+        "promptSuggestionEnabled": false,
     });
     // Without `Skill` in `--tools` the skill listing is already gone; a role
     // that keeps it drops Claude Code's bundled skills instead (spike 08).
@@ -301,6 +302,7 @@ mod tests {
             serde_json::from_str(&args[i + 1]).expect("--settings is JSON");
         assert_eq!(settings["autoMemoryEnabled"], false);
         assert_eq!(settings["autoDreamEnabled"], false);
+        assert_eq!(settings["promptSuggestionEnabled"], false);
     }
 
     #[test]

@@ -13,10 +13,12 @@ use bridle_api::discovery::bridle_home;
 use crate::cli::{Cli, SessionRole};
 use crate::error::CliError;
 
+/// promptSuggestionEnabled:false: a greyed suggestion on the input line reads as typed text in a
+/// colour-stripped tmux pane (br-sdrw).
 /// Lean start (ticket ct8m, docs/spikes/08-lean-context-findings.md): drops bundled skills,
 /// workflows and the claude.ai connectors, and denies tools these roles never use. Not
 /// disableRemoteControl: the human reaches the session through Remote Control.
-const LEAN: &str = r#""disableBundledSkills":true,"disableWorkflows":true,"disableClaudeAiConnectors":true,"disableArtifact":true,"permissions":{"deny":["EnterPlanMode","ExitPlanMode","DesignSync","NotebookEdit","PushNotification","ReportFindings","RemoteTrigger","Artifact","Workflow","Edit(~/.bridle/focus*)","Edit(~/.bridle/config.toml)","Bash(pkill *)","Bash(killall *)","Bash(bridle token *)"]}"#;
+const LEAN: &str = r#""promptSuggestionEnabled":false,"disableBundledSkills":true,"disableWorkflows":true,"disableClaudeAiConnectors":true,"disableArtifact":true,"permissions":{"deny":["EnterPlanMode","ExitPlanMode","DesignSync","NotebookEdit","PushNotification","ReportFindings","RemoteTrigger","Artifact","Workflow","Edit(~/.bridle/focus*)","Edit(~/.bridle/config.toml)","Bash(pkill *)","Bash(killall *)","Bash(bridle token *)"]}"#;
 
 /// Focus hours (ticket cvaq): a no-op unless `~/.bridle/config.toml` has `[[focus]]`.
 const FOCUS_GATE: &str =
@@ -990,6 +992,14 @@ mod tests {
     fn settings_are_valid_json() {
         for s in [orchestrator_settings(), advisor_settings()] {
             serde_json::from_str::<serde_json::Value>(&s).expect("json");
+        }
+    }
+
+    #[test]
+    fn session_settings_turn_prompt_suggestions_off() {
+        for s in [orchestrator_settings(), advisor_settings()] {
+            let v: serde_json::Value = serde_json::from_str(&s).expect("json");
+            assert_eq!(v["promptSuggestionEnabled"], false);
         }
     }
 

@@ -1,4 +1,5 @@
 {
   "autoMemoryEnabled": false,
-  "autoDreamEnabled": false
+  "autoDreamEnabled": false,
+  "promptSuggestionEnabled": false
 }
