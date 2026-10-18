@@ -42,7 +42,7 @@ mod specid;
 mod stable;
 mod stage_cmds;
 mod stage_next;
-mod stages;
+use bridle_daemon::stages;
 mod statusline;
 mod stop_check;
 mod systemd;

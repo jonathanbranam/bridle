@@ -3,8 +3,8 @@
 Status: built and in use as each step of epic br-tj7q lands. Step 1 (br-9mqh) is built: the
 schema, the proposal section, the stage folder, `check`, `resolve` and `show`. Step 2 (br-quvh) is
 built: the stage rules, templates and `ticket next`. Step 3 (br-ussh) is built: `stage-done`,
-`approve`, `changes`, `restage` and ready-means-prepared. Spawning designers and the timer are
-later steps and are not built yet.
+`approve`, `changes`, `restage` and ready-means-prepared. Step 4 (br-ewhy) is built: the daemon
+spawns the designers and runs the timer (below).
 
 A version 2 ticket prepares itself in stages before a worker builds it. Version 1 tickets (no
 `version:`, or `version: 1`) have no stages and behave as before; version 2 is opt-in
@@ -96,4 +96,29 @@ gate is refused (exit 1, naming the stage); with nothing left it says "prepared"
 adds the human's thread comments newer than the output file's mtime (the ticket file's, for the
 proposal), for a redo. `--json` is for bridle's own use.
 
-Code: `crates/bridle/src/stages.rs`, `stage_next.rs`; `stage_cmds.rs` has the four writing commands; `ticket.rs` has `check`, `create`, `resolve` and `show`.
+## Writers and the timer (br-ewhy)
+
+The daemon's stage watch (`stage_watch.rs`, on the 30 s settle-wake tick) reads the version 2
+tickets in `docs/tickets/open/` of the project checkout. For a ticket whose row is `pending` and
+that is not prepared:
+
+- **Unclaimed** means no `claimed_by:` line in the frontmatter (the human's signature claim and
+  the filer's `--claim` both write it) and no row claim. A claimed ticket gets no writer.
+- With an unblocked stage and no writer running, it spawns a `designer` through the supervisor
+  (so the budget governor, load hold, drain and settle hold apply; it also waits while as many
+  designers run as `max_workers`). The prompt names the ticket and stage and tells the designer to
+  run `ticket next <id> --json --comments`; comments mean a redo after `changes`, which the prompt
+  asks it to address. The agent is `designer-<id>-<stage>` (a generated name for a redo). The
+  designer writes the stage, runs `stage-done`, commits on its branch and tells its manager; a
+  stage counts as done for the daemon when it is written on the project checkout, so the
+  branch must land first. Then the next tick finds the next unblocked stage, a signature wait
+  (`claimed_by: human`), or a prepared ticket.
+- A stage not written `[stages] timeout` (default 60m, `0` turns the watch off) after its writer
+  started, or whose writer ended without `stage-done` (not even in its worktree), adds a thread
+  note and sends one message to `external:advisor/product-manager`: "br-oooo: design not done by
+  designer-3, timed out". It is not retried. The product manager may `ticket restage`, or any
+  later edit of the ticket file lets the next tick start a writer.
+- The writers are tracked in memory; after a restart a running `designer-<id>-<stage>` agent is
+  taken back by its name.
+
+Code: `crates/bridle-daemon/src/stages.rs` and `stage_watch.rs`; in `crates/bridle/src/`, `stage_next.rs`; `stage_cmds.rs` has the four writing commands; `ticket.rs` has `check`, `create`, `resolve` and `show`.

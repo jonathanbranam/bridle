@@ -50,6 +50,8 @@ mod schedule;
 mod server;
 pub mod sessions;
 pub mod signing;
+mod stage_watch;
+pub mod stages;
 pub mod state_branch;
 pub mod store;
 mod supervisor;
@@ -869,6 +871,13 @@ async fn start_inner(
         overrides.open_watch_debounce,
         config.tasks_open_stale,
     );
+    let stage_watch = stage_watch::StageWatch::new(
+        store.clone(),
+        manager.clone(),
+        tasks.clone(),
+        ws.repo.join("docs/tickets"),
+        config.stages_timeout,
+    );
     let outbox = outbox::Outbox::new(
         store.clone(),
         overrides
@@ -1085,10 +1094,12 @@ async fn start_inner(
             let tickets_dir = tickets_dir.clone();
             let settle_wake = settle_wake.clone();
             let open_watch = open_watch.clone();
+            let stage_watch = stage_watch.clone();
             async move {
                 settle_wake.tick().await;
                 open_watch.tick().await;
                 tasks.sync_ticket_links(&tickets_dir).await;
+                stage_watch.tick().await;
             }
         }
     });

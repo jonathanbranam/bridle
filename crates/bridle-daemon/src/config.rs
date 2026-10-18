@@ -1679,6 +1679,9 @@ pub struct Config {
     /// `[tasks] open_stale`: an `open` task nobody planned for this long goes back to `pending`
     /// (xz4f). Zero turns it off.
     pub tasks_open_stale: Duration,
+    /// `[stages] timeout`: a stage whose writer started this long ago and is not written is
+    /// reported to the product manager (br-ewhy). Zero turns the stage watcher off.
+    pub stages_timeout: Duration,
     /// Where the L1/L2 workflow layers live (docs/design/workflow-layers.md):
     /// a path (relative to the repo root) or a git url. `None` until a
     /// project opts in. Read by `bridle_daemon::rules::discover_layers` as
@@ -1741,6 +1744,7 @@ impl Default for Config {
             tasks_settle: DEFAULT_SETTLE,
             tasks_settle_problem: None,
             tasks_open_stale: DEFAULT_OPEN_STALE,
+            stages_timeout: DEFAULT_STAGES_TIMEOUT,
             workflow: None,
             packs: Vec::new(),
             components: BTreeMap::new(),
@@ -2276,6 +2280,13 @@ impl Config {
             }
         }
 
+        if let Some(v) = raw.stages.and_then(|s| s.timeout) {
+            match parse_stages_timeout(&v) {
+                Ok(d) => config.stages_timeout = d,
+                Err(problem) => tracing::warn!("{problem}; using 60m"),
+            }
+        }
+
         config.workflow = raw.workflow;
         config.packs = raw.packs.unwrap_or_default();
         config.components = raw.components.unwrap_or_default();
@@ -2525,6 +2536,22 @@ fn parse_open_stale(v: &toml::Value) -> Result<Duration, String> {
     }
 }
 
+/// The `[stages] timeout` when unset or invalid.
+const DEFAULT_STAGES_TIMEOUT: Duration = Duration::from_secs(60 * 60);
+
+/// `[stages] timeout`: a duration string ("60m", "0s") or the integer 0.
+fn parse_stages_timeout(v: &toml::Value) -> Result<Duration, String> {
+    let bad = |v: &dyn std::fmt::Display| {
+        format!("[stages] timeout = {v} is not a duration like \"60m\" (or 0)")
+    };
+    match v {
+        toml::Value::Integer(0) => Ok(Duration::ZERO),
+        toml::Value::String(s) if s.trim() == "0" => Ok(Duration::ZERO),
+        toml::Value::String(s) => parse_duration(s).map_err(|_| bad(&format!("{s:?}"))),
+        other => Err(bad(other)),
+    }
+}
+
 /// Parses "10m"-style durations: an integer followed by `s`, `m` or `h`.
 fn parse_duration(s: &str) -> Result<Duration, ConfigError> {
     let s = s.trim();
@@ -2625,6 +2652,8 @@ struct RawConfig {
     messages: Option<RawMessages>,
     #[serde(default)]
     tasks: Option<RawTasks>,
+    #[serde(default)]
+    stages: Option<RawStages>,
     #[serde(default)]
     workflow: Option<String>,
     /// Machine scope only: the git url `bridle init` / `bridle workflow update` fetch the
@@ -3028,6 +3057,13 @@ struct RawTasks {
 }
 
 #[derive(Debug, Default, Deserialize)]
+struct RawStages {
+    /// A duration like "60m", or the integer 0.
+    #[serde(default)]
+    timeout: Option<toml::Value>,
+}
+
+#[derive(Debug, Default, Deserialize)]
 struct RawBudget {
     #[serde(default)]
     max_workers: Option<u32>,
@@ -3267,7 +3303,7 @@ fn role_preamble_suffix(role_name: &str) -> Option<&'static str> {
             "\nYou are a prototyper: build the prototype in your own worktree and branch, from the prompt's constraints only, and report back to whoever gave you the task.\n",
         ),
         "designer" => Some(
-            "\nYou are a designer: read the ticket you were given, analyse the system, write design options and a recommendation into that ticket, and report back to whoever gave you the task. Build nothing.\n",
+            "\nYou are a designer: write the ticket or stage you were given (a proposal, design, specs or tasks stage, by the rule `bridle ticket next` prints; or design options for a ticket that asks for them) into the ticket, and report back to whoever gave you the task. Build nothing.\n",
         ),
         "document-reviewer" => Some(
             "\nYou are a document-reviewer: answer the human's comments in the one document you were given, revise it when a comment asks, and commit each round.\n",
@@ -4581,6 +4617,15 @@ mod tests {
 
         let cfg = Config::default();
         assert_eq!(cfg.task_prefix, None);
+    }
+
+    #[test]
+    fn stages_timeout_parses_and_defaults() {
+        let secs = |t: &str| Config::parse(t).expect("parse").stages_timeout.as_secs();
+        assert_eq!(secs(""), 3600);
+        assert_eq!(secs("[stages]\ntimeout = \"30m\"\n"), 1800);
+        assert_eq!(secs("[stages]\ntimeout = 0\n"), 0);
+        assert_eq!(secs("[stages]\ntimeout = \"soon\"\n"), 3600);
     }
 
     #[test]

@@ -152,6 +152,7 @@ config key is named.
 | prune | 24 h | deletes old events and handovers | one delete | reads |
 | task flush | 30 s | `flush_now` writes the task state branch when something is pending | nothing pending: no git | none |
 | settle wake + open watch | 30 s | scans the in-memory task list for settled and stale-open tasks | in memory | none |
+| stage watch (same tick) | 30 s | spawns a `designer` for each unblocked stage of a pending version 2 ticket; messages the product manager when one is not done (`[stages] timeout`, default 60m, 0 = off); see [[docs/design/stages]] | the writers it started, in memory | a running `designer-<id>-<stage>` agent is taken back by name |
 | doc watch | 30 s | `list_agents`; reads the review registry file and each registered document | registry empty: one file read | reads |
 | claim lease | 30 s | one `get_agent` per claimed task | no claims: none | none |
 | ports | 30 s | lists ports; `kill(pid, 0)` per row | no rows: one query | reads |
