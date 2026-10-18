@@ -2260,6 +2260,15 @@ pub enum OrchestratorAction {
     /// enters recovery when the pid file and the wake polls disagree and the orchestrator
     /// doesn't settle it.
     ClearRecovery,
+    /// Stop the supervisor relaunching the orchestrator, until `release` (human only). Survives
+    /// a daemon restart; no backoff is counted and no "not running" note is sent while held.
+    Hold {
+        /// Why, shown in `bridle status`.
+        #[arg(long)]
+        reason: Option<String>,
+    },
+    /// Clear the hold: supervision resumes at once (human only).
+    Release,
     /// Every agent's handover note (same as `bridle handover`).
     Handover(HandoverArgs),
     /// Print a fresh session's opening context for a role.

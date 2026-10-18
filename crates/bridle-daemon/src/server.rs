@@ -313,6 +313,10 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/agents/{id}/transcript", get(transcript))
         .route("/v1/messages", get(list_messages).post(send_message))
         .route("/v1/incidents/notice", post(incident_notice))
+        .route(
+            "/v1/orchestrator/hold",
+            post(orchestrator_hold).delete(orchestrator_release),
+        )
         .route("/v1/outbox", post(send_outbox))
         .route("/v1/schedules", get(list_schedules).post(add_schedule))
         .route("/v1/schedules/{id}", axum::routing::delete(remove_schedule))
@@ -745,6 +749,41 @@ async fn incident_notice(
     incidents.record(&req.text).await;
     incidents.ask_orchestrator(&req.text).await;
     Ok(Json(serde_json::json!({})))
+}
+
+/// The store's `meta` key for the orchestrator hold (JSON; survives a daemon restart).
+pub const HOLD_META_KEY: &str = "orchestrator_hold";
+
+/// `POST /v1/orchestrator/hold` (human only): the supervisor stops relaunching until released.
+async fn orchestrator_hold(
+    State(state): State<AppState>,
+    principal: Extension<Principal>,
+    Json(req): Json<bridle_api::types::HoldOrchestratorRequest>,
+) -> Result<Json<bridle_api::types::OrchestratorHold>, ApiError> {
+    require_human(&principal.0)?;
+    let hold = bridle_api::types::OrchestratorHold {
+        reason: req.reason.filter(|r| !r.trim().is_empty()),
+        since: chrono::Utc::now(),
+    };
+    let json = serde_json::to_string(&hold).expect("a plain struct serializes");
+    state.store.swap_meta(HOLD_META_KEY, &json).await?;
+    state.handover.set_hold(Some(hold.clone()));
+    Ok(Json(hold))
+}
+
+/// `DELETE /v1/orchestrator/hold` (human only): supervision resumes at the next tick.
+async fn orchestrator_release(
+    State(state): State<AppState>,
+    principal: Extension<Principal>,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    require_human(&principal.0)?;
+    state.store.swap_meta(HOLD_META_KEY, "").await?;
+    let was = state.handover.set_hold(None);
+    // The config key isn't ours to clear: say so, so `release` doesn't claim all is well.
+    Ok(Json(serde_json::json!({
+        "released": was.is_some(),
+        "config_held": state.handover.config_held(),
+    })))
 }
 
 fn require_human(principal: &Principal) -> Result<(), ApiError> {
@@ -1436,6 +1475,7 @@ async fn status(
                 created_by: t.created_by,
             })
             .collect(),
+        orchestrator_hold: state.handover.hold(),
         waiter_open,
         last_wake_at,
         upgrade_waiting: state.manager.upgrade_waiting(),

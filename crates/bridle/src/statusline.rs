@@ -438,6 +438,7 @@ mod tests {
             load: None,
             outbox: Vec::new(),
             incidents: Vec::new(),
+            orchestrator_hold: None,
             waiter_open: false,
             last_wake_at: None,
             upgrade_waiting: None,

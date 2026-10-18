@@ -1,6 +1,6 @@
 # Orchestrator supervision
 
-> **Status (checked 2026-10-03):** Built and in use: slices 1a, 1b, 2 and 3 (liveness, relaunch and backoff, wake conditions and `wait-for-wake`, context and uptime notes, forced restart, `handover done`, the handover note as a record), advisor session registration, `session.context` steps with warnings, `session keep` and the forced restart at the hard limit · Planned: `bridle orchestrator pause`, wakes for advisors, automatic crash restart for advisors (tabled), percentage thresholds, filing supervisor incidents as `incident` tasks (it still sends a `system` note plus an `orchestrator.incident` event)
+> **Status (checked 2026-10-03):** Built and in use: slices 1a, 1b, 2 and 3 (liveness, relaunch and backoff, wake conditions and `wait-for-wake`, context and uptime notes, forced restart, `handover done`, the handover note as a record), advisor session registration, `session.context` steps with warnings, `session keep` and the forced restart at the hard limit · Built: `bridle orchestrator hold` / `release` (br-9966) · Planned: wakes for advisors, automatic crash restart for advisors (tabled), percentage thresholds, filing supervisor incidents as `incident` tasks (it still sends a `system` note plus an `orchestrator.incident` event)
 
 Design for ticket [[the-orchestrator-stays-running-fx7x|fx7x]]; signals verified in
 [[docs/spikes/07-orchestrator-supervision-findings|spike 07]]. **Slice 1a built** (br-a424): liveness, relaunch and crash-loop backoff (sections 1 to 4, the
@@ -69,6 +69,25 @@ no context or uptime notes, no incidents) until `bridle orchestrator clear-recov
 the minimum flag, not the general hold of 8fsx. The launcher already refuses under a bridle
 agent (`BRIDLE_AGENT_ID`, k6b3) and beside a live pid (`--replace`).
 
+**Hold** (br-9966, ticket 8fsx). `bridle orchestrator hold [--reason T]` (human only,
+`POST /v1/orchestrator/hold`) sets a runtime flag; `release` (`DELETE`) clears it. The flag is the
+store's `meta` key `orchestrator_hold` (JSON `{reason, since}`), loaded at daemon start, so it survives
+a restart, and works whether or not `[orchestrator] enabled` is set. While it is set the tick
+returns first thing, as in recovery mode: no relaunch, no backoff counted, no notes or incidents.
+`bridle status` prints `orchestrator: held (reason), since ...` (`orchestrator_hold` in the status
+JSON). It is separate from recovery mode, which the supervisor sets itself; 7d62's and 4r3k's
+boot step can read the flag. Not per-machine. A hold forgets the backoff (attempts, last attempt, a
+pending relaunch, give-up), so `release` relaunches on the first tick that finds it down.
+
+**`autostart` (machine config).** `[orchestrator] autostart = false` in `$BRIDLE_HOME/config.toml`
+(default true; machine file only, no commit in a project) keeps the orchestrator down with no
+restart of any daemon. The supervisor reads it only when the session is down, its pid isn't a live
+`bridle session` and no wake command is polling, i.e. only when a launch could happen, never while
+the session is up; only the supervising daemon does. False acts like a hold (no relaunch, no
+backoff, no note) and `bridle status` shows it as held with reason "autostart = false in config".
+Flip it to true and the next tick relaunches. `release` doesn't clear it (it says so). An
+unreadable file counts as true.
+
 ## 2. Config
 
 An `[orchestrator]` table in the project's `.bridle/config.toml` (`roles-and-config.md`, "Other keys").
@@ -84,6 +103,7 @@ plan_tokens        = "180k"    # "plan a handover at the next quiet point"
 handover_tokens    = "200k"    # "hand over now"; starts the deadline
 handover_deadline  = "30m"     # after the "now" (or uptime) message; then the session is stopped
 max_uptime         = "12h"     # a plan-a-handover at this age; the deadline follows
+# autostart        = false  # machine config.toml only: keep it down; see "Hold" above
 relaunch_backoff   = ["30s", "2m", "10m"]   # wait before relaunch 1, 2, 3; then give up
 stable_after       = "10m"     # a session that lasts this long resets the relaunch count
 waiter_grace       = "15m"     # no wait-for-wake connected for this long (session up) = incident

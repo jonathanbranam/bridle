@@ -133,6 +133,13 @@ pub(super) async fn status(cli: &Cli) -> Result<(), CliError> {
                     .map_or("never".into(), |t| format!("{}m ago", mins(t)))
             );
         }
+        if let Some(h) = &status.orchestrator_hold {
+            println!(
+                "orchestrator: held ({}), since {}",
+                h.reason.as_deref().unwrap_or("no reason given"),
+                h.since.to_rfc3339()
+            );
+        }
         let waiting = if status.waiter_open {
             "waiting"
         } else {

@@ -10,7 +10,7 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex as StdMutex};
 use std::time::Duration;
 
-use bridle_api::types::{MessageKind, WakeReason, When, event_kind};
+use bridle_api::types::{MessageKind, OrchestratorHold, WakeReason, When, event_kind};
 use chrono::{DateTime, Utc};
 use serde_json::json;
 use tokio::sync::Mutex;
@@ -102,15 +102,57 @@ impl EventEmitter for Emitter {
 /// `bridle handover done`: when the orchestrator said it has written its state. Only a mark
 /// made after the current session launched counts, so a stale one never stops the next session.
 #[derive(Default)]
-pub struct Handover(StdMutex<Option<DateTime<Utc>>>);
+pub struct Handover {
+    done: StdMutex<Option<DateTime<Utc>>>,
+    /// `bridle orchestrator hold` (br-8fsx): set and cleared by the server, which persists it.
+    hold: StdMutex<Option<OrchestratorHold>>,
+    /// Since when the supervisor has found `autostart = false` in the machine config with the
+    /// orchestrator down. Set and cleared by the supervisor, never stored.
+    config_hold: StdMutex<Option<DateTime<Utc>>>,
+}
 
 impl Handover {
+    /// The hold `bridle orchestrator hold` set.
+    pub fn command_hold(&self) -> Option<OrchestratorHold> {
+        self.hold.lock().expect("hold lock").clone()
+    }
+
+    /// What `bridle status` shows: the command's hold, else the config key's.
+    pub fn hold(&self) -> Option<OrchestratorHold> {
+        self.command_hold().or_else(|| {
+            self.config_hold
+                .lock()
+                .expect("config hold lock")
+                .map(|since| OrchestratorHold {
+                    reason: Some("autostart = false in config".into()),
+                    since,
+                })
+        })
+    }
+
+    pub fn config_held(&self) -> bool {
+        self.config_hold.lock().expect("config hold lock").is_some()
+    }
+
+    fn set_config_hold(&self, held: bool, now: DateTime<Utc>) {
+        let mut g = self.config_hold.lock().expect("config hold lock");
+        match (held, g.is_some()) {
+            (true, false) => *g = Some(now),
+            (false, true) => *g = None,
+            _ => {}
+        }
+    }
+
+    pub fn set_hold(&self, hold: Option<OrchestratorHold>) -> Option<OrchestratorHold> {
+        std::mem::replace(&mut *self.hold.lock().expect("hold lock"), hold)
+    }
+
     pub fn mark(&self, now: DateTime<Utc>) {
-        *self.0.lock().expect("handover lock") = Some(now);
+        *self.done.lock().expect("handover lock") = Some(now);
     }
 
     fn done_since(&self, launched: i64) -> bool {
-        self.0
+        self.done
             .lock()
             .expect("handover lock")
             .is_some_and(|t| t.timestamp() >= launched)
@@ -191,6 +233,20 @@ struct State {
     deliberate: Option<Stop>,
 }
 
+impl State {
+    /// A hold forgets the backoff, so a release relaunches on its first tick, not after a wait
+    /// carried over from before the hold.
+    fn forget_backoff(&mut self) {
+        self.attempts = 0;
+        self.last_attempt = None;
+        self.pending = None;
+        self.given_up = false;
+        self.shell_seen = None;
+        self.dead_noted = false;
+        self.last_incident = None;
+    }
+}
+
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Stop {
     HandoverDone,
@@ -253,6 +309,12 @@ impl<T: Tmux, P: Procs, I: Incidents, W: WakeSink, E: EventEmitter> Supervisor<T
 
     pub async fn tick(&self, now: DateTime<Utc>) {
         let mut st = self.state.lock().await;
+        // Held by the human: like recovery, act on nothing, so no backoff is counted and no
+        // incident is raised. The next tick after release sees the pid file as it is.
+        if self.handover.command_hold().is_some() {
+            st.forget_backoff();
+            return;
+        }
         // Recovery mode: the supervisor acts on nothing (no relaunch, no notes) until cleared.
         if self.home.join(RECOVERY_FILE).exists() {
             if !std::mem::replace(&mut st.recovery_noted, true) {
@@ -284,6 +346,7 @@ impl<T: Tmux, P: Procs, I: Incidents, W: WakeSink, E: EventEmitter> Supervisor<T
             st.dead_noted = false;
             st.mismatch_noted = false;
             st.last_incident = None;
+            self.handover.set_config_hold(false, now);
             // Two sessions polling for one orchestrator.
             let two = self.waiters.open_count() > 1;
             self.crosscheck(&mut st, now, two, "two wake commands are polling")
@@ -317,6 +380,15 @@ impl<T: Tmux, P: Procs, I: Incidents, W: WakeSink, E: EventEmitter> Supervisor<T
             )
             .await
         {
+            return;
+        }
+
+        // `autostart = false` in the machine config: read only now, with the orchestrator down
+        // and nothing polling, so flipping it needs no restart and costs nothing while it is up.
+        let autostart = crate::config::Config::machine_orchestrator_autostart(&self.home);
+        self.handover.set_config_hold(!autostart, now);
+        if !autostart {
+            st.forget_backoff();
             return;
         }
 
@@ -1316,6 +1388,69 @@ mod tests {
             "the pane gets a fresh pty running a shell, never tmux's remembered command, \
              before the launcher is typed"
         );
+    }
+
+    #[tokio::test]
+    async fn a_hold_stops_relaunch_notes_and_backoff_until_released() {
+        let r = Rig::new();
+        r.write_pid(10, r.t0.timestamp() - 1000);
+        r.relaunch(0).await;
+        assert_eq!(r.typed(), 1);
+        let notes = r.incidents().len();
+        r.handover.set_hold(Some(OrchestratorHold {
+            reason: Some("maintenance".into()),
+            since: r.t0,
+        }));
+        // Long enough for several relaunches and a give-up, were it not held.
+        for secs in [40, 50, 100, 1000, 5000] {
+            r.relaunch(secs).await;
+        }
+        assert_eq!(r.typed(), 1);
+        assert_eq!(r.incidents().len(), notes, "no note or incident while held");
+        assert_eq!(r.sup.state.lock().await.attempts, 0, "no backoff counted");
+        // Released inside what would have been the backoff after the first relaunch: the
+        // relaunch goes on the first tick, with nothing carried over from before the hold.
+        r.handover.set_hold(None);
+        r.relaunch(5001).await;
+        assert_eq!(r.typed(), 2);
+    }
+
+    fn set_autostart(r: &Rig, on: bool) {
+        std::fs::write(
+            r.dir.path().join("config.toml"),
+            format!("[orchestrator]\nautostart = {on}\n"),
+        )
+        .unwrap();
+    }
+
+    #[tokio::test]
+    async fn autostart_false_in_the_machine_config_keeps_it_down_until_flipped() {
+        let r = Rig::new();
+        set_autostart(&r, false);
+        r.write_pid(10, r.t0.timestamp() - 1000);
+        for secs in [0, 10, 100, 1000] {
+            r.relaunch(secs).await;
+        }
+        assert_eq!(r.typed(), 0);
+        assert!(r.incidents().is_empty());
+        assert_eq!(
+            r.handover.hold().unwrap().reason.as_deref(),
+            Some("autostart = false in config")
+        );
+        // No restart: the next tick that finds it down reads the flipped key.
+        set_autostart(&r, true);
+        r.relaunch(1100).await;
+        assert_eq!(r.typed(), 1);
+        assert!(r.handover.hold().is_none());
+    }
+
+    #[tokio::test]
+    async fn the_autostart_key_is_not_read_while_it_is_up() {
+        let r = Rig::new();
+        r.live();
+        set_autostart(&r, false);
+        r.tick(10).await;
+        assert!(r.handover.hold().is_none(), "a live session is left alone");
     }
 
     #[tokio::test]

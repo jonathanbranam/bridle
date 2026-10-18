@@ -155,6 +155,9 @@ pub struct Status {
     /// Active incidents (tasks of kind `incident`, `planned`).
     #[serde(default)]
     pub incidents: Vec<IncidentSummary>,
+    /// The orchestrator relaunch is held (`bridle orchestrator hold`); `None` when not.
+    #[serde(default)]
+    pub orchestrator_hold: Option<OrchestratorHold>,
     /// A `wait-for-wake` request is open now (the orchestrator is listening).
     #[serde(default)]
     pub waiter_open: bool,
@@ -830,6 +833,21 @@ pub struct Message {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IncidentNotice {
     pub text: String,
+}
+
+/// The orchestrator supervisor's runtime hold (`bridle orchestrator hold`): no relaunch while set.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct OrchestratorHold {
+    #[serde(default)]
+    pub reason: Option<String>,
+    pub since: DateTime<Utc>,
+}
+
+/// `POST /v1/orchestrator/hold` (human only).
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct HoldOrchestratorRequest {
+    #[serde(default)]
+    pub reason: Option<String>,
 }
 
 /// `POST /v1/messages` requires `to` (`human`, agent id or name, or

@@ -27,6 +27,37 @@ pub fn clear_recovery() -> Result<(), crate::error::CliError> {
     Ok(())
 }
 
+/// `bridle orchestrator hold`.
+pub async fn hold(
+    cli: &crate::cli::Cli,
+    reason: Option<String>,
+) -> Result<(), crate::error::CliError> {
+    let client = crate::commands::client_for(cli).await?;
+    let hold = client.orchestrator_hold(reason).await?;
+    println!(
+        "orchestrator relaunch held since {}",
+        hold.since.to_rfc3339()
+    );
+    Ok(())
+}
+
+/// `bridle orchestrator release`.
+pub async fn release(cli: &crate::cli::Cli) -> Result<(), crate::error::CliError> {
+    let client = crate::commands::client_for(cli).await?;
+    let (released, config_held) = client.orchestrator_release().await?;
+    if released {
+        println!("hold released; the orchestrator supervisor resumes");
+    } else {
+        println!("not held");
+    }
+    if config_held {
+        println!(
+            "autostart = false in ~/.bridle/config.toml still keeps the orchestrator down; set it true (no restart needed)"
+        );
+    }
+    Ok(())
+}
+
 fn session_id(input: &Value) -> Option<&str> {
     input
         .get("session_id")

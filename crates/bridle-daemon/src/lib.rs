@@ -727,6 +727,14 @@ async fn start_inner(
     let wakes = wake::Wakes::new(store.clone());
     let waiters = wake::Waiters::new(Utc::now());
     let handover: std::sync::Arc<orchestrator::Handover> = Default::default();
+    // A hold set before a restart still holds (br-8fsx).
+    if let Some(hold) = store
+        .get_meta(server::HOLD_META_KEY)
+        .await?
+        .and_then(|j| serde_json::from_str(&j).ok())
+    {
+        handover.set_hold(Some(hold));
+    }
     let sessions = sessions::Sessions::new(
         overrides
             .bridle_home

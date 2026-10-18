@@ -1830,6 +1830,17 @@ impl Config {
         }
     }
 
+    /// `[orchestrator] autostart` in `<home>/config.toml` (default true). Read each time the
+    /// supervisor finds the orchestrator down; an unreadable file counts as true, so a typo
+    /// can't stop the orchestrator coming back.
+    pub fn machine_orchestrator_autostart(home: &Path) -> bool {
+        Self::load_machine_overrides(Some(home))
+            .ok()
+            .and_then(|r| r.orchestrator)
+            .and_then(|o| o.autostart)
+            .unwrap_or(true)
+    }
+
     /// The machine's `workflow_url` from `<home>/config.toml`, if any.
     pub fn machine_workflow_url(
         home_override: Option<&Path>,
@@ -3024,6 +3035,9 @@ impl<'de> Deserialize<'de> for TokenCount {
 struct RawOrchestrator {
     #[serde(default)]
     enabled: Option<bool>,
+    /// Machine `config.toml` only (read by `Config::machine_orchestrator_autostart`).
+    #[serde(default)]
+    autostart: Option<bool>,
     #[serde(default)]
     launcher: Option<String>,
     #[serde(default)]

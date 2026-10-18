@@ -15,24 +15,24 @@ use crate::types::{
     AskQuestionRequest, BudgetHoldRequest, BudgetOverrideRequest, BudgetStatus, BuiltTicketRequest,
     Conflict, DoneTicketRequest, DropTicketRequest, Edge, EditTicketRequest, Event, EventQuery,
     ForwardAck, ForwardRequest, ForwardState, Handover, HandoverDone, Health, HelloRequest,
-    HoldRequest, HoldTicketRequest, ImpactCheckRequest, ImpactReport, IncidentNotice, Interaction,
-    InteractionsQuery, InterruptRequest, InterruptResponse, LandRequest, LandResult,
-    MaxWorkersRequest, Message, MessageQuery, NewEdgeRequest, NewTicketRequest, NoteTicketRequest,
-    OpenQuestion, OrchestratorWakeQuery, OutboxEntry, OutboxSendRequest, PeerTokenCreateRequest,
-    PeerWatchRequest, PortAllocation, PrincipalWakeQuery, PrincipalWakeResponse, ProbeRequest,
-    ProbeResult, PushResult, Queue, Queued, RateLimitPoint, Recipient, RemoteWatchRequest,
-    RemoveEdgeQuery, RemoveQuery, RenewRequest, ResolveConflictRequest, RestartHoldRequest,
-    RestartHoldResponse, RestartRequest, RestartResponse, ResumeRequest, ReviewAddRequest,
-    ReviewAddResponse, ReviewNowRequest, ReviewNowResponse, Schedule, ScheduleAddRequest,
-    ScheduleListQuery, SendBackTicketRequest, SendRequest, SessionEnd, SessionInfo, SessionKeep,
-    SessionRegister, SetImpactRequest, SetKindRequest, SetPriorityRequest, SetQueueRequest,
-    SetSummaryRequest, ShutdownResponse, SkipSettleRequest, SpawnRequest, Status, StatusLineReport,
-    StopRequest, StopWakeRequest, StopWakeResponse, SubmitTicketRequest, Ticket, TicketQuery,
-    TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine, TranscriptQuery, Usage,
-    UsageBreakdown, UsageBreakdownQuery, UsageGroups, UsageGroupsQuery, UsageHistoryQuery,
-    UsageInstance, UsageInstancesQuery, UsagePeriods, UsagePeriodsQuery, UsageSeries,
-    UsageSeriesQuery, UsageSessionTurn, UsageSessions, UsageSessionsQuery, WakeResponse,
-    WriteHandoverRequest,
+    HoldOrchestratorRequest, HoldRequest, HoldTicketRequest, ImpactCheckRequest, ImpactReport,
+    IncidentNotice, Interaction, InteractionsQuery, InterruptRequest, InterruptResponse,
+    LandRequest, LandResult, MaxWorkersRequest, Message, MessageQuery, NewEdgeRequest,
+    NewTicketRequest, NoteTicketRequest, OpenQuestion, OrchestratorHold, OrchestratorWakeQuery,
+    OutboxEntry, OutboxSendRequest, PeerTokenCreateRequest, PeerWatchRequest, PortAllocation,
+    PrincipalWakeQuery, PrincipalWakeResponse, ProbeRequest, ProbeResult, PushResult, Queue,
+    Queued, RateLimitPoint, Recipient, RemoteWatchRequest, RemoveEdgeQuery, RemoveQuery,
+    RenewRequest, ResolveConflictRequest, RestartHoldRequest, RestartHoldResponse, RestartRequest,
+    RestartResponse, ResumeRequest, ReviewAddRequest, ReviewAddResponse, ReviewNowRequest,
+    ReviewNowResponse, Schedule, ScheduleAddRequest, ScheduleListQuery, SendBackTicketRequest,
+    SendRequest, SessionEnd, SessionInfo, SessionKeep, SessionRegister, SetImpactRequest,
+    SetKindRequest, SetPriorityRequest, SetQueueRequest, SetSummaryRequest, ShutdownResponse,
+    SkipSettleRequest, SpawnRequest, Status, StatusLineReport, StopRequest, StopWakeRequest,
+    StopWakeResponse, SubmitTicketRequest, Ticket, TicketQuery, TokenCreateRequest, TokenCreated,
+    TokenInfo, TranscriptLine, TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery,
+    UsageGroups, UsageGroupsQuery, UsageHistoryQuery, UsageInstance, UsageInstancesQuery,
+    UsagePeriods, UsagePeriodsQuery, UsageSeries, UsageSeriesQuery, UsageSessionTurn,
+    UsageSessions, UsageSessionsQuery, WakeResponse, WriteHandoverRequest,
 };
 
 pub use bridle_docs::documents::{
@@ -328,6 +328,29 @@ impl Client {
             )
             .await?;
         Ok(())
+    }
+
+    /// `POST /v1/orchestrator/hold` (human token): the supervisor stops relaunching.
+    pub async fn orchestrator_hold(
+        &self,
+        reason: Option<String>,
+    ) -> Result<OrchestratorHold, ClientError> {
+        self.post_json(
+            &["v1", "orchestrator", "hold"],
+            &HoldOrchestratorRequest { reason },
+        )
+        .await
+    }
+
+    /// `DELETE /v1/orchestrator/hold` (human token): `(released, config_held)`: a hold was
+    /// cleared, and `autostart = false` in the machine config still keeps the orchestrator down.
+    pub async fn orchestrator_release(&self) -> Result<(bool, bool), ClientError> {
+        let req = self.request(Method::DELETE, &["v1", "orchestrator", "hold"])?;
+        let v: serde_json::Value = self.send_json(req).await?;
+        Ok((
+            v["released"].as_bool().unwrap_or(false),
+            v["config_held"].as_bool().unwrap_or(false),
+        ))
     }
 
     /// `GET /v1/outbox/{id}`: where a message sent to another daemon has got to.

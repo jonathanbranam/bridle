@@ -236,6 +236,12 @@ pub async fn run(mut cli: Cli) -> Result<(), CliError> {
         Command::Orchestrator(OrchestratorArgs {
             action: OrchestratorAction::ClearRecovery,
         }) => crate::orchestrator::clear_recovery(),
+        Command::Orchestrator(OrchestratorArgs {
+            action: OrchestratorAction::Hold { reason },
+        }) => crate::orchestrator::hold(&cli, reason.clone()).await,
+        Command::Orchestrator(OrchestratorArgs {
+            action: OrchestratorAction::Release,
+        }) => crate::orchestrator::release(&cli).await,
         Command::Focus(FocusArgs {
             action: FocusAction::Gate,
         }) => {
