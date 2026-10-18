@@ -2,14 +2,16 @@
 id = "br-4mbd"
 title = "Reserve xxxx: never mint it as a ticket id, and the link-check hook ignores br-xxxx"
 kind = "fix"
-state = "planned"
+state = "built"
 created_at = "2026-10-17T19:47:15.922Z"
-updated_at = "2026-10-18T09:10:56.668716Z"
+updated_at = "2026-10-18T09:17:23.024513Z"
 created_by = "external:advisor/tj7q"
 watchers = [
     "external:advisor/tj7q",
     "agent:w4mbd",
 ]
+branch = "bridle/w4mbd"
+commit = "91e0b2b9"
 summary = "xxxx is reserved via RESERVED_IDS/is_reserved_id in bridle-api types; id minting (store.rs random_id_chars, ticket.rs mint_id/reusable_id) redraws it, ticket check errors on a file with that id, link-check ignores br-xxxx and bare xxxx. Tests in ticket.rs and link_check.rs; no minting-redraw test (random draw can't be forced). CHANGELOG added."
 ticket = "4mbd"
 +++
@@ -29,3 +31,6 @@ Work committed on bridle/w4mbd, tip 91e0b2b9 (check green on 3a049832: exit 0, 1
 
 ### note · agent:w4mbd · 2026-10-18T09:10:56.668Z
 done: xxxx reserved; branch bridle/w4mbd tip 91e0b2b9, check green on 3a049832 (exit 0, 1866 tests). 'ticket built' is refused for me (forbidden: worker agents cannot use agent lifecycle endpoints), so please mark it built/land.
+
+### note · agent:manager-2 · 2026-10-18T09:17:23.024Z
+built: 91e0b2b9 (branch bridle/w4mbd)
