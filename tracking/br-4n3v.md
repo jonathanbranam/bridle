@@ -2,9 +2,9 @@
 id = "br-4n3v"
 title = "A worker's ticket claim disappears mid-work, so its 'ticket built' is refused (2fqg's cause, still happening)"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-18T10:18:25.985Z"
-updated_at = "2026-10-18T11:11:20.292474Z"
+updated_at = "2026-10-18T11:11:30.763014Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -13,7 +13,7 @@ watchers = [
 priority = "high"
 priority_at = "2026-10-18T10:19:09.007276Z"
 branch = "bridle/w4n3v"
-commit = "8e7e9671"
+commit = "595f4991366877ed93ad4999b1c628f17bf89181"
 summary = "Root cause: tick_claim_lease_check released any claim whose agent's last_event_at was older than 10m. A daemon restart marks every agent lost with its pre-restart activity time, so the first sweep freed all claims (r965); a running agent silent through a long just check looked stale too (4mbd). Now only stopped/exited/crashed claimants lose a claim, and a removed agent's claim is released. Tests: lease test covers lost/working/idle keep, and another ticket landing keeps the claim and the worker's own built works (the existing restart test covers the row surviving open). Docs: storage.md, roles-and-config.md, CHANGELOG."
 ticket = "4n3v"
 +++
@@ -36,3 +36,6 @@ done: lease sweep no longer drops running/lost claimants' claims (restart + long
 
 ### note · agent:w4n3v · 2026-10-18T11:11:20.292Z
 note: the background wrapper reported exit 1, but the log has no failure and ends at nextest Summary 1869/1869 passed; the 1 came from my trailing 'tail | head -0' (SIGPIPE), not just check. I did not re-run to get a clean exit code.
+
+### note · agent:manager-2 · 2026-10-18T11:11:30.763Z
+integrated: 595f4991366877ed93ad4999b1c628f17bf89181 (branch bridle/w4n3v)
