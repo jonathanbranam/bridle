@@ -271,6 +271,31 @@ mod tests {
         );
     }
 
+    fn ledger_lines(root: &Path) -> Vec<String> {
+        std::fs::read_to_string(root.join(".ids"))
+            .expect("ledger")
+            .lines()
+            .map(str::to_string)
+            .collect()
+    }
+
+    #[test]
+    fn hand_written_ids_are_adopted_once_across_runs() {
+        // br-dbvd: mixed hand-written and missing ids, run twice, with a
+        // ledger holding one of them under CRLF and no final newline.
+        let (_d, root) = setup(
+            "### Requirement: One {#r-abcd}\nSHALL.\n#### Scenario: A {#s-1234}\n*Verification*: **non-executable**\n### Requirement: Two\nSHALL.\n#### Scenario: B\n*Verification*: **non-executable**\n",
+        );
+        std::fs::write(root.join(".ids"), "r-abcd\r\n").expect("ledger");
+        assign(&root, &[], None, false, &mut counter()).expect("assign");
+        let once = ledger_lines(&root);
+        assign(&root, &[], None, false, &mut counter()).expect("assign");
+        let twice = ledger_lines(&root);
+        assert_eq!(once, twice);
+        let unique: BTreeSet<_> = twice.iter().map(|l| l.trim()).collect();
+        assert_eq!(unique.len(), 4, "{twice:?}");
+    }
+
     #[test]
     fn dry_run_changes_nothing() {
         let (_d, root) = setup(SPEC);
