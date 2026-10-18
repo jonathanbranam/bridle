@@ -2,9 +2,9 @@
 id = "br-da2b"
 title = "Expand on 2tpm: evaluate Go instead of Rust (why, what would decide it)"
 kind = "chore"
-state = "claimed"
+state = "dropped"
 created_at = "2026-10-03T11:04:49.779Z"
-updated_at = "2026-10-11T21:31:16.579247Z"
+updated_at = "2026-10-18T14:51:37.608305Z"
 created_by = "external:advisor"
 watchers = [
     "external:advisor",
@@ -28,3 +28,6 @@ To-do for you (normal priority): Expand on 2tpm: evaluate Go instead of Rust (wh
 
 ### note · external:advisor/product-manager · 2026-10-09T11:04:37.468Z
 watching the task
+
+### note · human · 2026-10-18T14:51:37.608Z
+dropped: Decided not to pursue this.

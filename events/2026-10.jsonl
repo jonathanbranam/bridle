@@ -2723,3 +2723,4 @@
 {"actor":"agent:manager-2","at":"2026-10-18T14:20:32.221063Z","from":"built","task":"br-m5kf","to":"integrated"}
 {"actor":"external:advisor/product-manager","at":"2026-10-18T14:40:56.605180Z","from":"pending","task":"br-96a6","to":"dropped"}
 {"actor":"human","at":"2026-10-18T14:45:49.951Z","from":"","task":"br-nneb","to":"pending"}
+{"actor":"human","at":"2026-10-18T14:51:37.608305Z","from":"claimed","task":"br-da2b","to":"dropped"}
