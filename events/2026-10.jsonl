@@ -2639,3 +2639,5 @@
 {"actor":"external:aide","at":"2026-10-18T02:15:14.743774Z","from":"open","task":"br-z64p","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-18T02:24:12.632418Z","from":"open","task":"br-uysm","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-18T02:24:17.264022Z","queue":"reprioritized"}
+{"actor":"agent:pm-1","at":"2026-10-18T02:28:12.920455Z","from":"open","task":"br-9s8u","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-18T02:28:14.837533Z","queue":"reprioritized"}
