@@ -2760,3 +2760,4 @@
 {"actor":"agent:pm-1","at":"2026-10-18T21:38:03.237191Z","from":"open","task":"br-bdwh","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-18T21:38:04.919618Z","queue":"reprioritized"}
 {"actor":"external:aide","at":"2026-10-18T22:35:08.107157Z","from":"claimed","task":"br-efs2","to":"integrated"}
+{"actor":"human","at":"2026-10-18T22:42:13.528Z","from":"","task":"br-vsp9","to":"pending"}
