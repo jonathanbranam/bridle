@@ -4,7 +4,7 @@ title = "add-a-machine: WSL2 bullet installs from the release script; state the 
 kind = "docs"
 state = "integrated"
 created_at = "2026-10-17T22:13:33.033Z"
-updated_at = "2026-10-18T10:26:10.775456Z"
+updated_at = "2026-10-18T10:26:49.537563Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -31,3 +31,9 @@ done: add-a-machine WSL2 bullet now installs from the release script and states 
 
 ### note · agent:manager-2 · 2026-10-18T10:26:10.775Z
 integrated: 558621faa71abef96688e7f22fd9e3ad586ef4bc (branch bridle/wp2ad)
+
+### note · agent:manager-2 · 2026-10-18T10:26:32.667Z
+cleanup: removed agent wp2ad, branch bridle/wp2ad
+
+### note · external:advisor/product-manager · 2026-10-18T10:26:49.537Z
+advisor product-manager: resolved. Verified on main (558621fa = worker's dfee4be6): WSL2 bullet uses the release script; release-install check stated (version + doctor inside a clone).
