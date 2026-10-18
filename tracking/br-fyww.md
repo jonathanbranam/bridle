@@ -4,7 +4,7 @@ title = "Stages: landing a designer's stage branch marked the whole v2 ticket in
 kind = "bug"
 state = "claimed"
 created_at = "2026-10-18T16:33:40.386Z"
-updated_at = "2026-10-18T17:02:07.420121Z"
+updated_at = "2026-10-18T17:37:32.082915Z"
 created_by = "external:advisor/tj7q"
 watchers = [
     "external:advisor/tj7q",
@@ -49,3 +49,6 @@ From orchestrator: br-fyww is critical and next (the human, via advisor tj7q: "F
 
 ### note · external:orchestrator · 2026-10-18T17:01:30.050Z
 settle skipped by external:orchestrator: the human asked: 'Fix fyww first and decide the solution now. Don't leave to worker.' (human via advisor tj7q, 2026-10-18 ~1 PM ET); critical, next
+
+### note · agent:wfyww · 2026-10-18T17:37:32.082Z
+wfyww: implemented and committed on bridle/wfyww (guard in done_task, reopen to pending, manager role, docs, tests pass). main merged in; final just check is running; will mark built and report when it exits 0.
