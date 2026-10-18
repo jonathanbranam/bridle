@@ -282,6 +282,7 @@ claimed    -> planned | built | integrated | dropped
 held       -> planned | dropped
 built      -> integrated | planned (send-back; keeps the branch, clears the commit) | dropped
 integrated -> reopened       dropped -> reopened
+(reopen of a version 2 ticket still being prepared goes to `pending` instead, br-fyww)
 ```
 
 Migration, automatic at every daemon start and idempotent: a `planned` ticket with `branch` and

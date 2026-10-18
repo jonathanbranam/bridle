@@ -135,6 +135,9 @@ pub struct TicketManager {
     /// The settle period (`[tasks] settle`, ny9u); zero turns it off. Set by
     /// [`TicketManager::with_settle`]; `open` leaves it off.
     settle: chrono::Duration,
+    /// The project checkout's `docs/tickets`, to read a version 2 ticket's stages (br-fyww).
+    /// Set by [`TicketManager::with_tickets_dir`]; `open` leaves it unset.
+    tickets_dir: Option<std::path::PathBuf>,
 }
 
 /// Adds `who` unless already there; whether the list changed.
@@ -163,6 +166,18 @@ impl TicketManager {
     pub fn with_settle(mut self, settle: std::time::Duration) -> Self {
         self.settle = chrono::Duration::from_std(settle).unwrap_or(chrono::Duration::zero());
         self
+    }
+
+    /// Sets the checkout's tickets folder, so `done` and `reopen` can tell a prepared version 2
+    /// ticket from one still being prepared.
+    pub fn with_tickets_dir(mut self, dir: std::path::PathBuf) -> Self {
+        self.tickets_dir = Some(dir);
+        self
+    }
+
+    /// Why `id` is a version 2 ticket still being prepared, if it is.
+    fn unprepared_v2(&self, id: &str) -> Option<String> {
+        crate::stage_watch::unprepared(self.tickets_dir.as_deref()?, id)
     }
 
     /// Loads every task the database knows about, hydrating each from its
@@ -308,6 +323,7 @@ impl TicketManager {
                 .unwrap_or_else(|_| chrono::Duration::zero()),
             queue: Arc::new(Mutex::new(queue)),
             settle: chrono::Duration::zero(),
+            tickets_dir: None,
         })
     }
 
@@ -972,6 +988,12 @@ impl TicketManager {
                 "marking a task done requires a commit".to_string(),
             ));
         }
+        // Landing a stage branch does not finish the ticket (br-fyww).
+        if let Some(why) = self.unprepared_v2(id) {
+            return Err(TicketError::Conflict(format!(
+                "{id} is a version 2 ticket still being prepared ({why}); landing a stage does not finish it"
+            )));
+        }
         match task.state {
             TicketState::Dropped | TicketState::Integrated => {
                 return Err(TicketError::Conflict(format!(
@@ -1069,7 +1091,9 @@ impl TicketManager {
         Ok(self.put(task))
     }
 
-    /// `dropped` or `integrated` -> `reopened`. Any other starting state is a conflict.
+    /// `dropped` or `integrated` -> `reopened`, or -> `pending` for a version 2 ticket still
+    /// being prepared, so the stage watch writes its next stage (br-fyww). Any other starting
+    /// state is a conflict.
     pub async fn reopen_task(&self, id: &str, actor: &PrincipalId) -> Result<Ticket, TicketError> {
         let mut task = self
             .get_task(id)
@@ -1080,8 +1104,12 @@ impl TicketManager {
                 task.state
             )));
         }
-        self.transition(&mut task, TicketState::Reopened, actor)
-            .await?;
+        let to = if self.unprepared_v2(id).is_some() {
+            TicketState::Pending
+        } else {
+            TicketState::Reopened
+        };
+        self.transition(&mut task, to, actor).await?;
         self.state.enqueue_task(&task)?;
         Ok(self.put(task))
     }

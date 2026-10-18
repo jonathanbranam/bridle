@@ -104,6 +104,28 @@ fn read_preps(tickets: &Path) -> Vec<Prep> {
     out
 }
 
+/// For a version 2 ticket `id` under `<tickets>/open` that is not prepared, what is written and
+/// what is not, for the refusal text; `None` for a version 1 ticket, an unknown one or a prepared
+/// one (br-fyww).
+pub fn unprepared(tickets: &Path, id: &str) -> Option<String> {
+    let p = read_preps(tickets).into_iter().find(|p| p.id == id)?;
+    if stages::prepared(&p.stages, &p.marks) {
+        return None;
+    }
+    let (done, todo): (Vec<_>, Vec<_>) = stages::states(&p.stages, &p.marks)
+        .into_iter()
+        .partition(|(_, s)| matches!(s, State::Written | State::Signed));
+    let names = |v: Vec<(String, State)>| {
+        let v: Vec<_> = v.into_iter().map(|(n, _)| n).collect();
+        if v.is_empty() {
+            "none".to_string()
+        } else {
+            v.join(", ")
+        }
+    };
+    Some(format!("{} written; {} not", names(done), names(todo)))
+}
+
 /// The stage `ticket next` would write: the first unblocked one, in schema order.
 fn next_stage(p: &Prep) -> Option<String> {
     stages::states(&p.stages, &p.marks)

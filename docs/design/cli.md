@@ -805,7 +805,7 @@ bridle ticket comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain com
   never state), list (id/title/kind/state), plan (`open` -> `planned`), drop (a reason is
   required, recorded in the task's thread), done (`--commit` required, recorded in the
   thread; the task becomes `integrated`, which resolves its `blocks` edges and drops it from
-  `queue` and `ready`) and reopen (only a dropped or integrated task can be reopened).
+  `queue` and `ready`) and reopen (only a dropped or integrated task can be reopened; a version 2 ticket not yet prepared goes back to `pending`, not `reopened`, br-fyww). `done` refuses such a ticket: landing a stage does not finish it.
   Also (stx8): `ticket hold <id> --reason TEXT [--until TEXT]` (`planned` -> `held`; not claimable
   or startable) and `ticket unhold <id>`; `ticket built <id> --branch NAME --commit SHA` (a worker's
   finish: `claimed` -> `built`, releasing the claim; or parked work, `planned` -> `built`, by a

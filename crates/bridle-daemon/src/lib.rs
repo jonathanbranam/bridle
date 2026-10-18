@@ -584,7 +584,8 @@ async fn start_inner(
     )
     .await
     .context("loading tasks")?
-    .with_settle(config.tasks_settle);
+    .with_settle(config.tasks_settle)
+    .with_tickets_dir(ws.repo.join("docs/tickets"));
     tasks
         .backfill_handovers()
         .await

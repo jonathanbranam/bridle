@@ -98,6 +98,14 @@ gate is refused (exit 1, naming the stage); with nothing left it says "prepared"
 adds the human's thread comments newer than the output file's mtime (the ticket file's, for the
 proposal), for a redo. `--json` is for bridle's own use.
 
+## Landing a stage is not finishing the ticket (br-fyww)
+
+`ticket done` (and so a land) refuses a version 2 ticket that is not prepared, read from the
+ticket file on the project checkout with `stages::prepared`, the way the stage watch does. A
+designer branch (`bridle/designer-*`) carries a stage, not a build. `ticket reopen` of an
+unprepared version 2 ticket gives `pending` (not `reopened`), so the stage watch picks it up
+again; version 1 and prepared version 2 tickets reopen to `reopened` as before.
+
 ## Writers and the timer (br-ewhy)
 
 The daemon's stage watch (`stage_watch.rs`, on the 30 s settle-wake tick) reads the version 2

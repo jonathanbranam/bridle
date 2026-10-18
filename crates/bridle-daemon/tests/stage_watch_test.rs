@@ -17,9 +17,8 @@ async fn daemon(extra: &str) -> (support::TestDaemon, tempfile::TempDir) {
     start_daemon_with_config(Some(o), Some(&format!("{CONFIG}{extra}"))).await
 }
 
-/// A pending row, and its version 2 ticket file with `extra` frontmatter lines.
-async fn v2_ticket(daemon: &support::TestDaemon, extra: &str) -> String {
-    let row = daemon
+async fn new_row(daemon: &support::TestDaemon) -> String {
+    daemon
         .client
         .new_task(&NewTicketRequest {
             ticket: None,
@@ -33,19 +32,29 @@ async fn v2_ticket(daemon: &support::TestDaemon, extra: &str) -> String {
             size: None,
         })
         .await
-        .expect("new task");
-    let tail = row.id.rsplit('-').next().expect("tail").to_string();
+        .expect("new task")
+        .id
+}
+
+/// A pending row, and its version 2 ticket file with `extra` frontmatter lines.
+async fn v2_ticket(daemon: &support::TestDaemon, extra: &str) -> String {
+    let id = new_row(daemon).await;
+    v2_file(daemon, &id, extra);
+    id
+}
+
+fn v2_file(daemon: &support::TestDaemon, id: &str, extra: &str) {
+    let tail = id.rsplit('-').next().expect("tail").to_string();
     let dir = daemon.repo.join("docs/tickets/open");
     std::fs::create_dir_all(&dir).expect("mkdir");
     std::fs::write(
         dir.join(format!("prepare-me-{tail}.md")),
         format!(
             "---\nid: {}\nversion: 2\nstages:\n  proposal: {{}}\n  design: {{requires: [proposal]}}\n{extra}---\n\nbody\n",
-            row.id
+            id
         ),
     )
     .expect("write");
-    row.id
 }
 
 async fn designers(daemon: &support::TestDaemon) -> Vec<String> {
@@ -107,4 +116,57 @@ async fn a_stage_not_written_in_time_goes_to_the_product_manager_once() {
         "got {got:?}"
     );
     assert_eq!(designers(&daemon).await.len(), 1, "no retry");
+}
+
+#[tokio::test]
+async fn done_is_refused_for_an_unprepared_v2_ticket_and_reopen_gives_pending() {
+    let (daemon, _tmp) = daemon("").await;
+    let c = &daemon.client;
+    // Wrongly integrated while it was still a plain row (br-2ae8's state), then its file shows
+    // it is version 2 with only the proposal written.
+    let id = new_row(&daemon).await;
+    let done = bridle_api::types::DoneTicketRequest {
+        commit: "abc123".to_string(),
+        ..Default::default()
+    };
+    c.done_task(&id, &done).await.expect("v1-style row done");
+    v2_file(&daemon, &id, "written: [proposal]\n");
+    let err = c
+        .done_task(&id, &done)
+        .await
+        .expect_err("integrated already, but the guard speaks first");
+    assert!(
+        err.to_string().contains("still being prepared"),
+        "got {err}"
+    );
+    let row = c.reopen_task(&id).await.expect("reopen");
+    assert_eq!(row.state.as_str(), "pending");
+    // The stage watch then spawns the next writer (design; proposal is written).
+    tokio::time::sleep(Duration::from_secs(2)).await;
+    let tail = id.rsplit('-').next().expect("tail");
+    assert_eq!(
+        designers(&daemon).await,
+        [format!("designer-{tail}-design")]
+    );
+}
+
+#[tokio::test]
+async fn done_is_refused_for_a_pending_unprepared_v2_ticket() {
+    let (daemon, _tmp) = daemon("").await;
+    let id = v2_ticket(&daemon, "claimed_by: human\n").await;
+    let done = bridle_api::types::DoneTicketRequest {
+        commit: "abc123".to_string(),
+        ..Default::default()
+    };
+    let err = daemon
+        .client
+        .done_task(&id, &done)
+        .await
+        .expect_err("refused");
+    assert!(
+        err.to_string()
+            .contains("landing a stage does not finish it")
+    );
+    let row = daemon.client.get_task(&id).await.expect("get");
+    assert_eq!(row.state.as_str(), "pending");
 }
