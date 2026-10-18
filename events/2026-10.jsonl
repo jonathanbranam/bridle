@@ -2693,3 +2693,4 @@
 {"actor":"agent:manager-2","at":"2026-10-18T11:43:47.792576Z","from":"built","task":"br-2d6x","to":"integrated"}
 {"actor":"agent:wubjd2","at":"2026-10-18T12:09:12.970462Z","from":"claimed","task":"br-ubjd","to":"built"}
 {"actor":"agent:manager-2","at":"2026-10-18T12:09:28.021783Z","from":"built","task":"br-ubjd","to":"integrated"}
+{"actor":"agent:pm-1","at":"2026-10-18T12:21:58.408567Z","queue":"reprioritized"}
