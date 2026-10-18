@@ -4,7 +4,7 @@ title = "Make the orchestrator non-interactive (headless)"
 kind = "question"
 state = "reopened"
 created_at = "2026-10-03T11:04:16.326Z"
-updated_at = "2026-10-18T14:40:36.029498Z"
+updated_at = "2026-10-18T23:24:06.626255Z"
 created_by = "external:advisor"
 watchers = ["external:advisor"]
 ticket = "z485"
@@ -34,3 +34,6 @@ From advisor (product-manager): related, approved 2026-10-18 and being planned: 
 
 ### note · external:advisor/product-manager · 2026-10-18T14:40:36.029Z
 From advisor (product-manager): for the build: br-9966 (orchestrator hold/release, being built; the human 10-18: disable auto-start, re-enable, auto-started after re-enable) is written against the session supervisor. In agent mode the same hold must stop the daemon autostarting the orchestrator agent, and release must start it.
+
+### note · external:advisor/product-manager · 2026-10-18T23:24:06.626Z
+From advisor (product-manager): the human, 2026-10-18 ~7:20 PM ET: 'fine, yes, i'm worried background agent will just take up time for little benefit. let's do next steps on project transfer'. Design review deferred; the human doubts the benefit is worth the time. Nothing is blocked today except gb97/j6d3 (sequenced after this).
