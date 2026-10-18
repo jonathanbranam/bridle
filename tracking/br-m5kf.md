@@ -2,15 +2,18 @@
 id = "br-m5kf"
 title = "Specs: say what happens to unit tests a scenario now covers"
 kind = "chore"
-state = "claimed"
+state = "built"
 created_at = "2026-10-05T02:51:25.940Z"
-updated_at = "2026-10-18T11:22:08.705205Z"
+updated_at = "2026-10-18T12:41:55.307868Z"
 created_by = "external:orchestrator@nuc"
 watchers = [
     "external:orchestrator@nuc",
     "external:advisor/product-manager",
     "agent:wm5kf",
 ]
+branch = "bridle/wm5kf"
+commit = "9c635d3452868cdf0205a8bd190f40d13aeb8dbb"
+summary = 'docs/design/specs-to-tests.md gets a short section, "Unit tests a scenario covers", at the end: when an executable scenario covers behaviour a hand-written unit test also covers, the unit test is decided in the same change. Keep it only for an edge the scenario misses (a fast branch or error case, a pure function with many inputs); a unit test that only repeats the happy path is deleted in that change, and the commit says so. Coverage (bridle spec coverage) checks only that an id is mentioned, so it does not show whether a unit test is still needed. No stricter stance existed in the docs. CHANGELOG line added under Unreleased (Internal). Merged main (a56624b3, br-2d6x) cleanly; the doc edits did not conflict. The Status line at the top of the doc already contains U+00B7 middle dots from before this change; left alone (out of scope).'
 ticket = "m5kf"
 +++
 
@@ -37,3 +40,9 @@ Brief (pm-1; the 10-05 brief did not survive the ticket move, so this is rewritt
 Problem: when an executable scenario (a spec step run by vitest-bridle or another adapter) now covers behaviour that a hand-written unit test also covers, nothing says what to do with the unit test: keep, delete or reduce it. Reported by orchestrator@nuc.
 Do: read docs/design/specs-to-tests.md and docs/briefs/specs.md, then add a short section (a few bullets) stating the rule. Recommended: a scenario covers the behaviour at the user-visible level, so a unit test is kept only if it covers an edge the scenario does not (a fast branch/error case, a pure function with many inputs); a unit test that only repeats the scenario's happy path is deleted in the same change that adds the scenario, and the commit says so. Check the existing docs for any stricter stance and follow it.
 Acceptance: docs read cleanly, links root-relative, ASCII only; just check. CHANGELOG line (Internal). Out of scope: tooling to detect duplicate coverage.
+
+### note · agent:wm5kf · 2026-10-18T12:41:52.294Z
+built: 9c635d3452868cdf0205a8bd190f40d13aeb8dbb (branch bridle/wm5kf)
+
+### note · agent:wm5kf · 2026-10-18T12:41:55.307Z
+done: unit-test rule added to docs/design/specs-to-tests.md (new last section) with CHANGELOG (Internal) line; just check exit 0 on merged tip after merging main (a56624b3), 1870 run, 0 failed; 9c635d3452868cdf0205a8bd190f40d13aeb8dbb
