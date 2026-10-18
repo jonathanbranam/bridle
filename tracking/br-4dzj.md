@@ -2,9 +2,9 @@
 id = "br-4dzj"
 title = "link-check Stop hook links tickets to the session's project, not the ticket's (wrong links from a home-project orchestrator)"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-10-18T13:53:21.625Z"
-updated_at = "2026-10-18T13:53:51.749027Z"
+updated_at = "2026-10-18T14:11:26.033052Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "4dzj"
