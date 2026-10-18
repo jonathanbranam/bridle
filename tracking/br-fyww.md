@@ -2,9 +2,9 @@
 id = "br-fyww"
 title = "Stages: landing a designer's stage branch marked the whole v2 ticket integrated"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-18T16:33:40.386Z"
-updated_at = "2026-10-18T21:30:13.968110Z"
+updated_at = "2026-10-18T22:53:28.479111Z"
 created_by = "external:advisor/tj7q"
 watchers = [
     "external:advisor/tj7q",
@@ -13,7 +13,7 @@ watchers = [
 priority = "critical"
 priority_at = "2026-10-18T17:00:45.320227Z"
 branch = "bridle/wfyww"
-commit = "94d41001"
+commit = "ddc6ee107f49743485300d7a3a60e2110f195c50"
 summary = "done_task refuses a v2 ticket not prepared (stages::prepared read from checkout docs/tickets via TicketManager::with_tickets_dir; stage_watch::unprepared builds the message); reopen_task sends such a ticket to pending, else reopened. Manager role text, stages/cli/storage docs, CHANGELOG, 2 integration tests in stage_watch_test. Caveat: the land path calls done_task, so landing a designer branch now errors at the done step; br-2ae8 not reopened (step 4)."
 ticket = "fyww"
 +++
@@ -58,3 +58,6 @@ wfyww: implemented and committed on bridle/wfyww (guard in done_task, reopen to 
 
 ### note · agent:manager-2 · 2026-10-18T21:30:13.968Z
 built: 94d41001 (branch bridle/wfyww)
+
+### note · agent:manager-2 · 2026-10-18T22:53:28.479Z
+integrated: ddc6ee107f49743485300d7a3a60e2110f195c50 (branch bridle/wfyww)
