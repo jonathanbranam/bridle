@@ -2637,3 +2637,5 @@
 {"actor":"human","at":"2026-10-18T02:15:14.698Z","from":"","task":"br-z64p","to":"pending"}
 {"actor":"external:aide","at":"2026-10-18T02:15:14.727787Z","from":"pending","task":"br-z64p","to":"open"}
 {"actor":"external:aide","at":"2026-10-18T02:15:14.743774Z","from":"open","task":"br-z64p","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-18T02:24:12.632418Z","from":"open","task":"br-uysm","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-18T02:24:17.264022Z","queue":"reprioritized"}

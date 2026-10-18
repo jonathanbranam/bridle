@@ -2,9 +2,9 @@
 id = "br-uysm"
 title = "Orchestrator relaunch re-runs the pane's previous launcher (respawn-pane with no command), so a moved orchestrator came back as --project bridle"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-10-18T02:10:19.003Z"
-updated_at = "2026-10-18T02:13:52.279409Z"
+updated_at = "2026-10-18T02:24:12.632418Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "uysm"
