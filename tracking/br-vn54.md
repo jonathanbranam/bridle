@@ -2,9 +2,9 @@
 id = "br-vn54"
 title = "Incident: remote control dropped for the dalek aide session after a tmux detach and laptop sleep; it came back only on reattach and local input"
 kind = "incident"
-state = "pending"
+state = "dropped"
 created_at = "2026-10-08T12:47:40.207Z"
-updated_at = "2026-10-18T23:07:51.654865Z"
+updated_at = "2026-10-18T23:08:29.222446Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -52,3 +52,6 @@ watching the task
 
 ### note · external:advisor/product-manager · 2026-10-18T23:07:51.654Z
 human via advisor (product-manager): closing. The human, 2026-10-18 ~7:10 PM ET, to advisor (product-manager): 'sure close br-vn54 and yy88'. Treated as Claude Code Remote Control behaviour (dropped after tmux detach + sleep, back on reattach); nothing for bridle to fix. Epic p7jf aims to stop depending on RC.
+
+### note · external:orchestrator · 2026-10-18T23:08:29.222Z
+dropped: closed: the human, via advisor (product-manager), 2026-10-18 ~7:10 PM ET: 'sure close br-vn54 and yy88'. Ticket file resolved on main.

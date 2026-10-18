@@ -2,9 +2,9 @@
 id = "br-wt4f"
 title = "[morning] br-9qws needs you at dalek: the blocked-binary firewall self-probe test"
 kind = "chore"
-state = "claimed"
+state = "integrated"
 created_at = "2026-10-17T09:46:32.366Z"
-updated_at = "2026-10-17T09:46:32.370412Z"
+updated_at = "2026-10-18T23:08:41.254039Z"
 created_by = "external:orchestrator@dalek"
 watchers = [
     "external:orchestrator@dalek",
@@ -23,3 +23,6 @@ created for the human, priority normal
 
 ### note · external:orchestrator@dalek · 2026-10-17T09:46:32.370Z
 To-do for you (normal priority): [morning] br-9qws needs you at dalek: the blocked-binary firewall self-probe test. Finish it with `bridle ticket done br-wt4f`.
+
+### note · human · 2026-10-18T23:08:41.254Z
+done
