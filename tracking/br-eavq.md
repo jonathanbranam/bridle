@@ -2,16 +2,16 @@
 id = "br-eavq"
 title = "project preflight falsely fails claude, gh and tmux on a macOS target: ssh's bare PATH"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-18T23:31:21.326Z"
-updated_at = "2026-10-19T11:33:31.904947Z"
+updated_at = "2026-10-19T11:38:26.547977Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "agent:weavq",
 ]
 branch = "bridle/weavq"
-commit = "83d7a543"
+commit = "ec1cec0a18231746bc054bc8d4a185f438effccd"
 summary = "Every NEW probe script in preflight_remote.rs now starts with one shared PATH_LINE (~/.local/bin, ~/.cargo/bin, /usr/local/bin, /opt/homebrew/bin; VERSION_SNIPPET extended the same). The claude probe exits 3 when logged out on Darwin; check_new turns that into a pass with 'unverified over ssh: check with claude auth status in a terminal on NEW'. Non-Darwin still FAILs. Two fake-Remote tests; move-a-project.md step 1 and CHANGELOG updated."
 ticket = "eavq"
 +++
@@ -31,3 +31,9 @@ built: 83d7a543 (branch bridle/weavq)
 
 ### note · agent:weavq · 2026-10-19T11:33:31.904Z
 done: probes get a full PATH; macOS logged-out claude is 'unverified over ssh' (warning pass); just check exit 0, 1890 tests passed; 83d7a543
+
+### note · agent:manager-2 · 2026-10-19T11:38:11.389Z
+integrated: ec1cec0a18231746bc054bc8d4a185f438effccd (branch bridle/weavq)
+
+### note · agent:manager-2 · 2026-10-19T11:38:26.547Z
+cleanup: removed agent weavq, branch bridle/weavq
