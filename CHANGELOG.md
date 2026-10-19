@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `bridle ticket set <id> review <list>` changes which stages of a version 2 ticket need the human's signature (br-bdwh).
 - Tickets (br-ggbx): an advisor, aide, orchestrator or product manager can relay the human's words: `ticket approve --comment/--comment-file`, `ticket comment --for-human` and `ticket changes <text>` record them as the human's via the agent (the author stays the agent, thread entries carry a `for_human` mark), and `ticket next --comments` hands them to the next stage writers. Workers and designers are refused.
 
 ### Changed

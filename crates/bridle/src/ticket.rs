@@ -1139,9 +1139,9 @@ pub fn set_in(
         bail!("{field} is not editable (resolve stamps resolved; id and created never change)");
     }
     let is_list = LIST_FIELDS.contains(&field);
-    if !is_list && !matches!(field, "title" | "kind" | "theme" | "parent") {
+    if !is_list && !matches!(field, "title" | "kind" | "theme" | "parent" | "review") {
         bail!(
-            "unknown field {field}; one of title, kind, theme, parent, repos, changes, specs, blocked_by, related"
+            "unknown field {field}; one of title, kind, theme, parent, review, repos, changes, specs, blocked_by, related"
         );
     }
     if field == "kind" {
@@ -1172,6 +1172,9 @@ fn set_text(
     value: &str,
     projects: &Projects,
 ) -> anyhow::Result<String> {
+    if field == "review" {
+        return set_review(text, value);
+    }
     let is_list = LIST_FIELDS.contains(&field);
     let refs = matches!(field, "blocked_by" | "related");
     let rendered = if is_list {
@@ -1199,6 +1202,55 @@ fn set_text(
         None => text.to_string(),
     };
     let out = set_line(&text, field, &rendered).ok_or_else(|| anyhow!("no frontmatter"))?;
+    Ok(out)
+}
+
+/// `text` with the stages that need the human's signature set to the comma list `value`
+/// (replacing the set; empty clears it). Version 2 only; a stage already signed keeps its review.
+fn set_review(text: &str, value: &str) -> anyhow::Result<String> {
+    let review: Vec<String> = value
+        .split(',')
+        .map(|v| v.trim().to_string())
+        .filter(|v| !v.is_empty())
+        .collect();
+    let lines: Vec<String> = text.lines().map(str::to_string).collect();
+    let end = front_end(&lines).ok_or_else(|| anyhow!("no frontmatter"))?;
+    let front: Vec<&str> = lines[1..end].iter().map(String::as_str).collect();
+    let mut stages = crate::stages::parse(&front)
+        .map_err(|e| anyhow!("{e}"))?
+        .ok_or_else(|| anyhow!("this is a version 1 ticket: it has no stages to review"))?;
+    let names: Vec<&str> = stages.iter().map(|s| s.name.as_str()).collect();
+    if let Some(r) = review.iter().find(|r| !names.contains(&r.as_str())) {
+        bail!(
+            "stage {r} is not listed; this ticket's stages: {}",
+            names.join(", ")
+        );
+    }
+    let signed = crate::stages::marks(text).signed;
+    for s in &mut stages {
+        let want = review.contains(&s.name);
+        if want != s.human_review && signed.contains(&s.name) {
+            bail!(
+                "stage {} is already signed; its review cannot change (restage it first)",
+                s.name
+            );
+        }
+        s.human_review = want;
+    }
+    let at = lines[..end]
+        .iter()
+        .position(|l| l.trim_end() == "stages:")
+        .expect("parse found the stages block");
+    let block_end = (at + 1..end)
+        .find(|&i| !(lines[i].starts_with(' ') || lines[i].starts_with('\t')))
+        .unwrap_or(end);
+    let mut out: Vec<String> = lines[..at].to_vec();
+    out.extend(crate::stages::render(&stages).lines().map(str::to_string));
+    out.extend_from_slice(&lines[block_end..]);
+    let mut out = out.join("\n");
+    if text.ends_with('\n') {
+        out.push('\n');
+    }
     Ok(out)
 }
 
@@ -1988,6 +2040,40 @@ mod tests {
         );
         let r = check(dir.path(), dir.path());
         assert!(r.errors.is_empty(), "{:?}", r.errors);
+    }
+
+    #[test]
+    fn set_review_adds_removes_and_refuses() {
+        let v2 = "---\nid: br-aaaa\nversion: 2\nstages:\n  proposal: {review: human}\n  design: {requires: [proposal]}\n  tasks: {requires: [design]}\nwritten: [proposal]\nsigned: [proposal]\n---\nbody\n";
+        let p = Projects::default();
+        let root = Path::new(".");
+        let out = set_text(v2, root, "review", "proposal, design", &p).unwrap();
+        assert!(
+            out.contains("  design: {requires: [proposal], review: human}\n"),
+            "{out}"
+        );
+        assert!(
+            out.contains("  tasks: {requires: [design]}\nwritten:"),
+            "{out}"
+        );
+        let out = set_text(&out, root, "review", "proposal", &p).unwrap();
+        assert!(out.contains("  design: {requires: [proposal]}\n"), "{out}");
+        let e = set_text(v2, root, "review", "specs", &p)
+            .unwrap_err()
+            .to_string();
+        assert!(
+            e.contains("not listed") && e.contains("proposal, design, tasks"),
+            "{e}"
+        );
+        let e = set_text(v2, root, "review", "", &p)
+            .unwrap_err()
+            .to_string();
+        assert!(e.contains("already signed"), "{e}");
+        let v1 = "---\nid: br-aaaa\n---\nbody\n";
+        let e = set_text(v1, root, "review", "design", &p)
+            .unwrap_err()
+            .to_string();
+        assert!(e.contains("version 1"), "{e}");
     }
 
     #[test]

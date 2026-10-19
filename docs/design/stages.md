@@ -26,7 +26,7 @@ stages:
 - `requires` names listed stages only and may not form a cycle. `ticket new` fills it from
   OpenSpec's graph (design and specs require the proposal; tasks require design and specs),
   keeping only the stages listed.
-- `review: human` makes the stage need the human's signature.
+- `review: human` makes the stage need the human's signature. `ticket new --review` sets it; `bridle ticket set <id> review design,specs` changes it later (the list replaces the set, empty clears it; refused for a stage the ticket does not list, for a stage already signed, and on a version 1 ticket).
 - The indented lines are a block: the frontmatter reader skips them, so a stage named `specs`
   does not read as the ticket's `specs:` field.
 
