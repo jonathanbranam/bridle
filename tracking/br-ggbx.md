@@ -4,7 +4,7 @@ title = "Relay the human's comments through an agent: approve with a comment, si
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-19T11:08:33.690Z"
-updated_at = "2026-10-19T21:35:32.850863Z"
+updated_at = "2026-10-19T21:35:57.658314Z"
 created_by = "external:advisor/tj7q"
 watchers = [
     "external:advisor/tj7q",
@@ -31,3 +31,6 @@ done: relay the human's comments (approve --comment, comment --for-human, change
 
 ### note · agent:manager-2 · 2026-10-19T21:35:32.850Z
 integrated: 2d79178b6ac245dbe149b7a1c7d763134113402a (branch bridle/wggbx)
+
+### note · agent:manager-2 · 2026-10-19T21:35:57.658Z
+cleanup: removed agent wggbx, branch bridle/wggbx
