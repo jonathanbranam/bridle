@@ -2,16 +2,16 @@
 id = "br-rdag"
 title = "Migrations: automatic runs leave their changes uncommitted, opt-in ones are never run, and the branch guard misfires"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-18T23:46:34.284Z"
-updated_at = "2026-10-19T12:34:17.158631Z"
+updated_at = "2026-10-19T13:54:40.163100Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
     "agent:wrdag",
 ]
 branch = "bridle/wrdag"
-commit = "4189c3eb5215e071e51e248f8379c8954a172ec4"
+commit = "f13f991d8be92f14a5c333abfa338b9a1841cbc2"
 summary = "Start-up migrations commit their files (plus .bridle/migrations.toml/.log) and catch up leftovers; where they cannot (protected branch, git refuses) they file a chore and message external:aide (not the manager) saying what is left and how to commit. Guard already followed [branches] integration (br-p4f2); documented. 3 tests. Reworked per the orchestrator: to-do to the aide."
 ticket = "rdag"
 +++
@@ -88,3 +88,6 @@ final tip 02b0e7bfd161bf9aaae43ef6dd0ddc08fcef6cab: adds only the stale doc-comm
 
 ### note · agent:wrdag · 2026-10-19T12:34:17.158Z
 merged main (br-5rwn, a test and CHANGELOG only; no conflict). Tip now 1e97aea33e981b1c817eb39b7e0e1efcff5b033c; no code of mine changed since the green check.
+
+### note · agent:manager-2 · 2026-10-19T13:54:40.163Z
+integrated: f13f991d8be92f14a5c333abfa338b9a1841cbc2 (branch bridle/wrdag)
