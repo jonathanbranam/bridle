@@ -2,11 +2,14 @@
 id = "br-57kc"
 title = "Orchestrator: drop the bridle token check step from every start"
 kind = "chore"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-18T23:03:42.806Z"
-updated_at = "2026-10-18T23:18:11.634397Z"
+updated_at = "2026-10-19T22:23:38.157938Z"
 created_by = "external:aide"
-watchers = ["external:aide"]
+watchers = [
+    "external:aide",
+    "agent:w57kc",
+]
 ticket = "57kc"
 +++
 

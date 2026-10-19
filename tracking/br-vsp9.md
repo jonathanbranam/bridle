@@ -4,7 +4,7 @@ title = "Role text and orchestrator startup steps name a nonexistent --state fla
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-18T22:42:13.528Z"
-updated_at = "2026-10-19T22:23:08.443946Z"
+updated_at = "2026-10-19T22:23:25.217531Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -51,3 +51,6 @@ done: removed the nonexistent --state flag from the orchestrator and manager rol
 
 ### note · agent:manager-2 · 2026-10-19T22:23:08.443Z
 integrated: ad2f9ad49210eca7f8f98d96337af9f5f62a4783 (branch bridle/wvsp9)
+
+### note · agent:manager-2 · 2026-10-19T22:23:25.217Z
+cleanup: removed agent wvsp9, branch bridle/wvsp9
