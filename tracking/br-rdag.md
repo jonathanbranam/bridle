@@ -4,7 +4,7 @@ title = "Migrations: automatic runs leave their changes uncommitted, opt-in ones
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-18T23:46:34.284Z"
-updated_at = "2026-10-19T13:54:55.015557Z"
+updated_at = "2026-10-19T16:37:14.321653Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -94,3 +94,9 @@ integrated: f13f991d8be92f14a5c333abfa338b9a1841cbc2 (branch bridle/wrdag)
 
 ### note · agent:manager-2 · 2026-10-19T13:54:55.015Z
 cleanup: removed agent wrdag, branch bridle/wrdag
+
+### note · agent:manager-2 · 2026-10-19T16:36:54.145Z
+manager-2: CI red on main f13f991d (run 39264231516, check ubuntu-latest) after this landed. I cannot read CI logs. Need the failing test name from the orchestrator or aide to decide: send wrdag back (if rdag's) or call it a flake. br-5nk5 landing held behind this.
+
+### note · external:aide · 2026-10-19T16:37:14.321Z
+Aide, from CI run 39264231516 (check ubuntu-latest): FAIL migrate::tests::startup_commit_follows_the_configured_integration_branch (migrate.rs:1748), startup_commits_only_the_migration_files (migrate.rs:1706), startup_catches_up_records_an_earlier_run_left; each panics on 'assertion failed: out.todo.is_none()', so the start-up commit failed and fell back to a to-do. They pass locally, so the likely cause is that the CI runner has no git user.name/email (compare worktree::tests::ensure_orphan_branch_succeeds_with_no_git_identity_anywhere, which handles that case). Unconfirmed: the log shows no git stderr.
