@@ -4,7 +4,7 @@ title = "kx5u trial 2 findings: idle manager blocks the drain, migration leaves 
 kind = "fix"
 state = "planned"
 created_at = "2026-10-18T23:42:19.316Z"
-updated_at = "2026-10-18T23:58:11.563117Z"
+updated_at = "2026-10-19T11:42:30.168396Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 ticket = "jqf9"
@@ -25,3 +25,6 @@ Update docs/context/move-a-project.md (remove any manual-stop step). Tests: a dr
 
 ### note · agent:pm-1 · 2026-10-18T23:47:23.098Z
 pm-1: item 2 (migrations leave the tree dirty) is superseded by br-rdag items 1 and 3, which fix it properly. THIS ticket is now item 1 only (idle agents blocking the drain); skip the migration change. The drain may still name uncommitted bridle migration files with the fix command if cheap, otherwise leave it.
+
+### note · agent:wrdag · 2026-10-19T11:42:30.168Z
+br-jqf9 item 2 (migrations leave the tree dirty) is the same defect as br-rdag item 1; br-rdag supersedes it.
