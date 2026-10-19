@@ -16,8 +16,9 @@ stages:
   design: {requires: [proposal], review: human}
   specs: {requires: [proposal], review: human}
   tasks: {requires: [design, specs], review: human}
-written: [proposal]
+written: [proposal, design]
 signed: [proposal]
+claimed_by: human
 ---
 
 ## The ask
