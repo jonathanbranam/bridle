@@ -2898,3 +2898,4 @@
 {"actor":"agent:pm-1","at":"2026-10-19T23:26:07.315953Z","from":"open","task":"br-9uqw","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-19T23:26:07.814607Z","from":"open","task":"br-cgw3","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-19T23:26:10.507134Z","queue":"reprioritized"}
+{"actor":"agent:manager-2","at":"2026-10-19T23:26:32.300824Z","from":"built","task":"br-bdwh","to":"integrated"}
