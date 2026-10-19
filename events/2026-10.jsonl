@@ -2836,3 +2836,5 @@
 {"actor":"agent:manager-2","at":"2026-10-19T11:38:11.389010Z","from":"built","task":"br-eavq","to":"integrated"}
 {"actor":"human","at":"2026-10-19T11:51:15.175Z","from":"","task":"br-dfy7","to":"pending"}
 {"actor":"human","at":"2026-10-19T11:51:34.229Z","from":"","task":"br-5rwn","to":"pending"}
+{"actor":"external:orchestrator","at":"2026-10-19T11:51:54.965692Z","from":"pending","task":"br-5rwn","to":"open"}
+{"actor":"agent:manager-2","at":"2026-10-19T11:52:04.708366Z","from":"pending","task":"br-dfy7","to":"dropped"}
