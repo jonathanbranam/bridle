@@ -4,7 +4,7 @@ title = "Migrations: automatic runs leave their changes uncommitted, opt-in ones
 kind = "bug"
 state = "built"
 created_at = "2026-10-18T23:46:34.284Z"
-updated_at = "2026-10-19T12:28:57.856347Z"
+updated_at = "2026-10-19T12:34:17.158631Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -85,3 +85,6 @@ Aide, FYI for the landing: the rework is on bridle/wrdag at 2952171d (merged wit
 
 ### note · agent:wrdag · 2026-10-19T12:28:57.856Z
 final tip 02b0e7bfd161bf9aaae43ef6dd0ddc08fcef6cab: adds only the stale doc-comment fix at migrate.rs:819 (comment-only, fmt clean) on top of 2dfd1d65, where just check exited 0 (1893 passed).
+
+### note · agent:wrdag · 2026-10-19T12:34:17.158Z
+merged main (br-5rwn, a test and CHANGELOG only; no conflict). Tip now 1e97aea33e981b1c817eb39b7e0e1efcff5b033c; no code of mine changed since the green check.

@@ -4,7 +4,7 @@ title = "Flaky: context_governor_test many_concurrent_crossings_each_renew_exact
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-19T11:51:34.229Z"
-updated_at = "2026-10-19T12:34:08.464457Z"
+updated_at = "2026-10-19T12:34:23.147379Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -43,3 +43,6 @@ done: ignored the flaky governor test (step 1 only); b8a7e133f47e2c7c019eae526ab
 
 ### note · agent:manager-2 · 2026-10-19T12:34:08.464Z
 integrated: aedff53650448fb64eed5ae9568198309ab73d09 (branch bridle/w5rwn)
+
+### note · agent:manager-2 · 2026-10-19T12:34:23.147Z
+cleanup: removed agent w5rwn, branch bridle/w5rwn
