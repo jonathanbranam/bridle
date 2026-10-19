@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Tickets (br-ggbx): an advisor, aide, orchestrator or product manager can relay the human's words: `ticket approve --comment/--comment-file`, `ticket comment --for-human` and `ticket changes <text>` record them as the human's via the agent (the author stays the agent, thread entries carry a `for_human` mark), and `ticket next --comments` hands them to the next stage writers. Workers and designers are refused.
 
+### Changed
+
+- Orchestrator start (br-57kc): the role no longer tells the orchestrator to run `bridle token check` at every start (the check stays a command for the human, to run after a re-pair or when a project seems quiet).
+
 ### Fixed
 
 - Role text (br-vsp9): the orchestrator and manager roles and the orchestrator startup steps no longer name a `--state` flag that `ticket list` and `task list` don't have; they point at `bridle task list` (state column), `bridle ticket list` and `bridle status --json` (`pending_tasks`).

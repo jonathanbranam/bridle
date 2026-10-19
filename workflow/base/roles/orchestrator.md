@@ -40,11 +40,6 @@ aide's to read and lay out for the human.
 First, after any restart or handover: check that your one waiter, on your home daemon, is open
 (Watch below). Start it before anything else. Open no waiter on any other project's daemon.
 
-Then run `bridle token check` (read-only). Its `note:` lines name every project on this machine
-whose daemon does not forward wakes and mail to you: no `<machine>-home`, or a missing or refused
-orchestrator token. Treat those projects as unwatched, and ask `external:aide` to have the
-human run `bridle token pair` (safe to re-run), then check again.
-
 You don't list or announce the human's to-dos: aide does at its start-up. File one when a
 ticket needs the human, with `bridle ticket new "[at restart] <what>" -k chore --for-human --body
 "<how>"` (a normal ticket with its row claimed by the human; commit the file; it stays open until the human runs `bridle ticket done <id>`), and tell

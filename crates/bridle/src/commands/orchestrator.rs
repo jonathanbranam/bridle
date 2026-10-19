@@ -718,6 +718,13 @@ mod prime_tests {
     }
 
     #[test]
+    fn orchestrator_role_does_not_run_token_check_at_every_start() {
+        // br-57kc: the check is for the human after a re-pair; every start running it was wasted tokens.
+        let role = include_str!("../../../../workflow/base/roles/orchestrator.md");
+        assert!(!role.contains("bridle token check"), "{role}");
+    }
+
+    #[test]
     fn project_part_is_appended_after_the_role_file() {
         let out = render_prime_orchestrator(
             "p",
