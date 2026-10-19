@@ -9,6 +9,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-kx5u]
+resolved: 2026-10-19T11:38:44Z
 ---
 
 Found in kx5u trial 2 (data-contracts remus -> dalek, 2026-10-18), the first move with a macOS NEW.
