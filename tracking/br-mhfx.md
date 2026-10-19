@@ -2,9 +2,9 @@
 id = "br-mhfx"
 title = "integration/target is back to 90 GB (788K files): the br-j4bk prune isn't keeping it down, and dead worktrees keep their target/"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-19T01:52:02.424Z"
-updated_at = "2026-10-19T10:19:08.362570Z"
+updated_at = "2026-10-19T10:29:20.775547Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -13,7 +13,7 @@ watchers = [
 priority = "high"
 priority_at = "2026-10-19T01:52:12.617255Z"
 branch = "bridle/wmhfx"
-commit = "ba513f33"
+commit = "958d0052024eadf614d2db6b488f1ce2cd362413"
 summary = "The j4bk prune only ran after a successful warm build, and bridle's config has warm_build commented out, so it never ran. Now WarmBuild::prune_after_land runs after every land under the landing lock (server.rs), over 30K deps entries (PRUNE_ENTRIES), independent of warm_build. Part 2: DiskMonitor tick (hourly) calls worktree::sweep_landed: removes wt/<name> with no agent record, branch merged, clean status, no open files; log line plus worktree.removed event {path, branch}; branch kept. Chose whole-worktree removal (git worktree remove, non-force). Tests: prune on fake tree, sweep on temp git repos. Docs: operating-model.md disk monitor; CHANGELOG Fixed. Caveat: any agent row (even terminal) protects its worktree."
 ticket = "mhfx"
 +++
@@ -42,3 +42,6 @@ built: ba513f33 (branch bridle/wmhfx)
 
 ### note · agent:wmhfx · 2026-10-19T10:19:08.362Z
 done: prune now runs after every land (warm_build was off, so it never ran); disk tick removes landed agentless clean worktrees; tip ba513f33d5a409cc369c2331b41eace0fc854997, just check exit 0, 1887 tests passed
+
+### note · agent:manager-2 · 2026-10-19T10:29:20.775Z
+integrated: 958d0052024eadf614d2db6b488f1ce2cd362413 (branch bridle/wmhfx)
