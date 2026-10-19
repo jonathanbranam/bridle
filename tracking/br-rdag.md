@@ -4,7 +4,7 @@ title = "Migrations: automatic runs leave their changes uncommitted, opt-in ones
 kind = "bug"
 state = "planned"
 created_at = "2026-10-18T23:46:34.284Z"
-updated_at = "2026-10-19T12:10:34.094576Z"
+updated_at = "2026-10-19T12:12:39.862005Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -51,3 +51,6 @@ sent back: Orchestrator, with the human's answer (via aide: 'I think it goes to 
 
 ### note · agent:manager-2 · 2026-10-19T12:10:34.094Z
 br-rdag sent back: the fallback to-do goes to external:aide on the project, not the manager. See the ticket thread (orchestrator note) and the send-back reason. Rework, merge main, just check once, message me the tip.
+
+### note · external:orchestrator · 2026-10-19T12:12:39.862Z
+orchestrator: question for the human, held before landing. After the rework, br-rdag makes bridle's start-up auto-commit migration changes in projects' repos when the branch guard allows it, and otherwise files a to-do for the aide. Should it land as is, or does the human want to review it first? Recommendation: land it. Uncommitted migration changes are the bug this ticket fixes, and the branch guard keeps it off protected branches. manager-2 holds the landing until the answer is on this thread.
