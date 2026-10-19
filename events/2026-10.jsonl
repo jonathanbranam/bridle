@@ -2798,3 +2798,4 @@
 {"actor":"external:orchestrator","at":"2026-10-19T00:42:50.704141Z","from":"pending","task":"br-mp9d","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-19T01:26:16.947598Z","from":"open","task":"br-mp9d","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-19T01:26:19.043993Z","queue":"reprioritized"}
+{"actor":"agent:wupxq","at":"2026-10-19T01:32:30.018876Z","from":"claimed","task":"br-upxq","to":"built"}

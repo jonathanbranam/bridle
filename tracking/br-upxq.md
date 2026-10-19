@@ -2,9 +2,9 @@
 id = "br-upxq"
 title = "Stages: a designer's stage must be on main before the human is asked to review it"
 kind = "bug"
-state = "claimed"
+state = "built"
 created_at = "2026-10-18T15:08:02.155Z"
-updated_at = "2026-10-19T00:54:58.228145Z"
+updated_at = "2026-10-19T01:32:30.398856Z"
 created_by = "external:advisor/tj7q"
 watchers = [
     "external:advisor/tj7q",
@@ -12,6 +12,8 @@ watchers = [
 ]
 priority = "urgent"
 priority_at = "2026-10-18T15:08:07.318951Z"
+branch = "bridle/wupxq"
+commit = "e63e6b6b"
 summary = """stage-done from a designer's bridle/* worktree now commits the marks and calls the new POST /v1/tickets/{id}/stage-land (types StageLandRequest/Result, client stage_land). The daemon (stage_land.rs, under the landing lock) refuses a branch touching anything but the ticket file and its stage folder (path named), uncommitted edits to those paths on main, or a conflict (aborted, main left clean); else merges and adds the "stage X written ..." thread note naming the main commit. No row state change, no done_task. stage_watch: prompt drops the manager step; a writer that ended is alerted unless the stage is on main (written_in_worktree removed), one note + one message to the product manager. stage-done outside a bridle/* branch (filer's own checkout) keeps the old in-place behaviour. Tests: 4 git tests in stage_land.rs (lands and readable on main, outside path refused, conflict refused, dirty main refused). Not tested: the end-of-writer alert (unchanged code path, no existing harness) and an end-to-end CLI/daemon run."""
 ticket = "upxq"
 +++
@@ -48,3 +50,9 @@ From orchestrator: br-upxq is urgent and takes the next free worker slot once br
 
 ### note · agent:wupxq · 2026-10-19T00:54:58.228Z
 br-upxq: built, check green (exit 0, 1885 tests) on 853ecff2; main merged after that (HEAD e63e6b6b) and the re-check is stuck behind test lock pid 86314 (integration, 1h13m): is that landing hung? Tell me to wait, or land on the green sha.
+
+### note · agent:wupxq · 2026-10-19T01:32:30.018Z
+built: e63e6b6b (branch bridle/wupxq)
+
+### note · agent:wupxq · 2026-10-19T01:32:30.398Z
+done: stage-done lands the designer's branch on main via the daemon (stage-land) before the stage is recorded; check green exit 0, 1885 tests on 853ecff2; e63e6b6b = that plus main merge (re-check queued behind your lock)
