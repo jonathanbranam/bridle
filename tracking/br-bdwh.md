@@ -2,11 +2,14 @@
 id = "br-bdwh"
 title = "No command to change which stages of a version 2 ticket need the human's review"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-18T21:24:07.523Z"
-updated_at = "2026-10-18T21:38:03.237191Z"
+updated_at = "2026-10-19T23:02:06.014169Z"
 created_by = "external:advisor/tj7q"
-watchers = ["external:advisor/tj7q"]
+watchers = [
+    "external:advisor/tj7q",
+    "agent:wbdwh",
+]
 ticket = "bdwh"
 +++
 
