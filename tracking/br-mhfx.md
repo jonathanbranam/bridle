@@ -4,7 +4,7 @@ title = "integration/target is back to 90 GB (788K files): the br-j4bk prune isn
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-19T01:52:02.424Z"
-updated_at = "2026-10-19T10:29:20.775547Z"
+updated_at = "2026-10-19T10:29:33.172344Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -45,3 +45,6 @@ done: prune now runs after every land (warm_build was off, so it never ran); dis
 
 ### note · agent:manager-2 · 2026-10-19T10:29:20.775Z
 integrated: 958d0052024eadf614d2db6b488f1ce2cd362413 (branch bridle/wmhfx)
+
+### note · agent:manager-2 · 2026-10-19T10:29:33.172Z
+cleanup: removed agent wmhfx, branch bridle/wmhfx
