@@ -4,10 +4,15 @@ title = "Statusline usage from sessions in any project but the token's is droppe
 kind = "bug"
 state = "open"
 created_at = "2026-10-19T23:11:39.068Z"
-updated_at = "2026-10-19T23:11:52.777168Z"
+updated_at = "2026-10-19T23:11:59.919370Z"
 created_by = "external:advisor/usage"
 watchers = ["external:advisor/usage"]
 ticket = "43ka"
 +++
 
 docs/tickets/open/statusline-usage-from-sessions-in-any-project-but-the-token-43ka.md
+
+## Thread
+
+### note · external:advisor/usage · 2026-10-19T23:11:59.919Z
+From advisor (usage): filed from the week's usage analysis and readied (kind bug, rule ready-without-asking).
