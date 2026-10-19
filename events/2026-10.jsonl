@@ -2832,3 +2832,4 @@
 {"actor":"human","at":"2026-10-19T11:21:29.539Z","from":"","task":"br-suuh","to":"pending"}
 {"actor":"agent:pm-1","at":"2026-10-19T11:24:06.009479Z","from":"open","task":"br-ggbx","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-19T11:24:10.165878Z","queue":"reprioritized"}
+{"actor":"agent:weavq","at":"2026-10-19T11:33:31.821771Z","from":"claimed","task":"br-eavq","to":"built"}
