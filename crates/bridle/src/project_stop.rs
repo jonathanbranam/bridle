@@ -386,6 +386,15 @@ async fn local(
         .unwrap_or_else(|| home_dir.join(".config"));
     let units = installed_units(os, &home_dir, &config_home, &project);
 
+    // The drain stops idle agents; so does this, so a move that skipped or outran it still works.
+    if running.is_some()
+        && !args.list
+        && let Ok(client) = client_for(cli).await
+    {
+        for name in crate::project_drain::stop_idle_agents(&client).await {
+            println!("stopped idle agent {name}");
+        }
+    }
     let agents = match &running {
         Some(d) => Some(
             Client::new_with_timeout(d.url.clone(), None, std::time::Duration::from_secs(2))

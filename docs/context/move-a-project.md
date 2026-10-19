@@ -39,13 +39,14 @@ bridle project drain            # or: bridle --project P project drain
 
 It holds new claims and spawns for this project only (running agents finish their turns, messages
 still flow), tells every running agent and registered session, then waits with no timeout until
-the project is stable, messaging `orchestrator` at the start and on each change. It names a list that has
+the project is stable, stopping each agent that is idle with no claimed ticket and has had its announce
+turn (so no manual `agent stop`), messaging `orchestrator` at the start and on each change. It names a list that has
 not moved for 30 minutes to `orchestrator` and `aide`. It returns when nothing is left.
 
 Stable means: no claimed or built ticket, no running agent, no `bridle/*` or `integrate/*` branch ahead of
 the integration branch, a clean main checkout (untracked files count; `--leave PATH` lets a path through and
 lists it as LEFT), no undelivered outbox mail. Land or drop the tickets it names, push or delete
-the branches, and let the agents finish. Run `project preflight --to NEW` again; all passes means go.
+the branches, and let working agents finish (idle ones are stopped for you; `project stop` stops them too). Run `project preflight --to NEW` again; all passes means go.
 
 Caveats: the hold lives in the daemon's memory, so a daemon restart drops it (a running `drain` re-asserts it;
 do not restart the daemon while draining without the drain running). Known drain bugs are br-ef3u and br-8swr.

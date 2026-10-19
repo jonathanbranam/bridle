@@ -11,7 +11,9 @@ use std::time::{Duration, Instant};
 use anyhow::Context;
 use bridle_api::Client;
 use bridle_api::discovery::list_registry;
-use bridle_api::types::{MessageKind, SendRequest, When};
+use bridle_api::types::{
+    Agent, AgentState, MessageKind, SendRequest, StopRequest, TicketState, When,
+};
 use bridle_daemon::config::Config;
 use bridle_daemon::paths::Workspace;
 
@@ -61,6 +63,9 @@ pub async fn run(cli: &Cli, args: &ProjectDrainArgs) -> Result<(), CliError> {
         if !client.status().await?.held {
             client.hold_project(true).await?;
         }
+        for name in stop_idle_agents(&client).await {
+            println!("stopped idle agent {name}");
+        }
         let (bad, _left) = crate::stable::unstable(&repo, &db, &integration, &args.leave, true);
         if bad.is_empty() {
             println!("{project}: stable. Run `bridle project stop`.");
@@ -104,6 +109,42 @@ pub async fn run(cli: &Cli, args: &ProjectDrainArgs) -> Result<(), CliError> {
         }
         tokio::time::sleep(POLL).await;
     }
+}
+
+/// Whether the drain may stop `a`: idle, nothing held or unacknowledged (so its announce turn
+/// has run), and no claimed ticket. `claims` is the number of tickets it has claimed.
+fn stoppable(a: &Agent, claims: usize) -> bool {
+    a.state == AgentState::Idle && a.held_messages == 0 && a.unacked_messages == 0 && claims == 0
+}
+
+/// Stops every agent the drain could stop (see [`stoppable`]) and waits briefly for each to go.
+/// Best effort: an agent that does not stop is reported by the stable check as still running.
+/// `project stop` calls this too, so it never refuses on an agent the drain would have stopped.
+pub async fn stop_idle_agents(client: &Client) -> Vec<String> {
+    let Ok(agents) = client.list_agents().await else {
+        return Vec::new();
+    };
+    let mut stopped = Vec::new();
+    for a in agents.iter().filter(|a| a.state == AgentState::Idle) {
+        let claims = match client.list_tasks_claimed_by(&a.name).await {
+            Ok(t) => t.iter().filter(|t| t.state == TicketState::Claimed).count(),
+            Err(_) => continue,
+        };
+        if stoppable(a, claims) && client.stop(&a.id, &StopRequest::default()).await.is_ok() {
+            stopped.push(a.name.clone());
+        }
+    }
+    for _ in 0..60 {
+        match client.list_agents().await {
+            Ok(now)
+                if now
+                    .iter()
+                    .any(|a| stopped.contains(&a.name) && a.state.is_running()) => {}
+            _ => break,
+        }
+        tokio::time::sleep(Duration::from_millis(500)).await;
+    }
+    stopped
 }
 
 /// Everyone the move concerns, once each: running agents by name, registered sessions by identity.
@@ -159,7 +200,46 @@ async fn tell(client: &Client, to: &str, body: String) {
 
 #[cfg(test)]
 mod tests {
-    use super::recipient_names;
+    use super::{recipient_names, stoppable};
+    use bridle_api::types::{Agent, AgentState};
+    use chrono::Utc;
+
+    fn agent(state: AgentState) -> Agent {
+        Agent {
+            id: "a-1".into(),
+            name: "manager".into(),
+            role: "manager".into(),
+            state,
+            model: "sonnet".into(),
+            session_id: "s-1".into(),
+            pid: None,
+            cwd: "/ws".into(),
+            worktree: None,
+            branch: None,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+            last_event_at: None,
+            turns: 7,
+            turn_started_at: None,
+            cost_usd_total: 0.0,
+            context_tokens: None,
+            exit: None,
+            created_by: "human".into(),
+            held_messages: 0,
+            unacked_messages: 0,
+            components: Vec::new(),
+        }
+    }
+
+    #[test]
+    fn the_drain_stops_an_idle_agent_with_no_claim_and_waits_on_the_rest() {
+        assert!(stoppable(&agent(AgentState::Idle), 0));
+        assert!(!stoppable(&agent(AgentState::Working), 0));
+        assert!(!stoppable(&agent(AgentState::Idle), 1));
+        let mut unannounced = agent(AgentState::Idle);
+        unannounced.held_messages = 1;
+        assert!(!stoppable(&unannounced, 0));
+    }
 
     #[test]
     fn each_principal_is_named_once() {

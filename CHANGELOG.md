@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Project move (br-jqf9): `bridle project drain` stops each agent that is idle with no claimed ticket once its announce turn has run, and `project stop` does the same before its stability check, so an idle manager no longer blocks the drain or needs a manual `agent stop`.
 - Stages (br-t6ev): the designer writes every unblocked stage of a ticket in turn (design and specs together after the proposal is signed), and a signature wait no longer holds back the other unblocked stages; the ticket is claimed by the human only when no stage is left to write, so both arrive for review together and are approved or sent back independently.
 - Stage-land (br-5nk5): a stage merge into main ignores the user's `merge.ff` (`-c merge.ff=true`, as `integrator::land` does), so a clean merge of a stage branch that is behind main lands without a rebase; a real conflict still fails back to the writer.
 - Migrations (br-rdag): the start-up run now commits what it changed (the migrations' files plus `.bridle/migrations.toml`/`.log`, message names the ids), and catches up state/log files an earlier run left uncommitted; where it can't (protected branch, git refuses) it files a to-do for the project's aide (`external:aide`) saying what is left and how to commit. Supersedes br-jqf9 item 2.
