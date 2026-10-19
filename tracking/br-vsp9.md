@@ -2,11 +2,15 @@
 id = "br-vsp9"
 title = "Role text and orchestrator startup steps name a nonexistent --state flag on ticket/task list"
 kind = "fix"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-18T22:42:13.528Z"
-updated_at = "2026-10-18T22:55:27.357741Z"
+updated_at = "2026-10-19T22:04:49.693976Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "agent:wvsp9",
+]
+summary = "Three places told agents to run `--state` on `ticket list` and `task list`, a flag neither command has. Changed the three references (no `--state` flag added): crates/bridle/src/commands/orchestrator.rs (startup steps: pending tasks now point at `bridle task list`'s state column and `bridle status --json`'s `pending_tasks`), workflow/base/roles/orchestrator.md (start-up look at pending: same), workflow/base/roles/manager.md (idle/woken: `bridle ticket list`, reading the state column for open tickets). No test asserted the old text. CHANGELOG history left as is; a Fixed line added under Unreleased. Checked that `bridle task list`, `bridle ticket list` and `bridle status --json` (with `pending_tasks`) exit 0."
 ticket = "vsp9"
 +++
 
