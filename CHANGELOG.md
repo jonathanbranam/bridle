@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Self-upgrade (br-mp9d): the new binary's self-check timeout is 180 s per run (was 60 s), since the freshly installed binary's first exec queues behind macOS's policy scan under build/test load; the check already ran the installed, re-signed binary (now a tested helper).
 - `integration/target` growing to 90 GB (br-mhfx): the br-j4bk prune only ran after a warm build, which bridle's own config leaves off, so it never ran; it now runs after every land (over 30K `deps` entries). The disk monitor also removes `wt/` worktrees whose branch has landed, with no agent, clean and no open files (logged, `worktree.removed` event).
 - A worker's refused `ticket built` now says "ticket is not claimed by you" instead of "agent lifecycle endpoints" (br-65qh). The claim loss itself was br-4n3v's claim sweep (fixed, with its test).
 - Stages (br-fyww): `ticket done` refuses a version 2 ticket that is not prepared (landing a stage branch no longer marks it integrated), and `ticket reopen` of one goes to `pending` so the stage watch writes its next stage; the manager role says never to run `done` for a `bridle/designer-*` branch.

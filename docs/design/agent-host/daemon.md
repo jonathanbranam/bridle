@@ -397,7 +397,7 @@ turn is the stall detector's job. Skipped and building wake no one. Load holds a
 **Rollback.** The running binary is copied to `<workspace>/.bridle/bridle.prev` before the build
 replaces it. After the build, the daemon runs the new binary's self-check (`bridle serve --check
 --repo .. --workspace ..`: loads the config, never opens the database, so a newer schema isn't
-applied before the restart is certain; a run that times out at 60 s is retried, up to three runs, since the new binary's first run can be slow on a loaded Intel Mac, while a real failure is not); a failure is reported like a failed build and the daemon
+applied before the restart is certain; a run that times out at 180 s is retried, up to three runs, since the freshly installed binary's first exec waits on the macOS policy scan, which queues under build/test load (the binary checked is the one at the live path, after re-signing), while a real failure is not); a failure is reported like a failed build and the daemon
 stays as it is. Before the restart it writes `.bridle/upgrade-pending.json`; the new process marks
 it `started` as it begins and deletes it once `daemon.json` is written (serving). A new process
 that fails in `start`, or finds the marker already `started` (the last attempt died before

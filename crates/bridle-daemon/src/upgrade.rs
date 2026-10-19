@@ -25,10 +25,12 @@ const BUILT_KEY: &str = "upgrade.built";
 /// How far back from the tip to look for a green commit.
 const LOOKBACK: usize = 30;
 const BUILD_TIMEOUT: Duration = Duration::from_secs(60 * 60);
-/// Cap on one self-check run, and how many runs a timeout gets. The new binary's first run can be
-/// very slow on a loaded Intel Mac (likely macOS policy-checking a fresh unsigned binary; not
-/// confirmed), and later runs are fast, so only a timeout is retried; a real failure is not.
-const CHECK_TIMEOUT: Duration = Duration::from_secs(60);
+/// Cap on one self-check run, and how many runs a timeout gets. The checked binary is the
+/// installed, re-signed one (br-mp9d), a fresh file whose first exec waits on macOS's policy scan
+/// (syspolicyd); under build/test load that queue ran 45 s per exec, past the old 60 s cap with
+/// retries that kill and restart the wait. Later runs are fast, so only a timeout is retried; a
+/// real failure is not.
+const CHECK_TIMEOUT: Duration = Duration::from_secs(180);
 const CHECK_ATTEMPTS: usize = 3;
 /// Lines of build output kept in a failure report.
 const TAIL_LINES: usize = 15;
@@ -239,20 +241,9 @@ impl Upgrader {
                 let (p, a) = c.split_first().ok_or("empty preflight command")?;
                 (p.clone(), a.to_vec())
             }
-            Preflight::Real => (
-                crate::exe_path()
-                    .map_err(|e| e.to_string())?
-                    .to_string_lossy()
-                    .into_owned(),
-                vec![
-                    "serve".into(),
-                    "--check".into(),
-                    "--repo".into(),
-                    ws.repo.to_string_lossy().into_owned(),
-                    "--workspace".into(),
-                    ws.workspace.to_string_lossy().into_owned(),
-                ],
-            ),
+            Preflight::Real => {
+                real_check_command(&crate::exe_path().map_err(|e| e.to_string())?, ws)
+            }
         };
         let mut out = None;
         for _ in 0..CHECK_ATTEMPTS {
@@ -325,6 +316,22 @@ impl Upgrader {
             out.status
         ))
     }
+}
+
+/// The self-check command: the binary at the live path, which is what launchd execs after the
+/// restart (the build is installed there, re-signed, before this runs), not a staged copy.
+fn real_check_command(exe: &Path, ws: &Workspace) -> (String, Vec<String>) {
+    (
+        exe.to_string_lossy().into_owned(),
+        vec![
+            "serve".into(),
+            "--check".into(),
+            "--repo".into(),
+            ws.repo.to_string_lossy().into_owned(),
+            "--workspace".into(),
+            ws.workspace.to_string_lossy().into_owned(),
+        ],
+    )
 }
 
 /// Paths the binary is built from. The `include_*!` uses in the crates all sit in tests, so
@@ -448,6 +455,14 @@ mod tests {
         );
         up.check_timeout = Duration::from_millis(500);
         up
+    }
+
+    #[test]
+    fn the_real_self_check_runs_the_given_live_binary() {
+        let ws = Workspace::new(Path::new("/w"), None);
+        let (program, args) = real_check_command(Path::new("/live/bridle"), &ws);
+        assert_eq!(program, "/live/bridle");
+        assert_eq!(&args[..2], ["serve", "--check"]);
     }
 
     #[tokio::test]
