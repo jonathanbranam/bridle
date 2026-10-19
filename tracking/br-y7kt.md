@@ -4,7 +4,7 @@ title = "ticket ready checks the ticket is committed on main, not the project's 
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-18T23:51:48.693Z"
-updated_at = "2026-10-19T11:14:59.495272Z"
+updated_at = "2026-10-19T11:15:13.920028Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -37,3 +37,6 @@ done: ticket ready checks the integration branch; just check exit 0, 1888 passed
 
 ### note · agent:manager-2 · 2026-10-19T11:14:59.495Z
 integrated: 41a01f173f2a11023ede1d0c7d1a5885cd6c583d (branch bridle/wy7kt)
+
+### note · agent:manager-2 · 2026-10-19T11:15:13.920Z
+cleanup: removed agent wy7kt, branch bridle/wy7kt

@@ -2,9 +2,9 @@
 id = "br-5nk5"
 title = "stage-land refuses a clean merge when the user's git config says merge.ff=only"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-10-19T11:00:02.919Z"
-updated_at = "2026-10-19T11:00:56.975804Z"
+updated_at = "2026-10-19T11:15:04.844264Z"
 created_by = "external:advisor/tj7q"
 watchers = ["external:advisor/tj7q"]
 ticket = "5nk5"
