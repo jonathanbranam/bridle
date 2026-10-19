@@ -2,11 +2,14 @@
 id = "br-mhfx"
 title = "integration/target is back to 90 GB (788K files): the br-j4bk prune isn't keeping it down, and dead worktrees keep their target/"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-19T01:52:02.424Z"
-updated_at = "2026-10-19T02:07:12.560909Z"
+updated_at = "2026-10-19T10:00:35.350862Z"
 created_by = "external:aide"
-watchers = ["external:aide"]
+watchers = [
+    "external:aide",
+    "agent:wmhfx",
+]
 priority = "high"
 priority_at = "2026-10-19T01:52:12.617255Z"
 ticket = "mhfx"
