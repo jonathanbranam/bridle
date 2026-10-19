@@ -9,6 +9,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-7ytg]
+resolved: 2026-10-19T23:02:12Z
 ---
 
 From the human, via track-web's aide (m-17255, 2026-10-19), verbatim: "Send this issue with the ticket
