@@ -815,6 +815,9 @@ pub struct Outcome {
     pub failed: Option<(String, anyhow::Error)>,
     /// Pending opt-in migrations that were left alone.
     pub manual_pending: Vec<String>,
+    /// Set by the start-up run when changes were left uncommitted: what is left and how to
+    /// commit it, for a to-do for the project's aide.
+    pub todo: Option<String>,
 }
 
 /// Apply every pending migration in order, recording each (state file, then log) as it
@@ -837,6 +840,7 @@ pub fn apply(
         done: vec![],
         failed: None,
         manual_pending: vec![],
+        todo: None,
     };
     if let Some(id) = only
         && !all.iter().any(|m| m.id == id)
@@ -884,12 +888,99 @@ pub fn run_at_startup(repo: &Path, all: &[Migration]) -> Option<Result<Outcome, 
         if !bridle_daemon::config::Config::load(repo).is_ok_and(|c| c.migrations_auto) {
             return None;
         }
-        Some(apply(repo, all, false, None, Utc::now()).map_err(|e| format!("{e:#}")))
+        let mut out = match apply(repo, all, false, None, Utc::now()) {
+            Ok(o) => o,
+            Err(e) => return Some(Err(format!("{e:#}"))),
+        };
+        out.todo = commit_leftovers(repo, &out.done);
+        Some(Ok(out))
     }));
     match attempt {
         Ok(r) => r,
         Err(_) => Some(Err("the migration run panicked".into())),
     }
+}
+
+fn git_out(repo: &Path, args: &[&str]) -> Option<std::process::Output> {
+    std::process::Command::new("git")
+        .arg("-C")
+        .arg(repo)
+        .args(args)
+        .output()
+        .ok()
+}
+
+const STATE_FILES: [&str; 2] = [".bridle/migrations.toml", ".bridle/migrations.log"];
+
+/// Commit what the start-up run changed (the files the migrations reported, plus the state and
+/// log files); with nothing applied this is the catch-up for state/log differences an earlier run
+/// left. Only those paths are committed (`git commit -- paths`), never other dirty files. Fails
+/// safe: in any doubt (a protected branch, git refusing) nothing is committed and the returned
+/// text is a to-do for the project's aide (`external:aide`) saying what is left and how to commit it. `None`
+/// means nothing was left, or there is no git repo rooted at `repo` to commit in.
+fn commit_leftovers(repo: &Path, done: &[MigrationRecord]) -> Option<String> {
+    // Only a repo whose root is `repo` (a bridle project inside a larger repo is not ours to commit in).
+    let prefix = git_out(repo, &["rev-parse", "--show-prefix"])?;
+    if !prefix.status.success() || !prefix.stdout.iter().all(u8::is_ascii_whitespace) {
+        return None;
+    }
+    let mut files: Vec<String> = done.iter().flat_map(|r| r.files.clone()).collect();
+    files.extend(STATE_FILES.iter().map(|f| f.to_string()));
+    files.sort();
+    files.dedup();
+    let mut args = vec!["status", "--porcelain", "--"];
+    args.extend(files.iter().map(String::as_str));
+    let st = git_out(repo, &args)?;
+    if !st.status.success() {
+        return None;
+    }
+    let dirty = String::from_utf8_lossy(&st.stdout).trim_end().to_string();
+    if dirty.is_empty() {
+        return None;
+    }
+    let ids: Vec<&str> = done.iter().map(|r| r.id.as_str()).collect();
+    let msg = if ids.is_empty() {
+        "bridle migrate: commit migration records left by an earlier run".to_string()
+    } else {
+        format!("bridle migrate: {}", ids.join(", "))
+    };
+    let how = format!(
+        "git add -- {f} && git commit -m '{msg}' -- {f}",
+        f = files.join(" ")
+    );
+    let todo = |why: String| {
+        Some(format!(
+            "Migration changes were left uncommitted ({why}).\n\nLeft:\n{dirty}\n\nTo commit them, on the project's integration (or trial) branch:\n\n    {how}"
+        ))
+    };
+    if let Err(e) = refuse_on_protected_branch(repo, &project_of(repo)) {
+        return todo(format!("{e}"));
+    }
+    let run = |args: &[&str]| -> Result<(), String> {
+        let o = std::process::Command::new("git")
+            .arg("-C")
+            .arg(repo)
+            .args(args)
+            .output()
+            .map_err(|e| format!("git: {e}"))?;
+        if o.status.success() {
+            Ok(())
+        } else {
+            Err(String::from_utf8_lossy(&o.stderr).trim().to_string())
+        }
+    };
+    let mut add = vec!["add", "--"];
+    add.extend(files.iter().map(String::as_str));
+    if let Err(e) = run(&add) {
+        return todo(format!("git add failed: {e}"));
+    }
+    let mut commit = vec!["commit", "-q", "-m", msg.as_str(), "--"];
+    commit.extend(files.iter().map(String::as_str));
+    if let Err(e) = run(&commit) {
+        return todo(format!("git commit failed: {e}"));
+    }
+    tracing::info!("committed migration changes: {msg}");
+    None
 }
 
 fn record(
@@ -1583,5 +1674,85 @@ mod tests {
             "/target\n.agent-site/\n"
         );
         assert!(gitignore_agent_site(&ctx(false)).unwrap().files.is_empty());
+    }
+
+    fn head_files(p: &Path) -> String {
+        let o = std::process::Command::new("git")
+            .arg("-C")
+            .arg(p)
+            .args(["show", "--name-only", "--format=%s", "HEAD"])
+            .output()
+            .unwrap();
+        String::from_utf8_lossy(&o.stdout).into_owned()
+    }
+
+    fn status(p: &Path) -> String {
+        let o = std::process::Command::new("git")
+            .arg("-C")
+            .arg(p)
+            .args(["status", "--porcelain"])
+            .output()
+            .unwrap();
+        String::from_utf8_lossy(&o.stdout).into_owned()
+    }
+
+    #[test]
+    fn startup_commits_only_the_migration_files() {
+        let p = git_project("[branches]\nintegration = \"trial\"\n", false);
+        git(p.path(), &["checkout", "-q", "-B", "trial"]);
+        std::fs::write(p.path().join("stray.txt"), "human's").unwrap();
+        let all = [ok_migration("0001-b")];
+        let out = run_at_startup(p.path(), &all).unwrap().unwrap();
+        assert!(out.todo.is_none());
+        let shown = head_files(p.path());
+        assert!(shown.contains("0001-b"), "{shown}");
+        for f in [
+            "touched",
+            ".bridle/migrations.toml",
+            ".bridle/migrations.log",
+        ] {
+            assert!(shown.contains(f), "{f} in {shown}");
+        }
+        assert!(!shown.contains("stray.txt"), "{shown}");
+        assert_eq!(status(p.path()).trim(), "?? stray.txt");
+    }
+
+    #[test]
+    fn startup_catches_up_records_an_earlier_run_left() {
+        let p = git_project("[branches]\nintegration = \"trial\"\n", false);
+        git(p.path(), &["checkout", "-q", "-B", "trial"]);
+        let all = [ok_migration("0001-b")];
+        // An earlier run applied it and nobody committed.
+        apply(p.path(), &all, false, None, Utc::now()).unwrap();
+        assert!(!status(p.path()).is_empty());
+        let out = run_at_startup(p.path(), &all).unwrap().unwrap();
+        assert!(out.done.is_empty() && out.todo.is_none());
+        let shown = head_files(p.path());
+        assert!(shown.contains(".bridle/migrations.toml"), "{shown}");
+        // The migration's own file is not a state file: it stays for the owner.
+        assert_eq!(status(p.path()).trim(), "?? touched");
+        // Clean now: a third start touches nothing.
+        std::fs::remove_file(p.path().join("touched")).unwrap();
+        let out = run_at_startup(p.path(), &all).unwrap().unwrap();
+        assert!(out.done.is_empty() && out.todo.is_none());
+        assert_eq!(status(p.path()).trim(), "");
+    }
+
+    #[test]
+    fn startup_commit_follows_the_configured_integration_branch() {
+        let all = [ok_migration("0001-b")];
+        // integration = "dev": committing on dev is allowed.
+        let p = git_project("[branches]\nintegration = \"dev\"\n", false);
+        git(p.path(), &["checkout", "-q", "-B", "dev"]);
+        let out = run_at_startup(p.path(), &all).unwrap().unwrap();
+        assert!(out.todo.is_none());
+        assert!(head_files(p.path()).contains("0001-b"));
+        // No integration set and on main: protected, so nothing is committed and a to-do says how.
+        let q = git_project("", false);
+        git(q.path(), &["checkout", "-q", "-B", "main"]);
+        let out = run_at_startup(q.path(), &all).unwrap().unwrap();
+        let todo = out.todo.expect("a to-do");
+        assert!(todo.contains("git commit") && todo.contains(".bridle/migrations.toml"));
+        assert!(head_files(q.path()).starts_with("init"));
     }
 }

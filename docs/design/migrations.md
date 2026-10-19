@@ -54,6 +54,18 @@ the daemon: the run is wrapped against errors and panics.
   no incident, retried at the next start.
 - Applied migrations are posted as `project.migrated` events once the daemon is up.
 - Nothing pending (or `auto = false`) touches no file.
+- **Commit afterward** (br-rdag): after the run, the start-up commits what it changed: the files the
+  applied migrations reported plus `.bridle/migrations.toml` and `.bridle/migrations.log`, in one
+  commit `bridle migrate: <ids>`. Only those paths are committed (`git commit -- paths`); the
+  human's other dirty files are never staged. The same step is the **catch-up**: if the toml or log
+  differ from git at start (an earlier run left them), they are committed with the message "commit
+  migration records left by an earlier run". This is what fixes the projects that already carry
+  uncommitted migration output (track-web, dalek-home, bridle-ui as of 2026-10-18); a file a
+  migration edited before this change (say `.gitignore`) is not guessed at and stays for its owner.
+- **Fail safe.** It commits only on a branch the guard below allows, in a repo rooted at the
+  project directory. Where it can't (protected branch, git or a hook refuses) it commits nothing and
+  files a chore to-do and messages the project's aide (`external:aide`) naming what is left and the `git add`/`git commit`
+  line to run. It repeats at each start until the files are committed.
 
 ## Shipped migrations
 
@@ -129,7 +141,12 @@ runs on a real project): start-up skips it, and it runs by `bridle migrate --onl
   finds nothing.
 
 **Protected-branch guard** (rule `existing-projects`; `migrate::refuse_on_protected_branch`, the
-first one): a migration that rewrites a project's files calls it first and is refused
+first one): a migration that rewrites a project's files calls it before writing and is refused
 (`migrate::Refused`) while `main`, `dev` or the configured `[branches] release` is checked out,
-so it only lands on the trial or integration branch. Bridle's own repo (project `bridle`) is
+so it only lands on the trial or integration branch. A branch the project declares as its
+`[branches] integration` (set in the config, not the `main` default) is allowed unless it is also the
+release branch, so track-web on `dev` with `integration = "dev"` migrates. Since br-p4f2 the guard
+reads that setting; on dalek-home the 2026-10-17 `0007` run on `main` was allowed because the
+guard treats a declared integration of `main` as the project's own branch, and a project with no
+`integration` set is refused on `main`. The start-up commit uses the same guard. Bridle's own repo (project `bridle`) is
 exempt. `0002` to `0007` use it; `0001` does not yet.

@@ -161,7 +161,11 @@ async fn report_startup_migrations(
         Ok(out) => out.done.as_slice(),
         Err(_) => &[],
     };
-    if done.is_empty() && failure.is_none() {
+    let todo = result.as_ref().ok().and_then(|o| o.todo.clone());
+    if let Some(t) = &todo {
+        tracing::warn!("{t}");
+    }
+    if done.is_empty() && failure.is_none() && todo.is_none() {
         return;
     }
 
@@ -193,6 +197,36 @@ async fn report_startup_migrations(
     for rec in done {
         if let Err(e) = client.record_migration(rec).await {
             tracing::warn!("couldn't record {} as an event: {e}", rec.id);
+        }
+    }
+    if let Some(t) = todo {
+        let req = bridle_api::types::NewTicketRequest {
+            title: "Commit the migration changes left in the checkout".into(),
+            kind: bridle_api::types::TicketKind::Chore,
+            body: t,
+            size: None,
+            components: vec![],
+            for_human: false,
+            priority: None,
+            ticket: None,
+            parent: None,
+        };
+        // The to-do goes to the project's aide (often the only agent on a project), not its manager.
+        match client.new_task(&req).await {
+            Ok(t) => {
+                let msg = bridle_api::types::SendRequest {
+                    to: Some("external:aide".into()),
+                    body: format!("{}\n\n{}", req.title, req.body),
+                    task: Some(t.id),
+                    ..Default::default()
+                };
+                if let Err(e) = client.send(&msg).await {
+                    tracing::warn!("couldn't tell the aide about the migration to-do: {e}");
+                }
+            }
+            Err(e) => {
+                tracing::warn!("couldn't file the to-do for uncommitted migration changes: {e}")
+            }
         }
     }
     if let Some(f) = failure {
