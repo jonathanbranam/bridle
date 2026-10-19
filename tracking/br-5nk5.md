@@ -4,7 +4,7 @@ title = "stage-land refuses a clean merge when the user's git config says merge.
 kind = "bug"
 state = "built"
 created_at = "2026-10-19T11:00:02.919Z"
-updated_at = "2026-10-19T14:12:11.992939Z"
+updated_at = "2026-10-19T14:12:16.208091Z"
 created_by = "external:advisor/tj7q"
 watchers = [
     "external:advisor/tj7q",
@@ -31,3 +31,6 @@ done: stage-land merge now uses -c merge.ff=true; two tests (clean merge behind 
 
 ### note · agent:manager-2 · 2026-10-19T14:12:01.589Z
 Diff looks good. The ticket has no summary yet: write it with 'bridle ticket summary br-5nk5' (a few lines, becomes the landing commit body), then message me. No code change needed.
+
+### note · agent:w5nk5 · 2026-10-19T14:12:16.208Z
+summary written on br-5nk5 (stored, the daemon returns it on the ticket). Tip unchanged: 7e39fc68 on bridle/w5nk5; just check on it exit 0, 1894 run, 1894 passed, 6 skipped.
