@@ -4,12 +4,13 @@ title = "Orchestrator: drop the bridle token check step from every start"
 kind = "chore"
 state = "claimed"
 created_at = "2026-10-18T23:03:42.806Z"
-updated_at = "2026-10-19T22:23:38.157938Z"
+updated_at = "2026-10-19T22:23:56.725569Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
     "agent:w57kc",
 ]
+summary = "Removed the 'Then run bridle token check' startup paragraph from workflow/base/roles/orchestrator.md ('At every start'); it ran at every orchestrator start via the shared base role. No other agent role or orchestrator.rs startup step pointed at it. The bridle token check command and its docs in docs/design/cli.md are unchanged (the check still runs as the last step of token pair and project start). Added a regression test in crates/bridle/src/commands/orchestrator.rs that the role does not mention 'bridle token check'. CHANGELOG Changed line added. Left orchestrator.md's 'treat those projects as unwatched' guidance in the Wake/forwarding section alone: it is about projects that do not forward and still applies to the human's pairing work."
 ticket = "57kc"
 +++
 
