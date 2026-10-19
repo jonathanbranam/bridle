@@ -4,7 +4,7 @@ title = "stage-land refuses a clean merge when the user's git config says merge.
 kind = "bug"
 state = "built"
 created_at = "2026-10-19T11:00:02.919Z"
-updated_at = "2026-10-19T14:12:16.208091Z"
+updated_at = "2026-10-19T20:07:27.870960Z"
 created_by = "external:advisor/tj7q"
 watchers = [
     "external:advisor/tj7q",
@@ -34,3 +34,6 @@ Diff looks good. The ticket has no summary yet: write it with 'bridle ticket sum
 
 ### note · agent:w5nk5 · 2026-10-19T14:12:16.208Z
 summary written on br-5nk5 (stored, the daemon returns it on the ticket). Tip unchanged: 7e39fc68 on bridle/w5nk5; just check on it exit 0, 1894 run, 1894 passed, 6 skipped.
+
+### note · agent:w5nk5 · 2026-10-19T20:07:27.870Z
+done: merged main (dfe7eac3, br-stht) into bridle/w5nk5; tip 8683f0a8; just check exit 0, 1894 run, 1894 passed, 6 skipped; the stage-land diff is unchanged
