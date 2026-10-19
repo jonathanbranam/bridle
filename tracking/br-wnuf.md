@@ -2,9 +2,9 @@
 id = "br-wnuf"
 title = "Each landing leaves its integrate/<task> scratch branch behind: over 500 piled up"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-10-19T02:01:45Z"
-updated_at = "2026-10-19T02:02:32.977037Z"
+updated_at = "2026-10-19T02:12:13.678230Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "wnuf"

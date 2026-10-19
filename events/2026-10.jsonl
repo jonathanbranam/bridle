@@ -2810,3 +2810,5 @@
 {"actor":"external:orchestrator","at":"2026-10-19T02:04:05.549773Z","from":"pending","task":"br-pm2r","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-19T02:07:12.560909Z","from":"open","task":"br-mhfx","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-19T02:07:15.488475Z","queue":"reprioritized"}
+{"actor":"agent:pm-1","at":"2026-10-19T02:12:13.678230Z","from":"open","task":"br-wnuf","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-19T02:12:15.538395Z","queue":"reprioritized"}
