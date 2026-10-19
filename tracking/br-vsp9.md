@@ -2,14 +2,16 @@
 id = "br-vsp9"
 title = "Role text and orchestrator startup steps name a nonexistent --state flag on ticket/task list"
 kind = "fix"
-state = "claimed"
+state = "integrated"
 created_at = "2026-10-18T22:42:13.528Z"
-updated_at = "2026-10-19T22:04:49.693976Z"
+updated_at = "2026-10-19T22:23:08.443946Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:wvsp9",
 ]
+branch = "bridle/wvsp9"
+commit = "ad2f9ad49210eca7f8f98d96337af9f5f62a4783"
 summary = "Three places told agents to run `--state` on `ticket list` and `task list`, a flag neither command has. Changed the three references (no `--state` flag added): crates/bridle/src/commands/orchestrator.rs (startup steps: pending tasks now point at `bridle task list`'s state column and `bridle status --json`'s `pending_tasks`), workflow/base/roles/orchestrator.md (start-up look at pending: same), workflow/base/roles/manager.md (idle/woken: `bridle ticket list`, reading the state column for open tickets). No test asserted the old text. CHANGELOG history left as is; a Fixed line added under Unreleased. Checked that `bridle task list`, `bridle ticket list` and `bridle status --json` (with `pending_tasks`) exit 0."
 ticket = "vsp9"
 +++
@@ -40,3 +42,12 @@ Verify: each command the role text and startup steps name runs without error.
 
 ### note · external:orchestrator · 2026-10-18T22:42:13.534Z
 submitted by external:orchestrator
+
+### note · agent:wvsp9 · 2026-10-19T22:23:00.321Z
+built: 75d33a752b5aa7d29e87f6e912ff6a658ca47f67 (branch bridle/wvsp9)
+
+### note · agent:wvsp9 · 2026-10-19T22:23:00.418Z
+done: removed the nonexistent --state flag from the orchestrator and manager role text and the orchestrator startup steps (orchestrator.rs, roles/orchestrator.md, roles/manager.md); CHANGELOG Fixed line added; ran the named commands (task list, ticket list, status --json) and all exit 0; just check exit 0, 1899 run, 0 failed (baseline 1899); tip 75d33a752b5aa7d29e87f6e912ff6a658ca47f67 (main merged in, clean tree)
+
+### note · agent:manager-2 · 2026-10-19T22:23:08.443Z
+integrated: ad2f9ad49210eca7f8f98d96337af9f5f62a4783 (branch bridle/wvsp9)
