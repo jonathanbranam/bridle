@@ -2,16 +2,15 @@
 id = "br-rdag"
 title = "Migrations: automatic runs leave their changes uncommitted, opt-in ones are never run, and the branch guard misfires"
 kind = "bug"
-state = "built"
+state = "planned"
 created_at = "2026-10-18T23:46:34.284Z"
-updated_at = "2026-10-19T11:59:23.007323Z"
+updated_at = "2026-10-19T12:10:34.094576Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
     "agent:wrdag",
 ]
 branch = "bridle/wrdag"
-commit = "4189c3eb5215e071e51e248f8379c8954a172ec4"
 summary = """Start-up migrations now commit their output (migrate.rs commit_leftovers, run_at_startup; serve.rs files the to-do). After apply, only the reported files plus .bridle/migrations.toml/.log are committed with "git commit -- paths" (message names the ids); with nothing applied the same step catches up toml/log left dirty earlier. Fail safe: only in a repo rooted at the project dir and only where the existing protected-branch guard allows; otherwise nothing is committed and a chore to-do (what is left, the git add/commit line) is filed. Caveats: a to-do repeats each start until committed; non-state files an old run edited (e.g. dalek-home .gitignore) are not guessed at. Item 3: the guard already followed [branches] integration since br-p4f2 (before the 09:24Z run); dalek-home's main run was allowed because the guard treats a declared integration=main as the project's own branch (I could not see dalek-home's config). Documented in migrations.md. Tests: 3 new (only-its-files, catch-up, integration=dev vs main). Commented on br-jqf9."""
 ticket = "rdag"
 +++
@@ -37,3 +36,18 @@ built: 4189c3eb5215e071e51e248f8379c8954a172ec4 (branch bridle/wrdag)
 
 ### note · agent:wrdag · 2026-10-19T11:59:23.007Z
 done: start-up migrations commit their files + catch up leftovers, else file a to-do; just check exit 0, 1893 tests passed; 4189c3eb5215e071e51e248f8379c8954a172ec4
+
+### note · external:orchestrator · 2026-10-19T12:10:25.904Z
+orchestrator: sent back before landing. The human's answer on br-df8w (via aide, 2026-10-19: "I think it goes to the aide.") also covers this fallback. migrate.rs commit_leftovers files its to-do for the project's manager, and should file it for external:aide on the project instead. Update the doc comments, docs/design/migrations.md and the CHANGELOG line to match. Land after CI is green.
+
+### note · external:orchestrator · 2026-10-19T12:10:25.984Z
+From orchestrator: br-rdag: sent back, see the comment. Its fallback to-do goes to external:aide, not the manager (the human's call). This replaces my earlier hold: rework it, then land once CI is green. br-df8w: brief change on its thread (to-dos for the aide).
+
+### note · external:orchestrator · 2026-10-19T12:10:32.146Z
+From orchestrator: correction to m-17233. Rework br-rdag (to-do to external:aide), but don't land it yet. The human's answer on the start-up auto-commit (m-0292, via aide) is still open, and I'll tell you when it comes.
+
+### note · agent:manager-2 · 2026-10-19T12:10:33.430Z
+sent back: Orchestrator, with the human's answer (via aide: 'I think it goes to the aide'): the fallback to-do in migrate.rs commit_leftovers / serve.rs must be filed for external:aide on the project, not the project's manager. Update code, doc comments, docs/design/migrations.md and the CHANGELOG line to match. Then merge main, run just check once, message me the tip.
+
+### note · agent:manager-2 · 2026-10-19T12:10:34.094Z
+br-rdag sent back: the fallback to-do goes to external:aide on the project, not the manager. See the ticket thread (orchestrator note) and the send-back reason. Rework, merge main, just check once, message me the tip.
