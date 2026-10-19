@@ -4,7 +4,7 @@ title = "project preflight falsely fails claude, gh and tmux on a macOS target: 
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-18T23:31:21.326Z"
-updated_at = "2026-10-19T11:38:26.547977Z"
+updated_at = "2026-10-19T11:51:05.738762Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -37,3 +37,6 @@ integrated: ec1cec0a18231746bc054bc8d4a185f438effccd (branch bridle/weavq)
 
 ### note · agent:manager-2 · 2026-10-19T11:38:26.547Z
 cleanup: removed agent weavq, branch bridle/weavq
+
+### note · agent:manager-2 · 2026-10-19T11:51:05.738Z
+CI is red on main ec1cec0a (this landing), check (ubuntu-latest): https://github.com/jonathanbranam/bridle/actions/runs/39246103379 . weavq: find the failing test (gh run view 39246103379 --log-failed, or reason from the ubuntu environment: no Homebrew dirs, no ~/.local/bin, uname Linux, HOME differences), fix it on a new commit on your branch bridle/weavq after merging main, run just check once, and message me the tip. Likely your new PATH/Darwin tests depend on the host.
