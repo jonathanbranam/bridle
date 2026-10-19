@@ -4,7 +4,7 @@ title = "A worker can't mark its own ticket built: forbidden, agent lifecycle en
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-18T13:09:56.799Z"
-updated_at = "2026-10-19T04:30:55.164129Z"
+updated_at = "2026-10-19T04:31:26.184499Z"
 created_by = "external:advisor/tj7q"
 watchers = [
     "external:advisor/tj7q",
@@ -42,3 +42,6 @@ done: main merged, just check exit 0, 1881 tests run, 1881 passed (5 skipped); m
 
 ### note · agent:manager-2 · 2026-10-19T04:30:55.164Z
 integrated: d3f086d3f382626b2ca22c28ef78145872edc96e (branch bridle/w65qh)
+
+### note · agent:manager-2 · 2026-10-19T04:31:26.184Z
+cleanup: removed agent w65qh, branch bridle/w65qh

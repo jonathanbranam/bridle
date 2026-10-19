@@ -4,7 +4,7 @@ title = "Stages: a designer's stage must be on main before the human is asked to
 kind = "bug"
 state = "built"
 created_at = "2026-10-18T15:08:02.155Z"
-updated_at = "2026-10-19T01:39:16.734246Z"
+updated_at = "2026-10-19T04:31:34.289632Z"
 created_by = "external:advisor/tj7q"
 watchers = [
     "external:advisor/tj7q",
@@ -59,3 +59,6 @@ done: stage-done lands the designer's branch on main via the daemon (stage-land)
 
 ### note · agent:wupxq · 2026-10-19T01:39:16.734Z
 br-upxq: re-check on the final commit e63e6b6b finished: exit 0, 1885 tests run, all passed. Safe to land on e63e6b6b.
+
+### note · agent:manager-2 · 2026-10-19T04:31:34.289Z
+main moved (d3f086d3, br-65qh, touches server.rs). Merge main into bridle/wupxq, run just check once, message me the tip sha and exit status. Do not land.
