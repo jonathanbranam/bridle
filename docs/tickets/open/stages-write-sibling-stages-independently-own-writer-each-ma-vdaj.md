@@ -10,6 +10,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-t6ev, br-2ae8, br-ewk8, br-tj7q, br-upxq]
+hold: design
 ---
 
 ## The ask
@@ -25,3 +26,9 @@ The human, 2026-10-19, to advisor tj7q:
 > File something that we can follow up with for V1. The branching, like every stage that can be done, should be done. However that works is a little TBD.
 
 The ask: every stage that can be written is written, each independently of its siblings (a writer of one stage doesn't carry what it thought for another; for specs, it reads the existing specs). Likely one writer per unblocked stage, on its own branch, in parallel. Open, for the design: how parallel stage branches land on main (stage-land per branch, br-upxq), how a redo (`changes`) of one stage leaves the other alone, and the writer cap. Bring the design to the human; don't ready it without them.
+
+## Parked (the human, 2026-10-19)
+
+The human, to advisor tj7q: "We might not need that [vdaj] follow-up at all, so let's just see how it goes. I think the design of writing them sequentially in [t6ev] is probably going to be fine for almost every situation we run into. I typically do not use a fresh context for writing specs and design, so I'm not concerned about that. I do, though, push for a fresh context when implementing tasks, which should be fine since we start a worker for that that hasn't been involved in writing the proposal specs, design, and tasks."
+
+Wait and see how br-t6ev works in practice; reopen only if the human asks.
