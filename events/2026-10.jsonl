@@ -2826,3 +2826,4 @@
 {"actor":"agent:wy7kt","at":"2026-10-19T11:06:56.255419Z","from":"claimed","task":"br-y7kt","to":"built"}
 {"actor":"human","at":"2026-10-19T11:08:33.690Z","from":"","task":"br-ggbx","to":"pending"}
 {"actor":"external:advisor/tj7q","at":"2026-10-19T11:08:35.454437Z","from":"pending","task":"br-ggbx","to":"open"}
+{"actor":"agent:manager-2","at":"2026-10-19T11:14:59.495272Z","from":"built","task":"br-y7kt","to":"integrated"}
