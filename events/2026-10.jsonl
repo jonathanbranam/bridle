@@ -2799,3 +2799,4 @@
 {"actor":"agent:pm-1","at":"2026-10-19T01:26:16.947598Z","from":"open","task":"br-mp9d","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-19T01:26:19.043993Z","queue":"reprioritized"}
 {"actor":"agent:wupxq","at":"2026-10-19T01:32:30.018876Z","from":"claimed","task":"br-upxq","to":"built"}
+{"actor":"human","at":"2026-10-19T01:52:02.424Z","from":"","task":"br-mhfx","to":"pending"}
