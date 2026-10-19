@@ -2,9 +2,9 @@
 id = "br-5rwn"
 title = "Flaky: context_governor_test many_concurrent_crossings_each_renew_exactly_once times out waiting for agent.renewed (ubuntu CI)"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-10-19T11:51:34.229Z"
-updated_at = "2026-10-19T11:52:30.246357Z"
+updated_at = "2026-10-19T12:02:26.013782Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "5rwn"
