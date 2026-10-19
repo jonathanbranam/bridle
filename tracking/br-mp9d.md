@@ -2,9 +2,9 @@
 id = "br-mp9d"
 title = "Self-upgrade refused ac004852: the new binary's self-check timed out (3x60s); staged ad-hoc-signed binary hangs at exec"
 kind = "bug"
-state = "pending"
+state = "open"
 created_at = "2026-10-19T00:40:28.426Z"
-updated_at = "2026-10-19T00:40:38.078436Z"
+updated_at = "2026-10-19T00:42:50.704141Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "mp9d"
