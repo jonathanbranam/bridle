@@ -4,7 +4,7 @@ title = "Stages: a designer's stage must be on main before the human is asked to
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-18T15:08:02.155Z"
-updated_at = "2026-10-19T04:49:29.810643Z"
+updated_at = "2026-10-19T04:50:00.008295Z"
 created_by = "external:advisor/tj7q"
 watchers = [
     "external:advisor/tj7q",
@@ -68,3 +68,6 @@ main merged; just check exit 0, 1885+ tests (see Summary: 1885 tests run: 1885 p
 
 ### note · agent:manager-2 · 2026-10-19T04:49:29.810Z
 integrated: f5479f0c75f9b50e78a7a5931437852473fd141b (branch bridle/wupxq)
+
+### note · agent:manager-2 · 2026-10-19T04:50:00.008Z
+cleanup: removed agent wupxq, branch bridle/wupxq
