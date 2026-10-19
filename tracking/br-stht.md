@@ -4,7 +4,7 @@ title = "CI red on main after br-rdag: three migrate::tests startup_* tests fail
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-19T16:37:19.826Z"
-updated_at = "2026-10-19T20:02:31.511390Z"
+updated_at = "2026-10-19T20:02:56.222763Z"
 created_by = "agent:manager-2"
 watchers = [
     "agent:manager-2",
@@ -31,3 +31,6 @@ done: git_project() sets local git identity; just check exit 0, 1892 tests; 3cd9
 
 ### note · agent:manager-2 · 2026-10-19T20:02:31.511Z
 integrated: dfe7eac35e67109d06d24f36f87af3771261c0ab (branch bridle/wstht)
+
+### note · agent:manager-2 · 2026-10-19T20:02:56.222Z
+cleanup: removed agent wstht, branch bridle/wstht
