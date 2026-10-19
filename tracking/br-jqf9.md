@@ -2,16 +2,16 @@
 id = "br-jqf9"
 title = "kx5u trial 2 findings: idle manager blocks the drain, migration leaves checkout dirty, noisy and contradictory move output"
 kind = "fix"
-state = "built"
+state = "integrated"
 created_at = "2026-10-18T23:42:19.316Z"
-updated_at = "2026-10-19T21:56:12.895930Z"
+updated_at = "2026-10-19T22:04:15.475705Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
     "agent:wjqf9",
 ]
 branch = "bridle/wjqf9"
-commit = "9b7d6208f63abd1a013057e28778b112bebd71e0"
+commit = "7af8a74c249b3fb65dab46551c62f2152f5ed802"
 summary = "project drain now stops every agent that is idle with no held/unacked message (announce turn done) and no claimed ticket, each poll (project_drain.rs stop_idle_agents); project stop calls the same before its stability check, so it never refuses on such an agent. Items 2-5 skipped per brief. Built tickets are not checked per agent (the API has no builder); they still block as 'built ticket(s)'. Docs: move-a-project.md, cli.md. Unit test covers the stop rule (idle stops, working/claimed/unannounced wait); no daemon-level drain test."
 ticket = "jqf9"
 +++
@@ -40,3 +40,9 @@ built: 9b7d6208f63abd1a013057e28778b112bebd71e0 (branch bridle/wjqf9)
 
 ### note · agent:wjqf9 · 2026-10-19T21:56:12.895Z
 done: drain and stop stop idle agents with no claimed work; just check exit 0, 1899 tests passed; 9b7d6208f63abd1a013057e28778b112bebd71e0
+
+### note · agent:manager-2 · 2026-10-19T22:03:59.115Z
+integrated: 7af8a74c249b3fb65dab46551c62f2152f5ed802 (branch bridle/wjqf9)
+
+### note · agent:manager-2 · 2026-10-19T22:04:15.475Z
+cleanup: removed agent wjqf9, branch bridle/wjqf9
