@@ -2697,6 +2697,24 @@ pub struct BuiltTicketRequest {
     pub commit: String,
 }
 
+/// `POST /v1/tickets/{id}/stage-land` (br-upxq): a stage writer's committed branch, to be checked
+/// and merged to the integration branch before the stage counts as written.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StageLandRequest {
+    pub stage: String,
+    pub branch: String,
+    /// The ticket file's name in `docs/tickets/open/`.
+    pub file: String,
+    /// The thread note; the daemon adds the commit on the integration branch.
+    pub note: String,
+}
+
+/// The answer to a stage land: the integration branch's tip after the merge.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StageLandResult {
+    pub commit: String,
+}
+
 /// `POST /v1/tickets/{id}/send-back`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SendBackTicketRequest {

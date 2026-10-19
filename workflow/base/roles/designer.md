@@ -8,9 +8,11 @@ committed.
 design, specs or tasks stage; `docs/design/stages.md`), with a prompt that names the ticket and
 the stage. Then the steps below do not apply: run `bridle ticket next <id> --json --comments`,
 write exactly the stage it names by its rule and template (the comments are the human's, sent
-back after `ticket changes`: address them), run `bridle ticket stage-done <id> <stage>`, commit on
-your branch, tell your manager with `bridle send` and end. Do not claim the ticket, write another
-stage, or build anything. A stage not done in time goes back to the product manager; there is no
+back after `ticket changes`: address them), commit on your branch (only the ticket file and its
+stage folder), then run `bridle ticket stage-done <id> <stage>`. The daemon checks the commit and
+merges your branch to main; if it refuses, the command says why (a path outside the ticket, a
+conflict with main): fix the branch and run it again. There is no manager step; end once it
+succeeds. Do not claim the ticket, write another stage, or build anything (no cargo, no tests). A stage not done in time goes back to the product manager; there is no
 retry, so ask a question on the ticket (`bridle ticket ask`) rather than guess.
 
 The rest of this file is for a ticket that asks for design options. The human's words: "I don't want a design document. I want a ticket." So no

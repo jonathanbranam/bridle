@@ -152,7 +152,98 @@ pub async fn stage_done(cli: &Cli, repo: &Path, a: &TicketStageArgs) -> Result<(
     } else {
         format!("stage {} written", a.stage)
     };
-    finish(cli, repo, &l, m, claim, &note).await
+    let branch = current_branch(repo).await;
+    if !branch.starts_with("bridle/") {
+        // The filer's own checkout (`ticket new --claim`): no branch to land.
+        return finish(cli, repo, &l, m, claim, &note).await;
+    }
+    land(cli, repo, &l, m, claim, &note, &branch, &a.stage).await
+}
+
+async fn git(repo: &Path, args: &[&str]) -> anyhow::Result<String> {
+    let out = tokio::process::Command::new("git")
+        .arg("-C")
+        .arg(repo)
+        .args(args)
+        .output()
+        .await?;
+    if !out.status.success() {
+        bail!(
+            "git {}: {}",
+            args.join(" "),
+            String::from_utf8_lossy(&out.stderr).trim()
+        );
+    }
+    Ok(String::from_utf8_lossy(&out.stdout).to_string())
+}
+
+async fn current_branch(repo: &Path) -> String {
+    git(repo, &["rev-parse", "--abbrev-ref", "HEAD"])
+        .await
+        .map(|b| b.trim().to_string())
+        .unwrap_or_default()
+}
+
+/// A stage writer's `stage-done` (br-upxq): the writer committed its work; the marks go in a
+/// commit of their own, and the daemon checks the branch and merges it to main. The stage counts
+/// as written, and the thread hears of it, only once it is on main.
+#[allow(clippy::too_many_arguments)]
+async fn land(
+    cli: &Cli,
+    repo: &Path,
+    l: &Loaded,
+    m: Marks,
+    claim: Option<Option<&str>>,
+    note: &str,
+    branch: &str,
+    stage: &str,
+) -> Result<(), CliError> {
+    let rel = format!("docs/tickets/open/{}", file_name(&l.path)?);
+    let folder = rel.trim_end_matches(".md").to_string();
+    let dirty = git(repo, &["status", "--porcelain", "--", &rel, &folder]).await?;
+    if !dirty.trim().is_empty() {
+        return Err(
+            anyhow!("commit your work on {branch} first, then run stage-done again").into(),
+        );
+    }
+    let out = write_marks(&l.text, &l.stages, &m, claim)?;
+    std::fs::write(&l.path, out).with_context(|| format!("writing {}", l.path.display()))?;
+    if !git(repo, &["status", "--porcelain", "--", &rel])
+        .await?
+        .trim()
+        .is_empty()
+    {
+        git(repo, &["add", &rel]).await?;
+        git(
+            repo,
+            &[
+                "commit",
+                "-q",
+                "-m",
+                &format!("{}: stage {stage} written", l.id),
+            ],
+        )
+        .await?;
+    }
+    let row = thread_row_id(cli, repo, &l.id).await?;
+    let req = bridle_api::types::StageLandRequest {
+        stage: stage.to_string(),
+        branch: branch.to_string(),
+        file: file_name(&l.path)?,
+        note: note.to_string(),
+    };
+    let landed = client_for(cli).await?.stage_land(&row, &req).await?;
+    println!("{}: stage {stage} is on main at {}", l.id, landed.commit);
+    if stages::prepared(&l.stages, &m) {
+        println!("{}: prepared; the daemon opens it", l.id);
+    }
+    Ok(())
+}
+
+fn file_name(path: &Path) -> anyhow::Result<String> {
+    path.file_name()
+        .map(|n| n.to_string_lossy().to_string())
+        .ok_or_else(|| anyhow!("{} has no file name", path.display()))
 }
 
 pub async fn approve(cli: &Cli, repo: &Path, a: &TicketStageArgs) -> Result<(), CliError> {

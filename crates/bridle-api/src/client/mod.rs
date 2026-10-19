@@ -1001,6 +1001,16 @@ impl Client {
         self.post_json(&["v1", "tickets", id, "built"], req).await
     }
 
+    /// Merges a stage writer's branch to the integration branch (br-upxq).
+    pub async fn stage_land(
+        &self,
+        id: &str,
+        req: &crate::types::StageLandRequest,
+    ) -> Result<crate::types::StageLandResult, ClientError> {
+        self.post_json(&["v1", "tickets", id, "stage-land"], req)
+            .await
+    }
+
     /// `built` -> `planned`.
     pub async fn send_back_task(
         &self,

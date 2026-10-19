@@ -106,6 +106,32 @@ designer branch (`bridle/designer-*`) carries a stage, not a build. `ticket reop
 unprepared version 2 ticket gives `pending` (not `reopened`), so the stage watch picks it up
 again; version 1 and prepared version 2 tickets reopen to `reopened` as before.
 
+## A stage is on main before anyone is asked (br-upxq)
+
+The human reviews on main, not on a branch. So `stage-done` from a designer's worktree (a
+`bridle/*` branch) does not just mark the file:
+
+1. The designer commits its stage, then runs `bridle ticket stage-done <id> <stage>`. The command
+   refuses uncommitted changes to the ticket or its folder, writes the marks (`written`, the
+   human's `claimed_by`, `prepared`) and commits them, then asks the daemon
+   (`POST /v1/tickets/{id}/stage-land`).
+2. The daemon (`stage_land.rs`, under the one-landing-at-a-time lock) checks that the branch's
+   changes against the integration branch touch only `docs/tickets/open/<ticket>.md` and
+   `docs/tickets/open/<ticket>/`, and that the project checkout has no uncommitted edits to those
+   paths, then merges the branch into the checkout. It does not touch the ticket row (a stage is
+   not the build, br-fyww).
+3. Only then does it add the thread note ("stage proposal written, waiting for the human's
+   signature (on main at <commit>)"). The stage watch reads the stage from main as before.
+4. A refusal comes back to the designer at once as the error of `stage-done`: the path outside
+   the ticket, an uncommitted edit on main, or the files that conflict with main. It fixes the
+   branch and runs it again. A designer that ends without a successful `stage-done` is the stage
+   watch's alert below: a thread note and one message to the product manager, not the manager.
+
+`stage-done` run outside a `bridle/*` branch (the filer's own checkout after `ticket new --claim`)
+keeps the old behaviour: it marks the file in place. Rejected: designers committing straight to
+main (shares the human's checkout, no isolation); a manager landing designer branches (what
+failed in the first try, ticket br-2ae8).
+
 ## Writers and the timer (br-ewhy)
 
 The daemon's stage watch (`stage_watch.rs`, on the 30 s settle-wake tick) reads the version 2
@@ -124,7 +150,7 @@ that is not prepared:
   branch must land first. Then the next tick finds the next unblocked stage, a signature wait
   (`claimed_by: human`), or a prepared ticket.
 - A stage not written `[stages] timeout` (default 60m, `0` turns the watch off) after its writer
-  started, or whose writer ended without `stage-done` (not even in its worktree), adds a thread
+  started, or whose writer ended without a successful `stage-done`, adds a thread
   note and sends one message to `external:advisor/product-manager`: "br-oooo: design not done by
   designer-3, timed out". It is not retried. The product manager may `ticket restage`, or any
   later edit of the ticket file lets the next tick start a writer.

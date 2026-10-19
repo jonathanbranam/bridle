@@ -5,8 +5,8 @@
 //! claims it (no `claimed_by` line, no row claim) and `stages::states` has an unblocked stage.
 //! The writers it started are tracked in memory, one per ticket; after a restart a running
 //! `designer-<id>-<stage>` agent is taken back by its name. A stage whose writer ended without
-//! `stage-done`, or is still not written `[stages] timeout` after the writer started, sends one
-//! message and is not retried; `ticket restage` (or any later edit of the ticket file) lets the
+//! a successful `stage-done` (which lands its branch on main, br-upxq), or is still not written
+//! `[stages] timeout` after the writer started, sends one message and is not retried; `ticket restage` (or any later edit of the ticket file) lets the
 //! next tick start a writer again.
 
 use std::collections::HashMap;
@@ -153,8 +153,11 @@ fn writer_prompt(id: &str, stage: &str) -> String {
         "Write the {stage} stage of ticket {id}. Run `bridle ticket next {id} --json --comments` \
          first: it gives the rule, the template, the output path and the files you build on. \
          If it lists comments, the human added these comments; please address them. \
-         Write the stage, run `bridle ticket stage-done {id} {stage}`, commit on your branch, \
-         tell your manager with `bridle send` (the commit sha), and end. Build nothing else."
+         Write the stage, build nothing, and commit \
+         the ticket file and its stage folder only. Commit on your branch first, then run \
+         `bridle ticket stage-done {id} {stage}`: the daemon checks and merges your branch to main \
+         and, if it refuses, says why on the command (fix the branch and run it again). \
+         Nobody else lands it, so you need not tell a manager. End once it succeeds."
     )
 }
 
@@ -268,8 +271,8 @@ impl StageWatch {
             >= chrono::Duration::from_std(self.timeout).unwrap_or_default()
         {
             Some("timed out")
-        } else if ended && !written_in_worktree(a.and_then(|a| a.worktree), &p.file, &stage) {
-            Some("the writer ended without stage-done")
+        } else if ended {
+            Some("the writer ended without a successful stage-done")
         } else {
             None
         };
@@ -329,17 +332,6 @@ impl StageWatch {
             }
         }
     }
-}
-
-/// Whether the writer's own worktree shows `stage` written: it finished, and its branch is
-/// waiting to land.
-fn written_in_worktree(worktree: Option<String>, file: &Path, stage: &str) -> bool {
-    let (Some(wt), Some(name)) = (worktree, file.file_name()) else {
-        return false;
-    };
-    let path = Path::new(&wt).join("docs/tickets/open").join(name);
-    std::fs::read_to_string(path)
-        .is_ok_and(|t| stages::marks(&t).written.iter().any(|s| s == stage))
 }
 
 #[cfg(test)]

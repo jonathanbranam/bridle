@@ -424,7 +424,10 @@ async fn advance(i: &LandInput<'_>, old: &str, new: &str) -> Result<(), LandErro
 }
 
 /// The worktree (the clone included) that has `branch` checked out, if any.
-async fn checked_out_at(repo: &Path, branch: &str) -> Result<Option<PathBuf>, WorktreeError> {
+pub(crate) async fn checked_out_at(
+    repo: &Path,
+    branch: &str,
+) -> Result<Option<PathBuf>, WorktreeError> {
     let list = run_git(repo, &["worktree", "list", "--porcelain"]).await?;
     let want = format!("branch refs/heads/{branch}");
     let mut dir = None;

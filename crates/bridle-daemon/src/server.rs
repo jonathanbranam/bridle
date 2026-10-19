@@ -408,6 +408,7 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/tickets/{id}/hold", post(hold_task))
         .route("/v1/tickets/{id}/unhold", post(unhold_task))
         .route("/v1/tickets/{id}/built", post(built_task))
+        .route("/v1/tickets/{id}/stage-land", post(stage_land))
         .route("/v1/tickets/{id}/send-back", post(send_back_task))
         .route("/v1/tickets/{id}/reopen", post(reopen_task))
         .route("/v1/tasks/{id}/reopen", post(reopen_task))
@@ -4387,6 +4388,37 @@ async fn built_task(
         .await?;
     emit_state_change(&state, principal.id, &task, from).await;
     Ok(Json(task))
+}
+
+/// A stage writer's branch, checked and merged to the integration branch; only then does the
+/// thread hear the stage is written (br-upxq). Done state and the row are left alone.
+async fn stage_land(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Path(id): Path<String>,
+    Json(req): Json<bridle_api::types::StageLandRequest>,
+) -> Result<Json<bridle_api::types::StageLandResult>, ApiError> {
+    require_not_visitor(&principal)?;
+    if state.tasks.get_task(&id).is_none() {
+        return Err(ApiError::new(
+            StatusCode::NOT_FOUND,
+            "not_found",
+            format!("no such ticket: {id}"),
+        ));
+    }
+    let _one_at_a_time = state.landing.clone().lock_owned().await;
+    let commit = crate::stage_land::land(
+        &state.workspace.repo,
+        &state.integration,
+        &req.branch,
+        &req.file,
+        &req.stage,
+    )
+    .await
+    .map_err(|e| ApiError::new(StatusCode::CONFLICT, "stage_land_failed", e))?;
+    let note = format!("{} (on {} at {commit})", req.note, state.integration);
+    state.tasks.note_task(&id, &principal.id, &note).await?;
+    Ok(Json(bridle_api::types::StageLandResult { commit }))
 }
 
 async fn send_back_task(
