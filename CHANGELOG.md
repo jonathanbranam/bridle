@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `integration/target` growing to 90 GB (br-mhfx): the br-j4bk prune only ran after a warm build, which bridle's own config leaves off, so it never ran; it now runs after every land (over 30K `deps` entries). The disk monitor also removes `wt/` worktrees whose branch has landed, with no agent, clean and no open files (logged, `worktree.removed` event).
 - A worker's refused `ticket built` now says "ticket is not claimed by you" instead of "agent lifecycle endpoints" (br-65qh). The claim loss itself was br-4n3v's claim sweep (fixed, with its test).
 - Stages (br-fyww): `ticket done` refuses a version 2 ticket that is not prepared (landing a stage branch no longer marks it integrated), and `ticket reopen` of one goes to `pending` so the stage watch writes its next stage; the manager role says never to run `done` for a `bridle/designer-*` branch.
 - The orchestrator relaunch starts the session in the supervising project's repo whatever the pane's folder (br-jn8p): the default launch line is now `cd <repo> && bridle session orchestrator --project <p>`. A configured `[orchestrator] launcher` is still typed verbatim.

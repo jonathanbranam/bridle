@@ -615,6 +615,44 @@ async fn has_own_commits(repo: &Path, branch: &str) -> Result<bool, WorktreeErro
     Ok(log.lines().last().is_none_or(|first| first != tip.trim()))
 }
 
+/// Removes the worktrees under `wt_dir` that nothing needs any more: no agent record
+/// (`agent_worktrees`), branch merged into the repo's `HEAD`, nothing uncommitted, no open
+/// files. Anything else, or anything that errors, is left alone. Returns `(path, branch)` of
+/// each removal. The branch stays; only the checkout and its `target/` go (ticket mhfx).
+pub async fn sweep_landed(
+    repo: &Path,
+    wt_dir: &Path,
+    agent_worktrees: &[PathBuf],
+) -> Vec<(PathBuf, String)> {
+    let Ok(rd) = std::fs::read_dir(wt_dir) else {
+        return Vec::new();
+    };
+    let live: Vec<PathBuf> = agent_worktrees
+        .iter()
+        .filter_map(|p| p.canonicalize().ok())
+        .collect();
+    let mut removed = Vec::new();
+    for e in rd.flatten() {
+        let path = e.path();
+        let Ok(canon) = path.canonicalize() else {
+            continue;
+        };
+        if !canon.is_dir() || live.contains(&canon) || !is_git_repo(&path).await {
+            continue;
+        }
+        let Ok(Some(branch)) = checked_out_branch(&path).await else {
+            continue;
+        };
+        let safe = matches!(is_merged(repo, &branch).await, Ok(true))
+            && matches!(is_dirty(&path).await, Ok(false))
+            && matches!(open_file_holder(&path).await, Ok(None));
+        if safe && remove(repo, &path, false).await.is_ok() {
+            removed.push((path, branch));
+        }
+    }
+    removed
+}
+
 /// Whether `path` is inside a git repository (worktree or main checkout).
 pub async fn is_git_repo(path: &Path) -> bool {
     Command::new("git")
@@ -964,6 +1002,54 @@ mod tests {
             assert!(std::time::Instant::now() < deadline, "timed out waiting");
             tokio::time::sleep(Duration::from_millis(100)).await;
         }
+    }
+
+    #[tokio::test]
+    async fn sweep_landed_removes_only_landed_clean_agentless_worktrees() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let repo = tmp.path().join("repo");
+        init_repo(&repo).await;
+        let wt_dir = tmp.path().join("wt");
+        let git = |dir: &Path, args: &[&str]| {
+            let out = std::process::Command::new("git")
+                .arg("-C")
+                .arg(dir)
+                .args(["-c", "user.email=t@e.com", "-c", "user.name=T"])
+                .args(args)
+                .output()
+                .expect("git");
+            assert!(out.status.success(), "{args:?}");
+        };
+        // Each worktree gets one commit of its own; only `landed*` are then merged.
+        for name in ["landed", "live", "dirty", "unmerged", "fresh"] {
+            let p = wt_dir.join(name);
+            add(&repo, &p, &format!("b/{name}"), "HEAD")
+                .await
+                .expect("add");
+            if name != "fresh" {
+                git(&p, &["commit", "--allow-empty", "-q", "-m", name]);
+            }
+        }
+        for name in ["landed", "live", "dirty"] {
+            git(
+                &repo,
+                &["merge", "-q", "--no-ff", "-m", "land", &format!("b/{name}")],
+            );
+        }
+        std::fs::write(wt_dir.join("dirty/scratch"), "x").expect("w");
+        let live = vec![wt_dir.join("live")];
+
+        let removed = sweep_landed(&repo, &wt_dir, &live).await;
+        assert_eq!(
+            removed,
+            vec![(wt_dir.join("landed"), "b/landed".to_string())]
+        );
+        assert!(!wt_dir.join("landed").exists());
+        for kept in ["live", "dirty", "unmerged", "fresh"] {
+            assert!(wt_dir.join(kept).exists(), "{kept} must stay");
+        }
+        // The branch outlives the checkout.
+        assert!(branch_exists(&repo, "b/landed").await.expect("exists"));
     }
 
     #[tokio::test]

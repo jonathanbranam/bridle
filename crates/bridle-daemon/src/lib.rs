@@ -777,6 +777,7 @@ async fn start_inner(
         config.disk.min_free_gb,
         emitter.clone(),
         manager.clone(),
+        store.clone(),
     );
 
     let divergence_watch = divergence::DivergenceWatch::new(

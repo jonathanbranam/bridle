@@ -14,6 +14,7 @@ use serde_json::json;
 
 use crate::events::Emitter;
 use crate::paths::Workspace;
+use crate::store::Store;
 use crate::supervisor::{AgentManager, ToTarget};
 
 pub const DEFAULT_INTERVAL: Duration = Duration::from_secs(60 * 60);
@@ -66,23 +67,58 @@ struct Inner {
     min_free_bytes: u64,
     emitter: Emitter,
     manager: AgentManager,
+    store: Store,
     /// Whether the last tick was under the threshold, so the human is told once per
     /// dip, not every hour it stays low.
     low: Mutex<bool>,
 }
 
 impl DiskMonitor {
-    pub fn new(ws: Workspace, min_free_gb: u64, emitter: Emitter, manager: AgentManager) -> Self {
+    pub fn new(
+        ws: Workspace,
+        min_free_gb: u64,
+        emitter: Emitter,
+        manager: AgentManager,
+        store: Store,
+    ) -> Self {
         DiskMonitor(Arc::new(Inner {
             ws,
             min_free_bytes: min_free_gb * GB,
             emitter,
             manager,
+            store,
             low: Mutex::new(false),
         }))
     }
 
+    /// Removes worktrees whose branch has landed and whose agent is gone, one
+    /// `worktree.removed` event and log line each (ticket mhfx).
+    async fn sweep_landed_worktrees(&self) {
+        let Ok(agents) = self.0.store.list_agents(true).await else {
+            return;
+        };
+        let live: Vec<_> = agents
+            .iter()
+            .filter_map(|a| a.worktree.as_ref().map(std::path::PathBuf::from))
+            .collect();
+        let ws = &self.0.ws;
+        for (path, branch) in crate::worktree::sweep_landed(&ws.repo, &ws.wt_dir(), &live).await {
+            tracing::info!(path = %path.display(), %branch, "removed landed worktree with no agent");
+            let _ = self
+                .0
+                .emitter
+                .emit(
+                    event_kind::WORKTREE_REMOVED,
+                    "system".to_string(),
+                    None,
+                    json!({"path": path.to_string_lossy(), "branch": branch}),
+                )
+                .await;
+        }
+    }
+
     pub async fn tick(&self) {
+        self.sweep_landed_worktrees().await;
         let ws = self.0.ws.clone();
         let r = match tokio::task::spawn_blocking(move || measure(&ws)).await {
             Ok(Ok(r)) => r,

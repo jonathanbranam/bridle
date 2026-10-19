@@ -25,6 +25,11 @@ const GROWING: [&str; 3] = ["deps", "build", "incremental"];
 /// feeds syspolicyd one assessment per binary; ticket j4bk). A healthy target has ~12K.
 pub const BLOAT_ENTRIES: usize = 100_000;
 
+/// Entries in `target/debug/deps` past which `prune_after_land` prunes. Lower than
+/// `BLOAT_ENTRIES` so the folder stays near a clean build (~12K), not just under the clone limit
+/// (ticket mhfx).
+pub const PRUNE_ENTRIES: usize = 30_000;
+
 /// How many entries `target/debug/deps` holds (flat, so cheap to count).
 pub fn deps_entries(target: &std::path::Path) -> usize {
     std::fs::read_dir(target.join("debug/deps")).map_or(0, |d| d.count())
@@ -118,6 +123,22 @@ impl WarmBuild {
         });
     }
 
+    /// Prunes the integration `target/` of everything older than now, independent of whether a
+    /// warm build is configured (it was off in bridle's own config, so the prune after a warm
+    /// build never ran and the folder reached 90 GB; ticket mhfx). The caller holds the landing
+    /// lock, so no check is running in the integration worktree.
+    pub async fn prune_after_land(&self) {
+        let target = self.dir.join("target");
+        let removed = tokio::task::spawn_blocking(move || {
+            prune_stale(&target, std::time::SystemTime::now(), PRUNE_ENTRIES)
+        })
+        .await
+        .unwrap_or(0);
+        if removed > 0 {
+            tracing::info!(removed, "integration target/ pruned after land");
+        }
+    }
+
     #[cfg(test)]
     fn idle(&self) -> bool {
         !self.phase.lock().expect("warm build phase lock").running
@@ -204,6 +225,20 @@ mod tests {
         assert!(!deps.join("old").exists());
         assert!(!target.join("debug/build/old-crate").exists());
         assert!(deps.join("new").exists());
+    }
+
+    #[tokio::test]
+    async fn prune_after_land_clears_a_bloated_target_without_a_warm_build() {
+        let tmp = tempfile::tempdir().expect("tmp");
+        let deps = tmp.path().join("target/debug/deps");
+        std::fs::create_dir_all(&deps).expect("mk");
+        for n in 0..PRUNE_ENTRIES + 5 {
+            std::fs::write(deps.join(format!("d{n}")), "x").expect("w");
+        }
+        std::thread::sleep(Duration::from_millis(50));
+        let w = WarmBuild::new(None, tmp.path().to_path_buf());
+        w.prune_after_land().await;
+        assert_eq!(deps_entries(&tmp.path().join("target")), 0);
     }
 
     #[tokio::test]

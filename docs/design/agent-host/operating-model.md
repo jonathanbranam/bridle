@@ -79,7 +79,13 @@ worktrees_bytes, data_bytes}`), so growth over time is queryable from the event 
 problem reaches the human's inbox ([[stop-status-notes-to-the-human-inbox-kp3f|kp3f]]): free
 space under `[disk] min_free_gb` (default 20) sends one note with the sizes and a remediation
 (`cargo clean`, remove finished worktrees), and not again until free space has recovered and
-dipped again. Investigating growth is left to whoever reads the events.
+dipped again. Each tick also removes landed worktrees nobody uses (ticket mhfx): a `wt/<name>`
+checkout with no agent record, whose branch is merged into the clone's `HEAD`, with a clean
+`git status` and no open files, goes through `git worktree remove` (the branch stays), logged and
+recorded as a `worktree.removed` event `{path, branch}`. Separately, after every land (under the
+landing lock, so no check is building) the integration worktree's `target/debug/{deps,build,
+incremental}` is pruned of everything older than now once `deps` holds over 30K entries
+(`warm_build::prune_after_land`); it does not depend on `[integration] warm_build`. Investigating growth is left to whoever reads the events.
 
 ## Load watch
 

@@ -4001,6 +4001,7 @@ async fn land_task(
         serde_json::json!({"task": id, "branch": branch, "ok": true, "commit": landed.commit}),
     )
     .await;
+    state.warm_build.prune_after_land().await;
     drop(one_at_a_time);
     state.warm_build.trigger();
     let Json(task) = done_task(
