@@ -4,7 +4,7 @@ title = "integration/target is back to 90 GB (788K files): the br-j4bk prune isn
 kind = "bug"
 state = "claimed"
 created_at = "2026-10-19T01:52:02.424Z"
-updated_at = "2026-10-19T10:00:35.350862Z"
+updated_at = "2026-10-19T10:01:33.120057Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -30,3 +30,6 @@ Brief (pm-1). Model: Sonnet. High priority: it makes every check on dalek take ~
 1. Why the br-j4bk prune isn't keeping integration/target small (find the prune: grep prune/target in crates/bridle-daemon and the j4bk ticket's resolution; check whether it runs, when, and what it keeps). Fix so debug/deps stays near a clean build (~12K files). Add a test for the prune rule with a fake tree.
 2. Worktrees whose branch has landed and whose agent is gone: remove the worktree (or at least its target/), with a log line or event per removal. Pick the simpler; the rule must never touch a worktree with a live agent, unmerged work or uncommitted changes (check git status clean and branch merged into the integration branch). Test with temp git repos.
 Docs: the relevant design doc under docs/design/agent-host/ (worktrees/cleanup), CHANGELOG. Acceptance: just check. Out of scope: running fewer checks at once (aide handles separately), the macOS Developer Tools setting, br-p29s.
+
+### note · agent:wmhfx · 2026-10-19T10:01:33.120Z
+Finding (part 1). The j4bk prune is `warm_build::prune_stale`, and its only call site is the end of a *successful warm build*, which runs after each land only when `[integration] warm_build` is set. In bridle's own `.bridle/config.toml` that line is commented out (`# warm_build = ...`), so no warm build runs and the prune has never run. Meanwhile the landing checks build in `integration/target` and add stale hashed artifacts each time. Fix: prune after every land (under the landing lock, so no check is building), independent of warm_build, at a lower threshold (30K deps entries) so it stays near a clean build, not just under the 100K clone limit. Part 2: an hourly sweep (in the disk monitor tick) removes `wt/<name>` worktrees that have no agent record, whose branch is merged, and that are clean and have no open files; one event per removal.
