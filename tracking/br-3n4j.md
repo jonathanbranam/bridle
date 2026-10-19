@@ -2,9 +2,9 @@
 id = "br-3n4j"
 title = "The orchestrator holds and asks about a ticket without putting the reason or the question on its thread"
 kind = "fix"
-state = "open"
+state = "planned"
 created_at = "2026-10-19T12:15:34.875Z"
-updated_at = "2026-10-19T12:16:20.318931Z"
+updated_at = "2026-10-19T12:30:04.317164Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 ticket = "3n4j"
