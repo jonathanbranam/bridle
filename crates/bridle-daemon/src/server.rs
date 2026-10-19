@@ -4788,6 +4788,24 @@ async fn skip_settle(
     Ok(Json(task))
 }
 
+/// Who may record words as the human's, via themselves (br-ggbx): the roles that relay for the
+/// human. The human may too (it is their own word).
+async fn may_relay_for_human(state: &AppState, principal: &Principal) -> Result<bool, ApiError> {
+    let id = principal.id.as_str();
+    if id == "human" || id == "external:aide" || id == "external:orchestrator" {
+        return Ok(true);
+    }
+    if id == "external:advisor" || id.starts_with("external:advisor/") {
+        return Ok(true);
+    }
+    if principal.kind != PrincipalKind::Agent {
+        return Ok(false);
+    }
+    let name = id.strip_prefix("agent:").unwrap_or(id);
+    let role = state.store.get_agent(name).await?.map(|a| a.role);
+    Ok(role.as_deref() == Some("product-manager"))
+}
+
 async fn note_task(
     State(state): State<AppState>,
     Extension(principal): Extension<Principal>,
@@ -4805,7 +4823,16 @@ async fn note_task(
             ));
         }
     }
-    let task = state.tasks.note_task(&id, &principal.id, &req.body).await?;
+    if req.for_human && !may_relay_for_human(&state, &principal).await? {
+        return Err(ApiError::forbidden(
+            "only an advisor, aide, orchestrator or product manager may record a comment as \
+             the human's; workers and designers may not",
+        ));
+    }
+    let task = state
+        .tasks
+        .note_task_as(&id, &principal.id, &req.body, req.for_human)
+        .await?;
     emit_comment(&state, principal.id, &task, &req.body, &[]).await;
     Ok(Json(task))
 }

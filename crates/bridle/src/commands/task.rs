@@ -733,7 +733,9 @@ pub(crate) async fn task_comment(cli: &Cli, args: &RowCommentArgs) -> Result<(),
         }
         return Ok(());
     }
-    let task = client.note_task(&args.task, &text).await?;
+    let task = client
+        .note_task_for(&args.task, &text, args.for_human)
+        .await?;
     if cli.json {
         render::print_json(&task)?;
     } else {

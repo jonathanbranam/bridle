@@ -715,3 +715,26 @@ async fn an_escaped_mention_tells_nobody_and_an_unknown_one_is_reported_to_the_a
         "{lines:?}"
     );
 }
+
+#[tokio::test]
+async fn a_comment_for_the_human_keeps_the_real_author_and_is_marked() {
+    let (daemon, _tmp) = support::start_daemon(None).await;
+    let advisor = daemon.external_client("advisor").await;
+    let worker = daemon.external_client("worker").await;
+    let task = new_task(&daemon.client).await;
+    let t = advisor
+        .note_task_for(&task, "approve option 1", true)
+        .await
+        .expect("advisor may relay");
+    let e = t.thread.last().expect("entry");
+    assert!(e.for_human, "{e:?}");
+    assert_eq!(e.from, "external:advisor");
+    // Anyone else is refused, and nothing is recorded.
+    let err = worker
+        .note_task_for(&task, "I am the human", true)
+        .await
+        .expect_err("a worker may not relay");
+    assert!(err.to_string().contains("may not"), "{err}");
+    let t = daemon.client.get_task(&task).await.expect("task");
+    assert_eq!(t.thread.iter().filter(|e| e.for_human).count(), 1);
+}

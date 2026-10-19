@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- Tickets (br-ggbx): an advisor, aide, orchestrator or product manager can relay the human's words: `ticket approve --comment/--comment-file`, `ticket comment --for-human` and `ticket changes <text>` record them as the human's via the agent (the author stays the agent, thread entries carry a `for_human` mark), and `ticket next --comments` hands them to the next stage writers. Workers and designers are refused.
+
 ### Fixed
 
 - Stages (br-t6ev): the designer writes every unblocked stage of a ticket in turn (design and specs together after the proposal is signed), and a signature wait no longer holds back the other unblocked stages; the ticket is claimed by the human only when no stage is left to write, so both arrive for review together and are approved or sent back independently.

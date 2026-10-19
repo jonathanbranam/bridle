@@ -214,6 +214,7 @@ mod tests {
             from: from.to_string(),
             body: "fyi".to_string(),
             at,
+            for_human: false,
         }
     }
 

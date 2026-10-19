@@ -1526,6 +1526,9 @@ fn owns_thread_file(task: &Ticket) -> bool {
     task.ticket.as_deref() == Some(task.id.as_str())
 }
 
+/// Ends the header of an entry relayed for the human (br-ggbx): `... \u{b7} <rfc3339> \u{b7} for-human`.
+const FOR_HUMAN_MARK: &str = " \u{b7} for-human";
+
 /// The `## Thread` section, empty text for no entries.
 fn render_thread(thread: &[ThreadEntry]) -> String {
     let mut out = String::new();
@@ -1533,10 +1536,11 @@ fn render_thread(thread: &[ThreadEntry]) -> String {
         out.push_str("\n## Thread\n");
         for e in thread {
             out.push_str(&format!(
-                "\n### {} \u{b7} {} \u{b7} {}\n{}\n",
+                "\n### {} \u{b7} {} \u{b7} {}{}\n{}\n",
                 e.kind.as_str(),
                 e.from,
                 e.at.to_rfc3339_opts(SecondsFormat::Millis, true),
+                if e.for_human { FOR_HUMAN_MARK } else { "" },
                 e.body.trim_end(),
             ));
         }
@@ -1697,15 +1701,20 @@ fn line_of(text: &str, part: &str) -> usize {
 /// Whether `line` is an entry header exactly as [`render_thread`] writes it:
 /// `### <kind> \u{b7} <from> \u{b7} <rfc3339>`. Any other line, `##`/`###` headings included, is
 /// comment text: a body is free markdown.
-fn parse_entry_header(line: &str) -> Option<(ThreadEntryKind, &str, DateTime<Utc>)> {
+fn parse_entry_header(line: &str) -> Option<(ThreadEntryKind, &str, DateTime<Utc>, bool)> {
     let mut parts = line.strip_prefix("### ")?.split(" \u{b7} ");
     let (kind_s, from, at_s) = (parts.next()?, parts.next()?, parts.next()?);
+    let for_human = match parts.next() {
+        None => false,
+        Some("for-human") => true,
+        Some(_) => return None,
+    };
     if parts.next().is_some() {
         return None;
     }
     let kind = kind_s.parse().ok()?;
     let at = DateTime::parse_from_rfc3339(at_s).ok()?.with_timezone(&Utc);
-    Some((kind, from, at))
+    Some((kind, from, at, for_human))
 }
 
 /// `line_base` is the 1-based file line of the text's first line, for error messages.
@@ -1719,13 +1728,14 @@ fn parse_thread(thread_str: &str, line_base: usize) -> Result<Vec<ThreadEntry>, 
         body.clear();
     };
     for (i, line) in thread_str.lines().enumerate() {
-        if let Some((kind, from, at)) = parse_entry_header(line) {
+        if let Some((kind, from, at, for_human)) = parse_entry_header(line) {
             finish(&mut thread, &mut body);
             thread.push(ThreadEntry {
                 kind,
                 from: from.to_string(),
                 body: String::new(),
                 at,
+                for_human,
             });
         } else if thread.is_empty() {
             if !line.trim().is_empty() {
@@ -1850,6 +1860,28 @@ fn parse_queue(text: &str) -> Result<Vec<Vec<String>>, StateBranchError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_for_human_mark_survives_the_thread_file() {
+        let at = Utc::now();
+        let at = DateTime::parse_from_rfc3339(&at.to_rfc3339_opts(SecondsFormat::Millis, true))
+            .expect("rfc3339")
+            .with_timezone(&Utc);
+        let entry = |from: &str, for_human| ThreadEntry {
+            kind: ThreadEntryKind::Note,
+            from: from.to_string(),
+            body: "approve option 1".to_string(),
+            at,
+            for_human,
+        };
+        let thread = vec![entry("external:advisor/x", true), entry("agent:w1", false)];
+        let back = parse_thread(
+            render_thread(&thread).trim_start_matches("\n## Thread\n"),
+            1,
+        )
+        .expect("parse");
+        assert_eq!(back, thread);
+    }
     use bridle_api::types::{ThreadEntry, ThreadEntryKind};
     use tokio::process::Command;
 
@@ -1958,12 +1990,14 @@ mod tests {
                 from: "agent-1".to_string(),
                 body: body.to_string(),
                 at: task.created_at,
+                for_human: false,
             },
             ThreadEntry {
                 kind: ThreadEntryKind::Note,
                 from: "agent-2".to_string(),
                 body: "after".to_string(),
                 at: task.created_at,
+                for_human: false,
             },
         ];
         let parsed = parse_task(&render_task(&task).expect("render")).expect("parse");
@@ -2036,12 +2070,14 @@ mod tests {
             from: "human".to_string(),
             body: "dropped: budget cut".to_string(),
             at: Utc::now(),
+            for_human: false,
         });
         task.thread.push(ThreadEntry {
             kind: ThreadEntryKind::Note,
             from: "agent:w1".to_string(),
             body: "multi-line\nnote body".to_string(),
             at: Utc::now(),
+            for_human: false,
         });
         let rendered = render_task(&task).expect("render");
         let parsed = parse_task(&rendered).expect("parse");
@@ -2174,6 +2210,7 @@ mod tests {
             from: "human".to_string(),
             body: body.to_string(),
             at: Utc::now(),
+            for_human: false,
         };
         let mut own = sample_task("br-7fa2");
         own.ticket = Some("br-7fa2".to_string());

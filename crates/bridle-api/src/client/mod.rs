@@ -1062,10 +1062,21 @@ impl Client {
     }
 
     pub async fn note_task(&self, id: &str, body: &str) -> Result<Ticket, ClientError> {
+        self.note_task_for(id, body, false).await
+    }
+
+    /// [`Self::note_task`] recorded as the human's words, relayed by the caller (br-ggbx).
+    pub async fn note_task_for(
+        &self,
+        id: &str,
+        body: &str,
+        for_human: bool,
+    ) -> Result<Ticket, ClientError> {
         self.post_json(
             &["v1", "tickets", id, "note"],
             &NoteTicketRequest {
                 body: body.to_string(),
+                for_human,
             },
         )
         .await

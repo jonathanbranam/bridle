@@ -296,6 +296,7 @@ mod tests {
             from: "x".into(),
             body: body.into(),
             at: when,
+            for_human: false,
         });
     }
 

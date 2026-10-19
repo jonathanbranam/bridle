@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{Context, anyhow, bail};
 
-use crate::cli::{Cli, TicketChangesArgs, TicketStageArgs};
+use crate::cli::{Cli, TicketApproveArgs, TicketChangesArgs, TicketStageArgs};
 use crate::commands::client_for;
 use crate::error::CliError;
 use crate::stages::{self, Marks, Stage, State};
@@ -117,10 +117,26 @@ async fn finish(
     claim: Option<Option<&str>>,
     note: &str,
 ) -> Result<(), CliError> {
+    finish_as(cli, repo, l, m, claim, note, false).await
+}
+
+/// [`finish`]; `for_human` records the note as the human's words relayed by the caller.
+async fn finish_as(
+    cli: &Cli,
+    repo: &Path,
+    l: &Loaded,
+    m: Marks,
+    claim: Option<Option<&str>>,
+    note: &str,
+    for_human: bool,
+) -> Result<(), CliError> {
     let out = write_marks(&l.text, &l.stages, &m, claim)?;
     std::fs::write(&l.path, out).with_context(|| format!("writing {}", l.path.display()))?;
     let row = thread_row_id(cli, repo, &l.id).await?;
-    client_for(cli).await?.note_task(&row, note).await?;
+    client_for(cli)
+        .await?
+        .note_task_for(&row, note, for_human)
+        .await?;
     if stages::prepared(&l.stages, &m) {
         println!("{}: prepared; the daemon opens it", l.id);
     }
@@ -247,7 +263,7 @@ fn file_name(path: &Path) -> anyhow::Result<String> {
         .ok_or_else(|| anyhow!("{} has no file name", path.display()))
 }
 
-pub async fn approve(cli: &Cli, repo: &Path, a: &TicketStageArgs) -> Result<(), CliError> {
+pub async fn approve(cli: &Cli, repo: &Path, a: &TicketApproveArgs) -> Result<(), CliError> {
     let tail = local(cli, repo, &a.id).await?;
     let l = load(repo, &a.id, &tail, &a.stage)?;
     if state_of(&l, &a.stage) != State::WaitingForSignature {
@@ -264,6 +280,24 @@ pub async fn approve(cli: &Cli, repo: &Path, a: &TicketStageArgs) -> Result<(), 
     } else {
         format!("human via {caller}")
     };
+    // Before the marks change: a caller who may not relay for the human is refused with nothing
+    // written.
+    let comment = if a.comment.is_some() || a.comment_file.is_some() {
+        Some(crate::commands::read_text(
+            &a.comment,
+            &a.comment_file,
+            "comment",
+        )?)
+    } else {
+        None
+    };
+    if let Some(c) = comment.as_deref().filter(|c| !c.trim().is_empty()) {
+        let row = thread_row_id(cli, repo, &l.id).await?;
+        client_for(cli)
+            .await?
+            .note_task_for(&row, c, caller != "human")
+            .await?;
+    }
     let mut m = stages::marks(&l.text);
     add(&mut m.signed, &a.stage);
     let claim = Some(claim_after(&l, &m));
@@ -278,6 +312,7 @@ pub async fn approve(cli: &Cli, repo: &Path, a: &TicketStageArgs) -> Result<(), 
 pub async fn changes(cli: &Cli, repo: &Path, a: &TicketChangesArgs) -> Result<(), CliError> {
     let tail = local(cli, repo, &a.id).await?;
     let l = load(repo, &a.id, &tail, &a.stage)?;
+    let caller = client_for(cli).await?.status().await?.principal;
     let mut m = stages::marks(&l.text);
     if !m.written.contains(&a.stage) {
         return Err(anyhow!("{} is not written; there is nothing to send back", a.stage).into());
@@ -289,7 +324,10 @@ pub async fn changes(cli: &Cli, repo: &Path, a: &TicketChangesArgs) -> Result<()
         Some(t) => format!("stage {} sent back for changes: {t}", a.stage),
         None => format!("stage {} sent back for changes", a.stage),
     };
-    finish(cli, repo, &l, m, claim, &note).await
+    // Words from an agent are the human's, relayed (br-ggbx); the daemon refuses a worker.
+    let has_text = a.text.as_deref().is_some_and(|t| !t.trim().is_empty());
+    let relayed = caller != "human" && has_text;
+    finish_as(cli, repo, &l, m, claim, &note, relayed).await
 }
 
 pub async fn restage(cli: &Cli, repo: &Path, a: &TicketStageArgs) -> Result<(), CliError> {

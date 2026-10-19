@@ -2340,6 +2340,10 @@ pub struct ThreadEntry {
     pub from: PrincipalId,
     pub body: String,
     pub at: DateTime<Utc>,
+    /// Relayed for the human by `from` (an advisor, aide or orchestrator): `from` stays the real
+    /// principal, this marks the words as the human's (br-ggbx).
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub for_human: bool,
 }
 
 /// `Ticket::created_by` when the creator isn't known.
@@ -2794,6 +2798,10 @@ pub struct SkipSettleRequest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NoteTicketRequest {
     pub body: String,
+    /// The human's words, relayed by the caller (an advisor, aide, orchestrator or product
+    /// manager); the daemon refuses anyone else (br-ggbx).
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub for_human: bool,
 }
 
 /// One task's unanswered question (coordination.md, "Questions do not stop

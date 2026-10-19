@@ -528,6 +528,7 @@ impl TicketManager {
             from: by.clone(),
             body: format!("{SETTLE_SKIP_PREFIX}{by}: {}", reason.trim()),
             at: now,
+            for_human: false,
         });
         task.updated_at = now;
         self.state.enqueue_task(&task)?;
@@ -671,6 +672,7 @@ impl TicketManager {
             from: by.clone(),
             body: format!("split off {child}: {}", task.title),
             at: now,
+            for_human: false,
         });
         parent_task.updated_at = now;
         self.state.enqueue_task(&parent_task)?;
@@ -700,6 +702,7 @@ impl TicketManager {
             from: actor.clone(),
             body: format!("priority: {from} -> {priority}"),
             at: task.updated_at,
+            for_human: false,
         });
         self.state.enqueue_task(&task)?;
         Ok((self.put(task), from))
@@ -734,6 +737,7 @@ impl TicketManager {
             from: actor.clone(),
             body: format!("kind: {from} -> {kind}"),
             at: task.updated_at,
+            for_human: false,
         });
         self.state.enqueue_task(&task)?;
         Ok((self.put(task), from))
@@ -756,6 +760,7 @@ impl TicketManager {
             from: actor.clone(),
             body: format!("created for the human, priority {priority}"),
             at: Utc::now(),
+            for_human: false,
         });
         self.state.enqueue_task(&task)?;
         Ok(self.put(task))
@@ -824,6 +829,7 @@ impl TicketManager {
                 from: actor.clone(),
                 body: "edited the title or body".to_string(),
                 at: Utc::now(),
+                for_human: false,
             });
         }
         if let Some(title) = title {
@@ -885,6 +891,7 @@ impl TicketManager {
             from: actor.clone(),
             body: reason.to_string(),
             at: Utc::now(),
+            for_human: false,
         });
         self.transition(&mut task, TicketState::Pending, actor)
             .await?;
@@ -961,6 +968,7 @@ impl TicketManager {
             from: actor.clone(),
             body: format!("dropped: {reason}"),
             at: task.updated_at,
+            for_human: false,
         });
         self.state.enqueue_task(&task)?;
         Ok(self.put(task))
@@ -1029,6 +1037,7 @@ impl TicketManager {
                 (false, Some(b)) => format!("integrated: {commit} (branch {b})"),
                 (false, None) => format!("integrated: {commit}"),
             },
+            for_human: false,
             at: task.updated_at,
         });
         self.state.enqueue_task(&task)?;
@@ -1151,6 +1160,7 @@ impl TicketManager {
                 None => format!("held: {}", reason.trim()),
             },
             at: task.updated_at,
+            for_human: false,
         });
         self.state.enqueue_task(&task)?;
         Ok(self.put(task))
@@ -1175,6 +1185,7 @@ impl TicketManager {
             from: actor.clone(),
             body: "unheld".to_string(),
             at: task.updated_at,
+            for_human: false,
         });
         self.state.enqueue_task(&task)?;
         Ok(self.put(task))
@@ -1220,6 +1231,7 @@ impl TicketManager {
             from: actor.clone(),
             body: format!("built: {commit} (branch {branch})"),
             at: task.updated_at,
+            for_human: false,
         });
         self.state.enqueue_task(&task)?;
         Ok(self.put(task))
@@ -1257,6 +1269,7 @@ impl TicketManager {
             from: actor.clone(),
             body: format!("sent back: {}", reason.trim()),
             at: task.updated_at,
+            for_human: false,
         });
         self.state.enqueue_task(&task)?;
         Ok(self.put(task))
@@ -1454,6 +1467,7 @@ impl TicketManager {
             from: from.clone(),
             body: body.to_string(),
             at: message.created_at,
+            for_human: false,
         });
         task.updated_at = message.created_at;
         self.state.enqueue_task(&task)?;
@@ -1507,6 +1521,7 @@ impl TicketManager {
             from: from.clone(),
             body: body.to_string(),
             at: message.created_at,
+            for_human: false,
         });
         task.updated_at = message.created_at;
         self.state.enqueue_task(&task)?;
@@ -1522,6 +1537,18 @@ impl TicketManager {
         id: &str,
         from: &PrincipalId,
         body: &str,
+    ) -> Result<Ticket, TicketError> {
+        self.note_task_as(id, from, body, false).await
+    }
+
+    /// [`Self::note_task`]; `for_human` marks the note as the human's words relayed by `from`
+    /// (br-ggbx). The caller has checked that `from` may relay.
+    pub async fn note_task_as(
+        &self,
+        id: &str,
+        from: &PrincipalId,
+        body: &str,
+        for_human: bool,
     ) -> Result<Ticket, TicketError> {
         if body.trim().is_empty() {
             return Err(TicketError::BadRequest(
@@ -1554,6 +1581,7 @@ impl TicketManager {
             from: from.clone(),
             body: body.to_string(),
             at: message.created_at,
+            for_human,
         });
         task.updated_at = message.created_at;
         self.state.enqueue_task(&task)?;
@@ -1596,6 +1624,7 @@ impl TicketManager {
                     "stopped watching"
                 }
             ),
+            for_human: false,
             at: now,
         });
         task.updated_at = now;

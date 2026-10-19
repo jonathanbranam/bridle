@@ -498,7 +498,7 @@ pub enum TicketAction {
     /// Mark a stage of a version 2 ticket written (checks its file or proposal section); releases the writer's claim.
     StageDone(TicketStageArgs),
     /// Sign a stage that waits for the human's signature; recorded with who ran it and when (human via <agent> when an agent does).
-    Approve(TicketStageArgs),
+    Approve(TicketApproveArgs),
     /// Send a stage back for changes: it becomes unwritten and unclaimed, the text goes on the thread.
     Changes(TicketChangesArgs),
     /// Put a stage back for bridle (unwritten, unclaimed), e.g. after it failed or timed out.
@@ -602,6 +602,10 @@ pub struct TicketCommentArgs {
     /// `bridle send <agent> --task <id>`).
     #[arg(long, value_name = "AGENT")]
     pub notify: Option<String>,
+    /// Record the comment as the human's words, relayed by you ("human via <you>"). Only an
+    /// advisor, aide, orchestrator or product manager may.
+    #[arg(long, conflicts_with = "notify")]
+    pub for_human: bool,
 }
 
 #[derive(Debug, Args)]
@@ -704,6 +708,21 @@ pub struct TicketStageArgs {
     pub id: String,
     /// proposal, design, specs or tasks.
     pub stage: String,
+}
+
+#[derive(Debug, Args)]
+#[command(group(ArgGroup::new("comment_source").args(["comment", "comment_file"])))]
+pub struct TicketApproveArgs {
+    pub id: String,
+    /// proposal, design, specs or tasks.
+    pub stage: String,
+    /// The human's words with the signature. Run by an advisor, aide, orchestrator or product
+    /// manager it is recorded as "human via <you>" and reaches the next writers (`ticket next --comments`).
+    #[arg(long)]
+    pub comment: Option<String>,
+    /// Read the comment from a file (or `-` for stdin).
+    #[arg(long)]
+    pub comment_file: Option<PathBuf>,
 }
 
 #[derive(Debug, Args)]
@@ -2237,6 +2256,9 @@ pub struct RowCommentArgs {
     /// `bridle send <agent> --task <id>`).
     #[arg(long, value_name = "AGENT")]
     pub notify: Option<String>,
+    /// Record the comment as the human's words, relayed by you.
+    #[arg(long, conflicts_with = "notify")]
+    pub for_human: bool,
 }
 
 #[derive(Debug, Args)]

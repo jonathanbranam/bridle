@@ -61,7 +61,12 @@ The ticket's frontmatter records the marks (the files only hold the content):
 - `signed: [..]`: set by `ticket approve`, for a written `review: human` stage. The signature is
   the human's; the thread note says who ran it ("signed by human at <time>", or "signed by human
   via <principal>" when the token is an agent's) and when. Editing an approved stage does not
-  withdraw its signature; only `changes` does. Cryptographic signing is a later ticket (v2va).
+  withdraw its signature; only `changes` does. `approve --comment/--comment-file` takes the human's
+  words with the signature, as a second thread note right after it. Relayed words (that, `ticket
+  comment --for-human`, and `changes` text run by an agent) keep the real principal as `from` and
+  carry a `for-human` mark (a fourth part of the thread header); the daemon records the mark only
+  for `external:advisor*`, `external:aide`, `external:orchestrator`, a product-manager agent, or
+  the human, and refuses workers and designers. Cryptographic signing is a later ticket (v2va).
 - `claimed_by: human` while a stage waits for the human's signature **and no stage is left
   unblocked** (br-t6ev; chosen over making the watch ignore the claim, because the watch then
   needs no second rule: a claimed ticket still gets no writer). So after the proposal is signed,
@@ -99,7 +104,7 @@ usual `override:`. The `.template` extension keeps templates out of the rule loa
 body, its template, the output path (the ticket file for the proposal, else
 `<folder>/<stage>.md`) and the files of the stages it requires. A stage waiting on an unsigned
 gate is refused (exit 1, naming the stage); with nothing left it says "prepared". `--comments`
-adds the human's thread comments newer than the output file's mtime (the ticket file's, for the
+adds the human's thread comments (an entry from the human, or marked `for-human`) newer than the output file's mtime (the ticket file's, for the
 proposal), for a redo. `--json` is for bridle's own use.
 
 ## Landing a stage is not finishing the ticket (br-fyww)

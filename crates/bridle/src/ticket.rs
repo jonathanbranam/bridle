@@ -361,6 +361,7 @@ async fn comment_cmd(cli: &Cli, repo: &Path, args: &TicketCommentArgs) -> Result
             text: args.text.clone(),
             text_file: args.text_file.clone(),
             notify: args.notify.clone(),
+            for_human: args.for_human,
         },
     )
     .await
@@ -422,6 +423,11 @@ async fn show_cmd(cli: &Cli, repo: &Path, args: &TicketShowArgs) -> Result<(), C
     Ok(())
 }
 
+/// The human's own entry, or one an agent relayed for them (br-ggbx).
+fn is_humans(e: &bridle_api::types::ThreadEntry) -> bool {
+    e.for_human || e.from.contains("human")
+}
+
 async fn next_cmd(
     cli: &Cli,
     repo: &Path,
@@ -451,7 +457,7 @@ async fn next_cmd(
         Ok(rows
             .iter()
             .flat_map(|r| &r.thread)
-            .filter(|e| e.from.contains("human") && since.is_none_or(|s| e.at > s))
+            .filter(|e| is_humans(e) && since.is_none_or(|s| e.at > s))
             .map(|e| crate::stage_next::Comment {
                 at: e.at,
                 body: e.body.clone(),
@@ -2619,5 +2625,28 @@ mod tests {
         assert_eq!(ctx.local("k7tm").unwrap(), "k7tm");
         let e = ctx.local("tw-k7tm").unwrap_err().to_string();
         assert!(e.contains("belongs to project tw"), "{e}");
+    }
+}
+
+#[cfg(test)]
+mod relayed_comment_tests {
+    use super::is_humans;
+    use bridle_api::types::{ThreadEntry, ThreadEntryKind};
+
+    fn entry(from: &str, for_human: bool) -> ThreadEntry {
+        ThreadEntry {
+            kind: ThreadEntryKind::Note,
+            from: from.to_string(),
+            body: "x".to_string(),
+            at: chrono::Utc::now(),
+            for_human,
+        }
+    }
+
+    #[test]
+    fn next_comments_counts_the_humans_and_what_an_agent_relayed() {
+        assert!(is_humans(&entry("human", false)));
+        assert!(is_humans(&entry("external:advisor/tj7q", true)));
+        assert!(!is_humans(&entry("external:advisor/tj7q", false)));
     }
 }
