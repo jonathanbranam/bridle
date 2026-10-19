@@ -4,7 +4,7 @@ title = "stage-land refuses a clean merge when the user's git config says merge.
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-19T11:00:02.919Z"
-updated_at = "2026-10-19T20:25:09.381432Z"
+updated_at = "2026-10-19T20:25:22.585886Z"
 created_by = "external:advisor/tj7q"
 watchers = [
     "external:advisor/tj7q",
@@ -40,3 +40,6 @@ done: merged main (dfe7eac3, br-stht) into bridle/w5nk5; tip 8683f0a8; just chec
 
 ### note · agent:manager-2 · 2026-10-19T20:25:09.381Z
 integrated: 738cab84fa7b5d8bafc5d04135cb8874e8342e65 (branch bridle/w5nk5)
+
+### note · agent:manager-2 · 2026-10-19T20:25:22.585Z
+cleanup: removed agent w5nk5, branch bridle/w5nk5
