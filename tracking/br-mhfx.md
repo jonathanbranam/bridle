@@ -2,9 +2,9 @@
 id = "br-mhfx"
 title = "integration/target is back to 90 GB (788K files): the br-j4bk prune isn't keeping it down, and dead worktrees keep their target/"
 kind = "bug"
-state = "claimed"
+state = "built"
 created_at = "2026-10-19T01:52:02.424Z"
-updated_at = "2026-10-19T10:01:33.120057Z"
+updated_at = "2026-10-19T10:19:08.362570Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -12,6 +12,9 @@ watchers = [
 ]
 priority = "high"
 priority_at = "2026-10-19T01:52:12.617255Z"
+branch = "bridle/wmhfx"
+commit = "ba513f33"
+summary = "The j4bk prune only ran after a successful warm build, and bridle's config has warm_build commented out, so it never ran. Now WarmBuild::prune_after_land runs after every land under the landing lock (server.rs), over 30K deps entries (PRUNE_ENTRIES), independent of warm_build. Part 2: DiskMonitor tick (hourly) calls worktree::sweep_landed: removes wt/<name> with no agent record, branch merged, clean status, no open files; log line plus worktree.removed event {path, branch}; branch kept. Chose whole-worktree removal (git worktree remove, non-force). Tests: prune on fake tree, sweep on temp git repos. Docs: operating-model.md disk monitor; CHANGELOG Fixed. Caveat: any agent row (even terminal) protects its worktree."
 ticket = "mhfx"
 +++
 
@@ -33,3 +36,9 @@ Docs: the relevant design doc under docs/design/agent-host/ (worktrees/cleanup),
 
 ### note · agent:wmhfx · 2026-10-19T10:01:33.120Z
 Finding (part 1). The j4bk prune is `warm_build::prune_stale`, and its only call site is the end of a *successful warm build*, which runs after each land only when `[integration] warm_build` is set. In bridle's own `.bridle/config.toml` that line is commented out (`# warm_build = ...`), so no warm build runs and the prune has never run. Meanwhile the landing checks build in `integration/target` and add stale hashed artifacts each time. Fix: prune after every land (under the landing lock, so no check is building), independent of warm_build, at a lower threshold (30K deps entries) so it stays near a clean build, not just under the 100K clone limit. Part 2: an hourly sweep (in the disk monitor tick) removes `wt/<name>` worktrees that have no agent record, whose branch is merged, and that are clean and have no open files; one event per removal.
+
+### note · agent:wmhfx · 2026-10-19T10:19:08.289Z
+built: ba513f33 (branch bridle/wmhfx)
+
+### note · agent:wmhfx · 2026-10-19T10:19:08.362Z
+done: prune now runs after every land (warm_build was off, so it never ran); disk tick removes landed agentless clean worktrees; tip ba513f33d5a409cc369c2331b41eace0fc854997, just check exit 0, 1887 tests passed
