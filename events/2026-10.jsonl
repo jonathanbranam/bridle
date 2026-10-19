@@ -2848,3 +2848,4 @@
 {"actor":"agent:pm-1","at":"2026-10-19T12:10:04.603726Z","queue":"reprioritized"}
 {"actor":"agent:manager-2","at":"2026-10-19T12:10:33.430448Z","from":"built","task":"br-rdag","to":"planned"}
 {"actor":"human","at":"2026-10-19T12:11:04.037Z","from":"","task":"br-cxjs","to":"pending"}
+{"actor":"external:advisor/product-manager","at":"2026-10-19T12:11:12.731470Z","from":"pending","task":"br-cxjs","to":"open"}
