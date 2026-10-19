@@ -2863,3 +2863,4 @@
 {"actor":"human","at":"2026-10-19T16:37:19.826Z","from":"","task":"br-stht","to":"pending"}
 {"actor":"external:aide","at":"2026-10-19T19:38:04.644776Z","from":"pending","task":"br-stht","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-19T19:38:16.673575Z","from":"open","task":"br-stht","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-19T19:38:24.024162Z","queue":"reprioritized"}
