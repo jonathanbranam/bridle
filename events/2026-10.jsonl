@@ -2864,3 +2864,5 @@
 {"actor":"external:aide","at":"2026-10-19T19:38:04.644776Z","from":"pending","task":"br-stht","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-19T19:38:16.673575Z","from":"open","task":"br-stht","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-19T19:38:24.024162Z","queue":"reprioritized"}
+{"actor":"agent:wstht","at":"2026-10-19T20:02:23.295161Z","from":"claimed","task":"br-stht","to":"built"}
+{"actor":"agent:manager-2","at":"2026-10-19T20:02:31.511390Z","from":"built","task":"br-stht","to":"integrated"}
