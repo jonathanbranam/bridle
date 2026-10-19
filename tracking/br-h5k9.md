@@ -2,9 +2,9 @@
 id = "br-h5k9"
 title = "stage-land's 'stage written, waiting for signature' note reaches no watcher"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-10-19T21:00:43.249Z"
-updated_at = "2026-10-19T21:01:28.534603Z"
+updated_at = "2026-10-19T21:12:33.338888Z"
 created_by = "external:advisor/tj7q"
 watchers = ["external:advisor/tj7q"]
 ticket = "h5k9"
