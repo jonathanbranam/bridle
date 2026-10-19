@@ -21,6 +21,8 @@ signed: [proposal, design]
 claimed_by: human
 ---
 
+Stages: [design](http://dalek.tailbc91f5.ts.net:7878/p/bridle/docs?path=docs/tickets/open/show-the-current-budget-and-focus-settings-from-the-cli-cons-2ae8/design.md), [specs](http://dalek.tailbc91f5.ts.net:7878/p/bridle/docs?path=docs/tickets/open/show-the-current-budget-and-focus-settings-from-the-cli-cons-2ae8/specs.md)
+
 ## The ask
 
 Replaces br-4ge4 (version 1) as the real ticket for br-ewk8, the human's hands-on try of version 2 (Stages MVP step 6, epic br-tj7q). The human, 2026-10-18, to advisor tj7q: "yes, agree on 4ge4".
