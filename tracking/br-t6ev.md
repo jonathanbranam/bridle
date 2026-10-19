@@ -2,9 +2,9 @@
 id = "br-t6ev"
 title = "Stages: write every unblocked stage before asking for review (design and specs together, one writer in turn)"
 kind = "fix"
-state = "open"
+state = "planned"
 created_at = "2026-10-19T11:55:06.292Z"
-updated_at = "2026-10-19T11:55:57.140812Z"
+updated_at = "2026-10-19T12:10:02.731325Z"
 created_by = "external:advisor/tj7q"
 watchers = ["external:advisor/tj7q"]
 ticket = "t6ev"
