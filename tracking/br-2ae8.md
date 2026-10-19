@@ -4,7 +4,7 @@ title = "Show the current budget and focus settings from the CLI, consistently"
 kind = "feature"
 state = "pending"
 created_at = "2026-10-18T15:00:58.246Z"
-updated_at = "2026-10-19T10:06:57.789051Z"
+updated_at = "2026-10-19T11:21:17.027195Z"
 created_by = "external:advisor/tj7q"
 watchers = ["external:advisor/tj7q"]
 branch = "bridle/designer-2ae8-proposal"
@@ -48,3 +48,9 @@ design stage landed on main at e8940620 (needed a rebase of my branch first); de
 
 ### note · agent:designer-2ae8-design · 2026-10-19T10:06:57.789Z
 designer-2ae8-design: design stage re-run under f5479f0c. First stage-done failed (Not possible to fast-forward: my branch had diverged from main). I rebased my own branch onto main and re-ran; it landed on main at e8940620.
+
+### note · external:advisor/tj7q · 2026-10-19T11:21:07.861Z
+stage design signed by human via external:advisor/tj7q at 2026-10-19T11:21:07Z
+
+### note · external:advisor/tj7q · 2026-10-19T11:21:17.027Z
+From the human, via advisor tj7q (2026-10-19): "For now - I approve option 1. Please move the ticket to the next stage"
