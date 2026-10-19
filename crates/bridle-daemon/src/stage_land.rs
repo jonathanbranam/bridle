@@ -62,7 +62,21 @@ pub async fn land(
         "{}: stage {stage} written ({branch})",
         file.trim_end_matches(".md")
     );
-    if let Err(e) = run_git(&dir, &["merge", "--no-edit", "-m", &msg, branch]).await {
+    // `merge.ff=only` in a user's config would refuse a clean merge of a branch that is behind main.
+    let merged = run_git(
+        &dir,
+        &[
+            "-c",
+            "merge.ff=true",
+            "merge",
+            "--no-edit",
+            "-m",
+            &msg,
+            branch,
+        ],
+    )
+    .await;
+    if let Err(e) = merged {
         let paths = run_git(&dir, &["diff", "--name-only", "--diff-filter=U"])
             .await
             .unwrap_or_default();
@@ -134,6 +148,54 @@ mod tests {
         let on_main = run_git(d, &["rev-parse", "--short", "main"]).await.unwrap();
         assert_eq!(tip, on_main.trim());
         assert!(d.join("docs/tickets/open/t-aaaa/design.md").exists());
+    }
+
+    /// Makes main move on past the branch, so landing needs a real merge, not a fast-forward.
+    async fn move_main(d: &Path) {
+        put(d, "other.rs", "c\n");
+        g(d, &["add", "."]).await;
+        g(d, &["commit", "-q", "-m", "main moves"]).await;
+    }
+
+    #[tokio::test]
+    async fn a_clean_merge_of_a_branch_behind_main_lands_under_merge_ff_only() {
+        let tmp = repo().await;
+        let d = tmp.path();
+        commit_on_branch(d, "docs/tickets/open/t-aaaa/design.md", "the design\n").await;
+        move_main(d).await;
+        g(d, &["config", "merge.ff", "only"]).await;
+        let tip = land(d, "main", "bridle/d", "t-aaaa.md", "design")
+            .await
+            .unwrap();
+        let on_main = run_git(d, &["rev-parse", "--short", "main"]).await.unwrap();
+        assert_eq!(tip, on_main.trim());
+        assert!(d.join("docs/tickets/open/t-aaaa/design.md").exists());
+        assert!(d.join("other.rs").exists());
+    }
+
+    #[tokio::test]
+    async fn a_conflict_under_merge_ff_only_still_fails_back_to_the_writer() {
+        let tmp = repo().await;
+        let d = tmp.path();
+        commit_on_branch(
+            d,
+            "docs/tickets/open/t-aaaa.md",
+            "---\nid: aaaa\n---\nbranch\n",
+        )
+        .await;
+        put(
+            d,
+            "docs/tickets/open/t-aaaa.md",
+            "---\nid: aaaa\n---\nmain\n",
+        );
+        g(d, &["commit", "-q", "-am", "main edit"]).await;
+        g(d, &["config", "merge.ff", "only"]).await;
+        let e = land(d, "main", "bridle/d", "t-aaaa.md", "proposal")
+            .await
+            .unwrap_err();
+        assert!(e.contains("conflicts") && e.contains("t-aaaa.md"), "{e}");
+        let st = run_git(d, &["status", "--porcelain"]).await.unwrap();
+        assert!(st.trim().is_empty(), "{st}");
     }
 
     #[tokio::test]
