@@ -64,6 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Internal
 
+- Internal (br-stht): the `migrate::tests` temp git repos set a local `user.name`/`user.email`, so the start-up commit tests pass on a runner with no global git identity (CI was red on main after br-rdag). No production change.
 - Internal (br-5rwn): ignored the flaky `many_concurrent_crossings_each_renew_exactly_once` governor test (times out waiting for `agent.renewed` on ubuntu CI); the race is still open and the test comes back when it is fixed. Migration: none.
 - Internal (br-m5kf): the specs-to-tests doc says what to do with a hand-written unit test that an executable scenario now covers: keep it only for an edge the scenario misses, otherwise delete it in the same change. Migration: none.
 - Docs (br-2d6x): the vitest-bridle README and `docs/design/specs-to-tests.md` say step files are not typechecked by vitest and show the `tsc --noEmit` step and tsconfig `include` that cover them.

@@ -1281,6 +1281,10 @@ mod tests {
             assert!(ok, "git {args:?}");
         };
         git(&["init", "-q"]);
+        // The code under test commits without `-c` flags: give the repo its own identity so a
+        // runner with no global one still commits.
+        git(&["config", "user.name", "t"]);
+        git(&["config", "user.email", "t@t"]);
         git(&["add", "."]);
         git(&["commit", "-q", "-m", "init"]);
         p
