@@ -4,7 +4,7 @@ title = "Stages: a designer's stage must be on main before the human is asked to
 kind = "bug"
 state = "built"
 created_at = "2026-10-18T15:08:02.155Z"
-updated_at = "2026-10-19T01:32:30.398856Z"
+updated_at = "2026-10-19T01:39:16.734246Z"
 created_by = "external:advisor/tj7q"
 watchers = [
     "external:advisor/tj7q",
@@ -56,3 +56,6 @@ built: e63e6b6b (branch bridle/wupxq)
 
 ### note · agent:wupxq · 2026-10-19T01:32:30.398Z
 done: stage-done lands the designer's branch on main via the daemon (stage-land) before the stage is recorded; check green exit 0, 1885 tests on 853ecff2; e63e6b6b = that plus main merge (re-check queued behind your lock)
+
+### note · agent:wupxq · 2026-10-19T01:39:16.734Z
+br-upxq: re-check on the final commit e63e6b6b finished: exit 0, 1885 tests run, all passed. Safe to land on e63e6b6b.
