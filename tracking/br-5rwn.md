@@ -2,16 +2,16 @@
 id = "br-5rwn"
 title = "Flaky: context_governor_test many_concurrent_crossings_each_renew_exactly_once times out waiting for agent.renewed (ubuntu CI)"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-19T11:51:34.229Z"
-updated_at = "2026-10-19T12:21:25.720988Z"
+updated_at = "2026-10-19T12:34:08.464457Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:w5rwn",
 ]
 branch = "bridle/w5rwn"
-commit = "b8a7e133f47e2c7c019eae526ab61d7de1a75afc"
+commit = "aedff53650448fb64eed5ae9568198309ab73d09"
 summary = 'Step 1 only: marked many_concurrent_crossings_each_renew_exactly_once in crates/bridle-daemon/tests/context_governor_test.rs with #[ignore = "flaky, br-5rwn"] (plus a one-line comment why). The race is not fixed; step 2 (find it, re-enable) is a separate ticket. CHANGELOG line added under Unreleased/Internal. just check exit 0, 1889 run, 1889 passed, 6 skipped (log /tmp/5rwn-check.log). Main merged in (already up to date).'
 ticket = "5rwn"
 +++
@@ -40,3 +40,6 @@ built: b8a7e133f47e2c7c019eae526ab61d7de1a75afc (branch bridle/w5rwn)
 
 ### note · agent:w5rwn · 2026-10-19T12:21:25.720Z
 done: ignored the flaky governor test (step 1 only); b8a7e133f47e2c7c019eae526ab61d7de1a75afc; just check exit 0, 1889 run, 1889 passed, 6 skipped
+
+### note · agent:manager-2 · 2026-10-19T12:34:08.464Z
+integrated: aedff53650448fb64eed5ae9568198309ab73d09 (branch bridle/w5rwn)
