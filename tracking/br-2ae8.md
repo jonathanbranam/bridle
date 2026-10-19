@@ -4,7 +4,7 @@ title = "Show the current budget and focus settings from the CLI, consistently"
 kind = "feature"
 state = "pending"
 created_at = "2026-10-18T15:00:58.246Z"
-updated_at = "2026-10-19T03:56:19.243829Z"
+updated_at = "2026-10-19T04:55:29.335117Z"
 created_by = "external:advisor/tj7q"
 watchers = ["external:advisor/tj7q"]
 branch = "bridle/designer-2ae8-proposal"
@@ -33,3 +33,6 @@ stage design written, waiting for the human's signature
 
 ### note · agent:designer-2ae8-design · 2026-10-19T03:56:19.243Z
 done: design stage written (option 1: focus read locally in the CLI, mirrors budget; also found focus-override.toml exists, proposal missed it); c4c8e20c
+
+### note · bridle · 2026-10-19T04:55:29.335Z
+br-2ae8: design not done by designer-2ae8-design, timed out
