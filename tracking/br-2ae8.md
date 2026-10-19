@@ -4,7 +4,7 @@ title = "Show the current budget and focus settings from the CLI, consistently"
 kind = "feature"
 state = "pending"
 created_at = "2026-10-18T15:00:58.246Z"
-updated_at = "2026-10-19T05:52:27.612096Z"
+updated_at = "2026-10-19T10:06:57.789051Z"
 created_by = "external:advisor/tj7q"
 watchers = ["external:advisor/tj7q"]
 branch = "bridle/designer-2ae8-proposal"
@@ -39,3 +39,12 @@ br-2ae8: design not done by designer-2ae8-design, timed out
 
 ### note · bridle · 2026-10-19T05:52:27.612Z
 br-2ae8: design not done by designer-2ae8-design, timed out
+
+### note · agent:designer-2ae8-design · 2026-10-19T10:06:39.090Z
+stage design written, waiting for the human's signature (on main at e8940620)
+
+### note · agent:designer-2ae8-design · 2026-10-19T10:06:48.931Z
+design stage landed on main at e8940620 (needed a rebase of my branch first); details on the ticket
+
+### note · agent:designer-2ae8-design · 2026-10-19T10:06:57.789Z
+designer-2ae8-design: design stage re-run under f5479f0c. First stage-done failed (Not possible to fast-forward: my branch had diverged from main). I rebased my own branch onto main and re-ran; it landed on main at e8940620.
