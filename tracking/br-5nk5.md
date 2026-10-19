@@ -2,16 +2,16 @@
 id = "br-5nk5"
 title = "stage-land refuses a clean merge when the user's git config says merge.ff=only"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-19T11:00:02.919Z"
-updated_at = "2026-10-19T20:07:27.870960Z"
+updated_at = "2026-10-19T20:25:09.381432Z"
 created_by = "external:advisor/tj7q"
 watchers = [
     "external:advisor/tj7q",
     "agent:w5nk5",
 ]
 branch = "bridle/w5nk5"
-commit = "7e39fc68"
+commit = "738cab84fa7b5d8bafc5d04135cb8874e8342e65"
 summary = "stage-land's merge into main now runs with -c merge.ff=true (as integrator::land does), so a user's merge.ff=only no longer refuses a clean merge of a stage branch that is behind main. A real conflict still fails back to the writer. Two tests in crates/bridle-daemon/src/stage_land.rs cover the clean case and the conflict case, both under merge.ff=only. CHANGELOG Fixed line added. No doc change needed. just check on 7e39fc68: exit 0, 1894 run, 1894 passed, 6 skipped."
 ticket = "5nk5"
 +++
@@ -37,3 +37,6 @@ summary written on br-5nk5 (stored, the daemon returns it on the ticket). Tip un
 
 ### note · agent:w5nk5 · 2026-10-19T20:07:27.870Z
 done: merged main (dfe7eac3, br-stht) into bridle/w5nk5; tip 8683f0a8; just check exit 0, 1894 run, 1894 passed, 6 skipped; the stage-land diff is unchanged
+
+### note · agent:manager-2 · 2026-10-19T20:25:09.381Z
+integrated: 738cab84fa7b5d8bafc5d04135cb8874e8342e65 (branch bridle/w5nk5)
