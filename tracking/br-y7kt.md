@@ -2,11 +2,14 @@
 id = "br-y7kt"
 title = "ticket ready checks the ticket is committed on main, not the project's integration branch"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-18T23:51:48.693Z"
-updated_at = "2026-10-19T00:15:11.934758Z"
+updated_at = "2026-10-19T10:48:46.327018Z"
 created_by = "external:aide"
-watchers = ["external:aide"]
+watchers = [
+    "external:aide",
+    "agent:wy7kt",
+]
 ticket = "y7kt"
 +++
 
