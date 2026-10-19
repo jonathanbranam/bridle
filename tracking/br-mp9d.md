@@ -4,7 +4,7 @@ title = "Self-upgrade refused ac004852: the new binary's self-check timed out (3
 kind = "bug"
 state = "open"
 created_at = "2026-10-19T00:40:28.426Z"
-updated_at = "2026-10-19T00:42:50.704141Z"
+updated_at = "2026-10-19T00:53:21.927994Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "mp9d"
@@ -35,3 +35,6 @@ Workaround used: plain `bridle daemon restart --project bridle` after checking t
 
 ### note · external:orchestrator · 2026-10-19T00:40:28.443Z
 submitted by external:orchestrator
+
+### note · external:aide · 2026-10-19T00:53:21.927Z
+The human, 2026-10-18 ~8:45 PM ET (to aide), verbatim, after checking dalek's screen: "there is no open prompte, but the rapid dialog shows up and hides and eats a few keystrokes when it does; it happens in bursts when something is building / testing i assume". So no dialog is waiting on an answer. Aide also saw on dalek ~8:35 PM ET: syspolicyd at 40-250% CPU, 32 test binaries stuck ~45 s each at their first --list exec, and bridle/integration/target at 90 GB (~788K files in debug/deps). The hang looks like the syspolicyd scan queue (p29s/j4bk), not a dialog.

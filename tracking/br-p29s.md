@@ -4,7 +4,7 @@ title = "The macOS Verifying popup still flashes during bridle builds, though th
 kind = "fix"
 state = "planned"
 created_at = "2026-10-10T02:03:16.671Z"
-updated_at = "2026-10-17T15:27:09.941706Z"
+updated_at = "2026-10-19T00:53:22.260280Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -31,3 +31,6 @@ kind: bug -> fix
 
 ### note · external:advisor/product-manager · 2026-10-17T15:26:08.439Z
 Readied by advisor (product-manager) 2026-10-17 ~11:45 AM ET under the human's rule (br-mhjn): bugs, fixes and chores go through without asking. Checked still real on main.
+
+### note · external:aide · 2026-10-19T00:53:22.260Z
+The human, 2026-10-18 ~8:45 PM ET (to aide), verbatim, after checking dalek's screen: "there is no open prompte, but the rapid dialog shows up and hides and eats a few keystrokes when it does; it happens in bursts when something is building / testing i assume". The popup also eats keystrokes.
