@@ -157,7 +157,12 @@ fn writer_prompt(id: &str, stage: &str) -> String {
          the ticket file and its stage folder only. Commit on your branch first, then run \
          `bridle ticket stage-done {id} {stage}`: the daemon checks and merges your branch to main \
          and, if it refuses, says why on the command (fix the branch and run it again). \
-         Nobody else lands it, so you need not tell a manager. End once it succeeds."
+         Nobody else lands it, so you need not tell a manager. Then run \
+         `bridle ticket next {id} --json --comments` again: if another stage is unblocked, write \
+         it the same way, fully, before the next (one after another; order does not matter). \
+         Write each stage from its own `depends_on` inputs, not from a sibling stage you wrote \
+         in this session: do not let one shape the other. End when `ticket next` has no stage \
+         left to write."
     )
 }
 
@@ -255,6 +260,15 @@ impl StageWatch {
             (w.agent.clone(), w.stage.clone(), w.started, w.alerted)
         };
         if is_done(p, &stage) {
+            // The writer goes on to the ticket's other unblocked stages (br-t6ev): while it runs
+            // it still holds the ticket, so a second writer is not spawned beside it.
+            let running = match self.store.get_agent(&agent).await.ok().flatten() {
+                Some(a) => a.state.is_running(),
+                None => false,
+            };
+            if running {
+                return true;
+            }
             self.writers.lock().expect("writers lock").remove(&p.id);
             return false;
         }

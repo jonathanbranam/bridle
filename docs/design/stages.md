@@ -62,7 +62,11 @@ The ticket's frontmatter records the marks (the files only hold the content):
   the human's; the thread note says who ran it ("signed by human at <time>", or "signed by human
   via <principal>" when the token is an agent's) and when. Editing an approved stage does not
   withdraw its signature; only `changes` does. Cryptographic signing is a later ticket (v2va).
-- `claimed_by: human` while any stage waits for the human's signature; `ticket new --version 2
+- `claimed_by: human` while a stage waits for the human's signature **and no stage is left
+  unblocked** (br-t6ev; chosen over making the watch ignore the claim, because the watch then
+  needs no second rule: a claimed ticket still gets no writer). So after the proposal is signed,
+  design and specs are both written before the ticket reaches the human, who approves or sends
+  back each on its own; `tasks` waits for both signatures. `ticket new --version 2
   --claim` writes `claimed_by: <filer>` the same way (br-r965), and `stage-done` ends the
   writer's claim and `approve`, `changes` and `restage` recompute it. This is a frontmatter line,
   not a row claim: a version 2 ticket stays `pending` while it is prepared and the row claim
@@ -147,8 +151,12 @@ that is not prepared:
   asks it to address. The agent is `designer-<id>-<stage>` (a generated name for a redo). The
   designer writes the stage, runs `stage-done`, commits on its branch and tells its manager; a
   stage counts as done for the daemon when it is written on the project checkout, so the
-  branch must land first. Then the next tick finds the next unblocked stage, a signature wait
-  (`claimed_by: human`), or a prepared ticket.
+  branch must land first. The one designer then runs `ticket next` again and writes the ticket's
+  next unblocked stage, fully, before the one after (br-t6ev; each from its own `depends_on`
+  inputs, not from its sibling), and ends when none is left. While it runs it holds the ticket,
+  so no second writer starts; if it ends early the next tick starts one for what is still
+  unblocked. At the end the tick finds a signature wait (`claimed_by: human`) or a prepared
+  ticket.
 - A stage not written `[stages] timeout` (default 60m, `0` turns the watch off) after its writer
   started, or whose writer ended without a successful `stage-done`, adds a thread
   note and sends one message to `external:advisor/product-manager`: "br-oooo: design not done by

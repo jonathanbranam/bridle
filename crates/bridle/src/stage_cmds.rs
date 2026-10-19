@@ -99,12 +99,13 @@ fn add(list: &mut Vec<String>, stage: &str) {
     }
 }
 
-/// The ticket is claimed by the human while any stage waits for their signature.
+/// The ticket is claimed by the human while a stage waits for their signature and no stage is
+/// left for a writer: a signature wait must not hold back the other unblocked stages (br-t6ev).
 fn claim_after(l: &Loaded, m: &Marks) -> Option<&'static str> {
-    stages::states(&l.stages, m)
-        .iter()
-        .any(|(_, s)| *s == State::WaitingForSignature)
-        .then_some("human")
+    let states = stages::states(&l.stages, m);
+    (states.iter().any(|(_, s)| *s == State::WaitingForSignature)
+        && !states.iter().any(|(_, s)| *s == State::Unblocked))
+    .then_some("human")
 }
 
 /// Writes the new marks, then tells the thread (and so the watchers).
@@ -317,6 +318,51 @@ mod tests {
         assert!(check_ready_allowed("---\nversion: 1\n---\n").is_ok());
         assert!(check_ready_allowed("---\nversion: 2\n---\n").is_err());
         assert!(check_ready_allowed("---\nversion: 2\nprepared: true\n---\n").is_ok());
+    }
+
+    #[test]
+    fn the_human_claim_waits_until_no_stage_is_unblocked() {
+        let all = [
+            "proposal".to_string(),
+            "design".into(),
+            "specs".into(),
+            "tasks".into(),
+        ];
+        let st = stages::build(&all, &all[..3]).expect("stages");
+        let l = Loaded {
+            id: "x".into(),
+            path: "x.md".into(),
+            text: String::new(),
+            stages: st,
+        };
+        let mut m = Marks::default();
+        add(&mut m.written, "proposal");
+        assert_eq!(claim_after(&l, &m), Some("human"));
+        add(&mut m.signed, "proposal");
+        add(&mut m.written, "design");
+        // specs is still unblocked: the writer goes on to it, no claim.
+        assert_eq!(claim_after(&l, &m), None);
+        add(&mut m.written, "specs");
+        assert_eq!(claim_after(&l, &m), Some("human"));
+        // approve design, send specs back: specs is unblocked again, independently.
+        add(&mut m.signed, "design");
+        m.written.retain(|s| s != "specs");
+        assert_eq!(claim_after(&l, &m), None);
+        // tasks waits for both signatures.
+        add(&mut m.written, "specs");
+        let tasks = stages::states(&l.stages, &m);
+        assert!(
+            tasks
+                .iter()
+                .any(|(n, s)| n == "tasks" && *s == State::Waiting)
+        );
+        add(&mut m.signed, "specs");
+        let tasks = stages::states(&l.stages, &m);
+        assert!(
+            tasks
+                .iter()
+                .any(|(n, s)| n == "tasks" && *s == State::Unblocked)
+        );
     }
 
     #[test]

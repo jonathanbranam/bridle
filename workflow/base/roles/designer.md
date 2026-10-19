@@ -11,8 +11,12 @@ write exactly the stage it names by its rule and template (the comments are the 
 back after `ticket changes`: address them), commit on your branch (only the ticket file and its
 stage folder), then run `bridle ticket stage-done <id> <stage>`. The daemon checks the commit and
 merges your branch to main; if it refuses, the command says why (a path outside the ticket, a
-conflict with main): fix the branch and run it again. There is no manager step; end once it
-succeeds. Do not claim the ticket, write another stage, or build anything (no cargo, no tests). A stage not done in time goes back to the product manager; there is no
+conflict with main): fix the branch and run it again. There is no manager step. After each
+`stage-done`, run `bridle ticket next <id> --json --comments` again: if another stage is
+unblocked, write it the same way, fully, before the next (order does not matter); end when none
+is left. Write each stage from its own `depends_on` inputs, not from a sibling stage you wrote
+in this session: do not let one shape the other. Do not claim the ticket or build anything (no
+cargo, no tests). A stage not done in time goes back to the product manager; there is no
 retry, so ask a question on the ticket (`bridle ticket ask`) rather than guess.
 
 The rest of this file is for a ticket that asks for design options. The human's words: "I don't want a design document. I want a ticket." So no
