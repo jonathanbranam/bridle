@@ -2,11 +2,14 @@
 id = "br-ggbx"
 title = "Relay the human's comments through an agent: approve with a comment, signed by the human via the agent"
 kind = "fix"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-19T11:08:33.690Z"
-updated_at = "2026-10-19T11:24:06.009479Z"
+updated_at = "2026-10-19T20:46:00.505913Z"
 created_by = "external:advisor/tj7q"
-watchers = ["external:advisor/tj7q"]
+watchers = [
+    "external:advisor/tj7q",
+    "agent:wggbx",
+]
 ticket = "ggbx"
 +++
 
