@@ -46,3 +46,11 @@ Themes so far (advisor's reading, for the human to correct):
 - Behaviour specs don't spell out file formats (or, likely, exact output text); one spec owns each format, so a format change touches only that spec.
 
 The ask: once the human has shaped it, turn this into guidance for spec writers (rule `stage-specs`, `docs/design/specs.md`, maybe the template) and, where it matters, for the step implementations. hold: design until the human says go.
+
+## The general principle (the human, 2026-10-19, later the same day)
+
+> This is a specific example of a general rule. Yes, this is kind of a rule, kind of an idea, a principle, I guess. The more general rule is that implementation details, or parts of the spec that cover more implementation details, should either not be included in the spec or should be segregated like I described.
+
+> One example would be the format of a file. Another example would be the exact format for an API, or things that deal with the layout of things on disk. Something that we do want to specify because we don't want it to change is part of the specification, and we don't want it to change without planning, without intention. Other specs that don't deal with those specific, concrete details should not include them.
+
+The human is trying a revision pass of br-2ae8's specs with this feedback ("I want to experiment with that workflow"); what it teaches feeds this ticket.
