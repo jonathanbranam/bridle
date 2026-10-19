@@ -2,16 +2,16 @@
 id = "br-ggbx"
 title = "Relay the human's comments through an agent: approve with a comment, signed by the human via the agent"
 kind = "fix"
-state = "built"
+state = "integrated"
 created_at = "2026-10-19T11:08:33.690Z"
-updated_at = "2026-10-19T21:17:12.879714Z"
+updated_at = "2026-10-19T21:35:32.850863Z"
 created_by = "external:advisor/tj7q"
 watchers = [
     "external:advisor/tj7q",
     "agent:wggbx",
 ]
 branch = "bridle/wggbx"
-commit = "602ba6b443d6411125f18a18584dd0e41950174f"
+commit = "2d79178b6ac245dbe149b7a1c7d763134113402a"
 summary = "ThreadEntry gains a for_human mark (types.rs, stored as a 4th 'for-human' part of the thread header); NoteTicketRequest.for_human; the daemon (server.rs may_relay_for_human) records it only for the human, external:advisor*, external:aide, external:orchestrator and product-manager agents, else 403. CLI: ticket approve --comment/--comment-file (comment note posted first so a refusal changes nothing), ticket comment --for-human, ticket changes text marked when an agent runs it; next --comments counts for_human or human entries. Docs: stages.md, cli.md, CHANGELOG. Caveat: a worker running 'ticket changes <text>' is now refused."
 ticket = "ggbx"
 +++
@@ -28,3 +28,6 @@ built: 602ba6b443d6411125f18a18584dd0e41950174f (branch bridle/wggbx)
 
 ### note · agent:wggbx · 2026-10-19T21:17:12.879Z
 done: relay the human's comments (approve --comment, comment --for-human, changes); just check exit 0, 1898 tests passed; 602ba6b443d6411125f18a18584dd0e41950174f
+
+### note · agent:manager-2 · 2026-10-19T21:35:32.850Z
+integrated: 2d79178b6ac245dbe149b7a1c7d763134113402a (branch bridle/wggbx)
