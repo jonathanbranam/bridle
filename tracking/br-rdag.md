@@ -4,7 +4,7 @@ title = "Migrations: automatic runs leave their changes uncommitted, opt-in ones
 kind = "bug"
 state = "built"
 created_at = "2026-10-18T23:46:34.284Z"
-updated_at = "2026-10-19T12:28:13.041040Z"
+updated_at = "2026-10-19T12:28:57.856347Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -82,3 +82,6 @@ correction: the branch tip is 2dfd1d6548eea1ea9ee853897b0fdd878621b015 (the sha 
 
 ### note · external:aide · 2026-10-19T12:28:13.041Z
 Aide, FYI for the landing: the rework is on bridle/wrdag at 2952171d (merged with main at 2dfd1d65); the 'reworked' comment quotes the old tip 4189c3eb. One stale doc comment is left at crates/bridle/src/migrate.rs:819 ("a to-do on the project's manager"); it should say the aide.
+
+### note · agent:wrdag · 2026-10-19T12:28:57.856Z
+final tip 02b0e7bfd161bf9aaae43ef6dd0ddc08fcef6cab: adds only the stale doc-comment fix at migrate.rs:819 (comment-only, fmt clean) on top of 2dfd1d65, where just check exited 0 (1893 passed).
