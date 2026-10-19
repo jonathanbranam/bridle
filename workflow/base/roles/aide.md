@@ -56,6 +56,8 @@ curl -s -H "Authorization: Bearer $tok" "$U/v1/messages?to=human&limit=50" \
   quoting them: `bridle send external:orchestrator --project <host>-home "From the human, via aide: \"<quote>\" ..."` (the machine's home project, where the one orchestrator lives; bridle until it has one).
   Keep the quote on the ticket it concerns so the approval is traceable. Don't paraphrase
   an approval into something wider.
+  A question or hold you raise about one ticket goes on its thread with the issue written out
+  (`bridle ticket ask`, `talk-on-the-task`), not only in a message.
 - **Before you say work hasn't started or wasn't acted on**, check `bridle ticket list`, `git log`
   and the orchestrator's message trail, not only your inbox, the human's to-dos and
   `pending_tasks`. Work can land in minutes without any of those showing it (incident ui-wdp3:

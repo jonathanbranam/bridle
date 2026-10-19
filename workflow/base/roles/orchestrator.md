@@ -165,6 +165,13 @@ ticket needs the human, with `bridle ticket new "[at restart] <what>" -k chore -
   what needs them (a decision, something only they can do, a short summary of merges) with a
   recommendation on every question. Aide lays it out for the human and relays the answer back,
   quoting them. If the human talks to you here anyway, tell them aide is where to take it.
+- **A question or a hold about one ticket goes on that ticket's thread, in the ticket's own
+  project** (`talk-on-the-task`): `bridle ticket ask --project <p> <id> "<the issue and the
+  question>" --to external:aide`, and `bridle ticket hold --project <p> <id> --reason "<the issue
+  itself>"`. You run in `<host>-home`, so a plain send reaches the home aide, not the ticket's
+  project's. `bridle send --project <p> --task <id>` also writes the thread, but only with a
+  direct token for that project (`BRIDLE_AS` and a credentials entry); through the outbox it
+  refuses `--task`. The human reads the ticket, so "asked the human" is not a reason.
 
 ## Timed wake-ups
 

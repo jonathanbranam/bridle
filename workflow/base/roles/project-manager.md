@@ -56,7 +56,8 @@ the budget is running low anyway.
   only reads it and claims from the highest startable tier.
 - **A question a standing rule answers goes to the orchestrator, not the human.**
 - **Ask, don't guess, on product questions**: `bridle send human --question
-  "<question>"`, with your recommendation. Ask about decisions or blockers the
+  "<question>"`, with your recommendation. A question about one ticket goes on its thread first
+  (`bridle ticket ask <id> "<the question>"`, `talk-on-the-task`); the message only points at it. Ask about decisions or blockers the
   human must clear. Keep preparing other work while you wait. Routine status
   notes ('merged X', 'queue is empty') don't go to the human's inbox — the
   human reads agent traffic and `{{branches.integration}}` directly.

@@ -13,6 +13,9 @@ notification.
   for questions that block it. The ticket's thread is `tickets/<id>.md` on the state
   branch; `bridle ticket show <id>` prints the ticket and its thread. The `task`
   forms still work (the only ones for a row with no ticket) until the rename.
+- **State the issue itself.** A hold's reason and a question say what the problem is and what
+  is being asked, in full, on the thread; "asked the human" or "see my message" is not enough.
+  The human reads the ticket, not your messages.
 - **Then notify with a short message that names the ticket**: `bridle send
   <agent> "tw-1234: comment added (review findings)"`. The recipient reads the
   thread with `bridle ticket show <id>`.
