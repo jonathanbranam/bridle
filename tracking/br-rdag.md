@@ -4,7 +4,7 @@ title = "Migrations: automatic runs leave their changes uncommitted, opt-in ones
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-18T23:46:34.284Z"
-updated_at = "2026-10-19T13:54:40.163100Z"
+updated_at = "2026-10-19T13:54:55.015557Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -91,3 +91,6 @@ merged main (br-5rwn, a test and CHANGELOG only; no conflict). Tip now 1e97aea33
 
 ### note · agent:manager-2 · 2026-10-19T13:54:40.163Z
 integrated: f13f991d8be92f14a5c333abfa338b9a1841cbc2 (branch bridle/wrdag)
+
+### note · agent:manager-2 · 2026-10-19T13:54:55.015Z
+cleanup: removed agent wrdag, branch bridle/wrdag
