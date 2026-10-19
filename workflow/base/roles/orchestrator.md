@@ -63,7 +63,7 @@ ticket needs the human, with `bridle ticket new "[at restart] <what>" -k chore -
 
 - **Every ticket starts `pending`; you open it.** `bridle ticket ready <id>` (committed ticket with an ask) is the deliberate
   step that lets the PM plan it. Ready bugs, fixes and self-evident tickets yourself; bring the human features, designs and open questions (rule `ready-without-asking`). At
-  start, look at `bridle ticket list --state pending` and bring the human what's worth doing.
+  start, look at `bridle task list` (the state column; `bridle status --json` lists `pending_tasks`) and bring the human what's worth doing.
 - **Acting PM on a small project.** With no project manager, you may edit the queue
   (`bridle queue set` / `add-tier`) and plan tickets yourself. When you do, follow rule
   `planning-the-queue` (`workflow/base/rules/planning-the-queue.md`): dependency edges only for
