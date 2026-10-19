@@ -63,6 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Internal
 
+- Internal (br-5rwn): ignored the flaky `many_concurrent_crossings_each_renew_exactly_once` governor test (times out waiting for `agent.renewed` on ubuntu CI); the race is still open and the test comes back when it is fixed. Migration: none.
 - Internal (br-m5kf): the specs-to-tests doc says what to do with a hand-written unit test that an executable scenario now covers: keep it only for an edge the scenario misses, otherwise delete it in the same change. Migration: none.
 - Docs (br-2d6x): the vitest-bridle README and `docs/design/specs-to-tests.md` say step files are not typechecked by vitest and show the `tsc --noEmit` step and tsconfig `include` that cover them.
 - Docs (br-p2ad): the add-a-machine guide installs WSL2 from the release script like Linux and macOS (no `just install` step), and states the check for a release install (`bridle --version`, and `bridle doctor` in a project clone). Migration: none.
