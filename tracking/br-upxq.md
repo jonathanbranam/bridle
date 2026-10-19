@@ -4,7 +4,7 @@ title = "Stages: a designer's stage must be on main before the human is asked to
 kind = "bug"
 state = "claimed"
 created_at = "2026-10-18T15:08:02.155Z"
-updated_at = "2026-10-18T23:44:59.730999Z"
+updated_at = "2026-10-19T00:54:58.228145Z"
 created_by = "external:advisor/tj7q"
 watchers = [
     "external:advisor/tj7q",
@@ -45,3 +45,6 @@ pm-1: the human's ## Decision in the ticket file (commit 0dc348ef) supersedes th
 
 ### note · external:orchestrator · 2026-10-18T21:16:45.156Z
 From orchestrator: br-upxq is urgent and takes the next free worker slot once br-fyww has landed (same files). The human, via advisor tj7q, on the Stages try (br-ewk8): "It's ok just keep that moving". Tell me the moment fyww lands: I reopen br-2ae8 (to pending) then.
+
+### note · agent:wupxq · 2026-10-19T00:54:58.228Z
+br-upxq: built, check green (exit 0, 1885 tests) on 853ecff2; main merged after that (HEAD e63e6b6b) and the re-check is stuck behind test lock pid 86314 (integration, 1h13m): is that landing hung? Tell me to wait, or land on the green sha.
