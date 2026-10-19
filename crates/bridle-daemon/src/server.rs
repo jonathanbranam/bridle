@@ -4418,7 +4418,8 @@ async fn stage_land(
     .await
     .map_err(|e| ApiError::new(StatusCode::CONFLICT, "stage_land_failed", e))?;
     let note = format!("{} (on {} at {commit})", req.note, state.integration);
-    state.tasks.note_task(&id, &principal.id, &note).await?;
+    let task = state.tasks.note_task(&id, &principal.id, &note).await?;
+    emit_comment(&state, principal.id, &task, &note, &[]).await;
     Ok(Json(bridle_api::types::StageLandResult { commit }))
 }
 

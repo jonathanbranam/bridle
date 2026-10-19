@@ -738,3 +738,41 @@ async fn a_comment_for_the_human_keeps_the_real_author_and_is_marked() {
     let t = daemon.client.get_task(&task).await.expect("task");
     assert_eq!(t.thread.iter().filter(|e| e.for_human).count(), 1);
 }
+
+#[tokio::test]
+async fn a_stage_landing_tells_the_tickets_watchers() {
+    let (daemon, _tmp) = support::start_daemon(None).await;
+    let advisor = daemon.external_client("advisor").await;
+    let task = new_task(&daemon.client).await;
+    advisor.watch_task(&task).await.expect("watch");
+    let git = |args: &[&str]| {
+        let out = std::process::Command::new("git")
+            .args(args)
+            .current_dir(&daemon.repo)
+            .output()
+            .expect("git");
+        assert!(out.status.success(), "git {args:?}: {out:?}");
+    };
+    git(&["checkout", "-q", "-b", "stage-branch"]);
+    std::fs::create_dir_all(daemon.repo.join("docs/tickets/open")).expect("mkdir");
+    std::fs::write(daemon.repo.join("docs/tickets/open/t-abcd.md"), "ticket\n").expect("write");
+    git(&["add", "docs/tickets/open/t-abcd.md"]);
+    git(&["commit", "-q", "-m", "stage"]);
+    git(&["checkout", "-q", "main"]);
+    daemon
+        .client
+        .stage_land(
+            &task,
+            &bridle_api::types::StageLandRequest {
+                stage: "specs".to_string(),
+                branch: "stage-branch".to_string(),
+                file: "t-abcd.md".to_string(),
+                note: "stage specs written, waiting for the human's signature".to_string(),
+            },
+        )
+        .await
+        .expect("stage land");
+    let lines = updates(&advisor, "me").await;
+    assert_eq!(lines.len(), 1, "{lines:?}");
+    assert!(lines[0].contains("stage specs written"), "{lines:?}");
+}
