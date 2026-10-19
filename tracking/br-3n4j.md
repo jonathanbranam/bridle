@@ -2,11 +2,14 @@
 id = "br-3n4j"
 title = "The orchestrator holds and asks about a ticket without putting the reason or the question on its thread"
 kind = "fix"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-19T12:15:34.875Z"
-updated_at = "2026-10-19T12:30:04.317164Z"
+updated_at = "2026-10-19T22:43:22.988927Z"
 created_by = "external:advisor/product-manager"
-watchers = ["external:advisor/product-manager"]
+watchers = [
+    "external:advisor/product-manager",
+    "agent:w3n4j",
+]
 ticket = "3n4j"
 +++
 
