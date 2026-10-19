@@ -360,7 +360,8 @@ bridle ticket new --from-task <task-id> [--kind k] [title]   as `ticket new`, fr
 bridle ticket ready <id>                     marks the ticket's row ready (`pending` -> `open`; the PM plans only open
                                              rows). Bugs, fixes and self-evident tickets are readied without asking the
                                              human; the rest wait for them (rule `ready-without-asking`). Refuses an
-                                             empty `## The ask` and a ticket file not in the tip of local `main`
+                                             empty `## The ask` and a ticket file not in the tip of the local integration branch
+                                             (`[branches] integration`, default `main`; br-y7kt)
                                              (commit it first; k7tm's race fix); needs a daemon; prints the task id. A ticket
                                              file with no row gets one filed from its title and kind; a pending row is
                                              preferred and dropped rows are skipped (w8jm)

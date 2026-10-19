@@ -285,7 +285,9 @@ async fn ready_cmd(cli: &Cli, repo: &Path, args: &TicketReadyArgs) -> Result<(),
     crate::stage_cmds::check_ready_allowed(&text)?;
     let (title, kind) = task_source(&text)?;
     let rel = path.strip_prefix(repo).unwrap_or(&path).to_path_buf();
-    ensure_committed(repo, &rel)?;
+    let config =
+        bridle_daemon::config::Config::load(repo).context("reading .bridle/config.toml")?;
+    ensure_committed(repo, &config.branches.integration, &rel)?;
     let client = client_for(cli).await?;
     let rows = client.list_tasks().await?;
     let named = |t: &&bridle_api::Ticket| ticket_of(t).is_some_and(|tk| split_id(&tk).1 == id);
@@ -501,19 +503,20 @@ fn task_source(text: &str) -> anyhow::Result<(String, TicketKind)> {
     Ok((title, kind))
 }
 
-/// Errors unless `rel` (relative to `repo`) is in the tip of the local `main`.
-fn ensure_committed(repo: &Path, rel: &Path) -> anyhow::Result<()> {
-    let spec = format!("main:{}", rel.display());
-    let in_main = Command::new("git")
+/// Errors unless `rel` (relative to `repo`) is in the tip of the local `branch` (the project's
+/// integration branch: `dev` on a dev+release project, where `main` is production).
+fn ensure_committed(repo: &Path, branch: &str, rel: &Path) -> anyhow::Result<()> {
+    let spec = format!("{branch}:{}", rel.display());
+    let in_branch = Command::new("git")
         .current_dir(repo)
         .args(["cat-file", "-e", &spec])
         .output()
         .context("running git")?
         .status
         .success();
-    if !in_main {
+    if !in_branch {
         bail!(
-            "{} is not committed on main: commit it there first, so work never outruns its brief",
+            "{} is not committed on {branch}: commit it there first, so work never outruns its brief",
             rel.display()
         );
     }
@@ -2335,9 +2338,17 @@ mod tests {
         git(&["add", "a.md"]);
         git(&["commit", "-q", "-m", "a"]);
         std::fs::write(dir.path().join("b.md"), "y").unwrap();
-        assert!(ensure_committed(dir.path(), Path::new("a.md")).is_ok());
-        let err = ensure_committed(dir.path(), Path::new("b.md")).unwrap_err();
-        assert!(err.to_string().contains("not committed"), "{err}");
+        assert!(ensure_committed(dir.path(), "main", Path::new("a.md")).is_ok());
+        let err = ensure_committed(dir.path(), "main", Path::new("b.md")).unwrap_err();
+        assert!(err.to_string().contains("not committed on main"), "{err}");
+        // A dev integration branch: a file only on main is refused, one on dev is accepted.
+        git(&["checkout", "-q", "-b", "dev"]);
+        std::fs::write(dir.path().join("c.md"), "z").unwrap();
+        git(&["add", "c.md"]);
+        git(&["commit", "-q", "-m", "c"]);
+        assert!(ensure_committed(dir.path(), "dev", Path::new("c.md")).is_ok());
+        let err = ensure_committed(dir.path(), "main", Path::new("c.md")).unwrap_err();
+        assert!(err.to_string().contains("not committed on main"), "{err}");
     }
     const NEW_FRONT: &str =
         "created: 2026-09-30\nrepos: [p]\nchanges: []\nspecs: []\nblocked_by: []\nrelated: []\n";
