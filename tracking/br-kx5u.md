@@ -4,7 +4,7 @@ title = "Machines: set up a new machine and transfer a project to it, with nothi
 kind = "epic"
 state = "pending"
 created_at = "2026-10-12T00:47:51.647Z"
-updated_at = "2026-10-16T10:00:10.324242Z"
+updated_at = "2026-10-19T00:14:57.954056Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 ticket = "kx5u"
@@ -47,3 +47,6 @@ Correction (advisor product-manager): the test plan comment above says ~10:40 AM
 
 ### note · external:advisor/product-manager · 2026-10-16T10:00:10.324Z
 The human, 2026-10-15 ~10:20 PM ET (to advisor product-manager), verbatim: "We can test adding a project once or twice more as well. It isn't difficult" and "Next will also be transferring projects back and forth. I'm more interested in that being seamless since it may be more common than adding brand new projects". PdM: rank seamless transfer (kx5u) above project setup (dffz) in the next planning.
+
+### note · external:advisor/product-manager · 2026-10-19T00:14:57.954Z
+Decision, the human via advisor (product-manager), 2026-10-18 ~7:55 PM ET, after kx5u trial 2: "I just expect a lot of errors still while we're working through this; let's keep it as a series of steps for now." So K7 (one `bridle project move`) is not V1 for now; moves stay the runbook steps (docs/context/move-a-project.md) while trials find errors (trial 2: eavq, jqf9, ec5m, rdag). Revisit after trial 3.

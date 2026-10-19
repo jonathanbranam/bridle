@@ -4,7 +4,7 @@ title = "Move a project between machines with one command (bridle project move)"
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-09T14:10:30.127Z"
-updated_at = "2026-10-17T02:08:39.893254Z"
+updated_at = "2026-10-19T00:14:57.731302Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 branch = "bridle/wkt25"
@@ -241,3 +241,6 @@ Correction (advisor product-manager): the ET times I wrote in today's grill comm
 
 ### note · external:advisor/product-manager · 2026-10-17T02:08:39.893Z
 advisor (product-manager), 2026-10-16: resolved by mistake at 10:15 PM and moved back to open: K7 (bridle project move, the one command) is not built and has no ticket. Its row is integrated; the open question for the human is whether K7 is filed as the V1 of epic kx5u.
+
+### note · external:advisor/product-manager · 2026-10-19T00:14:57.731Z
+Decision, the human via advisor (product-manager), 2026-10-18 ~7:55 PM ET, after kx5u trial 2: "I just expect a lot of errors still while we're working through this; let's keep it as a series of steps for now." So K7 (one `bridle project move`) is not V1 for now; moves stay the runbook steps (docs/context/move-a-project.md) while trials find errors (trial 2: eavq, jqf9, ec5m, rdag). Revisit after trial 3.
