@@ -2,14 +2,21 @@
 id = "br-mp9d"
 title = "Self-upgrade refused ac004852: the new binary's self-check timed out (3x60s); staged ad-hoc-signed binary hangs at exec"
 kind = "bug"
-state = "claimed"
+state = "built"
 created_at = "2026-10-19T00:40:28.426Z"
-updated_at = "2026-10-19T10:29:52.455968Z"
+updated_at = "2026-10-19T10:47:57.469441Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:wmp9d",
 ]
+branch = "bridle/wmp9d"
+commit = "91cf84df"
+summary = """
+Investigation (wmp9d). Which binary: check_built runs crate::exe_path(), the live installed path. run_build installs the built binary there via signing::install (re-signed, renamed into place) BEFORE the check, so the check already runs the binary launchd will exec. It does not run the staged upgrade-root/upgrade-target copies; those hangs in the evidence were manual runs of the staged copies. So "wrong binary checked" is ruled out by the code.
+Cause, judged from code and events: load-driven, intermittent. The installed copy is a fresh file; its first exec waits on macOS's syspolicyd scan, which was at 40-250% CPU with 32 test binaries stuck ~45 s each at first exec and a 90 GB integration/target (br-mhfx, landed, prunes it). Under that queue one exec can exceed 60 s; the retry kills the child and restarts the wait, so 3x60 s can all time out. The 2026-10-19 01:51Z upgrade to f5479f0c succeeded (upgrade.built/draining events), consistent with load, not a deterministic linker-signed hang.
+Fix: CHECK_TIMEOUT 60 s -> 180 s (3 attempts kept); the command is now real_check_command(exe, ws) with a unit test that it runs the given live binary. daemon.md line and CHANGELOG (Fixed) updated.
+Verify by hand (not run here): on the Mac, under some build load, `bridle daemon restart --upgrade --project bridle` should restart into the new build; upgrade.* events show built then draining."""
 ticket = "mp9d"
 +++
 
@@ -41,3 +48,15 @@ submitted by external:orchestrator
 
 ### note · external:aide · 2026-10-19T00:53:21.927Z
 The human, 2026-10-18 ~8:45 PM ET (to aide), verbatim, after checking dalek's screen: "there is no open prompte, but the rapid dialog shows up and hides and eats a few keystrokes when it does; it happens in bursts when something is building / testing i assume". So no dialog is waiting on an answer. Aide also saw on dalek ~8:35 PM ET: syspolicyd at 40-250% CPU, 32 test binaries stuck ~45 s each at their first --list exec, and bridle/integration/target at 90 GB (~788K files in debug/deps). The hang looks like the syspolicyd scan queue (p29s/j4bk), not a dialog.
+
+### note · agent:wmp9d · 2026-10-19T10:47:53.549Z
+Investigation (wmp9d). Which binary: check_built runs crate::exe_path(), the live installed path. run_build installs the built binary there via signing::install (re-signed, renamed into place) BEFORE the check, so the check already runs the binary launchd will exec. It does not run the staged upgrade-root/upgrade-target copies; those hangs in the evidence were manual runs of the staged copies. So "wrong binary checked" is ruled out by the code.
+Cause, judged from code and events: load-driven, intermittent. The installed copy is a fresh file; its first exec waits on macOS's syspolicyd scan, which was at 40-250% CPU with 32 test binaries stuck ~45 s each at first exec and a 90 GB integration/target (br-mhfx, landed, prunes it). Under that queue one exec can exceed 60 s; the retry kills the child and restarts the wait, so 3x60 s can all time out. The 2026-10-19 01:51Z upgrade to f5479f0c succeeded (upgrade.built/draining events), consistent with load, not a deterministic linker-signed hang.
+Fix: CHECK_TIMEOUT 60 s -> 180 s (3 attempts kept); the command is now real_check_command(exe, ws) with a unit test that it runs the given live binary. daemon.md line and CHANGELOG (Fixed) updated.
+Verify by hand (not run here): on the Mac, under some build load, `bridle daemon restart --upgrade --project bridle` should restart into the new build; upgrade.* events show built then draining.
+
+### note · agent:wmp9d · 2026-10-19T10:47:57.389Z
+built: 91cf84df (branch bridle/wmp9d)
+
+### note · agent:wmp9d · 2026-10-19T10:47:57.469Z
+done: self-check timeout 60->180 s per run (code already checked the live re-signed binary; cause is load-driven syspolicyd first-exec queue, see thread); just check exit 0, 1888 passed; 91cf84df. Hand-verify restart --upgrade on the Mac (not run).
