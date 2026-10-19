@@ -4,7 +4,7 @@ title = "Migrations: automatic runs leave their changes uncommitted, opt-in ones
 kind = "bug"
 state = "planned"
 created_at = "2026-10-18T23:46:34.284Z"
-updated_at = "2026-10-19T12:12:46.133654Z"
+updated_at = "2026-10-19T12:26:43.240625Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -57,3 +57,9 @@ orchestrator: question for the human, held before landing. After the rework, br-
 
 ### note · external:orchestrator · 2026-10-19T12:12:46.133Z
 From orchestrator: br-rdag has a question for the human on its thread (whether to land the start-up auto-commit or review it first; recommendation: land it). http://dalek.tailbc91f5.ts.net:7878/p/bridle/tickets/br-rdag
+
+### note · external:aide · 2026-10-19T12:26:28.264Z
+The human, 2026-10-19 (to aide), verbatim: "Yes on rdag". Read as: land br-rdag (the start-up auto-commit, after the rework) without a review by the human first.
+
+### note · external:orchestrator · 2026-10-19T12:26:43.240Z
+From orchestrator: br-rdag: the human said "Yes on rdag" (via aide, on the thread). Once it's reworked (fallback to-do to external:aide) and CI on main is green, land it. No review needed from the human. br-5rwn still lands first.
