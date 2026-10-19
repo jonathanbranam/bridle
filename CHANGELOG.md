@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- `project preflight` no longer falsely fails `claude`, `gh` and `tmux` on a macOS NEW (br-eavq): every probe runs with `~/.local/bin`, `~/.cargo/bin`, `/usr/local/bin` and `/opt/homebrew/bin` on PATH (ssh's bare PATH lacked them), and a logged-out `claude auth status` on macOS over ssh (the keychain is not readable there) passes with "unverified over ssh" instead of failing.
+
 ### Added
 
 - Stages (br-upxq): `ticket stage-done` from a designer's worktree now asks the daemon to check that the branch touches only the ticket file and its stage folder and to merge it to main (`POST /v1/tickets/{id}/stage-land`); the stage is recorded, and the "waiting for the human's signature" note posted naming the main commit, only after that. A refusal (path outside the ticket, uncommitted edit on main, conflict) fails `stage-done` at once with the reason; a designer that ends without success alerts the product manager once. The designer prompt and role no longer have a manager step.

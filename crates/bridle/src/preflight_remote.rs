@@ -25,9 +25,18 @@ pub trait Remote {
 
 /// The path bridle was found at, then its version; the PATH extension is `token_pair`'s.
 const VERSION_SNIPPET: &str = concat!(
-    r#"PATH="$PATH:$HOME/.local/bin:$HOME/.cargo/bin"; "#,
+    r#"PATH="$PATH:$HOME/.local/bin:$HOME/.cargo/bin:/usr/local/bin:/opt/homebrew/bin"; "#,
     "command -v bridle; bridle --version"
 );
+
+/// The PATH line every probe starts with: ssh's shell on macOS has only /usr/bin:/bin:..., without
+/// where claude, gh and tmux live (br-eavq).
+const PATH_LINE: &str =
+    r#"PATH="$PATH:$HOME/.local/bin:$HOME/.cargo/bin:/usr/local/bin:/opt/homebrew/bin"; "#;
+
+/// Exit code the claude probe uses for "logged out, but this is macOS over ssh": the keychain is
+/// not readable from an ssh session, so the login cannot be told either way.
+const UNVERIFIED: i32 = 3;
 
 pub struct Ssh;
 
@@ -105,14 +114,16 @@ fn probes(c: &Ctx) -> Vec<Probe> {
     let p = |name, ok, script: &str, fix: &str| Probe {
         name,
         ok,
-        script: script.to_string(),
+        script: format!("{PATH_LINE}{script}"),
         fix: fix.to_string(),
     };
     let mut v = vec![
         p(
             "claude login",
             "logged in",
-            "claude auth status 2>/dev/null | grep -Eq '\"loggedIn\": *true'",
+            &format!(
+                "claude auth status 2>/dev/null | grep -Eq '\"loggedIn\": *true' || {{ [ \"$(uname -s)\" = Darwin ] && exit {UNVERIFIED}; exit 1; }}"
+            ),
             "claude auth login (from a local terminal or tmux, not over ssh, on macOS)",
         ),
         p("gh auth", "logged in", "gh auth status", "gh auth login"),
@@ -161,7 +172,7 @@ fn probes(c: &Ctx) -> Vec<Probe> {
             name: "git push",
             ok: "origin accepts a push",
             script: format!(
-                "git -C \"{}\" push --dry-run origin HEAD:refs/heads/bridle-preflight-probe",
+                "{PATH_LINE}git -C \"{}\" push --dry-run origin HEAD:refs/heads/bridle-preflight-probe",
                 c.clone
             ),
             fix: format!("make git push access to {o} work (ssh key or `gh auth setup-git`)"),
@@ -267,6 +278,15 @@ pub fn check_new(
         let r = remote.run(c.host, &pr.script);
         out.push(if r.code == 0 {
             outcome(pr.name, true, pr.ok.into())
+        } else if pr.name == "claude login" && r.code == UNVERIFIED {
+            outcome(
+                pr.name,
+                true,
+                format!(
+                    "unverified over ssh: check with `claude auth status` in a terminal on {}",
+                    c.machine
+                ),
+            )
         } else {
             outcome(pr.name, false, failure(c, "", &pr.fix))
         });
@@ -440,6 +460,8 @@ mod tests {
         fail: Vec<&'static str>,
         version: &'static str,
         down: bool,
+        /// A macOS NEW: the claude probe reports "unverified" instead of 1.
+        darwin: bool,
     }
 
     impl Remote for Fake {
@@ -462,7 +484,10 @@ mod tests {
                     text: format!("/home/u/.cargo/bin/bridle\n{}", self.version),
                 };
             }
-            let code = i32::from(self.fail.iter().any(|f| script.contains(f)));
+            let mut code = i32::from(self.fail.iter().any(|f| script.contains(f)));
+            if code == 1 && self.darwin && script.contains("loggedIn") {
+                code = UNVERIFIED;
+            }
             Ran {
                 code,
                 text: String::new(),
@@ -521,6 +546,7 @@ mod tests {
             fail: vec![],
             version: "bridle 0.6.3",
             down: false,
+            darwin: false,
         }
     }
 
@@ -541,6 +567,66 @@ mod tests {
         {
             assert!(x.pass, "{}: {}", x.name, x.message);
         }
+    }
+
+    #[test]
+    fn every_probe_script_starts_with_the_path_line() {
+        struct Rec(std::cell::RefCell<Vec<String>>);
+        impl Remote for Rec {
+            fn run(&self, _: &str, script: &str) -> Ran {
+                self.0.borrow_mut().push(script.to_string());
+                Ran {
+                    code: 0,
+                    text: "/b/bridle\nbridle 0.6.3".into(),
+                }
+            }
+        }
+        let fleet = fleet();
+        let c = Ctx {
+            machine: "nuc",
+            host: "localhost",
+            version: "0.6.3",
+            origin: Some("git@x:o/p.git".into()),
+            clone: "$HOME/p".into(),
+            toolchain: "just".into(),
+            mail: true,
+            offset: "+0000".into(),
+            fleet: &fleet,
+        };
+        let r = Rec(Default::default());
+        let files = Cfg([("localhost".to_string(), NEW.to_string())].into());
+        check_new(&c, &r, &files, &|_| false);
+        for p in probes(&c) {
+            assert!(p.script.starts_with(PATH_LINE), "{}", p.name);
+            assert!(r.0.borrow().contains(&p.script), "{} not run", p.name);
+        }
+        assert!(PATH_LINE.contains("/opt/homebrew/bin") && PATH_LINE.contains("/usr/local/bin"));
+    }
+
+    #[test]
+    fn logged_out_claude_on_macos_is_a_warning_not_a_fail() {
+        let r = Fake {
+            fail: vec!["loggedIn"],
+            darwin: true,
+            ..ok()
+        };
+        let o = go(&r, NEW, false);
+        let x = msg(&o, "claude login");
+        assert!(
+            x.pass && x.message.contains("unverified over ssh"),
+            "{}",
+            x.message
+        );
+        // Not macOS: still a FAIL.
+        let o = go(
+            &Fake {
+                fail: vec!["loggedIn"],
+                ..ok()
+            },
+            NEW,
+            false,
+        );
+        assert!(!msg(&o, "claude login").pass);
     }
 
     #[test]

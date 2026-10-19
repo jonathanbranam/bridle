@@ -25,7 +25,9 @@ Each check prints `pass` or `FAIL` with what to run; exit is non-zero on any FAI
 - the project is stable (see step 2: it will normally FAIL here until the drain is done, which is fine);
 - NEW: ssh, clone present (it asks before cloning), bridle version, `claude` and `gh` logins, git push
   access, the project's toolchain, tmux, timezone, `[machine] name` equals the key `NEW`, AWS
-  credentials when `[mail]` is set, and `projects sync` shows no difference.
+  credentials when `[mail]` is set, and `projects sync` shows no difference. On a macOS NEW the
+  `claude` login cannot be read over ssh (keychain): a logged-out result there passes as
+  "unverified over ssh"; check `claude auth status` in a terminal on NEW.
 
 Fix every FAIL that is not "stable project". **Back out:** nothing to undo.
 
