@@ -758,10 +758,14 @@ async fn worker_may_build_only_its_own_claimed_ticket() {
         commit: "abc123".to_string(),
     };
     let err = worker.built_task(&ids[1], &req).await.unwrap_err();
-    assert!(matches!(
-        err,
-        bridle_api::ClientError::Api { status: 403, .. }
-    ));
+    assert!(
+        matches!(
+            &err,
+            bridle_api::ClientError::Api { status: 403, message, .. }
+                if message.contains("ticket is not claimed by you")
+        ),
+        "{err:?}"
+    );
     worker.claim_task(&ids[0]).await.expect("claim");
     let built = worker.built_task(&ids[0], &req).await.expect("built");
     assert_eq!(built.state, TicketState::Built);

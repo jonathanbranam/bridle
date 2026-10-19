@@ -4376,7 +4376,9 @@ async fn built_task(
         .as_ref()
         .is_some_and(|t| t.claimed_by.as_deref() == Some(principal.id.as_str()));
     if !own_claim {
-        require_not_worker(&state, &principal).await?;
+        require_not_worker(&state, &principal)
+            .await
+            .map_err(|_| ApiError::forbidden("ticket is not claimed by you"))?;
     }
     let from = before.map(|t| t.state);
     let task = state

@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A worker's refused `ticket built` now says "ticket is not claimed by you" instead of "agent lifecycle endpoints" (br-65qh). The claim loss itself was br-4n3v's claim sweep (fixed, with its test).
 - Stages (br-fyww): `ticket done` refuses a version 2 ticket that is not prepared (landing a stage branch no longer marks it integrated), and `ticket reopen` of one goes to `pending` so the stage watch writes its next stage; the manager role says never to run `done` for a `bridle/designer-*` branch.
 - The orchestrator relaunch starts the session in the supervising project's repo whatever the pane's folder (br-jn8p): the default launch line is now `cd <repo> && bridle session orchestrator --project <p>`. A configured `[orchestrator] launcher` is still typed verbatim.
 - Flaky governor_test `working_agent_is_notified_then_stopped_when_its_turn_ends` (br-ar4d): a second racing `stop` (one per turn end while winding down) could write `stopping` over an agent `finish_agent` had just recorded `stopped`, leaving it there; a finished runtime no longer moves back to a live state. The test is re-enabled.
