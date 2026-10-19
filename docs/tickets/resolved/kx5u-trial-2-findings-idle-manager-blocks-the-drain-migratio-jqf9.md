@@ -9,6 +9,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-kx5u, br-eavq]
+resolved: 2026-10-19T22:04:33Z
 ---
 
 Found in kx5u trial 2, 2026-10-18 ~7:30-7:45 PM ET: the human moved data-contracts remus -> dalek by
