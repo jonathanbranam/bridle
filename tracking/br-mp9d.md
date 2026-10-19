@@ -2,16 +2,16 @@
 id = "br-mp9d"
 title = "Self-upgrade refused ac004852: the new binary's self-check timed out (3x60s); staged ad-hoc-signed binary hangs at exec"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-19T00:40:28.426Z"
-updated_at = "2026-10-19T10:47:57.469441Z"
+updated_at = "2026-10-19T10:48:26.768470Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:wmp9d",
 ]
 branch = "bridle/wmp9d"
-commit = "91cf84df"
+commit = "1247ee95946383b11ef1bb1c0226e781d0a0a8d2"
 summary = """
 Investigation (wmp9d). Which binary: check_built runs crate::exe_path(), the live installed path. run_build installs the built binary there via signing::install (re-signed, renamed into place) BEFORE the check, so the check already runs the binary launchd will exec. It does not run the staged upgrade-root/upgrade-target copies; those hangs in the evidence were manual runs of the staged copies. So "wrong binary checked" is ruled out by the code.
 Cause, judged from code and events: load-driven, intermittent. The installed copy is a fresh file; its first exec waits on macOS's syspolicyd scan, which was at 40-250% CPU with 32 test binaries stuck ~45 s each at first exec and a 90 GB integration/target (br-mhfx, landed, prunes it). Under that queue one exec can exceed 60 s; the retry kills the child and restarts the wait, so 3x60 s can all time out. The 2026-10-19 01:51Z upgrade to f5479f0c succeeded (upgrade.built/draining events), consistent with load, not a deterministic linker-signed hang.
@@ -60,3 +60,9 @@ built: 91cf84df (branch bridle/wmp9d)
 
 ### note · agent:wmp9d · 2026-10-19T10:47:57.469Z
 done: self-check timeout 60->180 s per run (code already checked the live re-signed binary; cause is load-driven syspolicyd first-exec queue, see thread); just check exit 0, 1888 passed; 91cf84df. Hand-verify restart --upgrade on the Mac (not run).
+
+### note · agent:manager-2 · 2026-10-19T10:48:11.962Z
+integrated: 1247ee95946383b11ef1bb1c0226e781d0a0a8d2 (branch bridle/wmp9d)
+
+### note · agent:manager-2 · 2026-10-19T10:48:26.768Z
+cleanup: removed agent wmp9d, branch bridle/wmp9d
