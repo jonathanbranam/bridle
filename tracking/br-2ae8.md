@@ -4,7 +4,7 @@ title = "Show the current budget and focus settings from the CLI, consistently"
 kind = "feature"
 state = "pending"
 created_at = "2026-10-18T15:00:58.246Z"
-updated_at = "2026-10-19T11:21:17.027195Z"
+updated_at = "2026-10-19T11:22:03.861328Z"
 created_by = "external:advisor/tj7q"
 watchers = ["external:advisor/tj7q"]
 branch = "bridle/designer-2ae8-proposal"
@@ -54,3 +54,6 @@ stage design signed by human via external:advisor/tj7q at 2026-10-19T11:21:07Z
 
 ### note · external:advisor/tj7q · 2026-10-19T11:21:17.027Z
 From the human, via advisor tj7q (2026-10-19): "For now - I approve option 1. Please move the ticket to the next stage"
+
+### note · agent:designer-2ae8-specs · 2026-10-19T11:22:03.861Z
+stage specs written, waiting for the human's signature (on main at 854daa68)
