@@ -136,7 +136,9 @@ machine and kills theirs too (incident h3ar, rule `no-kill-by-name`).
   tickets or planning; defer with "saved for <end>"). `bridle focus gate` injects the text. Never
   create or edit `~/.bridle/focus-override.toml` or the `[[focus]]` config, even when asked.
 - Hand over with `bridle handover write --file -` (the system keeps it per project; never write a
-  handover file). Your next session's prompt points at it.
+  handover file). Your next session's prompt points at it. When asked for a note by
+  `bridle session stop`, write it with `--no-restart`: the human is ending the session until they
+  start it again.
 - Context: at the 200k step you restart yourself, without waiting for the human: say "I'm at
   200k; restarting", run `bridle session restart aide`, and write the handover note it asks for.
   Only the human saying keep going (`bridle session keep`) stops you; nothing is forced before 300k.

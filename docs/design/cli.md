@@ -942,7 +942,14 @@ bridle ticket comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain com
   the session it stops, so a session can restart itself (br-4s3z, br-5j35; a handover note
   written in the 2 minutes before the request counts, and if typing into the pane fails the
   launcher goes in a new tmux window; the handover note is a
-  record, so a restart never removes it); `bridle session keep <identifier>` carries on past a context warning
+  record, so a restart never removes it); `bridle session stop <role>[/<name>]` (`advisor/<name>`,
+  `advisor`, `aide`, `orchestrator`; human, refused under an agent) asks the session for a handover
+  note (told to record it with `--no-restart`), waits as `restart --handover` does, then ends the
+  session the same way and leaves it stopped: its waiter is ended through the daemon
+  (`POST /v1/wake/stop`, no signal), the tmux shell window stays, and messages wait in the inbox.
+  For the orchestrator it also holds the supervisor (`bridle orchestrator hold`). It prints how to
+  start again: `bridle session advisor <name>` / `session aide` (each reads the note), or
+  `bridle orchestrator release` (br-fpqy); `bridle session keep <identifier>` carries on past a context warning
   (orchestrator-supervision.md, section 6). The hidden
   `bridle session note` is the advisor's SessionStart hook. `events --kind session.context`
   has the threshold crossings.

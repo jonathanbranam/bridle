@@ -158,6 +158,9 @@ pub async fn run(cli: &Cli, role: &SessionRole) -> Result<(), CliError> {
         println!("{identifier} will carry on; it is asked again at the next step");
         return Ok(());
     }
+    if let SessionRole::Stop { identifier } = role {
+        return stop(cli, identifier).await;
+    }
     if let SessionRole::Restart {
         identifier,
         fresh,
@@ -244,7 +247,10 @@ pub async fn run(cli: &Cli, role: &SessionRole) -> Result<(), CliError> {
             );
             aide(cli, &project, &args).await?
         }
-        SessionRole::Note | SessionRole::Restart { .. } | SessionRole::Keep { .. } => {
+        SessionRole::Note
+        | SessionRole::Restart { .. }
+        | SessionRole::Stop { .. }
+        | SessionRole::Keep { .. } => {
             unreachable!("handled above")
         }
     };
@@ -581,11 +587,27 @@ async fn restart(
 
 /// The handover request: why (a scheduled restart's reason sentence), then the instructions for
 /// the session's role (`bridle_daemon::handover`: standard text, role part, project override).
-fn handover_request(repo: &std::path::Path, identity: &str, reason: Option<&str>) -> String {
+fn handover_request(
+    repo: &std::path::Path,
+    identity: &str,
+    reason: Option<&str>,
+    stopping: bool,
+) -> String {
+    let (why, after) = if stopping {
+        (
+            "The human is stopping this session until it is started again.",
+            "Record it with `bridle handover write --no-restart --file -` (no restart: the session \
+             is ended for you). Say nothing more once it is written.",
+        )
+    } else {
+        (
+            "The human is restarting this session.",
+            "Say nothing more once it is written; the restart follows when the note is recorded.",
+        )
+    };
     format!(
-        "{}\n\n{}\n\nSay nothing more once it is written; the restart follows when the note is \
-         recorded.",
-        reason.unwrap_or("The human is restarting this session."),
+        "{}\n\n{}\n\n{after}",
+        reason.unwrap_or(why),
         bridle_daemon::handover::instructions_for_repo(
             repo,
             bridle_daemon::handover::role_of(identity)
@@ -631,49 +653,7 @@ async fn restart_session(
         return detach_restart(cli, &info.identity, fresh);
     }
     if !fresh {
-        let newest = || async {
-            client
-                .latest_handover(Some(&info.identity))
-                .await
-                .map(|h| h.map(|h| h.id))
-        };
-        let before = newest().await?;
-        // A note written just before the request (the session saw its context filling up) counts,
-        // so the session isn't asked twice.
-        let recent = client
-            .latest_handover(Some(&info.identity))
-            .await?
-            .is_some_and(|h| is_recent_note(h.created_at, chrono::Utc::now()));
-        if recent {
-            println!("{} wrote a handover note just now; using it", info.identity);
-        } else {
-            let to = format!("external:{}", info.identity);
-            let repo = std::env::current_dir().map_err(anyhow::Error::from)?;
-            let body = handover_request(&repo, &info.identity, reason);
-            client
-                .send(&bridle_api::SendRequest {
-                    to: Some(to),
-                    body,
-                    kind: bridle_api::MessageKind::Note,
-                    when: bridle_api::When::Now,
-                    reply_to: None,
-                    task: None,
-                })
-                .await?;
-            println!("asked {} to write a handover note; waiting", info.identity);
-            let deadline = std::time::Instant::now() + handover_wait();
-            while newest().await? == before {
-                if std::time::Instant::now() >= deadline {
-                    return Err(anyhow::anyhow!(
-                        "no handover note after {}s; nothing restarted. Use --fresh to restart \
-                         with no context",
-                        handover_wait().as_secs()
-                    )
-                    .into());
-                }
-                tokio::time::sleep(std::time::Duration::from_millis(500)).await;
-            }
-        }
+        obtain_handover(&client, &info.identity, reason, false).await?;
     }
     stop_session(info.pid).await?;
     let cmd = relaunch_command(&info.identity, info.project.as_deref());
@@ -717,6 +697,132 @@ async fn restart_session(
             info.identity
         ),
     }
+    Ok(())
+}
+
+/// Asks `identity`'s running session for a handover note and waits for it (a note written just
+/// before counts). With `stopping` the request says to record it with `--no-restart`, since the
+/// session is to end, not restart.
+async fn obtain_handover(
+    client: &bridle_api::Client,
+    identity: &str,
+    reason: Option<&str>,
+    stopping: bool,
+) -> Result<(), CliError> {
+    let newest = || async {
+        client
+            .latest_handover(Some(identity))
+            .await
+            .map(|h| h.map(|h| h.id))
+    };
+    let before = newest().await?;
+    // A note written just before the request (the session saw its context filling up) counts,
+    // so the session isn't asked twice.
+    let recent = client
+        .latest_handover(Some(identity))
+        .await?
+        .is_some_and(|h| is_recent_note(h.created_at, chrono::Utc::now()));
+    if recent {
+        println!("{identity} wrote a handover note just now; using it");
+        return Ok(());
+    }
+    let repo = std::env::current_dir().map_err(anyhow::Error::from)?;
+    let body = handover_request(&repo, identity, reason, stopping);
+    client
+        .send(&bridle_api::SendRequest {
+            to: Some(format!("external:{identity}")),
+            body,
+            kind: bridle_api::MessageKind::Note,
+            when: bridle_api::When::Now,
+            reply_to: None,
+            task: None,
+        })
+        .await?;
+    println!("asked {identity} to write a handover note; waiting");
+    let deadline = std::time::Instant::now() + handover_wait();
+    while newest().await? == before {
+        if std::time::Instant::now() >= deadline {
+            return Err(anyhow::anyhow!(
+                "no handover note after {}s; nothing {}. Use --fresh to restart with no context",
+                handover_wait().as_secs(),
+                if stopping { "stopped" } else { "restarted" }
+            )
+            .into());
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+    }
+    Ok(())
+}
+
+/// `bridle session stop <role>[/<name>]`: a handover note first, then the session ends and
+/// stays stopped (the tmux shell window stays open). The orchestrator is also held, so the
+/// supervisor does not relaunch it. Refused under a bridle agent, like restart.
+pub async fn stop(cli: &Cli, identifier: &str) -> Result<(), CliError> {
+    if std::env::var_os("BRIDLE_AGENT_ID").is_some()
+        && std::env::var_os("BRIDLE_LAUNCHER_TEST").is_none()
+    {
+        return Err(anyhow::anyhow!(
+            "bridle session stop: refusing under a bridle agent (BRIDLE_AGENT_ID is set)"
+        )
+        .into());
+    }
+    let client = crate::commands::client_for(cli).await?;
+    let (identity, pid, start_cmd) = if identifier == "orchestrator" {
+        let file = bridle_home().join("orchestrator.pid");
+        let pid = std::fs::read_to_string(&file)
+            .ok()
+            .and_then(|t| t.split_whitespace().next()?.parse::<i32>().ok())
+            .filter(|p| pid_alive(*p))
+            .ok_or_else(|| {
+                anyhow::anyhow!(
+                    "the orchestrator is not running (no live pid in {})",
+                    file.display()
+                )
+            })?;
+        (
+            "orchestrator".to_string(),
+            pid,
+            "bridle orchestrator release".to_string(),
+        )
+    } else {
+        let wanted = session_identity(identifier);
+        let info = client
+            .sessions()
+            .await?
+            .into_iter()
+            .find(|s| s.identity == wanted)
+            .ok_or_else(|| {
+                anyhow::anyhow!("no running session {wanted:?} (see `bridle status`)")
+            })?;
+        let cmd = relaunch_command(&info.identity, info.project.as_deref());
+        (info.identity, info.pid, cmd)
+    };
+    if is_descendant_of(pid) {
+        return Err(anyhow::anyhow!(
+            "bridle session stop: run it from another terminal; it would end the session it runs in"
+        )
+        .into());
+    }
+    obtain_handover(&client, &identity, None, true).await?;
+    if identity == "orchestrator" {
+        client
+            .orchestrator_hold(Some("session stop".into()))
+            .await?;
+    }
+    stop_session(pid).await?;
+    // The waiter goes through the daemon, never a signal (rule no-kill-by-name).
+    let ended = client
+        .stop_wake(&bridle_api::StopWakeRequest {
+            principal: Some(format!("external:{identity}")),
+            session: None,
+        })
+        .await
+        .map(|r| r.stopped)
+        .unwrap_or(0);
+    println!(
+        "stopped {identity} after its handover note (ended {ended} waiting wake); messages wait in \
+         its inbox. Start it again with: {start_cmd}"
+    );
     Ok(())
 }
 
@@ -954,12 +1060,12 @@ mod tests {
         std::fs::create_dir_all(d.path().join(".bridle/handover")).expect("dir");
         std::fs::write(d.path().join(".bridle/handover/advisor.md"), "MY TEXT").expect("w");
         let why = "The human has configured your session to hand over at 3:00 AM every day.";
-        let advisor = handover_request(d.path(), "advisor/notes", Some(why));
+        let advisor = handover_request(d.path(), "advisor/notes", Some(why), false);
         assert!(
             advisor.starts_with(why) && advisor.contains("MY TEXT"),
             "{advisor}"
         );
-        let aide = handover_request(d.path(), "aide", None);
+        let aide = handover_request(d.path(), "aide", None, false);
         assert!(
             aide.starts_with("The human is restarting") && aide.contains("cannot be summarised")
         );

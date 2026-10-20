@@ -2674,6 +2674,14 @@ pub enum SessionRole {
         #[arg(long, conflicts_with = "fresh")]
         reason: Option<String>,
     },
+    /// Stop a running advisor, aide or orchestrator session until it is started again:
+    /// `bridle session stop advisor/alice`. Asks it for a handover note, waits for it, then ends
+    /// the session (the tmux shell window stays). The orchestrator is also held. Prints how to
+    /// start it again; the next session reads the note.
+    Stop {
+        /// `advisor/<name>`, `advisor`, `aide` or `orchestrator`.
+        identifier: String,
+    },
     /// Carry on past a session's context warning: `bridle session keep advisor/alice` records the
     /// human's override of the planned handover (none at the hard limit) and tells the session.
     Keep {

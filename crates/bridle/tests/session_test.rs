@@ -799,3 +799,150 @@ fn handover_write_by_an_aide_restarts_its_own_session() {
     assert!(text.contains("restarted aide in pane %3"), "{text}");
     assert!(typed);
 }
+
+/// A fake daemon for `session stop`: no note until a message is posted to the session, then one.
+/// Records each request line.
+fn stop_daemon(
+    identity: &str,
+    pid: u32,
+) -> (String, std::sync::Arc<std::sync::Mutex<Vec<String>>>) {
+    use std::io::{Read, Write};
+    let l = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let url = format!("http://{}", l.local_addr().unwrap());
+    let seen = std::sync::Arc::new(std::sync::Mutex::new(Vec::<String>::new()));
+    let log = seen.clone();
+    let sessions = registered(identity, pid);
+    std::thread::spawn(move || {
+        for mut c in l.incoming().flatten() {
+            let mut buf = [0u8; 8192];
+            let n = c.read(&mut buf).unwrap_or(0);
+            let req = String::from_utf8_lossy(&buf[..n]).into_owned();
+            let line = req.lines().next().unwrap_or("").to_string();
+            let asked = req.contains("handover note") || {
+                let g = log.lock().unwrap();
+                g.iter().any(|l| l.starts_with("POST /v1/messages"))
+            };
+            log.lock().unwrap().push(format!(
+                "{line}{}",
+                if req.contains("--no-restart") {
+                    " [no-restart]"
+                } else {
+                    ""
+                }
+            ));
+            let body = if line.starts_with("GET /v1/handovers/latest") {
+                if asked { HANDOVER_JSON } else { "null" }.to_string()
+            } else if line.starts_with("POST /v1/wake/stop") {
+                r#"{"stopped":1}"#.into()
+            } else if line.starts_with("POST /v1/orchestrator/hold") {
+                r#"{"reason":"session stop","since":"2026-01-01T00:00:00Z"}"#.into()
+            } else if line.starts_with("GET /v1/sessions") {
+                sessions.clone()
+            } else if line.starts_with("POST /v1/messages") {
+                "[]".into()
+            } else {
+                "{}".into()
+            };
+            let _ = write!(
+                c,
+                "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}",
+                body.len()
+            );
+        }
+    });
+    (url, seen)
+}
+
+/// Runs `bridle session stop <who>` against a launcher shell; returns the output and the requests.
+fn stop_run(who: &str, identity: &str, pid_file: bool) -> (String, Vec<String>, bool) {
+    let bin = tempfile::tempdir().unwrap();
+    let home = tempfile::tempdir().unwrap();
+    let mut launcher = Command::new("sh")
+        .args(["-c", "sleep 60; :"])
+        .stdin(std::process::Stdio::null())
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .spawn()
+        .unwrap();
+    let pid = launcher.id();
+    // Reaps the launcher so a dead one is not a zombie `kill -0` still finds.
+    let (tx, rx) = std::sync::mpsc::channel();
+    let reaper = std::thread::spawn(move || {
+        let _ = launcher.wait();
+        let _ = tx.send(());
+    });
+    if pid_file {
+        fs::write(
+            home.path().join("orchestrator.pid"),
+            format!("{pid} @0 0\n"),
+        )
+        .unwrap();
+    }
+    let (url, seen) = stop_daemon(identity, pid);
+    let path = format!(
+        "{}:{}",
+        bin.path().display(),
+        std::env::var("PATH").unwrap_or_default()
+    );
+    let out = Command::new(env!("CARGO_BIN_EXE_bridle"))
+        .args([
+            "--project",
+            "p",
+            "--url",
+            &url,
+            "--token",
+            "t",
+            "session",
+            "stop",
+            who,
+        ])
+        .env("PATH", path)
+        .env("BRIDLE_HOME", home.path())
+        .env("BRIDLE_LAUNCHER_TEST", "1")
+        .env("BRIDLE_STOP_WAIT_SECS", "1")
+        .env_remove("BRIDLE_AGENT_ID")
+        .env_remove("BRIDLE_AS")
+        .output()
+        .unwrap();
+    let died = rx.try_recv().is_ok();
+    // Kill by pid in case it survived, so the test leaves nothing behind.
+    let _ = Command::new("kill")
+        .args(["-KILL", &pid.to_string()])
+        .status();
+    let _ = reaper.join();
+    let text = format!(
+        "{}{}",
+        String::from_utf8_lossy(&out.stdout),
+        String::from_utf8_lossy(&out.stderr)
+    );
+    let seen = seen.lock().unwrap().clone();
+    (text, seen, died)
+}
+
+#[test]
+fn session_stop_waits_for_the_note_then_ends_the_session_and_its_waiter() {
+    let (text, seen, died) = stop_run("aide", "aide", false);
+    assert!(text.contains("stopped aide"), "{text}");
+    assert!(text.contains("bridle --project p session aide"), "{text}");
+    assert!(died, "{text}");
+    let at = |p: &str| seen.iter().position(|l| l.starts_with(p));
+    let msg = at("POST /v1/messages").unwrap_or_else(|| panic!("{seen:?}"));
+    assert!(seen[msg].contains("[no-restart]"), "{seen:?}");
+    assert!(
+        msg < at("POST /v1/wake/stop").expect("wake stop"),
+        "{seen:?}"
+    );
+    assert!(at("POST /v1/orchestrator/hold").is_none(), "{seen:?}");
+}
+
+#[test]
+fn stopping_the_orchestrator_holds_it_and_says_how_to_start_it() {
+    let (text, seen, died) = stop_run("orchestrator", "orchestrator", true);
+    assert!(text.contains("bridle orchestrator release"), "{text}");
+    assert!(died, "{text}");
+    let at = |p: &str| seen.iter().position(|l| l.starts_with(p));
+    assert!(
+        at("POST /v1/messages").unwrap() < at("POST /v1/orchestrator/hold").expect("hold"),
+        "{seen:?}"
+    );
+}
