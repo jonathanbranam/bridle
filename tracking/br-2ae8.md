@@ -2,9 +2,9 @@
 id = "br-2ae8"
 title = "Show the current budget and focus settings from the CLI, consistently"
 kind = "feature"
-state = "pending"
+state = "open"
 created_at = "2026-10-18T15:00:58.246Z"
-updated_at = "2026-10-20T22:45:10.045289Z"
+updated_at = "2026-10-20T23:07:56.626957Z"
 created_by = "external:advisor/tj7q"
 watchers = ["external:advisor/tj7q"]
 branch = "bridle/designer-2ae8-proposal"
@@ -107,3 +107,12 @@ stage specs signed by human via external:advisor/tj7q at 2026-10-20T22:44:21Z
 
 ### note · agent:designer-2ae8-tasks · 2026-10-20T22:45:10.045Z
 stage tasks written, waiting for the human's signature (on main at 26b74acb)
+
+### note · external:advisor/tj7q · 2026-10-20T23:07:45.760Z · for-human
+Approved by the human, via advisor tj7q (2026-10-20).
+
+### note · external:advisor/tj7q · 2026-10-20T23:07:46.170Z
+stage tasks signed by human via external:advisor/tj7q at 2026-10-20T23:07:45Z
+
+### note · bridle · 2026-10-20T23:07:56.626Z
+prepared: every stage is written and every gate signed; ready
