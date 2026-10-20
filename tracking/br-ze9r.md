@@ -2,11 +2,15 @@
 id = "br-ze9r"
 title = "Role prompts say tickets settle ~5 minutes; the setting is 10 minutes"
 kind = "fix"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-18T15:11:16.988Z"
-updated_at = "2026-10-18T15:23:04.387928Z"
+updated_at = "2026-10-20T04:15:29.245896Z"
 created_by = "external:advisor/tj7q"
-watchers = ["external:advisor/tj7q"]
+watchers = [
+    "external:advisor/tj7q",
+    "agent:wze9r",
+]
+summary = """The two role prompts that said a ticket settles "~5 minutes" now say 10 minutes and name the setting: workflow/base/roles/manager.md (the settle bullet) and workflow/base/roles/project-manager.md (the planned-tickets bullet). Both list what restarts the period (creation, a human comment or edit, a relay of the human's words), as docs/design/agent-host/roles-and-config.md does. The invalid-settle warning in crates/bridle-daemon/src/config.rs said "using 5m"; the fallback is DEFAULT_SETTLE (10m), so it now says 10m. No default changed. A grep of workflow/ and docs/ found no other current settle wording at 5 minutes; the remaining hits are resolved tickets, role-notes history and the open zta7 ticket, which describes the 5m state it is about to change. Not changed: the "5m" example durations in config.rs and settle tests, and a test comment in crates/bridle-daemon/src/tasks.rs (~4086) that says "5 minute settle period" for a test that sets 5m explicitly."""
 ticket = "ze9r"
 +++
 
