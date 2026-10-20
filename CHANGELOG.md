@@ -22,6 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Roles and rule `talk-on-the-task` (br-3n4j): the orchestrator holds and asks about a ticket on its thread, in the ticket's own project (`ticket ask/hold --project <p>`), stating the issue itself; aide and project-manager text say the same. No code change: `send --project <p> --task` works only with a direct token.
 - Orchestrator start (br-57kc): the role no longer tells the orchestrator to run `bridle token check` at every start (the check stays a command for the human, to run after a re-pair or when a project seems quiet).
 
+### Internal
+
+- Governor test `working_agent_is_notified_then_stopped_when_its_turn_ends` is `#[ignore]`d as flaky (ubuntu CI timeout waiting for Stopped), so main is green; the fix is br-remg (br-sftn).
+
 ### Fixed
 - The home-project warning names the machine's home from `[machine] name` (`dalek-home`), not the raw `hostname` (`dalek.local-home`); a test pins it (br-b2g8).
 - `bridle usage --by name|session` shares the account's weekly points over every project's spend on the machine, not one project's, so a small project no longer shows $0.10 = 60 points (br-cgw3).

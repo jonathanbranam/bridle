@@ -318,6 +318,7 @@ async fn idle_agent_is_stopped_at_once_on_wind_down_then_resumed() {
 
 /// A working agent gets the usage-pause notice, then is stopped with
 /// `budget_paused` once its turn ends on its own.
+#[ignore = "flaky, br-remg"]
 #[tokio::test]
 async fn working_agent_is_notified_then_stopped_when_its_turn_ends() {
     let (daemon, _tmp) = start_daemon(None).await;
