@@ -2,11 +2,14 @@
 id = "br-7ytg"
 title = "The machine's home project is the orchestrator's only project: one orchestrator, there, and nowhere else"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-18T13:26:42.072Z"
-updated_at = "2026-10-18T14:44:32.265324Z"
+updated_at = "2026-10-20T03:53:11.226094Z"
 created_by = "external:aide"
-watchers = ["external:aide"]
+watchers = [
+    "external:aide",
+    "agent:w7ytg",
+]
 ticket = "7ytg"
 +++
 
