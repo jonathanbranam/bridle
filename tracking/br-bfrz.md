@@ -2,9 +2,9 @@
 id = "br-bfrz"
 title = "Agents see no [machine] name: their own BRIDLE_HOME has no config.toml, so the home falls back to hostname (dalek.local-home)"
 kind = "fix"
-state = "open"
+state = "planned"
 created_at = "2026-10-20T23:03:05.846Z"
-updated_at = "2026-10-20T23:03:37.627588Z"
+updated_at = "2026-10-20T23:17:37.599848Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "bfrz"
