@@ -111,7 +111,7 @@ Never `take-over --force` on OLD while NEW's daemon runs: two writers.
 3. Tokens both ways: from another machine `bridle --project P status --json` answers (visitor token); and
    `bridle send --project P advisor "ping"` prints `delivered`, not `queued` (peer token). Send one the other way too. `project start` has already re-paired every machine's peer token toward P (not only P's own outgoing ones) and checked them, so a refused one shows in its output; if a machine was unreachable, run `bridle token pair --tokens peer` once.
 4. Scheduled messages: `bridle schedule list` shows what OLD had.
-5. Mail (only if P uses `[mail]`): `bridle mail status` or the unit is running; send a mail and see the reply.
+5. Mail (only if P uses `[mail]`): the unit is running (`launchctl list | grep bridle.mail` on macOS, `systemctl --user is-active bridle-mail-<project>` on Linux); send a mail and see the reply.
    If `start` said replies to mail from OLD will fail verification, `mail.key` differs: copy OLD's.
 6. Gateway: the gateway (bridle-ui) lists P at NEW. The gateway follows `[projects]` with no code of its own;
    K6 built and tested the mail half only, so look at it yourself.

@@ -511,6 +511,27 @@ pub fn sync_counting(
     apply: bool,
     out: &mut dyn Write,
 ) -> (bool, usize) {
+    sync_inner(fleet, files, apply, true, out)
+}
+
+/// `sync` printing only the differences, not the table or the "same" lines: what `project
+/// take-over` shows after it moved one entry.
+pub(crate) fn sync_diffs_only(
+    fleet: &Fleet,
+    files: &dyn Files,
+    apply: bool,
+    out: &mut dyn Write,
+) -> bool {
+    sync_inner(fleet, files, apply, false, out).0
+}
+
+fn sync_inner(
+    fleet: &Fleet,
+    files: &dyn Files,
+    apply: bool,
+    table: bool,
+    out: &mut dyn Write,
+) -> (bool, usize) {
     let mut ok = true;
     let mut pending = 0;
     let mut source = list_of(fleet);
@@ -569,12 +590,14 @@ pub fn sync_counting(
     source.extend(mail_source.clone());
     lists[0] = Some(source.clone());
 
-    let _ = writeln!(out, "entry\t{}", names.join("\t"));
+    if table {
+        let _ = writeln!(out, "entry\t{}", names.join("\t"));
+    }
     let mut all: Vec<&(&'static str, String)> =
         lists.iter().flatten().flat_map(|l| l.keys()).collect();
     all.sort();
     all.dedup();
-    for k in all {
+    for k in all.into_iter().filter(|_| table) {
         let cells: Vec<String> = lists
             .iter()
             .map(|l| l.as_ref().map_or("?".to_string(), |l| cell(l.get(k))))
@@ -585,7 +608,7 @@ pub fn sync_counting(
     for (i, name) in names.iter().enumerate().skip(1) {
         let Some(target) = &lists[i] else { continue };
         let diffs = diff(&source, target);
-        if diffs.is_empty() {
+        if diffs.is_empty() && table {
             let _ = writeln!(out, "{name}: same");
         }
         for (_, d) in &diffs {
@@ -799,6 +822,24 @@ mod tests {
         );
         assert!(out.contains("only on nuc [projects] z"), "{out}");
         assert_eq!(f.0.borrow()["nuc.lan"], text);
+    }
+
+    #[test]
+    fn diffs_only_prints_just_the_changed_entry() {
+        let text = SRC.replace("port = 7402", "port = 9");
+        let f = Fake::new(&[("nuc.lan", &text)]);
+        let mut out = Vec::new();
+        sync_diffs_only(&fleet(), &f, true, &mut out);
+        let out = String::from_utf8(out).unwrap();
+        assert!(!out.contains("entry\t") && !out.contains("same"), "{out}");
+        assert!(out.contains("nuc: differs [projects] b"), "{out}");
+        assert_eq!(
+            out.lines()
+                .filter(|l| !l.starts_with("nuc: updated"))
+                .count(),
+            1,
+            "{out}"
+        );
     }
 
     #[test]

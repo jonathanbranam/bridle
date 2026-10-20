@@ -128,6 +128,18 @@ pub fn install_at(
     workdir: PathBuf,
     project: String,
 ) -> Result<(), CliError> {
+    install_unit(cli, a, workdir, project, true)
+}
+
+/// `install_at`; `load_hint` false drops the "nothing was started; to load it" text, for a
+/// caller that starts the unit itself right after.
+pub fn install_unit(
+    cli: &Cli,
+    a: &MailInstallArgs,
+    workdir: PathBuf,
+    project: String,
+    load_hint: bool,
+) -> Result<(), CliError> {
     let home = PathBuf::from(std::env::var_os("HOME").ok_or_else(|| anyhow!("$HOME is not set"))?);
     let os = std::env::consts::OS;
     if mail_state(&discovery::bridle_home(), &home, false) == MailState::Off {
@@ -159,7 +171,13 @@ pub fn install_at(
     } else {
         render_systemd(&env)
     };
-    let out = write_unit(&path, &text, a.force, &commands(os, &env.project, &path))?;
+    let out = write_unit(
+        &path,
+        &text,
+        a.force,
+        &commands(os, &env.project, &path),
+        load_hint,
+    )?;
     print_out(cli, &out)
 }
 
@@ -216,6 +234,7 @@ fn write_unit(
     text: &str,
     force: bool,
     (load, unload): &(String, String),
+    load_hint: bool,
 ) -> Result<serde_json::Value, CliError> {
     if path.exists() && !force {
         return Err(anyhow!(
@@ -228,10 +247,14 @@ fn write_unit(
         std::fs::create_dir_all(dir).with_context(|| format!("creating {}", dir.display()))?;
     }
     std::fs::write(path, text).with_context(|| format!("writing {}", path.display()))?;
-    let message = format!(
-        "wrote {}\nnothing was started; to load it:\n  {load}\nto unload:\n  {unload}",
-        path.display()
-    );
+    let message = if load_hint {
+        format!(
+            "wrote {}\nnothing was started; to load it:\n  {load}\nto unload:\n  {unload}",
+            path.display()
+        )
+    } else {
+        format!("wrote {}", path.display())
+    };
     Ok(serde_json::json!({"unit": path, "load": load, "unload": unload, "message": message}))
 }
 
@@ -405,13 +428,33 @@ mod tests {
     }
 
     #[test]
+    fn write_unit_drops_the_load_hint_when_the_caller_starts_it() {
+        let d = tempfile::tempdir().unwrap();
+        let p = d.path().join("u");
+        let cmds = ("load-cmd".to_string(), "unload-cmd".to_string());
+        let out = write_unit(&p, "x", false, &cmds, false).unwrap();
+        let msg = out["message"].as_str().unwrap();
+        assert!(
+            !msg.contains("nothing was started") && !msg.contains("load-cmd"),
+            "{msg}"
+        );
+        let out = write_unit(&p, "x", true, &cmds, true).unwrap();
+        assert!(
+            out["message"]
+                .as_str()
+                .unwrap()
+                .contains("nothing was started")
+        );
+    }
+
+    #[test]
     fn write_unit_refuses_overwrite_without_force() {
         let tmp = tempfile::tempdir().unwrap();
         let p = tmp.path().join("a/b.unit");
         let cmds = ("load".to_string(), "unload".to_string());
-        write_unit(&p, "x", false, &cmds).unwrap();
-        assert!(write_unit(&p, "y", false, &cmds).is_err());
-        write_unit(&p, "y", true, &cmds).unwrap();
+        write_unit(&p, "x", false, &cmds, true).unwrap();
+        assert!(write_unit(&p, "y", false, &cmds, true).is_err());
+        write_unit(&p, "y", true, &cmds, true).unwrap();
         assert_eq!(std::fs::read_to_string(&p).unwrap(), "y");
     }
 

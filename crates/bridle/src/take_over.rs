@@ -15,7 +15,7 @@ use bridle_daemon::state_branch::{MainPush, TakeOverOutcome, take_over_project};
 
 use crate::cli::{Cli, TakeOverArgs};
 use crate::error::CliError;
-use crate::project_sync::{Diff, Entry, Files, Real, apply_text, sync};
+use crate::project_sync::{Diff, Entry, Files, Real, apply_text, sync_diffs_only};
 use crate::token_pair::{Fleet, Where};
 
 pub async fn run(cli: &Cli, args: &TakeOverArgs) -> Result<(), CliError> {
@@ -180,7 +180,7 @@ pub fn update_projects(home: &Path, project: &str, out: &mut dyn Write) -> Resul
         let _ = writeln!(out, "{project} is not in [projects]; left unlisted");
     }
     let map = MachineMap::load(home).map_err(|e| e.to_string())?;
-    if sync(&Fleet::from_config(&map), &files, true, out) {
+    if sync_diffs_only(&Fleet::from_config(&map), &files, true, out) {
         Ok(())
     } else {
         Err("some machines could not be read or written".into())

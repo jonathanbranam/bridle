@@ -500,11 +500,12 @@ pub fn bring_mail(
     if has_unit(&sys.units(project)) {
         let _ = writeln!(out, "{project}: mail bridge already installed");
     } else {
-        crate::mail_install::install_at(
+        crate::mail_install::install_unit(
             cli,
             &crate::cli::MailInstallArgs { force: false },
             repo.to_path_buf(),
             project.to_string(),
+            false,
         )
         .map_err(|e| e.to_string())?;
     }
