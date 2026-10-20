@@ -181,9 +181,24 @@ CLAUDE.md has none.
 so, per the override semantics in
 [[docs/design/workflow-layers|workflow-layers.md]], **locked**: a project
 config can't remove it. The orchestrator is exempt because cutting a release
-is its job. Workers already can't push at all
-(`Bash(git push *)` in their built-in `disallowed_tools`); this closes the
-one door a manager would otherwise have to the release branch.
+is its job. Raw `git push` stays denied to workers (`Bash(git push *)` in the
+project's worker `disallowed_tools`); this closes the one door a manager would
+otherwise have to the release branch.
+
+**Workers push their own branch (br-t7ya).** The one door is `bridle push-branch`
+(`push_branch.rs`), run from the worker's worktree. It runs `git push origin
+refs/heads/bridle/<name>:refs/heads/bridle/<name>` and nothing else: it refuses any option
+(`--force`, `-f`, `--delete`), any refspec (`+x`, `a:b`), more than one name, any branch but
+`bridle/$BRIDLE_AGENT_NAME` (the integration branch and other agents' branches included), and a
+worktree where that branch is not checked out. The deny rule is unchanged, so a worker cannot push
+by any other route; the owner-only pre-push hook still guards the integration branch for every
+other pusher. A worker pushes at least when it marks its ticket built (`workflow/base/roles/worker.md`).
+Remote cleanup of landed branches is a separate ticket.
+
+*Picking it up in a project with custom tool lists (ticket xebc).* Nothing to change in
+`disallowed_tools`. A worker role whose `allowed_tools` is `Bash` or `Bash(bridle *)` already
+permits the command; one that lists Bash patterns needs `Bash(bridle push-branch*)` added. The
+role text arrives with the next `bridle workflow` vendoring/upgrade of `workflow/base/roles/worker.md`.
 
 ### Trial onboarding
 

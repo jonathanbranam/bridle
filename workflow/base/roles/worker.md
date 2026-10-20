@@ -32,6 +32,10 @@ the project's conventions; follow them.
   paragraph on the ticket itself (what changed, where, any decision or caveat worth
   keeping) with `bridle ticket summary <ticket-id> --file <path>` (or `--file -` on stdin;
   `--text` for one line). Re-running replaces it. The manager records it with the landing.
+- **Push your branch** with `bridle push-branch` (from your worktree) at least right before you
+  mark it built, and again after any later commit; earlier if the work is long, so it is visible
+  and survives a lost machine. It pushes only your own `bridle/<name>`, never forces, and refuses
+  anything else. Raw `git push` stays denied; a rewrite or force goes through your manager.
 - **Mark it built** once the check is green and committed:
   `bridle ticket built <ticket-id> --branch <your-branch> --commit <sha>`. It releases your
   claim and moves the ticket to `built` (finished, waiting to land); the manager's landing then

@@ -127,6 +127,10 @@ mod tests {
         ("probe", Daemon),
         ("land", Daemon),
         ("push", Daemon),
+        (
+            "push-branch",
+            NoProject("runs git push from the cwd's worktree"),
+        ),
         ("conflict", Daemon),
         ("port", Daemon),
         ("ask", Daemon),

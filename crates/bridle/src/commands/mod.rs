@@ -247,6 +247,7 @@ pub async fn run(mut cli: Cli) -> Result<(), CliError> {
         Command::Probe(args) => probe(&cli, args).await,
         Command::Land(args) => land(&cli, args).await,
         Command::Push => push(&cli).await,
+        Command::PushBranch(args) => crate::push_branch::run(args).map_err(Into::into),
         Command::Conflict(args) => conflict(&cli, args).await,
         Command::Port(args) => port(&cli, args).await,
         Command::Ask(args) => ask(&cli, args).await,

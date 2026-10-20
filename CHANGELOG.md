@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `bridle push-branch`: a worker pushes its own `bridle/<name>` branch to origin (never force, no refspec, no other or integration branch); raw `git push` stays denied to workers, and the worker role text says to push at least when marking built (br-t7ya).
 - The machine's home project (`<host>-home`, or `[machine] home_project` in `~/.bridle/config.toml`) is resolved in one place; `bridle daemon doctor` and `bridle status` report it, any non-home project with `[orchestrator]` enabled and where the orchestrator's waiter is, and a non-home daemon with `[orchestrator]`, `bridle session orchestrator`/`up`/`prime orchestrator` on another project, and mail to `external:orchestrator` on one all warn. Warn-only: a self-upgrade onto this build changes nothing but the warnings and needs no migration; refusals come in a later slice. Roles and CLAUDE.md now say to use the home (br-7ytg).
 - `bridle session stop <role>[/<name>]` asks an advisor, aide or orchestrator session for a handover note, waits for it, then ends the session and leaves it stopped (orchestrator also held); it prints how to start it again (br-fpqy).
 - `bridle ticket set <id> review <list>` changes which stages of a version 2 ticket need the human's signature (br-bdwh).

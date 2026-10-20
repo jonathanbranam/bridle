@@ -205,6 +205,7 @@ const CLASSES: &[(&str, Kind, &str)] = &[
     ("ticket", Daemon, ""),
     ("probe", Daemon, ""),
     ("push", Daemon, ""),
+    ("push-branch", Skip, "runs git push from the cwd's worktree"),
     ("port", Daemon, ""),
     ("queue", Daemon, ""),
     ("report", Daemon, ""),

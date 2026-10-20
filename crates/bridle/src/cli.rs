@@ -171,6 +171,9 @@ pub enum Command {
     /// Push the integration branch to origin (human, orchestrator, managers). A rejected push is
     /// recorded as a `push.failed` event and messaged to the orchestrator and the human; exits 1.
     Push,
+    /// Push your own `bridle/<name>` branch to origin (workers; ticket t7ya). Run from your
+    /// worktree. Never forces; refuses options, refspecs, any other branch and the integration branch.
+    PushBranch(PushBranchArgs),
     /// Conflicts opened by `impact check`: list and resolve
     /// (docs/design/impact-and-conflicts.md).
     #[command(hide = true)]
@@ -2925,6 +2928,14 @@ pub enum MachineAction {
     /// push of the integration branch from a clone this machine does not own (8z7j).
     #[command(hide = true)]
     PushCheck(PushCheckArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct PushBranchArgs {
+    /// Your own branch (default: the one checked out). Every option and refspec is taken only to
+    /// be refused with a reason.
+    #[arg(allow_hyphen_values = true, trailing_var_arg = true)]
+    pub branch: Vec<String>,
 }
 
 #[derive(Debug, Args)]
