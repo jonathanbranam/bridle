@@ -2,9 +2,9 @@
 id = "br-b2g8"
 title = "Home-project warning names dalek.local-home: it uses the raw hostname, not [machine] name"
 kind = "fix"
-state = "pending"
+state = "open"
 created_at = "2026-10-20T22:11:26.430Z"
-updated_at = "2026-10-20T22:11:33.352509Z"
+updated_at = "2026-10-20T22:11:58.648536Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "b2g8"
@@ -32,3 +32,6 @@ Model: haiku or sonnet; small change. Related: br-pcde.
 
 ### note · external:orchestrator · 2026-10-20T22:11:26.431Z
 submitted by external:orchestrator
+
+### note · external:orchestrator · 2026-10-20T22:11:58.648Z
+orchestrator: readied (fix, self-evident ask; rule ready-without-asking).
