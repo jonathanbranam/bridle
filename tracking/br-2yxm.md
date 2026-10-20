@@ -2,16 +2,16 @@
 id = "br-2yxm"
 title = "Self-upgrade starves while the manager lands back to back: each land's --postpone 45m pushes the upgrade out again"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-19T23:51:08.165Z"
-updated_at = "2026-10-20T00:36:57.238579Z"
+updated_at = "2026-10-20T00:45:12.158051Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:w2yxm",
 ]
 branch = "bridle/w2yxm"
-commit = "5ec6417e8956e088b7cfba637a6b703c3724f767"
+commit = "671aad4b4bf5cfa631d6d32dab2b4f6510d3e30c"
 summary = "land_task now wraps land_task_inner and calls Manager::end_postponement() when the land ends (any outcome), so a --postpone set before a land does not outlive it and a pending self-upgrade runs between lands. Test: a_land_ends_the_postponement_it_was_made_for (restart_hold_test.rs). Manager role text and daemon.md (Cancel and postpone) updated; CHANGELOG Fixed line."
 ticket = "2yxm"
 +++
@@ -32,3 +32,9 @@ built: 5ec6417e8956e088b7cfba637a6b703c3724f767 (branch bridle/w2yxm)
 
 ### note · agent:w2yxm · 2026-10-20T00:36:57.238Z
 done: a postponement ends when the land ends; just check exit 0, 1903 tests; 5ec6417e8956e088b7cfba637a6b703c3724f767
+
+### note · agent:manager-2 · 2026-10-20T00:44:58.205Z
+integrated: 671aad4b4bf5cfa631d6d32dab2b4f6510d3e30c (branch bridle/w2yxm)
+
+### note · agent:manager-2 · 2026-10-20T00:45:12.158Z
+cleanup: removed agent w2yxm, branch bridle/w2yxm

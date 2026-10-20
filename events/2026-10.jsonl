@@ -2915,3 +2915,4 @@
 {"actor":"agent:w2yxm","at":"2026-10-20T00:36:56.871474Z","from":"claimed","task":"br-2yxm","to":"built"}
 {"actor":"agent:pm-1","at":"2026-10-20T00:38:10.501Z","from":"open","task":"br-43ug","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-20T00:38:12.522945Z","queue":"reprioritized"}
+{"actor":"agent:manager-2","at":"2026-10-20T00:44:58.205470Z","from":"built","task":"br-2yxm","to":"integrated"}
