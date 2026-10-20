@@ -4515,3 +4515,9 @@ from = "br-b2g8"
 to = "br-q7my"
 kind = "blocks"
 created_at = "2026-10-20T22:42:41.088Z"
+
+[[edge]]
+from = "br-bfrz"
+to = "br-q7my"
+kind = "blocks"
+created_at = "2026-10-20T23:03:25.554Z"

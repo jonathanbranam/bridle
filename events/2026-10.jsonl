@@ -2959,3 +2959,4 @@
 {"actor":"agent:manager-2","at":"2026-10-20T23:01:06.645817Z","from":"built","task":"br-b2g8","to":"integrated"}
 {"actor":"agent:pm-1","at":"2026-10-20T23:02:09.033467Z","queue":"reprioritized"}
 {"actor":"human","at":"2026-10-20T23:03:05.846Z","from":"","task":"br-bfrz","to":"pending"}
+{"actor":"external:orchestrator","at":"2026-10-20T23:03:37.178111Z","from":"pending","task":"br-bfrz","to":"open"}

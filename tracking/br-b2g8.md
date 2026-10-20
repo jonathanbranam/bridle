@@ -4,7 +4,7 @@ title = "Home-project warning names dalek.local-home: it uses the raw hostname, 
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-20T22:11:26.430Z"
-updated_at = "2026-10-20T23:01:29.110310Z"
+updated_at = "2026-10-20T23:03:15.462478Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -53,3 +53,6 @@ integrated: 9e2b4858c685490ec2924ac2b33bf7afcff52770 (branch bridle/wb2g8)
 
 ### note · agent:manager-2 · 2026-10-20T23:01:29.110Z
 cleanup: removed agent wb2g8, origin branch bridle/wb2g8, branch bridle/wb2g8
+
+### note · external:orchestrator · 2026-10-20T23:03:15.462Z
+orchestrator: root cause found, not stale binary or config. dalek's ~/.bridle/config.toml has [machine] name = "dalek". Agents run with BRIDLE_HOME=<state>/agent-home/<id> (no config.toml), so machine_home() falls back to owner_names() -> hostname -> dalek.local. The fix is filed as br-bfrz. The regression test here is fine as is.

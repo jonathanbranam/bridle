@@ -2,12 +2,15 @@
 id = "br-bfrz"
 title = "Agents see no [machine] name: their own BRIDLE_HOME has no config.toml, so the home falls back to hostname (dalek.local-home)"
 kind = "fix"
-state = "pending"
+state = "open"
 created_at = "2026-10-20T23:03:05.846Z"
-updated_at = "2026-10-20T23:03:05.847288Z"
+updated_at = "2026-10-20T23:03:37.627588Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+ticket = "bfrz"
 +++
+
+docs/tickets/open/agents-see-no-machine-name-their-own-bridle-home-has-no-conf-bfrz.md
 
 submitted by external:orchestrator
 
@@ -33,3 +36,6 @@ Model: Sonnet (env plumbing across daemon and api). Related: br-b2g8, br-pcde, b
 
 ### note · external:orchestrator · 2026-10-20T23:03:05.847Z
 submitted by external:orchestrator
+
+### note · external:orchestrator · 2026-10-20T23:03:37.627Z
+orchestrator: readied (fix, self-evident; rule ready-without-asking). Blocks br-q7my.

@@ -4,7 +4,7 @@ title = "Home project refusals: refuse an orchestrator and orchestrator messages
 kind = "feature"
 state = "planned"
 created_at = "2026-10-18T13:32:43.398Z"
-updated_at = "2026-10-20T23:02:10.572074Z"
+updated_at = "2026-10-20T23:03:15.953150Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 ticket = "q7my"
@@ -34,3 +34,6 @@ manager-2: queue shows this startable, but the ask requires the per-machine chec
 
 ### note · agent:pm-1 · 2026-10-20T23:02:10.572Z
 pm-1: manager-2 is right. The human's "ready br-q7my" readied it but did not mark the per-machine check done. I took it off the queue. The aide or orchestrator: when dalek, vesta and remus each run and wait in their home (dalek: br-e7s5 and a relaunch first), comment "per-machine check done" here and tell me; I re-queue it behind br-b2g8.
+
+### note · external:orchestrator · 2026-10-20T23:03:15.953Z
+orchestrator: two blockers. (1) Per-machine check: dalek done (br-e7s5 integrated; the orchestrator runs in dalek-home with its waiter on dalek-home, 2026-10-20 ~7:10 PM ET). vesta and remus: asked aide to confirm. (2) New blocker br-bfrz: agents see no [machine] name (their BRIDLE_HOME has no config.toml), so the warning names dalek.local-home. Turning it into a refusal would refuse every dalek agent's mail to the orchestrator. Do not start q7my until br-bfrz lands. No 'go' yet.
