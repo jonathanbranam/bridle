@@ -6,27 +6,36 @@ The system SHALL let the user read their focus settings with `bridle focus` and 
 
 #### Scenario: Inside a focus period
 *Verification*: **executable**
-- **GIVEN** a focus period that runs Monday to Friday, 8:00 to 18:00, and the clock is at 15:30 on a Tuesday
+- **GIVEN** a focus period that runs Monday to Friday, 8:00 to 18:00
+- **AND** the clock is at 15:30 on a Tuesday
 - **WHEN** the user runs `bridle focus`
-- **THEN** the output tells them that period is in effect, what it does, when it ends, and when focus next changes
+- **THEN** the output tells them that period is in effect
+- **AND** the output tells them what the period does
+- **AND** the output tells them when it ends
+- **AND** the output tells them when focus next changes
 
 #### Scenario: Outside every period
 *Verification*: **executable**
-- **GIVEN** focus periods that run on weekdays only, and the clock is at noon on a Saturday
+- **GIVEN** focus periods that run on weekdays only
+- **AND** the clock is at noon on a Saturday
 - **WHEN** the user runs `bridle focus`
-- **THEN** the output tells them no period is in effect, and when focus next changes
+- **THEN** the output tells them no period is in effect
+- **AND** the output tells them when focus next changes
 
 #### Scenario: No focus periods configured
 *Verification*: **executable**
 - **GIVEN** a config with no focus periods
 - **WHEN** the user runs `bridle focus`
-- **THEN** the output tells them focus hours are off, and the command succeeds
+- **THEN** the output tells them focus hours are off
+- **AND** the command succeeds
 
 #### Scenario: Daemon is down
 *Verification*: **executable**
-- **GIVEN** focus periods are configured and no daemon is running
+- **GIVEN** focus periods are configured
+- **AND** no daemon is running
 - **WHEN** the user runs `bridle focus`
-- **THEN** the settings are still shown, and the command succeeds
+- **THEN** the settings are still shown
+- **AND** the command succeeds
 
 ### Requirement: Focus shows its override
 
@@ -34,15 +43,19 @@ The system SHALL show an active or pending focus override in the output of `brid
 
 #### Scenario: Active override
 *Verification*: **executable**
-- **GIVEN** an override that is in force now and ends at 17:00, given the reason "deploy is broken"
+- **GIVEN** an override that is in force now
+- **AND** it ends at 17:00
+- **AND** it was given the reason "deploy is broken"
 - **WHEN** the user runs `bridle focus`
-- **THEN** the output tells them an override is active until 17:00 and why
+- **THEN** the output tells them an override is active until 17:00
+- **AND** the output tells them why
 
 #### Scenario: Pending override
 *Verification*: **executable**
 - **GIVEN** an override whose delayed start has not yet arrived
 - **WHEN** the user runs `bridle focus`
-- **THEN** the output tells them an override is pending, and when it starts and ends
+- **THEN** the output tells them an override is pending
+- **AND** the output tells them when it starts and ends
 
 #### Scenario: No override
 *Verification*: **executable**
@@ -56,9 +69,11 @@ The system SHALL list every configured focus period, with its name, the days and
 
 #### Scenario: Two periods
 *Verification*: **executable**
-- **GIVEN** a weekday work period and a separate evening period are configured
+- **GIVEN** a weekday work period is configured
+- **AND** a separate evening period is configured
 - **WHEN** the user runs `bridle focus --schedule`
-- **THEN** both periods are listed, each with its name, days, hours and what it does
+- **THEN** both periods are listed
+- **AND** each shows its name, days, hours and what it does
 
 ### Requirement: Budget and focus read the same way
 
@@ -66,15 +81,21 @@ The system SHALL show the same facts about budget as about focus when the user r
 
 #### Scenario: Both overrides are visible alike
 *Verification*: **executable**
-- **GIVEN** a budget override and a focus override are both active
-- **WHEN** the user runs `bridle budget` and then `bridle focus`
-- **THEN** each output shows its override and the upcoming change in the same words
+- **GIVEN** a budget override is active
+- **AND** a focus override is active
+- **WHEN** the user runs `bridle budget`
+- **AND** the user runs `bridle focus`
+- **THEN** each output shows its override
+- **AND** each output shows the upcoming change
+- **AND** the two use the same words for both
 
 #### Scenario: Existing budget invocations keep working
 *Verification*: **executable**
 - **GIVEN** a running daemon
-- **WHEN** the user runs `bridle budget` and `bridle budget --schedule`
-- **THEN** both succeed and still give everything they gave before this change
+- **WHEN** the user runs `bridle budget`
+- **AND** the user runs `bridle budget --schedule`
+- **THEN** both succeed
+- **AND** both still give everything they gave before this change
 
 ### Requirement: Shared JSON key names
 
@@ -82,15 +103,19 @@ The system SHALL print machine-readable settings with `--json` on both `bridle f
 
 #### Scenario: Focus JSON uses the shared names
 *Verification*: **executable**
-- **GIVEN** focus periods and an override are configured
+- **GIVEN** focus periods are configured
+- **AND** a focus override is set
 - **WHEN** the user runs `bridle focus --json`
-- **THEN** one JSON object is printed whose period list, next change and override use the shared key names
+- **THEN** one JSON object is printed
+- **AND** its period list, next change and override use the shared key names
 
 #### Scenario: Budget JSON keeps its old keys and adopts the shared names
 *Verification*: **executable**
-- **GIVEN** a daemon with a budget schedule and a hold
+- **GIVEN** a daemon with a budget schedule
+- **AND** a hold is active
 - **WHEN** the user runs `bridle budget --json`
-- **THEN** every key it had before is still there with the same meaning, and the shared parts use the same key names as the focus JSON
+- **THEN** every key it had before is still there with the same meaning
+- **AND** the shared parts use the same key names as the focus JSON
 
 ### Requirement: Focus hooks are unchanged
 
@@ -100,4 +125,5 @@ The system SHALL keep the `focus gate` and `focus reply` hooks behaving as befor
 *Verification*: **executable**
 - **GIVEN** the clock is outside every focus period
 - **WHEN** the `focus gate` hook runs
-- **THEN** it prints nothing and the command succeeds
+- **THEN** it prints nothing
+- **AND** the command succeeds
