@@ -14,7 +14,7 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, SystemTime};
 
-use bridle_api::types::{MessageKind, SpawnRequest, TicketState, When};
+use bridle_api::types::{AgentState, MessageKind, SpawnRequest, TicketState, When};
 use chrono::{DateTime, Utc};
 
 use crate::stages::{self, State};
@@ -33,6 +33,37 @@ struct Writer {
     started: DateTime<Utc>,
     /// When the product manager was told; the stage is not retried until the file changes.
     alerted: Option<SystemTime>,
+    /// The stage was seen written: if it is later not (`ticket changes`), the writer is a leftover,
+    /// not a failure.
+    done_seen: bool,
+}
+
+/// A writer holds the ticket only while its turn runs: an idle one has ended its turn and, with
+/// its stage written, is finished (br-43ug).
+fn holds(state: Option<AgentState>) -> bool {
+    matches!(state, Some(AgentState::Starting | AgentState::Working))
+}
+
+enum Verdict {
+    /// Still running: nothing new is spawned.
+    Hold,
+    /// The writer is finished or was overtaken: forget it.
+    Drop,
+    /// Ended without writing its stage.
+    Failed,
+    /// Nothing to say yet; the timeout decides.
+    Wait,
+}
+
+fn verdict(done: bool, done_seen: bool, state: Option<AgentState>) -> Verdict {
+    match (done, done_seen, holds(state)) {
+        (true, _, true) => Verdict::Hold,
+        (true, _, false) => Verdict::Drop,
+        // `ticket changes` un-wrote the stage the writer had finished.
+        (false, true, _) => Verdict::Drop,
+        (false, false, false) => Verdict::Failed,
+        (false, false, true) => Verdict::Wait,
+    }
 }
 
 /// One version 2 ticket as the watcher reads it.
@@ -219,9 +250,12 @@ impl StageWatch {
                 .lock()
                 .expect("writers lock")
                 .contains_key(&p.id)
-                && let Some(a) = agents
-                    .iter()
-                    .find(|a| a.role == ROLE && a.state.is_running() && a.name.starts_with(&prefix))
+                && let Some(a) = agents.iter().find(|a| {
+                    a.role == ROLE
+                        && holds(Some(a.state))
+                        && a.name.starts_with(&prefix)
+                        && !is_done(&p, &a.name[prefix.len()..])
+                })
             {
                 let stage = a.name[prefix.len()..].to_string();
                 self.writers.lock().expect("writers lock").insert(
@@ -231,6 +265,7 @@ impl StageWatch {
                         stage,
                         started: a.created_at,
                         alerted: None,
+                        done_seen: false,
                     },
                 );
             }
@@ -252,23 +287,37 @@ impl StageWatch {
     /// Looks at the ticket's writer, if it has one. True while one holds the ticket (running,
     /// waiting to land, or alerted and not yet restaged): nothing new is spawned.
     async fn check_writer(&self, p: &Prep) -> bool {
-        let (agent, stage, started, alerted) = {
+        let (agent, stage, started, alerted, done_seen) = {
             let w = self.writers.lock().expect("writers lock");
             let Some(w) = w.get(&p.id) else {
                 return false;
             };
-            (w.agent.clone(), w.stage.clone(), w.started, w.alerted)
+            (
+                w.agent.clone(),
+                w.stage.clone(),
+                w.started,
+                w.alerted,
+                w.done_seen,
+            )
         };
-        if is_done(p, &stage) {
-            // The writer goes on to the ticket's other unblocked stages (br-t6ev): while it runs
-            // it still holds the ticket, so a second writer is not spawned beside it.
-            let running = match self.store.get_agent(&agent).await.ok().flatten() {
-                Some(a) => a.state.is_running(),
-                None => false,
-            };
-            if running {
-                return true;
-            }
+        let done = is_done(p, &stage);
+        let state = self
+            .store
+            .get_agent(&agent)
+            .await
+            .ok()
+            .flatten()
+            .map(|a| a.state);
+        if done && let Some(w) = self.writers.lock().expect("writers lock").get_mut(&p.id) {
+            w.done_seen = true;
+        }
+        // The writer goes on to the ticket's other unblocked stages (br-t6ev): while its turn
+        // runs it still holds the ticket, so a second writer is not spawned beside it.
+        let v = verdict(done, done_seen, state);
+        if matches!(v, Verdict::Hold) {
+            return true;
+        }
+        if matches!(v, Verdict::Drop) {
             self.writers.lock().expect("writers lock").remove(&p.id);
             return false;
         }
@@ -279,8 +328,7 @@ impl StageWatch {
             }
             return true;
         }
-        let a = self.store.get_agent(&agent).await.ok().flatten();
-        let ended = a.as_ref().is_none_or(|a| !a.state.is_running());
+        let ended = matches!(v, Verdict::Failed);
         let reason = if Utc::now() - started
             >= chrono::Duration::from_std(self.timeout).unwrap_or_default()
         {
@@ -335,6 +383,7 @@ impl StageWatch {
                         stage: stage.to_string(),
                         started: Utc::now(),
                         alerted: None,
+                        done_seen: false,
                     },
                 );
                 true
@@ -369,6 +418,43 @@ mod tests {
         assert_eq!(next_stage(&preps[0]).as_deref(), Some("proposal"));
         assert!(!preps[0].claimed);
         assert_eq!(tail("br-aaaa"), "aaaa");
+    }
+
+    #[test]
+    fn an_idle_writer_does_not_hold_the_ticket() {
+        use AgentState::*;
+        assert!(holds(Some(Starting)) && holds(Some(Working)));
+        assert!(!holds(Some(Idle)) && !holds(None) && !holds(Some(Stopped)));
+        // Finished stage, idle writer: dropped, so a redo can start.
+        assert!(matches!(verdict(true, true, Some(Idle)), Verdict::Drop));
+        assert!(matches!(verdict(true, true, Some(Working)), Verdict::Hold));
+    }
+
+    #[test]
+    fn a_stage_sent_back_by_changes_is_not_a_failure() {
+        use AgentState::*;
+        // Written once, now un-written: the writer is dropped whether it was stopped or idle.
+        assert!(matches!(verdict(false, true, None), Verdict::Drop));
+        assert!(matches!(verdict(false, true, Some(Idle)), Verdict::Drop));
+        // Never written and ended: still a failure.
+        assert!(matches!(verdict(false, false, Some(Idle)), Verdict::Failed));
+        assert!(matches!(
+            verdict(false, false, Some(Working)),
+            Verdict::Wait
+        ));
+    }
+
+    #[test]
+    fn re_adoption_skips_a_written_stage() {
+        let tmp = tempfile::tempdir().expect("tmp");
+        write(
+            tmp.path(),
+            "a-aaaa.md",
+            &V2.replace("version: 2", "version: 2\nwritten: [proposal]"),
+        );
+        let p = &read_preps(tmp.path())[0];
+        assert!(is_done(p, "proposal"));
+        assert!(!is_done(p, "design"));
     }
 
     #[test]

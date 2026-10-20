@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The stage watch no longer lets an idle, finished designer hold a ticket (only a starting or working writer does), re-adopts after a restart only a writer whose stage is still unwritten, and drops a writer whose stage `ticket changes` sent back instead of alerting, so a redo starts on the next tick (br-43ug).
 - A `bridle daemon restart --postpone` ends when the land in progress ends, so a manager that postpones before every land no longer keeps a pending self-upgrade out between lands (br-2yxm).
 - A stage landing (`bridle ticket stage-done`) now tells the ticket's watchers, as any other thread note does; `stage_land` skipped the fan-out, so signature requests reached nobody (br-h5k9).
 - Role text (br-vsp9): the orchestrator and manager roles and the orchestrator startup steps no longer name a `--state` flag that `ticket list` and `task list` don't have; they point at `bridle task list` (state column), `bridle ticket list` and `bridle status --json` (`pending_tasks`).

@@ -158,7 +158,8 @@ that is not prepared:
   stage counts as done for the daemon when it is written on the project checkout, so the
   branch must land first. The one designer then runs `ticket next` again and writes the ticket's
   next unblocked stage, fully, before the one after (br-t6ev; each from its own `depends_on`
-  inputs, not from its sibling), and ends when none is left. While it runs it holds the ticket,
+  inputs, not from its sibling), and ends when none is left. While its turn runs (starting or
+  working; an idle writer has ended) it holds the ticket,
   so no second writer starts; if it ends early the next tick starts one for what is still
   unblocked. At the end the tick finds a signature wait (`claimed_by: human`) or a prepared
   ticket.
@@ -166,8 +167,9 @@ that is not prepared:
   started, or whose writer ended without a successful `stage-done`, adds a thread
   note and sends one message to `external:advisor/product-manager`: "br-oooo: design not done by
   designer-3, timed out". It is not retried. The product manager may `ticket restage`, or any
-  later edit of the ticket file lets the next tick start a writer.
-- The writers are tracked in memory; after a restart a running `designer-<id>-<stage>` agent is
+  later edit of the ticket file lets the next tick start a writer. A writer whose stage was
+  written and is later sent back by `ticket changes` is dropped, not alerted (br-43ug).
+- The writers are tracked in memory; after a restart a working `designer-<id>-<stage>` agent whose stage is unwritten is
   taken back by its name.
 
 ## The worker and the land check (br-6c8x)

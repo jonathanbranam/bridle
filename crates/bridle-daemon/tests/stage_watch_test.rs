@@ -112,7 +112,9 @@ async fn a_stage_not_written_in_time_goes_to_the_product_manager_once() {
     assert!(
         got[0].contains(&id)
             && got[0].contains("proposal not done by designer-")
-            && got[0].contains("timed out"),
+            // The fake designer ends its turn (idle) without a stage-done, which is an ended
+            // writer since br-43ug; a slow real one would be "timed out".
+            && (got[0].contains("timed out") || got[0].contains("ended without")),
         "got {got:?}"
     );
     assert_eq!(designers(&daemon).await.len(), 1, "no retry");
