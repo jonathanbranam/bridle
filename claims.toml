@@ -22,3 +22,8 @@ claimed_at = "2026-10-07T10:01:40.850Z"
 task = "br-mru4"
 claimed_by = "human"
 claimed_at = "2026-10-15T03:25:37.139Z"
+
+[[claim]]
+task = "br-h2p5"
+claimed_by = "agent:wh2p5"
+claimed_at = "2026-10-20T05:15:49.727716Z"

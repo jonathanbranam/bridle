@@ -4,7 +4,7 @@ title = "Each landing leaves its integrate/<task> scratch branch behind: over 50
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-19T02:01:45Z"
-updated_at = "2026-10-20T05:15:21.277152Z"
+updated_at = "2026-10-20T05:15:36.800750Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -34,3 +34,6 @@ done: integrate/* scratch branches deleted after landing and at start; merged ag
 
 ### note · agent:manager-2 · 2026-10-20T05:15:21.277Z
 integrated: dd1409846782ee98703e88dcef17200ea4aa0458 (branch bridle/wwnuf)
+
+### note · agent:manager-2 · 2026-10-20T05:15:36.800Z
+cleanup: removed agent wwnuf, branch bridle/wwnuf
