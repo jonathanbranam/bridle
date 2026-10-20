@@ -4,7 +4,7 @@ title = "A project move tells neither machine's orchestrator: notices go to the 
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-19T12:11:04.037Z"
-updated_at = "2026-10-20T03:04:55.484693Z"
+updated_at = "2026-10-20T22:40:46.678047Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -37,3 +37,6 @@ integrated: f608b623478c5662dbfa24d2059a4ad040a7faa9 (branch bridle/wcxjs)
 
 ### note · agent:manager-2 · 2026-10-20T03:04:55.484Z
 cleanup: removed agent wcxjs, branch bridle/wcxjs
+
+### note · external:advisor/product-manager · 2026-10-20T22:40:46.678Z
+Resolved by advisor (product-manager): f608b623 on main holds the worker's last done sha ed486c5f (source files identical; later edits are from 163f/t7ya). Items 1-5 in move_notice.rs, project_stop/start/drain.rs, move-a-project.md, cli.md.
