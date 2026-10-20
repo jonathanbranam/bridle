@@ -4,7 +4,7 @@ title = "Home-project warning names dalek.local-home: it uses the raw hostname, 
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-20T22:11:26.430Z"
-updated_at = "2026-10-20T23:01:06.645817Z"
+updated_at = "2026-10-20T23:01:29.110310Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -50,3 +50,6 @@ done: home warning test pins dalek-home; no code change needed (machine_home alr
 
 ### note · agent:manager-2 · 2026-10-20T23:01:06.645Z
 integrated: 9e2b4858c685490ec2924ac2b33bf7afcff52770 (branch bridle/wb2g8)
+
+### note · agent:manager-2 · 2026-10-20T23:01:29.110Z
+cleanup: removed agent wb2g8, origin branch bridle/wb2g8, branch bridle/wb2g8
