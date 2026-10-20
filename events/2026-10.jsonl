@@ -2916,3 +2916,4 @@
 {"actor":"agent:pm-1","at":"2026-10-20T00:38:10.501Z","from":"open","task":"br-43ug","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-20T00:38:12.522945Z","queue":"reprioritized"}
 {"actor":"agent:manager-2","at":"2026-10-20T00:44:58.205470Z","from":"built","task":"br-2yxm","to":"integrated"}
+{"actor":"agent:wfpqy","at":"2026-10-20T01:12:51.186151Z","from":"claimed","task":"br-fpqy","to":"built"}
