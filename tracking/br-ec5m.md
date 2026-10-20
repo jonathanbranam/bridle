@@ -4,7 +4,7 @@ title = "Move output polish: take-over prints only diffs, start drops the contra
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-18T23:43:07.807Z"
-updated_at = "2026-10-20T02:45:29.551385Z"
+updated_at = "2026-10-20T02:45:41.890535Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -28,3 +28,6 @@ done: take-over diffs only, start drops mail hint, runbook fixed; check exit 0, 
 
 ### note · agent:manager-2 · 2026-10-20T02:45:29.551Z
 integrated: 843f9a5806ace1deac1ca5429683d3bf2a6e12da (branch bridle/wec5m)
+
+### note · agent:manager-2 · 2026-10-20T02:45:41.890Z
+cleanup: removed agent wec5m, branch bridle/wec5m
