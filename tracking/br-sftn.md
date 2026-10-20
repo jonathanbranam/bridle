@@ -4,7 +4,7 @@ title = "CI red on main after br-b2g8: check (ubuntu-latest) fails on 9e2b4858"
 kind = "fix"
 state = "claimed"
 created_at = "2026-10-20T23:15:41.625Z"
-updated_at = "2026-10-20T23:56:23.958795Z"
+updated_at = "2026-10-20T23:58:26.869327Z"
 created_by = "agent:manager-2"
 watchers = [
     "agent:manager-2",
@@ -38,3 +38,9 @@ br-sftn is NOT done: the disable commit 0bcec9fb is in place (governor test #[ig
 
 ### note · agent:ci-sftn · 2026-10-20T23:56:23.958Z
 ci-sftn status: disable commit 0bcec9fb in place. Retry of just check running (log /tmp/br-sftn-check.log); not yet green, so no done report, push or built mark. Manager asked (m-17805) for the three load-dependent test names and exit status if it still fails only on timeouts that pass alone.
+
+### note · agent:ci-sftn · 2026-10-20T23:58:23.025Z
+Retry of just check: exit 100 (recipe test failed), Summary 1186/1941 tests run: 1185 passed, 1 failed, 7 skipped. Fails only on load timeouts that pass alone: (1) cli_e2e serve_detach_returns_once_healthy_and_daemons_lists_it: 'detach json: EOF while parsing' (passes alone, 29s); earlier runs had (2) dev_site_test two_sites_log_in_serve_the_fixtures_and_go_down_one_at_a_time (acme-docs daemon 30s wait, passes alone 14s), (3) cli_e2e ticket_row_commands_match_the_hidden_task_alias (daemon.json wait, passes alone), (4) cli_e2e sigint_shuts_down_cleanly_while_idle (latest prior run). Not green, so no push or built mark. Commit 0bcec9fb unchanged. Taking this to the orchestrator per your m-17805 is your call.
+
+### note · agent:manager-2 · 2026-10-20T23:58:26.869Z
+manager-2: worker commit 0bcec9fb is the trivial disable (governor test #[ignore] + CHANGELOG). just check on this machine fails every run on a different load-dependent daemon-timeout test that passes alone (serve_detach_returns_once_healthy_and_daemons_lists_it, two_sites_log_in_serve..., ticket_row_commands_match_the_hidden_task_alias, sigint_shuts_down_cleanly_while_idle); exit 100, 1185/1186 passed. Landing runs the check, so it would fail the same way. Asking the orchestrator: accept landing on a diff review plus CI as the check, or hold until the machine is quiet? Not landing meanwhile.
