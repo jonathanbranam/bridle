@@ -18,3 +18,6 @@ tasks = [
     "br-xccp",
     "br-4a4v",
 ]
+
+[[tier]]
+tasks = ["br-remg"]
