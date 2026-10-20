@@ -1,6 +1,7 @@
 //! Usage and budget commands: usage, cost, budget.
 
 use super::*;
+use bridle_api::types::UsageGroups;
 
 pub(super) fn is_known_rate_limit_window(window: &str) -> bool {
     matches!(
@@ -210,9 +211,29 @@ async fn usage_groups(
     since: Option<chrono::DateTime<Utc>>,
     with_sessions: bool,
 ) -> Result<(), CliError> {
-    let groups = client
+    let mut groups = client
         .usage_groups(&UsageGroupsQuery { since, until: None })
         .await?;
+    // The seven_day points are the whole account's, so divide them over every project's spend
+    // on this machine, not just this project's (br-cgw3). Other daemons are read without a
+    // token: usage reads are open to the local principal.
+    let mut others = 0.0;
+    let mut unreachable = Vec::new();
+    for d in discovery::list_registry() {
+        if d.project == groups.project {
+            continue;
+        }
+        let other =
+            Client::new_with_timeout(d.url.clone(), None, std::time::Duration::from_secs(5));
+        match other
+            .usage_groups(&UsageGroupsQuery { since, until: None })
+            .await
+        {
+            Ok(g) => others += g.total_cost_usd,
+            Err(_) => unreachable.push(d.project),
+        }
+    }
+    share_over_machine(&mut groups, others, &unreachable);
     if cli.json {
         return Ok(render::print_json(&groups)?);
     }
@@ -242,6 +263,37 @@ async fn usage_groups(
     );
     println!("{}", groups.share_note);
     Ok(())
+}
+
+/// Rescales every `share_points` from "this project's cost over the points" to "this project's
+/// cost over the machine's cost", so a small project never claims the whole account's gain.
+/// Other machines' spend is still not counted (br-a65d); the note says so.
+pub(super) fn share_over_machine(g: &mut UsageGroups, others_cost: f64, unreachable: &[String]) {
+    fn scale(groups: &mut [UsageShareGroup], f: f64) {
+        for g in groups {
+            g.share_points *= f;
+            scale(&mut g.children, f);
+        }
+    }
+    let machine_cost = g.total_cost_usd + others_cost;
+    if machine_cost > 0.0 {
+        scale(&mut g.roles, g.total_cost_usd / machine_cost);
+        g.points_per_dollar = (g.seven_day_points > 0.0).then(|| g.seven_day_points / machine_cost);
+    }
+    g.share_note = format!(
+        "{} Shares and points per dollar are over every project's cost on this machine \
+         (${}); other machines' spend is not included.{}",
+        g.share_note,
+        format_cost_dollars(machine_cost),
+        if unreachable.is_empty() {
+            String::new()
+        } else {
+            format!(
+                " Not reachable, so not counted: {}.",
+                unreachable.join(", ")
+            )
+        }
+    );
 }
 
 fn print_group(g: &UsageShareGroup, depth: usize) {
@@ -749,5 +801,46 @@ mod week_tests {
             super::in_zone(t, chrono_tz::America::New_York),
             "2026-10-21 03:00"
         );
+    }
+}
+
+#[cfg(test)]
+mod share_tests {
+    use super::*;
+
+    fn group(cost: f64, share: f64, children: Vec<UsageShareGroup>) -> UsageShareGroup {
+        UsageShareGroup {
+            key: "k".into(),
+            project: "p".into(),
+            machine: "m".into(),
+            turns: None,
+            tokens: Default::default(),
+            cost_usd: cost,
+            context_growth: 0,
+            share_points: share,
+            agent_id: None,
+            external: false,
+            children,
+        }
+    }
+
+    #[test]
+    fn a_small_project_gets_its_slice_of_the_points_not_all_of_them() {
+        let mut g = UsageGroups {
+            project: "p".into(),
+            machine: "m".into(),
+            since: None,
+            until: None,
+            total_cost_usd: 0.1,
+            seven_day_points: 60.0,
+            points_per_dollar: Some(600.0),
+            share_note: "est.".into(),
+            roles: vec![group(0.1, 60.0, vec![group(0.1, 60.0, vec![])])],
+        };
+        share_over_machine(&mut g, 99.9, &["x".to_string()]);
+        assert!((g.roles[0].share_points - 0.06).abs() < 1e-9);
+        assert!((g.roles[0].children[0].share_points - 0.06).abs() < 1e-9);
+        assert!((g.points_per_dollar.unwrap() - 0.6).abs() < 1e-9);
+        assert!(g.share_note.contains("other machines") && g.share_note.contains("x"));
     }
 }

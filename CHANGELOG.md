@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Orchestrator start (br-57kc): the role no longer tells the orchestrator to run `bridle token check` at every start (the check stays a command for the human, to run after a re-pair or when a project seems quiet).
 
 ### Fixed
+- `bridle usage --by name|session` shares the account's weekly points over every project's spend on the machine, not one project's, so a small project no longer shows $0.10 = 60 points (br-cgw3).
 
 - `bridle usage --by name` and `--by session` mark a role or name "(ext)" only when all its sessions are external (they were all marked, since role and name groups had no agent id); hosted roles and names show plain (br-9uqw).
 - `bridle usage --week` prints the week and window times in the schedule timezone (they were UTC under that label), and a week's days ignore readings that still carry the previous week's reset, so the first day no longer shows the old peak (br-h2p5).

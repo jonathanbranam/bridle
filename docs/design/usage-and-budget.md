@@ -128,6 +128,12 @@ percentage (per week: the highest reading in range minus the last one before `si
 role and the sessions in a name each add up to it. That is an estimate: Anthropic does not publish the
 limit's weights. `points_per_dollar` is the measured ratio, to check the estimate from week to week.
 Other machines' data is not merged here (br-ktgd's a65d).
+The daemon's own numbers divide the account's points over that project's cost alone, so a small
+project would claim the whole gain (br-cgw3). `bridle usage --by name|session` therefore sums
+`total_cost_usd` over every live daemon in the machine registry and rescales `share_points` and
+`points_per_dollar` by this project's fraction of it; the note says other machines are not included
+and names daemons it could not reach. The gateway already shares over its merged total. Rejected:
+relabelling the column "if this project were the only spender" (a number nobody can act on).
 
 `GET /v1/usage/sessions?since=` (br-eapt) lists the sessions themselves for the context and cost pages: per
 hosted session its start and end reason and the renewal limit in force (from `agent_sessions`, br-2kam),
