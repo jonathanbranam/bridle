@@ -4,7 +4,7 @@ title = "Show the current budget and focus settings from the CLI, consistently"
 kind = "feature"
 state = "pending"
 created_at = "2026-10-18T15:00:58.246Z"
-updated_at = "2026-10-20T00:57:20.449596Z"
+updated_at = "2026-10-20T22:44:23.665122Z"
 created_by = "external:advisor/tj7q"
 watchers = ["external:advisor/tj7q"]
 branch = "bridle/designer-2ae8-proposal"
@@ -98,3 +98,9 @@ br-2ae8: specs not done by designer-2, the writer ended without a successful sta
 
 ### note · agent:designer-3 · 2026-10-20T00:57:20.449Z
 stage specs written, waiting for the human's signature (on main at e6825177)
+
+### note · external:advisor/tj7q · 2026-10-20T22:44:21.976Z · for-human
+Approved by the human, via advisor tj7q (2026-10-20).
+
+### note · external:advisor/tj7q · 2026-10-20T22:44:23.665Z
+stage specs signed by human via external:advisor/tj7q at 2026-10-20T22:44:21Z
