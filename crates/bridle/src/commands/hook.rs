@@ -188,20 +188,37 @@ pub(super) async fn link_check(cli: &Cli) -> Result<(), CliError> {
             bridle_daemon::config::ui_base_url(&bridle_api::discovery::bridle_home(), Some(&repo))
                 .ok()??;
         let prefix = crate::ticket::own_prefix(cli, &repo).await.ok()?;
-        let known = crate::link_check::ticket_ids(&repo);
-        let ids = crate::link_check::unlinked_ids(text, &prefix, |id| known.contains(id));
+        let project = crate::project::resolve(cli).ok()?;
+        let own = crate::link_check::Owner {
+            ids: crate::link_check::ticket_ids(&repo),
+            project,
+            prefix,
+        };
+        // Other projects on this machine, from the registry: a reply may name their tickets.
+        let others: Vec<_> = bridle_api::discovery::list_registry()
+            .into_iter()
+            .filter(|d| d.project != own.project)
+            .filter_map(|d| {
+                Some(crate::link_check::Owner {
+                    ids: crate::link_check::ticket_ids(std::path::Path::new(&d.repo)),
+                    prefix: d.task_prefix?,
+                    project: d.project,
+                })
+            })
+            .collect();
+        let prefixes: Vec<&str> = std::iter::once(own.prefix.as_str())
+            .chain(others.iter().map(|o| o.prefix.as_str()))
+            .collect();
+        let exists = |id: &str| own.ids.contains(id) || others.iter().any(|o| o.ids.contains(id));
+        let ids = crate::link_check::unlinked_ids(text, &prefixes, exists);
         if ids.is_empty() {
             return None;
         }
         let mut links = Vec::new();
         for id in ids {
-            let target = if crate::ticket::is_bare_id(&id) {
-                format!("{prefix}-{id}")
-            } else {
-                id.clone()
-            };
+            let (project, target) = crate::link_check::owning(&id, &own, &others)?;
             let url =
-                crate::link::url(&base, &target, || crate::project::resolve(cli), |_| None).ok()?;
+                crate::link::url(&base, &target, || Ok(project.to_string()), |_| None).ok()?;
             links.push((id, url));
         }
         Some(crate::link_check::reason(&links))

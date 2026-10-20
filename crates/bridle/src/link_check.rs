@@ -100,12 +100,14 @@ fn words(text: &str) -> Vec<(String, bool)> {
 }
 
 /// IDs in `text` that are not part of a link, as written (`br-9dcz` or `9dcz`), once each. A task
-/// ID of the project's `prefix` always counts; a bare 4-character ID only when `exists` says a
+/// ID of any of the `prefixes` always counts; a bare 4-character ID only when `exists` says a
 /// ticket has it. An ID linked anywhere in the reply counts as linked everywhere.
-pub fn unlinked_ids(text: &str, prefix: &str, exists: impl Fn(&str) -> bool) -> Vec<String> {
+pub fn unlinked_ids(text: &str, prefixes: &[&str], exists: impl Fn(&str) -> bool) -> Vec<String> {
     let tail = |w: &str| -> Option<String> {
-        if let Some(rest) = w.strip_prefix(prefix).and_then(|r| r.strip_prefix('-')) {
-            return (is_bare_id(rest) && !is_reserved_id(rest)).then(|| rest.to_string());
+        for prefix in prefixes {
+            if let Some(rest) = w.strip_prefix(prefix).and_then(|r| r.strip_prefix('-')) {
+                return (is_bare_id(rest) && !is_reserved_id(rest)).then(|| rest.to_string());
+            }
         }
         (is_bare_id(w) && !is_reserved_id(w) && exists(w)).then(|| w.to_string())
     };
@@ -124,6 +126,26 @@ pub fn unlinked_ids(text: &str, prefix: &str, exists: impl Fn(&str) -> bool) -> 
         .filter(|(_, id)| !linked.contains(id))
         .map(|(w, _)| w)
         .collect()
+}
+
+/// A project whose tickets an ID may belong to: its name, id prefix and the ticket IDs it has.
+pub struct Owner {
+    pub project: String,
+    pub prefix: String,
+    pub ids: BTreeSet<String>,
+}
+
+/// The project that owns `id` (as written) and the qualified id to link. A qualified id names its
+/// owner by prefix; a bare one belongs to the first project that has it, the session's `own`
+/// first, and falls back to `own`. `None` for a prefix no project has.
+pub fn owning<'a>(id: &str, own: &'a Owner, others: &'a [Owner]) -> Option<(&'a str, String)> {
+    let all = || std::iter::once(own).chain(others);
+    if let Some((prefix, bare)) = id.split_once('-') {
+        let o = all().find(|o| o.prefix == prefix)?;
+        return Some((&o.project, format!("{prefix}-{bare}")));
+    }
+    let o = all().find(|o| o.ids.contains(id)).unwrap_or(own);
+    Some((&o.project, format!("{}-{id}", o.prefix)))
 }
 
 /// The ticket IDs on disk: the end of each file name in `docs/tickets/{open,resolved}`.
@@ -165,43 +187,43 @@ mod tests {
 
     #[test]
     fn the_reserved_placeholder_is_never_flagged() {
-        assert!(unlinked_ids("br-xxxx and xxxx", "br", |_| true).is_empty());
+        assert!(unlinked_ids("br-xxxx and xxxx", &["br"], |_| true).is_empty());
     }
 
     #[test]
     fn task_ids_always_count() {
         assert_eq!(
-            unlinked_ids("see br-ab3k now", "br", |_| false),
+            unlinked_ids("see br-ab3k now", &["br"], |_| false),
             ["br-ab3k"]
         );
     }
 
     #[test]
     fn a_word_that_is_not_a_ticket_is_not_flagged() {
-        assert!(unlinked_ids("then we wait, easy", "br", real).is_empty());
+        assert!(unlinked_ids("then we wait, easy", &["br"], real).is_empty());
     }
 
     #[test]
     fn an_existing_ticket_is_flagged() {
-        assert_eq!(unlinked_ids("Filed (9dcz).", "br", real), ["9dcz"]);
-        assert_eq!(unlinked_ids("the rest.", "br", real), ["rest"]);
+        assert_eq!(unlinked_ids("Filed (9dcz).", &["br"], real), ["9dcz"]);
+        assert_eq!(unlinked_ids("the rest.", &["br"], real), ["rest"]);
     }
 
     #[test]
     fn linked_code_path_and_longer_words_are_skipped() {
         let t = "[9dcz](http://x/9dcz) [[tickets/foo-9dcz|br-ab3k]] `9dcz`\n```\n9dcz br-ab3k\n```\n\
                  docs/tickets/open/foo-9dcz.md http://h/p/tickets/br-ab3k 9dczx";
-        assert!(unlinked_ids(t, "br", real).is_empty());
+        assert!(unlinked_ids(t, &["br"], real).is_empty());
     }
 
     #[test]
     fn linked_anywhere_counts_as_linked() {
-        assert!(unlinked_ids("9dcz is [9dcz](http://x/9dcz)", "br", real).is_empty());
+        assert!(unlinked_ids("9dcz is [9dcz](http://x/9dcz)", &["br"], real).is_empty());
     }
 
     #[test]
     fn other_prefixes_and_capitals_are_ignored() {
-        assert!(unlinked_ids("pre-test BR-ab3k", "br", |_| false).is_empty());
+        assert!(unlinked_ids("pre-test BR-ab3k", &["br"], |_| false).is_empty());
     }
 
     #[test]
@@ -211,6 +233,52 @@ mod tests {
         std::fs::write(d.path().join("docs/tickets/open/a-thing-9dcz.md"), "").expect("w");
         let ids = ticket_ids(d.path());
         assert!(ids.contains("9dcz") && ids.len() == 1);
+    }
+
+    fn owner(project: &str, prefix: &str, ids: &[&str]) -> Owner {
+        Owner {
+            project: project.into(),
+            prefix: prefix.into(),
+            ids: ids.iter().map(|s| s.to_string()).collect(),
+        }
+    }
+
+    #[test]
+    fn a_qualified_id_of_another_project_links_there() {
+        let own = owner("dalek-home", "da", &[]);
+        let others = [owner("bridle", "br", &["gb97"])];
+        assert_eq!(
+            owning("br-gb97", &own, &others),
+            Some(("bridle", "br-gb97".to_string()))
+        );
+        assert_eq!(owning("zz-gb97", &own, &others), None);
+    }
+
+    #[test]
+    fn a_bare_id_links_to_the_project_that_has_it() {
+        let own = owner("dalek-home", "da", &["aaaa"]);
+        let others = [owner("bridle", "br", &["gb97"])];
+        assert_eq!(
+            owning("gb97", &own, &others),
+            Some(("bridle", "br-gb97".to_string()))
+        );
+        assert_eq!(
+            owning("aaaa", &own, &others),
+            Some(("dalek-home", "da-aaaa".to_string()))
+        );
+        // Nowhere: the session's project.
+        assert_eq!(
+            owning("zzzz", &own, &others),
+            Some(("dalek-home", "da-zzzz".to_string()))
+        );
+    }
+
+    #[test]
+    fn other_projects_prefixes_count_as_ids() {
+        assert_eq!(
+            unlinked_ids("see br-ab3k and da-cd4e", &["da", "br"], |_| false),
+            ["br-ab3k", "da-cd4e"]
+        );
     }
 
     #[test]
