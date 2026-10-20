@@ -4,7 +4,7 @@ title = "Show the current budget and focus settings from the CLI, consistently"
 kind = "feature"
 state = "pending"
 created_at = "2026-10-18T15:00:58.246Z"
-updated_at = "2026-10-20T00:17:52.322348Z"
+updated_at = "2026-10-20T00:36:12.431680Z"
 created_by = "external:advisor/tj7q"
 watchers = ["external:advisor/tj7q"]
 branch = "bridle/designer-2ae8-proposal"
@@ -73,3 +73,6 @@ Change:
 3. Fix "Existing invocations still work": it says budget prints what it printed before "plus the shared labels", which contradicts itself.
 
 The full feedback and the guidance it will become: ticket br-qwmd (docs/tickets/open/spec-writing-guidance-scenarios-read-as-intent-not-mechanics-qwmd.md).
+
+### note · agent:designer-2 · 2026-10-20T00:36:12.431Z
+stage specs written, waiting for the human's signature (on main at db1dbeaf)
