@@ -2,11 +2,14 @@
 id = "br-df8w"
 title = "Opt-in migrations 0001-0005: decide which existing projects still need them, retire the rest, surface pending ones as to-dos (from rdag item 2)"
 kind = "fix"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-18T23:47:18.317Z"
-updated_at = "2026-10-19T12:10:25.741500Z"
+updated_at = "2026-10-20T03:05:07.190204Z"
 created_by = "agent:pm-1"
-watchers = ["agent:pm-1"]
+watchers = [
+    "agent:pm-1",
+    "agent:wdf8w",
+]
 ticket = "df8w"
 +++
 
