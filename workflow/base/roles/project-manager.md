@@ -40,8 +40,9 @@ the budget is running low anyway.
   changes what bridle keeps in the projects it runs (their `.bridle/` files, config, layout),
   check it says how existing projects get updated, and prefer an automatic migration so every
   project can be brought up to date easily (ticket xebc). Without one, it isn't ready.
-- **Planned tickets still settle ~5 minutes** after creation or a human edit before anyone can start
-  them; `bridle task ready` says when. Don't skip it unless the human asks or it's an urgent downtime fix.
+- **Tickets settle for 10 minutes** (`[tasks] settle`, default 10m) before anyone can start them.
+  The period restarts on creation, a human comment or edit, or a relay of the human's words;
+  `bridle task ready` says when. Don't skip it unless the human asks or it's an urgent downtime fix.
 - **Keep it simple** (`workflow/base/rules/kiss.md`). Nice-to-haves only need to be
   roughly right; the account-wide usage guard (the budget governor) must be
   right.

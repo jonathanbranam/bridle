@@ -2278,7 +2278,9 @@ impl Config {
                 match parse_settle(&v) {
                     Ok(d) => config.tasks_settle = d,
                     Err(problem) => {
-                        tracing::warn!("{problem}; using 5m (`bridle daemon doctor` reports this)");
+                        tracing::warn!(
+                            "{problem}; using 10m (`bridle daemon doctor` reports this)"
+                        );
                         config.tasks_settle_problem = Some(problem);
                     }
                 }
