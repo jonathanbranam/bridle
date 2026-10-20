@@ -2,11 +2,14 @@
 id = "br-43ug"
 title = "Stage watch: an idle, finished designer holds the ticket forever, so a redo after 'changes' never starts"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-20T00:23:00.303Z"
-updated_at = "2026-10-20T00:56:48.224671Z"
+updated_at = "2026-10-20T01:21:07.429608Z"
 created_by = "external:advisor/tj7q"
-watchers = ["external:advisor/tj7q"]
+watchers = [
+    "external:advisor/tj7q",
+    "agent:w43ug",
+]
 ticket = "43ug"
 +++
 
