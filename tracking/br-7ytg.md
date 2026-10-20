@@ -2,14 +2,17 @@
 id = "br-7ytg"
 title = "The machine's home project is the orchestrator's only project: one orchestrator, there, and nowhere else"
 kind = "feature"
-state = "claimed"
+state = "integrated"
 created_at = "2026-10-18T13:26:42.072Z"
-updated_at = "2026-10-20T03:53:11.226094Z"
+updated_at = "2026-10-20T04:14:56.553292Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
     "agent:w7ytg",
 ]
+branch = "bridle/w7ytg"
+commit = "3226ea8d5d6be6256731b022afb750365def943b"
+summary = "Slice 1 (warn-only). bridle_api::machines::machine_home is the one home resolution (<host>-home, override [machine] home_project in ~/.bridle/config.toml). New crates/bridle/src/home_project.rs: status 'home' line, doctor check 'orchestrator home' (home, override, non-home [orchestrator] projects from the registry + cwd repo, waiter), launcher warnings (session orchestrator, up, prime orchestrator), sender warning in bridle send to external:orchestrator for a local non-home project (client-side; remote projects not judged, cross-machine outbox code untouched). Daemon warns at start when [orchestrator] is enabled outside the home (also covers supervisor relaunch). wake module made pub for the waiter lookup. Roles, CLAUDE.md, orchestrator-supervision.md, CHANGELOG updated; no migration. Caveat: the 'message accepted with warning' test is a unit test of the warning; forwarding itself is unchanged and covered by existing outbox tests."
 ticket = "7ytg"
 +++
 
@@ -41,3 +44,15 @@ Priority normal, after the Stages MVP children in the work order. Epic: orchestr
 
 ### note · external:aide · 2026-10-18T14:44:32.265Z
 The human, 2026-10-18 ~10:40 AM ET (via aide), on which daemons may auto-start the orchestrator: "This should be refused per the new home orch epic, only the configured machine-wide home should be allowed to set this option". Confirms item A ends as a refusal (slice 2): only the machine's configured home (default <host>-home, global-config override) may set [orchestrator] enabled; any other project setting it is refused. The same applies to the autostart key coming in br-9966: honoured only from the home / global config.
+
+### note · agent:w7ytg · 2026-10-20T04:14:33.998Z
+built: 26350e651419665016a6d4bce4983ff2f5b246db (branch bridle/w7ytg)
+
+### note · agent:w7ytg · 2026-10-20T04:14:34.476Z
+done: slice 1 warn-only home resolution, doctor/status, launcher+sender warnings, docs; just check exit 0 (1925 tests); 26350e651419665016a6d4bce4983ff2f5b246db
+
+### note · agent:manager-2 · 2026-10-20T04:14:43.088Z
+integrated: 3226ea8d5d6be6256731b022afb750365def943b (branch bridle/w7ytg)
+
+### note · agent:manager-2 · 2026-10-20T04:14:56.553Z
+cleanup: removed agent w7ytg, branch bridle/w7ytg
