@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `bridle usage --week` prints the week and window times in the schedule timezone (they were UTC under that label), and a week's days ignore readings that still carry the previous week's reset, so the first day no longer shows the old peak (br-h2p5).
 - Landing no longer leaves its `integrate/<task>` scratch branch behind: the integration worktree is detached and the branch deleted when the landing ends, leftovers are deleted at daemon start, and the disk tick deletes local `bridle/*` branches with no agent, an integrated or dropped ticket and commits merged into the integration branch (br-wnuf).
 - Role prompts (project-manager, manager) say tickets settle 10 minutes, the `[tasks] settle` default, and list what restarts the period; the invalid-`settle` warning says it falls back to 10m, not 5m (br-ze9r).
 - Opt-in migrations: `0001-rename-product-manager` and `0003-bug-tickets-that-are-fixes` are retired (the role alias and the unused label made them unnecessary); a pending opt-in migration (`0002`, `0004`, `0005`) now files one to-do for the project's aide at daemon start, recorded as `announced` in `migrations.toml` so the next start files none (br-df8w).

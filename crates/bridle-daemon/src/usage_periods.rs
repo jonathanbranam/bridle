@@ -58,6 +58,17 @@ fn days(
     seven: &[RateLimitPoint],
     tz: Tz,
 ) -> Vec<UsageDay> {
+    // Agents with a stale last rate_limit_event keep reporting the old week's reading after
+    // the reset; only this week's `resets_at` cluster counts (br-h2p5).
+    let this_week: Vec<RateLimitPoint> = seven
+        .iter()
+        .filter(|p| {
+            p.resets_at
+                .is_some_and(|r| (r - ends).abs() <= RESET_TOLERANCE)
+        })
+        .cloned()
+        .collect();
+    let seven = &this_week[..];
     let mut out = Vec::new();
     let mut date = starts.with_timezone(&tz).date_naive();
     loop {
@@ -182,6 +193,21 @@ mod tests {
         assert!(oct7.hit_five_hour);
         assert_eq!(days[0].peak_seven_day, None);
         assert!(!days[0].hit_five_hour);
+    }
+
+    #[test]
+    fn stale_old_week_reading_after_the_reset_is_ignored() {
+        let (wk1, wk2) = ("2026-10-14T07:00:00Z", "2026-10-21T07:00:00Z");
+        let seven = vec![
+            pt("seven_day", 0.89, wk1, "2026-10-13T20:00:00Z"),
+            // An agent's stale event, observed after the reset but carrying the old week.
+            pt("seven_day", 0.89, wk1, "2026-10-14T10:00:00Z"),
+            pt("seven_day", 0.11, wk2, "2026-10-14T12:00:00Z"),
+        ];
+        let p = periods(vec![], seven, chrono_tz::America::New_York);
+        let first = &p.weeks[1].days[0];
+        assert_eq!(first.date, "2026-10-14");
+        assert_eq!(first.peak_seven_day, Some(0.11));
     }
 
     #[test]

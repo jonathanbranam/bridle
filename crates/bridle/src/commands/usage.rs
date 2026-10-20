@@ -144,6 +144,11 @@ fn pct(u: Option<f64>) -> String {
     format_utilization(u)
 }
 
+/// A UTC time as `YYYY-MM-DD HH:MM` in the schedule's zone, the one the header names.
+fn in_zone(t: chrono::DateTime<Utc>, tz: chrono_tz::Tz) -> String {
+    t.with_timezone(&tz).format("%Y-%m-%d %H:%M").to_string()
+}
+
 /// `--week`: the latest week from the reset, its days and the five-hour windows inside it.
 async fn usage_week(
     cli: &Cli,
@@ -158,10 +163,12 @@ async fn usage_week(
         println!("no seven_day readings yet");
         return Ok(());
     };
+    let tz: chrono_tz::Tz = periods.timezone.parse().unwrap_or(chrono_tz::UTC);
+    let local = |t| in_zone(t, tz);
     println!(
         "week {} to {} ({}): peak {}{}",
-        week.starts_at.format("%Y-%m-%d %H:%M"),
-        week.resets_at.format("%Y-%m-%d %H:%M"),
+        local(week.starts_at),
+        local(week.resets_at),
         periods.timezone,
         pct(Some(week.peak)),
         if week.hit_limit {
@@ -188,7 +195,7 @@ async fn usage_week(
     {
         println!(
             "{:<18} {:>6}  {}",
-            w.resets_at.format("%Y-%m-%d %H:%M"),
+            local(w.resets_at),
             pct(Some(w.peak)),
             if w.hit_limit { "limit" } else { "" }
         );
@@ -730,5 +737,17 @@ pub(super) fn parse_duration(s: &str) -> Option<chrono::Duration> {
         "h" => Some(chrono::Duration::hours(n)),
         "d" => Some(chrono::Duration::days(n)),
         _ => None,
+    }
+}
+
+#[cfg(test)]
+mod week_tests {
+    #[test]
+    fn week_times_are_in_the_schedule_timezone() {
+        let t = "2026-10-21T07:00:00Z".parse().expect("time");
+        assert_eq!(
+            super::in_zone(t, chrono_tz::America::New_York),
+            "2026-10-21 03:00"
+        );
     }
 }

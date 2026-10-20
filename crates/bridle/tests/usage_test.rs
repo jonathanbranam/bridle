@@ -60,7 +60,7 @@ fn week_prints_days_windows_peaks_and_hits() {
         "{out}"
     );
     assert!(
-        out.contains("2026-10-13 15:00") && out.contains("limit"),
+        out.contains("2026-10-13 11:00") && out.contains("limit"),
         "{out}"
     );
 }
