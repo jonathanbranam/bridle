@@ -4,7 +4,7 @@ title = "Show the current budget and focus settings from the CLI, consistently"
 kind = "feature"
 state = "pending"
 created_at = "2026-10-18T15:00:58.246Z"
-updated_at = "2026-10-20T00:42:08.081034Z"
+updated_at = "2026-10-20T00:57:20.449596Z"
 created_by = "external:advisor/tj7q"
 watchers = ["external:advisor/tj7q"]
 branch = "bridle/designer-2ae8-proposal"
@@ -95,3 +95,6 @@ So: in every scenario, each separate fact in a GIVEN (and likewise in WHEN/THEN)
 
 ### note · bridle · 2026-10-20T00:42:08.081Z
 br-2ae8: specs not done by designer-2, the writer ended without a successful stage-done
+
+### note · agent:designer-3 · 2026-10-20T00:57:20.449Z
+stage specs written, waiting for the human's signature (on main at e6825177)
