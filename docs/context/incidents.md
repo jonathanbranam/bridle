@@ -26,6 +26,29 @@ Newest first. Times are UTC. Each entry has:
 
 Related: [[laptop-sleep-and-network-loss-prvy|prvy]] (the laptop sleeping or losing its network).
 
+## 2026-10-20 23:15Z: main red again on the flaky governor test (fourth flake)
+
+- **What happened:** CI check (ubuntu-latest) failed on 9e2b4858 (br-b2g8, a test-only change
+  elsewhere). The only failure was `governor_test working_agent_is_notified_then_stopped_when_its_turn_ends`,
+  "timed out waiting for agent a-2xysa to reach Stopped". Found by the `ci_failed` wake.
+- **Impact:** main red; landings stopped until it is disabled.
+- **Cause:** unknown; br-ar4d's fix (after jtn8, n96z) did not hold. Same symptom as ar4d.
+- **Category:** `ci`.
+- **Follow-up:** br-sftn (disable with `#[ignore]`, critical), br-remg (the fix, later).
+
+## 2026-10-20 22:10Z: agents told to send to `dalek.local-home`; the first fix found no bug
+
+- **What happened:** manager-2's CLI warned it to send with `--project dalek.local-home`, no
+  such daemon. br-b2g8 was filed for it; its worker found no bug, landed only a regression test,
+  and blamed a stale binary. The orchestrator traced the real cause.
+- **Impact:** one ticket's build (~30 min of machine time) spent on the wrong cause. br-q7my (turn
+  the warning into a refusal) would have refused every dalek agent's mail to the orchestrator.
+- **Cause:** agents run with their own `BRIDLE_HOME` (k6b3) with no `config.toml`, so
+  `machine_home` sees no `[machine] name` and falls back to `hostname` (`dalek.local`). The
+  worker tested with a real config only.
+- **Category:** `config`, `role`.
+- **Follow-up:** br-bfrz (blocks br-q7my).
+
 ## 2026-10-17 22:04Z: the human's Stages MVP go sat in dalek-home's inbox for 3 hours
 
 - **What happened:** advisor/tj7q and advisor/product-manager sent the human's "Yes approved.
