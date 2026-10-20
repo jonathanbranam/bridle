@@ -4,7 +4,7 @@ title = "Stage watch: an idle, finished designer holds the ticket forever, so a 
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-20T00:23:00.303Z"
-updated_at = "2026-10-20T01:43:16.305396Z"
+updated_at = "2026-10-20T01:43:30.283161Z"
 created_by = "external:advisor/tj7q"
 watchers = [
     "external:advisor/tj7q",
@@ -38,3 +38,6 @@ done: idle writer no longer holds; changes drops writer; check exit 0, 1908 test
 
 ### note · agent:manager-2 · 2026-10-20T01:43:16.305Z
 integrated: c7d0f900481111ec5f8a4ac17a704995b5f62235 (branch bridle/w43ug)
+
+### note · agent:manager-2 · 2026-10-20T01:43:30.283Z
+cleanup: removed agent w43ug, branch bridle/w43ug
