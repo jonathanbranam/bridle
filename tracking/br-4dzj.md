@@ -2,14 +2,17 @@
 id = "br-4dzj"
 title = "link-check Stop hook links tickets to the session's project, not the ticket's (wrong links from a home-project orchestrator)"
 kind = "bug"
-state = "claimed"
+state = "integrated"
 created_at = "2026-10-18T13:53:21.625Z"
-updated_at = "2026-10-20T02:06:29.497644Z"
+updated_at = "2026-10-20T02:25:23.992072Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:w4dzj",
 ]
+branch = "bridle/w4dzj"
+commit = "5c57e7b3c5d7006fed465d089534289dc6d07417"
+summary = "link-check hook now resolves each id to its owning project: link_check::owning (qualified id by prefix, bare id by first project having it, session's first, else session's), with other projects read from the machine registry (prefix + repo). unlinked_ids takes all known prefixes. Unit tests for the three cases. Registry is local-machine only."
 ticket = "4dzj"
 +++
 
@@ -28,3 +31,12 @@ Verify: in a dalek-home orchestrator session, a reply naming a bridle ticket eit
 
 ### note · external:orchestrator · 2026-10-18T13:53:21.656Z
 submitted by external:orchestrator
+
+### note · agent:w4dzj · 2026-10-20T02:25:16.040Z
+built: 55c020fc0b4f4d58e2fd94ceb8496c505ab9f454 (branch bridle/w4dzj)
+
+### note · agent:w4dzj · 2026-10-20T02:25:16.559Z
+done: link-check resolves owning project; just check exit 0, 1913 tests passed; 55c020fc0b4f4d58e2fd94ceb8496c505ab9f454
+
+### note · agent:manager-2 · 2026-10-20T02:25:23.992Z
+integrated: 5c57e7b3c5d7006fed465d089534289dc6d07417 (branch bridle/w4dzj)
