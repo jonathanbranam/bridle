@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `bridle usage --by name` and `--by session` mark a role or name "(ext)" only when all its sessions are external (they were all marked, since role and name groups had no agent id); hosted roles and names show plain (br-9uqw).
 - `bridle usage --week` prints the week and window times in the schedule timezone (they were UTC under that label), and a week's days ignore readings that still carry the previous week's reset, so the first day no longer shows the old peak (br-h2p5).
 - Landing no longer leaves its `integrate/<task>` scratch branch behind: the integration worktree is detached and the branch deleted when the landing ends, leftovers are deleted at daemon start, and the disk tick deletes local `bridle/*` branches with no agent, an integrated or dropped ticket and commits merged into the integration branch (br-wnuf).
 - Role prompts (project-manager, manager) say tickets settle 10 minutes, the `[tasks] settle` default, and list what restarts the period; the invalid-`settle` warning says it falls back to 10m, not 5m (br-ze9r).

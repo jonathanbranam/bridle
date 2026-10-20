@@ -88,9 +88,12 @@ pub fn build(
     until: Option<DateTime<Utc>>,
 ) -> UsageGroups {
     let total_cost: f64 = sessions.iter().map(|s| s.cost_usd).sum();
+    // A session is external when it has no hosted agent id; a role or name is external only
+    // when every session under it is (br-9uqw), so a hosted role never reads "(ext)".
     let group = |key: &str,
                  sums: &Sums,
                  agent_id: Option<String>,
+                 external: bool,
                  children: Vec<UsageShareGroup>| UsageShareGroup {
         key: key.to_string(),
         project: project.to_string(),
@@ -104,8 +107,8 @@ pub fn build(
         } else {
             0.0
         },
-        external: agent_id.is_none(),
         agent_id,
+        external,
         children,
     };
     let mut tree: BTreeMap<String, BTreeMap<String, Vec<SessionUsage>>> = BTreeMap::new();
@@ -121,6 +124,7 @@ pub fn build(
         let (mut role_sums, mut name_groups) = (Sums::default(), Vec::new());
         for (name, sessions) in names {
             let (mut name_sums, mut session_groups) = (Sums::default(), Vec::new());
+            let mut name_external = true;
             for s in sessions {
                 let sums = Sums {
                     turns: s.turns,
@@ -132,12 +136,27 @@ pub fn build(
                     },
                 };
                 name_sums.add(&sums);
-                session_groups.push(group(&s.session_id, &sums, s.agent_id, Vec::new()));
+                let external = s.agent_id.is_none();
+                name_external &= external;
+                session_groups.push(group(
+                    &s.session_id,
+                    &sums,
+                    s.agent_id,
+                    external,
+                    Vec::new(),
+                ));
             }
             role_sums.add(&name_sums);
-            name_groups.push(group(&name, &name_sums, None, session_groups));
+            name_groups.push(group(
+                &name,
+                &name_sums,
+                None,
+                name_external,
+                session_groups,
+            ));
         }
-        roles.push(group(&role, &role_sums, None, name_groups));
+        let role_external = name_groups.iter().all(|n| n.external);
+        roles.push(group(&role, &role_sums, None, role_external, name_groups));
     }
     UsageGroups {
         project: project.to_string(),
@@ -149,5 +168,58 @@ pub fn build(
         points_per_dollar: (total_cost > 0.0 && points > 0.0).then(|| points / total_cost),
         share_note: SHARE_NOTE.to_string(),
         roles,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn session(role: &str, name: &str, id: &str, agent_id: Option<&str>) -> SessionUsage {
+        SessionUsage {
+            role: role.to_string(),
+            name: name.to_string(),
+            session_id: id.to_string(),
+            agent_id: agent_id.map(str::to_string),
+            turns: Some(1),
+            tokens: TokenTotals::default(),
+            cost_usd: 1.0,
+            first_context: None,
+            last_context: None,
+        }
+    }
+
+    /// br-9uqw: a role or name is "(ext)" only when every session under it is external; a
+    /// hosted role's rows stay plain, and a name mixing hosted and external sessions is plain.
+    #[test]
+    fn external_only_when_every_session_is_external() {
+        let g = build(
+            vec![
+                session("worker", "w1", "s-1", Some("agent-1")),
+                session("worker", "w2", "s-2", Some("agent-2")),
+                session("advisor", "pm", "ext-1", None),
+                session("advisor", "pm", "ext-2", None),
+                session("worker", "mixed", "s-3", Some("agent-3")),
+                session("worker", "mixed", "ext-3", None),
+            ],
+            0.0,
+            "p",
+            "m",
+            None,
+            None,
+        );
+        let role = |key: &str| g.roles.iter().find(|r| r.key == key).expect("role");
+        let worker = role("worker");
+        assert!(!worker.external && worker.agent_id.is_none());
+        let name = |key: &str| worker.children.iter().find(|n| n.key == key).expect("name");
+        assert!(!name("w1").external);
+        assert!(!name("w1").children[0].external);
+        assert!(!name("mixed").external);
+        assert!(!name("mixed").children[0].external);
+        assert!(name("mixed").children[1].external);
+        let advisor = role("advisor");
+        assert!(advisor.external);
+        assert!(advisor.children[0].external);
+        assert!(advisor.children[0].children.iter().all(|s| s.external));
     }
 }
