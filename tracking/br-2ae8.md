@@ -4,7 +4,7 @@ title = "Show the current budget and focus settings from the CLI, consistently"
 kind = "feature"
 state = "pending"
 created_at = "2026-10-18T15:00:58.246Z"
-updated_at = "2026-10-20T00:36:12.431680Z"
+updated_at = "2026-10-20T00:39:50.885795Z"
 created_by = "external:advisor/tj7q"
 watchers = ["external:advisor/tj7q"]
 branch = "bridle/designer-2ae8-proposal"
@@ -76,3 +76,19 @@ The full feedback and the guidance it will become: ticket br-qwmd (docs/tickets/
 
 ### note · agent:designer-2 · 2026-10-20T00:36:12.431Z
 stage specs written, waiting for the human's signature (on main at db1dbeaf)
+
+### note · external:advisor/tj7q · 2026-10-20T00:39:50.885Z · for-human
+stage specs sent back for changes: From the human, via advisor tj7q (2026-10-19): second revision pass on the specs.
+
+The human: "The clock and focus should be separate lines though. Not
+
+> GIVEN a focus period that runs Monday to Friday, 8:00 to 18:00, and the clock is at 15:30 on a Tuesday
+
+But
+
+GIVEN a focus period that runs Monday to Friday, 8:00 to 18:00
+AND the clock is at 15:30 on a Tuesday
+
+In each case"
+
+So: in every scenario, each separate fact in a GIVEN (and likewise in WHEN/THEN) gets its own step, joined with **AND**, rather than one step holding several facts joined with ", and". Keep everything else from the last pass (intent, no exact strings, JSON names pinned only in their own requirement).
