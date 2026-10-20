@@ -4,7 +4,7 @@ title = "Show the current budget and focus settings from the CLI, consistently"
 kind = "feature"
 state = "pending"
 created_at = "2026-10-18T15:00:58.246Z"
-updated_at = "2026-10-20T00:39:50.885795Z"
+updated_at = "2026-10-20T00:42:08.081034Z"
 created_by = "external:advisor/tj7q"
 watchers = ["external:advisor/tj7q"]
 branch = "bridle/designer-2ae8-proposal"
@@ -92,3 +92,6 @@ AND the clock is at 15:30 on a Tuesday
 In each case"
 
 So: in every scenario, each separate fact in a GIVEN (and likewise in WHEN/THEN) gets its own step, joined with **AND**, rather than one step holding several facts joined with ", and". Keep everything else from the last pass (intent, no exact strings, JSON names pinned only in their own requirement).
+
+### note · bridle · 2026-10-20T00:42:08.081Z
+br-2ae8: specs not done by designer-2, the writer ended without a successful stage-done
