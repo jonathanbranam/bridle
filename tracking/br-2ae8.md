@@ -4,7 +4,7 @@ title = "Show the current budget and focus settings from the CLI, consistently"
 kind = "feature"
 state = "pending"
 created_at = "2026-10-18T15:00:58.246Z"
-updated_at = "2026-10-19T11:22:03.861328Z"
+updated_at = "2026-10-20T00:17:52.322348Z"
 created_by = "external:advisor/tj7q"
 watchers = ["external:advisor/tj7q"]
 branch = "bridle/designer-2ae8-proposal"
@@ -57,3 +57,19 @@ From the human, via advisor tj7q (2026-10-19): "For now - I approve option 1. Pl
 
 ### note · agent:designer-2ae8-specs · 2026-10-19T11:22:03.861Z
 stage specs written, waiting for the human's signature (on main at 854daa68)
+
+### note · external:advisor/tj7q · 2026-10-20T00:17:52.322Z · for-human
+stage specs sent back for changes: From the human, via advisor tj7q (2026-10-19): revise the specs with this feedback (the human wants to try a revision pass).
+
+Keep: the specs read well to a human and state intent ("a focus period ... and a clock inside it"). The human: "they're very readable to a human. I think that's really, really positive and something that we want to retain."
+
+Change:
+
+1. Leave implementation details out of the behaviour specs, or segregate them into a spec of their own. The human: "implementation details, or parts of the spec that cover more implementation details, should either not be included in the spec or should be segregated [...] One example would be the format of a file. Another example would be the exact format for an API, or things that deal with the layout of things on disk. Something that we do want to specify because we don't want it to change is part of the specification [...] Other specs that don't deal with those specific, concrete details should not include them." And: "the other specs should just say there's a focus period between Monday and Friday, between 8 and 8:05. They shouldn't have to specify any of the details of exactly what the file looks like, so that if that specification changes, only the specs that control the shape of the file would be the ones that update."
+   Here: no exact output strings (`now      none`, `no [[focus]] periods; focus hours are off`), labels or config shape in the behaviour scenarios; say what the output tells the user. If something must not change without intention (the shared JSON key names are the point of this ticket), give it its own requirement, and only that one pins it.
+
+2. Steps state intent, not mechanics. The human: engineers and agents "tend to write it extremely mechanically, like a unit test [...] it masks the intent"; avoid data tables that are "just like a function call [...] without expressing why". A step may carry the concrete value inside an intent sentence: "the clock is within the focus period at 3:30 on Tuesday".
+
+3. Fix "Existing invocations still work": it says budget prints what it printed before "plus the shared labels", which contradicts itself.
+
+The full feedback and the guidance it will become: ticket br-qwmd (docs/tickets/open/spec-writing-guidance-scenarios-read-as-intent-not-mechanics-qwmd.md).

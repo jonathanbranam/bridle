@@ -2,11 +2,14 @@
 id = "br-2yxm"
 title = "Self-upgrade starves while the manager lands back to back: each land's --postpone 45m pushes the upgrade out again"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-19T23:51:08.165Z"
-updated_at = "2026-10-20T00:06:30.285610Z"
+updated_at = "2026-10-20T00:17:41.338346Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "agent:w2yxm",
+]
 ticket = "2yxm"
 +++
 

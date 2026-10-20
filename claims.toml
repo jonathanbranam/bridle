@@ -1,12 +1,17 @@
 [[claim]]
+task = "br-9667"
+claimed_by = "human"
+claimed_at = "2026-10-03T11:04:49.804Z"
+
+[[claim]]
 task = "br-z64p"
 claimed_by = "human"
 claimed_at = "2026-10-18T02:15:14.743Z"
 
 [[claim]]
-task = "br-mru4"
+task = "br-7575"
 claimed_by = "human"
-claimed_at = "2026-10-15T03:25:37.139Z"
+claimed_at = "2026-10-03T11:04:49.732Z"
 
 [[claim]]
 task = "br-cfb2"
@@ -14,11 +19,11 @@ claimed_by = "human"
 claimed_at = "2026-10-07T10:01:40.850Z"
 
 [[claim]]
-task = "br-9667"
+task = "br-mru4"
 claimed_by = "human"
-claimed_at = "2026-10-03T11:04:49.804Z"
+claimed_at = "2026-10-15T03:25:37.139Z"
 
 [[claim]]
-task = "br-7575"
-claimed_by = "human"
-claimed_at = "2026-10-03T11:04:49.732Z"
+task = "br-2yxm"
+claimed_by = "agent:w2yxm"
+claimed_at = "2026-10-20T00:17:41.338346Z"
