@@ -282,3 +282,40 @@ async fn cancel_ends_an_upgrade_drain_quietly() {
     daemon.running.shutdown();
     daemon.running.join().await.expect("join");
 }
+
+/// br-2yxm: a manager postpones before every land; the postponement must end with the land, or
+/// back-to-back lands keep a pending self-upgrade out indefinitely.
+#[tokio::test]
+async fn a_land_ends_the_postponement_it_was_made_for() {
+    let (daemon, _tmp) = support::start_daemon(None).await;
+    let orch = daemon.external_client("orchestrator").await;
+    for _ in 0..2 {
+        orch.restart_hold(&postpone(2700)).await.expect("postponed");
+        assert!(
+            daemon
+                .client
+                .status()
+                .await
+                .expect("status")
+                .postponed_until
+                .is_some()
+        );
+        // The land fails (no such ticket); any end of a land lifts the postponement.
+        let _ = daemon
+            .client
+            .land_task("br-nope", &bridle_api::types::LandRequest::default())
+            .await;
+        assert!(
+            daemon
+                .client
+                .status()
+                .await
+                .expect("status")
+                .postponed_until
+                .is_none(),
+            "the land's end lifts the postponement"
+        );
+    }
+    daemon.running.shutdown();
+    daemon.running.join().await.expect("join");
+}

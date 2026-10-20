@@ -359,7 +359,7 @@ conflict, and an upgrade ends quietly (an `upgrade.cancelled` event, no failure 
 not recorded as built, so the next cycle rebuilds). `postpone` sets an in-memory expiry (capped at 7 days;
 a restart ends it): the self-upgrade tick starts nothing, a new `POST /v1/restart` (plain or
 `--upgrade`) is refused with 409, and a drain already pending does not take its quiet point until the
-expiry. Status shows it as `postponed_until` (`upgrade    postponed until HH:MM`). It does not
+expiry. A land (`POST /v1/tickets/<id>/land`, any outcome) ends the postponement when it ends (br-2yxm): a manager that postpones before every land cannot keep a pending self-upgrade out between lands. Status shows it as `postponed_until` (`upgrade    postponed until HH:MM`). It does not
 lift a drain: claims and spawns stay refused while one is pending, so postpone before the drain.
 
 #### Upgrade

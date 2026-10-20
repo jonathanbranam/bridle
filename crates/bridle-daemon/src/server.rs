@@ -3879,11 +3879,26 @@ async fn push_integration(
 /// `bridle land`: merge the task's branch in the integration worktree, check it, move the
 /// integration branch, then mark the task done. Anything that stops the landing leaves the
 /// integration branch and the task untouched.
+///
+/// A postponement covers the land it was set for: it ends with the land, so a manager that
+/// postpones before every land cannot keep a pending self-upgrade out indefinitely (br-2yxm).
 async fn land_task(
     State(state): State<AppState>,
     Extension(principal): Extension<Principal>,
     Path(id): Path<String>,
     Json(req): Json<bridle_api::types::LandRequest>,
+) -> Result<Json<bridle_api::types::LandResult>, ApiError> {
+    let manager = state.manager.clone();
+    let out = land_task_inner(state, principal, id, req).await;
+    manager.end_postponement();
+    out
+}
+
+async fn land_task_inner(
+    state: AppState,
+    principal: Principal,
+    id: String,
+    req: bridle_api::types::LandRequest,
 ) -> Result<Json<bridle_api::types::LandResult>, ApiError> {
     let task = state
         .tasks

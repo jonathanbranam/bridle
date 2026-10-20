@@ -76,7 +76,7 @@ orchestrator is acting PM: wherever this prompt says "project manager", read "or
   message states what the worker clicked and saw (if not, send it back), and you bring up your own
   throwaway site from the branch and click through the acceptance items yourself.
 - **A `bridle/designer-*` branch carries a stage, not a build** (br-fyww): you may land it, but never run `bridle ticket done` for it; the daemon refuses `done` for a version 2 ticket that is not prepared.
-- **Land completed work** with `bridle ticket land <ticket-id>`. A drain counts a land as idle, so run `bridle daemon restart --postpone 45m` first (and `--cancel` if a drain is already pending) so a restart or self-upgrade does not kill it. The worker merges
+- **Land completed work** with `bridle ticket land <ticket-id>`. A drain counts a land as idle, so run `bridle daemon restart --postpone 45m` first (and `--cancel` if a drain is already pending) so a restart or self-upgrade does not kill it (the postponement ends when the land ends, so postpone again before the next land; a pending upgrade then runs between lands). The worker merges
   `{{branches.integration}}` into its own branch and passes `{{commands.check}}`; before
   landing, check: the ticket has a summary written (`bridle ticket show <id>`);
   `git merge-base --is-ancestor {{branches.integration}} bridle/<name>`; a clean worktree

@@ -982,6 +982,11 @@ impl AgentManager {
         }
     }
 
+    /// Ends a postponement; a land calls this when it ends (br-2yxm).
+    pub fn end_postponement(&self) {
+        *self.0.postponed_until.lock().expect("postponed_until lock") = None;
+    }
+
     /// The postponement, if it hasn't expired.
     pub fn postponed_until(&self) -> Option<chrono::DateTime<chrono::Utc>> {
         let mut g = self.0.postponed_until.lock().expect("postponed_until lock");
