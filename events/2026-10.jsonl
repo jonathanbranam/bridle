@@ -2971,3 +2971,5 @@
 {"actor":"external:aide","at":"2026-10-20T23:18:42.214458Z","from":"pending","task":"br-wqy5","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-20T23:25:55.295197Z","from":"open","task":"br-sftn","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-20T23:25:56.624384Z","queue":"reprioritized"}
+{"actor":"agent:pm-1","at":"2026-10-20T23:33:03.622109Z","from":"open","task":"br-wqy5","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-20T23:33:05.772458Z","queue":"reprioritized"}
