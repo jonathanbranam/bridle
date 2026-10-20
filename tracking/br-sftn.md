@@ -2,9 +2,9 @@
 id = "br-sftn"
 title = "CI red on main after br-b2g8: check (ubuntu-latest) fails on 9e2b4858"
 kind = "fix"
-state = "open"
+state = "planned"
 created_at = "2026-10-20T23:15:41.625Z"
-updated_at = "2026-10-20T23:16:50.537797Z"
+updated_at = "2026-10-20T23:25:55.295197Z"
 created_by = "agent:manager-2"
 watchers = ["agent:manager-2"]
 ticket = "sftn"
