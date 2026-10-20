@@ -2,11 +2,14 @@
 id = "br-fpqy"
 title = "bridle session stop: hand over, then stop an advisor, aide or orchestrator session until it is started again"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-20T00:02:27.424Z"
-updated_at = "2026-10-20T00:17:07.819986Z"
+updated_at = "2026-10-20T00:45:26.659758Z"
 created_by = "external:advisor/usage"
-watchers = ["external:advisor/usage"]
+watchers = [
+    "external:advisor/usage",
+    "agent:wfpqy",
+]
 ticket = "fpqy"
 +++
 
