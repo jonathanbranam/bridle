@@ -340,6 +340,25 @@ mod tests {
     }
 
     #[test]
+    fn the_home_is_named_from_the_machine_name_not_the_raw_hostname() {
+        // br-b2g8: a `hostname` of dalek.local must not leak into `<host>-home` when
+        // `[machine] name` is set, so the warning names a daemon that exists (dalek-home).
+        let d = home_dir(
+            "[machine]\nname = \"dalek\"\n[machines]\ndalek = \"dalek\"\n[projects]\ndalek-home = { machine = \"dalek\", port = 7410 }\n",
+        );
+        let h = machine_home(d.path());
+        assert_eq!(h.home.as_deref(), Some("dalek-home"));
+        let w = h
+            .warning(d.path(), Some("bridle"), "bridle up --project {home}")
+            .expect("warns");
+        assert!(
+            w.contains("'dalek-home'") && w.contains("bridle up --project dalek-home"),
+            "{w}"
+        );
+        assert!(!w.contains("dalek.local"), "{w}");
+    }
+
+    #[test]
     fn a_missing_home_says_how_to_create_one() {
         let d = home_dir("[machine]\nname = \"mbp\"\n");
         let w = machine_home(d.path())
