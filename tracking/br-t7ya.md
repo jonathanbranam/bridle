@@ -4,7 +4,7 @@ title = "Workers push their own branches to origin (no force), and landed branch
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-12T14:36:06.928Z"
-updated_at = "2026-10-20T04:56:26.760059Z"
+updated_at = "2026-10-20T04:56:41.025536Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -36,3 +36,6 @@ done: bridle push-branch (own bridle/<name> only, no force/refspec/other/integra
 
 ### note · agent:manager-2 · 2026-10-20T04:56:26.760Z
 integrated: 63ff8bd34f11287e2b273c31c77b701def776d4a (branch bridle/wt7ya)
+
+### note · agent:manager-2 · 2026-10-20T04:56:41.025Z
+cleanup: removed agent wt7ya, branch bridle/wt7ya
