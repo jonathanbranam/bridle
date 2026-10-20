@@ -2,14 +2,17 @@
 id = "br-sftn"
 title = "CI red on main after br-b2g8: check (ubuntu-latest) fails on 9e2b4858"
 kind = "fix"
-state = "claimed"
+state = "integrated"
 created_at = "2026-10-20T23:15:41.625Z"
-updated_at = "2026-10-20T23:58:26.869327Z"
+updated_at = "2026-10-20T23:59:33.264845Z"
 created_by = "agent:manager-2"
 watchers = [
     "agent:manager-2",
     "agent:ci-sftn",
 ]
+branch = "bridle/ci-sftn"
+commit = "9bd67d61b5b36dd0c7d64d7d145881f815b64805"
+summary = 'Disabled the flaky governor test working_agent_is_notified_then_stopped_when_its_turn_ends with #[ignore = "flaky, br-remg"] (crates/bridle-daemon/tests/governor_test.rs), plus a CHANGELOG Internal line. Nothing else changed. Landed on diff review and CI, not the local check: just check here fails on load-dependent daemon-timeout tests that pass alone (serve_detach_returns_once_healthy_and_daemons_lists_it, two_sites_log_in_serve..., ticket_row_commands_match_the_hidden_task_alias, sigint_shuts_down_cleanly_while_idle). Those are filed as br-6wp2; the governor fix is br-remg.'
 ticket = "sftn"
 +++
 
@@ -44,3 +47,18 @@ Retry of just check: exit 100 (recipe test failed), Summary 1186/1941 tests run:
 
 ### note · agent:manager-2 · 2026-10-20T23:58:26.869Z
 manager-2: worker commit 0bcec9fb is the trivial disable (governor test #[ignore] + CHANGELOG). just check on this machine fails every run on a different load-dependent daemon-timeout test that passes alone (serve_detach_returns_once_healthy_and_daemons_lists_it, two_sites_log_in_serve..., ticket_row_commands_match_the_hidden_task_alias, sigint_shuts_down_cleanly_while_idle); exit 100, 1185/1186 passed. Landing runs the check, so it would fail the same way. Asking the orchestrator: accept landing on a diff review plus CI as the check, or hold until the machine is quiet? Not landing meanwhile.
+
+### note · external:orchestrator · 2026-10-20T23:59:15.348Z
+orchestrator: yes, land it. I reviewed 0bcec9fb: one #[ignore = "flaky, br-remg"] line plus a CHANGELOG line, nothing else. main is already red, so skip the local check for this landing and let CI on the push verify it. Don't ignore the other four tests; their load-dependent timeouts are filed as br-6wp2 for later.
+
+### note · agent:manager-2 · 2026-10-20T23:59:21.511Z
+Orchestrator approved landing on diff review with CI as the check. Please write the ticket summary now (bridle ticket summary), then push-branch if not done and message me. Do not rerun just check.
+
+### note · agent:ci-sftn · 2026-10-20T23:59:26.019Z
+built: 0bcec9fb (branch bridle/ci-sftn)
+
+### note · agent:ci-sftn · 2026-10-20T23:59:29.069Z
+done: disabled governor_test working_agent_is_notified_then_stopped_when_its_turn_ends (#[ignore = "flaky, br-remg"]) + CHANGELOG Internal line; local just check not run per orchestrator (fails on load timeouts that pass alone, filed as br-6wp2); CI on the push verifies; 0bcec9fb
+
+### note · agent:manager-2 · 2026-10-20T23:59:33.264Z
+integrated: 9bd67d61b5b36dd0c7d64d7d145881f815b64805 (branch bridle/ci-sftn)
