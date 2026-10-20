@@ -653,6 +653,49 @@ pub async fn sweep_landed(
     removed
 }
 
+/// Deletes the local `bridle/*` branches in `eligible` (the caller has checked that no agent
+/// holds them and their ticket is integrated or dropped) that are merged into `integration`
+/// and checked out nowhere. `git branch --merged`, so a branch that merely landed by squash
+/// stays. Returns the branches deleted (br-wnuf).
+pub async fn sweep_merged_branches(
+    repo: &Path,
+    integration: &str,
+    eligible: &std::collections::HashSet<String>,
+) -> Vec<String> {
+    let Ok(merged) = run_git(
+        repo,
+        &[
+            "branch",
+            "--merged",
+            integration,
+            "--list",
+            "bridle/*",
+            "--format=%(refname:short)",
+        ],
+    )
+    .await
+    else {
+        return Vec::new();
+    };
+    let Ok(wts) = run_git(repo, &["worktree", "list", "--porcelain"]).await else {
+        return Vec::new();
+    };
+    let held: Vec<&str> = wts
+        .lines()
+        .filter_map(|l| l.strip_prefix("branch refs/heads/"))
+        .collect();
+    let mut deleted = Vec::new();
+    for b in merged.lines() {
+        if eligible.contains(b)
+            && !held.contains(&b)
+            && run_git(repo, &["branch", "-D", b]).await.is_ok()
+        {
+            deleted.push(b.to_string());
+        }
+    }
+    deleted
+}
+
 /// Whether `path` is inside a git repository (worktree or main checkout).
 pub async fn is_git_repo(path: &Path) -> bool {
     Command::new("git")
@@ -1050,6 +1093,46 @@ mod tests {
         }
         // The branch outlives the checkout.
         assert!(branch_exists(&repo, "b/landed").await.expect("exists"));
+    }
+
+    #[tokio::test]
+    async fn sweep_merged_branches_deletes_only_eligible_merged_unheld_branches() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let repo = tmp.path().join("repo");
+        init_repo(&repo).await;
+        let g = |args: &[&str]| {
+            let out = std::process::Command::new("git")
+                .arg("-C")
+                .arg(&repo)
+                .args(["-c", "user.email=t@e.com", "-c", "user.name=T"])
+                .args(args)
+                .output()
+                .expect("git");
+            assert!(out.status.success(), "git {args:?}");
+        };
+        g(&["branch", "bridle/merged", "main"]);
+        g(&["branch", "bridle/not-eligible", "main"]);
+        g(&["branch", "bridle/held", "main"]);
+        g(&["checkout", "-q", "-b", "bridle/unmerged", "main"]);
+        g(&["commit", "-q", "--allow-empty", "-m", "work"]);
+        g(&["checkout", "-q", "main"]);
+        let wt = tmp.path().join("held-wt");
+        g(&[
+            "worktree",
+            "add",
+            "-q",
+            &wt.to_string_lossy(),
+            "bridle/held",
+        ]);
+        let eligible = ["bridle/merged", "bridle/held", "bridle/unmerged"]
+            .map(String::from)
+            .into_iter()
+            .collect();
+        let gone = sweep_merged_branches(&repo, "main", &eligible).await;
+        assert_eq!(gone, vec!["bridle/merged".to_string()]);
+        for b in ["bridle/not-eligible", "bridle/held", "bridle/unmerged"] {
+            assert!(branch_exists(&repo, b).await.expect("exists"), "{b}");
+        }
     }
 
     #[tokio::test]

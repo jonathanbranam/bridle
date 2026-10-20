@@ -9,13 +9,14 @@ use std::path::Path;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use bridle_api::types::{MessageKind, When, event_kind};
+use bridle_api::types::{MessageKind, TicketState, When, event_kind};
 use serde_json::json;
 
 use crate::events::Emitter;
 use crate::paths::Workspace;
 use crate::store::Store;
 use crate::supervisor::{AgentManager, ToTarget};
+use crate::tasks::TicketManager;
 
 pub const DEFAULT_INTERVAL: Duration = Duration::from_secs(60 * 60);
 pub const DEFAULT_MIN_FREE_GB: u64 = 20;
@@ -68,6 +69,8 @@ struct Inner {
     emitter: Emitter,
     manager: AgentManager,
     store: Store,
+    tasks: TicketManager,
+    integration: String,
     /// Whether the last tick was under the threshold, so the human is told once per
     /// dip, not every hour it stays low.
     low: Mutex<bool>,
@@ -80,6 +83,8 @@ impl DiskMonitor {
         emitter: Emitter,
         manager: AgentManager,
         store: Store,
+        tasks: TicketManager,
+        integration: String,
     ) -> Self {
         DiskMonitor(Arc::new(Inner {
             ws,
@@ -87,6 +92,8 @@ impl DiskMonitor {
             emitter,
             manager,
             store,
+            tasks,
+            integration,
             low: Mutex::new(false),
         }))
     }
@@ -117,8 +124,34 @@ impl DiskMonitor {
         }
     }
 
+    /// Deletes local `bridle/*` branches with no agent whose ticket is integrated or dropped
+    /// and whose commits are on the integration branch. After the worktree sweep (br-wnuf).
+    async fn sweep_merged_branches(&self) {
+        let Ok(agents) = self.0.store.list_agents(true).await else {
+            return;
+        };
+        let held: std::collections::HashSet<_> =
+            agents.iter().filter_map(|a| a.branch.clone()).collect();
+        let eligible = self
+            .0
+            .tasks
+            .list_tasks()
+            .into_iter()
+            .filter(|t| matches!(t.state, TicketState::Integrated | TicketState::Dropped))
+            .filter_map(|t| t.branch)
+            .filter(|b| !held.contains(b))
+            .collect();
+        let ws = &self.0.ws;
+        for branch in
+            crate::worktree::sweep_merged_branches(&ws.repo, &self.0.integration, &eligible).await
+        {
+            tracing::info!(%branch, "deleted merged branch with no agent");
+        }
+    }
+
     pub async fn tick(&self) {
         self.sweep_landed_worktrees().await;
+        self.sweep_merged_branches().await;
         let ws = self.0.ws.clone();
         let r = match tokio::task::spawn_blocking(move || measure(&ws)).await {
             Ok(Ok(r)) => r,

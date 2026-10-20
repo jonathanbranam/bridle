@@ -73,6 +73,14 @@ pub struct Landed {
 
 /// The caller holds the daemon's one-landing-at-a-time lock.
 pub async fn land(i: &LandInput<'_>) -> Result<Landed, LandError> {
+    let r = land_on_scratch(i).await;
+    // Landed or failed, the scratch branch is spent (br-wnuf). An abandoned landing (the
+    // request dropped mid-way) skips this; `sweep_scratch_branches` gets it at the next start.
+    release_scratch(i.repo, &i.dir, i.task).await;
+    r
+}
+
+async fn land_on_scratch(i: &LandInput<'_>) -> Result<Landed, LandError> {
     let mut notes = Vec::new();
     let old = run_git(
         i.repo,
@@ -461,6 +469,53 @@ async fn prepare_worktree(i: &LandInput<'_>, tip: &str) -> Result<PathBuf, Workt
     Ok(i.dir.clone())
 }
 
+/// Moves the integration worktree off `integrate/<task>` (to a detached HEAD, the commit it is on)
+/// and deletes the branch. Best effort: a leftover branch is only clutter.
+async fn release_scratch(repo: &Path, dir: &Path, task: &str) {
+    delete_scratch(repo, dir, &format!("integrate/{task}")).await;
+}
+
+async fn delete_scratch(repo: &Path, dir: &Path, branch: &str) {
+    if dir.join(".git").exists()
+        && run_git(dir, &["rev-parse", "--abbrev-ref", "HEAD"])
+            .await
+            .is_ok_and(|b| b.trim() == branch)
+    {
+        let _ = run_git(dir, &["checkout", "-q", "-f", "--detach"]).await;
+    }
+    let _ = run_git(repo, &["branch", "-D", branch]).await;
+}
+
+/// Deletes every `integrate/*` branch except those of the tasks in `in_progress`: the leftovers
+/// of landings that ended without cleaning up (br-wnuf). Run at daemon start, when none is
+/// running. Returns the branches deleted.
+pub async fn sweep_scratch_branches(repo: &Path, dir: &Path, in_progress: &[&str]) -> Vec<String> {
+    let Ok(list) = run_git(
+        repo,
+        &[
+            "for-each-ref",
+            "--format=%(refname:short)",
+            "refs/heads/integrate/",
+        ],
+    )
+    .await
+    else {
+        return Vec::new();
+    };
+    let mut deleted = Vec::new();
+    for b in list.lines() {
+        let task = b.strip_prefix("integrate/").unwrap_or(b);
+        if in_progress.contains(&task) {
+            continue;
+        }
+        delete_scratch(repo, dir, b).await;
+        if !worktree::branch_exists(repo, b).await.unwrap_or(true) {
+            deleted.push(b.to_string());
+        }
+    }
+    deleted
+}
+
 fn count_path(i: &LandInput<'_>) -> PathBuf {
     i.dir.with_file_name(COUNT_FILE)
 }
@@ -539,6 +594,84 @@ pub async fn run_check_for_test(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn git(dir: &Path, args: &[&str]) -> String {
+        let out = std::process::Command::new("git")
+            .arg("-C")
+            .arg(dir)
+            .args(["-c", "user.email=t@e.com", "-c", "user.name=T"])
+            .args(args)
+            .output()
+            .unwrap();
+        assert!(
+            out.status.success(),
+            "git {args:?}: {}",
+            String::from_utf8_lossy(&out.stderr)
+        );
+        String::from_utf8_lossy(&out.stdout).to_string()
+    }
+
+    fn scratch_repo() -> (tempfile::TempDir, PathBuf, PathBuf) {
+        let tmp = tempfile::tempdir().unwrap();
+        let repo = tmp.path().join("repo");
+        std::fs::create_dir(&repo).unwrap();
+        git(&repo, &["init", "-q", "-b", "main"]);
+        git(&repo, &["commit", "-q", "--allow-empty", "-m", "init"]);
+        let dir = tmp.path().join("integration");
+        let d = dir.to_string_lossy().to_string();
+        git(
+            &repo,
+            &[
+                "worktree",
+                "add",
+                "-q",
+                "-B",
+                "integrate/br-done",
+                &d,
+                "main",
+            ],
+        );
+        git(&repo, &["branch", "integrate/br-live", "main"]);
+        git(&repo, &["branch", "integrate/br-old", "main"]);
+        (tmp, repo, dir)
+    }
+
+    #[tokio::test]
+    async fn release_scratch_detaches_the_worktree_and_deletes_the_branch() {
+        let (_tmp, repo, dir) = scratch_repo();
+        release_scratch(&repo, &dir, "br-done").await;
+        assert!(
+            !worktree::branch_exists(&repo, "integrate/br-done")
+                .await
+                .unwrap()
+        );
+        assert_eq!(
+            git(&dir, &["rev-parse", "--abbrev-ref", "HEAD"]).trim(),
+            "HEAD"
+        );
+    }
+
+    #[tokio::test]
+    async fn start_sweep_deletes_ended_landings_but_not_one_in_progress() {
+        let (_tmp, repo, dir) = scratch_repo();
+        let gone = sweep_scratch_branches(&repo, &dir, &["br-live"]).await;
+        assert_eq!(gone.len(), 2);
+        assert!(
+            worktree::branch_exists(&repo, "integrate/br-live")
+                .await
+                .unwrap()
+        );
+        assert!(
+            !worktree::branch_exists(&repo, "integrate/br-old")
+                .await
+                .unwrap()
+        );
+        assert!(
+            !worktree::branch_exists(&repo, "integrate/br-done")
+                .await
+                .unwrap()
+        );
+    }
 
     fn ticket_tree(version: &str, tasks: Option<&str>) -> tempfile::TempDir {
         let d = tempfile::tempdir().unwrap();

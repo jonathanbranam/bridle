@@ -142,7 +142,7 @@ start_prompt      = "Check your inbox and tell the human you're ready."   # firs
   ([[docs/design/roles-and-lifecycle|roles]]). `bridle land <task> [--branch B]
   [--check-cmd CMD]` is that integrator: under one lock (one landing at a time) it
   squash-merges the branch (one commit: `<task id>: <title>`, summary body, `Task:`/`Branch:` trailers) in `<workspace>/integration` (a worktree on scratch branch
-  `integrate/<task>` cut from the integration tip, created on first use), runs
+  `integrate/<task>` cut from the integration tip, created on first use; once the landing ends, landed or not, the worktree is detached and the branch deleted, and at daemon start any leftover `integrate/*` branch is deleted too, br-wnuf; the disk tick also deletes local `bridle/*` branches with no agent whose ticket is integrated or dropped and that `git branch --merged` the integration branch shows merged), runs
   `[integration] check = "..."` there (unset: skipped, with a note; `--check-cmd`
   overrides; also skipped, with a note, when the integration branch is an ancestor of the
   branch tip, since the squash tree is then the tree the worker already checked; CI on `main`

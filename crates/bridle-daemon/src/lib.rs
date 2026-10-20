@@ -778,7 +778,16 @@ async fn start_inner(
         emitter.clone(),
         manager.clone(),
         store.clone(),
+        tasks.clone(),
+        config.branches.integration.clone(),
     );
+
+    // Landings of a previous run are over (br-wnuf).
+    for b in
+        integrator::sweep_scratch_branches(&ws.repo, &ws.workspace.join("integration"), &[]).await
+    {
+        tracing::info!(branch = %b, "deleted leftover integration scratch branch");
+    }
 
     let divergence_watch = divergence::DivergenceWatch::new(
         ws.repo.clone(),
