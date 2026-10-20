@@ -2,11 +2,14 @@
 id = "br-t7ya"
 title = "Workers push their own branches to origin (no force), and landed branches are cleaned up safely"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-12T14:36:06.928Z"
-updated_at = "2026-10-19T02:03:40.096874Z"
+updated_at = "2026-10-20T04:33:29.475127Z"
 created_by = "external:advisor/product-manager"
-watchers = ["external:advisor/product-manager"]
+watchers = [
+    "external:advisor/product-manager",
+    "agent:wt7ya",
+]
 ticket = "t7ya"
 +++
 
