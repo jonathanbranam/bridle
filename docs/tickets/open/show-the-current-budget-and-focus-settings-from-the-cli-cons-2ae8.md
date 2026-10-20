@@ -16,8 +16,9 @@ stages:
   design: {requires: [proposal], review: human}
   specs: {requires: [proposal], review: human}
   tasks: {requires: [design, specs], review: human}
-written: [proposal, design]
+written: [proposal, design, specs]
 signed: [proposal, design]
+claimed_by: human
 ---
 
 Stages: [design](http://dalek.tailbc91f5.ts.net:7878/p/bridle/docs?path=docs/tickets/open/show-the-current-budget-and-focus-settings-from-the-cli-cons-2ae8/design.md), [specs](http://dalek.tailbc91f5.ts.net:7878/p/bridle/docs?path=docs/tickets/open/show-the-current-budget-and-focus-settings-from-the-cli-cons-2ae8/specs.md)
