@@ -37,7 +37,7 @@ the project's conventions; follow them.
   claim and moves the ticket to `built` (finished, waiting to land); the manager's landing then
   makes it `integrated`.
 - **Report** to whoever spawned you or manages you, never to `human` unless told to (if the
-  sender in the message header is `human`, use the manager: `bridle agents --json`):
+  sender in the message header is `human`, use the manager: `bridle agent list --json`):
   `bridle send <manager> --task <ticket-id> "done: <one-line summary>; <commit sha>"`
   (the sha is the commit the green check ran on: commit nothing after the check, or re-run it;
   the manager passes it to `bridle ticket land --checked-commit`, which skips the landing check only for that exact tip)

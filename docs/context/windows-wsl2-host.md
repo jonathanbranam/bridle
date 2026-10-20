@@ -185,7 +185,7 @@ starts it at boot.
 - Conditions: untick "Start only if on AC power" (it matters only on a laptop; unverified that
   this PC is a desktop).
 
-Also in Ubuntu, so user services (the bridle daemons) start without a login:
+Also in Ubuntu, so user services (the bridle daemon list) start without a login:
 
 ```bash
 sudo loginctl enable-linger "$USER"
@@ -304,10 +304,10 @@ bridle's own repo (br-ajp5). Unverified: the script on WSL2 (it
 is tested on a local fixture release only).
 
 Then the daemon's units (this step is **to be verified under WSL's systemd**; the audit task
-br-4yc8 will report whether `bridle systemd install` works here):
+br-4yc8 will report whether `bridle daemon systemd install` works here):
 
 ```bash
-bridle systemd install           # writes the daemons' user units and prints the commands it does not run
+bridle daemon systemd install           # writes the daemons' user units and prints the commands it does not run
 ```
 
 Boot step: the orchestrator comes up by itself after a reboot (opt-in; not yet drilled on this host):

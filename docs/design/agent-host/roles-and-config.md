@@ -27,7 +27,7 @@ claim_lease_after = "10m"          # a claimed task is released once its claiman
 self_upgrade = "release"           # default: install the newest GitHub release's binary (no build),
                                    # optionally from `release_repo = "owner/name"`; it also keeps
                                    # ~/.bridle/workflow/vX.Y.Z as the base layer when no `workflow`
-                                   # is set (daemon.md). true builds green main, as `bridle restart
+                                   # is set (daemon.md). true builds green main, as `bridle daemon restart
                                    # --upgrade` (bridle's own repo only); false = off
 self_upgrade_min_interval = "3h"   # at least this long between automatic upgrades, to batch
                                    # landings; "0s" = at once
@@ -195,7 +195,7 @@ Also read from `.bridle/config.toml` (defaults in parentheses; each is documente
 - `[tasks] settle` (`"10m"`; `0` turns it off): how long a ticket waits after creation, a human
   comment/edit or a relay of the human's words before any work on it starts: claiming, planning,
   or spawning an agent for it (`agent spawn --ticket`), in any state. A `worker` spawn with `--ticket` is also refused unless the ticket is `planned` or `claimed` (br-h6h8). An invalid value warns, falls back to
-  10m and is reported by `bridle doctor`; it never stops the daemon starting (coordination.md, "Settling").
+  10m and is reported by `bridle daemon doctor`; it never stops the daemon starting (coordination.md, "Settling").
 - `[tasks] open_stale` (`"4h"`; `0` turns it off): a task left `open` (no activity on it) this long
   goes back to `pending` with a thread note saying why, and the orchestrator and whoever readied it
   are messaged; a task with an open question is left alone. Also, when a task is readied the
@@ -211,7 +211,7 @@ Also read from `.bridle/config.toml` (defaults in parentheses; each is documente
   path is written for one machine. A leading `~` and `$VAR`/`${VAR}` are expanded (an unset
   variable is an error); a relative path is taken against the repo. A workflow directory
   that is missing or unreadable is an error at `bridle serve`, `sync`, `prime` and `rules`,
-  and a failing `bridle doctor` check ("referenced files"), never a silent empty base
+  and a failing `bridle daemon doctor` check ("referenced files"), never a silent empty base
   layer. A git url is an error (`WorkflowGitUrl`) at the same places: it is not resolved. One resolver: `Config::workflow_root`.
 - `[components.<id>]` (`paths`, `parent`, `docs`, `consumers`, all optional): the component map
   ([[../components|components]]); a parent that isn't defined, or a cycle, is a config error.
@@ -320,7 +320,7 @@ are silent: the hook still exits 0 and prints its normal gate output unchanged.
 
 ## Per-spawn tool overrides
 
-`bridle spawn <role> --allow-tool TOOL` (repeatable) grants a tool beyond the
+`bridle agent spawn <role> --allow-tool TOOL` (repeatable) grants a tool beyond the
 role's `allowed_tools` for that one spawn only ([[../cli#Built|cli.md]]).
 It's per-agent, not per-role: nothing is written to `.bridle/config.toml` or
 the role, so the next agent spawned with the same role gets the role's own
@@ -334,14 +334,14 @@ able to lower (docs/tickets/open/per-task-tools-and-model-k8dw.md).
 
 ## Per-spawn secrets
 
-`bridle spawn <role> --env KEY=VALUE` (repeatable) sets an environment
+`bridle agent spawn <role> --env KEY=VALUE` (repeatable) sets an environment
 variable in that one spawn's `claude` process only ([[../cli#Built|cli.md]]),
 e.g. a paid API token (docs/tickets/resolved/per-task-secrets-and-network-access-2ty9.md).
 Same shape as `--allow-tool`: per-agent only, nothing written to
 `.bridle/config.toml` or the role, so the next agent spawned with the same
 role doesn't get it. Like `--allow-tool`, it's persisted on the agent's own
 record and reapplied on that agent's `renew` and `resume`. It isn't logged or
-returned by `bridle agents` or other read endpoints; only the variable names
+returned by `bridle agent list` or other read endpoints; only the variable names
 are ever written to the daemon's log, never the values.
 
 Network access for that secret needs no new mechanism: every role already

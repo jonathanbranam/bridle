@@ -1,4 +1,4 @@
-//! `bridle doctor`: checks the project's setup and says what to fix. Local only: it reads
+//! `bridle daemon doctor`: checks the project's setup and says what to fix. Local only: it reads
 //! the repo, `.bridle/config.toml` and the tools on PATH, and never talks to a daemon or
 //! changes anything (but for `git fetch origin`, which updates remote-tracking refs). See docs/design/cli.md.
 
@@ -527,7 +527,7 @@ struct LinuxHost {
     path: std::path::PathBuf,
     /// `/proc/1/comm`, if readable.
     pid1_comm: Option<String>,
-    /// Any `bridle-*.service` user unit from `bridle systemd install` exists.
+    /// Any `bridle-*.service` user unit from `bridle daemon systemd install` exists.
     units_installed: bool,
     /// Whether linger is on for `user`; `None` when unknown.
     linger: Option<bool>,

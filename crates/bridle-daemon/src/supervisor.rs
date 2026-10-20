@@ -157,7 +157,7 @@ struct AgentRuntime {
     budget_paused: AtomicBool,
     /// Set by [`AgentManager::stop_all`] before it calls `stop()`, so
     /// `classify_exit` can tell a shutdown-triggered stop from an ordinary
-    /// `bridle stop`, and give it a reason that `resume_on_restart` treats
+    /// `bridle agent stop`, and give it a reason that `resume_on_restart` treats
     /// like `lost` after the next start.
     shutdown_requested: AtomicBool,
     /// CAS-claimed the first time something actually calls `renew` for a
@@ -1210,7 +1210,7 @@ impl AgentManager {
                     if canon.starts_with(&wt) {
                         let branch = other.branch.as_deref().unwrap_or("its branch");
                         return Err(SupervisorError::Conflict(format!(
-                            "{} is agent {:?}'s worktree (branch {branch}); one agent per branch: `bridle renew {}` to continue it, or `bridle remove {}` first",
+                            "{} is agent {:?}'s worktree (branch {branch}); one agent per branch: `bridle agent renew {}` to continue it, or `bridle remove {}` first",
                             path.display(),
                             other.name,
                             other.name,
@@ -3460,7 +3460,7 @@ async fn write_message(
 }
 
 /// Reason on `ExitInfo` for an agent stopped as part of daemon shutdown
-/// (`AgentManager::stop_all`), distinct from an ordinary `bridle stop`'s
+/// (`AgentManager::stop_all`), distinct from an ordinary `bridle agent stop`'s
 /// `sigterm`/`sigkill`/`stdin_closed`. `run_autostart_and_resume` treats a
 /// `resume_on_restart` role stopped this way the same as `lost`, so it comes
 /// back after a clean restart, not only after a crash.

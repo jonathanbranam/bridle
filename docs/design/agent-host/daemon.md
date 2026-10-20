@@ -79,7 +79,7 @@ names the `claude` executable the daemon runs.
 `bridle serve` runs in the foreground and logs to stderr. `bridle serve
 --detach` re-executes itself in a new process group with output going to
 `.bridle/daemon.log`, waits up to 60 s for `/v1/health` to answer, prints the
-URL and pid, and exits. If the daemon is still starting then, it says so (pid, log path, `bridle daemons`), leaves it running and exits 0. The daemon installs its signal handlers before
+URL and pid, and exits. If the daemon is still starting then, it says so (pid, log path, `bridle daemon list`), leaves it running and exits 0. The daemon installs its signal handlers before
 anything else, and ignores SIGHUP. It is a new process group, not a new session (`setsid`
 would need `unsafe`), and surviving a closed terminal is unverified:
 [[detached-daemon-and-its-terminal-mnzh|spike mnzh]]. On a host that should
@@ -111,7 +111,7 @@ starts, the daemon logs one line at `info` (so it lands on stderr in the
 foreground, and in `daemon.log` when detached) naming how many agents it's
 stopping and the actual cap, so a slow shutdown doesn't look hung. The HTTP listener stays up (health still
 answers) until cleanup is done, and `POST /v1/shutdown` replies with that cap, which is how
-`bridle stop-daemon` reports progress.
+`bridle daemon stop` reports progress.
 
 ## Background loops
 
@@ -294,7 +294,7 @@ Whether workers should resume too after a *crash* or plain restart is open:
 
 ### Restart in place
 
-`POST /v1/restart` (`bridle restart`; the human and `external:orchestrator` only) upgrades the
+`POST /v1/restart` (`bridle daemon restart`; the human and `external:orchestrator` only) upgrades the
 daemon without the human: it **drains** first. From the request on the daemon is `draining`: spawns
 are refused (the refusal tells the agent to end its turn: the drain waits for turns to end, so an agent waiting inside its turn would deadlock the restart; br-z5kz), task claims are refused, and no running agent gets a new turn. Messages, task updates
 and comments, queue nudges and wakes are still stored (state `held`, in order) but not written to
@@ -366,7 +366,7 @@ lift a drain: claims and spawns stay refused while one is pending, so postpone b
 
 With `[daemon] self_upgrade = "release"`, `restart --upgrade` does not look at CI: it asks `release_repo` for its newest release and, if that is newer than the running binary, installs it as the automatic path does (reply `installing release <tag> ...`); otherwise the reply says no release is newer (br-9a7b). The rest of this section is the commit mode.
 
-`bridle restart --upgrade` (`upgrade: true` in the request) builds before it restarts. The daemon
+`bridle daemon restart --upgrade` (`upgrade: true` in the request) builds before it restarts. The daemon
 walks the integration branch's first-parent history (30 commits back) for the newest commit whose
 GitHub Actions runs (the CI watcher's `gh` calls, `Gh::runs`) have all finished green; unpushed
 commits have no runs and are skipped. The commit the last upgrade built is kept in `meta` key
@@ -427,7 +427,7 @@ this long after the last upgrade, then takes the newest green commit, so the lan
 in as one batch. The last upgrade's time is the newest stored `upgrade.built` event (not memory, so
 it survives the restart the upgrade causes; not `daemon.started`, which a crash emits too). A daemon
 that has never upgraded has no wait. While inside the interval a newer green commit is logged once
-and not built. `0s` restores the old upgrade-at-once behaviour. An explicit `bridle restart
+and not built. `0s` restores the old upgrade-at-once behaviour. An explicit `bridle daemon restart
 --upgrade` ignores the interval, which is how a critical fix goes through at once; a
 critical-priority landing does not trigger an upgrade by itself (not yet needed: the orchestrator
 runs the explicit command; ticket 7ufd).
@@ -472,7 +472,7 @@ vendored) keeps its own copy of the base workflow at the binary's tag: a shallow
 in `~/.bridle/workflow/vX.Y.Z/` (read-only by convention; the `.git` is dropped), and the base layer
 points at its `workflow/` directory (`workflow_checkout.rs`). The source is the machine's
 `workflow_url`, else `github.com/<release_repo>` (bridle's own by default). Git network calls
-set `GIT_TERMINAL_PROMPT=0`, so a failed clone is an error in the log, not a prompt. `bridle doctor`
+set `GIT_TERMINAL_PROMPT=0`, so a failed clone is an error in the log, not a prompt. `bridle daemon doctor`
 warns for a release daemon with no checkout or a `release_repo` that is not bridle's. At start, if the running version's checkout is
 absent, it is fetched before the config is read; after a release install the new tag is fetched
 before the restart. The last two tags are kept, older ones deleted. A failed fetch doesn't stop the

@@ -174,7 +174,7 @@ pub(crate) async fn stop_daemon_with(
         }
         if std::time::Instant::now() >= deadline {
             return Err(CliError::Other(anyhow::anyhow!(
-                "the daemon did not stop within {}s; see `bridle daemons` and \
+                "the daemon did not stop within {}s; see `bridle daemon list` and \
                  <workspace>/.bridle/daemon.log",
                 limit.as_secs()
             )));
@@ -351,7 +351,7 @@ mod stop_daemon_tests {
         .unwrap_err();
         let msg = err.to_string();
         assert!(msg.contains("did not stop"), "{msg}");
-        assert!(msg.contains("bridle daemons"), "{msg}");
+        assert!(msg.contains("bridle daemon list"), "{msg}");
         assert!(msg.contains(".bridle/daemon.log"), "{msg}");
     }
 }

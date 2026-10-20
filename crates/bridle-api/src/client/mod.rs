@@ -1208,7 +1208,7 @@ impl Client {
             .map_err(|e| ClientError::Decode(e.to_string()))
     }
 
-    /// `bridle rebuild`: reconstructs `tasks`/`edges`/`open_questions` from
+    /// `bridle daemon rebuild`: reconstructs `tasks`/`edges`/`open_questions` from
     /// the project's state branch. Human-only; fails if the database
     /// already has rows in any of those tables.
     /// With `from_origin`, first fetches `origin/bridle/state` (fast-forward only; never

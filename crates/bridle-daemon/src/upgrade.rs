@@ -1,4 +1,4 @@
-//! `bridle restart --upgrade` (docs/design/agent-host/daemon.md, "Upgrade"): find the newest commit
+//! `bridle daemon restart --upgrade` (docs/design/agent-host/daemon.md, "Upgrade"): find the newest commit
 //! on the integration branch whose GitHub Actions runs are all green, build it, then the caller
 //! restarts in place. The CI lookup is the CI watcher's [`Gh`]; the build command is injectable
 //! so tests never run a real `cargo install`.

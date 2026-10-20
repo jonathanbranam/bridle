@@ -295,7 +295,7 @@ pub struct OpenQuestion {
 }
 
 /// The fast-index row for a claim (storage.md, "claims"), mirrored to the
-/// state branch's `claims.toml` so `bridle rebuild` can restore it; the
+/// state branch's `claims.toml` so `bridle daemon rebuild` can restore it; the
 /// ephemeral tables `waits`, `ports`, `impact_cache` still arrive with later
 /// tasks. `task_id` is the primary key: a task has at most one claimant at a
 /// time. Lease expiry is computed live from the claiming agent's own
@@ -1132,7 +1132,7 @@ impl Store {
 
     /// Inserts `edge` exactly as given, including its `created_at`, rather
     /// than stamping `now()` the way [`Store::insert_edge`] does. Only for
-    /// `bridle rebuild`.
+    /// `bridle daemon rebuild`.
     pub async fn insert_edge_row(&self, edge: &Edge) -> Result<(), StoreError> {
         let edge = edge.clone();
         self.with_conn(move |c| sync::insert_edge_row(c, &edge))

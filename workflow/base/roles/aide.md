@@ -108,8 +108,8 @@ returns, its output carries your new messages in full; they stay unread until yo
 you find, then wait again. If the command errors (no daemon, daemon down), tell the human once
 and wait 30 seconds before retrying; don't spin.
 To check for a message you may have missed (a lost waiter, a restart), run
-`bridle messages --last 5`: it lists your latest messages with when each was sent, delivered and
-read, and how it was read (the waiter's pid, the inbox). `bridle messages --for <role>` shows
+`bridle message list --last 5`: it lists your latest messages with when each was sent, delivered and
+read, and how it was read (the waiter's pid, the inbox). `bridle message list --for <role>` shows
 another principal's, headers only.
 
 Start a waiter only as Claude Code's background command: never with `&`, never with its output

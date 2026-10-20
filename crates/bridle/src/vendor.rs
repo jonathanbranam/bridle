@@ -1,4 +1,4 @@
-//! Vendoring the base workflow into a project (`bridle init`, `bridle workflow update`;
+//! Vendoring the base workflow into a project (`bridle daemon init`, `bridle workflow update`;
 //! docs/design/workflow-layers.md, "Two modes"). The copy lives at `.bridle/workflow/`, is
 //! committed by the human, and changes only when they run an update.
 
@@ -138,7 +138,7 @@ fn url() -> anyhow::Result<String> {
     Ok(Config::machine_workflow_url(None)?.unwrap_or_else(default_url))
 }
 
-/// For `bridle init`: vendors the workflow unless the project already names one (or has a
+/// For `bridle daemon init`: vendors the workflow unless the project already names one (or has a
 /// vendored copy). Returns the changes if it installed.
 pub fn init_vendor(repo: &Path) -> anyhow::Result<Option<Changes>> {
     if Config::load(repo)?.workflow.is_some() {
@@ -158,7 +158,7 @@ pub fn run(action: &WorkflowAction) -> Result<(), CliError> {
     };
     if !repo.join(VENDORED_WORKFLOW).join("base").is_dir() {
         return Err(anyhow::anyhow!(
-            "{} isn't vendored in this project; run `bridle init` (a project with `workflow = <path>` updates at `bridle sync`)",
+            "{} isn't vendored in this project; run `bridle daemon init` (a project with `workflow = <path>` updates at `bridle sync`)",
             VENDORED_WORKFLOW
         )
         .into());

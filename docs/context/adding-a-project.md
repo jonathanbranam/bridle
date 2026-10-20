@@ -20,7 +20,7 @@ the mail bridge, one step at a time, and stops with the fix if one fails: run th
 again to carry on. With a clone already in place, run it inside the clone instead. `--check`
 prints the checklist and changes nothing. The rest of this page is what it runs, step by step.
 Before that command, no single command did it all.
-`bridle init` only writes two files. The rest is a few commands of yours, then an orchestrator
+`bridle daemon init` only writes two files. The rest is a few commands of yours, then an orchestrator
 session that prepares the project. Your flow (make a workspace folder, clone the repo, ask the
 orchestrator to prepare it) is right. You also have to do the `~/.bridle` config and the tokens,
 because the orchestrator can't edit `~/.bridle` files under auto mode.
@@ -36,7 +36,7 @@ because the orchestrator can't edit `~/.bridle` files under auto mode.
 A project lives on one machine. Moving it later is a known procedure: see "Moving a project to
 another machine" in [[docs/context/nuc-host|nuc host]].
 
-## What `bridle init` does and doesn't do
+## What `bridle daemon init` does and doesn't do
 
 Run inside a clone. It:
 
@@ -105,7 +105,7 @@ the directory.
   `workflow = "<NUC bridle checkout>/workflow"` above its first table, which overrides it for
   every project there. meta-notes depends on it, so it should already be there.
 - **Starting at boot (optional).** Run
-  `bridle systemd install --project P --projects-dir /srv/shared/work/P-work`, then the
+  `bridle daemon systemd install --project P --projects-dir /srv/shared/work/P-work`, then the
   `systemctl --user` and `loginctl enable-linger` commands it prints. It doesn't run them for
   you. Always give `--project`. Without it, one unit is written per NUC project, all with the
   same `--projects-dir` as their shared workspace, which only suits clones that sit side by side.
@@ -119,7 +119,7 @@ the directory.
   `workflow = "/Volumes/Data/work/bridle/bridle/workflow"`. This is "path mode": it follows
   bridle's workflow as it changes, as meta-notes and track-web do. Leave it unset to keep a
   frozen vendored copy that you refresh yourself with `bridle workflow update`.
-- `bridle launchd install --project P` writes a LaunchAgent if you want the daemon supervised,
+- `bridle daemon launchd install --project P` writes a LaunchAgent if you want the daemon supervised,
   and prints the `launchctl` commands.
 - Once per Mac, run `just sign-setup` (over SSH is fine; it asks for the login keychain password
   once). It creates the self-signed "bridle local signing" identity; after that `just install` and
@@ -162,11 +162,11 @@ Tell it whether this is a new or an existing project:
   ticket 63rv). To skip the trial, say "directly on main" explicitly, as for dotfiles-local
   (ticket 35mw).
 
-Then something like: *"Prepare P for bridle: run `bridle init --stack <s>` if it isn't done,
+Then something like: *"Prepare P for bridle: run `bridle daemon init --stack <s>` if it isn't done,
 fill in `.bridle/config.toml` (task prefix, check command, worker role, and for a small project
 `[roles.manager] autostart = false` and `resume_on_restart = false`), add any project rules
-under `.bridle/rules/`, run `bridle sync` and `bridle doctor`, try the check command, commit it
-on <branch>, `bridle restart`, then file the first tasks from <write-up>."* The manager settings
+under `.bridle/rules/`, run `bridle sync` and `bridle daemon doctor`, try the check command, commit it
+on <branch>, `bridle daemon restart`, then file the first tasks from <write-up>."* The manager settings
 come from ticket w2hj: with no manager running, the orchestrator starts one when there's work.
 As of commit 82c42db (ticket gnar) it can also edit the queue on a project with no product
 manager. That needs a daemon built from that commit or later.
@@ -180,8 +180,8 @@ manager. That needs a daemon built from that commit or later.
   has none, and the daemon then hangs at a passphrase prompt before it starts):
   `tmux new-window -d -c <clone> 'SSH_AUTH_SOCK=/private/tmp/com.apple.launchd.<id>/Listeners bridle serve'`.
   Copy the `SSH_AUTH_SOCK` value from a running daemon's environment (`ps eww -p <pid>`;
-  `bridle daemons` lists the pids). `launchctl getenv SSH_AUTH_SOCK` prints nothing on dalek.
-- The first `bridle restart` after a project's port changes reports failure, although the daemon
+  `bridle daemon list` lists the pids). `launchctl getenv SSH_AUTH_SOCK` prints nothing on dalek.
+- The first `bridle daemon restart` after a project's port changes reports failure, although the daemon
   came back (ticket 6d5y). Check with `bridle --project P status`. A new project that starts on
   its `[projects]` port doesn't hit this.
 - Marking a leftover clone tools-only (`bridle machine tools-only-install`) refuses over your

@@ -104,7 +104,7 @@ check fails; the check is skipped (with a note) if none is configured.
 SQLite (`bridle.db`) is the fast index: the task row (id, title, kind, state, size), edges,
 open questions, claims, messages. The **state branch** in git holds the durable copy:
 task files (body, thread), `edges.toml`, `claims.toml`, `queue.toml` and a monthly event
-log. Writes go to SQLite at once and to the branch in batches. `bridle rebuild` recreates
+log. Writes go to SQLite at once and to the branch in batches. `bridle daemon rebuild` recreates
 the tables from the branch on a fresh clone and refuses if the database has rows.
 Messages, conflicts and ports are SQLite only and are lost in a rebuild (claims are restored). **Built.**
 

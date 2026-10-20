@@ -230,7 +230,7 @@ Agents use bridle correctly: commands, help, roles, the workflow reaching every 
 | [br-3haz](http://dalek.tailbc91f5.ts.net:7878/task?id=br-3haz) | Mail between daemons, slice 1: outbox, peer tokens, forwarding with acknowledgement and... |  | integrated | delivered |
 | [br-fvkq](http://dalek.tailbc91f5.ts.net:7878/task?id=br-fvkq) | Mail between daemons, slice 3: outbox retry with backoff and the start-up ping (3haz P3) |  | integrated | delivered |
 | [br-hwek](http://dalek.tailbc91f5.ts.net:7878/task?id=br-hwek) | A named advisor's unread mail stays in its own inbox when its session ends or restarts ... |  | integrated | delivered |
-| [br-9aj2](http://dalek.tailbc91f5.ts.net:7878/task?id=br-9aj2) | Message delivery you can check, part 1: bridle messages command, delivery audit events ... |  | integrated | delivered |
+| [br-9aj2](http://dalek.tailbc91f5.ts.net:7878/task?id=br-9aj2) | Message delivery you can check, part 1: bridle message list command, delivery audit events ... |  | integrated | delivered |
 | [br-3zhx](http://dalek.tailbc91f5.ts.net:7878/task?id=br-3zhx) | Message delivery you can check, part 2: a message stays unread until the session has se... |  | integrated | delivered |
 | [br-djru](http://dalek.tailbc91f5.ts.net:7878/task?id=br-djru) | Message delivery you can check, part 2: a message stays unread until the session has se... |  | dropped | dropped |
 | [br-2msq](http://dalek.tailbc91f5.ts.net:7878/task?id=br-2msq) | bridle send --project to a local daemon needs a peer token, and --url can't be combined... |  | integrated | delivered |
@@ -590,7 +590,7 @@ Chores assigned to the human: expand on an idea, review a ticket or branch.
 | 2026-10-09 03:05 | br-9xze scheduled messages, slice 1 | scheduler |
 | 2026-10-09 03:13 | br-ukpm designer role | product-process |
 | 2026-10-09 morning | br-7m99, br-r9h7 macOS test flake | reliability |
-| 2026-10-09 morning | br-2uje bridle doctor Linux/WSL checks | multi-machine |
+| 2026-10-09 morning | br-2uje bridle daemon doctor Linux/WSL checks | multi-machine |
 | 2026-10-09 morning | ui-kqsp, ui-5zrr Document page markdown rendering and highlights | human-ui |
 | 2026-10-09 ~10:00 | br-g3az status line token docs (first item routed through the PdM) | tickets-release |
 | 2026-10-09 ~12:20 | br-6nzj test daemons poll at 200 ms, resource-budget test | performance |

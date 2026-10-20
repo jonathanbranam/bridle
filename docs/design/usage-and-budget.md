@@ -170,7 +170,7 @@ statuses, and from reading staleness while any agent is working, and it
 reads usage over HTTP, falling back to the undocumented `get_usage`
 control request on a throwaway probe process
 ([[docs/design/usage-and-budget#Seeing the windows|seeing the windows]]). It holds new work while not
-`normal`: `bridle spawn`/`resume` are refused (409) unless `--ignore-budget`
+`normal`: `bridle agent spawn`/`resume` are refused (409) unless `--ignore-budget`
 is passed, and a message that would start a turn in an idle agent is held
 instead. On crossing into `winding_down` or worse, it stops idle agents at
 once, sends working ones the usage-pause notice and stops them with exit
@@ -210,7 +210,7 @@ those three fields on `TurnEnd` for cost/token accounting, and falls back to
 their sum for `context_tokens` only if the `get_context_usage` probe times
 out or its response doesn't parse.
 
-`bridle agents`, `bridle show` and the TUI's agents list show it as
+`bridle agent list`, `bridle agent show` and the TUI's agents list show it as
 `CONTEXT`/`context`, `-` when unknown.
 
 **Sessions** (br-2kam, ktgd decision 7): each hosted session is a row in `agent_sessions`: when
@@ -439,7 +439,7 @@ timezone in text; `--json` stays UTC.
 `[budget] max_workers` limits **workers** (role `worker`; the manager, PM and
 orchestrator never count), in two places that share one definition of
 "running" (`AgentManager::running_worker_count`, any live worker process, idle
-included): `bridle spawn` of a worker is refused (409) once running workers
+included): `bridle agent spawn` of a worker is refused (409) once running workers
 meet the cap, and `maybe_resume` resumes budget-paused workers only into the
 free slots. Other paused roles always resume (k7nr).
 
@@ -496,9 +496,9 @@ none, one line saying the pause is over. Then the manager is told. Short of
 that, bridle stays idle: a paused `seven_day` window can mean days without
 bridle work, and that is intended.
 
-`bridle spawn` and `bridle resume` are refused (409, naming the window and its
+`bridle agent spawn` and `bridle agent resume` are refused (409, naming the window and its
 reset time) while the governor holds or is paused; the human can pass
-`--ignore-budget` to run one anyway. `bridle renew` is never refused: it swaps a running agent's
+`--ignore-budget` to run one anyway. `bridle agent renew` is never refused: it swaps a running agent's
 process for a fresh one rather than adding work (`ignore_budget` is accepted and ignored). The
 daemon's own autostart goes through `spawn`, so a hold refuses it too.
 

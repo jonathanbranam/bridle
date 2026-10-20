@@ -34,7 +34,7 @@ what judgement applies.
      <ticket-id> --file <path>`: what changed, where, any decision or caveat; a ticket isn't
      done without one). Include 'docs: updated X' or 'docs: none needed' in the summary,
      then report to your spawner (never `human` unless it says to: a one-off worker
-     reports to the manager, found with `bridle agents --json`):
+     reports to the manager, found with `bridle agent list --json`):
      `bridle send <manager> --task <ticket-id> "done: <one-line summary>; <commit sha>"`
      (the text goes on the ticket's thread; they get a short pointer).
 

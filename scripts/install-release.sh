@@ -81,5 +81,5 @@ esac
 
 cat <<NEXT
 next: set [daemon] self_upgrade = "release" in ~/.bridle/config.toml so the daemon keeps itself
-current, then follow docs/context/add-a-machine.md (bridle doctor checks the result).
+current, then follow docs/context/add-a-machine.md (bridle daemon doctor checks the result).
 NEXT

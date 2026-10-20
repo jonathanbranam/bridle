@@ -428,7 +428,7 @@ async fn wait_for_daemon(
 fn still_starting_message(pid: i32, wait: Duration, log_path: &Path) -> String {
     format!(
         "warning: the daemon (pid {pid}) is still starting after {}s and was left running.\n\
-         Log: {}\nCheck on it with `bridle daemons`.",
+         Log: {}\nCheck on it with `bridle daemon list`.",
         wait.as_secs(),
         log_path.display()
     )
@@ -514,7 +514,7 @@ mod tests {
     fn still_starting_message_names_pid_log_and_daemons() {
         let m = still_starting_message(4242, DETACH_WAIT, Path::new("/w/.bridle/daemon.log"));
         assert!(m.contains("4242") && m.contains("/w/.bridle/daemon.log"));
-        assert!(m.contains("bridle daemons") && m.contains("left running"));
+        assert!(m.contains("bridle daemon list") && m.contains("left running"));
     }
 
     #[tokio::test]

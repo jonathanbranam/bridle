@@ -1,4 +1,4 @@
-//! Divergence from origin: on a timer (and in `bridle doctor`), `git fetch origin` in the
+//! Divergence from origin: on a timer (and in `bridle daemon doctor`), `git fetch origin` in the
 //! owner's clone and compare `origin/<integration>` with the local integration branch. A
 //! clone silently far ahead of or behind origin hid for hours in incident br-2y3m (postmortem
 //! j7r4); a plain `[ahead 23]` did not stand out. Any difference is reported as

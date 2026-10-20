@@ -35,7 +35,7 @@ pub enum PrincipalKind {
 pub struct Health {
     pub ok: bool,
     pub version: String,
-    /// Non-terminal agents on this daemon, for `bridle daemons` to show
+    /// Non-terminal agents on this daemon, for `bridle daemon list` to show
     /// without probing every daemon's authenticated status endpoint.
     pub agent_count: u32,
 }
@@ -1158,7 +1158,7 @@ pub mod event_kind {
     /// The actor is whoever asked (`system` for a restart).
     pub const AGENT_RESUMED: &str = "agent.resumed";
     /// A fresh process, fresh session, same worktree/branch/role/model as
-    /// the agent it replaced (`bridle renew`). data: {from} (the old state).
+    /// the agent it replaced (`bridle agent renew`). data: {from} (the old state).
     pub const AGENT_RENEWED: &str = "agent.renewed";
     /// data: {cost_total}. The role's `max_budget_usd` is spent; bridle
     /// stops the agent, and `resume` grants a fresh allowance.
@@ -1557,7 +1557,7 @@ pub struct UsageInstance {
     pub name: String,
     pub role: String,
     pub model: String,
-    /// Whether the agent row is gone (`bridle rm`).
+    /// Whether the agent row is gone (`bridle agent rm`).
     pub removed: bool,
     /// An external (unbridled) session, from the statusline reports (`interactive_usage`):
     /// `agent_id` and `name` are its identity, `role` its first path part, `turns` is `None`.

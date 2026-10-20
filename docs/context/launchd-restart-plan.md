@@ -6,7 +6,7 @@ launchd-started process has none. Nothing here was run by the worker; these are 
 
 ## What a daemon restart does to agents
 
-- Stopping the daemon (`bridle stop-daemon`, SIGTERM) stops every running agent, tagged
+- Stopping the daemon (`bridle daemon stop`, SIGTERM) stops every running agent, tagged
   `daemon_shutdown`; that can take up to `stop_grace` (30 s) + 5 s.
 - On the next start, roles with `resume_on_restart` (manager, orchestrator) resume with
   `--resume`, keeping their conversation. Workers do **not** resume (open question 2fkk): their
@@ -21,14 +21,14 @@ launchd-started process has none. Nothing here was run by the worker; these are 
 
 1. In the project's clone, install (writes only the plist; `--project` if the directory name
    isn't the project name):
-   `bridle launchd install --project <name>`. Run it with the `bridle` binary you want the
+   `bridle daemon launchd install --project <name>`. Run it with the `bridle` binary you want the
    daemon to use (the path is baked in); rebuilding that binary later needs a restart anyway.
-2. `bridle budget hold` (optional), then check `bridle agents` for running workers.
-3. `bridle --project <name> stop-daemon`, and wait until `bridle daemons` no longer lists it.
+2. `bridle budget hold` (optional), then check `bridle agent list` for running workers.
+3. `bridle --project <name> stop-daemon`, and wait until `bridle daemon list` no longer lists it.
    Then end the old `bridle serve` in its tmux pane if it didn't exit.
 4. Load it: `launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/dev.bridle.<name>.plist`
    (the command `install` printed).
-5. `bridle daemons` shows the project; `bridle status` looks right; `bridle budget release` if
+5. `bridle daemon list` shows the project; `bridle status` looks right; `bridle budget release` if
    you held. Re-spawn any workers you stopped. Log: `<workspace>/.bridle/daemon.log`.
 
 Do one project first (track-web or meta-notes, not bridle itself, which runs your other
@@ -48,7 +48,7 @@ produce them. Also `ps -o pid,ppid,command -p <daemon pid>` shows parent 1 (laun
 ## Roll back
 
 1. `bridle --project <name> stop-daemon`; `launchctl bootout gui/$(id -u)/dev.bridle.<name>`.
-2. `bridle launchd uninstall --project <name>` (removes the plist).
+2. `bridle daemon launchd uninstall --project <name>` (removes the plist).
 3. Start `bridle serve` in tmux as before.
 
 ## Notes

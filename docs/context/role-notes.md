@@ -40,12 +40,12 @@ split above.
 | Verify each merge: by its CI run, not locally | orchestrator | admin (CI is mechanical) |
 | Push `main` after a merge | development manager or orchestrator | development manager only |
 | Cut SemVer releases on verified `main` | orchestrator | admin, with the human told |
-| Rebuild the binary (`cargo install --path crates/bridle`) | orchestrator | admin (`bridle rebuild`-like step) |
+| Rebuild the binary (`cargo install --path crates/bridle`) | orchestrator | admin (`bridle daemon rebuild`-like step) |
 | Restart the daemon | human only | admin, if a supervisor outside the daemon exists |
 | Resume `lost` workers after a restart, and tell each one | orchestrator | the daemon itself, or admin |
 | Renew contexts by hand (before htp6b) | orchestrator | done: automatic since htp6b |
 | Watch usage and budget windows | orchestrator's watcher | done in part: the budget governor |
-| Stop or remove agents (`bridle stop`, `bridle rm --delete-branch`) | human (the orchestrator's auto mode refuses) | development manager (allowed since v4nk) or admin |
+| Stop or remove agents (`bridle agent stop`, `bridle agent rm --delete-branch`) | human (the orchestrator's auto mode refuses) | development manager (allowed since v4nk) or admin |
 | Delete merged branches | orchestrator, in bulk | development manager, at merge (already the rule) |
 | Notice everything is idle and find out why | orchestrator | admin, or the product manager |
 | Nudge a manager that asked in a `note` and went idle | orchestrator | fix the manager's prompt, or admin |
@@ -216,7 +216,7 @@ Newest first. One line per item: what happened, who did it, what it says about r
 
 ## Thirteenth session (2026-09-29 20:45 UTC onward)
 
-- By hand: renewed manager-2 at 149K (`bridle renew`) and briefed it from its own handoff note.
+- By hand: renewed manager-2 at 149K (`bridle agent renew`) and briefed it from its own handoff note.
   The context governor wouldn't have: `[context] wind_down_at` defaults to 200K and the human's
   150K was in `~/.bridle/config.toml`, where the daemon reads only `[budget]` (9mxw note).
 - The human's uncommitted edit to `.bridle/config.toml` blocked landing (the manager asked in a
@@ -237,7 +237,7 @@ Newest first. One line per item: what happened, who did it, what it says about r
   the config used plain numbers; it didn't. A config-format change needs a rebuild before the
   next start, and the handover note has to check the file, not recall it. Self-upgrade (q7rx)
   retires the whole class.
-- I relayed `bridle rm mark-unread --delete-branch` from `bridle status`'s "merged" line; the
+- I relayed `bridle agent rm mark-unread --delete-branch` from `bridle status`'s "merged" line; the
   branch was empty (stopped by the restart before its first commit) and held uncommitted work.
   Filed z4hd (fixed, br-f919). Check the branch yourself before handing the human an `rm`.
 - By hand: two `cargo install` builds, one in the foreground from a detached checkout of the
@@ -302,7 +302,7 @@ Newest first. One line per item: what happened, who did it, what it says about r
 - The human moved meta-notes to the NUC by hand (`stop-daemon`, then `serve --take-over`). Gaps
   hit: the project's `workflow` path is machine-specific (the `~/.bridle/config.toml` override
   fixes it); `tools-only-install` refused over the human's git-template hooks (ged2); the first
-  `bridle restart` after a port change reported failure though the daemon came back (6d5y).
+  `bridle daemon restart` after a port change reported failure though the daemon came back (6d5y).
   Auto mode refused my edit of `~/.bridle/config.toml`, so machine config is the human's hand.
 - Cross-machine orchestrators now talk both ways (dalek 7401, NUC 7402, visitor tokens). The NUC
   orchestrator relayed three bridle requests from the human: tickets through the binary (7gk7,
@@ -435,7 +435,7 @@ Newest first. One line per item: what happened, who did it, what it says about r
 
 ## Twenty-fifth orchestrator session (2026-10-03, ~01:25Z to ~13:20Z)
 
-- **Onboarding bridle-ui by hand, again.** `bridle init` vendored the workflow; I removed it for
+- **Onboarding bridle-ui by hand, again.** `bridle daemon init` vendored the workflow; I removed it for
   path mode, wrote the config from track-web's and wrote CLAUDE.md. Two mistakes cost a restart
   each: `[worktrees] setup = npm install` fails before the scaffold makes a package.json (now
   `test ! -f package.json || ...`), and the config only loads at restart. The `bridle project
@@ -447,7 +447,7 @@ Newest first. One line per item: what happened, who did it, what it says about r
 - **Restarting an advisor** (the human asked; no handover): `/exit` in its tmux pane, confirm
   "Exit and stop tasks", then `bridle session advisor` in the same pane. No command does it; an
   admin task the orchestrator can do with tmux.
-- **Advisor context** isn't visible in bridle (`bridle agents` lists only headless agents). I read
+- **Advisor context** isn't visible in bridle (`bridle agent list` lists only headless agents). I read
   it from `~/.claude/sessions/<pid>.json` and the transcript's last usage. Worth a `bridle
   sessions` view.
 - **Quiet hours vs the watch loop**: the gate blocked restarting the watchers all night (cc45).

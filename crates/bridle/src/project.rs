@@ -29,7 +29,7 @@ pub fn resolve_in(explicit: Option<&str>, cwd: &Path) -> Result<String, CliError
         .ok_or_else(|| {
             anyhow::anyhow!(
                 "no project: {} is not inside a bridle workspace. Pass --project <name> or set \
-                 $BRIDLE_PROJECT (see `bridle daemons`).",
+                 $BRIDLE_PROJECT (see `bridle daemon list`).",
                 cwd.display()
             )
             .into()

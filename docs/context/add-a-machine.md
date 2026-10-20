@@ -7,7 +7,7 @@ OS specifics are linked, not copied.*
 > **Status (2026-10-09):** Every command below was checked against `bridle <cmd> --help` and the
 > docs on 2026-10-09. None of it was run end to end on a new machine; steps or lines marked
 > "(unverified on a machine)" are from the help text and code only. Planned, not built: `bridle
-> token pair` (br-8c25, ticket sk7p), `bridle systemd uninstall` (br-xrkh), automated project
+> token pair` (br-8c25, ticket sk7p), `bridle daemon systemd uninstall` (br-xrkh), automated project
 > transfer.
 
 Do the steps in order. The example adds a machine named `newpc` (the Windows PC under WSL2) to a
@@ -57,7 +57,7 @@ other by the host name in `[machines]` (a Tailscale MagicDNS name); `ping <host>
 machine is the check.
 
 The check for a release install: `bridle --version` prints the release you asked for, and
-`bridle doctor` run inside a project clone exits 0. Outside a clone doctor has no repo to check and
+`bridle daemon doctor` run inside a project clone exits 0. Outside a clone doctor has no repo to check and
 is not expected to pass there.
 
 ## 1. GitHub and git
@@ -150,7 +150,7 @@ this machine's entries to the others (adds missing, fixes differing, never delet
 machine whose `[machine] name` is not a key of its `[machines]`.
 
 Without the `[machines]` line a project on `newpc` can't be reached. A listed project with no
-`[machine] name` on the machine that reads it is an error. Check the file loads: `bridle doctor`
+`[machine] name` on the machine that reads it is an error. Check the file loads: `bridle daemon doctor`
 warns about unknown sections and keys (`--strict` fails on them).
 
 ### Remote PATH: bridle over ssh
@@ -301,7 +301,7 @@ beside it. The clone's directory name is the project name:
 
 ```bash
 sudo loginctl enable-linger "$USER"      # so user units start at boot, with no login
-bridle systemd install --project P --projects-dir ~/work/P-workspace
+bridle daemon systemd install --project P --projects-dir ~/work/P-workspace
 # prints the systemctl --user commands; run them, normally:
 systemctl --user daemon-reload
 systemctl --user enable --now bridle-P.service
@@ -314,7 +314,7 @@ workspace. On WSL2 systemd must be on (`/etc/wsl.conf`), which the WSL2 guide se
 **macOS (a LaunchAgent), from the clone:**
 
 ```bash
-bridle launchd install --project P       # writes ~/Library/LaunchAgents/dev.bridle.P.plist
+bridle daemon launchd install --project P       # writes ~/Library/LaunchAgents/dev.bridle.P.plist
 # run the launchctl bootstrap command it prints
 ```
 
@@ -346,15 +346,15 @@ exists. `touch ~/.bridle/no-autostart` stops it starting anything. Drill: reboot
 `tmux list-panes -a -F '#{pane_id} #{@bridle}'` shows one `orchestrator` pane.
 
 Both take `--force` to overwrite an existing file. `bridle mail uninstall` and
-`bridle launchd uninstall` exist; `bridle systemd uninstall` does not yet (br-xrkh).
+`bridle daemon launchd uninstall` exist; `bridle daemon systemd uninstall` does not yet (br-xrkh).
 
-**Check with `bridle doctor`** in the project's clone. Green is every line a pass (or a
+**Check with `bridle daemon doctor`** in the project's clone. Green is every line a pass (or a
 deliberate warning) and exit status 0. It reads only the project's clone and `~/.bridle/config.toml`,
 so a machine with no bridle clone needs nothing more for it (not yet run on a machine installed
 this way; if it prints a failure, that is a bug to file):
 
 ```bash
-cd ~/work/P-workspace/P && bridle doctor        # exit 0; --strict also fails on warnings
+cd ~/work/P-workspace/P && bridle daemon doctor        # exit 0; --strict also fails on warnings
 bridle --project P status --json                # the daemon answers
 systemctl --user status bridle-P.service        # Linux: active (running)
 ```
@@ -370,7 +370,7 @@ The procedure is "Moving a project to another machine" in
 take-over`, create tokens, start sessions. Adding a brand-new project instead is
 [[docs/context/adding-a-project|adding a project]]. Two traps the runbook's steps hide:
 
-1. **Stop the old machine first.** `bridle stop-daemon` is not enough: a launchd plist or
+1. **Stop the old machine first.** `bridle daemon stop` is not enough: a launchd plist or
    systemd unit restarts the daemon, and it fights the new owner. On the old machine:
 
    ```bash
@@ -425,7 +425,7 @@ remus, 2026-10-14, and it is not yet a one-command setup. Every machine must be 
 or later first (the token pair fix).
 
 1. **Repo:** a git repository with a private remote (GitHub). State push is on by default, so
-   tickets about the machine's setup can live in it. Run `bridle init` in the clone.
+   tickets about the machine's setup can live in it. Run `bridle daemon init` in the clone.
 2. **Enrol it on every machine:** add `<host>-home` to `[projects]` in `~/.bridle/config.toml`
    (the `machine` is this machine), then `bridle projects sync --apply` on any machine. The sync
    spreads `[mail]` too and adds `<host>-home` to `[mail] projects`; it never removes an entry
@@ -462,7 +462,7 @@ because dalek's orchestrator is the one everything else addresses today.
 Run them from a machine other than the new one where it says so.
 
 1. `ping newpc` and `ssh newpc` work from dalek and the nuc.
-2. On newpc: `bridle doctor` exits 0 in a project clone.
+2. On newpc: `bridle daemon doctor` exits 0 in a project clone.
 3. On newpc: `bridle --project P status --json` shows the daemon; `P` is a project on newpc.
 4. From dalek: `bridle --project my-project status --json` answers (visitor token, step 3a).
 5. From newpc: `bridle --project bridle status --json` answers (the other direction).

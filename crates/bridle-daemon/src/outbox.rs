@@ -192,7 +192,7 @@ impl Outbox {
             .find(|d| d.project == project)
             .map(|d| d.url)
             .ok_or_else(|| {
-                format!("no daemon known for project '{project}'; check `bridle daemons`")
+                format!("no daemon known for project '{project}'; check `bridle daemon list`")
             })
     }
 

@@ -111,7 +111,7 @@ Never `take-over --force` on OLD while NEW's daemon runs: two writers.
 ## 5. Check on NEW
 
 1. `bridle --project P status --json` answers and shows the daemon on NEW.
-2. `bridle doctor` exits 0 in the clone.
+2. `bridle daemon doctor` exits 0 in the clone.
 3. Tokens both ways: from another machine `bridle --project P status --json` answers (visitor token); and
    `bridle send --project P advisor "ping"` prints `delivered`, not `queued` (peer token). Send one the other way too. `project start` has already re-paired every machine's peer token toward P (not only P's own outgoing ones) and checked them, so a refused one shows in its output; if a machine was unreachable, run `bridle token pair --tokens peer` once.
 4. Scheduled messages: `bridle schedule list` shows what OLD had.

@@ -13,7 +13,7 @@ L4  component  <repo>/.bridle/components/<n>/    scoped by task or spawn
 
 Later layers win. A project lists its `packs` and points `workflow` at the directory
 holding `base/` and `packs/` in `.bridle/config.toml`; when `workflow` is unset, a
-project on an installed binary uses the copy `bridle init` vendored into
+project on an installed binary uses the copy `bridle daemon init` vendored into
 `.bridle/workflow/`, which changes only when the human runs `bridle workflow update`.
 
 ## What a layer contains

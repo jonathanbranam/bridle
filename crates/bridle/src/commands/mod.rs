@@ -70,7 +70,7 @@ use workflow::*;
 /// Rewrite a grouped command line (`task claim`, `agent spawn`, ...) into the flat
 /// command it forwards to, so the old top-level names and the new groups share one
 /// dispatch and can't drift apart.
-fn normalize(cmd: Command) -> Command {
+pub(super) fn normalize(cmd: Command) -> Command {
     use crate::cli::{AgentAction as A, DaemonAction as D, HookAction as H, UsageSub};
     match cmd {
         Command::Daemon(DaemonArgs { action }) => match action {
@@ -95,6 +95,12 @@ fn normalize(cmd: Command) -> Command {
             A::Rm(a) => Command::Rm(a),
             A::Logs(a) => Command::Logs(a),
             A::Wake(a) => Command::Wake(a),
+        },
+        Command::Message(MessageArgs { action }) => match action {
+            MessageAction::Send(a) => Command::Send(a),
+            MessageAction::Inbox(a) => Command::Inbox(a),
+            MessageAction::List(a) => Command::Messages(a),
+            action => Command::Message(MessageArgs { action }),
         },
         Command::Hook(HookArgs { action }) => match action {
             H::Statusline => Command::Statusline,
@@ -142,7 +148,38 @@ fn normalize(cmd: Command) -> Command {
     }
 }
 
+/// The old top-level spelling of a command that moved into a group, with its new spelling
+/// (a67t). Must run before `normalize`, which erases the difference. Not listed: `serve`
+/// (launchd and systemd units spell it) and the hook commands, which scripts call.
+fn deprecated_spelling(cmd: &Command) -> Option<(&'static str, &'static str)> {
+    Some(match cmd {
+        Command::StopDaemon => ("stop-daemon", "daemon stop"),
+        Command::Restart(_) => ("restart", "daemon restart"),
+        Command::Doctor(_) => ("doctor", "daemon doctor"),
+        Command::Init(_) => ("init", "daemon init"),
+        Command::Launchd(_) => ("launchd", "daemon launchd"),
+        Command::Systemd(_) => ("systemd", "daemon systemd"),
+        Command::Rebuild(_) => ("rebuild", "daemon rebuild"),
+        Command::Daemons => ("daemons", "daemon list"),
+        Command::Spawn(_) => ("spawn", "agent spawn"),
+        Command::Agents(_) => ("agents", "agent list"),
+        Command::Show(_) => ("show", "agent show"),
+        Command::Interrupt(_) => ("interrupt", "agent interrupt"),
+        Command::Stop(_) => ("stop", "agent stop"),
+        Command::Resume(_) => ("resume", "agent resume"),
+        Command::Renew(_) => ("renew", "agent renew"),
+        Command::Rm(_) => ("rm", "agent rm"),
+        Command::Logs(_) => ("logs", "agent logs"),
+        Command::Wake(_) => ("wake", "agent wake"),
+        Command::Messages(_) => ("messages", "message list"),
+        _ => return None,
+    })
+}
+
 pub async fn run(mut cli: Cli) -> Result<(), CliError> {
+    if let Some((old, new)) = deprecated_spelling(&cli.command) {
+        eprintln!("warning: `bridle {old}` is deprecated; use `bridle {new}`");
+    }
     let command = normalize(std::mem::replace(&mut cli.command, Command::Status));
     let cli = Cli { command, ..cli };
     // The daemon logs its config warnings; every other command prints them once to stderr.
@@ -515,4 +552,92 @@ fn completions(args: &CompletionsArgs) -> Result<(), CliError> {
     let mut stdout = std::io::stdout();
     generate(args.shell, &mut cmd, "bridle", &mut stdout);
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use clap::Parser;
+
+    fn parse(args: &[&str]) -> Command {
+        let mut argv = vec!["bridle"];
+        argv.extend_from_slice(args);
+        Cli::try_parse_from(argv).expect("parses").command
+    }
+
+    /// Each old spelling still runs the same command as the new one and warns, naming the new
+    /// spelling; the new spelling does not warn (a67t).
+    #[test]
+    fn old_spellings_warn_and_forward_to_the_group() {
+        let pairs: &[(&[&str], &[&str])] = &[
+            (&["stop-daemon"], &["daemon", "stop"]),
+            (&["restart"], &["daemon", "restart"]),
+            (&["doctor"], &["daemon", "doctor"]),
+            (&["init"], &["daemon", "init"]),
+            (&["launchd", "install"], &["daemon", "launchd", "install"]),
+            (&["systemd", "install"], &["daemon", "systemd", "install"]),
+            (&["rebuild"], &["daemon", "rebuild"]),
+            (&["daemons"], &["daemon", "list"]),
+            (&["spawn", "worker"], &["agent", "spawn", "worker"]),
+            (&["agents"], &["agent", "list"]),
+            (&["show", "w1"], &["agent", "show", "w1"]),
+            (&["interrupt", "w1"], &["agent", "interrupt", "w1"]),
+            (&["stop", "w1"], &["agent", "stop", "w1"]),
+            (&["resume", "w1"], &["agent", "resume", "w1"]),
+            (&["renew", "w1"], &["agent", "renew", "w1"]),
+            (&["rm", "w1"], &["agent", "rm", "w1"]),
+            (&["logs", "w1"], &["agent", "logs", "w1"]),
+            (
+                &["wake", "orchestrator"],
+                &["agent", "wake", "orchestrator"],
+            ),
+            (&["messages"], &["message", "list"]),
+        ];
+        for (old, new) in pairs {
+            let (_, hint) =
+                deprecated_spelling(&parse(old)).unwrap_or_else(|| panic!("{old:?} should warn"));
+            assert_eq!(hint, new[..2].join(" "), "{old:?}");
+            assert!(deprecated_spelling(&parse(new)).is_none(), "{new:?} warned");
+            assert_eq!(
+                format!("{:?}", normalize(parse(old))),
+                format!("{:?}", normalize(parse(new))),
+                "{old:?} vs {new:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn message_group_forwards_to_the_flat_commands() {
+        assert!(matches!(
+            normalize(parse(&["message", "send", "human", "hi"])),
+            Command::Send(_)
+        ));
+        assert!(matches!(
+            normalize(parse(&["message", "inbox"])),
+            Command::Inbox(_)
+        ));
+        assert!(matches!(
+            normalize(parse(&["message", "show", "m-1"])),
+            Command::Message(_)
+        ));
+    }
+
+    /// Scripts and units spell these; they must stay silent.
+    #[test]
+    fn hook_and_launcher_spellings_do_not_warn() {
+        for args in [
+            &["statusline"][..],
+            &["stop-check"],
+            &["arch-guard"],
+            &["kill-guard"],
+            &["link-check"],
+            &["wait-for-wake"],
+            &["serve"],
+            &["status"],
+            &["inbox"],
+            &["send", "human", "hi"],
+        ] {
+            assert!(deprecated_spelling(&parse(args)).is_none(), "{args:?}");
+        }
+    }
 }

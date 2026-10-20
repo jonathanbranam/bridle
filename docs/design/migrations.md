@@ -80,7 +80,7 @@ the daemon: the run is wrapped against errors and panics.
   The daemon reads a stored or configured role named `product-manager` as `project-manager`
   (`config::canonical_role`), so an unmigrated project loses nothing; the rename was cosmetic.
   A project that wants the new name in its config edits it by hand. Rules that vendor a role list
-  come from the workflow layers and are replaced by `bridle init`/sync.
+  come from the workflow layers and are replaced by `bridle daemon init`/sync.
 
 - **`0002-standard-ticket-fields`** (ticket syqn, part 3): in every `docs/tickets/**.md` it renames
   `needs`, `see`, `opened`, `filed_by`, `closed` to `blocked_by`, `related`, `created`,

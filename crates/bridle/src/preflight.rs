@@ -1,7 +1,7 @@
 //! `bridle project preflight` (br-3ch7, kx5u K1): read-only checks that a project can move to
 //! another machine. A list of named checks, each pass or fail with a message; `--to` adds the
 //! new machine's (`preflight_remote`, br-bb2n).
-//! The absolute-path scan is shared with `bridle doctor`.
+//! The absolute-path scan is shared with `bridle daemon doctor`.
 
 use std::path::{Path, PathBuf};
 

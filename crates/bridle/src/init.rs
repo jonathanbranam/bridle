@@ -1,4 +1,4 @@
-//! `bridle init`: scaffolds `.bridle/config.toml` and `.gitignore` entries in a git repo.
+//! `bridle daemon init`: scaffolds `.bridle/config.toml` and `.gitignore` entries in a git repo.
 //! Local and additive only: it never overwrites a file, and it doesn't run `sync` or start
 //! anything. See docs/design/cli.md.
 
@@ -55,7 +55,7 @@ pub fn run(args: &InitArgs) -> Result<(), CliError> {
 
 fn next_steps(name: &str) -> String {
     format!(
-        "\nNext:\n  bridle sync     render the workflow layers into .claude/\n  bridle doctor   check the setup\n  bridle project start   start the project's daemon (and mail bridge, if any)\n  bridle token pair --projects {name}   once it is serving: peer tokens so it can mail the other projects (n63z)"
+        "\nNext:\n  bridle sync     render the workflow layers into .claude/\n  bridle daemon doctor   check the setup\n  bridle project start   start the project's daemon (and mail bridge, if any)\n  bridle token pair --projects {name}   once it is serving: peer tokens so it can mail the other projects (n63z)"
     )
 }
 

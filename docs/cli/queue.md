@@ -22,7 +22,7 @@ bridle ready --all                        # every ready task, across projects
   task between tiers.
 - **Dependencies** are `blocks` edges (`bridle ticket link <id> blocked-by <other>`), real ones only. Use tiers, not
   edges, for ordering.
-- **Durable:** stored in `queue.toml` on the state branch, restored by `bridle rebuild`.
+- **Durable:** stored in `queue.toml` on the state branch, restored by `bridle daemon rebuild`.
 
 ## More
 

@@ -125,7 +125,7 @@ delivered again).
 
 ## Interrupt
 
-`bridle interrupt <agent>` sends `{"subtype":"interrupt"}` and waits for the
+`bridle agent interrupt <agent>` sends `{"subtype":"interrupt"}` and waits for the
 correlated `control_response` receipt (S4, ~5 ms; bridle gives up after
 10 s). The turn then ends with `result/error_during_execution`,
 `terminal_reason: "aborted_tools"`. The running tool's processes are killed by
@@ -133,7 +133,7 @@ claude, and the agent returns to `idle`.
 
 **Bridle never sends `cancel_queued: true`**, because it silently drops
 pending messages (S4b). Held (`--when idle`) messages are bridle's own queue,
-and `bridle interrupt --drop-held` discards those explicitly, with a
+and `bridle agent interrupt --drop-held` discards those explicitly, with a
 `message.dropped` event each.
 
 ## Permission prompts as questions (planned)

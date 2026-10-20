@@ -8,7 +8,7 @@ is the author and you are the route: write `human via <agent>`, as in the relay 
 "From the human, via advisor:". When you act on your own judgement, write `<agent>` alone.
 
 - `<agent>` is the agent's name, not its role: `doc-3haz`, `advisor`, `orchestrator`. A name
-  identifies one agent you can look up (`bridle agents`, its logs); a role can be reassigned.
+  identifies one agent you can look up (`bridle agent list`, its logs); a role can be reassigned.
   Add the role only if the name doesn't make it clear.
 - The human's authority makes the action legitimate; the line is for traceability, as in
   Gmail's From/Sender pair.

@@ -330,7 +330,7 @@ fn resolve_endpoint_with(
             })
             .ok_or_else(|| {
                 DiscoveryError::Message(format!(
-                    "no daemon registered for project '{project}'; check `bridle daemons`"
+                    "no daemon registered for project '{project}'; check `bridle daemon list`"
                 ))
             });
     }
@@ -345,7 +345,7 @@ fn resolve_endpoint_with(
     }
     Err(DiscoveryError::Message(
         "no bridle daemon found: pass --url, set $BRIDLE_URL, use --project/$BRIDLE_PROJECT \
-         (see `bridle daemons`), or run inside a workspace created by `bridle serve`"
+         (see `bridle daemon list`), or run inside a workspace created by `bridle serve`"
             .to_string(),
     ))
 }

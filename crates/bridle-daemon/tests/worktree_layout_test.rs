@@ -1,5 +1,5 @@
 //! `[worktrees] layout = "root"` puts a worker's worktree at the configured path, and
-//! `bridle rm` still removes it (docs/design/worktrees-and-ports.md).
+//! `bridle agent rm` still removes it (docs/design/worktrees-and-ports.md).
 
 mod support;
 

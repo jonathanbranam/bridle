@@ -160,7 +160,7 @@ handovers(seq INTEGER PK AUTOINCREMENT, id UNIQUE -> h-0007, role, project, body
 
 `handovers` are the orchestrator's notes ([[orchestrator-supervision]] section 7): also on the
 state branch as `handovers/<id>.md` (frontmatter + body, one file per note, written by the same
-flush; notes missing there are backfilled at daemon start) and restored by `bridle rebuild` with
+flush; notes missing there are backfilled at daemon start) and restored by `bridle daemon rebuild` with
 their ids and `seq`. The highest `seq` is the current note; older rows stay for
 `handover list` and `show`, and the daily prune deletes those older than the events' 30 days but
 always keeps the newest.
@@ -195,7 +195,7 @@ wholesale approach `edges.toml` already uses — every claim/release enqueues
 the *entire* current claim set to overwrite the state branch's `claims.toml`
 at the next flush (`TicketManager::enqueue_claims_snapshot`,
 `StateBranch::enqueue_claims`). Unlike `edges.toml`, this file does have a
-read path back (`StateBranch::list_claims`): `bridle rebuild`
+read path back (`StateBranch::list_claims`): `bridle daemon rebuild`
 (`TicketManager::rebuild_from_state_branch`) restores `claims` from it, the
 same way it restores `tasks`/`edges`/`open_questions` from their own files —
 inserting each row and setting the task's `state` back to `Claimed` (that
@@ -403,7 +403,7 @@ events/2026-09.jsonl      append-only transitions, for history and rebuild
   ` · `) starts an entry, so a comment body may hold any markdown, `##` and `###` headings
   included. A body containing the literal line `## Thread` still confuses the split (known,
   accepted). A file that won't parse is reported with its path, the line and the line's text;
-  `bridle rebuild` reports every bad file in one pass.
+  `bridle daemon rebuild` reports every bad file in one pass.
 
 The alternative, task files in-tree under `.bridle/tasks/` on the main line, is
 easier to browse next to code but brings back the worktree-visibility and
@@ -421,10 +421,10 @@ questions from this index (`GET /v1/questions`).
 
 ## Rebuild
 
-`bridle rebuild` (`TicketManager::rebuild_from_state_branch`) reconstructs
+`bridle daemon rebuild` (`TicketManager::rebuild_from_state_branch`) reconstructs
 `tasks`, `edges`, `open_questions` and `claims` from the state branch alone:
 the migration path for a fresh clone with no `bridle.db` — clone the repo,
-start the daemon, `bridle rebuild`. It walks every `tracking/<id>.md` (and old `tasks/<id>.md`) file for
+start the daemon, `bridle daemon rebuild`. It walks every `tracking/<id>.md` (and old `tasks/<id>.md`) file for
 the task rows, `edges.toml` for the edge set, each task's own thread for its
 open question, if any (the most recent `question`/`answer` entry; an
 unanswered trailing `question` becomes an `open_questions` row), and
@@ -455,7 +455,7 @@ after a rebuild, since there's no message row behind it to find.
 resume above the highest); a note already in the table is skipped, and they don't count towards
 the refusal above.
 
-**Fetching from origin.** With `bridle rebuild --from-origin`, or on a daemon's first start with
+**Fetching from origin.** With `bridle daemon rebuild --from-origin`, or on a daemon's first start with
 no local `bridle/state` when `[state] push = true` (the default, or explicit `push = false` opt-out), the daemon first fetches
 `origin/bridle/state` (`StateBranch::fetch_from_origin`). It only reads from the remote and never
 overwrites: a missing local branch is created from it; a local branch that is behind it, or is
@@ -483,7 +483,7 @@ from before this) and the same host all start as before.
 `~/.bridle/daemons/<project>.json` lists each running daemon with its
 workspace, repo and URL
 ([[docs/design/agent-host/operating-model#Several projects at once|several projects]]).
-Views across projects (`bridle daemons`, and later `status --all`,
+Views across projects (`bridle daemon list`, and later `status --all`,
 `ready --all`) fan out over it.
 
 ## Rename to tickets (br-95t9, 22ab step 9, slice 1)
@@ -494,7 +494,7 @@ Views across projects (`bridle daemons`, and later `status --all`,
 - **Folder**: the per-item files live in `tracking/<id>.md`, not `tickets/`, because `tickets/<id>.md`
   already holds a ticket's thread under the same file name. A state branch written before this
   keeps its files in `tasks/`: a daemon reads `tracking/` first, then `tasks/` (hydration,
-  `bridle rebuild`), and writes only `tracking/`, deleting the item's old `tasks/` file in the same
+  `bridle daemon rebuild`), and writes only `tracking/`, deleting the item's old `tasks/` file in the same
   commit. There is no bulk rewrite of any project's state branch; an item moves when it is touched.
   The `tasks/` fallback is removed with the other old-name readers (22ab step 10).
 - Rust types and wire JSON are unchanged here (slices 2 and 3).

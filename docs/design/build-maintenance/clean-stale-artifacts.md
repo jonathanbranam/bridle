@@ -35,4 +35,4 @@ just clean-stale [days]    # Default: 7 days
 
 The orchestrator's budget hold maintenance window is the sole time cleanup runs. It is inherently serialized: the orchestrator runs cleanup before reinstalling the daemon, and no workers build during this window.
 
-Worker worktrees are cleaned up separately via `bridle rm --delete-branch` after merge.
+Worker worktrees are cleaned up separately via `bridle agent rm --delete-branch` after merge.

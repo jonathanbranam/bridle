@@ -77,7 +77,7 @@ established; S-numbers are its scenarios. Each agent is one headless
   creates the sibling repos' worktrees, [[docs/design/worktrees-and-ports|worktrees and ports]]),
   the clone itself, or an explicit path.
   **One agent per branch**: an explicit path inside another agent's worktree
-  (running or stopped) is refused with a 409 naming the fix, `bridle renew`
+  (running or stopped) is refused with a 409 naming the fix, `bridle agent renew`
   that agent or `bridle remove` it first. Renew reuses its own branch.
 - **Names** are `[a-z0-9][a-z0-9-]{0,39}`, unique (409 on a clash), and
   default to `<role>-<n>`.
@@ -112,7 +112,7 @@ per process and checks it after each model call, so a turn can overshoot it
 ([spike 02](docs/spikes/02-budget-cap-findings.md)). When a turn ends with
 `error_max_budget_usd`, bridle emits `agent.budget_exhausted` and stops the
 agent (exit reason `budget_exhausted`): every later turn would fail without
-calling the model. Its messages wait, pending. `bridle resume` starts a new
+calling the model. Its messages wait, pending. `bridle agent resume` starts a new
 process, and so grants a fresh allowance. Account-wide limits belong to the
 [[docs/design/usage-and-budget#The budget governor|budget governor]].
 
@@ -149,7 +149,7 @@ version. Instead:
 - **idle → working** on `system/init`, which is re-emitted before *every* turn
   (S2). **working → idle** on `result`. The result's `subtype`, `is_error` and
   `terminal_reason` are stored on the turn.
-- **`stopped`, `exited`, `crashed` and `lost` are resumable.** `bridle resume
+- **`stopped`, `exited`, `crashed` and `lost` are resumable.** `bridle agent resume
   <agent>` starts a new process with `--resume <session_id>`. The conversation
   and session id are kept (S7), and so are the cumulative cost counters. The
   model is the one it was spawned with; the role's prompt and flags are re-read
@@ -185,7 +185,7 @@ version. Instead:
 
 ## Stopping
 
-`bridle stop <agent>` snapshots the process tree first, so a child spawned in a
+`bridle agent stop <agent>` snapshots the process tree first, so a child spawned in a
 short turn is still seen, then runs the escalation, each step only if the
 previous one didn't end the process:
 
@@ -201,7 +201,7 @@ previous one didn't end the process:
 
 Stopping an agent that isn't running does nothing and succeeds.
 
-`bridle rm <agent>` stops the agent if it's running, then removes its
+`bridle agent rm <agent>` stops the agent if it's running, then removes its
 worktree:
 
 - It refuses if the worktree has uncommitted changes, unless `--force`. It
@@ -223,9 +223,9 @@ worktree:
 
 ## Renewing
 
-`bridle renew <agent>` swaps an agent's process for a fresh one without
+`bridle agent renew <agent>` swaps an agent's process for a fresh one without
 losing its in-flight branch work: stop it if it's running (same escalation as
-`bridle stop`), then start its replacement in the *same* worktree, branch,
+`bridle agent stop`), then start its replacement in the *same* worktree, branch,
 role and model. Unlike `resume`, the replacement gets a brand-new session
 (`--session-id`, not `--resume`): the point of a renew is a clean context, not
 continuity. The agent keeps its id and name, so anything that addresses it

@@ -57,7 +57,7 @@ pub fn unreported_reason_for(task: &Ticket) -> String {
          reported it. RUN these commands now with the Bash tool; printing them does nothing: \
          `bridle task summary {id} --text \"<what changed>\"`, then \
          `bridle send <manager> --task {id} \"done: <one-line summary>; <commit sha>\"`, \
-         where <manager> is your spawner or the manager agent (`bridle agents --json`), never `human`.",
+         where <manager> is your spawner or the manager agent (`bridle agent list --json`), never `human`.",
         id = task.id,
         title = task.title
     )

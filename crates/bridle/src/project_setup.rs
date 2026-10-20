@@ -750,7 +750,7 @@ impl Steps for Setup<'_> {
                 Some(u) => format!("git clone {u} {}", self.repo.display()),
                 None => "make an empty repo and run bridle project setup <URL>".into(),
             },
-            INIT => "bridle init".into(),
+            INIT => "bridle daemon init".into(),
             REGISTER => format!("bridle projects add {p}"),
             STATE | SERVICE => "bridle project start".into(),
             TOKENS => format!("bridle token pair --projects {p}"),

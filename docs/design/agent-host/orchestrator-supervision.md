@@ -290,7 +290,7 @@ deadline, again with `--fresh`: forced, never deferred for a busy human. Each fi
 `session.restart.completed` (`project`, `session`, `at`, `note`) or, for a session not running,
 `session.restart.skipped` (`reason: not running`); a restart without a note also notes
 `external:aide` for the morning list. A bad `[[restart]]` entry is ignored with a log warning and
-reported by `bridle doctor`. No entry, nothing happens. The orchestrator keeps its own `max_uptime`.
+reported by `bridle daemon doctor`. No entry, nothing happens. The orchestrator keeps its own `max_uptime`.
 
 **Context steps for every interactive session (jttf).** Not the orchestrator's thresholds: the
 human's, `[sessions] warn = ["150k", "200k", "250k", "300k"]` (four increasing counts; per role
@@ -411,7 +411,7 @@ tasks, CI), and that is printed live by `bridle prime orchestrator`. What is lef
 - Also on the state branch, unlike messages and incidents: each note is written as
   `handovers/<id>.md` (TOML frontmatter with id, role, project, created_at, created_by; then the
   body) by the same batched flush, so it is pushed with it (we2r). Files are history, never
-  rewritten; the newest by seq is current. `bridle rebuild` restores the table from them, ids
+  rewritten; the newest by seq is current. `bridle daemon rebuild` restores the table from them, ids
   and seq kept, so new notes number above the highest. Notes already in SQLite are written on
   the daemon's next start if missing. The human's **decisions stay in the repo** (rules,
   tickets, the role file), where they're reviewed.

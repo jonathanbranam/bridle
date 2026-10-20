@@ -2,7 +2,7 @@
 
 > **Status (checked 2026-10-03):** Built and in use: worktrees at `<workspace>/wt/<agent>` with `[worktrees] setup`/`copy`/`warm_target` · Built, not wired in: `layout = "root"` and `"paired"` (no project sets them yet); the port registry (`bridle port alloc|release|list`; the daemon frees ports on exit, but no role or rule tells agents to allocate) · Planned: injecting `PORT` into an agent's env
 
-`bridle spawn` creates the task's worktree according to a layout the project
+`bridle agent spawn` creates the task's worktree according to a layout the project
 declares, including harness's **paired** sibling layout (research 09 §2.2):
 
 ```toml
@@ -19,7 +19,7 @@ at `<workspace>/wt/<agent>`, unchanged. `root` is an absolute path template with
 and `{project}` (the clone's directory name); it must contain `{task}` or `{agent}`, and a bad
 one (relative, `..`, unknown placeholder, `layout = "root"` without `root`) is refused when
 the config loads. A root may leave the workspace, but never the clone: a path inside it is
-refused at spawn. `bridle rm` uses the path recorded on the agent, so it finds the worktree
+refused at spawn. `bridle agent rm` uses the path recorded on the agent, so it finds the worktree
 wherever it was put.
 
 Built: `layout = "paired"` (same `root` template, same validation) creates the project's
@@ -37,7 +37,7 @@ mode = "worktree"                               # "worktree" (default) | "symlin
 `worktree` runs `git worktree add` in the sibling on `bridle/<agent>` from that repo's HEAD;
 `symlink` links to its checkout, for read-only use. The agent's cwd is the project's
 worktree, and its system prompt names each sibling's path. `setup` runs in the project's
-worktree and in each `worktree`-mode member. `bridle rm` removes every member (and, with
+worktree and in each `worktree`-mode member. `bridle agent rm` removes every member (and, with
 `--delete-branch`, the sibling branches), refusing on a dirty member by name unless `--force`;
 members are found from the current config, beside the recorded worktree. `pair` needs
 `layout = "paired"` and the layout needs at least one `pair`.

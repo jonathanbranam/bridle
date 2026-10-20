@@ -35,7 +35,7 @@ the agents bridle hosts, and later a TUI, GUI or MCP server all share:
    `<workspace>/.bridle/`. Agents get worktrees under `<workspace>/wt/<agent>` (the default `[worktrees] layout`),
    on branches `bridle/<agent>`. The clone's own checkout is left to the human
    and the manager.
-4. **"Start working" means starting the manager**: `bridle spawn manager`, or
+4. **"Start working" means starting the manager**: `bridle agent spawn manager`, or
    it autostarts with the daemon by default. Bridle is
    mechanism: it spawns, delivers, supervises, records and (later) integrates.
    Deciding what to work on is judgement, so it's the manager's job
@@ -61,7 +61,7 @@ orchestrator and TUI stay on the laptop.
 ## No-manager mode
 
 A project can run without a standing manager: `[roles.manager]` with `autostart = false` and
-`resume_on_restart = false`. The orchestrator starts one (`bridle spawn manager`) when the
+`resume_on_restart = false`. The orchestrator starts one (`bridle agent spawn manager`) when the
 human asks or there is work, and stops it when nothing is ready or running. Manager-bound notices
 meanwhile: "task filed" goes to the orchestrator; CI failures on `main` go to the human and wake the
 orchestrator; main-moved notes go to workers, not the manager; `main` moving doesn't wake the orchestrator
@@ -275,7 +275,7 @@ the clone:
    refuses unless `<sha>` is reachable from the integration branch, marks the task
    `integrated`, tells other workers `main moved`, then removes
    every agent on that branch, its worktree and the now-landed branch (`-D`), and notes what it
-   removed on the task. Unmerged work can't be lost. `bridle rm --delete-branch` still works for
+   removed on the task. Unmerged work can't be lost. `bridle agent rm --delete-branch` still works for
    one agent, and treats a `Branch: bridle/<agent>` trailer on a commit
    reachable from `HEAD` as landed. `bridle status` lists stopped agents whose
    branch has landed (`merged_leftovers`; an empty branch isn't landed, and `daemon_shutdown`
@@ -343,6 +343,6 @@ Each daemon records only its own usage:
 [[how-project-daemons-share-one-budget-xypj|how project daemons share one budget]].
 
 **Hosting the orchestrator in bridle.** If the human can't run their own agent,
-they can host one (`bridle spawn orchestrator`, a role like any other) and talk
+they can host one (`bridle agent spawn orchestrator`, a role like any other) and talk
 to it with `bridle send`. Where the one orchestrator should live is open:
 [[where-the-single-orchestrator-lives-hj4g|where the orchestrator lives]].

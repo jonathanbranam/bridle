@@ -7,7 +7,7 @@ setup guide is the human's
 > **Status (checked 2026-10-03):** Built and in use: the NUC hosts meta-notes, notes and
 > dotfiles-local, started by hand (only dotfiles-local's daemon was up at this check); bridle's
 > own daemon, track-web and bridle-ui run on dalek (the laptop), not here ·
-> Built, not wired in: `bridle systemd install` (linger off, no units enabled) · Planned:
+> Built, not wired in: `bridle daemon systemd install` (linger off, no units enabled) · Planned:
 > cross-machine message sync (hw6c), Remote Control (never set up).
 
 ## The machine
@@ -31,7 +31,7 @@ The human expects it to be slow with many agents and doesn't mind a slow swarm.
   reverse tunnel through an EC2 instance is the fallback if Tailscale is down.
 - **Remote Control:** the `claude-rc` systemd user unit (`claude remote-control --name
   nuc` in tmux) was never set up and won't be. Linger is **off** (checked 2026-09-30), so user
-  services start only after a login. `bridle systemd install` writes the daemons' units and
+  services start only after a login. `bridle daemon systemd install` writes the daemons' units and
   prints the `sudo loginctl enable-linger` command (ticket 4r3k). `bridle up --install` (the orchestrator at boot, ticket f8f9) needs linger too: enable it with that command before relying on a no-login boot; bridle does not run it.
 
 So a bridle daemon on the NUC is reachable from the laptop by
@@ -94,7 +94,7 @@ To move one (old machine to new):
 
 1. **Old machine, push the work.** Push the integration branch and any working branches you want to
    keep (`git push origin main <branch>...`). Uncommitted worktree changes don't move.
-2. **Old machine, stop the daemon** with `bridle stop-daemon`. One writer only: don't start the new
+2. **Old machine, stop the daemon** with `bridle daemon stop`. One writer only: don't start the new
    daemon first. Shutdown stops the agents, flushes tasks and pushes `bridle/state` (bounded to
    10 s); check that `git push origin bridle/state` says up to date, or run it yourself.
    (A client machine that shouldn't build can set `[daemon] self_upgrade = "release"` and install
@@ -117,7 +117,7 @@ To move one (old machine to new):
    projects" above: `bridle session orchestrator --project <name>` and
    `bridle session advisor --project <name> [alias]`.
    Take over first, then enable the unit on the new machine.
-7. **Old machine, uninstall its unit** (`bridle launchd uninstall` / `bridle systemd uninstall
+7. **Old machine, uninstall its unit** (`bridle daemon launchd uninstall` / `bridle daemon systemd uninstall
    --project <name>`, then the printed `launchctl bootout` / `systemctl --user disable --now`), or
    it restarts at boot. A unit left behind no longer loops (`serve` exits 78, which the unit
    treats as final), but it is still dead weight.
@@ -125,7 +125,7 @@ To move one (old machine to new):
 
 Messages (the inbox) live in SQLite, not on the state branch, and do not move; read anything
 still needed on the old machine first. Tasks, edges, open questions and claims come from the state
-branch (`bridle rebuild` if the new machine's database looks stale). Cross-machine message sync is
+branch (`bridle daemon rebuild` if the new machine's database looks stale). Cross-machine message sync is
 not built. Ticket hw6c.
 
 ## Tools-only clones

@@ -157,7 +157,7 @@ pub(super) async fn status(cli: &Cli) -> Result<(), CliError> {
         }
         if !status.merged_leftovers.is_empty() {
             println!(
-                "merged     stopped agents whose branch has landed: {} (bridle rm <name> --delete-branch)",
+                "merged     stopped agents whose branch has landed: {} (bridle agent rm <name> --delete-branch)",
                 status.merged_leftovers.join(", ")
             );
         }
@@ -440,7 +440,7 @@ fn via(ev: &Event) -> String {
     }
 }
 
-/// `bridle messages`: recent messages for me or another principal. Headers only unless they
+/// `bridle message list`: recent messages for me or another principal. Headers only unless they
 /// are my own: a display rule of the CLI, not a boundary (the HTTP route returns bodies).
 pub(super) async fn messages(cli: &Cli, args: &MessagesArgs) -> Result<(), CliError> {
     let client = client_for_read(cli).await?;
@@ -1326,7 +1326,9 @@ fn mail_stage(state: bridle_api::types::MessageState) -> &'static str {
 /// `bridle message show <id>`: where a message has got to. `o-` ids are mail to another daemon,
 /// asked of the sender's own daemon; `m-` ids are on this daemon.
 pub(super) async fn message(cli: &Cli, args: &MessageArgs) -> Result<(), CliError> {
-    let MessageAction::Show(show) = &args.action;
+    let MessageAction::Show(show) = &args.action else {
+        unreachable!("normalize forwards the other message actions")
+    };
     let client = client_for_read(cli).await?;
     if show.id.starts_with("o-") {
         let e = client.outbox_entry(&show.id).await?;

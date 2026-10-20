@@ -41,7 +41,7 @@ async fn spawn_into_another_agents_worktree_is_refused_until_it_is_removed() {
         .expect_err("running holder");
     let msg = err.to_string();
     assert!(
-        msg.contains("bridle renew w1") && msg.contains("bridle remove w1"),
+        msg.contains("bridle agent renew w1") && msg.contains("bridle remove w1"),
         "{msg}"
     );
     c.stop(&first.id, &StopRequest { now: true })

@@ -134,7 +134,7 @@ project is enrolled; a new project reaches this list through the same sync.
 
 To run no mail on this machine, set `[machine] mail = false` (sync never copies `[machine]`).
 `project start` then skips the bridge with one line and `mail install` refuses. With mail on but
-AWS credentials missing, `project start` skips the bridge with a warning and `bridle doctor`
+AWS credentials missing, `project start` skips the bridge with a warning and `bridle daemon doctor`
 warns once, until you finish steps 1-3 or turn mail off.
 
 ## 5. Per project: token and bridge

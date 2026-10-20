@@ -28,7 +28,7 @@ and, for a machine's home project, [[docs/context/add-a-machine|add a machine]] 
    An **existing** project you care about: `git switch -c bridle-adopt` too, so the trial has its
    own branch and `main` is never touched until you approve (rule `existing-projects`).
 
-2. **Config.** In the clone: `bridle init`. It writes `.bridle/config.toml` and `.gitignore`
+2. **Config.** In the clone: `bridle daemon init`. It writes `.bridle/config.toml` and `.gitignore`
    lines and never overwrites. Commit them.
 
 3. **Register it on every machine.** On `M`: `bridle project add P`. It adds
@@ -52,7 +52,7 @@ and, for a machine's home project, [[docs/context/add-a-machine|add a machine]] 
    - `bridle --project P status --json` answers, here and from another machine.
    - `bridle send --project P advisor "ping"` from another machine prints `delivered`.
    - A mail to `P@` gets a reply.
-   - `bridle doctor` in the clone exits 0.
+   - `bridle daemon doctor` in the clone exits 0.
 
 8. **Sessions.** Only what this project needs:
    - **A work project:** ask your machine's orchestrator to prepare it (new: "work directly on

@@ -1,6 +1,6 @@
 # Architecture in one picture
 
-> **Status (checked 2026-10-03):** Built and in use: the daemon and agent host, tasks, edges, claims, the queue, the state branch (`bridle/state`), `bridle rebuild`, workflow rule resolution (base, packs, project) delivered in each spawned agent's system prompt · Built, not wired in: the `design/` tiers' commands (`bridle spec|goals|arch|explore|trace`); no project has a `design/` tree yet · Planned: the MCP server; a separate `bridle-workflow` repo (bridle keeps `workflow/` in-repo, decision r2uq)
+> **Status (checked 2026-10-03):** Built and in use: the daemon and agent host, tasks, edges, claims, the queue, the state branch (`bridle/state`), `bridle daemon rebuild`, workflow rule resolution (base, packs, project) delivered in each spawned agent's system prompt · Built, not wired in: the `design/` tiers' commands (`bridle spec|goals|arch|explore|trace`); no project has a `design/` tree yet · Planned: the MCP server; a separate `bridle-workflow` repo (bridle keeps `workflow/` in-repo, decision r2uq)
 
 ```
                          ┌──────────────────────────────────────────┐
@@ -51,6 +51,6 @@ Three kinds of state, each in the place its lifetime demands:
 | Tasks, edges, claims, the queue, answered questions, impact | state branch `bridle/state` in each repo | until closed, then history | yes (git) |
 | Agents, claims, leases, unread flags, waits, agent chatter, events, usage | `<workspace>/.bridle/bridle.db` only | minutes–days | **no, by design** |
 
-`bridle rebuild` recreates the database from the project's state branch. That
+`bridle daemon rebuild` recreates the database from the project's state branch. That
 is the migration story: clone the repo into a workspace on the new machine,
-start the daemon, `bridle rebuild`.
+start the daemon, `bridle daemon rebuild`.

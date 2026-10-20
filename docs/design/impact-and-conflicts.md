@@ -14,7 +14,7 @@ bridle impact set tw-7fa2 \
 
 **Built:** the registry only. `bridle impact set` replaces a task's whole declared impact
 (`POST /v1/tasks/{id}/impact`) and `bridle impact show` prints it. It is a field on the task
-record, stored in the state branch frontmatter (storage.md) and restored by `bridle rebuild`. Only
+record, stored in the state branch frontmatter (storage.md) and restored by `bridle daemon rebuild`. Only
 an open, planned or claimed task can be set; ids are checked by shape (`r-`/`s-`/`g-`/`a-` plus
 hex), not for existence. Diffing actual against declared impact is not built.
 
@@ -80,7 +80,7 @@ didn't declare. An agent can't avoid a conflict by under-declaring.
 **Built: steps 1, 2 and 4.** `impact check` (`POST /v1/impact/check`) opens one conflict per
 conflict-level overlap, and each overlap only once, resolved or not (unique on the two tasks,
 kind and key). Conflicts live in the SQLite `conflicts` table only: a conflict is not a
-task thread and has no state-branch record, so `bridle rebuild` drops them and the next
+task thread and has no state-branch record, so `bridle daemon rebuild` drops them and the next
 `impact check` reopens any still-real overlap. Each task's claimant gets one `system`
 message naming the other task and the overlap, and a note lands on both task threads. For
 an unclaimed task the message goes to the running `manager` agents. `bridle conflict list`

@@ -31,7 +31,7 @@ flash takes keyboard focus, which drops keystrokes and closes any open menu-bar 
 - Tested by hand: adding iTerm to System Settings → Privacy & Security → Developer Tools did
   **not** stop the window; ad-hoc signing did not either; a binary started by `launchctl
   submit` was scanned but showed **no** window.
-- The fix taken: `bridle launchd install` runs each daemon as a LaunchAgent (br-936d).
+- The fix taken: `bridle daemon launchd install` runs each daemon as a LaunchAgent (br-936d).
 
 ## What the aide checked (2026-10-09 ~10 PM ET)
 

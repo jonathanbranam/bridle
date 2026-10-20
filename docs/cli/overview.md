@@ -14,7 +14,7 @@ coordinate through tasks, messages and a queue. Run `bridle docs` for the topic 
 - **Worktrees.** Each agent works on its own git worktree and branch
   (`<workspace>/wt/<agent>/`, branch `bridle/<agent>`).
 - **The state branch** (`bridle/state`). Task records, edges, claims and the
-  queue are mirrored to git, so `bridle rebuild` can restore the database.
+  queue are mirrored to git, so `bridle daemon rebuild` can restore the database.
 - **The workflow.** Rules, role prompts and skills in layers (base, packs,
   project) that are resolved per project. See `bridle docs workflow-layers`.
 
@@ -36,7 +36,7 @@ implement one task each, and bridle itself integrates (`bridle task land`). Role
 
 ```
 bridle status --json         # the system's state
-bridle agents --json         # who is running
+bridle agent list --json         # who is running
 bridle inbox --json          # messages waiting for you
 bridle task show <id>        # a task and its thread
 ```

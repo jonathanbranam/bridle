@@ -731,7 +731,7 @@ async fn only_pm_or_human_may_write_the_queue() {
     assert!(matches!(err, ClientError::Api { status: 403, .. }));
 }
 
-/// `bridle rebuild`'s HTTP surface: a no-op against an empty database
+/// `bridle daemon rebuild`'s HTTP surface: a no-op against an empty database
 /// succeeds, but refuses once the database has anything to lose
 /// (docs/design/storage.md, "Rebuild"). The reconstruction itself is
 /// covered at the `TicketManager` level (`tasks.rs`'s own tests); this is just

@@ -75,7 +75,7 @@ pub enum ConfigError {
     WorkflowGitUrl { url: String },
 }
 
-/// Where `bridle init` vendors the base workflow, repo-relative.
+/// Where `bridle daemon init` vendors the base workflow, repo-relative.
 /// A role name as the daemon looks it up: the pre-9j2h `product-manager` reads as
 /// `project-manager`, so stored agents and unmigrated configs keep PM permissions.
 pub fn canonical_role(name: &str) -> String {
@@ -1615,14 +1615,14 @@ pub struct Config {
     /// released back to `planned` (docs/design/storage.md, claims).
     pub claim_lease_after: Duration,
     /// `[daemon] self_upgrade`: when a newer green commit is on the integration
-    /// branch, run what `bridle restart --upgrade` runs (docs/design/agent-host/daemon.md, Upgrade).
+    /// branch, run what `bridle daemon restart --upgrade` runs (docs/design/agent-host/daemon.md, Upgrade).
     pub self_upgrade: SelfUpgrade,
     /// `[daemon] release_repo` (`owner/name`): where `self_upgrade = "release"` looks for releases;
     /// by default taken from the checkout's `origin` remote.
     pub release_repo: Option<String>,
     /// `[daemon] self_upgrade_min_interval`: the automatic upgrade waits this long after the
     /// last upgrade, so landings in between go in as one batch. `0s` is no wait. An explicit
-    /// `bridle restart --upgrade` ignores it.
+    /// `bridle daemon restart --upgrade` ignores it.
     pub self_upgrade_min_interval: Duration,
     pub stop_grace: Duration,
     pub roles: BTreeMap<String, Role>,
@@ -1673,7 +1673,7 @@ pub struct Config {
     /// edit/comment before anyone can start it (ny9u). Zero turns it off.
     pub tasks_settle: Duration,
     /// Set when `[tasks] settle` didn't parse and `tasks_settle` fell back to
-    /// the default; `bridle doctor` reports it. Never fatal: a typo here must
+    /// the default; `bridle daemon doctor` reports it. Never fatal: a typo here must
     /// not stop the daemon starting.
     pub tasks_settle_problem: Option<String>,
     /// `[tasks] open_stale`: an `open` task nobody planned for this long goes back to `pending`
@@ -1932,7 +1932,7 @@ impl Config {
                 config.self_upgrade_min_interval = parse_duration(&s)?;
             }
         }
-        // A project with no `workflow` uses the copy `bridle init` vendored, if there is one.
+        // A project with no `workflow` uses the copy `bridle daemon init` vendored, if there is one.
         if config.workflow.is_none() && repo.join(VENDORED_WORKFLOW).join("base").is_dir() {
             config.workflow = Some(VENDORED_WORKFLOW.to_string());
         }
@@ -2278,7 +2278,7 @@ impl Config {
                 match parse_settle(&v) {
                     Ok(d) => config.tasks_settle = d,
                     Err(problem) => {
-                        tracing::warn!("{problem}; using 5m (`bridle doctor` reports this)");
+                        tracing::warn!("{problem}; using 5m (`bridle daemon doctor` reports this)");
                         config.tasks_settle_problem = Some(problem);
                     }
                 }
@@ -2407,7 +2407,7 @@ fn parse_time_of_day(s: &str, period_name: &str) -> Result<NaiveTime, ConfigErro
 /// What is wrong with a period's `start`/`end` as written, with the fix, or `None`. An end
 /// before its start must say `+1d` (`00:00` is the midnight ending the start day, so it needs
 /// none); `+1d` on an end that isn't before the start can't mean the next day's earlier time.
-/// Unparseable times are left to `parse_time_of_day`. Called by `bridle doctor` as an error and
+/// Unparseable times are left to `parse_time_of_day`. Called by `bridle daemon doctor` as an error and
 /// by the loaders as a warning only: a surprising block must never stop the daemon.
 fn overnight_problem(name: &str, start: &str, end: &str) -> Option<String> {
     let plus = end.ends_with("+1d");
@@ -2429,12 +2429,12 @@ fn overnight_problem(name: &str, start: &str, end: &str) -> Option<String> {
 
 fn warn_overnight(name: &str, start: &str, end: &str) {
     if let Some(problem) = overnight_problem(name, start, end) {
-        tracing::warn!("{problem} (read as the next day; `bridle doctor` reports this)");
+        tracing::warn!("{problem} (read as the next day; `bridle daemon doctor` reports this)");
     }
 }
 
 /// Every overnight problem in `<home>/config.toml`'s `[[focus]]` and `[[budget.schedule]]`
-/// blocks, for `bridle doctor`. Empty when the file is absent.
+/// blocks, for `bridle daemon doctor`. Empty when the file is absent.
 pub fn machine_config_problems(home: &Path) -> Result<Vec<String>, ConfigError> {
     let path = home.join("config.toml");
     let text = match std::fs::read_to_string(&path) {
@@ -2667,7 +2667,7 @@ struct RawConfig {
     stages: Option<RawStages>,
     #[serde(default)]
     workflow: Option<String>,
-    /// Machine scope only: the git url `bridle init` / `bridle workflow update` fetch the
+    /// Machine scope only: the git url `bridle daemon init` / `bridle workflow update` fetch the
     /// base workflow from when there's no local clone.
     #[serde(default)]
     workflow_url: Option<String>,
@@ -3288,7 +3288,7 @@ To reply or send a message of your own, run:
   bridle send <agent|human> \"text\" [--question] [--reply-to m-...]
 
 Check what's waiting for you with `bridle inbox --json`. See the system's
-state with `bridle status --json` and `bridle agents --json`. Always pass
+state with `bridle status --json` and `bridle agent list --json`. Always pass
 --json: it gives you structured output instead of a table meant for humans.
 
 Never read another principal's token, and never read anything under
@@ -3305,7 +3305,7 @@ fn role_preamble_suffix(role_name: &str) -> Option<&'static str> {
             "\nYou are a worker: implement the task you were given in your own worktree, commit your work on your branch, and report back to whoever gave you the task.\n",
         ),
         "manager" => Some(
-            "\nYou are the manager: coordinate work in this repository and spawn workers with `bridle spawn worker --name ... --prompt ...` to do it; you never edit code yourself.\n",
+            "\nYou are the manager: coordinate work in this repository and spawn workers with `bridle agent spawn worker --name ... --prompt ...` to do it; you never edit code yourself.\n",
         ),
         "orchestrator" => Some(
             "\nYou are the orchestrator: you are the human's delegate, driving bridle's agents to get work done.\n",

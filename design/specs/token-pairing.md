@@ -149,7 +149,7 @@ both directions. Its role tokens SHALL still be minted. The default is `true`.
 
 ### Requirement: Creating a project pairs it  {#r-1f66}
 
-`bridle init` SHALL run `bridle token pair --projects <name>` when the project already has a
+`bridle daemon init` SHALL run `bridle token pair --projects <name>` when the project already has a
 daemon, and otherwise print the command as a next step after `bridle serve`. A failure SHALL
 not fail init; it says to re-run the command. Existing projects default to `peers = true` and
 get peer tokens on the next plain `bridle token pair`.
@@ -159,5 +159,5 @@ get peer tokens on the next plain `bridle token pair`.
 *Verification*: **executable**
 
 - **GIVEN** a new git repo
-- **WHEN** bridle init runs
+- **WHEN** bridle daemon init runs
 - **THEN** it succeeds and its next steps include the token pair command for the new project

@@ -1,4 +1,4 @@
-//! `bridle launchd install|uninstall`: a per-project LaunchAgent so the daemon (and so every
+//! `bridle daemon launchd install|uninstall`: a per-project LaunchAgent so the daemon (and so every
 //! agent and build under it) has no GUI responsible app. Writes and removes the plist only;
 //! never runs `launchctl`. See docs/design/cli.md and ticket qr8z.
 
@@ -13,7 +13,9 @@ use crate::render;
 
 pub fn run(cli: &Cli, args: &LaunchdArgs) -> Result<(), CliError> {
     if !cfg!(target_os = "macos") {
-        return Err(CliError::Other(anyhow!("bridle launchd is macOS only")));
+        return Err(CliError::Other(anyhow!(
+            "bridle daemon launchd is macOS only"
+        )));
     }
     let home = PathBuf::from(std::env::var_os("HOME").ok_or_else(|| anyhow!("$HOME is not set"))?);
     let agents_dir = home.join("Library/LaunchAgents");

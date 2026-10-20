@@ -1,4 +1,4 @@
-//! `bridle renew`: stop the named agent, start its replacement fresh in the
+//! `bridle agent renew`: stop the named agent, start its replacement fresh in the
 //! same worktree/branch/role/model (docs/design/agent-host/agents.md,
 //! Renewing).
 

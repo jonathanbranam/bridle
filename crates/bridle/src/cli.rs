@@ -93,7 +93,8 @@ pub enum Command {
     /// Spawn a new agent.
     #[command(hide = true)]
     Spawn(SpawnArgs),
-    /// List agents.
+    /// Old name of `agent list` (kept one release, hidden).
+    #[command(hide = true)]
     Agents(AgentsArgs),
     /// Show one agent's detail.
     #[command(hide = true)]
@@ -106,7 +107,8 @@ pub enum Command {
     Message(MessageArgs),
     /// Who this session can message here and which other daemons it can reach.
     Recipients,
-    /// Recent messages for me or any principal, with sent/delivered/read times and channels.
+    /// Old name of `message list` (kept one release, hidden).
+    #[command(hide = true)]
     Messages(MessagesArgs),
     /// Interrupt a running agent's turn.
     #[command(hide = true)]
@@ -258,7 +260,7 @@ pub enum Command {
     /// explain`/`diff` — no daemon call.
     #[command(hide = true)]
     Sync,
-    /// Refresh the workflow `bridle init` vendored into `.bridle/workflow/` (never automatic).
+    /// Refresh the workflow `bridle daemon init` vendored into `.bridle/workflow/` (never automatic).
     #[command(subcommand)]
     Workflow(WorkflowAction),
     /// Validate capability spec files (docs/design/specs.md) and print each
@@ -1461,6 +1463,12 @@ pub enum MessageAction {
     /// (the recipient received it; also read, for now). Takes an `o-NNNN` id from `send`, or
     /// an `m-NNNN` id.
     Show(MessageShowArgs),
+    /// Send a message to an agent or the human inbox (same as top-level `send`).
+    Send(SendArgs),
+    /// Messages addressed to me (same as top-level `inbox`).
+    Inbox(InboxArgs),
+    /// Recent messages for me or any principal, with sent/delivered/read times and channels.
+    List(MessagesArgs),
 }
 
 #[derive(Debug, Args)]
@@ -1669,7 +1677,7 @@ pub struct BudgetArgs {
 #[derive(Debug, Subcommand)]
 pub enum BudgetAction {
     /// Idle the account for the human: stop idle agents, wind working ones
-    /// down, and hold `bridle spawn`/`resume` until `release` (or `--for`/
+    /// down, and hold `bridle agent spawn`/`resume` until `release` (or `--for`/
     /// `--until` passes).
     #[command(group(ArgGroup::new("hold_duration").args(["for_", "until"])))]
     Hold(BudgetHoldArgs),
@@ -1885,7 +1893,7 @@ pub enum TokenAction {
     /// List external tokens: name, created-at, revoked-or-not (human only).
     List,
     /// Revoke an `external:<name>` token (human only). An agent's own token
-    /// isn't revoked this way; that happens through `bridle rm`.
+    /// isn't revoked this way; that happens through `bridle agent rm`.
     Revoke { name: String },
 }
 
@@ -3712,7 +3720,9 @@ mod tests {
         let Command::Message(args) = cli.command else {
             panic!("expected message")
         };
-        let MessageAction::Show(show) = args.action;
+        let MessageAction::Show(show) = args.action else {
+            panic!("expected show")
+        };
         assert_eq!(show.id, "o-0007");
         assert!(matches!(
             parse(&["recipients"]).unwrap().command,

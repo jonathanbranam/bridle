@@ -34,7 +34,7 @@ authenticates normally (with its real principal and attribution) even on a
 `GET`, and an invalid one is still a 401.
 
 This is for read-only ad hoc sessions (a plain Claude Code session in the
-clone, poking around with `bridle status`/`bridle agents`) that have no
+clone, poking around with `bridle status`/`bridle agent list`) that have no
 `BRIDLE_TOKEN` per the rule below. That's only useful if the `bridle` CLI
 itself cooperates: a read-only command run with `$CLAUDECODE` set and no
 token sends the request anonymously (see "How the CLI picks a token" below)

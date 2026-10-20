@@ -1,4 +1,4 @@
-//! `bridle systemd install`: a systemd user unit per project this machine owns, so daemons come
+//! `bridle daemon systemd install`: a systemd user unit per project this machine owns, so daemons come
 //! back after a reboot with no terminal (ticket 4r3k, step 2). Writes unit files only; never
 //! runs `systemctl` or `loginctl`. The Linux sibling of `launchd.rs`.
 
@@ -67,7 +67,9 @@ fn check_os(os: &str) -> Result<(), CliError> {
     if os == "linux" {
         Ok(())
     } else {
-        Err(CliError::Other(anyhow!("bridle systemd is Linux only")))
+        Err(CliError::Other(anyhow!(
+            "bridle daemon systemd is Linux only"
+        )))
     }
 }
 

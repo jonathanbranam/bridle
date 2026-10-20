@@ -173,11 +173,14 @@ const CLASSES: &[(&str, Kind, &str)] = &[
     ),
     ("status", Daemon, ""),
     ("ci", Daemon, ""),
-    ("agents", Daemon, ""),
     ("send", Daemon, ""),
     ("inbox", Daemon, ""),
-    ("messages", Daemon, ""),
     ("message show", Daemon, ""),
+    ("message send", Daemon, ""),
+    ("message inbox show", Daemon, ""),
+    ("message inbox read", Daemon, ""),
+    ("message inbox unread", Daemon, ""),
+    ("message list", Daemon, ""),
     ("recipients", Daemon, ""),
     ("schedule add", Daemon, ""),
     ("schedule list", Daemon, ""),
@@ -273,6 +276,7 @@ fn required_args(path: &[String]) -> Vec<String> {
         ("probe", &["target"]),
         ("agent wake", &["external:advisor"]),
         ("send", &["human", "hi"]),
+        ("message send", &["human", "hi"]),
         ("token create", &["x"]),
         (
             "schedule add",
@@ -635,7 +639,9 @@ fn the_flag_wins_over_the_workspace() {
     let mut seen = acted_on(&w, &w.inside, &["--project", "y"], &[]);
     // 3haz: `send --project y` is mail for y's daemon, so it is queued on the sender's own
     // daemon (x, the workspace's) and forwarded from there; the CLI never writes to y.
-    assert_eq!(seen.remove("send").as_deref(), Some("x"));
+    for leaf in ["send", "message send"] {
+        assert_eq!(seen.remove(leaf).as_deref(), Some("x"), "{leaf}");
+    }
     // br-qac3: so is `ticket watch|unwatch --project y`, registered on y by x's peer token.
     for leaf in ["ticket watch", "ticket unwatch"] {
         assert_eq!(seen.remove(leaf).as_deref(), Some("x"), "{leaf}");

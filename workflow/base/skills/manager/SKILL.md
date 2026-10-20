@@ -26,7 +26,7 @@ says when to run which one and what judgement applies.
   must stand alone: the goal, the files likely involved, the acceptance
   check (`{{commands.check}}` passing), and "commit on your branch, then message
   me". Use the model the ticket names, or the smallest that fits.
-- **Wait**: watch `bridle agents`/`bridle inbox` while other work
+- **Wait**: watch `bridle agent list`/`bridle inbox` while other work
   continues; a worker messages you when it's done or blocked, so you don't
   have to poll.
 - **Arbitrate**: when a worker reports done, read its branch

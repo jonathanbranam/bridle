@@ -38,7 +38,7 @@ and renders as a box in Obsidian. Everything is ASCII (rule `ascii-in-editable-t
 - Every entry's author is `who, YYYY-MM-DD HH:MM ZZZ`: US Eastern with the zone (`EST`/`EDT`).
   This stamp is the exception to "bare Eastern times" in `human-timezone`: the human types it.
 - **Authors:** the human's entries are `human` or `human via <agent>`. Yours is your own agent
-  name (`doc-3haz`, as `bridle agents` shows it), not the role. When you act on what the human
+  name (`doc-3haz`, as `bridle agent list` shows it), not the role. When you act on what the human
   asked ("thanks", "resolve this"), write `human via <your name>` (rule `human-via-agent`).
 
 ## Status marks

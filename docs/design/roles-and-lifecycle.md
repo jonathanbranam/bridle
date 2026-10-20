@@ -100,7 +100,7 @@ Built states: `pending`, `open`, `planned`, `claimed`, `dropped`, `integrated`, 
   for bridle-hosted agents. If the lease expires (`[daemon] claim_lease_after`, default 10 min), the task returns to ready,
   and whatever the worker wrote on it goes to the next claimant (research 10
   §5). Claims are durable: mirrored to the state branch alongside the task
-  and edge state, so `bridle rebuild` restores who's working what
+  and edge state, so `bridle daemon rebuild` restores who's working what
   (storage.md, "claims").
 - **Kinds** are to change the gates (planned) and the prime (today only `explore`, via
   `bridle prime worker --task`, which no spawned worker runs): `feature`, `bug`, `chore`,
@@ -123,10 +123,10 @@ bridle task new "Watch: ratings filter" -k feature      → tw-7fa2
 bridle ticket link 7fa2 blocked-by c0f1
 bridle task plan tw-7fa2                # PM: open -> planned, ready to build
 bridle queue add-tier tw-c0f1 tw-7fa2   # PM: queues them, tw-c0f1 first
-bridle spawn worker --prompt "Claim tw-c0f1 …"   # worktree + session; the worker claims it
+bridle agent spawn worker --prompt "Claim tw-c0f1 …"   # worktree + session; the worker claims it
 bridle wait tw-c0f1 --until integrated  # run as background Bash; manager is woken
 …
-bridle spawn worker --prompt "Claim tw-7fa2 …"   # now ready
+bridle agent spawn worker --prompt "Claim tw-7fa2 …"   # now ready
 bridle review                           # planned: human's batch: diffs, scenarios, verification notes
 ```
 

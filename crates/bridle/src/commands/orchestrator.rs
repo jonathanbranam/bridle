@@ -7,7 +7,7 @@ use super::*;
 /// one-command-orchestrator-handover-d4mz.md). Kept in the binary, so there's one source of truth
 /// for what a fresh orchestrator session does first; `bridle session orchestrator` runs this.
 pub(super) const ORCHESTRATOR_STARTUP_STEPS: &str = "\
-Check in: `bridle status`, `bridle agents`, and recent messages to human (from the \
+Check in: `bridle status`, `bridle agent list`, and recent messages to human (from the \
 managers).
 Pending tasks (`bridle status --json` lists them under `pending_tasks`; `bridle task list` shows \
 each one's state): every task starts pending. Bring the human the ones worth doing, and `bridle ticket ready <id>` those they \

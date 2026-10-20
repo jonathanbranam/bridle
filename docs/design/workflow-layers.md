@@ -49,7 +49,7 @@ no hook runs it. Nothing is copied into projects, so nothing goes stale.
 
 **Two modes** (2026-09-29, ticket mrhe). A project whose `workflow` is a path to a local
 bridle clone updates automatically, as below. A project on an installed binary has the base
-workflow vendored into `.bridle/workflow/` by `bridle init` (used whenever `workflow` is
+workflow vendored into `.bridle/workflow/` by `bridle daemon init` (used whenever `workflow` is
 unset) and it changes only when the human runs `bridle workflow update [--to <tag>]`: opt-in,
 so the workflow never shifts under them. The vendored copy is committed by the human.
 

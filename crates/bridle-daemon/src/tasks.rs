@@ -13,7 +13,7 @@
 //!
 //! Claims are durable too now: `claim_task`/`release_task` write to `Store`
 //! *and* enqueue the full current claim set to the state branch's
-//! `claims.toml`, so `bridle rebuild` restores who's working what (storage.md,
+//! `claims.toml`, so `bridle daemon rebuild` restores who's working what (storage.md,
 //! "claims"). The claiming agent's own activity (the same signal
 //! `supervisor.rs`'s stall check watches) still stands in for a lease
 //! renewal, so [`TicketManager::tick_claim_lease_check`] can release a stale
@@ -329,7 +329,7 @@ impl TicketManager {
 
     /// Reconstructs `tasks`, `edges`, `open_questions` and `claims` from the
     /// state branch alone: the migration path for a fresh clone with no
-    /// `bridle.db` (docs/design/overview.md, "`bridle rebuild` recreates the
+    /// `bridle.db` (docs/design/overview.md, "`bridle daemon rebuild` recreates the
     /// database from the project's state branch"). Refuses — rather than
     /// silently overwriting — if the database already has any rows in these
     /// tables; a rebuild is a from-nothing reconstruction, not a merge. The
@@ -445,7 +445,7 @@ impl TicketManager {
         Ok(())
     }
 
-    /// `bridle rebuild --from-origin`: see [`StateBranch::fetch_from_origin`].
+    /// `bridle daemon rebuild --from-origin`: see [`StateBranch::fetch_from_origin`].
     pub async fn fetch_state_from_origin(&self) -> crate::state_branch::FetchOutcome {
         StateBranch::fetch_from_origin(self.state.dir()).await
     }
@@ -1638,7 +1638,7 @@ impl TicketManager {
     /// `claims.toml`, mirroring [`TicketManager::claims`] the way
     /// `add_edge`/`remove_edge` mirror the edge cache to `edges.toml`. Called
     /// with the claims lock already released, after every claim/release, so
-    /// `bridle rebuild` can restore current claims (storage.md, "claims").
+    /// `bridle daemon rebuild` can restore current claims (storage.md, "claims").
     fn enqueue_claims_snapshot(&self) -> Result<(), TicketError> {
         let records: Vec<ClaimRecord> = self
             .claims
@@ -3787,7 +3787,7 @@ mod tests {
         tm.flush_now().await.expect("flush");
 
         // A fresh database, over the same already-flushed state branch, as
-        // `bridle rebuild` runs against: unlike before durable claims, this
+        // `bridle daemon rebuild` runs against: unlike before durable claims, this
         // restores the claim too, not just the task.
         let fresh_store = Store::open(tmp.path().join("bridle2.db"))
             .await
@@ -3938,7 +3938,7 @@ mod tests {
 
         // A fresh, empty database over the same (already flushed) state
         // branch, as the migration story describes: clone, start the
-        // daemon, `bridle rebuild`.
+        // daemon, `bridle daemon rebuild`.
         let fresh_store = Store::open(tmp.path().join("bridle2.db"))
             .await
             .expect("open fresh store");

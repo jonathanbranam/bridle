@@ -427,7 +427,7 @@ impl StateBranch {
     }
 
     /// Every handover file, parsed, oldest first (by seq, which is the id's number). Strict,
-    /// like [`StateBranch::list_tasks`]: only `bridle rebuild` reads it.
+    /// like [`StateBranch::list_tasks`]: only `bridle daemon rebuild` reads it.
     pub fn list_handovers(&self) -> Result<Vec<Handover>, StateBranchError> {
         let dir = self.dir.join("handovers");
         let mut out = Vec::new();
@@ -779,7 +779,7 @@ impl StateBranch {
     }
 
     /// [`Self::overlay_thread`], reporting an unparseable thread file (named, with line) for
-    /// `bridle rebuild`; a missing file is not an error.
+    /// `bridle daemon rebuild`; a missing file is not an error.
     fn overlay_thread_strict(&self, task: &mut Ticket) -> Result<(), String> {
         if !owns_thread_file(task) {
             return Ok(());
@@ -806,7 +806,7 @@ impl StateBranch {
     /// deterministic order. Unlike [`StateBranch::read_task`] (which treats
     /// a missing or unparseable file as "nothing to hydrate", tolerating a
     /// crash between an enqueue and the next flush), this is strict: it's
-    /// only used by `bridle rebuild`, reconstructing the database from this
+    /// only used by `bridle daemon rebuild`, reconstructing the database from this
     /// branch alone, where a task file that exists but won't parse must
     /// surface as an error rather than silently vanish from the rebuilt set.
     pub fn list_tasks(&self) -> Result<Vec<Ticket>, StateBranchError> {
@@ -859,7 +859,7 @@ impl StateBranch {
     }
 
     /// The current edge set from `edges.toml`, or empty if the file doesn't
-    /// exist yet (a project with no edges). Used by `bridle rebuild`; see
+    /// exist yet (a project with no edges). Used by `bridle daemon rebuild`; see
     /// [`render_edges`] for why there's normally no read path back from this
     /// file.
     pub fn list_edges(&self) -> Result<Vec<Edge>, StateBranchError> {
@@ -873,7 +873,7 @@ impl StateBranch {
     /// The current claim set from `claims.toml`, or empty if the file
     /// doesn't exist yet (a project with nothing claimed, or one predating
     /// durable claims). Used both to hydrate `TicketManager::open`'s claims
-    /// cache and by `bridle rebuild`.
+    /// cache and by `bridle daemon rebuild`.
     pub fn list_claims(&self) -> Result<Vec<ClaimRecord>, StateBranchError> {
         match std::fs::read_to_string(self.dir.join("claims.toml")) {
             Ok(text) => parse_claims(&text),
@@ -886,7 +886,7 @@ impl StateBranch {
     /// unparseable file as "no queue yet" (empty) rather than failing —
     /// [`StateBranch::read_task`]'s reasoning applies the same way here,
     /// since this is also used to hydrate the in-memory cache on daemon
-    /// startup, not just `bridle rebuild`.
+    /// startup, not just `bridle daemon rebuild`.
     pub fn read_queue(&self) -> Vec<Vec<String>> {
         let text = match std::fs::read_to_string(self.dir.join("queue.toml")) {
             Ok(text) => text,
@@ -1325,7 +1325,7 @@ pub async fn sync_integration_for_take_over(
     Ok(false)
 }
 
-/// What [`StateBranch::fetch_from_origin`] did, for `bridle rebuild --from-origin` to say.
+/// What [`StateBranch::fetch_from_origin`] did, for `bridle daemon rebuild --from-origin` to say.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum FetchOutcome {
     /// No local branch; created from `origin/bridle/state`.
@@ -1606,7 +1606,7 @@ struct EdgesFileOwned {
     edge: Vec<EdgeRecordOwned>,
 }
 
-/// The inverse of [`render_edges`], used only by `bridle rebuild`
+/// The inverse of [`render_edges`], used only by `bridle daemon rebuild`
 /// (`render_edges`'s own doc comment notes there's normally no read path
 /// back from `edges.toml`, since SQLite already has everything an `Edge`
 /// carries — rebuild is the one case reconstructing SQLite from scratch).
@@ -1772,7 +1772,7 @@ struct ClaimsFile<'a> {
 /// wholesale-array-of-tables shape. Unlike edges, this one does have a read
 /// path back (`parse_claims`, [`StateBranch::list_claims`]): the task
 /// files carry no claim (storage.md), so this file is the only durable copy
-/// `bridle rebuild` can restore them from.
+/// `bridle daemon rebuild` can restore them from.
 fn render_claims(claims: &[ClaimRecord]) -> Result<String, StateBranchError> {
     let file = ClaimsFile {
         claim: claims

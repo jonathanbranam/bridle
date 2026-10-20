@@ -688,7 +688,7 @@ fn write_non_forwarding(out: &mut dyn Write, p: &Plan, results: &[Checked]) {
                 out,
                 "note: machine {holder} has no {home} project, so its orchestrator's tokens stay direct and \
                  these daemons do not forward wakes or mail to it: {names}. Create {home} \
-                 (`bridle init`, then start its daemon), then re-run `bridle token pair`.",
+                 (`bridle daemon init`, then start its daemon), then re-run `bridle token pair`.",
                 home = machine_home(holder),
                 names = v.join(", ")
             )

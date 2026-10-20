@@ -64,7 +64,7 @@ the human is, so cwd says nothing about which client is meant. The scope is name
   `--component <id>` repeatedly, rejects an unknown id, and in a project that has
   components prints a one-line reminder when none is given. It never refuses.
   Nothing else in bridle blocks on it.
-- **A spawn takes the same list** (`bridle spawn … --component <id>`), defaulting to
+- **A spawn takes the same list** (`bridle agent spawn … --component <id>`), defaulting to
   the claimed task's. A planning or proposal agent has no task, so this is how it
   gets scoped. The daemon records the list on the agent and passes it to the
   process as `BRIDLE_COMPONENTS` (comma-separated), which `bridle prime` reads.
@@ -171,7 +171,7 @@ a spawned agent receives its components' rules:
 > builder, and tests that a two-deep chain resolves (replace, append, disable, locked)
 > and that sibling chains are resolved separately; (3) an optional `components` list
 > on tasks and spawns (wire types, store, state branch, `bridle task new/list
-> --component`, `bridle spawn --component`, `BRIDLE_COMPONENTS`); (4) `bridle prime`
+> --component`, `bridle agent spawn --component`, `BRIDLE_COMPONENTS`); (4) `bridle prime`
 > for worker and planner roles printing L1–L3, the named chains, docs pointers and the
 > other-components line; (5) `rules explain/diff --component`. Update
 > workflow-layers, cli.md and rules.rs's header comment. Out of scope: rendering

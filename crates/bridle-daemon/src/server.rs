@@ -6012,7 +6012,7 @@ struct RebuildQuery {
     from_origin: bool,
 }
 
-/// `bridle rebuild` (docs/design/overview.md, "`bridle rebuild` recreates
+/// `bridle daemon rebuild` (docs/design/overview.md, "`bridle daemon rebuild` recreates
 /// the database from the project's state branch"): reconstructs
 /// `tasks`/`edges`/`open_questions` from the state branch alone. Human-only,
 /// like `shutdown`; refuses (409) rather than overwrites if the database

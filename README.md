@@ -27,17 +27,17 @@ git clone git@github.com:me/myproj.git                # 2. the clone
 cd myproj
 bridle serve --detach                                  # 3. daemon (or `bridle serve` in the foreground)
 
-bridle spawn worker --name w1 --prompt "Fix the flaky date test; commit on your branch; tell me when done."
-bridle agents                                          # what's running
-bridle logs w1 --follow                                # watch it work
+bridle agent spawn worker --name w1 --prompt "Fix the flaky date test; commit on your branch; tell me when done."
+bridle agent list                                          # what's running
+bridle agent logs w1 --follow                                # watch it work
 bridle inbox                                           # messages agents sent you
 bridle send w1 "Also update the changelog." [--when idle]
-bridle interrupt w1                                    # end the current turn; agent stays up
-bridle stop w1                                         # then: bridle resume w1 (same conversation)
-bridle rm w1 [--delete-branch]
+bridle agent interrupt w1                                    # end the current turn; agent stays up
+bridle agent stop w1                                         # then: bridle agent resume w1 (same conversation)
+bridle agent rm w1 [--delete-branch]
 bridle events --follow                                 # everything, live, with who did it
 bridle usage
-bridle stop-daemon
+bridle daemon stop
 ```
 
 This lays out the workspace as:
@@ -54,7 +54,7 @@ The CLI finds the daemon:
 - by name with `--project myproj` (or `BRIDLE_PROJECT`) from anywhere on the machine;
 - by `--url` / `BRIDLE_URL`.
 
-`bridle daemons` lists every project's daemon on the machine. Projects are fully
+`bridle daemon list` lists every project's daemon on the machine. Projects are fully
 independent.
 
 ## Roles
