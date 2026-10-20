@@ -4,7 +4,7 @@ title = "Opt-in migrations 0001-0005: decide which existing projects still need 
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-18T23:47:18.317Z"
-updated_at = "2026-10-20T03:26:22.712966Z"
+updated_at = "2026-10-20T03:26:39.438217Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -37,3 +37,6 @@ done: retired 0001/0003, opt-in migrations announced once to external:aide; chec
 
 ### note · agent:manager-2 · 2026-10-20T03:26:22.712Z
 integrated: 3f446252fd265cda8770bcab600eed8d0844a6b3 (branch bridle/wdf8w)
+
+### note · agent:manager-2 · 2026-10-20T03:26:39.438Z
+cleanup: removed agent wdf8w, branch bridle/wdf8w
