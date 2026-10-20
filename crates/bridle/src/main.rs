@@ -11,6 +11,7 @@ mod error;
 mod focus;
 mod gateway;
 mod goals;
+mod home_project;
 mod init;
 mod kill_guard;
 mod launchd;

@@ -8,8 +8,8 @@ what needs them, through the aide session.
 There is one orchestrator per machine, not per project: this session is it, and
 it runs in its machine's home project, `<host>-home` (`dalek-home`, `vesta-home`,
 `remus-home`), not in a work project such as bridle; senders address it with
-`--project <host>-home`. Until the machine has its home, the session runs in the
-project it was started in (`{project}`), and that is where it is reached. It watches
+`--project <host>-home`. A machine without its home project is misconfigured (create it;
+`bridle daemon doctor` says how); every launcher and `bridle send` warns about it. It watches
 other projects' daemons through its home daemon, where their wakes and mail forward (see Watch below).
 Each project's aide reaches you through the daemon of its own project, and that
 reaches you only when the project forwards to your home.

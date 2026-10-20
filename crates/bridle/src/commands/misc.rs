@@ -49,6 +49,7 @@ pub(super) async fn status(cli: &Cli) -> Result<(), CliError> {
             status.claude_version.as_deref().unwrap_or("-")
         );
         println!("unread     {}", status.unread_human_messages);
+        println!("home       {}", crate::home_project::status_line());
         if let Some(line) = crate::focus::status_line(&discovery::bridle_home(), chrono::Utc::now())
         {
             println!("focus      {line}");
@@ -254,8 +255,27 @@ pub(super) async fn own_daemon_for_other_project(
     Ok(Some((client, project.to_string())))
 }
 
+/// Mail to the orchestrator belongs on the machine's home project (br-7ytg): the sender is told
+/// when it addresses another local project. Still delivered; nothing refuses yet.
+fn warn_if_orchestrator_mail_off_home(cli: &Cli, to: &str) {
+    if to != "external:orchestrator" && to != "orchestrator" {
+        return;
+    }
+    let Ok(project) = crate::project::resolve(cli) else {
+        return;
+    };
+    let home = discovery::bridle_home();
+    let remote = bridle_api::machines::MachineMap::load(&home)
+        .ok()
+        .is_some_and(|m| m.remote(&project).ok().flatten().is_some());
+    if let Some(w) = crate::home_project::send_warning(&home, &project, remote) {
+        eprintln!("{w}");
+    }
+}
+
 pub(super) async fn send(cli: &Cli, args: &SendArgs) -> Result<(), CliError> {
     let body = require_body(read_text(&args.text, &args.text_file, "text")?)?;
+    warn_if_orchestrator_mail_off_home(cli, &args.to);
     if let Some((own, project)) = own_daemon_for_other_project(cli).await? {
         if args.task.is_some() {
             return Err(CliError::from(anyhow::anyhow!(

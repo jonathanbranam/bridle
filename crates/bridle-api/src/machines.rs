@@ -17,7 +17,7 @@
 use std::collections::BTreeMap;
 use std::path::Path;
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::discovery::DiscoveryError;
 
@@ -45,6 +45,9 @@ pub struct MachineMap {
 pub struct MachineSelf {
     #[serde(default)]
     pub name: Option<String>,
+    /// Overrides the machine's home project (default `<name>-home`), br-7ytg.
+    #[serde(default)]
+    pub home_project: Option<String>,
 }
 
 /// A project's daemon on another machine.
@@ -78,6 +81,125 @@ pub fn owner_names(home: &Path) -> Vec<String> {
         names.push("unknown".to_string());
     }
     names
+}
+
+/// The machine's home project: the one project where the machine's orchestrator lives
+/// (br-7ytg). `<name>-home` unless `[machine] home_project` says otherwise.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
+pub struct MachineHome {
+    /// `[machine] name`, else the hostname; None when neither is known.
+    pub machine: Option<String>,
+    /// `[machine] home_project`, if set.
+    pub override_: Option<String>,
+    /// The override, else `<machine>-home`; None when there is no machine name either.
+    pub home: Option<String>,
+}
+
+/// The one function everything asks for the machine's home project.
+pub fn machine_home(bridle_home: &Path) -> MachineHome {
+    let map = MachineMap::load(bridle_home).unwrap_or_default();
+    let machine = map
+        .machine
+        .name
+        .clone()
+        .or_else(|| owner_names(bridle_home).into_iter().next())
+        .filter(|n| n != "unknown");
+    let override_ = map.machine.home_project.filter(|h| !h.is_empty());
+    let home = override_
+        .clone()
+        .or_else(|| machine.as_ref().map(|m| format!("{m}-home")));
+    MachineHome {
+        machine,
+        override_,
+        home,
+    }
+}
+
+impl MachineHome {
+    /// Whether a project of that name runs here: listed in `[projects]` on this machine or in
+    /// the local daemon registry.
+    pub fn exists(&self, bridle_home: &Path) -> bool {
+        let Some(home) = self.home.as_deref() else {
+            return false;
+        };
+        let listed = MachineMap::load(bridle_home).is_ok_and(|m| {
+            m.projects
+                .get(home)
+                .is_some_and(|p| Some(&p.machine) == self.machine.as_ref())
+        });
+        listed
+            || crate::discovery::list_registry()
+                .iter()
+                .any(|d| d.project == home)
+    }
+
+    /// Warn-only check for a command that launches or addresses the orchestrator in `project`
+    /// (None: it would pick one itself). `command` is what to run instead, with `{home}` for the
+    /// home project. Nothing refuses yet (br-7ytg slice 1).
+    pub fn warning(
+        &self,
+        bridle_home: &Path,
+        project: Option<&str>,
+        command: &str,
+    ) -> Option<String> {
+        let Some(home) = self.home.as_deref() else {
+            return Some(
+                "warning: this machine has no name, so no home project: set `[machine] name` in \
+                 ~/.bridle/config.toml (the home is `<name>-home`), or `[machine] home_project`"
+                    .to_string(),
+            );
+        };
+        if !self.exists(bridle_home) {
+            return Some(format!(
+                "warning: the machine's home project '{home}' does not exist here: create it \
+                 (a clone named {home}, `bridle init`, `bridle serve`) or set `[machine] \
+                 home_project` in ~/.bridle/config.toml to an existing project"
+            ));
+        }
+        match project {
+            Some(p) if p != home => Some(format!(
+                "warning: the machine's orchestrator belongs in its home project '{home}', not \
+                 '{p}': run `{}`. This still works for now; a later release refuses.",
+                command.replace("{home}", home)
+            )),
+            _ => None,
+        }
+    }
+}
+
+/// Projects of the local registry whose config has `[orchestrator] enabled = true`, other than
+/// `home`: each would run an orchestrator supervisor outside the home.
+pub fn non_home_orchestrators(home: Option<&str>, extra_repo: Option<&Path>) -> Vec<String> {
+    let mut repos: Vec<(String, std::path::PathBuf)> = crate::discovery::list_registry()
+        .into_iter()
+        .map(|d| (d.project, std::path::PathBuf::from(d.repo)))
+        .collect();
+    if let Some(r) = extra_repo {
+        let name = r
+            .file_name()
+            .map(|n| n.to_string_lossy().into_owned())
+            .unwrap_or_default();
+        if !repos.iter().any(|(_, p)| p == r) {
+            repos.push((name, r.to_path_buf()));
+        }
+    }
+    let mut out: Vec<String> = repos
+        .into_iter()
+        .filter(|(p, _)| Some(p.as_str()) != home)
+        .filter(|(_, repo)| orchestrator_enabled_in(repo))
+        .map(|(p, _)| p)
+        .collect();
+    out.sort();
+    out.dedup();
+    out
+}
+
+fn orchestrator_enabled_in(repo: &Path) -> bool {
+    std::fs::read_to_string(repo.join(".bridle/config.toml"))
+        .ok()
+        .and_then(|t| t.parse::<toml::Table>().ok())
+        .and_then(|t| t.get("orchestrator")?.get("enabled")?.as_bool())
+        .unwrap_or(false)
 }
 
 impl MachineMap {
@@ -181,6 +303,65 @@ mod tests {
                 .to_string()
                 .contains("[machines]")
         );
+    }
+
+    fn home_dir(cfg: &str) -> tempfile::TempDir {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::write(dir.path().join("config.toml"), cfg).unwrap();
+        dir
+    }
+
+    #[test]
+    fn home_defaults_to_the_machine_name_and_the_config_overrides_it() {
+        let d = home_dir("[machine]\nname = \"mbp\"\n");
+        let h = machine_home(d.path());
+        assert_eq!(h.home.as_deref(), Some("mbp-home"));
+        assert_eq!(h.override_, None);
+        let d = home_dir("[machine]\nname = \"mbp\"\nhome_project = \"base\"\n");
+        let h = machine_home(d.path());
+        assert_eq!(h.home.as_deref(), Some("base"));
+        assert_eq!(h.override_.as_deref(), Some("base"));
+    }
+
+    #[test]
+    fn a_non_home_project_gets_a_warning_naming_the_home_command() {
+        let d = home_dir(
+            "[machine]\nname = \"mbp\"\n[machines]\nmbp = \"h\"\n[projects]\nmbp-home = { machine = \"mbp\", port = 1 }\n",
+        );
+        let h = machine_home(d.path());
+        let w = h
+            .warning(d.path(), Some("bridle"), "bridle up --project {home}")
+            .expect("warns");
+        assert!(
+            w.contains("'mbp-home'") && w.contains("bridle up --project mbp-home"),
+            "{w}"
+        );
+        assert_eq!(h.warning(d.path(), Some("mbp-home"), "x"), None);
+    }
+
+    #[test]
+    fn a_missing_home_says_how_to_create_one() {
+        let d = home_dir("[machine]\nname = \"mbp\"\n");
+        let w = machine_home(d.path())
+            .warning(d.path(), None, "x")
+            .expect("warns");
+        assert!(
+            w.contains("does not exist") && w.contains("bridle init"),
+            "{w}"
+        );
+    }
+
+    #[test]
+    fn orchestrator_enabled_reads_the_projects_config() {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::create_dir(dir.path().join(".bridle")).unwrap();
+        assert!(!orchestrator_enabled_in(dir.path()));
+        std::fs::write(
+            dir.path().join(".bridle/config.toml"),
+            "[orchestrator]\nenabled = true\n",
+        )
+        .unwrap();
+        assert!(orchestrator_enabled_in(dir.path()));
     }
 
     #[test]

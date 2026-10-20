@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The machine's home project (`<host>-home`, or `[machine] home_project` in `~/.bridle/config.toml`) is resolved in one place; `bridle daemon doctor` and `bridle status` report it, any non-home project with `[orchestrator]` enabled and where the orchestrator's waiter is, and a non-home daemon with `[orchestrator]`, `bridle session orchestrator`/`up`/`prime orchestrator` on another project, and mail to `external:orchestrator` on one all warn. Warn-only: a self-upgrade onto this build changes nothing but the warnings and needs no migration; refusals come in a later slice. Roles and CLAUDE.md now say to use the home (br-7ytg).
 - `bridle session stop <role>[/<name>]` asks an advisor, aide or orchestrator session for a handover note, waits for it, then ends the session and leaves it stopped (orchestrator also held); it prints how to start it again (br-fpqy).
 - `bridle ticket set <id> review <list>` changes which stages of a version 2 ticket need the human's signature (br-bdwh).
 - Tickets (br-ggbx): an advisor, aide, orchestrator or product manager can relay the human's words: `ticket approve --comment/--comment-file`, `ticket comment --for-human` and `ticket changes <text>` record them as the human's via the agent (the author stays the agent, thread entries carry a `for_human` mark), and `ticket next --comments` hands them to the next stage writers. Workers and designers are refused.

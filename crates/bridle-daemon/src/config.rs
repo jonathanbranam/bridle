@@ -2800,6 +2800,10 @@ struct RawMachine {
     #[serde(default)]
     #[allow(dead_code)]
     name: Option<String>,
+    /// The machine's home project override; read by `bridle_api::machines::machine_home`.
+    #[serde(default)]
+    #[allow(dead_code)]
+    home_project: Option<String>,
     /// The load watch (`crate::load`).
     #[serde(default)]
     check_interval: Option<String>,

@@ -91,6 +91,8 @@ pub fn run(cli: &Cli, a: &UpArgs) -> Result<(), CliError> {
     let exe = std::env::current_exe().context("locating the bridle binary")?;
     let machines = MachineMap::load(&discovery::bridle_home()).map_err(|e| anyhow!("{e}"))?;
     let (command, project_note) = orchestrator_command(&exe.to_string_lossy(), &machines);
+    // `up` picks the home itself; with none it falls back to the cwd's project, and says so.
+    crate::home_project::warn_launcher(None, "bridle up");
     let message = ensure_orchestrator(&discovery::bridle_home(), "tmux", &command)?;
     let message = format!("{message} ({project_note})");
     if cli.json {

@@ -64,7 +64,7 @@ mod upgrade;
 pub mod usage_groups;
 pub mod usage_http;
 pub mod usage_periods;
-mod wake;
+pub mod wake;
 pub mod warm_build;
 pub mod workflow_checkout;
 pub mod worktree;
@@ -1178,6 +1178,16 @@ async fn start_inner(
             .bridle_home
             .clone()
             .unwrap_or_else(discovery::bridle_home);
+        let mh = bridle_api::machines::machine_home(&home);
+        if mh.home.as_deref() != Some(project.as_str()) {
+            tracing::warn!(
+                project = %project,
+                home = mh.home.as_deref().unwrap_or("none"),
+                "[orchestrator] is enabled but this project is not the machine's home project; \
+                 the orchestrator belongs in the home (still honoured for now; a later release \
+                 refuses). Run `bridle daemon doctor`."
+            );
+        }
         let launcher =
             orchestrator::launch_line(config.orchestrator.launcher.as_deref(), &project, &ws.repo);
         let sup = orchestrator::real(

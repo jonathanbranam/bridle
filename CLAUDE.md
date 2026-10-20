@@ -17,6 +17,9 @@ Claude Code agents. Read these before changing behaviour:
   Cite it rather than assuming how `claude` behaves.
 - **If you are the human's orchestrator** (directing bridle's workforce on this repo):
   `bridle prime orchestrator` (the role, the newest handover note and the startup steps).
+  The machine's one orchestrator lives in its home project, `<host>-home` (override:
+  `[machine] home_project` in `~/.bridle/config.toml`); run it and message it there
+  (`bridle send external:orchestrator --project <host>-home`), never `--project bridle`.
 
 ## Layout
 

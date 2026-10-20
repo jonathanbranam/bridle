@@ -271,6 +271,7 @@ mod tests {
         MachineMap {
             machine: MachineSelf {
                 name: Some("nuc".into()),
+                home_project: None,
             },
             machines: BTreeMap::new(),
             projects: BTreeMap::from([

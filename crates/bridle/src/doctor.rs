@@ -34,7 +34,7 @@ pub struct Check {
 }
 
 impl Check {
-    fn ok(name: &'static str, detail: impl Into<String>) -> Self {
+    pub(crate) fn ok(name: &'static str, detail: impl Into<String>) -> Self {
         Check {
             name,
             status: Status::Ok,
@@ -42,7 +42,11 @@ impl Check {
             fix: String::new(),
         }
     }
-    fn warn(name: &'static str, detail: impl Into<String>, fix: impl Into<String>) -> Self {
+    pub(crate) fn warn(
+        name: &'static str,
+        detail: impl Into<String>,
+        fix: impl Into<String>,
+    ) -> Self {
         Check {
             name,
             status: Status::Warn,
@@ -73,6 +77,7 @@ pub fn run(cli: &Cli, args: &DoctorArgs) -> Result<(), CliError> {
     if std::env::consts::OS == "linux" {
         checks.extend(linux_checks(&LinuxHost::detect(&repo)));
     }
+    checks.push(crate::home_project::doctor_check(&repo));
     checks.extend(mail_check());
     checks.extend(config_warning_checks());
 

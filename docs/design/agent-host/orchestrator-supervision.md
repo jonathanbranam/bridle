@@ -90,6 +90,18 @@ unreadable file counts as true.
 
 ## 2. Config
 
+**The machine's home (br-7ytg, slice 1, warn-only).** The one orchestrator lives in the machine's
+home project: `<host>-home`, or `[machine] home_project` in `~/.bridle/config.toml`
+(`bridle_api::machines::machine_home` is the one resolution). `bridle daemon doctor` and a
+`home` line in `bridle status` report the home, the override, every project with `[orchestrator]
+enabled` outside it, and where the waiter is. A non-home daemon with `[orchestrator]` enabled
+warns at start; `bridle session orchestrator`, `bridle up` and `bridle prime orchestrator` warn
+naming the home and the exact command when given another project (or when the machine has no
+home, saying how to create one); `bridle send external:orchestrator` to a non-home local
+project still forwards (br-dg5g) but the sender gets a warning. Nothing refuses: a self-upgrade
+onto this build changes nothing but those warnings and needs no migration. The refusals are
+slice 2.
+
 An `[orchestrator]` table in the project's `.bridle/config.toml` (`roles-and-config.md`, "Other keys").
 Absent or `enabled = false`: the supervisor doesn't run (today's behaviour). There is **no pane
 key**.
