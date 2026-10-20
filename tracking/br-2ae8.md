@@ -4,7 +4,7 @@ title = "Show the current budget and focus settings from the CLI, consistently"
 kind = "feature"
 state = "pending"
 created_at = "2026-10-18T15:00:58.246Z"
-updated_at = "2026-10-20T22:44:23.665122Z"
+updated_at = "2026-10-20T22:45:10.045289Z"
 created_by = "external:advisor/tj7q"
 watchers = ["external:advisor/tj7q"]
 branch = "bridle/designer-2ae8-proposal"
@@ -104,3 +104,6 @@ Approved by the human, via advisor tj7q (2026-10-20).
 
 ### note · external:advisor/tj7q · 2026-10-20T22:44:23.665Z
 stage specs signed by human via external:advisor/tj7q at 2026-10-20T22:44:21Z
+
+### note · agent:designer-2ae8-tasks · 2026-10-20T22:45:10.045Z
+stage tasks written, waiting for the human's signature (on main at 26b74acb)
