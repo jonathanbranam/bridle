@@ -2,12 +2,15 @@
 id = "br-remg"
 title = "Flaky a fourth time: governor_test working_agent_is_notified_then_stopped_when_its_turn_ends times out waiting for Stopped (ubuntu CI)"
 kind = "fix"
-state = "pending"
+state = "open"
 created_at = "2026-10-20T23:16:39.761Z"
-updated_at = "2026-10-20T23:16:39.762345Z"
+updated_at = "2026-10-20T23:17:06.046137Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+ticket = "remg"
 +++
+
+docs/tickets/open/flaky-a-fourth-time-governor-test-working-agent-is-notified-remg.md
 
 submitted by external:orchestrator
 
@@ -29,3 +32,6 @@ Model: Sonnet. Related: br-ar4d, br-n96z, br-jtn8, br-sftn.
 
 ### note · external:orchestrator · 2026-10-20T23:16:39.762Z
 submitted by external:orchestrator
+
+### note · external:orchestrator · 2026-10-20T23:17:06.046Z
+orchestrator: readied (fix; back of queue per the flaky-test rule).

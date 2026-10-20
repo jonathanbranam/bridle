@@ -2963,3 +2963,5 @@
 {"actor":"bridle","at":"2026-10-20T23:07:56.626799Z","from":"pending","task":"br-2ae8","to":"open"}
 {"actor":"human","at":"2026-10-20T23:15:41.625Z","from":"","task":"br-sftn","to":"pending"}
 {"actor":"human","at":"2026-10-20T23:16:39.761Z","from":"","task":"br-remg","to":"pending"}
+{"actor":"external:orchestrator","at":"2026-10-20T23:16:50.030961Z","from":"pending","task":"br-sftn","to":"open"}
+{"actor":"external:orchestrator","at":"2026-10-20T23:17:05.563309Z","from":"pending","task":"br-remg","to":"open"}
