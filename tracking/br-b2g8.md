@@ -2,9 +2,9 @@
 id = "br-b2g8"
 title = "Home-project warning names dalek.local-home: it uses the raw hostname, not [machine] name"
 kind = "fix"
-state = "open"
+state = "planned"
 created_at = "2026-10-20T22:11:26.430Z"
-updated_at = "2026-10-20T22:11:58.648536Z"
+updated_at = "2026-10-20T22:35:14.108593Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "b2g8"
