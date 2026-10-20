@@ -4,7 +4,7 @@ title = "Delete a landed worker's remote bridle/<name> branch at the manager's c
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-19T02:03:33.360Z"
-updated_at = "2026-10-20T06:17:57.656408Z"
+updated_at = "2026-10-20T06:18:12.171068Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -31,3 +31,6 @@ done: remote branch delete at landing cleanup; just check exit 0, 1940 tests; 3b
 
 ### note · agent:manager-2 · 2026-10-20T06:17:57.656Z
 integrated: 57a6b3c0a45a1cdb17e6975a1db3e4edfcdc097c (branch bridle/wpm2r)
+
+### note · agent:manager-2 · 2026-10-20T06:18:12.171Z
+cleanup: removed agent wpm2r, branch bridle/wpm2r

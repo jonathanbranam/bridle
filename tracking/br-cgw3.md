@@ -2,11 +2,14 @@
 id = "br-cgw3"
 title = "Each project's usage shares the whole account's weekly gain over its own spend (data-contracts: $0.10 = 60 points)"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-19T23:11:40.022Z"
-updated_at = "2026-10-19T23:26:07.814607Z"
+updated_at = "2026-10-20T06:18:25.004894Z"
 created_by = "external:advisor/usage"
-watchers = ["external:advisor/usage"]
+watchers = [
+    "external:advisor/usage",
+    "agent:wcgw3",
+]
 ticket = "cgw3"
 +++
 
