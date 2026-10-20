@@ -495,6 +495,20 @@ async fn local(
     for line in retire(&repo, &ws, &project, home).await? {
         let _ = writeln!(out, "{line}");
     }
+    let machines = MachineMap::load(home).unwrap_or_default();
+    crate::move_notice::tell_home(
+        &crate::move_notice::RealSender,
+        crate::move_notice::home_project(&machines).as_deref(),
+        &["external:orchestrator", "external:aide"],
+        &format!(
+            "{project} left this machine ({}) at {}: it is stopped and released; another machine \
+             takes it over. Its agents are gone here.",
+            names[0],
+            chrono::Utc::now().to_rfc3339()
+        ),
+        "nobody was told that the project left",
+        &mut out,
+    );
     let _ = writeln!(
         out,
         "{project} is stopped and released; take it over on the new machine"

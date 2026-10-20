@@ -44,6 +44,21 @@ fn mail_step(mail: &MailStep<'_>, from: Option<&str>, project: &str, out: &mut d
     }
 }
 
+/// What the new machine's orchestrator is told when a taken-over project starts (br-cxjs).
+fn arrival_notice(project: &str, moved: &MovedIn, carried: usize, mail_ok: bool) -> String {
+    let from = moved.from.as_deref().unwrap_or("no previous owner");
+    let mail = if mail_ok {
+        "mail bridge moved"
+    } else {
+        "mail bridge NOT moved yet (run `bridle mail install`)"
+    };
+    format!(
+        "{project} arrived on this machine from {from} and is running. Pending from the move: \
+         {carried} of {} scheduled message(s) carried; {mail}.",
+        moved.schedules.len()
+    )
+}
+
 /// Removes the moved-in note once the mail step succeeded. A failed mail step keeps it, so the
 /// next `project start` retries and the old machine's `[mail]` and `mail.key` are not lost
 /// (br-whce).
@@ -620,6 +635,15 @@ async fn carry_in(
     }
     // After the tokens: the bridge needs its `mail` token to start.
     let mail_ok = mail_step(mail, moved.from.as_deref(), project, out);
+    let machines = bridle_api::machines::MachineMap::load(home).unwrap_or_default();
+    crate::move_notice::tell_home(
+        &crate::move_notice::RealSender,
+        crate::move_notice::home_project(&machines).as_deref(),
+        &["external:orchestrator"],
+        &arrival_notice(project, &moved, sent, mail_ok),
+        "nobody was told that the project arrived",
+        out,
+    );
     finish_moved_in(&note, mail_ok)?;
     Ok(())
 }
@@ -750,6 +774,20 @@ mod tests {
         assert_eq!(seen[0].cron.as_deref(), Some("0 9 * * 1"));
         assert_eq!(seen[0].to.as_deref(), Some("external:orchestrator"));
         assert!(seen[1].at.is_some() && seen[1].cron.is_none());
+    }
+
+    #[test]
+    fn the_arrival_notice_names_the_old_machine_and_what_is_pending() {
+        let moved = MovedIn {
+            schedules: vec![sched("cron", Some("0 9 * * 1"), None)],
+            from: Some("remus".into()),
+        };
+        let text = arrival_notice("acme", &moved, 1, false);
+        assert!(
+            text.contains("from remus") && text.contains("1 of 1"),
+            "{text}"
+        );
+        assert!(text.contains("NOT moved"), "{text}");
     }
 
     #[test]

@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A project move now tells the machines' orchestrators: `project stop` messages the orchestrator and aide in OLD's `<host>-home`, `project start` after a take-over messages the orchestrator in NEW's `<host>-home`, and `project drain` also messages OLD's home orchestrator; with no `<host>-home` the output says nobody was told, and a failed notice never fails the move (br-cxjs).
 - `project take-over` prints only the entries that differ, not the whole `projects sync` table; `project start` no longer prints "nothing was started; to load it" before starting the mail unit; the move runbook names a real mail check (br-ec5m).
 - The `bridle hook link-check` Stop hook links an id to the project that owns the ticket (a qualified id by its prefix, a bare id by the project that has it, else the session's), not always the session's project (br-4dzj).
 - Statusline usage from a session whose project daemon refuses the shared `statusline.token` is no longer dropped silently: it is retried on other live daemons with ` @<project>` on the identity, and the line shows `usage not counted` when none accepts (br-43ka).

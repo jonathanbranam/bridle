@@ -18,6 +18,7 @@ mod link;
 mod link_check;
 mod mail_install;
 mod migrate;
+mod move_notice;
 mod orchestrator;
 mod pane;
 mod preflight;

@@ -40,7 +40,7 @@ bridle project drain            # or: bridle --project P project drain
 It holds new claims and spawns for this project only (running agents finish their turns, messages
 still flow), tells every running agent and registered session, then waits with no timeout until
 the project is stable, stopping each agent that is idle with no claimed ticket and has had its announce
-turn (so no manual `agent stop`), messaging `orchestrator` at the start and on each change. It names a list that has
+turn (so no manual `agent stop`), messaging `orchestrator` at the start and on each change (the project's own role and the orchestrator in OLD's `<host>-home`, which is the one that is watched; with no `<host>-home` it says so). It names a list that has
 not moved for 30 minutes to `orchestrator` and `aide`. It returns when nothing is left.
 
 Stable means: no claimed or built ticket, no running agent, no `bridle/*` or `integrate/*` branch ahead of
@@ -54,6 +54,10 @@ do not restart the daemon while draining without the drain running). Known drain
 **Back out:** `bridle project drain --undo` lifts the hold. Nothing else changed.
 
 ## 3. Stop on OLD (this is the giving up)
+
+Who is told: when the stop succeeds it messages the orchestrator and the aide in OLD's `<host>-home`
+that the project left (br-cxjs). Step 4 messages NEW's `<host>-home` orchestrator that it arrived.
+Without a `<host>-home` the output says nobody was told; a failed notice never fails the move.
 
 ```bash
 bridle project stop --list      # what it would leave behind; stops nothing

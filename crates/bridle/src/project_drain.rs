@@ -53,6 +53,19 @@ pub async fn run(cli: &Cli, args: &ProjectDrainArgs) -> Result<(), CliError> {
     let project = status.daemon.project.clone();
     println!("{project}: held; no new claims or spawns. Announcing, then waiting (no timeout).");
     announce(&client, &project, &recipients(&client).await?).await;
+    // The orchestrator runs in <host>-home (br-cxjs); the project's own role is still told above.
+    let machines = bridle_api::machines::MachineMap::load(&bridle_api::discovery::bridle_home())
+        .unwrap_or_default();
+    let home = crate::move_notice::home_project(&machines);
+    if home.is_none() {
+        println!(
+            "no <host>-home on this machine: only the project's own orchestrator role is told"
+        );
+    }
+    tell_home_orchestrator(
+        home.as_deref(),
+        &format!("{project} is draining to move to another machine; updates follow here."),
+    );
 
     let mut last: Vec<String> = Vec::new();
     let mut since = Instant::now();
@@ -69,12 +82,9 @@ pub async fn run(cli: &Cli, args: &ProjectDrainArgs) -> Result<(), CliError> {
         let (bad, _left) = crate::stable::unstable(&repo, &db, &integration, &args.leave, true);
         if bad.is_empty() {
             println!("{project}: stable. Run `bridle project stop`.");
-            tell(
-                &client,
-                "orchestrator",
-                format!("drain of {project}: stable; the project can be stopped."),
-            )
-            .await;
+            let msg = format!("drain of {project}: stable; the project can be stopped.");
+            tell(&client, "orchestrator", msg.clone()).await;
+            tell_home_orchestrator(home.as_deref(), &msg);
             return Ok(());
         }
         if first || bad != last {
@@ -82,16 +92,13 @@ pub async fn run(cli: &Cli, args: &ProjectDrainArgs) -> Result<(), CliError> {
             for b in &bad {
                 println!("  {b}");
             }
-            tell(
-                &client,
-                "orchestrator",
-                format!(
-                    "drain of {project}: {} item(s) left:\n{}",
-                    bad.len(),
-                    bad.join("\n")
-                ),
-            )
-            .await;
+            let msg = format!(
+                "drain of {project}: {} item(s) left:\n{}",
+                bad.len(),
+                bad.join("\n")
+            );
+            tell(&client, "orchestrator", msg.clone()).await;
+            tell_home_orchestrator(home.as_deref(), &msg);
             last = bad;
             since = Instant::now();
             told_stuck = false;
@@ -105,6 +112,7 @@ pub async fn run(cli: &Cli, args: &ProjectDrainArgs) -> Result<(), CliError> {
             );
             println!("{msg}");
             tell(&client, "orchestrator", msg.clone()).await;
+            tell_home_orchestrator(home.as_deref(), &msg);
             tell(&client, "aide", msg).await;
         }
         tokio::time::sleep(POLL).await;
@@ -180,6 +188,20 @@ async fn announce(client: &Client, project: &str, to: &[String]) {
     );
     for who in to {
         tell(client, who, body.clone()).await;
+    }
+}
+
+/// Best effort: tells `<host>-home`'s orchestrator; with no home the caller has said so already.
+fn tell_home_orchestrator(home: Option<&str>, body: &str) {
+    if home.is_some() {
+        crate::move_notice::tell_home(
+            &crate::move_notice::RealSender,
+            home,
+            &["external:orchestrator"],
+            body,
+            "",
+            &mut std::io::stdout(),
+        );
     }
 }
 
