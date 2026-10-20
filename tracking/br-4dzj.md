@@ -4,7 +4,7 @@ title = "link-check Stop hook links tickets to the session's project, not the ti
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-18T13:53:21.625Z"
-updated_at = "2026-10-20T02:25:23.992072Z"
+updated_at = "2026-10-20T02:25:36.823445Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -40,3 +40,6 @@ done: link-check resolves owning project; just check exit 0, 1913 tests passed; 
 
 ### note · agent:manager-2 · 2026-10-20T02:25:23.992Z
 integrated: 5c57e7b3c5d7006fed465d089534289dc6d07417 (branch bridle/w4dzj)
+
+### note · agent:manager-2 · 2026-10-20T02:25:36.823Z
+cleanup: removed agent w4dzj, branch bridle/w4dzj
