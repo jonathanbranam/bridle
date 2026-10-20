@@ -2,11 +2,14 @@
 id = "br-pm2r"
 title = "Delete a landed worker's remote bridle/<name> branch at the manager's cleanup step (from t7ya, part 2)"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-19T02:03:33.360Z"
-updated_at = "2026-10-19T02:18:15.709372Z"
+updated_at = "2026-10-20T05:59:47.023713Z"
 created_by = "agent:pm-1"
-watchers = ["agent:pm-1"]
+watchers = [
+    "agent:pm-1",
+    "agent:wpm2r",
+]
 ticket = "pm2r"
 +++
 
