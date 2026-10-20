@@ -2,9 +2,9 @@
 id = "br-2yxm"
 title = "Self-upgrade starves while the manager lands back to back: each land's --postpone 45m pushes the upgrade out again"
 kind = "bug"
-state = "pending"
+state = "open"
 created_at = "2026-10-19T23:51:08.165Z"
-updated_at = "2026-10-19T23:51:14.019062Z"
+updated_at = "2026-10-20T00:06:26.475605Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "2yxm"

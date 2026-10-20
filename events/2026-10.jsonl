@@ -2904,3 +2904,4 @@
 {"actor":"human","at":"2026-10-20T00:02:27.424Z","from":"","task":"br-fpqy","to":"pending"}
 {"actor":"human","at":"2026-10-20T00:02:27.786Z","from":"","task":"br-3qha","to":"pending"}
 {"actor":"external:advisor/usage","at":"2026-10-20T00:02:36.349460Z","from":"pending","task":"br-fpqy","to":"open"}
+{"actor":"external:orchestrator","at":"2026-10-20T00:06:26.475605Z","from":"pending","task":"br-2yxm","to":"open"}
