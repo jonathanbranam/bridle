@@ -248,53 +248,87 @@ pub(super) async fn bridle_counts(cwd: &Path, env: &impl Env, token_path: &Path)
 }
 
 /// Posts the session's running totals so `bridle usage` can count it (hd28). Best effort:
-/// any failure is only logged, the status line must stay fast.
+/// the status line must stay fast. Returns false when a token was there but no daemon took
+/// the report, so the line can say the session's usage is not being counted (br-43ka).
 pub(super) async fn post_statusline_report(
     cwd: &Path,
     env: &impl Env,
     token_path: &Path,
     report: &bridle_api::types::StatusLineReport,
-) {
-    post_statusline_report_via(
-        cwd,
-        env,
-        token_path,
-        report,
-        discovery::machine_fallback_daemon,
-    )
-    .await
+) -> bool {
+    post_statusline_report_via(cwd, env, token_path, report, discovery::list_registry).await
 }
 
 /// A session whose cwd is in no bridle project (and no `$BRIDLE_URL`/`$BRIDLE_PROJECT`)
 /// reports to the machine's fallback daemon instead of being dropped (drvx), under an
 /// identity marking it as outside any project. The line's counts never use that daemon.
+///
+/// `statusline.token` is one per-user file but a principal only on the daemon that minted it
+/// (br-43ka), so the session's own project daemon may refuse it (401/403). The report then goes
+/// to the other live daemons in turn until one accepts, with ` @<project>` appended to the
+/// identity so the row says where the session really works. If none accepts, that is a warning
+/// on stderr, and the caller learns it from the `false`.
 async fn post_statusline_report_via(
     cwd: &Path,
     env: &impl Env,
     token_path: &Path,
     report: &bridle_api::types::StatusLineReport,
-    fallback: impl FnOnce() -> Option<bridle_api::types::DaemonInfo>,
-) {
+    daemons: impl FnOnce() -> Vec<bridle_api::types::DaemonInfo>,
+) -> bool {
+    let Some(token) = read_statusline_token(token_path) else {
+        return true;
+    };
+    let timeout = std::time::Duration::from_secs(2);
     let mut report = report.clone();
-    let client = match statusline_client(cwd, env, token_path) {
-        Some(c) => c,
+    let mut tried_url = None;
+    let mut home_project = None;
+    match discovery::resolve_endpoint(None, None, cwd, env) {
+        Ok(endpoint) => {
+            let client =
+                Client::new_with_timeout(endpoint.url.clone(), Some(token.clone()), timeout);
+            match client.report_statusline(&report).await {
+                Ok(()) => return true,
+                Err(bridle_api::ClientError::Api {
+                    status: 401 | 403, ..
+                }) => {
+                    tried_url = Some(endpoint.url);
+                    home_project = endpoint.project;
+                }
+                Err(e) => {
+                    tracing::warn!("statusline: posting the session's usage failed: {e}");
+                    return false;
+                }
+            }
+        }
+        Err(e) => tracing::debug!("statusline: no bridle daemon found: {e}"),
+    }
+    let mut candidates = daemons();
+    candidates.sort_by(|a, b| a.project.cmp(&b.project));
+    candidates.retain(|d| Some(&d.url) != tried_url.as_ref());
+    match &home_project {
+        Some(project) => {
+            if let Some(id) = report.identity.as_mut() {
+                id.push_str(&format!(" @{project}"));
+            }
+        }
         None => {
-            let Some(token) = read_statusline_token(token_path) else {
-                return;
-            };
-            let Some(info) = fallback() else {
-                tracing::debug!("statusline: no bridle daemon to count an outside session");
-                return;
-            };
             if report.identity.as_deref() == Some("external:unbridled") {
                 report.identity = Some(crate::statusline::OUTSIDE_IDENTITY.to_string());
             }
-            Client::new_with_timeout(info.url, Some(token), std::time::Duration::from_secs(2))
         }
-    };
-    if let Err(e) = client.report_statusline(&report).await {
-        tracing::debug!("statusline: posting the session's usage failed: {e}");
     }
+    for info in candidates {
+        let client = Client::new_with_timeout(info.url, Some(token.clone()), timeout);
+        match client.report_statusline(&report).await {
+            Ok(()) => return true,
+            Err(e) => tracing::debug!("statusline: {} refused the report: {e}", info.project),
+        }
+    }
+    tracing::warn!(
+        "statusline: no bridle daemon accepted the session's usage; \
+         mint the token on a daemon (bridle --project <name> token create statusline)"
+    );
+    false
 }
 
 fn read_statusline_token(token_path: &Path) -> Option<String> {
@@ -636,10 +670,92 @@ mod bridle_counts_tests {
             version: "0".into(),
             task_prefix: None,
         };
-        post_statusline_report_via(dir.path(), &env, &token_path, &report, || Some(info)).await;
+        assert!(
+            post_statusline_report_via(dir.path(), &env, &token_path, &report, || vec![info]).await
+        );
         let request = server.await.unwrap();
         assert!(request.contains("POST /v1/statusline"), "{request}");
         assert!(request.contains("outside any project"), "{request}");
+    }
+
+    /// A one-shot server that answers `status_line` and returns the request it got.
+    async fn one_shot(status_line: &'static str) -> (String, tokio::task::JoinHandle<String>) {
+        use tokio::io::{AsyncReadExt, AsyncWriteExt};
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let url = format!("http://{}", listener.local_addr().unwrap());
+        let server = tokio::spawn(async move {
+            let (mut sock, _) = listener.accept().await.unwrap();
+            let mut buf = vec![0u8; 8192];
+            let n = sock.read(&mut buf).await.unwrap();
+            let body = r#"{"error":{"code":"unauthorized","message":"no"}}"#;
+            let _ = sock
+                .write_all(
+                    format!(
+                        "HTTP/1.1 {status_line}\r\ncontent-length: {}\r\ncontent-type: application/json\r\n\r\n{body}",
+                        body.len()
+                    )
+                    .as_bytes(),
+                )
+                .await;
+            String::from_utf8_lossy(&buf[..n]).into_owned()
+        });
+        (url, server)
+    }
+
+    fn daemon_at(url: String) -> bridle_api::types::DaemonInfo {
+        bridle_api::types::DaemonInfo {
+            project: "p".into(),
+            workspace: "/ws".into(),
+            repo: "/repo".into(),
+            url,
+            pid: 1,
+            started_at: chrono::Utc::now(),
+            version: "0".into(),
+            task_prefix: None,
+        }
+    }
+
+    /// br-43ka: the session's own daemon refuses the machine-wide token, so the report goes to
+    /// another daemon instead of being dropped.
+    #[tokio::test]
+    async fn refused_report_falls_back_to_another_daemon() {
+        let (home_url, home) = one_shot("403 Forbidden").await;
+        let (other_url, other) = one_shot("204 No Content").await;
+        let dir = tempfile::tempdir().unwrap();
+        let token_path = dir.path().join("statusline.token");
+        std::fs::write(&token_path, "tok\n").unwrap();
+        let env = move |key: &str| (key == "BRIDLE_URL").then(|| home_url.clone());
+        let report = bridle_api::types::StatusLineReport {
+            session_id: Some("s1".into()),
+            identity: Some("external:orchestrator".into()),
+            ..Default::default()
+        };
+        let counted = post_statusline_report_via(dir.path(), &env, &token_path, &report, || {
+            vec![daemon_at(other_url)]
+        })
+        .await;
+        assert!(counted);
+        assert!(home.await.unwrap().contains("POST /v1/statusline"));
+        assert!(other.await.unwrap().contains("POST /v1/statusline"));
+    }
+
+    /// br-43ka: when every daemon refuses, the caller is told, so the line can say so.
+    #[tokio::test]
+    async fn report_refused_everywhere_is_not_counted() {
+        let (home_url, home) = one_shot("403 Forbidden").await;
+        let (other_url, other) = one_shot("401 Unauthorized").await;
+        let dir = tempfile::tempdir().unwrap();
+        let token_path = dir.path().join("statusline.token");
+        std::fs::write(&token_path, "tok\n").unwrap();
+        let env = move |key: &str| (key == "BRIDLE_URL").then(|| home_url.clone());
+        let report = bridle_api::types::StatusLineReport::default();
+        let counted = post_statusline_report_via(dir.path(), &env, &token_path, &report, || {
+            vec![daemon_at(other_url)]
+        })
+        .await;
+        assert!(!counted);
+        home.await.unwrap();
+        other.await.unwrap();
     }
 
     #[tokio::test]

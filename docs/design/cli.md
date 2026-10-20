@@ -969,6 +969,10 @@ bridle ticket comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain com
   was reported ([[docs/design/usage-and-budget#Where bridle can see usage|usage and budget]]).
   Outside any bridle project the post goes to the machine's fallback daemon (the first live
   project by name) as `external:unbridled/outside any project`; the counts are skipped there.
+  The token is a principal only on the daemon that minted it, so a project daemon may refuse
+  it (401/403, br-43ka): the post then goes to the other live daemons in turn (by name) until one
+  accepts, with ` @<project>` appended to the identity (the session's real project), and if none
+  does the line ends with ` | usage not counted` and a warning goes to stderr.
 
   If `~/.bridle/statusline.token` holds a token, it also appends a short "N working · M for
   you" from `GET /v1/status` (agents in `working`/`starting`, and `unread_human_messages`) —

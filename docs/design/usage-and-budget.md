@@ -81,7 +81,14 @@ added up. A session outside any bridle project (no daemon found for its cwd, no 
 `$BRIDLE_PROJECT`) is not dropped (drvx): it posts to the machine's fallback daemon, the first
 live project in the registry by name (no setting, so existing machines need no edit), as
 `external:unbridled/outside any project`, its own bucket in that project's `bridle usage`. The
-desktop app and claude.ai stay uncounted. Rate-limit windows still go through the same path. Reading Claude Code's own session
+A project daemon that refuses the token
+(it is a principal only on the daemon that minted it) is not the end of the report either
+(br-43ka): the post is retried on the other live daemons by name until one accepts, with
+` @<project>` appended to the identity, so `bridle usage` there shows e.g.
+`external:orchestrator @dalek-home`. Decision: retry-with-tag over a machine-wide credential or
+minting on every daemon, because it needs no daemon or setup change; the cost is that a session's
+usage lands in another project's database. If every daemon refuses, the status line says
+`usage not counted` and a warning goes to stderr. The desktop app and claude.ai stay uncounted. Rate-limit windows still go through the same path. Reading Claude Code's own session
 files is not done.
 
 `bridle usage` (and `GET /v1/usage`) shows per-agent turns, tokens, cost,

@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Statusline usage from a session whose project daemon refuses the shared `statusline.token` is no longer dropped silently: it is retried on other live daemons with ` @<project>` on the identity, and the line shows `usage not counted` when none accepts (br-43ka).
 - The stage watch no longer lets an idle, finished designer hold a ticket (only a starting or working writer does), re-adopts after a restart only a writer whose stage is still unwritten, and drops a writer whose stage `ticket changes` sent back instead of alerting, so a redo starts on the next tick (br-43ug).
 - A `bridle daemon restart --postpone` ends when the land in progress ends, so a manager that postpones before every land no longer keeps a pending self-upgrade out between lands (br-2yxm).
 - A stage landing (`bridle ticket stage-done`) now tells the ticket's watchers, as any other thread note does; `stage_land` skipped the fan-out, so signature requests reached nobody (br-h5k9).

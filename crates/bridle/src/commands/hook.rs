@@ -34,13 +34,16 @@ pub(super) async fn statusline(_cli: &Cli) -> Result<(), CliError> {
         std::env::var("BRIDLE_AS").ok().as_deref(),
         std::env::var("BRIDLE_ADVISOR_NAME").ok().as_deref(),
     ));
-    let (counts, ()) = tokio::join!(
+    let (counts, counted) = tokio::join!(
         bridle_counts(&cwd, &ProcessEnv, &token_path),
         post_statusline_report(&cwd, &ProcessEnv, &token_path, &post)
     );
     if let Some(counts) = counts {
         line.push_str(" \u{b7} ");
         line.push_str(&counts);
+    }
+    if !counted {
+        line.push_str(" | usage not counted");
     }
     println!("{line}");
     Ok(())
