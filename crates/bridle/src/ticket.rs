@@ -1387,17 +1387,6 @@ pub fn standardize_front(text: &str, prefix: &str, root: &Path) -> Option<String
     Some(s)
 }
 
-/// `text` with `kind: bug` changed to `kind: fix` when the ticket lists a task (bpku); `None`
-/// for any other ticket.
-pub fn bug_to_fix(text: &str) -> Option<String> {
-    let (pairs, _) = split_front(text)?;
-    let get = |k: &str| pairs.iter().find(|(n, _)| n == k).map(|(_, v)| v.as_str());
-    if get("kind") != Some("bug") || list_items(get("tasks")?).is_none_or(|t| t.is_empty()) {
-        return None;
-    }
-    set_line(text, "kind", "fix")
-}
-
 /// `text` with `kind:` set to `pick(id)` when it has frontmatter but no (or an empty) kind
 /// (migration 0006); `None` for any other ticket. `id` is the ticket's `id:` value, or empty.
 pub fn backfill_kind(text: &str, pick: impl Fn(&str) -> String) -> Option<String> {

@@ -165,7 +165,8 @@ async fn report_startup_migrations(
     if let Some(t) = &todo {
         tracing::warn!("{t}");
     }
-    if done.is_empty() && failure.is_none() && todo.is_none() {
+    let optin = result.as_ref().ok().and_then(|o| o.optin_todo.clone());
+    if done.is_empty() && failure.is_none() && todo.is_none() && optin.is_none() {
         return;
     }
 
@@ -199,11 +200,20 @@ async fn report_startup_migrations(
             tracing::warn!("couldn't record {} as an event: {e}", rec.id);
         }
     }
+    // Both to-dos go to the project's aide (often the only agent on a project), not its manager
+    // and not the human.
+    let mut todos = vec![];
     if let Some(t) = todo {
+        todos.push(("Commit the migration changes left in the checkout", t));
+    }
+    if let Some(t) = optin {
+        todos.push(("Opt-in migrations are pending in this project", t));
+    }
+    for (title, body) in todos {
         let req = bridle_api::types::NewTicketRequest {
-            title: "Commit the migration changes left in the checkout".into(),
+            title: title.into(),
             kind: bridle_api::types::TicketKind::Chore,
-            body: t,
+            body,
             size: None,
             components: vec![],
             for_human: false,
@@ -211,7 +221,6 @@ async fn report_startup_migrations(
             ticket: None,
             parent: None,
         };
-        // The to-do goes to the project's aide (often the only agent on a project), not its manager.
         match client.new_task(&req).await {
             Ok(t) => {
                 let msg = bridle_api::types::SendRequest {
@@ -224,9 +233,7 @@ async fn report_startup_migrations(
                     tracing::warn!("couldn't tell the aide about the migration to-do: {e}");
                 }
             }
-            Err(e) => {
-                tracing::warn!("couldn't file the to-do for uncommitted migration changes: {e}")
-            }
+            Err(e) => tracing::warn!("couldn't file the migration to-do {title:?}: {e}"),
         }
     }
     if let Some(f) = failure {

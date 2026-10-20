@@ -62,25 +62,11 @@ pub const MIGRATIONS: &[Migration] = &[
         },
     },
     Migration {
-        id: "0001-rename-product-manager",
-        description: "Rename the product-manager role to project-manager (ticket 9j2h).",
-        // The human reviews it before it runs on a real project (br-9j2h).
-        manual_only: true,
-        run: rename_product_manager,
-    },
-    Migration {
         id: "0002-standard-ticket-fields",
         description: "Rename ticket frontmatter fields to the standard names and qualify ticket ids with the project prefix (ticket syqn).",
         // Rewrites many files of the human's project: they review it first, on a trial branch.
         manual_only: true,
         run: standard_ticket_fields,
-    },
-    Migration {
-        id: "0003-bug-tickets-that-are-fixes",
-        description: "Make `kind: bug` tickets that have a task `kind: fix`; a bug with none stays a report (ticket bpku).",
-        // Rewrites many files of the human's project: they review it first, on a trial branch.
-        manual_only: true,
-        run: bug_tickets_that_are_fixes,
     },
     Migration {
         id: "0004-ticket-links-in-frontmatter",
@@ -155,62 +141,6 @@ fn gitignore_agent_site(ctx: &Ctx) -> anyhow::Result<Report> {
     })
 }
 
-const OLD_ROLE: &str = "product-manager";
-const NEW_ROLE: &str = "project-manager";
-
-/// Renames the role in `.bridle/config.toml` (the `[roles.*]` table and any path or value that
-/// names it) and moves a `.bridle/roles/product-manager.md` override. The config doesn't keep
-/// the old name as an alias: the smaller option, since a migration is how a project moves over.
-fn rename_product_manager(ctx: &Ctx) -> anyhow::Result<Report> {
-    let config_rel = ".bridle/config.toml";
-    let old_role_rel = format!(".bridle/roles/{OLD_ROLE}.md");
-    let new_role_rel = format!(".bridle/roles/{NEW_ROLE}.md");
-    let config_path = ctx.repo.join(config_rel);
-    let old_role = ctx.repo.join(&old_role_rel);
-    let new_role = ctx.repo.join(&new_role_rel);
-
-    let config = match std::fs::read_to_string(&config_path) {
-        Ok(s) => Some(s),
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => None,
-        Err(e) => return Err(e).with_context(|| format!("reading {}", config_path.display())),
-    };
-    let config_changes = config.as_ref().is_some_and(|s| s.contains(OLD_ROLE));
-    let role_moves = old_role.exists();
-    if role_moves && new_role.exists() {
-        bail!("both {old_role_rel} and {new_role_rel} exist; merge them by hand, then rerun");
-    }
-
-    let mut files = vec![];
-    if config_changes {
-        files.push(config_rel.to_string());
-    }
-    if role_moves {
-        files.push(old_role_rel.clone());
-        files.push(new_role_rel.clone());
-    }
-    if files.is_empty() {
-        return Ok(Report {
-            files,
-            summary: "no product-manager role in this project".into(),
-        });
-    }
-    refuse_if_uncommitted(ctx.repo, &files)?;
-    if !ctx.dry_run {
-        if let (true, Some(s)) = (config_changes, &config) {
-            std::fs::write(&config_path, s.replace(OLD_ROLE, NEW_ROLE))
-                .with_context(|| format!("writing {}", config_path.display()))?;
-        }
-        if role_moves {
-            std::fs::rename(&old_role, &new_role)
-                .with_context(|| format!("moving {}", old_role.display()))?;
-        }
-    }
-    Ok(Report {
-        files,
-        summary: format!("renamed {OLD_ROLE} to {NEW_ROLE}"),
-    })
-}
-
 /// Rewrites every ticket under `docs/tickets/` to the standard frontmatter (syqn): `needs`,
 /// `see`, `opened`, `filed_by`, `closed` become `blocked_by`, `related`, `created`,
 /// `created_by`, `resolved`, and bare ids become `<prefix>-<id>`. Tickets already in the new
@@ -259,52 +189,6 @@ fn standard_ticket_fields(ctx: &Ctx) -> anyhow::Result<Report> {
     }
     Ok(Report {
         summary: format!("standardized {} tickets (prefix {prefix})", files.len()),
-        files,
-    })
-}
-
-/// `bug` is a report and `fix` the change that fixes it (bpku): a `bug` ticket with a task was
-/// worked as a fix, so it becomes one. Tickets already `fix`, and bugs nobody worked, are left
-/// alone, so a rerun finds nothing. The daemon's rows are not touched: an open row changes with
-/// `bridle task kind`, an integrated one stays as it was.
-fn bug_tickets_that_are_fixes(ctx: &Ctx) -> anyhow::Result<Report> {
-    let project = project_of(ctx.repo);
-    let root = crate::ticket::tickets_root(ctx.repo);
-    let mut paths = vec![];
-    md_files(&root, &mut paths);
-    paths.sort();
-    let mut edits = vec![];
-    for p in paths {
-        let text =
-            std::fs::read_to_string(&p).with_context(|| format!("reading {}", p.display()))?;
-        if let Some(new) = crate::ticket::bug_to_fix(&text) {
-            edits.push((p, new));
-        }
-    }
-    let files: Vec<String> = edits
-        .iter()
-        .map(|(p, _)| {
-            p.strip_prefix(ctx.repo)
-                .unwrap_or(p)
-                .to_string_lossy()
-                .into_owned()
-        })
-        .collect();
-    if files.is_empty() {
-        return Ok(Report {
-            files,
-            summary: "no bug ticket with a task".into(),
-        });
-    }
-    refuse_on_protected_branch(ctx.repo, &project)?;
-    refuse_if_uncommitted(ctx.repo, &files)?;
-    if !ctx.dry_run {
-        for (p, new) in &edits {
-            std::fs::write(p, new).with_context(|| format!("writing {}", p.display()))?;
-        }
-    }
-    Ok(Report {
-        summary: format!("{} bug tickets became fix", files.len()),
         files,
     })
 }
@@ -773,6 +657,10 @@ fn refuse_if_uncommitted(repo: &Path, files: &[String]) -> anyhow::Result<()> {
 struct State {
     #[serde(default)]
     applied: Vec<Applied>,
+    /// Opt-in migrations already announced in a to-do, so a pending one is announced once, not at
+    /// every start (br-df8w).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    announced: Vec<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -818,6 +706,9 @@ pub struct Outcome {
     /// Set by the start-up run when changes were left uncommitted: what is left and how to
     /// commit it, for a to-do for the project's aide.
     pub todo: Option<String>,
+    /// Set by the start-up run when opt-in migrations are pending that no earlier start announced:
+    /// the text of a to-do for the project's aide (`external:aide`). Announced once per migration.
+    pub optin_todo: Option<String>,
 }
 
 /// Apply every pending migration in order, recording each (state file, then log) as it
@@ -841,6 +732,7 @@ pub fn apply(
         failed: None,
         manual_pending: vec![],
         todo: None,
+        optin_todo: None,
     };
     if let Some(id) = only
         && !all.iter().any(|m| m.id == id)
@@ -892,6 +784,11 @@ pub fn run_at_startup(repo: &Path, all: &[Migration]) -> Option<Result<Outcome, 
             Ok(o) => o,
             Err(e) => return Some(Err(format!("{e:#}"))),
         };
+        // Before the commit, so the record of what was announced is committed with the rest.
+        out.optin_todo = announce_opt_in(repo, all).unwrap_or_else(|e| {
+            tracing::warn!("couldn't record the opt-in migration announcement: {e:#}");
+            None
+        });
         out.todo = commit_leftovers(repo, &out.done);
         Some(Ok(out))
     }));
@@ -899,6 +796,32 @@ pub fn run_at_startup(repo: &Path, all: &[Migration]) -> Option<Result<Outcome, 
         Ok(r) => r,
         Err(_) => Some(Err("the migration run panicked".into())),
     }
+}
+
+/// The to-do text for opt-in migrations that are pending and not yet announced, recording them
+/// as announced; `None` when there is nothing new, which touches no file.
+fn announce_opt_in(repo: &Path, all: &[Migration]) -> anyhow::Result<Option<String>> {
+    let mut state = load_state(repo)?;
+    let fresh: Vec<&Migration> = pending(repo, all)?
+        .into_iter()
+        .filter(|m| m.manual_only && !state.announced.iter().any(|a| a == m.id))
+        .collect();
+    if fresh.is_empty() {
+        return Ok(None);
+    }
+    let list: String = fresh
+        .iter()
+        .map(|m| format!("- {}: {}\n", m.id, m.description))
+        .collect();
+    state
+        .announced
+        .extend(fresh.iter().map(|m| m.id.to_string()));
+    let path = state_path(repo);
+    std::fs::write(&path, toml::to_string(&state)?)
+        .with_context(|| format!("writing {}", path.display()))?;
+    Ok(Some(format!(
+        "These migrations are opt-in: bridle does not run them at start-up, because they rewrite this project's files and want a review first. Decide whether this project needs each one, and if so run it on the trial or integration branch and commit the result:\n\n{list}\nRun one with `bridle migrate --only <id>` (add --dry-run to see what it would change)."
+    )))
 }
 
 fn git_out(repo: &Path, args: &[&str]) -> Option<std::process::Output> {
@@ -1198,6 +1121,31 @@ mod tests {
     }
 
     #[test]
+    fn a_pending_opt_in_migration_is_announced_once_not_at_the_next_start() {
+        let p = project();
+        let all = [ok_migration("0000-a"), manual("0001-m")];
+        let first = run_at_startup(p.path(), &all).unwrap().unwrap();
+        let todo = first.optin_todo.expect("a to-do");
+        assert!(
+            todo.contains("0001-m") && !todo.contains("0000-a"),
+            "{todo}"
+        );
+        // Still pending, but already announced.
+        assert_eq!(first.manual_pending, ["0001-m"]);
+        let second = run_at_startup(p.path(), &all).unwrap().unwrap();
+        assert!(second.optin_todo.is_none());
+        assert_eq!(second.manual_pending, ["0001-m"]);
+        // A newly shipped opt-in migration is announced on its own.
+        let more = [ok_migration("0000-a"), manual("0001-m"), manual("0002-n")];
+        let third = run_at_startup(p.path(), &more).unwrap().unwrap();
+        let todo = third.optin_todo.expect("a to-do");
+        assert!(
+            todo.contains("0002-n") && !todo.contains("0001-m"),
+            "{todo}"
+        );
+    }
+
+    #[test]
     fn auto_false_leaves_it_pending() {
         let p = project();
         std::fs::write(
@@ -1290,73 +1238,6 @@ mod tests {
         p
     }
 
-    const OLD_CONFIG: &str =
-        "[roles.product-manager]\nsystem_prompt = \"workflow/base/roles/product-manager.md\"\n";
-
-    #[test]
-    fn rename_migration_moves_config_and_role_file_and_is_idempotent() {
-        let p = git_project(OLD_CONFIG, true);
-        let ctx = Ctx {
-            repo: p.path(),
-            dry_run: false,
-        };
-        let r = rename_product_manager(&ctx).unwrap();
-        assert_eq!(r.files.len(), 3);
-        let cfg = std::fs::read_to_string(p.path().join(".bridle/config.toml")).unwrap();
-        assert_eq!(
-            cfg,
-            "[roles.project-manager]\nsystem_prompt = \"workflow/base/roles/project-manager.md\"\n"
-        );
-        assert!(!p.path().join(".bridle/roles/product-manager.md").exists());
-        assert!(p.path().join(".bridle/roles/project-manager.md").exists());
-        // The changes are now uncommitted, so a second run must find nothing to do (and so
-        // not refuse).
-        let again = rename_product_manager(&ctx).unwrap();
-        assert!(again.files.is_empty());
-    }
-
-    #[test]
-    fn rename_migration_dry_run_writes_nothing() {
-        let p = git_project(OLD_CONFIG, true);
-        let ctx = Ctx {
-            repo: p.path(),
-            dry_run: true,
-        };
-        assert_eq!(rename_product_manager(&ctx).unwrap().files.len(), 3);
-        assert_eq!(
-            std::fs::read_to_string(p.path().join(".bridle/config.toml")).unwrap(),
-            OLD_CONFIG
-        );
-        assert!(p.path().join(".bridle/roles/product-manager.md").exists());
-    }
-
-    #[test]
-    fn rename_migration_refuses_uncommitted_edits() {
-        let p = git_project(OLD_CONFIG, false);
-        let edited = format!("{OLD_CONFIG}# mine\n");
-        std::fs::write(p.path().join(".bridle/config.toml"), &edited).unwrap();
-        let ctx = Ctx {
-            repo: p.path(),
-            dry_run: false,
-        };
-        let err = rename_product_manager(&ctx).unwrap_err().to_string();
-        assert!(err.contains("uncommitted"), "{err}");
-        assert_eq!(
-            std::fs::read_to_string(p.path().join(".bridle/config.toml")).unwrap(),
-            edited
-        );
-    }
-
-    #[test]
-    fn rename_migration_leaves_a_project_without_the_role_alone() {
-        let p = git_project("[roles.worker]\nmodel = \"sonnet\"\n", false);
-        let ctx = Ctx {
-            repo: p.path(),
-            dry_run: false,
-        };
-        assert!(rename_product_manager(&ctx).unwrap().files.is_empty());
-    }
-
     fn git(p: &Path, args: &[&str]) {
         let ok = std::process::Command::new("git")
             .arg("-C")
@@ -1429,33 +1310,6 @@ mod tests {
             dry_run: false,
         };
         assert!(is_refusal(&standard_ticket_fields(&ctx).unwrap_err()));
-    }
-
-    #[test]
-    fn bug_tickets_with_a_task_become_fix_and_rerun_is_a_noop() {
-        let p = ticket_project("bridle-adopt");
-        let open = p.path().join("docs/tickets/open");
-        let ticket = |kind: &str, tasks: &str| {
-            format!("---\nid: br-aaaa\ntitle: t\nkind: {kind}\ntasks: {tasks}\n---\nbody\n")
-        };
-        std::fs::write(open.join("worked-aaaa.md"), ticket("bug", "[br-aaaa]")).unwrap();
-        std::fs::write(open.join("report-bbbb.md"), ticket("bug", "[]")).unwrap();
-        std::fs::write(open.join("feat-cccc.md"), ticket("feature", "[br-cccc]")).unwrap();
-        git(p.path(), &["add", "."]);
-        git(p.path(), &["commit", "-q", "-m", "more"]);
-        let ctx = Ctx {
-            repo: p.path(),
-            dry_run: false,
-        };
-        let r = bug_tickets_that_are_fixes(&ctx).unwrap();
-        assert_eq!(
-            r.files,
-            vec!["docs/tickets/open/worked-aaaa.md".to_string()]
-        );
-        let got = std::fs::read_to_string(open.join("worked-aaaa.md")).unwrap();
-        assert!(got.contains("\nkind: fix\n"), "{got}");
-        git(p.path(), &["commit", "-qam", "migrated"]);
-        assert!(bug_tickets_that_are_fixes(&ctx).unwrap().files.is_empty());
     }
 
     #[test]

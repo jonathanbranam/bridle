@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Opt-in migrations: `0001-rename-product-manager` and `0003-bug-tickets-that-are-fixes` are retired (the role alias and the unused label made them unnecessary); a pending opt-in migration (`0002`, `0004`, `0005`) now files one to-do for the project's aide at daemon start, recorded as `announced` in `migrations.toml` so the next start files none (br-df8w).
 - A project move now tells the machines' orchestrators: `project stop` messages the orchestrator and aide in OLD's `<host>-home`, `project start` after a take-over messages the orchestrator in NEW's `<host>-home`, and `project drain` also messages OLD's home orchestrator; with no `<host>-home` the output says nobody was told, and a failed notice never fails the move (br-cxjs).
 - `project take-over` prints only the entries that differ, not the whole `projects sync` table; `project start` no longer prints "nothing was started; to load it" before starting the mail unit; the move runbook names a real mail check (br-ec5m).
 - The `bridle hook link-check` Stop hook links an id to the project that owns the ticket (a qualified id by its prefix, a bare id by the project that has it, else the session's), not always the session's project (br-4dzj).

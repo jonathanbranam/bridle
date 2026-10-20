@@ -1,6 +1,6 @@
 # Project migrations
 
-> **Status (checked 2026-10-03):** Built, not wired in: `bridle migrate` with `.bridle/migrations.toml`/`.log` and the `project.migrated` event (`crates/bridle/src/migrate.rs`); never automatic, by design. Migrations: `0000-baseline` and `0001-rename-product-manager`; bridle's own repo has run both
+> **Status (checked 2026-10-03):** Built, not wired in: `bridle migrate` with `.bridle/migrations.toml`/`.log` and the `project.migrated` event (`crates/bridle/src/migrate.rs`); never automatic, by design. Migrations: see "Shipped migrations"
 
 Some bridle changes alter what a project keeps in its own repo for bridle: ticket frontmatter,
 `.bridle/config.toml`, the docs layout. `bridle migrate` brings a project up to date with the
@@ -14,7 +14,7 @@ running binary (ticket xebc). The daemon's SQLite database is separate: it migra
   `[migrations] auto = false` in `.bridle/config.toml`.
 - **Opt-in migrations.** A migration with `manual_only: true` is skipped at start-up and by a
   plain `bridle migrate` (listed as pending-manual); it runs only by id, `bridle migrate --only ID`.
-  None ships today.
+  A pending one is announced once (br-df8w, "At start-up").
 - A migration is a Rust fn in the ordered `MIGRATIONS` list (`crates/bridle/src/migrate.rs`):
   an id `NNNN-short-name`, a description, `run(ctx) -> Result<Report>`. Ids are append-only.
 - It must be **idempotent**, touch only the project's own bridle files, and under `ctx.dry_run`
@@ -52,6 +52,12 @@ the daemon: the run is wrapped against errors and panics.
   incident task once the daemon is up. The daemon serves regardless.
 - A migration refusing for uncommitted changes (`migrate::Refused`) is not a failure: logged,
   no incident, retried at the next start.
+- **Opt-in migrations are announced once.** Pending `manual_only` migrations not yet announced
+  produce one chore to-do, filed once the daemon is up and messaged to the project's aide
+  (`external:aide`; often the only agent on a project; not the human, not the manager), listing
+  the ids and how to run them. The ids are recorded as `announced = [...]` in
+  `.bridle/migrations.toml` (committed with the rest by the step below), so the next start files
+  nothing; a migration shipped later is announced on its own.
 - Applied migrations are posted as `project.migrated` events once the daemon is up.
 - Nothing pending (or `auto = false`) touches no file.
 - **Commit afterward** (br-rdag): after the run, the start-up commits what it changed: the files the
@@ -70,29 +76,11 @@ the daemon: the run is wrapped against errors and panics.
 ## Shipped migrations
 
 - **`0000-baseline`**: starts tracking; changes nothing.
-- **`0001-rename-product-manager`** (ticket 9j2h): the `product-manager` role became
-  `project-manager`. In `.bridle/config.toml` it replaces the name everywhere it appears (the
-  `[roles.product-manager]` table, a `system_prompt` path, any value), and it moves a
-  `.bridle/roles/product-manager.md` override to `project-manager.md`. It refuses, naming the
-  files, when git shows uncommitted changes in any file it would edit, and when both role files
-  exist. A project without the role is left alone. Rerunning it is a no-op. **Read-time alias:** the
-  daemon reads a stored agent role or a configured role table named `product-manager` as
-  `project-manager` (`config::canonical_role`), so existing agents (their stored role is not
-  rewritten) and unmigrated projects keep PM permissions until they migrate. This reverses the
-  first "no alias" decision: without it, the queue gate and the stop check silently dropped a
-  running PM's permissions the moment the daemon updated. Example, before and after:
-
-  ```toml
-  [roles.product-manager]                          [roles.project-manager]
-  system_prompt = "workflow/base/roles/product-manager.md"   system_prompt = "workflow/base/roles/project-manager.md"
-  ```
-
-  Rules that vendor a role list (`roles: [..., product-manager]`) come from the workflow layers
-  and are replaced by `bridle init`/sync, not by this migration.
-  Existing projects other than bridle's own are migrated only after the human reviews this.
-
-`0001` is flagged `manual_only` (it edits a project's files, and the human reviews it before it
-runs on a real project): start-up skips it, and it runs by `bridle migrate --only 0001-rename-product-manager`.
+- **`0001-rename-product-manager`** (ticket 9j2h): **retired** (br-df8w), removed from the list.
+  The daemon reads a stored or configured role named `product-manager` as `project-manager`
+  (`config::canonical_role`), so an unmigrated project loses nothing; the rename was cosmetic.
+  A project that wants the new name in its config edits it by hand. Rules that vendor a role list
+  come from the workflow layers and are replaced by `bridle init`/sync.
 
 - **`0002-standard-ticket-fields`** (ticket syqn, part 3): in every `docs/tickets/**.md` it renames
   `needs`, `see`, `opened`, `filed_by`, `closed` to `blocked_by`, `related`, `created`,
@@ -102,14 +90,13 @@ runs on a real project): start-up skips it, and it runs by `bridle migrate --onl
   this project holds that ticket; an id of another project is left for its owner. A ticket already
   in the new form is skipped, so a rerun finds nothing. It refuses, naming the files, on
   uncommitted changes in a ticket it would edit. Readers keep accepting the old names until every
-  project has run it. Like `0001` it is `manual_only`; the owner runs it on the project's trial
+  project has run it. It is `manual_only`; the owner runs it on the project's trial
   branch with `bridle migrate --only 0002-standard-ticket-fields`, reviews the diff and commits it
-  (the migration leaves the commit to the owner, as `0001` does).
+  (the migration leaves the commit to the owner).
 
-- **`0003-bug-tickets-that-are-fixes`** (ticket bpku): `kind: bug` becomes `kind: fix` in every
-  ticket that lists a task (it was worked as a fix); a bug with no task stays a report. Opt-in,
-  same review and guard as `0002`. It edits files only: an open row changes with
-  `bridle task kind`, an integrated row keeps `bug`.
+- **`0003-bug-tickets-that-are-fixes`** (ticket bpku): **retired** (br-df8w), removed from the
+  list. It only relabelled `kind: bug` tickets that had a task as `fix`; nothing reads the label
+  to behave differently, and `bug` remains a valid kind. Left tickets stay as they are.
 
 - **`0004-ticket-links-in-frontmatter`** (ticket 3v75): each `blocks`, `parent` and `related` edge
   between two tickets of the project (read from `edges.toml` and the rows' `ticket` fields on the
@@ -149,4 +136,4 @@ release branch, so track-web on `dev` with `integration = "dev"` migrates. Since
 reads that setting; on dalek-home the 2026-10-17 `0007` run on `main` was allowed because the
 guard treats a declared integration of `main` as the project's own branch, and a project with no
 `integration` set is refused on `main`. The start-up commit uses the same guard. Bridle's own repo (project `bridle`) is
-exempt. `0002` to `0007` use it; `0001` does not yet.
+exempt. `0002`, `0004` to `0007` use it.
