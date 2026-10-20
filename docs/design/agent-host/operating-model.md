@@ -193,7 +193,10 @@ refs/heads/bridle/<name>:refs/heads/bridle/<name>` and nothing else: it refuses 
 worktree where that branch is not checked out. The deny rule is unchanged, so a worker cannot push
 by any other route; the owner-only pre-push hook still guards the integration branch for every
 other pusher. A worker pushes at least when it marks its ticket built (`workflow/base/roles/worker.md`).
-Remote cleanup of landed branches is a separate ticket.
+At the landing's cleanup step the daemon also runs `git push origin --delete bridle/<name>` in the clone
+(br-pm2r): only `bridle/*`, only when the branch is on the integration branch (or already gone
+locally) and exists on origin. A failure (no remote, no permission) is logged and never fails the
+cleanup; the integration branch and non-`bridle/` branches are never deleted.
 
 *Picking it up in a project with custom tool lists (ticket xebc).* Nothing to change in
 `disallowed_tools`. A worker role whose `allowed_tools` is `Bash` or `Bash(bridle *)` already

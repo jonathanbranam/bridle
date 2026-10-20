@@ -468,6 +468,31 @@ pub async fn delete_branch(repo: &Path, branch: &str, force: bool) -> Result<(),
     run_git(repo, &["branch", flag, branch]).await.map(|_| ())
 }
 
+/// Deletes `branch` on `origin` after a landing (br-pm2r): only `bridle/*`, and only when no local
+/// copy holds unlanded work (`is_merged`). Returns whether a delete ran; a branch that is not on
+/// origin is `Ok(false)`. The call is a plain `git push origin --delete`, so the one-pusher
+/// pre-push hook (integration branch only) lets it through.
+pub async fn delete_remote_branch(repo: &Path, branch: &str) -> Result<bool, WorktreeError> {
+    if !branch.starts_with("bridle/") || !is_merged(repo, branch).await? {
+        return Ok(false);
+    }
+    let on_origin = run_git(
+        repo,
+        &[
+            "ls-remote",
+            "--heads",
+            "origin",
+            &format!("refs/heads/{branch}"),
+        ],
+    )
+    .await?;
+    if on_origin.trim().is_empty() {
+        return Ok(false);
+    }
+    run_git(repo, &["push", "origin", "--delete", branch]).await?;
+    Ok(true)
+}
+
 /// Paths changed by `commit` (against its first parent, for a merge).
 pub async fn changed_files(repo: &Path, commit: &str) -> Result<Vec<String>, WorktreeError> {
     let out = run_git(
@@ -1133,6 +1158,77 @@ mod tests {
         for b in ["bridle/not-eligible", "bridle/held", "bridle/unmerged"] {
             assert!(branch_exists(&repo, b).await.expect("exists"), "{b}");
         }
+    }
+
+    #[tokio::test]
+    async fn delete_remote_branch_removes_only_landed_bridle_branches() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let (origin, repo) = (tmp.path().join("origin.git"), tmp.path().join("repo"));
+        init_repo(&repo).await;
+        let g = |args: &[&str]| {
+            let out = std::process::Command::new("git")
+                .arg("-C")
+                .arg(&repo)
+                .args(["-c", "user.email=t@example.com", "-c", "user.name=T"])
+                .args(args)
+                .output()
+                .expect("git");
+            assert!(out.status.success(), "{args:?}: {out:?}");
+        };
+        std::fs::create_dir_all(&origin).expect("mkdir");
+        let out = std::process::Command::new("git")
+            .args(["init", "-q", "--bare"])
+            .arg(&origin)
+            .output()
+            .expect("init bare");
+        assert!(out.status.success());
+        g(&["remote", "add", "origin", &origin.to_string_lossy()]);
+        // landed: a commit of its own that main contains; unmerged: ahead of main.
+        for b in ["bridle/landed", "bridle/unmerged", "feature/other"] {
+            g(&["checkout", "-q", "-b", b, "main"]);
+            g(&["commit", "-q", "--allow-empty", "-m", b]);
+        }
+        g(&["checkout", "-q", "main"]);
+        g(&["merge", "-q", "--no-ff", "-m", "land", "bridle/landed"]);
+        g(&[
+            "push",
+            "-q",
+            "origin",
+            "main",
+            "bridle/landed",
+            "bridle/unmerged",
+            "feature/other",
+        ]);
+
+        let heads = || {
+            let out = std::process::Command::new("git")
+                .arg("-C")
+                .arg(&origin)
+                .args(["for-each-ref", "--format=%(refname:short)", "refs/heads"])
+                .output()
+                .expect("refs");
+            String::from_utf8_lossy(&out.stdout)
+                .lines()
+                .map(String::from)
+                .collect::<Vec<_>>()
+        };
+        for b in ["bridle/unmerged", "feature/other", "main"] {
+            assert!(!delete_remote_branch(&repo, b).await.expect(b), "{b}");
+        }
+        assert!(
+            delete_remote_branch(&repo, "bridle/landed")
+                .await
+                .expect("landed")
+        );
+        // Already gone: not an error.
+        assert!(
+            !delete_remote_branch(&repo, "bridle/landed")
+                .await
+                .expect("gone")
+        );
+        let mut left = heads();
+        left.sort();
+        assert_eq!(left, ["bridle/unmerged", "feature/other", "main"]);
     }
 
     #[tokio::test]

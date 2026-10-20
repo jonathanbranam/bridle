@@ -4244,6 +4244,13 @@ async fn clean_up_landed_branch(
         Err(e) => failed.push(format!("listing agents: {e}")),
     }
     let repo = &state.workspace.repo;
+    // Before the local branch goes: the "work is on the integration branch" check reads it.
+    // A failure (no remote, no permission) is logged and never fails the cleanup.
+    match crate::worktree::delete_remote_branch(repo, branch).await {
+        Ok(true) => removed.push(format!("origin branch {branch}")),
+        Ok(false) => {}
+        Err(e) => tracing::warn!(branch, "cleanup: deleting the branch on origin failed: {e}"),
+    }
     if kept.is_empty()
         && crate::worktree::branch_exists(repo, branch)
             .await
