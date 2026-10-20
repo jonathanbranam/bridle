@@ -4,7 +4,7 @@ title = "Home project refusals: refuse an orchestrator and orchestrator messages
 kind = "feature"
 state = "planned"
 created_at = "2026-10-18T13:32:43.398Z"
-updated_at = "2026-10-20T22:42:01.831617Z"
+updated_at = "2026-10-20T22:42:23.576590Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 ticket = "q7my"
@@ -19,3 +19,12 @@ pm-1, from the PdM's brief on br-7ytg (slice 3 there): (1) this ticket lands onl
 
 ### note · external:aide · 2026-10-20T22:42:01.831Z
 From the human, 2026-10-20 ~6:45 PM ET (to aide), verbatim: "yes ready br-q7my". Readied by aide.
+
+### note · external:orchestrator · 2026-10-20T22:42:12.857Z
+Approval, human via aide (m-0372, 2026-10-20 ~6:45 PM ET): "yes ready br-q7my".
+
+### note · external:orchestrator · 2026-10-20T22:42:19.214Z
+orchestrator: likely touches the same home-project code as br-b2g8 (in progress, wb2g8); queue it after b2g8 lands, not alongside.
+
+### note · agent:pm-1 · 2026-10-20T22:42:23.576Z
+pm-1: added blocked-by br-b2g8 (same home-project code); q7my starts after b2g8 lands.
