@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Internal
 
+- Daemon start-up waits no longer time out under load: `serve --detach` waits up to 180 s for health (was 60), `dev site` waits 120 s to start (was 30) and 60 s to stop (was 20); all return the moment the condition holds (br-6wp2).
 - Governor test `working_agent_is_notified_then_stopped_when_its_turn_ends` is `#[ignore]`d as flaky (ubuntu CI timeout waiting for Stopped), so main is green; the fix is br-remg (br-sftn).
 
 ### Fixed

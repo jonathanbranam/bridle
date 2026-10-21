@@ -383,8 +383,9 @@ pub(crate) fn detached_command(
 }
 
 /// How long `--detach` waits for the daemon's health to answer. A loaded host (a build
-/// running beside it) can take well past 15 s to start; see ticket cy5v.
-pub(crate) const DETACH_WAIT: Duration = Duration::from_secs(60);
+/// running beside it) can take well past 15 s to start; see tickets cy5v and 6wp2. It returns
+/// the moment health answers, so a long bound costs nothing on an idle host.
+pub(crate) const DETACH_WAIT: Duration = Duration::from_secs(180);
 
 async fn wait_for_daemon(
     json: bool,

@@ -17,8 +17,8 @@ use crate::error::CliError;
 
 const SITES_DIR: &str = ".agent-site";
 const USERNAME: &str = "agent";
-const START_WAIT: Duration = Duration::from_secs(30);
-const STOP_WAIT: Duration = Duration::from_secs(20);
+const START_WAIT: Duration = Duration::from_secs(120);
+const STOP_WAIT: Duration = Duration::from_secs(60);
 
 /// (project, path in the repo, contents) for `fixtures/dev-site/`; add a new file here when you add one there.
 const FIXTURE_FILES: &[(&str, &str, &str)] = &[
