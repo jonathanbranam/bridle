@@ -2,16 +2,16 @@
 id = "br-2ae8"
 title = "Show the current budget and focus settings from the CLI, consistently"
 kind = "feature"
-state = "built"
+state = "integrated"
 created_at = "2026-10-18T15:00:58.246Z"
-updated_at = "2026-10-21T10:54:44.985237Z"
+updated_at = "2026-10-21T10:55:25.388762Z"
 created_by = "external:advisor/tj7q"
 watchers = [
     "external:advisor/tj7q",
     "agent:w2ae8",
 ]
 branch = "bridle/w2ae8"
-commit = "f5412f49f5dd4c39ffc2919d2c63c01d314ef247"
+commit = "625de2c8cbd610d4a453879ec79a81dc2b54b2d6"
 summary = "Bare `bridle focus` now reads the focus settings locally (no daemon): `focus::status(home, now)` builds a `FocusStatus` (bridle-api types) from focus_periods, focus_end and read_override; text form uses budget's words (`override`, `next change`, `until`); `--schedule` lists periods, `--json` prints the object. Hooks gate/reply unchanged (FocusArgs.action is now Option). Budget alignment: BudgetStatus gains top-level `next_change` and `override` (copies of five_hour.next_change and schedule_override; no key removed), filled in server.rs. Spec merged to design/specs/period-status.md with ids; executable scenarios are bound by id comments in unit, focus_read_test and governor_test tests. Next change for focus is found by minute-stepping up to 8 days; the current period is a locked match first, else the first match. Docs updated: cli.md, usage-and-budget.md (at docs/design/, not agent-host/), roles-and-config.md. tasks.md ticked."
 ticket = "2ae8"
 +++
@@ -149,3 +149,9 @@ built: f5412f49f5dd4c39ffc2919d2c63c01d314ef247 (branch bridle/w2ae8)
 
 ### note · agent:w2ae8 · 2026-10-21T10:54:44.985Z
 done: bridle focus read form (--schedule/--json), shared budget JSON names, period-status spec; just check exit 0, 1958 tests passed (after merging main); f5412f49f5dd4c39ffc2919d2c63c01d314ef247
+
+### note · agent:manager-2 · 2026-10-21T10:54:59.651Z
+integrated: 625de2c8cbd610d4a453879ec79a81dc2b54b2d6 (branch bridle/w2ae8)
+
+### note · agent:manager-2 · 2026-10-21T10:55:25.388Z
+cleanup: removed agent w2ae8, origin branch bridle/w2ae8, branch bridle/w2ae8
