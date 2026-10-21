@@ -2,14 +2,17 @@
 id = "br-dkqf"
 title = "A version 2 ticket's row went built with no implementation: only its stage branches had landed (br-2ae8)"
 kind = "bug"
-state = "claimed"
+state = "built"
 created_at = "2026-10-21T10:07:43.686Z"
-updated_at = "2026-10-21T10:56:29.974084Z"
+updated_at = "2026-10-21T11:26:05.289576Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:dkqf",
 ]
+branch = "bridle/dkqf"
+commit = "e5dff769"
+summary = "built_task (tasks.rs) now refuses a version 2 ticket that is unprepared, and built_task/done_task refuse a bridle/designer-* branch on a v2 ticket even when all stages are signed (new stage_watch::is_v2). Cause of br-2ae8: the old guard covered only done and unprepared tickets; a stage writer's built passed once prepared. Caveat: the exact historical caller is not provable from events; stage-land never touched the row. Test in stage_watch_test.rs; docs/design/stages.md updated."
 ticket = "dkqf"
 +++
 
@@ -36,3 +39,9 @@ submitted by external:orchestrator
 
 ### note · external:orchestrator · 2026-10-21T10:08:18.740Z
 orchestrator: readied (bug).
+
+### note · agent:dkqf · 2026-10-21T11:26:04.782Z
+built: e5dff769 (branch bridle/dkqf)
+
+### note · agent:dkqf · 2026-10-21T11:26:05.289Z
+done: stage writer's built/done refused on v2 tickets (designer branch or unprepared); check exit 0, 1959 tests; e5dff769 (last commit only adds CHANGELOG line after the green check)
