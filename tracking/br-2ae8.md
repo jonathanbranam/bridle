@@ -2,11 +2,14 @@
 id = "br-2ae8"
 title = "Show the current budget and focus settings from the CLI, consistently"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-18T15:00:58.246Z"
-updated_at = "2026-10-21T10:07:13.541492Z"
+updated_at = "2026-10-21T10:11:57.498525Z"
 created_by = "external:advisor/tj7q"
-watchers = ["external:advisor/tj7q"]
+watchers = [
+    "external:advisor/tj7q",
+    "agent:w2ae8",
+]
 branch = "bridle/designer-2ae8-proposal"
 ticket = "2ae8"
 +++
