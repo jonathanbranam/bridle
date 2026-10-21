@@ -332,7 +332,7 @@ async fn ensure_orphan_branch_with_env(
         repo,
         &[
             "-c",
-            "user.email=bridle@localhost",
+            "user.email=bridle@branam.us",
             "-c",
             "user.name=bridle",
             "commit-tree",

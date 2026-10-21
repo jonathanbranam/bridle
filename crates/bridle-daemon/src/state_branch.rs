@@ -737,18 +737,16 @@ impl StateBranch {
         } else {
             parts.join(", ")
         };
+        let machine =
+            bridle_api::machines::machine_home(&bridle_api::discovery::bridle_home()).machine;
+        let email = format!("user.email={}", crate::supervisor::BRIDLE_GIT_EMAIL);
+        let name = format!(
+            "user.name={}",
+            crate::supervisor::bridle_identity_name(None, machine.as_deref())
+        );
         worktree::run_git(
             &self.dir,
-            &[
-                "-c",
-                "user.email=bridle@localhost",
-                "-c",
-                "user.name=bridle",
-                "commit",
-                "-q",
-                "-m",
-                &message,
-            ],
+            &["-c", &email, "-c", &name, "commit", "-q", "-m", &message],
         )
         .await?;
         Ok(true)

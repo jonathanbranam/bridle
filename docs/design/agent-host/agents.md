@@ -36,7 +36,10 @@ established; S-numbers are its scenarios. Each agent is one headless
 - **Environment**: bridle removes every inherited `CLAUDE*` variable and any
   `BRIDLE_TOKEN` (spike surprise 12), then sets `BRIDLE_URL`, `BRIDLE_TOKEN`
   (the agent's own), `BRIDLE_AGENT_ID`, `BRIDLE_AGENT_NAME`,
-  `BRIDLE_WORKSPACE` and `BRIDLE_PROJECT`, and `BRIDLE_HOME` set to the agent's own
+  `BRIDLE_WORKSPACE` and `BRIDLE_PROJECT`, the git identity `GIT_AUTHOR_NAME`/`GIT_COMMITTER_NAME`
+  (`bridle <agent name> (<machine>)`) and `GIT_AUTHOR_EMAIL`/`GIT_COMMITTER_EMAIL`
+  (`bridle@branam.us`) so agents never commit as the human (br-4a4v; the daemon's state-branch
+  commits use `bridle (<machine>)` and the same email), and `BRIDLE_HOME` set to the agent's own
   `<workspace>/.bridle/agent-home/<agent id>` (not created by bridle), so nothing an agent runs
   can touch the machine's live `~/.bridle` (orchestrator pid/session files, credentials; ticket
   k6b3). Since that home has no `config.toml`, the supervisor also sets `BRIDLE_MACHINE_NAME` and

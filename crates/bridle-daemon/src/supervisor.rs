@@ -3374,6 +3374,10 @@ fn agent_env(
     ];
     // The machine's name and home from the real config, which the agent's own home lacks (br-bfrz).
     let home = bridle_api::machines::machine_home(&bridle_api::discovery::bridle_home());
+    // Agents commit as themselves, not as the human whose clone they run in (br-4a4v).
+    for (k, v) in git_identity_env(&bridle_identity_name(Some(name), home.machine.as_deref())) {
+        env.push((k.to_string(), v));
+    }
     if let Some(m) = home.machine {
         env.push((bridle_api::machines::ENV_MACHINE_NAME.to_string(), m));
     }
@@ -3384,6 +3388,31 @@ fn agent_env(
         env.push(("BRIDLE_COMPONENTS".to_string(), components.join(",")));
     }
     env
+}
+
+/// The one email every bridle commit carries (br-4a4v).
+pub(crate) const BRIDLE_GIT_EMAIL: &str = "bridle@branam.us";
+
+/// `bridle <agent> (<machine>)`; the daemon's own commits have no agent: `bridle (<machine>)`.
+pub(crate) fn bridle_identity_name(agent: Option<&str>, machine: Option<&str>) -> String {
+    let mut n = "bridle".to_string();
+    if let Some(a) = agent {
+        n.push(' ');
+        n.push_str(a);
+    }
+    if let Some(m) = machine {
+        n.push_str(&format!(" ({m})"));
+    }
+    n
+}
+
+fn git_identity_env(name: &str) -> [(&'static str, String); 4] {
+    [
+        ("GIT_AUTHOR_NAME", name.to_string()),
+        ("GIT_AUTHOR_EMAIL", BRIDLE_GIT_EMAIL.to_string()),
+        ("GIT_COMMITTER_NAME", name.to_string()),
+        ("GIT_COMMITTER_EMAIL", BRIDLE_GIT_EMAIL.to_string()),
+    ]
 }
 
 /// Agents call `bridle` from their Bash tool, so the binary running this
@@ -3627,6 +3656,36 @@ fn is_revival(from: AgentState, to: AgentState) -> bool {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn identity_name_and_env() {
+        assert_eq!(
+            super::bridle_identity_name(Some("a4v"), Some("dalek")),
+            "bridle a4v (dalek)"
+        );
+        assert_eq!(
+            super::bridle_identity_name(None, Some("dalek")),
+            "bridle (dalek)"
+        );
+        assert_eq!(super::bridle_identity_name(None, None), "bridle");
+        let env = super::git_identity_env("bridle a4v (dalek)");
+        assert!(env.contains(&("GIT_COMMITTER_EMAIL", "bridle@branam.us".to_string())));
+        assert!(env.contains(&("GIT_AUTHOR_NAME", "bridle a4v (dalek)".to_string())));
+    }
+
+    #[test]
+    fn agent_env_sets_git_identity() {
+        let ws = Workspace::new("/tmp/ws-4a4v/repo", None);
+        let env = super::agent_env(&ws, "http://x", "p", "id1", "a4v", "tok", &[]);
+        let get = |k: &str| env.iter().find(|(n, _)| n == k).map(|(_, v)| v.clone());
+        assert_eq!(get("GIT_AUTHOR_EMAIL").as_deref(), Some("bridle@branam.us"));
+        assert_eq!(
+            get("GIT_COMMITTER_EMAIL").as_deref(),
+            Some("bridle@branam.us")
+        );
+        assert!(get("GIT_AUTHOR_NAME").unwrap().starts_with("bridle a4v"));
+        assert_eq!(get("GIT_AUTHOR_NAME"), get("GIT_COMMITTER_NAME"));
+    }
+
     #[test]
     fn finished_state_is_not_revived() {
         assert!(is_revival(AgentState::Stopped, AgentState::Stopping));
