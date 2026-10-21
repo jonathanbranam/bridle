@@ -3011,3 +3011,6 @@
 {"actor":"agent:xccp","at":"2026-10-21T12:09:41.307785Z","from":"claimed","task":"br-xccp","to":"built"}
 {"actor":"agent:a4v","at":"2026-10-21T12:19:57.652134Z","from":"claimed","task":"br-4a4v","to":"built"}
 {"actor":"agent:manager-2","at":"2026-10-21T12:20:09.571540Z","from":"built","task":"br-4a4v","to":"integrated"}
+{"actor":"human","at":"2026-10-21T12:41:50.446Z","from":"","task":"br-gm4w","to":"pending"}
+{"actor":"external:orchestrator","at":"2026-10-21T12:41:50.447399Z","from":"pending","task":"br-gm4w","to":"open"}
+{"actor":"external:orchestrator","at":"2026-10-21T12:41:50.447805Z","from":"open","task":"br-gm4w","to":"planned"}
