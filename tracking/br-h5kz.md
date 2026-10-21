@@ -2,9 +2,9 @@
 id = "br-h5kz"
 title = "A version 2 ticket that bridle readies on prepare tells nobody: the PM never hears it is open, and open_stale sends it back to pending"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-10-21T01:28:33.751Z"
-updated_at = "2026-10-21T01:28:45.328750Z"
+updated_at = "2026-10-21T01:43:05.419614Z"
 created_by = "external:advisor/product-manager"
 watchers = ["external:advisor/product-manager"]
 ticket = "h5kz"
