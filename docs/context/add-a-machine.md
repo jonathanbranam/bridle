@@ -78,14 +78,20 @@ On the new machine:
    its agents crash until the daemon is restarted after a login (br-myw9: remus needed two logins).
 4. **A distinct git identity per machine** (postmortem
    [[docs/tickets/open/postmortem-git-push-to-origin-rejected-because-two-machines-j7r4|j7r4]],
-   recommendation 6), so a log shows which box made a commit:
+   recommendation 6; decision on [[docs/tickets/open/a-git-identity-per-machine-so-commits-show-which-clone-made-xccp|xccp]], 2026-10-17), so a log shows which box made a
+   commit. The name carries the machine; the email is the human's, so every commit still links to
+   the account:
 
    ```bash
    git config --global user.name  "Jonathan Branam (newpc)"
-   git config --global user.email "<your email>"
+   git config --global user.email dev@branam.us
+   git config --show-origin --get-all user.name    # one line, from ~/.gitconfig, showing the new name
    ```
 
-   Any scheme works if it differs per machine. The host in the name is the point.
+   The check must print exactly one `user.name`, the one you just set. If it lists another, a file
+   included from `~/.gitconfig` (such as `~/.gitconfig.local`) sets a different `[user]`, and git
+   uses the last value it reads; remove that entry so the name you set is the one used. Everyone
+   commits as `dev@branam.us`, so use that email on every machine.
 
 ## 2. `~/.bridle/config.toml`
 
