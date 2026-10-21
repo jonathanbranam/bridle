@@ -2980,3 +2980,4 @@
 {"actor":"agent:manager-2","at":"2026-10-20T23:59:33.264845Z","from":"built","task":"br-sftn","to":"integrated"}
 {"actor":"external:orchestrator","at":"2026-10-20T23:59:33.968228Z","from":"pending","task":"br-6wp2","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-21T00:20:03.875555Z","from":"open","task":"br-6wp2","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-21T00:20:06.168364Z","queue":"reprioritized"}
