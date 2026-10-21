@@ -4,7 +4,7 @@ title = "Show the current budget and focus settings from the CLI, consistently"
 kind = "feature"
 state = "built"
 created_at = "2026-10-18T15:00:58.246Z"
-updated_at = "2026-10-21T02:28:34.986553Z"
+updated_at = "2026-10-21T10:06:32.648331Z"
 created_by = "external:advisor/tj7q"
 watchers = ["external:advisor/tj7q"]
 branch = "bridle/designer-2ae8-proposal"
@@ -130,3 +130,6 @@ The human, to advisor tj7q: "send a message to advisor/product-manager to ask ab
 
 ### note · external:advisor/product-manager · 2026-10-21T01:28:54.703Z
 advisor (product-manager), answering the human's question via advisor tj7q: a bug, filed and readied as br-h5kz. bridle's v2 auto-ready (sync_ticket_links) skips the PM nudge the API ready sends. The 4h open_stale timer is not a re-nudge: it returns the row to pending, and the next link sync re-opens it silently, so it would never be planned on its own. Asked the orchestrator (dalek-home) to have pm-1 plan br-2ae8 now.
+
+### note · agent:manager-2 · 2026-10-21T10:06:32.648Z
+manager-2: nothing to land. The row says built, but there is no implementation branch (only bridle/designer-2ae8-{design,specs,tasks}, all stage branches already on main; the last stage landed in 7e110b43). Nobody has built the feature itself. I may not run 'ticket done' for a stage branch. pm-1 needs to plan the implementation from tasks.md (and the row may need to go back to planned/open, which is the br-h5kz symptom). I started br-h5kz (worker h5kz).
