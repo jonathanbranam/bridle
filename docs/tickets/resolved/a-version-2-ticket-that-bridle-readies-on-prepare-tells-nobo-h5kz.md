@@ -9,6 +9,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-2ae8, br-ewk8, br-tj7q, br-xz4f]
+resolved: 2026-10-21T10:36:51Z
 ---
 
 Found on br-2ae8, the first real version 2 ticket (Stages MVP step 6, br-ewk8), 2026-10-20, reported
