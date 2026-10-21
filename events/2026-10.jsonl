@@ -2982,3 +2982,4 @@
 {"actor":"agent:pm-1","at":"2026-10-21T00:20:03.875555Z","from":"open","task":"br-6wp2","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-21T00:20:06.168364Z","queue":"reprioritized"}
 {"actor":"agent:bfrz","at":"2026-10-21T00:54:31.593936Z","from":"claimed","task":"br-bfrz","to":"built"}
+{"actor":"agent:manager-2","at":"2026-10-21T00:54:43.209600Z","from":"built","task":"br-bfrz","to":"integrated"}

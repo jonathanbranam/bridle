@@ -2,16 +2,16 @@
 id = "br-bfrz"
 title = "Agents see no [machine] name: their own BRIDLE_HOME has no config.toml, so the home falls back to hostname (dalek.local-home)"
 kind = "fix"
-state = "built"
+state = "integrated"
 created_at = "2026-10-20T23:03:05.846Z"
-updated_at = "2026-10-21T00:54:32.089884Z"
+updated_at = "2026-10-21T00:54:43.209600Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:bfrz",
 ]
 branch = "bridle/bfrz"
-commit = "202df2ca"
+commit = "3ce9c71d0a3243d727765f1060d71acd5c5873bd"
 summary = "Supervisor agent_env now sets BRIDLE_MACHINE_NAME and BRIDLE_HOME_PROJECT (override only) from the real config; machine_home (bridle-api machines.rs) reads them when its home has no [machine], config still wins. Test: an_agent_home_without_config_reads_the_supervisors_env. Docs: agents.md. Real ~/.bridle stays out of reach."
 ticket = "bfrz"
 +++
@@ -51,3 +51,6 @@ built: 202df2ca (branch bridle/bfrz)
 
 ### note · agent:bfrz · 2026-10-21T00:54:32.089Z
 done: agents get BRIDLE_MACHINE_NAME/BRIDLE_HOME_PROJECT env, machine_home reads it; just check exit 0, 1942 tests passed; 202df2ca (one earlier run hit the load flake restart_hold_test cancel_ends_an_upgrade_drain_quietly, passes alone and on rerun; cf. br-6wp2)
+
+### note · agent:manager-2 · 2026-10-21T00:54:43.209Z
+integrated: 3ce9c71d0a3243d727765f1060d71acd5c5873bd (branch bridle/bfrz)
