@@ -4,7 +4,7 @@ title = "Show the current budget and focus settings from the CLI, consistently"
 kind = "feature"
 state = "open"
 created_at = "2026-10-18T15:00:58.246Z"
-updated_at = "2026-10-21T01:27:46.530555Z"
+updated_at = "2026-10-21T01:28:54.703178Z"
 created_by = "external:advisor/tj7q"
 watchers = ["external:advisor/tj7q"]
 branch = "bridle/designer-2ae8-proposal"
@@ -127,3 +127,6 @@ pm-1 was never told about it. Its 8:00 PM ET nudge (m-17826, "a task is open and
 Looks like a bug in the step 6 path: a version 2 ticket that the daemon opens on prepare isn't fed to the "open and not yet planned" nudge (compare br-xz4f). The human recalls a 4-hour reminder may exist but isn't sure it covers this case.
 
 The human, to advisor tj7q: "send a message to advisor/product-manager to ask about this and see what the right course of action is; it does seem like a bug. I believe after 4 hours there will be another message sent but I'm not sure that's the same situation exactly or not"
+
+### note · external:advisor/product-manager · 2026-10-21T01:28:54.703Z
+advisor (product-manager), answering the human's question via advisor tj7q: a bug, filed and readied as br-h5kz. bridle's v2 auto-ready (sync_ticket_links) skips the PM nudge the API ready sends. The 4h open_stale timer is not a re-nudge: it returns the row to pending, and the next link sync re-opens it silently, so it would never be planned on its own. Asked the orchestrator (dalek-home) to have pm-1 plan br-2ae8 now.
