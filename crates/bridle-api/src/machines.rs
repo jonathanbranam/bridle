@@ -95,16 +95,32 @@ pub struct MachineHome {
     pub home: Option<String>,
 }
 
-/// The one function everything asks for the machine's home project.
+/// Env the supervisor sets for agents (br-bfrz): their `BRIDLE_HOME` has no `config.toml`
+/// (k6b3), so the machine's name and home override travel here instead.
+pub const ENV_MACHINE_NAME: &str = "BRIDLE_MACHINE_NAME";
+pub const ENV_HOME_PROJECT: &str = "BRIDLE_HOME_PROJECT";
+
+/// The one function everything asks for the machine's home project. The config wins; an agent's
+/// home has none, so it falls back to the env above, then the hostname.
 pub fn machine_home(bridle_home: &Path) -> MachineHome {
+    machine_home_with(bridle_home, |k| std::env::var(k).ok())
+}
+
+fn machine_home_with(bridle_home: &Path, env: impl Fn(&str) -> Option<String>) -> MachineHome {
     let map = MachineMap::load(bridle_home).unwrap_or_default();
+    let env = |k| env(k).filter(|v| !v.is_empty());
     let machine = map
         .machine
         .name
         .clone()
+        .or_else(|| env(ENV_MACHINE_NAME))
         .or_else(|| owner_names(bridle_home).into_iter().next())
         .filter(|n| n != "unknown");
-    let override_ = map.machine.home_project.filter(|h| !h.is_empty());
+    let override_ = map
+        .machine
+        .home_project
+        .filter(|h| !h.is_empty())
+        .or_else(|| env(ENV_HOME_PROJECT));
     let home = override_
         .clone()
         .or_else(|| machine.as_ref().map(|m| format!("{m}-home")));
@@ -309,6 +325,33 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         std::fs::write(dir.path().join("config.toml"), cfg).unwrap();
         dir
+    }
+
+    #[test]
+    fn an_agent_home_without_config_reads_the_supervisors_env() {
+        let empty = tempfile::tempdir().unwrap();
+        let env = |k: &str| match k {
+            ENV_MACHINE_NAME => Some("dalek".to_string()),
+            _ => None,
+        };
+        let h = machine_home_with(empty.path(), env);
+        assert_eq!(h.machine.as_deref(), Some("dalek"));
+        assert_eq!(h.home.as_deref(), Some("dalek-home"));
+        let env = |k: &str| match k {
+            ENV_HOME_PROJECT => Some("base".to_string()),
+            _ => None,
+        };
+        assert_eq!(
+            machine_home_with(empty.path(), env).home.as_deref(),
+            Some("base")
+        );
+        // A config still wins over the env.
+        let d = home_dir("[machine]\nname = \"mbp\"\n");
+        let env = |k: &str| (k == ENV_MACHINE_NAME).then(|| "dalek".to_string());
+        assert_eq!(
+            machine_home_with(d.path(), env).home.as_deref(),
+            Some("mbp-home")
+        );
     }
 
     #[test]

@@ -3366,6 +3366,14 @@ fn agent_env(
         ),
         ("PATH".to_string(), agent_path()),
     ];
+    // The machine's name and home from the real config, which the agent's own home lacks (br-bfrz).
+    let home = bridle_api::machines::machine_home(&bridle_api::discovery::bridle_home());
+    if let Some(m) = home.machine {
+        env.push((bridle_api::machines::ENV_MACHINE_NAME.to_string(), m));
+    }
+    if let Some(h) = home.override_ {
+        env.push((bridle_api::machines::ENV_HOME_PROJECT.to_string(), h));
+    }
     if !components.is_empty() {
         env.push(("BRIDLE_COMPONENTS".to_string(), components.join(",")));
     }
