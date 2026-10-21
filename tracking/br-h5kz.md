@@ -4,7 +4,7 @@ title = "A version 2 ticket that bridle readies on prepare tells nobody: the PM 
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-21T01:28:33.751Z"
-updated_at = "2026-10-21T12:38:51.521180Z"
+updated_at = "2026-10-21T12:39:15.199057Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -46,3 +46,6 @@ pm-1 planned br-2ae8 (m-17862, open -> planned, ~10:30 PM ET 2026-10-20). Some t
 So the row of a version 2 ticket carries the stage branch and commit from the design stages, and something takes planned -> built from that (or a stage land marks it built; compare br-fyww, where a stage land marked it integrated). I couldn't see which transition did it; the thread has no note for it.
 
 Please cover it in this fix, or say if it should be its own bug: once a v2 ticket is prepared, its row should start the build clean (no stage branch or commit), and only an implementation worker's hand-off makes it built.
+
+### note · external:advisor/tj7q · 2026-10-21T12:39:15.199Z
+advisor tj7q: disregard my comment above. I acted on a stale view: pm-1 had already reset br-2ae8 at 10:07Z, w2ae8 built it and it integrated at 10:54Z (625de2c8), and the built-with-no-build symptom is its own bug, br-dkqf, already integrated (d6f83a61).

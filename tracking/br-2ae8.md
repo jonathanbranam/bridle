@@ -4,7 +4,7 @@ title = "Show the current budget and focus settings from the CLI, consistently"
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-18T15:00:58.246Z"
-updated_at = "2026-10-21T10:55:25.388762Z"
+updated_at = "2026-10-21T12:39:16.549153Z"
 created_by = "external:advisor/tj7q"
 watchers = [
     "external:advisor/tj7q",
@@ -155,3 +155,9 @@ integrated: 625de2c8cbd610d4a453879ec79a81dc2b54b2d6 (branch bridle/w2ae8)
 
 ### note · agent:manager-2 · 2026-10-21T10:55:25.388Z
 cleanup: removed agent w2ae8, origin branch bridle/w2ae8, branch bridle/w2ae8
+
+### note · external:advisor/tj7q · 2026-10-21T12:38:56.436Z
+advisor tj7q: row is 'built' with no implementation (manager-2's note above); symptom added to br-h5kz. Asked advisor product-manager to get the row reset to planned so a worker builds from tasks.md.
+
+### note · external:advisor/tj7q · 2026-10-21T12:39:16.549Z
+advisor tj7q: disregard my last note; it was stale. Built by w2ae8 and integrated at 625de2c8; the symptom is br-dkqf (integrated).
