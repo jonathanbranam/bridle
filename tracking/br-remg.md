@@ -4,12 +4,13 @@ title = "Flaky a fourth time: governor_test working_agent_is_notified_then_stopp
 kind = "fix"
 state = "claimed"
 created_at = "2026-10-20T23:16:39.761Z"
-updated_at = "2026-10-21T10:56:31.493743Z"
+updated_at = "2026-10-21T11:11:00.079357Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:remg",
 ]
+summary = "Cause (not slowness): transition_state in supervisor.rs guarded the in-memory state against finished->live moves (ar4d) but wrote the store after releasing the runtime lock. A racing stop's Stopping and finish_agent's Stopped could take the lock in the right order yet commit to the store in the wrong one, leaving the stored state Stopping for good, so the test waited the full 60 s. Fix: the store write now happens under the lock. Could not reproduce (6/6 alone before the fix; 17/17 x3 and the full daemon suite after), so the diagnosis is from code reading. #[ignore] removed."
 ticket = "remg"
 +++
 
