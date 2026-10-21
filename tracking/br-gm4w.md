@@ -4,7 +4,7 @@ title = "[at restart] Agent git identity: create bridle@branam.us and switch eac
 kind = "chore"
 state = "claimed"
 created_at = "2026-10-21T12:41:50.446Z"
-updated_at = "2026-10-21T22:44:23.243844Z"
+updated_at = "2026-10-21T22:45:56.076300Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -26,3 +26,6 @@ To-do for you (normal priority): [at restart] Agent git identity: create bridle@
 
 ### note · external:aide · 2026-10-21T22:44:23.243Z
 The human, 2026-10-21 (to aide), verbatim: "I did create bridle@branam.us. And I think Remus is using a PAT but not dalek or vesta yet". Aide checked dalek: all 5 clones (bridle, bridle-ui, dalek-home, data-contracts, track-web) still use git@github.com (SSH). Step 1 done; step 2 open on dalek and vesta (NUC unconfirmed).
+
+### note · external:aide · 2026-10-21T22:45:56.076Z
+Correction from the human, 2026-10-21 (to aide), verbatim: "Vesta is the NUC. Remus is the wsl2". So the machines are dalek, vesta (the NUC) and remus (WSL2); the ask's list of four counts the NUC twice. Remus is on a PAT already (the human, unverified); dalek and vesta are left.
