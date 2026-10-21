@@ -172,3 +172,44 @@ async fn done_is_refused_for_a_pending_unprepared_v2_ticket() {
     let row = daemon.client.get_task(&id).await.expect("get");
     assert_eq!(row.state.as_str(), "pending");
 }
+
+#[tokio::test]
+async fn a_stage_writers_built_or_done_never_marks_a_prepared_v2_row() {
+    let (daemon, _tmp) = daemon("").await;
+    let c = &daemon.client;
+    // Every stage signed and prepared, as br-2ae8 was: the row must wait for its implementation.
+    let id = v2_ticket(
+        &daemon,
+        "written: [proposal, design]\nsigned: [proposal, design]\nprepared: true\n",
+    )
+    .await;
+    let stage_branch = format!(
+        "bridle/designer-{}-design",
+        id.rsplit('-').next().expect("tail")
+    );
+    let built = bridle_api::types::BuiltTicketRequest {
+        branch: stage_branch.clone(),
+        commit: "abc123".to_string(),
+    };
+    let err = c.built_task(&id, &built).await.expect_err("built refused");
+    assert!(err.to_string().contains("stage branch"), "got {err}");
+    let head = std::process::Command::new("git")
+        .args(["rev-parse", "HEAD"])
+        .current_dir(&daemon.repo)
+        .output()
+        .expect("git");
+    let done = bridle_api::types::DoneTicketRequest {
+        commit: String::from_utf8(head.stdout)
+            .expect("utf8")
+            .trim()
+            .to_string(),
+        branch: Some(stage_branch),
+        ..Default::default()
+    };
+    let err = c.done_task(&id, &done).await.expect_err("done refused");
+    assert!(err.to_string().contains("stage branch"), "got {err}");
+    assert_eq!(
+        c.get_task(&id).await.expect("get").state.as_str(),
+        "pending"
+    );
+}

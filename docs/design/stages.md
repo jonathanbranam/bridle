@@ -119,6 +119,12 @@ designer branch (`bridle/designer-*`) carries a stage, not a build. `ticket reop
 unprepared version 2 ticket gives `pending` (not `reopened`), so the stage watch picks it up
 again; version 1 and prepared version 2 tickets reopen to `reopened` as before.
 
+`ticket built` (br-dkqf) is refused the same way for an unprepared version 2 ticket, and both
+`built` and `done` are refused for a version 2 ticket when the branch is a stage writer's
+(`bridle/designer-*`), even once every stage is signed: only the implementation builds the
+ticket, so a prepared ticket's row waits for its own worker. (br-2ae8 went `built` from its
+stage branches after all its stages were signed.)
+
 ## A stage is on main before anyone is asked (br-upxq)
 
 The human reviews on main, not on a branch. So `stage-done` from a designer's worktree (a

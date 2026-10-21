@@ -157,6 +157,11 @@ pub fn unprepared(tickets: &Path, id: &str) -> Option<String> {
     Some(format!("{} written; {} not", names(done), names(todo)))
 }
 
+/// Whether `id` is a version 2 ticket under `<tickets>/open` (br-dkqf).
+pub fn is_v2(tickets: &Path, id: &str) -> bool {
+    read_preps(tickets).iter().any(|p| p.id == id)
+}
+
 /// Whether `id` is a version 2 ticket under `<tickets>/open` marked `prepared: true`, the flag
 /// the link sync opens it on.
 pub fn is_prepared(tickets: &Path, id: &str) -> bool {

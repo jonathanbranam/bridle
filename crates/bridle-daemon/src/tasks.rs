@@ -180,6 +180,23 @@ impl TicketManager {
         crate::stage_watch::unprepared(self.tickets_dir.as_deref()?, id)
     }
 
+    /// Refuses `branch` when it is a stage writer's (`bridle/designer-*`) on a version 2 ticket:
+    /// a stage is not the build, even once every stage is signed (br-dkqf).
+    fn refuse_stage_branch(&self, id: &str, branch: Option<&str>) -> Result<(), TicketError> {
+        let on_stage_branch = branch.is_some_and(|b| b.trim().starts_with("bridle/designer-"));
+        let v2 = self
+            .tickets_dir
+            .as_deref()
+            .is_some_and(|d| crate::stage_watch::is_v2(d, id));
+        if on_stage_branch && v2 {
+            return Err(TicketError::Conflict(format!(
+                "{id} is a version 2 ticket and {} is a stage branch; a stage is not the build",
+                branch.unwrap_or_default().trim()
+            )));
+        }
+        Ok(())
+    }
+
     /// Whether `id` is a version 2 ticket that is fully prepared (nothing to re-prepare).
     pub fn is_prepared_v2(&self, id: &str) -> bool {
         self.tickets_dir
@@ -1009,6 +1026,7 @@ impl TicketManager {
                 "{id} is a version 2 ticket still being prepared ({why}); landing a stage does not finish it"
             )));
         }
+        self.refuse_stage_branch(id, branch)?;
         match task.state {
             TicketState::Dropped | TicketState::Integrated => {
                 return Err(TicketError::Conflict(format!(
@@ -1216,6 +1234,14 @@ impl TicketManager {
         let mut task = self
             .get_task(id)
             .ok_or_else(|| TicketError::NotFound(format!("no such task: {id}")))?;
+        // Only the implementation builds a version 2 ticket; a stage writer's built is refused
+        // (br-dkqf), as is anything while it is still being prepared (br-fyww).
+        if let Some(why) = self.unprepared_v2(id) {
+            return Err(TicketError::Conflict(format!(
+                "{id} is a version 2 ticket still being prepared ({why}); a stage is not the build"
+            )));
+        }
+        self.refuse_stage_branch(id, Some(branch))?;
         match task.state {
             TicketState::Planned => {}
             TicketState::Claimed => {
