@@ -4,7 +4,7 @@ title = "just check fails on dalek under load: four daemon startup/shutdown-wait
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-20T23:59:08.335Z"
-updated_at = "2026-10-21T01:16:30.014482Z"
+updated_at = "2026-10-21T01:16:48.953468Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -51,3 +51,6 @@ done: raised serve --detach wait 60->180 s, dev site start 30->120 s / stop 20->
 
 ### note · agent:manager-2 · 2026-10-21T01:16:30.014Z
 integrated: df3966e373e45c8a7bffef68528af6e5b4169bc2 (branch bridle/wp2)
+
+### note · agent:manager-2 · 2026-10-21T01:16:48.953Z
+cleanup: removed agent wp2, origin branch bridle/wp2, branch bridle/wp2

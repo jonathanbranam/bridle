@@ -2,11 +2,14 @@
 id = "br-wqy5"
 title = "Incidents are only down or stuck systems: a red CI build, a flaky test or a bug is a bug ticket, not an incident"
 kind = "chore"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-20T23:18:35.450Z"
-updated_at = "2026-10-21T00:55:55.152294Z"
+updated_at = "2026-10-21T01:17:04.550601Z"
 created_by = "external:aide"
-watchers = ["external:aide"]
+watchers = [
+    "external:aide",
+    "agent:wqy5",
+]
 ticket = "wqy5"
 +++
 
