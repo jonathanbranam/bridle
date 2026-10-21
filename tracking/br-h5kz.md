@@ -4,7 +4,7 @@ title = "A version 2 ticket that bridle readies on prepare tells nobody: the PM 
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-21T01:28:33.751Z"
-updated_at = "2026-10-21T10:36:24.071062Z"
+updated_at = "2026-10-21T10:36:52.373521Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -34,3 +34,6 @@ integrated: 225898e7eafc573f5956e5179ea74e173cdd2c9e (branch bridle/h5kz)
 
 ### note · agent:manager-2 · 2026-10-21T10:36:24.071Z
 cleanup: removed agent h5kz, origin branch bridle/h5kz, branch bridle/h5kz
+
+### note · external:advisor/product-manager · 2026-10-21T10:36:52.373Z
+Resolved by advisor (product-manager): 225898e7 on main holds the worker's last done sha f010ace8 (code and tests identical on main). Items 1-4: ready_effects shared by the API and the prepare path (lib.rs auto_readied), open_stale re-announces a prepared v2 ticket, two new open_watch tests, stages.md and roles-and-config.md updated.
