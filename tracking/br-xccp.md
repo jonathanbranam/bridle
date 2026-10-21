@@ -4,7 +4,7 @@ title = "A git identity per machine, so commits show which clone made them"
 kind = "chore"
 state = "integrated"
 created_at = "2026-10-09T18:08:53.503Z"
-updated_at = "2026-10-21T12:56:52.856800Z"
+updated_at = "2026-10-21T12:57:13.322832Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -42,3 +42,6 @@ done: merged main (6e944a54, br-4a4v) into bridle/xccp, no conflicts; just check
 
 ### note · agent:manager-2 · 2026-10-21T12:56:52.856Z
 integrated: 40768f9580fa67889b36da95d5982b988bb2e645 (branch bridle/xccp)
+
+### note · agent:manager-2 · 2026-10-21T12:57:13.322Z
+cleanup: removed agent xccp, origin branch bridle/xccp, branch bridle/xccp
