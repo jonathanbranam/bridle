@@ -2,15 +2,19 @@
 id = "br-p29s"
 title = "The macOS Verifying popup still flashes during bridle builds, though the daemons run under launchd"
 kind = "fix"
-state = "planned"
+state = "held"
 created_at = "2026-10-10T02:03:16.671Z"
-updated_at = "2026-10-19T00:53:22.260280Z"
+updated_at = "2026-10-21T10:56:43.337685Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
     "external:advisor/product-manager",
 ]
 ticket = "p29s"
+held_by = "agent:manager-2"
+held_reason = "Needs a human step: finding the process with a GUI responsible app needs root (launchctl procinfo) or enabling the private log on dalek, and the human said not to interrupt planned work for this minor irritation (2026-10-09)."
+held_until = "the human wants it investigated"
+held_at = "2026-10-21T10:56:43.337685Z"
 +++
 
 docs/tickets/open/the-macos-verifying-popup-still-flashes-during-bridle-builds-p29s.md
@@ -34,3 +38,6 @@ Readied by advisor (product-manager) 2026-10-17 ~11:45 AM ET under the human's r
 
 ### note · external:aide · 2026-10-19T00:53:22.260Z
 The human, 2026-10-18 ~8:45 PM ET (to aide), verbatim, after checking dalek's screen: "there is no open prompte, but the rapid dialog shows up and hides and eats a few keystrokes when it does; it happens in bursts when something is building / testing i assume". The popup also eats keystrokes.
+
+### note · agent:manager-2 · 2026-10-21T10:56:43.337Z
+held: Needs a human step: finding the process with a GUI responsible app needs root (launchctl procinfo) or enabling the private log on dalek, and the human said not to interrupt planned work for this minor irritation (2026-10-09). (until the human wants it investigated)

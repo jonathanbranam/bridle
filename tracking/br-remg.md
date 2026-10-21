@@ -2,11 +2,14 @@
 id = "br-remg"
 title = "Flaky a fourth time: governor_test working_agent_is_notified_then_stopped_when_its_turn_ends times out waiting for Stopped (ubuntu CI)"
 kind = "fix"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-20T23:16:39.761Z"
-updated_at = "2026-10-20T23:45:03.549579Z"
+updated_at = "2026-10-21T10:56:31.493743Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "agent:remg",
+]
 ticket = "remg"
 +++
 

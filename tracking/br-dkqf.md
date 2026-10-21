@@ -2,11 +2,14 @@
 id = "br-dkqf"
 title = "A version 2 ticket's row went built with no implementation: only its stage branches had landed (br-2ae8)"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-21T10:07:43.686Z"
-updated_at = "2026-10-21T10:30:14.320121Z"
+updated_at = "2026-10-21T10:56:29.974084Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "agent:dkqf",
+]
 ticket = "dkqf"
 +++
 

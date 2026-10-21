@@ -9,9 +9,19 @@ claimed_by = "human"
 claimed_at = "2026-10-18T02:15:14.743Z"
 
 [[claim]]
-task = "br-cfb2"
+task = "br-remg"
+claimed_by = "agent:remg"
+claimed_at = "2026-10-21T10:56:31.493743Z"
+
+[[claim]]
+task = "br-9667"
 claimed_by = "human"
-claimed_at = "2026-10-07T10:01:40.850Z"
+claimed_at = "2026-10-03T11:04:49.804Z"
+
+[[claim]]
+task = "br-dkqf"
+claimed_by = "agent:dkqf"
+claimed_at = "2026-10-21T10:56:29.974084Z"
 
 [[claim]]
 task = "br-7575"
@@ -19,6 +29,6 @@ claimed_by = "human"
 claimed_at = "2026-10-03T11:04:49.732Z"
 
 [[claim]]
-task = "br-9667"
+task = "br-cfb2"
 claimed_by = "human"
-claimed_at = "2026-10-03T11:04:49.804Z"
+claimed_at = "2026-10-07T10:01:40.850Z"
