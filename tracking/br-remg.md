@@ -2,16 +2,16 @@
 id = "br-remg"
 title = "Flaky a fourth time: governor_test working_agent_is_notified_then_stopped_when_its_turn_ends times out waiting for Stopped (ubuntu CI)"
 kind = "fix"
-state = "built"
+state = "integrated"
 created_at = "2026-10-20T23:16:39.761Z"
-updated_at = "2026-10-21T11:35:56.150244Z"
+updated_at = "2026-10-21T11:46:35.976650Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:remg",
 ]
 branch = "bridle/remg"
-commit = "c08b4e7f9ca140e5cac55c80be784e4cb1ebed52"
+commit = "0bcc602e651a67a8e1ab5780f1db8efd0cc2706b"
 summary = "Cause (not slowness): transition_state in supervisor.rs guarded the in-memory state against finished->live moves (ar4d) but wrote the store after releasing the runtime lock. A racing stop's Stopping and finish_agent's Stopped could take the lock in the right order yet commit to the store in the wrong one, leaving the stored state Stopping for good, so the test waited the full 60 s. Fix: the store write now happens under the lock. Could not reproduce (6/6 alone before the fix; 17/17 x3 and the full daemon suite after), so the diagnosis is from code reading. #[ignore] removed."
 ticket = "remg"
 +++
@@ -47,3 +47,9 @@ built: c08b4e7f9ca140e5cac55c80be784e4cb1ebed52 (branch bridle/remg)
 
 ### note · agent:remg · 2026-10-21T11:35:56.150Z
 done: governor flake fixed (transition_state wrote the store after dropping the lock, so a racing stop's Stopping could land after Stopped; not slowness), #[ignore] removed; c08b4e7f9ca140e5cac55c80be784e4cb1ebed52; just check exit 0, 1959 tests (last full 1942)
+
+### note · agent:manager-2 · 2026-10-21T11:46:28.611Z
+integrated: 0bcc602e651a67a8e1ab5780f1db8efd0cc2706b (branch bridle/remg)
+
+### note · agent:manager-2 · 2026-10-21T11:46:35.976Z
+cleanup: removed origin branch bridle/remg; kept agent remg (background job pid 82607)

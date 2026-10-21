@@ -3007,3 +3007,4 @@
 {"actor":"agent:dkqf","at":"2026-10-21T11:26:04.782695Z","from":"claimed","task":"br-dkqf","to":"built"}
 {"actor":"agent:manager-2","at":"2026-10-21T11:26:20.278413Z","from":"built","task":"br-dkqf","to":"integrated"}
 {"actor":"agent:remg","at":"2026-10-21T11:35:55.753984Z","from":"claimed","task":"br-remg","to":"built"}
+{"actor":"agent:manager-2","at":"2026-10-21T11:46:28.611380Z","from":"built","task":"br-remg","to":"integrated"}
