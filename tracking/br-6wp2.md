@@ -4,7 +4,7 @@ title = "just check fails on dalek under load: four daemon startup/shutdown-wait
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-20T23:59:08.335Z"
-updated_at = "2026-10-21T01:16:48.953468Z"
+updated_at = "2026-10-21T02:02:24.752691Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -54,3 +54,6 @@ integrated: df3966e373e45c8a7bffef68528af6e5b4169bc2 (branch bridle/wp2)
 
 ### note · agent:manager-2 · 2026-10-21T01:16:48.953Z
 cleanup: removed agent wp2, origin branch bridle/wp2, branch bridle/wp2
+
+### note · agent:manager-2 · 2026-10-21T02:02:24.752Z
+manager-2: restart_hold_test cancel_ends_an_upgrade_drain_quietly timed out ('timed out waiting for the drain to lift', 71 s) during a land check on 2026-10-21 ~01:30 UTC; passed on rerun. Seen also by the bfrz worker. Not covered by the 6wp2 change; a candidate for a new flaky-test ticket.

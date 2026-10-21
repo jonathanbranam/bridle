@@ -4,7 +4,7 @@ title = "Incidents are only down or stuck systems: a red CI build, a flaky test 
 kind = "chore"
 state = "integrated"
 created_at = "2026-10-20T23:18:35.450Z"
-updated_at = "2026-10-21T02:02:05.768002Z"
+updated_at = "2026-10-21T02:02:21.460875Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -34,3 +34,6 @@ done: incidents narrowed to down or blocked systems in orchestrator role, incide
 
 ### note · agent:manager-2 · 2026-10-21T02:02:05.768Z
 integrated: 5c19150a8c058d214faf3d39014984cdfa629ec0 (branch bridle/wqy5)
+
+### note · agent:manager-2 · 2026-10-21T02:02:21.460Z
+cleanup: removed agent wqy5, origin branch bridle/wqy5, branch bridle/wqy5
