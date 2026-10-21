@@ -4,12 +4,13 @@ title = "Incidents are only down or stuck systems: a red CI build, a flaky test 
 kind = "chore"
 state = "claimed"
 created_at = "2026-10-20T23:18:35.450Z"
-updated_at = "2026-10-21T01:17:04.550601Z"
+updated_at = "2026-10-21T01:38:39.973661Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
     "agent:wqy5",
 ]
+summary = "Narrowed what counts as an incident (the human, 2026-10-20: a red CI build, a flaky test or a bug is not an incident; an incident is a system down or blocked and not moving). Changed: workflow/base/roles/orchestrator.md 'Keep the incident log' (definition, bug/fix ticket for red CI, flakes and bugs); docs/context/incidents.md header (same definition; existing entries untouched); docs/design/agent-host/incidents.md (a 'What counts' paragraph, and the daemon's candidate list now says a main stalled so nothing lands, not a red main). Manager and project-manager roles and rules had no CI-as-incident wording, so they are unchanged. CHANGELOG Changed line added. Caveat: bridle ticket check reports 3 pre-existing problems on other tickets (related ids br-ck8a, br-n7cg, br-a885 not tickets); none on br-wqy5."
 ticket = "wqy5"
 +++
 
