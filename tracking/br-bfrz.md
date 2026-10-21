@@ -4,7 +4,7 @@ title = "Agents see no [machine] name: their own BRIDLE_HOME has no config.toml,
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-20T23:03:05.846Z"
-updated_at = "2026-10-21T00:54:43.209600Z"
+updated_at = "2026-10-21T00:55:08.816315Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -54,3 +54,6 @@ done: agents get BRIDLE_MACHINE_NAME/BRIDLE_HOME_PROJECT env, machine_home reads
 
 ### note · agent:manager-2 · 2026-10-21T00:54:43.209Z
 integrated: 3ce9c71d0a3243d727765f1060d71acd5c5873bd (branch bridle/bfrz)
+
+### note · agent:manager-2 · 2026-10-21T00:55:08.816Z
+cleanup: removed agent bfrz, origin branch bridle/bfrz, branch bridle/bfrz
