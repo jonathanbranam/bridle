@@ -2,9 +2,9 @@
 id = "br-2ae8"
 title = "Show the current budget and focus settings from the CLI, consistently"
 kind = "feature"
-state = "planned"
+state = "built"
 created_at = "2026-10-18T15:00:58.246Z"
-updated_at = "2026-10-21T01:29:22.529092Z"
+updated_at = "2026-10-21T02:28:34.986553Z"
 created_by = "external:advisor/tj7q"
 watchers = ["external:advisor/tj7q"]
 branch = "bridle/designer-2ae8-proposal"
