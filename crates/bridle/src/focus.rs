@@ -7,9 +7,12 @@
 use std::io::Write as _;
 use std::path::{Path, PathBuf};
 
+use bridle_api::types::{
+    FocusCurrent, FocusNextChange, FocusOverrideStatus, FocusPeriodInfo, FocusStatus, ScheduleSpan,
+};
 use bridle_daemon::config::{FocusMode, FocusPeriod, focus_end, focus_opted_out, focus_periods};
 use bridle_daemon::focus::{locked_period, read_override};
-use chrono::{DateTime, Local, Utc};
+use chrono::{DateTime, Local, Timelike as _, Utc};
 
 /// Repeat the nudge once this long has passed since the last one (the human's call: 30 min is
 /// too long).
@@ -39,6 +42,187 @@ pub fn status_line(home: &Path, now: DateTime<Utc>) -> Option<String> {
     } else {
         None
     }
+}
+
+/// How far ahead `status` looks for the next change.
+const NEXT_CHANGE_DAYS: i64 = 8;
+
+fn mode_name(m: FocusMode) -> String {
+    match m {
+        FocusMode::Quiet => "quiet",
+        FocusMode::Locked => "locked",
+    }
+    .to_string()
+}
+
+fn span_of(p: &FocusPeriod) -> ScheduleSpan {
+    ScheduleSpan {
+        days: p
+            .days
+            .iter()
+            .map(|d| format!("{d:?}").to_lowercase())
+            .collect(),
+        start: p.start.format("%H:%M").to_string(),
+        end: p.end.format("%H:%M").to_string(),
+    }
+}
+
+/// The period in effect: a locked match wins over a quiet one, then config order.
+fn current_period(periods: &[FocusPeriod], now: DateTime<Local>) -> Option<&FocusPeriod> {
+    let mut hit = periods.iter().filter(|p| p.matches(now));
+    let first = hit.next()?;
+    if first.mode == FocusMode::Locked {
+        return Some(first);
+    }
+    Some(hit.find(|p| p.mode == FocusMode::Locked).unwrap_or(first))
+}
+
+/// `bridle focus`'s answer for `now`: the periods, the one in effect, the next change and the
+/// override file. Local files only; no daemon.
+pub fn status(home: &Path, now: DateTime<Utc>) -> Result<FocusStatus, anyhow::Error> {
+    let periods = focus_periods(home)?;
+    let local = now.with_timezone(&Local);
+    let current = current_period(&periods, local);
+    let next_change = if periods.is_empty() {
+        None
+    } else {
+        // Minute steps, like the budget schedule's next change: periods may start at any minute.
+        let name = current.map(|p| p.name.as_str());
+        let mut t = local
+            .with_second(0)
+            .and_then(|t| t.with_nanosecond(0))
+            .unwrap_or(local);
+        let stop = local + chrono::Duration::days(NEXT_CHANGE_DAYS);
+        let mut found = None;
+        while t < stop {
+            t += chrono::Duration::minutes(1);
+            let p = current_period(&periods, t);
+            if p.map(|p| p.name.as_str()) != name {
+                found = Some(FocusNextChange {
+                    at: t.with_timezone(&Utc),
+                    period: p.map(|p| p.name.clone()),
+                });
+                break;
+            }
+        }
+        found
+    };
+    let override_ = (!periods.is_empty())
+        .then(|| read_override(home))
+        .flatten()
+        .and_then(|o| {
+            let state = if o.active(now) {
+                "active"
+            } else if now < o.from {
+                "pending"
+            } else {
+                return None;
+            };
+            Some(FocusOverrideStatus {
+                state: state.to_string(),
+                from: o.from,
+                until: o.until,
+                reason: o.reason,
+            })
+        });
+    Ok(FocusStatus {
+        current: current.map(|p| FocusCurrent {
+            name: p.name.clone(),
+            span: span_of(p),
+            mode: mode_name(p.mode),
+            ends: focus_end(&periods, p, local).0.with_timezone(&Utc),
+        }),
+        next_change,
+        override_,
+        schedule: periods
+            .iter()
+            .map(|p| FocusPeriodInfo {
+                name: p.name.clone(),
+                span: span_of(p),
+                mode: mode_name(p.mode),
+            })
+            .collect(),
+    })
+}
+
+/// `bridle focus [--schedule] [--json]`.
+pub fn show(schedule: bool, json: bool) -> Result<(), anyhow::Error> {
+    let st = status(&bridle_api::discovery::bridle_home(), Utc::now())?;
+    if json {
+        println!("{}", serde_json::to_string(&st)?);
+    } else {
+        print!("{}", render(&st, schedule));
+    }
+    Ok(())
+}
+
+fn local_time(t: DateTime<Utc>) -> String {
+    t.with_timezone(&Local)
+        .format("%Y-%m-%d %H:%M %Z")
+        .to_string()
+}
+
+fn span_text(s: &ScheduleSpan) -> String {
+    format!("{} {}-{}", s.days.join(","), s.start, s.end)
+}
+
+/// The text form, in the words `bridle budget` uses for the same facts (`override`,
+/// `next change`, `until`).
+fn render(st: &FocusStatus, schedule: bool) -> String {
+    use std::fmt::Write as _;
+    let mut out = String::new();
+    if st.schedule.is_empty() {
+        out.push_str("no [[focus]] periods; focus hours are off\n");
+        return out;
+    }
+    if schedule {
+        for p in &st.schedule {
+            let _ = writeln!(out, "{:<12} {}  {}", p.name, span_text(&p.span), p.mode);
+        }
+        return out;
+    }
+    match &st.current {
+        Some(c) => {
+            let _ = writeln!(
+                out,
+                "now    {} ({}): {}\n  ends {}",
+                c.name,
+                span_text(&c.span),
+                c.mode,
+                local_time(c.ends)
+            );
+        }
+        None => out.push_str("now    none\n"),
+    }
+    match &st.next_change {
+        Some(n) => {
+            let _ = writeln!(
+                out,
+                "  next change {} -> {}",
+                local_time(n.at),
+                n.period.as_deref().unwrap_or("none")
+            );
+        }
+        None => out.push_str("  next change: none scheduled\n"),
+    }
+    if let Some(o) = &st.override_ {
+        let _ = match o.state.as_str() {
+            "pending" => writeln!(
+                out,
+                "override pending, from {}, until {}: {}",
+                local_time(o.from),
+                local_time(o.until),
+                o.reason
+            ),
+            _ => writeln!(
+                out,
+                "override active, until {}: {}",
+                local_time(o.until),
+                o.reason
+            ),
+        };
+    }
+    out
 }
 
 /// The hook's stdout for `now`: the JSON that adds the nudge to the prompt's context, or
@@ -741,5 +925,110 @@ mod tests {
 
         let gate_before = gate(home.path(), home.path(), at(2026, 9, 30, 10, 0), None);
         assert_eq!(gate_before, None, "gate output should be unchanged");
+    }
+
+    fn utc(t: DateTime<Local>) -> DateTime<Utc> {
+        t.with_timezone(&Utc)
+    }
+
+    // s-6a0d..: inside, outside and unconfigured. 2026-09-30 is a Wednesday, 2026-10-03 a Saturday.
+    // s-2596
+    #[test]
+    fn status_inside_a_period_has_its_end_and_next_change() {
+        let home = home_with(Some(WORK));
+        let st = status(home.path(), utc(at(2026, 9, 29, 15, 30))).expect("status");
+        let c = st.current.expect("in effect");
+        assert_eq!((c.name.as_str(), c.mode.as_str()), ("work", "quiet"));
+        assert_eq!(c.span.days, ["mon", "tue", "wed", "thu", "fri"]);
+        assert_eq!(
+            (c.span.start.as_str(), c.span.end.as_str()),
+            ("08:00", "18:00")
+        );
+        assert_eq!(c.ends, utc(at(2026, 9, 29, 18, 0)));
+        let n = st.next_change.expect("next change");
+        assert_eq!((n.at, n.period), (utc(at(2026, 9, 29, 18, 0)), None));
+        assert_eq!(st.override_, None);
+    }
+
+    // s-dea9
+    #[test]
+    fn status_outside_every_period_points_at_the_next_start() {
+        let home = home_with(Some(WORK));
+        let st = status(home.path(), utc(at(2026, 10, 3, 12, 0))).expect("status");
+        assert_eq!(st.current, None);
+        let n = st.next_change.expect("next change");
+        assert_eq!(n.at, utc(at(2026, 10, 5, 8, 0)));
+        assert_eq!(n.period.as_deref(), Some("work"));
+    }
+
+    #[test]
+    fn status_with_no_periods_is_empty_and_says_off() {
+        let home = home_with(None);
+        let st = status(home.path(), Utc::now()).expect("status");
+        assert_eq!((st.current.as_ref(), st.next_change.as_ref()), (None, None));
+        assert!(st.schedule.is_empty());
+        assert!(render(&st, false).contains("focus hours are off"));
+    }
+
+    // s-82ce
+    // s-4231
+    // s-23ed
+    #[test]
+    fn status_reports_active_pending_and_no_override() {
+        let home = home_with(Some(WORK));
+        let now = utc(at(2026, 9, 29, 15, 30));
+        assert_eq!(status(home.path(), now).expect("status").override_, None);
+        std::fs::write(
+            home.path().join(OVERRIDE_FILE),
+            "until = 2099-01-01T00:00:00Z\nreason = \"deploy is broken\"\n",
+        )
+        .expect("write");
+        let o = read_override(home.path()).expect("parses");
+        let pending = status(home.path(), o.from - Duration::minutes(1)).expect("status");
+        let p = pending.override_.expect("pending");
+        assert_eq!(
+            (p.state.as_str(), p.from, p.until),
+            ("pending", o.from, o.until)
+        );
+        assert_eq!(p.reason, "deploy is broken");
+        let active = status(home.path(), o.from + Duration::minutes(1)).expect("status");
+        assert_eq!(active.override_.as_ref().expect("active").state, "active");
+        let text = render(&active, false);
+        assert!(text.contains("override active") && text.contains("deploy is broken"));
+    }
+
+    // s-8f8e
+    #[test]
+    fn schedule_text_lists_every_period() {
+        let home = home_with(Some(&format!(
+            "{WORK}\n[[focus]]\nname = \"evening\"\ndays = \"all\"\nstart = \"20:00\"\nend = \"22:00\"\nmode = \"locked\"\n"
+        )));
+        let st = status(home.path(), Utc::now()).expect("status");
+        let text = render(&st, true);
+        assert!(text.contains("work") && text.contains("mon,tue,wed,thu,fri 08:00-18:00"));
+        assert!(
+            text.contains("evening") && text.contains("20:00-22:00") && text.contains("locked")
+        );
+    }
+
+    #[test]
+    fn status_json_has_the_shared_keys() {
+        let home = home_with(Some(WORK));
+        let st = status(home.path(), utc(at(2026, 9, 29, 15, 30))).expect("status");
+        let v = serde_json::to_value(&st).expect("json");
+        assert!(v["next_change"].is_object());
+        assert_eq!(v["schedule"][0]["span"]["start"], "08:00");
+        let back: FocusStatus = serde_json::from_value(v).expect("round trip");
+        assert_eq!(back, st);
+    }
+
+    // s-ecc8
+    #[test]
+    fn gate_is_silent_outside_every_period() {
+        let home = home_with(Some(WORK));
+        assert_eq!(
+            gate(home.path(), home.path(), at(2026, 10, 3, 12, 0), None),
+            None
+        );
     }
 }

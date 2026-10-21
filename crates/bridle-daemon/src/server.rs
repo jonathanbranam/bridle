@@ -1541,10 +1541,15 @@ async fn budget(State(state): State<AppState>) -> Result<Json<BudgetStatus>, Api
         .stop_at
         .insert("five_hour".into(), five_hour.stop_at);
     let reasons = budget_reasons(&windows, &thresholds);
+    let schedule_override = state
+        .governor
+        .schedule_override_status()
+        .map(|(period, until)| ScheduleOverrideStatus { period, until });
     Ok(Json(BudgetStatus {
         state: snapshot.default.state,
         windows,
         thresholds,
+        next_change: five_hour.next_change.clone(),
         five_hour,
         schedule: state.governor.schedule_info(),
         reasons,
@@ -1552,11 +1557,9 @@ async fn budget(State(state): State<AppState>) -> Result<Json<BudgetStatus>, Api
             .governor
             .hold_status()
             .map(|until| HoldStatus { until }),
-        schedule_override: state
-            .governor
-            .schedule_override_status()
-            .map(|(period, until)| ScheduleOverrideStatus { period, until }),
+        schedule_override: schedule_override.clone(),
         max_workers_override: state.manager.max_workers_override(),
+        override_: schedule_override,
     }))
 }
 

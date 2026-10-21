@@ -281,17 +281,23 @@ pub async fn run(mut cli: Cli) -> Result<(), CliError> {
             action: OrchestratorAction::Release,
         }) => crate::orchestrator::release(&cli).await,
         Command::Focus(FocusArgs {
-            action: FocusAction::Gate,
+            action: Some(FocusAction::Gate),
+            ..
         }) => {
             crate::focus::run_gate();
             Ok(())
         }
         Command::Focus(FocusArgs {
-            action: FocusAction::Reply,
+            action: Some(FocusAction::Reply),
+            ..
         }) => {
             crate::focus::run_reply();
             Ok(())
         }
+        Command::Focus(FocusArgs {
+            action: None,
+            schedule,
+        }) => crate::focus::show(*schedule, cli.json).map_err(CliError::Other),
         Command::Review(args) => crate::review::run(&cli, args).await,
         Command::Handover(args) => handover(&cli, args).await,
         Command::WaitForWake(args) => wait_for_wake(&cli, args.timeout).await,

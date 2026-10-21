@@ -2340,11 +2340,16 @@ pub enum ReviewAction {
 #[derive(Debug, Args)]
 pub struct FocusArgs {
     #[command(subcommand)]
-    pub action: FocusAction,
+    pub action: Option<FocusAction>,
+    /// With no subcommand: list every `[[focus]]` period (name, days, hours, mode).
+    #[arg(long)]
+    pub schedule: bool,
 }
 
 #[derive(Debug, Subcommand)]
 pub enum FocusAction {
+    // Bare `bridle focus` (no subcommand) shows the periods, the one in effect, the next change
+    // and the override file, read locally (no daemon); `--json` prints it as one object.
     /// The UserPromptSubmit hook: inside a `quiet` period, prints context that nudges the human
     /// back to work on the first prompt and every 5 minutes after. Silent when no `[[focus]]`
     /// is configured, outside a period, or in a project with `focus_hours = false`. Never fails.

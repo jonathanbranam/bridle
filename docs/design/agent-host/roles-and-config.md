@@ -270,13 +270,20 @@ prompts that are not the human's (`<task-notification>` prompts from finished ba
 no gate text, no block, no `prompts.jsonl` line; cc45); the advisor and orchestrator role text points at it as the source. A project opts out with `focus_hours = false`
 in its `.bridle/config.toml`.
 
+`bridle focus` (no subcommand; br-2ae8) reads the settings back, locally and with no daemon: the
+period in effect, what it does and when it really ends, the next change, and the override file
+(active or still pending, with its end and reason; nothing when there is none). `--schedule` lists
+every period (name, days, hours, mode); `--json` prints one object (`current`, `next_change`,
+`override`, `schedule`; UTC). It uses the words and key names of `bridle budget`
+([[usage-and-budget]], Seeing what applies); the spec is `design/specs/period-status.md`.
+
 **Locked.** In a `locked` period the gate blocks every prompt, the orchestrator keeps running,
 `bridle session advisor` / `bridle advisor start` refuse, and the daemon kills every advisor tmux
 pane (`@bridle` = `advisor*`) from its stall-check loop, so a period that starts is caught within
 one tick (`bridle_daemon::focus`). An active override lifts the lock the same way it silences the
 nudge.
 
-**Override.** The human can write `~/.bridle/focus-override.toml` by hand (no CLI command):
+**Override.** The human can write `~/.bridle/focus-override.toml` by hand (no command writes it; `bridle focus` reads it):
 
 ```toml
 # Local time (machine's local zone, no offset)

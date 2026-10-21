@@ -440,6 +440,11 @@ than `max_staleness` or missing. `bridle budget --schedule` prints every
 resolved period (span and thresholds). Times are the machine's local
 timezone in text; `--json` stays UTC.
 
+`bridle focus` reads the human's focus hours the same way (roles-and-config.md, Focus hours;
+br-2ae8): the labels `override` and `next change` and the JSON keys `next_change`, `override`
+and `schedule[].span` are shared. For that, `BudgetStatus` also carries `next_change` (a copy of
+`five_hour.next_change`) and `override` (a copy of `schedule_override`); every older key stays.
+
 ### Max-workers override
 
 `[budget] max_workers` limits **workers** (role `worker`; the manager, PM and

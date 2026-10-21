@@ -140,7 +140,7 @@ bridle usage --week                                         # the current week f
 bridle usage --history WINDOW [--since DURATION]            # the window's rate-limit readings over time (five_hour, seven_day)
 bridle usage cost audit [--check]                 static: size of what bridle injects into agent context (usage-and-budget.md)
 bridle tui                                  interactive terminal UI: agents list, live event tail
-bridle usage budget [--schedule]                  usage governor status, or the whole resolved schedule (usage-and-budget.md)
+bridle usage budget [--schedule]                  usage governor status, or the whole resolved schedule; `--json` shares `next_change`/`override`/`schedule[].span` with `bridle focus` (usage-and-budget.md)
 bridle usage budget hold [--for D | --until HH:MM] | release          idle the account for the human / end the hold early
 bridle usage budget override <period|default> [--until HH:MM] | override-clear   force a schedule period's thresholds / revert
 bridle usage budget max-workers <N> | --clear     live worker cap, lost on daemon restart
@@ -214,6 +214,9 @@ bridle review resolve <path> c3               closes a comment thread: appends `
 bridle review now <path> [--resend]           sends the document's pending comment threads to its agent at once, skipping the quiet period;
                                              marks them `[sent YYYY-MM-DD HH:MM EDT]` in the file; marked threads stay out unless --resend
 bridle link <ID|PATH>                                           local, no daemon: the bridle UI URL from `[gateway] public_url` (project config over machine config), needing the project: a ticket ID `br-xxxx` or bare `xxxx` (printed qualified, `br-xxxx`) gives `<base>/p/<project>/tickets/<id>`; the gateway also opens bare and ticket-file ids (br-wayb); a repo-relative document path gives `<base>/p/<project>/docs?path=<path>`; a requirement or scenario ID (`r-xxxx`, `s-xxxx`) gives `<base>/p/<project>/specs?path=<file>#<id>`; a ticket ID of a task the human holds (a to-do: claimed by `human`) gives `<base>/p/<project>/todos/<id>` instead, when the daemon answers the lookup (otherwise the ticket URL; br-bnfs); the gateway marks such tasks `todo: true` in its task summary and detail, and the UI opens the to-do page scrolled to that to-do for them, also when the id is typed into the ticket page; prints nothing and exits 0 when unset (yfjc, zqnp)
+bridle focus [--schedule] [--json]          local, no daemon: the `[[focus]]` period in effect and when it ends, the next change and the override file
+                                             (active or pending); `--schedule` lists every period; `--json` one object (`current`, `next_change`,
+                                             `override`, `schedule`), like `bridle budget` (br-2ae8)
 bridle focus gate                           the UserPromptSubmit hook of focus hours (cvaq): in a `quiet` `[[focus]]` period prints
                                              nudge context on the first prompt and every 5 min after; silent otherwise; never fails
 bridle orchestrator handover ...                       alias of `bridle handover ...`; `handover done` is a deprecated hidden alias (prints a note; the marker only)

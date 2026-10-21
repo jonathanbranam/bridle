@@ -1976,6 +1976,12 @@ pub struct BudgetStatus {
     /// stays the configured value.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub max_workers_override: Option<u32>,
+    /// The key names `bridle focus --json` shares (specs: period-status): the next schedule
+    /// change, as in `five_hour.next_change`, and the schedule override, as `schedule_override`.
+    #[serde(default)]
+    pub next_change: Option<NextScheduleChange>,
+    #[serde(default, rename = "override", skip_serializing_if = "Option::is_none")]
+    pub override_: Option<ScheduleOverrideStatus>,
 }
 
 /// `POST /v1/budget/max-workers`: `None` clears the override and falls back
@@ -2019,6 +2025,53 @@ pub struct ScheduleOverrideStatus {
     pub period: Option<String>,
     /// `None` = no computed or given end (no schedule to revert to).
     pub until: Option<DateTime<Utc>>,
+}
+
+/// `bridle focus --json`: the `[[focus]]` periods, the one in effect, the next change and the
+/// override file. Built by the CLI from the local config (no daemon); times are UTC. Shares
+/// `next_change`, `override` and `schedule[].span` with `BudgetStatus`.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct FocusStatus {
+    /// The period in effect now; `None` outside every period.
+    pub current: Option<FocusCurrent>,
+    /// When the period in effect changes next (within 8 days); `None` when it never does.
+    pub next_change: Option<FocusNextChange>,
+    #[serde(default, rename = "override", skip_serializing_if = "Option::is_none")]
+    pub override_: Option<FocusOverrideStatus>,
+    pub schedule: Vec<FocusPeriodInfo>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct FocusCurrent {
+    pub name: String,
+    pub span: ScheduleSpan,
+    /// `quiet` or `locked`.
+    pub mode: String,
+    /// When it really ends, following periods that touch or overlap it.
+    pub ends: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct FocusNextChange {
+    pub at: DateTime<Utc>,
+    /// The period in effect from then; `None` = none.
+    pub period: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct FocusOverrideStatus {
+    /// `active` or `pending` (the delayed start has not arrived).
+    pub state: String,
+    pub from: DateTime<Utc>,
+    pub until: DateTime<Utc>,
+    pub reason: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct FocusPeriodInfo {
+    pub name: String,
+    pub span: ScheduleSpan,
+    pub mode: String,
 }
 
 // ---------- tokens ----------
@@ -2954,6 +3007,36 @@ pub struct ApiErrorResponse {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn focus_status_wire_shape() {
+        let st = FocusStatus {
+            current: None,
+            next_change: Some(FocusNextChange {
+                at: Utc::now(),
+                period: Some("work".into()),
+            }),
+            override_: Some(FocusOverrideStatus {
+                state: "active".into(),
+                from: Utc::now(),
+                until: Utc::now(),
+                reason: "r".into(),
+            }),
+            schedule: vec![FocusPeriodInfo {
+                name: "work".into(),
+                span: ScheduleSpan {
+                    days: vec!["mon".into()],
+                    start: "08:00".into(),
+                    end: "18:00".into(),
+                },
+                mode: "quiet".into(),
+            }],
+        };
+        let v = serde_json::to_value(&st).unwrap();
+        assert!(v["next_change"].is_object() && v["override"].is_object());
+        assert_eq!(v["schedule"][0]["span"]["days"][0], "mon");
+        assert_eq!(serde_json::from_value::<FocusStatus>(v).unwrap(), st);
+    }
 
     #[test]
     fn workdir_wire_shape() {

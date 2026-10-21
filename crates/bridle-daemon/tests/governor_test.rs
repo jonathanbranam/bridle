@@ -434,6 +434,9 @@ async fn human_hold_forces_winding_down_and_release_lifts_it() {
 /// `five_hour` thresholds regardless of whether the schedule itself would
 /// currently pick it, an explicit `--until` is stored as given, and
 /// `override clear` reverts to the plain thresholds right away.
+// s-3a11
+// s-5bf6
+// s-23ed
 #[tokio::test]
 async fn budget_override_forces_period_thresholds_and_clear_reverts() {
     // `start == end` never naturally matches (`SchedulePeriod::matches`), so
@@ -473,9 +476,19 @@ stop_at = 70
         })
         .await
         .expect("override");
-    let ov = overridden.schedule_override.expect("override in force");
+    let ov = overridden
+        .schedule_override
+        .clone()
+        .expect("override in force");
     assert_eq!(ov.period.as_deref(), Some("night"));
     assert_eq!(ov.until, Some(explicit_until));
+    // The shared names `bridle focus --json` uses (s-period-status), beside the old keys.
+    let json = serde_json::to_value(&overridden).expect("json");
+    assert_eq!(json["override"], json["schedule_override"]);
+    assert_eq!(json["next_change"], json["five_hour"]["next_change"]);
+    assert!(
+        json["schedule"][0]["span"].is_null() || json["schedule"][0]["span"]["days"].is_array()
+    );
 
     wait_for("holding under the forced night thresholds", || async {
         let b = daemon.client.budget().await.ok()?;
@@ -522,7 +535,10 @@ stop_at = 95
         })
         .await
         .expect("override");
-    let ov = overridden.schedule_override.expect("override in force");
+    let ov = overridden
+        .schedule_override
+        .clone()
+        .expect("override in force");
     assert_eq!(ov.period, None);
     // `night` recurs daily, so the schedule always changes within 24h of
     // any instant; the computed `until` must be a real, future instant.
