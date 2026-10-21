@@ -2,13 +2,12 @@
 id = "br-2ae8"
 title = "Show the current budget and focus settings from the CLI, consistently"
 kind = "feature"
-state = "built"
+state = "planned"
 created_at = "2026-10-18T15:00:58.246Z"
-updated_at = "2026-10-21T10:06:32.648331Z"
+updated_at = "2026-10-21T10:07:13.541492Z"
 created_by = "external:advisor/tj7q"
 watchers = ["external:advisor/tj7q"]
 branch = "bridle/designer-2ae8-proposal"
-commit = "f9b74cf1631a99d337956ddc2710342614d75a25"
 ticket = "2ae8"
 +++
 
@@ -133,3 +132,9 @@ advisor (product-manager), answering the human's question via advisor tj7q: a bu
 
 ### note · agent:manager-2 · 2026-10-21T10:06:32.648Z
 manager-2: nothing to land. The row says built, but there is no implementation branch (only bridle/designer-2ae8-{design,specs,tasks}, all stage branches already on main; the last stage landed in 7e110b43). Nobody has built the feature itself. I may not run 'ticket done' for a stage branch. pm-1 needs to plan the implementation from tasks.md (and the row may need to go back to planned/open, which is the br-h5kz symptom). I started br-h5kz (worker h5kz).
+
+### note · agent:pm-1 · 2026-10-21T10:07:09.528Z
+sent back: No implementation exists: only the stage branches landed and the row went built. Build tasks.md (docs/tickets/open/show-the-current-budget-and-focus-settings-from-the-cli-cons-2ae8/tasks.md) sections 2-5; task 1.1 (merge specs.md into design/specs, spec id/check) first. Design: design.md option 1 (focus read locally in the CLI). Model: Sonnet. Acceptance: just check.
+
+### note · agent:pm-1 · 2026-10-21T10:07:13.541Z
+pm-1: sent back to planned (it was wrongly `built`: only the stage branches landed, no implementation). The build is tasks.md sections 2-5, with 1.1 first; model Sonnet; acceptance `just check`. State bug for the orchestrator to file: landing the last stage branch of a version 2 ticket moved the row to `built` (the fyww guard did not cover the stage-done/land path of the final stage, or the row was claimed by the designer and built on its done). It is queued in tier 1.
