@@ -78,7 +78,11 @@ The ticket's frontmatter records the marks (the files only hold the content):
   needs `planned`.
 - `prepared: true`: written whenever every stage is written and every gate signed, dropped
   otherwise. The daemon's ticket sync (`ticket_links.rs`) moves a `pending` row of a version 2
-  ticket with it to `open` itself (actor `bridle`, with a thread note). `ticket ready` refuses a
+  ticket with it to `open` itself (actor `bridle`, with a thread note), then runs the same effects as
+  the API's ready (`OpenWatch::ready_effects`): the open-and-not-yet-planned message to the PM (else
+  the orchestrator), the state-change event and the filed notice (br-h5kz). A prepared version 2
+  ticket left `open` past `[tasks] open_stale` is not sent back to `pending` (nothing to
+  re-prepare): the PM and the orchestrator are told again, once per period. `ticket ready` refuses a
   version 2 ticket without it; `plan` and the rest are as for any ticket.
 
 Every command adds a thread note (stage written, waiting for signature, signed, sent back, put

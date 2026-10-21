@@ -180,6 +180,13 @@ impl TicketManager {
         crate::stage_watch::unprepared(self.tickets_dir.as_deref()?, id)
     }
 
+    /// Whether `id` is a version 2 ticket that is fully prepared (nothing to re-prepare).
+    pub fn is_prepared_v2(&self, id: &str) -> bool {
+        self.tickets_dir
+            .as_deref()
+            .is_some_and(|d| crate::stage_watch::is_prepared(d, id))
+    }
+
     /// Loads every task the database knows about, hydrating each from its
     /// state-branch file. A task whose file is missing (a crash between
     /// `insert_task` and the first flush that would have written it) falls
@@ -2573,7 +2580,8 @@ mod tests {
         )
         .expect("v2");
         std::fs::write(open.join("b.md"), file(&v1.id, "prepared: true\n")).expect("v1");
-        tm.sync_ticket_links(&tmp.path().join("tickets")).await;
+        let (_, _, readied) = tm.sync_ticket_links(&tmp.path().join("tickets")).await;
+        assert_eq!(readied.len(), 1);
         let v2 = tm.get_task(&v2.id).expect("v2 row");
         assert_eq!(v2.state, TicketState::Open);
         assert!(v2.thread.iter().any(|e| e.from == "bridle"));

@@ -29,7 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Governor test `working_agent_is_notified_then_stopped_when_its_turn_ends` is `#[ignore]`d as flaky (ubuntu CI timeout waiting for Stopped), so main is green; the fix is br-remg (br-sftn).
 
 ### Fixed
-- The home-project warning names the machine's home from `[machine] name` (`dalek-home`), not the raw `hostname` (`dalek.local-home`); a test pins it (br-b2g8).
+-- A version 2 ticket that bridle opens on prepare now tells the PM (else the orchestrator), emits the state-change event and notes the filing, as an API ready does; `open_stale` no longer returns a prepared version 2 ticket to `pending` but re-announces it (br-h5kz).
+ The home-project warning names the machine's home from `[machine] name` (`dalek-home`), not the raw `hostname` (`dalek.local-home`); a test pins it (br-b2g8).
 - `bridle usage --by name|session` shares the account's weekly points over every project's spend on the machine, not one project's, so a small project no longer shows $0.10 = 60 points (br-cgw3).
 
 - `bridle usage --by name` and `--by session` mark a role or name "(ext)" only when all its sessions are external (they were all marked, since role and name groups had no agent id); hosted roles and names show plain (br-9uqw).

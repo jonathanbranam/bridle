@@ -163,3 +163,71 @@ async fn a_task_with_an_open_question_stays_open() {
     let t = daemon.client.get_task(&a).await.expect("get");
     assert_eq!(t.state, TicketState::Open);
 }
+
+/// A pending row and its prepared version 2 ticket file, which the link sync opens itself.
+async fn prepared_v2(daemon: &support::TestDaemon) -> String {
+    let id = open_task_pending(daemon).await;
+    let tail = id.rsplit('-').next().expect("tail").to_string();
+    let dir = daemon.repo.join("docs/tickets/open");
+    std::fs::create_dir_all(&dir).expect("mkdir");
+    std::fs::write(
+        dir.join(format!("prepared-{tail}.md")),
+        format!("---\nid: {id}\nversion: 2\nprepared: true\n---\n\nbody\n"),
+    )
+    .expect("write");
+    id
+}
+
+async fn open_task_pending(daemon: &support::TestDaemon) -> String {
+    daemon
+        .client
+        .new_task(&req("prepared"))
+        .await
+        .expect("new")
+        .id
+}
+
+#[tokio::test]
+async fn a_version_2_ticket_opened_on_prepare_tells_the_pm_and_emits_the_event() {
+    let (daemon, _tmp) = daemon(CONFIG).await;
+    let a = prepared_v2(&daemon).await;
+    settle().await;
+    let t = daemon.client.get_task(&a).await.expect("get");
+    assert_eq!(t.state, TicketState::Open);
+    let bodies = messages(&daemon, "external:orchestrator").await;
+    assert!(
+        bodies
+            .iter()
+            .any(|b| b.contains("not yet planned") && b.contains(&a)),
+        "got {bodies:?}"
+    );
+    let events = daemon
+        .client
+        .events(&bridle_api::types::EventQuery::default())
+        .await
+        .expect("events");
+    assert!(
+        events
+            .iter()
+            .any(|e| e.kind == bridle_api::types::event_kind::TASK_STATE
+                && e.data["task"] == a.as_str()
+                && e.data["to"] == "open"),
+        "no open event for {a}"
+    );
+}
+
+#[tokio::test]
+async fn a_prepared_version_2_ticket_open_too_long_stays_open_and_is_announced_again() {
+    let (daemon, _tmp) = daemon(&format!("{CONFIG}[tasks]\nopen_stale = \"1s\"\n")).await;
+    let a = prepared_v2(&daemon).await;
+    tokio::time::sleep(Duration::from_secs(4)).await;
+    let t = daemon.client.get_task(&a).await.expect("get");
+    assert_eq!(t.state, TicketState::Open);
+    let bodies = messages(&daemon, "external:orchestrator").await;
+    assert!(
+        bodies
+            .iter()
+            .any(|b| b.contains("prepared but never planned") && b.contains(&a)),
+        "got {bodies:?}"
+    );
+}

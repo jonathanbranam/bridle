@@ -1,12 +1,13 @@
 //! Keeps `open` tasks from sitting unplanned (xz4f). A task readied by anyone but the PM
 //! tells the PM (else the orchestrator) it is open, one message per settled burst; one left
-//! open past `[tasks] open_stale` goes back to `pending` with a comment saying why.
+//! open past `[tasks] open_stale` goes back to `pending` with a comment saying why. A prepared
+//! version 2 ticket instead stays open and the PM and orchestrator are told again (h5kz).
 
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use bridle_api::types::{MessageKind, PrincipalId, TicketState, When, event_kind};
+use bridle_api::types::{MessageKind, PrincipalId, Ticket, TicketState, When, event_kind};
 
 use crate::events::Emitter;
 use crate::store::Store;
@@ -34,6 +35,9 @@ pub struct OpenWatch {
     /// Who readied each task, to tell them if it goes stale. In memory only: after a restart
     /// the task's creator is told instead.
     readied_by: Arc<Mutex<HashMap<String, PrincipalId>>>,
+    /// When a prepared version 2 ticket was last announced again by `tick`, so one open past
+    /// `open_stale` is told once per period, not once per tick. In memory only.
+    reannounced: Arc<Mutex<HashMap<String, std::time::Instant>>>,
 }
 
 impl OpenWatch {
@@ -54,7 +58,42 @@ impl OpenWatch {
             stale_after,
             pending: Arc::default(),
             readied_by: Arc::default(),
+            reannounced: Arc::default(),
         }
+    }
+
+    /// What follows any ready, whoever did it: tell the PM it is open (`readied`) and note the
+    /// filing for the manager. The API's ready and the daemon's own both end here, so they
+    /// cannot drift apart (h5kz).
+    pub async fn ready_effects(&self, task: &Ticket, actor: &PrincipalId) {
+        self.readied(&task.id, actor).await;
+        let open = self
+            .tasks
+            .list_tasks()
+            .iter()
+            .filter(|t| t.state == TicketState::Open)
+            .count();
+        self.manager
+            .note_task_filed(&task.id, &task.title, open)
+            .await;
+    }
+
+    /// A version 2 ticket the daemon opened because it is prepared: the state-change event the
+    /// API's ready emits, then the same effects.
+    pub async fn auto_readied(&self, task: &Ticket) {
+        let bridle = "bridle".to_string();
+        let _ = self
+            .emitter
+            .emit(
+                event_kind::TASK_STATE,
+                bridle.clone(),
+                None,
+                serde_json::json!({
+                    "task": task.id, "from": TicketState::Pending, "to": task.state,
+                }),
+            )
+            .await;
+        self.ready_effects(task, &bridle).await;
     }
 
     /// Called after `actor` readied `task_id`. Returns at once; the wait happens in a spawned task.
@@ -155,6 +194,12 @@ impl OpenWatch {
             .filter(|t| t.state == TicketState::Open && now - t.updated_at >= after)
             .collect();
         for t in stale {
+            // A prepared version 2 ticket has nothing to re-prepare: pending would only
+            // be undone by the next link sync, so say it is still open instead.
+            if self.tasks.is_prepared_v2(&t.id) {
+                self.reannounce(&t.id, &t.title).await;
+                continue;
+            }
             let hours = self.stale_after.as_secs_f64() / 3600.0;
             let reason = format!(
                 "open {hours}h, never planned: back to pending. Ready it again once someone will plan it."
@@ -179,6 +224,29 @@ impl OpenWatch {
                 Err(e) => tracing::warn!(task = %t.id, "returning a stale open task failed: {e}"),
             }
         }
+    }
+
+    async fn reannounce(&self, id: &str, title: &str) {
+        {
+            let mut seen = self.reannounced.lock().expect("reannounced lock");
+            if seen
+                .get(id)
+                .is_some_and(|at| at.elapsed() < self.stale_after)
+            {
+                return;
+            }
+            seen.insert(id.to_string(), std::time::Instant::now());
+        }
+        let hours = self.stale_after.as_secs_f64() / 3600.0;
+        self.announce(vec![id.to_string()]).await;
+        let text = format!(
+            "{id} ({title}): open {hours}h, prepared but never planned; it stays open (nothing to re-prepare). Plan it or hand it to the PM."
+        );
+        self.send(
+            ToTarget::External(crate::wake::ORCHESTRATOR.to_string()),
+            &text,
+        )
+        .await;
     }
 
     async fn tell_stale(&self, id: &str, title: &str, reason: &str) {

@@ -3295,18 +3295,8 @@ async fn ready_task(
     }
     let from = state.tasks.get_task(&id).map(|t| t.state);
     let task = state.tasks.ready_task(&id, &principal.id).await?;
-    state.open_watch.readied(&task.id, &principal.id).await;
-    emit_state_change(&state, principal.id, &task, from).await;
-    let open = state
-        .tasks
-        .list_tasks()
-        .iter()
-        .filter(|t| t.state == bridle_api::types::TicketState::Open)
-        .count();
-    state
-        .manager
-        .note_task_filed(&task.id, &task.title, open)
-        .await;
+    emit_state_change(&state, principal.id.clone(), &task, from).await;
+    state.open_watch.ready_effects(&task, &principal.id).await;
     Ok(Json(task))
 }
 

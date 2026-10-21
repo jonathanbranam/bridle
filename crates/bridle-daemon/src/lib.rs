@@ -1118,7 +1118,10 @@ async fn start_inner(
             async move {
                 settle_wake.tick().await;
                 open_watch.tick().await;
-                tasks.sync_ticket_links(&tickets_dir).await;
+                let (_, _, readied) = tasks.sync_ticket_links(&tickets_dir).await;
+                for task in readied {
+                    open_watch.auto_readied(&task).await;
+                }
                 stage_watch.tick().await;
             }
         }

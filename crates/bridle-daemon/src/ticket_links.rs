@@ -8,7 +8,7 @@
 use std::collections::HashSet;
 use std::path::Path;
 
-use bridle_api::types::EdgeKind;
+use bridle_api::types::{EdgeKind, Ticket};
 
 use crate::tasks::TicketManager;
 
@@ -111,13 +111,15 @@ pub fn read_dir_links(tickets: &Path) -> Vec<TicketLinks> {
 impl TicketManager {
     /// Makes the edges of every ticket that has a row match its frontmatter. A link to an id
     /// with no row here (another project's ticket, a typo) makes no edge. Returns how many
-    /// edges were added and removed.
-    pub async fn sync_ticket_links(&self, tickets: &Path) -> (usize, usize) {
+    /// edges were added and removed, and the version 2 tickets it opened because they are
+    /// prepared (the caller runs the side effects of a ready, as for the API's).
+    pub async fn sync_ticket_links(&self, tickets: &Path) -> (usize, usize, Vec<Ticket>) {
         let dir = tickets.to_path_buf();
         let links = tokio::task::spawn_blocking(move || read_dir_links(&dir))
             .await
             .unwrap_or_default();
         let (mut added, mut removed) = (0, 0);
+        let mut readied = Vec::new();
         for t in links {
             let Some(row) = self.get_task(&t.id) else {
                 continue;
@@ -125,7 +127,8 @@ impl TicketManager {
             // Ready means prepared: a version 2 ticket opens itself, as by bridle.
             if t.version >= 2 && t.prepared && row.state == bridle_api::TicketState::Pending {
                 let bridle = "bridle".to_string();
-                if self.ready_task(&t.id, &bridle).await.is_ok() {
+                if let Ok(task) = self.ready_task(&t.id, &bridle).await {
+                    readied.push(task);
                     let _ = self
                         .note_task(
                             &t.id,
@@ -180,7 +183,7 @@ impl TicketManager {
                 }
             }
         }
-        (added, removed)
+        (added, removed, readied)
     }
 }
 

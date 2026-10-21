@@ -157,6 +157,26 @@ pub fn unprepared(tickets: &Path, id: &str) -> Option<String> {
     Some(format!("{} written; {} not", names(done), names(todo)))
 }
 
+/// Whether `id` is a version 2 ticket under `<tickets>/open` marked `prepared: true`, the flag
+/// the link sync opens it on.
+pub fn is_prepared(tickets: &Path, id: &str) -> bool {
+    let Ok(rd) = std::fs::read_dir(tickets.join("open")) else {
+        return false;
+    };
+    rd.flatten().any(|e| {
+        let Ok(text) = std::fs::read_to_string(e.path()) else {
+            return false;
+        };
+        let lines = front(&text);
+        lines.contains(&"version: 2")
+            && lines.contains(&"prepared: true")
+            && lines.iter().any(|l| {
+                l.strip_prefix("id:")
+                    .is_some_and(|v| v.trim().trim_matches(|c| c == '"' || c == '\'') == id)
+            })
+    })
+}
+
 /// The stage `ticket next` would write: the first unblocked one, in schema order.
 fn next_stage(p: &Prep) -> Option<String> {
     stages::states(&p.stages, &p.marks)
