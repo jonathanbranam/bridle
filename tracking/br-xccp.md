@@ -2,11 +2,14 @@
 id = "br-xccp"
 title = "A git identity per machine, so commits show which clone made them"
 kind = "chore"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-09T18:08:53.503Z"
-updated_at = "2026-10-17T21:44:28.990104Z"
+updated_at = "2026-10-21T11:47:45.499495Z"
 created_by = "external:advisor/product-manager"
-watchers = ["external:advisor/product-manager"]
+watchers = [
+    "external:advisor/product-manager",
+    "agent:xccp",
+]
 priority = "low"
 priority_at = "2026-10-09T18:09:00.693104Z"
 ticket = "xccp"
