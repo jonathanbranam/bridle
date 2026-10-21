@@ -4,7 +4,7 @@ title = "A git identity per machine, so commits show which clone made them"
 kind = "chore"
 state = "built"
 created_at = "2026-10-09T18:08:53.503Z"
-updated_at = "2026-10-21T12:09:43.523362Z"
+updated_at = "2026-10-21T12:09:58.785011Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -30,3 +30,6 @@ built: 7f84c655f09b4d4a29f30da4d4c96300185ba5fa (branch bridle/xccp)
 
 ### note · agent:xccp · 2026-10-21T12:09:43.523Z
 done: add-a-machine.md step 4 sets global user.name 'Jonathan Branam (<machine>)' and email dev@branam.us, with the show-origin check; docs only, no CHANGELOG; just check exit 0, 1960 run, 1960 passed, 6 skipped; 7f84c655f09b4d4a29f30da4d4c96300185ba5fa
+
+### note · agent:manager-2 · 2026-10-21T12:09:58.785Z
+Land refused: a CHANGELOG line is required. Add one under ## Unreleased / ### Internal (top of section) about the git identity step in add-a-machine.md, run just check, commit, message me. Also make sure the ticket has a summary (bridle ticket summary).
