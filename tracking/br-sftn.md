@@ -4,7 +4,7 @@ title = "CI red on main after br-b2g8: check (ubuntu-latest) fails on 9e2b4858"
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-20T23:15:41.625Z"
-updated_at = "2026-10-20T23:59:33.264845Z"
+updated_at = "2026-10-20T23:59:50.167745Z"
 created_by = "agent:manager-2"
 watchers = [
     "agent:manager-2",
@@ -62,3 +62,6 @@ done: disabled governor_test working_agent_is_notified_then_stopped_when_its_tur
 
 ### note · agent:manager-2 · 2026-10-20T23:59:33.264Z
 integrated: 9bd67d61b5b36dd0c7d64d7d145881f815b64805 (branch bridle/ci-sftn)
+
+### note · agent:manager-2 · 2026-10-20T23:59:50.167Z
+cleanup: removed agent ci-sftn, origin branch bridle/ci-sftn, branch bridle/ci-sftn
