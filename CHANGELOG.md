@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Internal
 
+- Fixed the fourth flake of governor_test working_agent_is_notified_then_stopped_when_its_turn_ends: `transition_state` now writes the agent state to the store under the runtime lock, so a racing stop's Stopping can no longer land in the store after finish_agent's Stopped (ar4d guarded only the in-memory state); test re-enabled. Not slowness (br-remg).
 - Daemon start-up waits no longer time out under load: `serve --detach` waits up to 180 s for health (was 60), `dev site` waits 120 s to start (was 30) and 60 s to stop (was 20); all return the moment the condition holds (br-6wp2).
 - Governor test `working_agent_is_notified_then_stopped_when_its_turn_ends` is `#[ignore]`d as flaky (ubuntu CI timeout waiting for Stopped), so main is green; the fix is br-remg (br-sftn).
 

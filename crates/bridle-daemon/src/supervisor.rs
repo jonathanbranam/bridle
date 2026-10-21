@@ -2018,12 +2018,18 @@ impl AgentManager {
                 return;
             }
             st.current_state = to;
+            // Written under the lock: two racing transitions (a stop's
+            // Stopping and finish_agent's Stopped) could otherwise commit to
+            // the store in the opposite order to the in-memory one, leaving
+            // the stored state at Stopping for good (remg).
+            if from != to {
+                let _ = self.0.store.set_agent_state(id, to).await;
+            }
             from
         };
         if from == to {
             return;
         }
-        let _ = self.0.store.set_agent_state(id, to).await;
         let _ = self
             .0
             .emitter
