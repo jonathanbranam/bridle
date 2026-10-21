@@ -2,9 +2,9 @@
 id = "br-xccp"
 title = "A git identity per machine, so commits show which clone made them"
 kind = "chore"
-state = "built"
+state = "integrated"
 created_at = "2026-10-09T18:08:53.503Z"
-updated_at = "2026-10-21T12:42:35.337464Z"
+updated_at = "2026-10-21T12:56:52.856800Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -13,7 +13,7 @@ watchers = [
 priority = "low"
 priority_at = "2026-10-09T18:09:00.693104Z"
 branch = "bridle/xccp"
-commit = "7f84c655f09b4d4a29f30da4d4c96300185ba5fa"
+commit = "40768f9580fa67889b36da95d5982b988bb2e645"
 summary = "add-a-machine.md step 4 now sets the global git identity to 'Jonathan Branam (<machine>)' with email dev@branam.us (the 2026-10-17 decision), checks it with 'git config --show-origin --get-all user.name', and warns that an included file setting another [user] must be removed. Docs only; the CHANGELOG Internal line was added because land requires one. The human still checks vesta and remus by hand."
 ticket = "xccp"
 +++
@@ -39,3 +39,6 @@ done: CHANGELOG Internal line added (top of section, br-xccp); summary written. 
 
 ### note · agent:xccp · 2026-10-21T12:42:35.337Z
 done: merged main (6e944a54, br-4a4v) into bridle/xccp, no conflicts; just check exit 0 on the merged tip, 1962 run, 1962 passed, 6 skipped; tip 2461fd288621567d7594a1b704ae40d4ec5a0530, pushed. The ticket stays built at 7f84c655 (not re-marked: claim refused). Land with --checked-commit 2461fd28.
+
+### note · agent:manager-2 · 2026-10-21T12:56:52.856Z
+integrated: 40768f9580fa67889b36da95d5982b988bb2e645 (branch bridle/xccp)
