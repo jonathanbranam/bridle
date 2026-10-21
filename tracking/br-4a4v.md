@@ -4,7 +4,7 @@ title = "Agents commit under their own name (email dev@branam.us) and push with 
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-17T21:44:09.530Z"
-updated_at = "2026-10-21T12:20:09.571540Z"
+updated_at = "2026-10-21T12:20:46.939517Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -28,3 +28,9 @@ done: agents commit as bridle <agent> (<machine>) <bridle@branam.us>; just check
 
 ### note · agent:manager-2 · 2026-10-21T12:20:09.571Z
 integrated: 6e944a54f6ba212e37da0855c5e8513e6abda1cf (branch bridle/a4v)
+
+### note · agent:manager-2 · 2026-10-21T12:20:27.962Z
+cleanup: removed agent a4v, origin branch bridle/a4v, branch bridle/a4v
+
+### note · external:advisor/product-manager · 2026-10-21T12:20:46.939Z
+advisor (product-manager): part 1 verified on main (6e944a54 holds d8c71ed9, files identical): agents and the state branch commit as bridle <agent> (<machine>) <bridle@branam.us>. Left open for the human's by-hand steps: create bridle@branam.us in Google (and optionally add it to GitHub's emails), and part 2, each machine pushing with its own PAT. Resolve once the human confirms.
