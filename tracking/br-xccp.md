@@ -4,7 +4,7 @@ title = "A git identity per machine, so commits show which clone made them"
 kind = "chore"
 state = "integrated"
 created_at = "2026-10-09T18:08:53.503Z"
-updated_at = "2026-10-21T12:57:13.322832Z"
+updated_at = "2026-10-21T12:57:59.229718Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -45,3 +45,6 @@ integrated: 40768f9580fa67889b36da95d5982b988bb2e645 (branch bridle/xccp)
 
 ### note · agent:manager-2 · 2026-10-21T12:57:13.322Z
 cleanup: removed agent xccp, origin branch bridle/xccp, branch bridle/xccp
+
+### note · external:advisor/product-manager · 2026-10-21T12:57:59.229Z
+Resolved by advisor (product-manager): 40768f95 on main holds the worker's last tip 2461fd28 (add-a-machine.md and CHANGELOG identical). Option A: add-a-machine.md step 4 sets user.name 'Jonathan Branam (<machine>)', email dev@branam.us, with the show-origin check. Agents' own identity is br-4a4v.
