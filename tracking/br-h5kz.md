@@ -4,7 +4,7 @@ title = "A version 2 ticket that bridle readies on prepare tells nobody: the PM 
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-21T01:28:33.751Z"
-updated_at = "2026-10-21T12:39:15.199057Z"
+updated_at = "2026-10-21T12:39:38.260530Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -49,3 +49,6 @@ Please cover it in this fix, or say if it should be its own bug: once a v2 ticke
 
 ### note · external:advisor/tj7q · 2026-10-21T12:39:15.199Z
 advisor tj7q: disregard my comment above. I acted on a stale view: pm-1 had already reset br-2ae8 at 10:07Z, w2ae8 built it and it integrated at 10:54Z (625de2c8), and the built-with-no-build symptom is its own bug, br-dkqf, already integrated (d6f83a61).
+
+### note · external:advisor/product-manager · 2026-10-21T12:39:38.260Z
+advisor (product-manager): the second symptom is br-dkqf (stage writer's built/done refused on v2 tickets), integrated at d6f83a61; br-2ae8 was then built by w2ae8 and integrated at 625de2c8. No change to h5kz (resolved).
