@@ -1,12 +1,16 @@
 # Incidents
 
-A running log of every failure or problem we find, so patterns show up and we learn from them
-(the human, 2026-10-02: "Anytime there's an incident or an issue that we discover, we should log
-it and explain the reason for it ... so we can analyze it and learn from our failures"). It began
-as a log of lost connections and sessions (the human, 2026-09-28); it now covers anything that
-went wrong: something the human reports to the orchestrator or an advisor, or anything a role
-discovers (a crash, a stall, a red `main`, a bad merge, work that sat stuck, a role that did the
-wrong thing, a wrong assumption that cost time).
+A running log of incidents, so patterns show up and we learn from them (the human, 2026-10-02:
+"Anytime there's an incident or an issue that we discover, we should log it and explain the reason
+for it ... so we can analyze it and learn from our failures"). It began as a log of lost
+connections and sessions (the human, 2026-09-28).
+
+An incident is a system that is down, or blocked and not moving: a daemon that can't restart, an
+orchestrator that died and nothing relaunched it, messages held for hours, spawns blocked by load,
+a `main` stalled so nothing can land. A red CI build, a flaky test or a bug is not an incident
+(the human, 2026-10-20: "Red build on CI is not an incident. incidents are down or blocked systems
+that aren't moving. not bugs or flaky tests"): it is a `bug` or `fix` ticket. Entries written
+before that date may cover other problems; they stay as they are.
 
 This is a record, not a to-do list. Work that comes out of an incident is a ticket or task,
 linked from the entry. An active incident that agents must know about is also an `incident`

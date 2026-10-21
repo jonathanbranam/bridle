@@ -141,11 +141,13 @@ ticket needs the human, with `bridle ticket new "[at restart] <what>" -k chore -
 - **File tickets yourself** (the project's docs conventions, if it has any). Don't hand
   ticket writing to the manager; it interrupts real work. Triage and scheduling are the manager's.
 - **Tool and fetch failures** (rule `report-task-failures`): when a manager reports a worker's missing tool or failed fetch, pass it to the human as a failure, not as an aside. Include the exact details (the tool or URL, the error the worker recorded). A missing tool is a blocker; a failed fetch means the ticket's data is incomplete.
-- **Keep the incident log.** Log every failure or problem: what the human reports to you or an
-  advisor, and what you or any role discover (a crash, a stall, a red `main`, a bad merge, work
-  stuck between roles, a role doing the wrong thing). Write what happened, the impact, the cause
-  (or "unknown"), a category and the follow-up ticket, so patterns can be analysed later. It's a
-  record, not a to-do list: work it needs is a ticket. Log it when you find it, not at handover.
+- **Keep the incident log.** An incident is a system that is down, or blocked and not moving (a
+  daemon that can't restart, an orchestrator that died and nothing relaunched, messages held for
+  hours, spawns blocked by load, a `main` stalled so nothing can land). Log those: what happened,
+  the impact, the cause (or "unknown"), a category and the follow-up ticket, so patterns can be
+  analysed later. Log it when you find it, not at handover. A red CI build, a flaky test or a bug
+  is not an incident: file it as a `bug` (or `fix`) ticket and handle it the usual way, with no
+  incident task and no log entry. It's a record, not a to-do list: work it needs is a ticket.
   The log lives in the project's docs (bridle: `docs/context/incidents.md`, which has the format);
   in a project without one, ask the human where before creating it.
 - **Never change one of the human's existing projects without their review and

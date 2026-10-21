@@ -8,6 +8,9 @@ machinery is the **notice**: a persistent broadcast to every agent while an inci
 The notice is a `system` note in the existing message queue ([[messages]]), withdrawn if it's
 still `pending` or `held`.
 
+What counts: an incident is a system that is down, or blocked and not moving (the human,
+2026-10-20). A red CI build, a flaky test or a bug is a `bug` or `fix` ticket, not an incident.
+
 An agent that already read a notice can't be made to unread it (stdin can't be unsent), so
 "retract" means two things: undelivered notices are **dropped**, delivered ones get a short
 "resolved".
@@ -42,8 +45,9 @@ for work to build, and an incident is nobody's to claim): the queue filters `kin
   lifecycle endpoints, [[principals]]). Commenting is open to all.
 - **Retention:** incidents are tasks, so they live on the state branch and survive a lost
   database like any task.
-- **The daemon files none in v1.** Candidates are a budget hold, a failed push, a red `main`
-  (c8qw's CI watcher); each would be a small hook filing a `potential` incident with
+- **The daemon files none in v1.** Candidates are a budget hold, a failed push, and a `main`
+  stalled so that nothing lands (c8qw's CI watcher; a red build alone is a `bug` ticket, not an
+  incident, the human 2026-10-20); each would be a small hook filing a `potential` incident with
   `filed_by = system`. **Budget holds stay as they are**: their wind-down and resume notices
   carry per-agent instructions that a broadcast body can't.
 - **Cross-project: not in v1.** Each daemon has its own tasks and agents. The orchestrator

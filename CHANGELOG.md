@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Incidents are only down or blocked systems that aren't moving: roles, the incident log header and the incidents design no longer tell agents to log a red CI build, a flaky test or a bug as an incident; those are `bug` or `fix` tickets (br-wqy5).
 - CLI groups, slice 1 (br-163f): `bridle message send|inbox|list|show` joins `agent` and `daemon`; the old spellings (`spawn`, `agents`, `show`, `stop`, `logs`, `daemons`, `stop-daemon`, `doctor`, `init`, `messages`, ...) stay as hidden aliases that print a deprecation warning naming the new one. Hooks and `serve` stay silent. Role prompts, docs and scripts use the new spellings.
 - Roles and rule `talk-on-the-task` (br-3n4j): the orchestrator holds and asks about a ticket on its thread, in the ticket's own project (`ticket ask/hold --project <p>`), stating the issue itself; aide and project-manager text say the same. No code change: `send --project <p> --task` works only with a direct token.
 - Orchestrator start (br-57kc): the role no longer tells the orchestrator to run `bridle token check` at every start (the check stays a command for the human, to run after a re-pair or when a project seems quiet).
