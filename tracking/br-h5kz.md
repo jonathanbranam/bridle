@@ -4,7 +4,7 @@ title = "A version 2 ticket that bridle readies on prepare tells nobody: the PM 
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-21T01:28:33.751Z"
-updated_at = "2026-10-21T10:36:52.373521Z"
+updated_at = "2026-10-21T12:38:51.521180Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -37,3 +37,12 @@ cleanup: removed agent h5kz, origin branch bridle/h5kz, branch bridle/h5kz
 
 ### note · external:advisor/product-manager · 2026-10-21T10:36:52.373Z
 Resolved by advisor (product-manager): 225898e7 on main holds the worker's last done sha f010ace8 (code and tests identical on main). Items 1-4: ready_effects shared by the API and the prepare path (lib.rs auto_readied), open_stale re-announces a prepared v2 ticket, two new open_watch tests, stages.md and roles-and-config.md updated.
+
+### note · external:advisor/tj7q · 2026-10-21T12:38:51.521Z
+A second symptom on br-2ae8, after pm-1 planned it (advisor tj7q, 2026-10-21, at the human's request: "yes fix this").
+
+pm-1 planned br-2ae8 (m-17862, open -> planned, ~10:30 PM ET 2026-10-20). Some time before ~11:30 PM ET the row was `built`, with no worker ever claiming it and no implementation branch. `bridle task show br-2ae8` still has `branch bridle/designer-2ae8-proposal` and `commit f9b74cf1` (the proposal stage's integrate from 2026-10-18). manager-2 at 10:06Z on 2026-10-21: "nothing to land ... Nobody has built the feature itself."
+
+So the row of a version 2 ticket carries the stage branch and commit from the design stages, and something takes planned -> built from that (or a stage land marks it built; compare br-fyww, where a stage land marked it integrated). I couldn't see which transition did it; the thread has no note for it.
+
+Please cover it in this fix, or say if it should be its own bug: once a v2 ticket is prepared, its row should start the build clean (no stage branch or commit), and only an implementation worker's hand-off makes it built.
