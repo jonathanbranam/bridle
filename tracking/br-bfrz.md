@@ -2,14 +2,17 @@
 id = "br-bfrz"
 title = "Agents see no [machine] name: their own BRIDLE_HOME has no config.toml, so the home falls back to hostname (dalek.local-home)"
 kind = "fix"
-state = "claimed"
+state = "built"
 created_at = "2026-10-20T23:03:05.846Z"
-updated_at = "2026-10-21T00:20:51.917325Z"
+updated_at = "2026-10-21T00:54:32.089884Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:bfrz",
 ]
+branch = "bridle/bfrz"
+commit = "202df2ca"
+summary = "Supervisor agent_env now sets BRIDLE_MACHINE_NAME and BRIDLE_HOME_PROJECT (override only) from the real config; machine_home (bridle-api machines.rs) reads them when its home has no [machine], config still wins. Test: an_agent_home_without_config_reads_the_supervisors_env. Docs: agents.md. Real ~/.bridle stays out of reach."
 ticket = "bfrz"
 +++
 
@@ -42,3 +45,9 @@ submitted by external:orchestrator
 
 ### note · external:orchestrator · 2026-10-20T23:03:37.627Z
 orchestrator: readied (fix, self-evident; rule ready-without-asking). Blocks br-q7my.
+
+### note · agent:bfrz · 2026-10-21T00:54:31.593Z
+built: 202df2ca (branch bridle/bfrz)
+
+### note · agent:bfrz · 2026-10-21T00:54:32.089Z
+done: agents get BRIDLE_MACHINE_NAME/BRIDLE_HOME_PROJECT env, machine_home reads it; just check exit 0, 1942 tests passed; 202df2ca (one earlier run hit the load flake restart_hold_test cancel_ends_an_upgrade_drain_quietly, passes alone and on rerun; cf. br-6wp2)

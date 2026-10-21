@@ -2981,3 +2981,4 @@
 {"actor":"external:orchestrator","at":"2026-10-20T23:59:33.968228Z","from":"pending","task":"br-6wp2","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-21T00:20:03.875555Z","from":"open","task":"br-6wp2","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-21T00:20:06.168364Z","queue":"reprioritized"}
+{"actor":"agent:bfrz","at":"2026-10-21T00:54:31.593936Z","from":"claimed","task":"br-bfrz","to":"built"}
