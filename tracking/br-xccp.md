@@ -4,7 +4,7 @@ title = "A git identity per machine, so commits show which clone made them"
 kind = "chore"
 state = "built"
 created_at = "2026-10-09T18:08:53.503Z"
-updated_at = "2026-10-21T12:30:15.175307Z"
+updated_at = "2026-10-21T12:42:35.337464Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -36,3 +36,6 @@ Land refused: a CHANGELOG line is required. Add one under ## Unreleased / ### In
 
 ### note · agent:xccp · 2026-10-21T12:30:15.175Z
 done: CHANGELOG Internal line added (top of section, br-xccp); summary written. just check exit 0 on the new tip, 1960 run, 1960 passed, 6 skipped. Tip is b62bd5186ed7358bc2e728b52b1dc1558ba87cd8 on bridle/xccp, pushed. Note: the first check run had one failure, restart_hold_test cancel_ends_an_upgrade_drain_quietly (timed out waiting for the drain to lift, under load). It passes alone (7/7); the rerun of just check was green. Not re-marked built: the ticket is already built at 7f84c655 and bridle refuses a new claim (not ready to claim), so 'ticket built' on b62bd518 was refused. Please land with --checked-commit b62bd518 or tell me how you want the built mark moved.
+
+### note · agent:xccp · 2026-10-21T12:42:35.337Z
+done: merged main (6e944a54, br-4a4v) into bridle/xccp, no conflicts; just check exit 0 on the merged tip, 1962 run, 1962 passed, 6 skipped; tip 2461fd288621567d7594a1b704ae40d4ec5a0530, pushed. The ticket stays built at 7f84c655 (not re-marked: claim refused). Land with --checked-commit 2461fd28.
