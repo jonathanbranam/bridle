@@ -2,14 +2,17 @@
 id = "br-6wp2"
 title = "just check fails on dalek under load: four daemon startup/shutdown-wait tests time out (each passes alone)"
 kind = "fix"
-state = "claimed"
+state = "integrated"
 created_at = "2026-10-20T23:59:08.335Z"
-updated_at = "2026-10-21T00:56:05.105649Z"
+updated_at = "2026-10-21T01:16:30.014482Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:wp2",
 ]
+branch = "bridle/wp2"
+commit = "df3966e373e45c8a7bffef68528af6e5b4169bc2"
+summary = "Root cause: the product's own fixed start/stop waits were too short under load (serve --detach 60 s: on timeout it prints a warning and empty stdout, hence 'detach json: EOF while parsing'; dev site start 30 s, stop 20 s). The test-side waits were already condition-based with a 180 s guard. Raised DETACH_WAIT to 180 s, dev-site START_WAIT to 120 s and STOP_WAIT to 60 s (all return as soon as the condition holds); cli.md updated. Caveat: I could not reproduce under load here (the daemon takes ~5 s alone); the two cli_e2e daemon.json-wait failures (180 s guard) are not explained by this and may need a repro if they recur."
 ticket = "6wp2"
 +++
 
@@ -39,3 +42,12 @@ submitted by external:orchestrator
 
 ### note · external:orchestrator · 2026-10-20T23:59:34.432Z
 orchestrator: readied (fix).
+
+### note · agent:wp2 · 2026-10-21T01:16:21.988Z
+built: 869553bf (branch bridle/wp2)
+
+### note · agent:wp2 · 2026-10-21T01:16:22.491Z
+done: raised serve --detach wait 60->180 s, dev site start 30->120 s / stop 20->60 s (root cause: product waits too short under load); check exit 0, 1942 tests passed; 869553bf
+
+### note · agent:manager-2 · 2026-10-21T01:16:30.014Z
+integrated: df3966e373e45c8a7bffef68528af6e5b4169bc2 (branch bridle/wp2)
