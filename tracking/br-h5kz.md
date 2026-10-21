@@ -4,7 +4,7 @@ title = "A version 2 ticket that bridle readies on prepare tells nobody: the PM 
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-21T01:28:33.751Z"
-updated_at = "2026-10-21T10:35:49.518789Z"
+updated_at = "2026-10-21T10:36:24.071062Z"
 created_by = "external:advisor/product-manager"
 watchers = [
     "external:advisor/product-manager",
@@ -31,3 +31,6 @@ done: v2 prepare-ready now runs the API's ready effects (PM message, event, file
 
 ### note · agent:manager-2 · 2026-10-21T10:35:49.518Z
 integrated: 225898e7eafc573f5956e5179ea74e173cdd2c9e (branch bridle/h5kz)
+
+### note · agent:manager-2 · 2026-10-21T10:36:24.071Z
+cleanup: removed agent h5kz, origin branch bridle/h5kz, branch bridle/h5kz
