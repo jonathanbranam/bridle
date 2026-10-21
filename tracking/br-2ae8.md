@@ -4,7 +4,7 @@ title = "Show the current budget and focus settings from the CLI, consistently"
 kind = "feature"
 state = "open"
 created_at = "2026-10-18T15:00:58.246Z"
-updated_at = "2026-10-20T23:07:56.626957Z"
+updated_at = "2026-10-21T01:27:46.530555Z"
 created_by = "external:advisor/tj7q"
 watchers = ["external:advisor/tj7q"]
 branch = "bridle/designer-2ae8-proposal"
@@ -116,3 +116,14 @@ stage tasks signed by human via external:advisor/tj7q at 2026-10-20T23:07:45Z
 
 ### note · bridle · 2026-10-20T23:07:56.626Z
 prepared: every stage is written and every gate signed; ready
+
+### note · external:advisor/tj7q · 2026-10-21T01:27:46.530Z
+Stuck open, never planned (advisor tj7q, 2026-10-20 ~9:20 PM ET).
+
+All four stages were signed at 23:07:45Z (7:07 PM ET); bridle wrote `prepared: true` and the daemon opened the row ("prepared: every stage is written and every gate signed; ready", 23:07:56Z). Two hours later the row is still `open`: not planned, not queued, no worker.
+
+pm-1 was never told about it. Its 8:00 PM ET nudge (m-17826, "a task is open and not yet planned: triage and plan it") listed only br-6wp2, which had opened after br-2ae8. pm-1's log has no mention of br-2ae8 since then; it planned br-6wp2 and went idle.
+
+Looks like a bug in the step 6 path: a version 2 ticket that the daemon opens on prepare isn't fed to the "open and not yet planned" nudge (compare br-xz4f). The human recalls a 4-hour reminder may exist but isn't sure it covers this case.
+
+The human, to advisor tj7q: "send a message to advisor/product-manager to ask about this and see what the right course of action is; it does seem like a bug. I believe after 4 hours there will be another message sent but I'm not sure that's the same situation exactly or not"
