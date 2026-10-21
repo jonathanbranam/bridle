@@ -2992,3 +2992,4 @@
 {"actor":"agent:wqy5","at":"2026-10-21T01:38:43.874573Z","from":"claimed","task":"br-wqy5","to":"built"}
 {"actor":"agent:pm-1","at":"2026-10-21T01:43:05.419614Z","from":"open","task":"br-h5kz","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-21T01:43:07.627326Z","queue":"reprioritized"}
+{"actor":"agent:manager-2","at":"2026-10-21T02:02:05.768002Z","from":"built","task":"br-wqy5","to":"integrated"}
