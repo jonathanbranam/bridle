@@ -2,11 +2,14 @@
 id = "br-6wp2"
 title = "just check fails on dalek under load: four daemon startup/shutdown-wait tests time out (each passes alone)"
 kind = "fix"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-20T23:59:08.335Z"
-updated_at = "2026-10-21T00:20:03.875555Z"
+updated_at = "2026-10-21T00:56:05.105649Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "agent:wp2",
+]
 ticket = "6wp2"
 +++
 
