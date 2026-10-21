@@ -2995,3 +2995,4 @@
 {"actor":"agent:manager-2","at":"2026-10-21T02:02:05.768002Z","from":"built","task":"br-wqy5","to":"integrated"}
 {"actor":"agent:pm-1","at":"2026-10-21T10:07:09.528934Z","from":"built","task":"br-2ae8","to":"planned"}
 {"actor":"human","at":"2026-10-21T10:07:43.686Z","from":"","task":"br-dkqf","to":"pending"}
+{"actor":"external:orchestrator","at":"2026-10-21T10:08:17.454958Z","from":"pending","task":"br-dkqf","to":"open"}

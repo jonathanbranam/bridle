@@ -2,9 +2,9 @@
 id = "br-dkqf"
 title = "A version 2 ticket's row went built with no implementation: only its stage branches had landed (br-2ae8)"
 kind = "bug"
-state = "pending"
+state = "open"
 created_at = "2026-10-21T10:07:43.686Z"
-updated_at = "2026-10-21T10:07:55.182485Z"
+updated_at = "2026-10-21T10:08:18.740601Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "dkqf"
@@ -30,3 +30,6 @@ Model: Sonnet. Related: br-2ae8, br-h5kz, br-fyww.
 
 ### note · external:orchestrator · 2026-10-21T10:07:43.686Z
 submitted by external:orchestrator
+
+### note · external:orchestrator · 2026-10-21T10:08:18.740Z
+orchestrator: readied (bug).
