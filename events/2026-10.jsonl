@@ -3015,3 +3015,4 @@
 {"actor":"external:orchestrator","at":"2026-10-21T12:41:50.447399Z","from":"pending","task":"br-gm4w","to":"open"}
 {"actor":"external:orchestrator","at":"2026-10-21T12:41:50.447805Z","from":"open","task":"br-gm4w","to":"planned"}
 {"actor":"agent:manager-2","at":"2026-10-21T12:56:52.856800Z","from":"built","task":"br-xccp","to":"integrated"}
+{"actor":"human","at":"2026-10-22T00:58:06.025Z","from":"","task":"br-t7uq","to":"pending"}
