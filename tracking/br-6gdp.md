@@ -4,10 +4,13 @@ title = "Writes to a project's clone are left uncommitted: migrations, ticket li
 kind = "bug"
 state = "pending"
 created_at = "2026-10-22T01:00:01.203Z"
-updated_at = "2026-10-22T01:00:01.204100Z"
+updated_at = "2026-10-22T01:00:09.796766Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+ticket = "6gdp"
 +++
+
+docs/tickets/open/writes-to-a-project-s-clone-are-left-uncommitted-migrations-6gdp.md
 
 submitted by external:orchestrator
 

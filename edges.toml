@@ -4575,3 +4575,15 @@ from = "br-h5kz"
 to = "br-dkqf"
 kind = "blocks"
 created_at = "2026-10-21T10:30:45.372Z"
+
+[[edge]]
+from = "br-gakc"
+to = "br-6gdp"
+kind = "related"
+created_at = "2026-10-22T01:00:18.488Z"
+
+[[edge]]
+from = "br-6wff"
+to = "br-6gdp"
+kind = "related"
+created_at = "2026-10-22T01:00:18.492Z"
