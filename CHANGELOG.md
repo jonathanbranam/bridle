@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `.bridle/review-documents.txt` (the daemon's review list) is gitignored: in bridle's .gitignore, `bridle init`, and new migration `0009-gitignore-review-documents` (br-v54x).
 - `.bridle/tmp/` (agent scratch) is gitignored: in bridle's own .gitignore, in `bridle init`'s scaffold, and for existing projects through new migration `0008-gitignore-bridle-tmp` (`bridle project migrate`); the advisor and orchestrator roles say scratch goes there (br-6wff).
 - `bridle session list` lists the running external sessions (identifier, machine, context, uptime, last activity); `session list` and `agent list` take `--all-projects` to list every project in the local registry with a project column, naming a daemon that can't be reached instead of skipping it (br-t7uq).
 - `ticket new`, `ticket set` and `ticket link` commit the ticket file they write when run on the project's integration branch (commit only, never a push), so agent-filed tickets are no longer left uncommitted and `ticket ready` works right after `ticket new`; on a worker's branch the worker's own commit carries it (br-gakc).

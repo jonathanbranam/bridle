@@ -105,10 +105,17 @@ pub const MIGRATIONS: &[Migration] = &[
         manual_only: false,
         run: gitignore_bridle_tmp,
     },
+    Migration {
+        id: "0009-gitignore-review-documents",
+        description: "Add `.bridle/review-documents.txt` (the review list) to .gitignore (ticket v54x).",
+        manual_only: false,
+        run: gitignore_review_documents,
+    },
 ];
 
 const AGENT_SITE_LINE: &str = ".agent-site/";
 const BRIDLE_TMP_LINE: &str = ".bridle/tmp/";
+const REVIEW_LIST_LINE: &str = ".bridle/review-documents.txt";
 
 /// Appends `.agent-site/` to `.gitignore` unless a line already says so, so a rerun finds nothing.
 fn gitignore_agent_site(ctx: &Ctx) -> anyhow::Result<Report> {
@@ -118,6 +125,11 @@ fn gitignore_agent_site(ctx: &Ctx) -> anyhow::Result<Report> {
 /// Appends `.bridle/tmp/` (where agents put scratch) to `.gitignore`, the same way.
 fn gitignore_bridle_tmp(ctx: &Ctx) -> anyhow::Result<Report> {
     gitignore_line(ctx, BRIDLE_TMP_LINE)
+}
+
+/// Appends the review list (machine-local daemon state) to `.gitignore`, the same way.
+fn gitignore_review_documents(ctx: &Ctx) -> anyhow::Result<Report> {
+    gitignore_line(ctx, REVIEW_LIST_LINE)
 }
 
 /// Appends the directory `line` (`name/`) to `.gitignore` unless a line already ignores it, with
@@ -1419,7 +1431,7 @@ mod tests {
         // Nothing to change: no refusal on main, with or without a declared integration.
         std::fs::remove_dir_all(p.path().join("docs/tickets")).unwrap();
         for m in MIGRATIONS.iter().filter(|m| !m.manual_only) {
-            if m.id.starts_with("0007") || m.id.starts_with("0008") {
+            if m.id.starts_with("0007") || m.id.starts_with("0008") || m.id.starts_with("0009") {
                 continue; // adds a line when .gitignore lacks it
             }
             let r = (m.run)(&ctx);
@@ -1566,6 +1578,23 @@ mod tests {
         gitignore_bridle_tmp(&ctx).unwrap();
         assert_eq!(std::fs::read_to_string(&gi).unwrap(), ".bridle/tmp/\n");
         assert!(gitignore_bridle_tmp(&ctx).unwrap().files.is_empty());
+    }
+
+    #[test]
+    fn gitignore_review_documents_appends_once() {
+        let d = tempfile::tempdir().unwrap();
+        let gi = d.path().join(".gitignore");
+        let ctx = Ctx {
+            repo: d.path(),
+            dry_run: false,
+        };
+        std::fs::write(&gi, ".bridle/tmp/\n").unwrap();
+        gitignore_review_documents(&ctx).unwrap();
+        assert_eq!(
+            std::fs::read_to_string(&gi).unwrap(),
+            ".bridle/tmp/\n.bridle/review-documents.txt\n"
+        );
+        assert!(gitignore_review_documents(&ctx).unwrap().files.is_empty());
     }
 
     fn head_files(p: &Path) -> String {

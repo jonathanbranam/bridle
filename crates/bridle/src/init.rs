@@ -12,11 +12,12 @@ use crate::error::CliError;
 
 /// What `doctor` looks for, so a fresh init passes it, plus the files `sync` generates into
 /// `.claude/` (never committed).
-const GITIGNORE_LINES: [&str; 6] = [
+const GITIGNORE_LINES: [&str; 7] = [
     ".bridle/*.db*",
     ".bridle/daemon.json",
     ".bridle/cache/",
     ".bridle/tmp/",
+    ".bridle/review-documents.txt",
     ".claude/skills/bridle-*/",
     ".claude/.bridle-sync-hooks.json",
 ];

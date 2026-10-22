@@ -22,3 +22,6 @@
 
 # Agent scratch (drafts, reports): never committed
 .bridle/tmp/
+
+# The daemon's review list (machine-local state)
+.bridle/review-documents.txt
