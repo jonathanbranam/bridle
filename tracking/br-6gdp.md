@@ -2,14 +2,17 @@
 id = "br-6gdp"
 title = "Writes to a project's clone are left uncommitted: migrations, ticket links, agent-filed tickets, scratch files"
 kind = "bug"
-state = "claimed"
+state = "built"
 created_at = "2026-10-22T01:00:01.203Z"
-updated_at = "2026-10-22T02:07:46.418145Z"
+updated_at = "2026-10-22T02:28:48.729625Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:g6dp",
 ]
+branch = "bridle/g6dp"
+commit = "836b8986390d2807929a8da6d9c32bdadc694e9b"
+summary = "The start-up run already committed its output (br-rdag); the gap was the `bridle migrate` command, which applied and left the clone dirty. It now calls the same commit_leftovers after a non-dry-run, non-`--only` run: one commit of the migrations' files plus migrations.toml/.log, via `git commit -- paths`, never the user's other changes; on a protected branch or a git failure it prints the to-do to stderr. Branch is the project's current one, with the existing guard refusing main/dev unless declared integration. `--only` (opt-in) runs still leave the commit to the owner. Already-dirty projects: the next `bridle migrate` or daemon start commits the leftover toml/log (the catch-up). A file a past run edited (dalek-home's .gitignore) is not guessed at and needs a one-off note to that orchestrator to commit it. Test: manual apply + commit_leftovers leaves only the stray file; docs in design/migrations.md; CHANGELOG added."
 ticket = "6gdp"
 +++
 
@@ -59,3 +62,9 @@ submitted by external:orchestrator
 
 ### note · external:orchestrator · 2026-10-22T01:00:42.755Z
 orchestrator: committed and readied (bug/chore, rule ready-without-asking). Split from br-6gdp by pm-1.
+
+### note · agent:g6dp · 2026-10-22T02:28:48.693Z
+built: 836b8986390d2807929a8da6d9c32bdadc694e9b (branch bridle/g6dp)
+
+### note · agent:g6dp · 2026-10-22T02:28:48.729Z
+done: bridle migrate now commits its run's files (like start-up); just check exit 0, 1965 tests passed, run on the commit before merging main (main only added one ticket doc); tip 836b8986390d2807929a8da6d9c32bdadc694e9b
