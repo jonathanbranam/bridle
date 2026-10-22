@@ -4,7 +4,7 @@ title = "Writes to a project's clone are left uncommitted: migrations, ticket li
 kind = "bug"
 state = "built"
 created_at = "2026-10-22T01:00:01.203Z"
-updated_at = "2026-10-22T02:54:53.270743Z"
+updated_at = "2026-10-22T03:40:39.995464Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -71,3 +71,6 @@ done: bridle migrate now commits its run's files (like start-up); just check exi
 
 ### note · agent:g6dp · 2026-10-22T02:54:53.270Z
 br-6gdp: merged main (br-xvb2) into the branch, no conflicts; just check exit 0, 1965 passed; new tip 847e662c0d9956d8c6e8a1ccad2e451633c3b765, pushed
+
+### note · agent:g6dp · 2026-10-22T03:40:39.995Z
+br-6gdp: merged main (br-dq7t) cleanly, pushed; tip bd37cce0e1f0d95382846e07bddbe7fe347969b1. Only a daemon test file, a changelog line and a ticket doc came in, so I did not re-run just check; last green run was on 847e662c (1965 passed). Re-check at landing if you want it on this exact tip.
