@@ -78,6 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `bridle migrate` now commits what its run wrote (the migrations' files plus `.bridle/migrations.toml` and `.log`, nothing else) on the project's current branch, as the start-up run does, instead of leaving the clone dirty; it prints a to-do where it can't, e.g. on a protected branch (br-6gdp).
 - A stage writer can no longer mark a version 2 ticket's row built or done: `ticket built` is refused while the ticket is unprepared, and `built`/`done` are refused for a `bridle/designer-*` branch even when all stages are signed, so only the implementation builds it (br-dkqf; br-2ae8 went built from its stage branches).
 - Agents now see the machine's `[machine] name` and home project: the supervisor passes `BRIDLE_MACHINE_NAME` and `BRIDLE_HOME_PROJECT` in their env and `machine_home` reads them when its home has no config, so the home-project warning no longer names `<hostname>-home` (br-bfrz).
 - `ticket ready` (br-y7kt): checks the ticket file is committed on the project's integration branch (`[branches] integration`, default `main`) instead of a hardcoded `main`, so a project integrating on `dev` can ready tickets; the error names that branch.

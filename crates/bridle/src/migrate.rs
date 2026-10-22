@@ -841,7 +841,7 @@ const STATE_FILES: [&str; 2] = [".bridle/migrations.toml", ".bridle/migrations.l
 /// safe: in any doubt (a protected branch, git refusing) nothing is committed and the returned
 /// text is a to-do for the project's aide (`external:aide`) saying what is left and how to commit it. `None`
 /// means nothing was left, or there is no git repo rooted at `repo` to commit in.
-fn commit_leftovers(repo: &Path, done: &[MigrationRecord]) -> Option<String> {
+pub(crate) fn commit_leftovers(repo: &Path, done: &[MigrationRecord]) -> Option<String> {
     // Only a repo whose root is `repo` (a bridle project inside a larger repo is not ours to commit in).
     let prefix = git_out(repo, &["rev-parse", "--show-prefix"])?;
     if !prefix.status.success() || !prefix.stdout.iter().all(u8::is_ascii_whitespace) {
@@ -1594,6 +1594,17 @@ mod tests {
         let out = run_at_startup(p.path(), &all).unwrap().unwrap();
         assert!(out.done.is_empty() && out.todo.is_none());
         assert_eq!(status(p.path()).trim(), "");
+    }
+
+    #[test]
+    fn a_manual_run_followed_by_commit_leftovers_leaves_the_clone_clean() {
+        let p = git_project("[branches]\nintegration = \"trial\"\n", false);
+        git(p.path(), &["checkout", "-q", "-B", "trial"]);
+        std::fs::write(p.path().join("stray.txt"), "human's").unwrap();
+        let all = [ok_migration("0001-b")];
+        let out = apply(p.path(), &all, false, None, Utc::now()).unwrap();
+        assert!(commit_leftovers(p.path(), &out.done).is_none());
+        assert_eq!(status(p.path()).trim(), "?? stray.txt");
     }
 
     #[test]

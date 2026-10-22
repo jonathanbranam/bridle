@@ -502,6 +502,18 @@ async fn migrate(cli: &Cli, args: &MigrateArgs) -> Result<(), CliError> {
             Utc::now(),
         )
         .with_context(|| format!("project {}", t.name))?;
+        // One commit per run (br-6gdp), as at start-up. An `--only` run is an opt-in migration
+        // whose diff the owner reviews and commits, so it is left alone.
+        if !args.dry_run && args.only.is_none() {
+            let (repo, done) = (t.repo.clone(), out.done.clone());
+            let todo =
+                tokio::task::spawn_blocking(move || crate::migrate::commit_leftovers(&repo, &done))
+                    .await
+                    .map_err(anyhow::Error::from)?;
+            if let Some(todo) = todo {
+                eprintln!("{}: {todo}", t.name);
+            }
+        }
         // A daemon being down never fails a migration; the log in the project is the record.
         if !args.dry_run
             && let Some(client) = &t.client

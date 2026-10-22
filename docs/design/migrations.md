@@ -68,6 +68,8 @@ the daemon: the run is wrapped against errors and panics.
   migration records left by an earlier run". This is what fixes the projects that already carry
   uncommitted migration output (track-web, dalek-home, bridle-ui as of 2026-10-18); a file a
   migration edited before this change (say `.gitignore`) is not guessed at and stays for its owner.
+- `bridle migrate` (not `--only`, not `--dry-run`) makes the same commit after its run (br-6gdp) and
+  prints the to-do text to stderr where it cannot. `--only` runs leave the commit to the owner.
 - **Fail safe.** It commits only on a branch the guard below allows, in a repo rooted at the
   project directory. Where it can't (protected branch, git or a hook refuses) it commits nothing and
   files a chore to-do and messages the project's aide (`external:aide`) naming what is left and the `git add`/`git commit`
