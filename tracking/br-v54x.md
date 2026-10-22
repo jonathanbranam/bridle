@@ -2,9 +2,9 @@
 id = "br-v54x"
 title = ".bridle/review-documents.txt (the daemon's review list) is neither committed nor ignored"
 kind = "chore"
-state = "pending"
+state = "open"
 created_at = "2026-10-22T04:18:23.073Z"
-updated_at = "2026-10-22T04:18:29.175728Z"
+updated_at = "2026-10-22T04:18:54.318853Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "v54x"
@@ -26,3 +26,6 @@ Model: Haiku.
 
 ### note · external:orchestrator · 2026-10-22T04:18:23.074Z
 submitted by external:orchestrator
+
+### note · external:orchestrator · 2026-10-22T04:18:54.318Z
+orchestrator: readied (chore, rule ready-without-asking). The file was committed by bridle itself (br-gakc working).
