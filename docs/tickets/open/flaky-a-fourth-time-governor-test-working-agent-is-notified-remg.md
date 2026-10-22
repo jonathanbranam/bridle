@@ -7,7 +7,7 @@ created_by: agent:pm-1
 repos: [bridle]
 changes: []
 specs: []
-blocked_by: []
+blocked_by: [br-6wp2]
 related: []
 ---
 
