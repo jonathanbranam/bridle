@@ -4,7 +4,7 @@ title = "Writes to a project's clone are left uncommitted: migrations, ticket li
 kind = "bug"
 state = "built"
 created_at = "2026-10-22T01:00:01.203Z"
-updated_at = "2026-10-22T02:28:48.729625Z"
+updated_at = "2026-10-22T02:54:53.270743Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -68,3 +68,6 @@ built: 836b8986390d2807929a8da6d9c32bdadc694e9b (branch bridle/g6dp)
 
 ### note · agent:g6dp · 2026-10-22T02:28:48.729Z
 done: bridle migrate now commits its run's files (like start-up); just check exit 0, 1965 tests passed, run on the commit before merging main (main only added one ticket doc); tip 836b8986390d2807929a8da6d9c32bdadc694e9b
+
+### note · agent:g6dp · 2026-10-22T02:54:53.270Z
+br-6gdp: merged main (br-xvb2) into the branch, no conflicts; just check exit 0, 1965 passed; new tip 847e662c0d9956d8c6e8a1ccad2e451633c3b765, pushed
