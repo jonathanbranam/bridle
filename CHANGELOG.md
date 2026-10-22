@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `ticket new`, `ticket set` and `ticket link` commit the ticket file they write when run on the project's integration branch (commit only, never a push), so agent-filed tickets are no longer left uncommitted and `ticket ready` works right after `ticket new`; on a worker's branch the worker's own commit carries it (br-gakc).
 - Agents commit as `bridle <agent> (<machine>) <bridle@branam.us>`: bridle sets `GIT_AUTHOR_*` and `GIT_COMMITTER_*` for every agent it spawns, and the state-branch commits use `bridle (<machine>)` with the same email, so no commit carries the human's identity (br-4a4v part 1).
 - `bridle focus` with no subcommand shows the focus settings from the local config (no daemon): the period in effect and when it ends, the next change and the override file (active or pending, with its reason); `--schedule` lists every period and `--json` prints one object. `bridle budget --json` gains `next_change` and `override` (copies; no key removed) so the two share names; spec `design/specs/period-status.md` (br-2ae8).
 - Landing cleanup also deletes the landed `bridle/<name>` branch on origin (only `bridle/*`, only when its work is on the integration branch; a failure is logged, never fatal) (br-pm2r).

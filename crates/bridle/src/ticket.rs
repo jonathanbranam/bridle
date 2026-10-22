@@ -114,6 +114,41 @@ fn discard_unfiled(
     )
 }
 
+/// Commits `paths` (relative to `repo`) with `msg` when `repo` is checked out on the project's
+/// integration branch, so a ticket file an agent writes is never left uncommitted (br-gakc) and
+/// `ticket ready` works right after `ticket new`. Commit only, never a push (rule
+/// `one-pusher-for-the-integration-branch`); elsewhere (a worker's branch) the worker's own
+/// commit carries the file. A failure warns: the file is written either way.
+fn commit_ticket_files(repo: &Path, paths: &[&Path], msg: &str) {
+    let git = |args: &[&str]| {
+        Command::new("git")
+            .current_dir(repo)
+            .args(args)
+            .output()
+            .ok()
+            .filter(|o| o.status.success())
+    };
+    let Ok(config) = bridle_daemon::config::Config::load(repo) else {
+        return;
+    };
+    let on_integration = git(&["symbolic-ref", "--short", "HEAD"])
+        .is_some_and(|o| String::from_utf8_lossy(&o.stdout).trim() == config.branches.integration);
+    if !on_integration {
+        return;
+    }
+    let names: Vec<String> = paths.iter().map(|p| p.display().to_string()).collect();
+    let mut add = vec!["add", "--"];
+    add.extend(names.iter().map(String::as_str));
+    let mut commit = vec!["commit", "-q", "--no-verify", "-m", msg, "--"];
+    commit.extend(names.iter().map(String::as_str));
+    if git(&add).is_none() || git(&commit).is_none() {
+        eprintln!(
+            "warning: could not commit {}; commit it yourself",
+            names.join(", ")
+        );
+    }
+}
+
 pub(crate) async fn new(cli: &Cli, repo: &Path, args: &TicketNewArgs) -> Result<(), CliError> {
     check_project_matches(
         cli.project.as_deref(),
@@ -258,6 +293,7 @@ pub(crate) async fn new(cli: &Cli, repo: &Path, args: &TicketNewArgs) -> Result<
             std::fs::write(&path, out).with_context(|| format!("writing {}", path.display()))?;
         }
     }
+    commit_ticket_files(repo, &[Path::new(&rel)], &format!("Ticket {rel}: filed"));
     println!("{rel}");
     if let Some(w) = no_ask_warning(&ask) {
         eprintln!("{w}");
@@ -662,6 +698,8 @@ async fn set_cmd(cli: &Cli, repo: &Path, args: &TicketSetArgs) -> Result<(), Cli
     let projects = projects(cli, repo).await?;
     let id = projects.local(&args.id)?;
     let path = set_in(&tickets_root(repo), id, &args.field, &args.value, &projects)?;
+    let rel = path.strip_prefix(repo).unwrap_or(&path);
+    commit_ticket_files(repo, &[rel], &format!("Ticket {id}: set {}", args.field));
     println!("{}", path.strip_prefix(repo).unwrap_or(&path).display());
     Ok(())
 }
@@ -710,7 +748,9 @@ async fn link_cmd(cli: &Cli, repo: &Path, args: &TicketLinkArgs) -> Result<(), C
         args.rm,
         &projects,
     )?;
-    println!("{}", path.strip_prefix(repo).unwrap_or(&path).display());
+    let rel = path.strip_prefix(repo).unwrap_or(&path);
+    commit_ticket_files(repo, &[rel], &format!("Ticket {id}: link {other}"));
+    println!("{}", rel.display());
     Ok(())
 }
 
@@ -2431,6 +2471,37 @@ mod tests {
         let err = ensure_committed(dir.path(), "main", Path::new("c.md")).unwrap_err();
         assert!(err.to_string().contains("not committed on main"), "{err}");
     }
+    #[test]
+    fn commit_ticket_files_commits_on_integration_only() {
+        let dir = tempfile::tempdir().unwrap();
+        let git = |args: &[&str]| {
+            let out = Command::new("git")
+                .current_dir(dir.path())
+                .args(["-c", "user.name=t", "-c", "user.email=t@t"])
+                .args(args)
+                .output()
+                .unwrap();
+            assert!(out.status.success(), "{args:?}");
+            String::from_utf8_lossy(&out.stdout).to_string()
+        };
+        git(&["init", "-q", "-b", "main"]);
+        std::fs::create_dir_all(dir.path().join(".bridle")).unwrap();
+        std::fs::write(dir.path().join("a.md"), "x").unwrap();
+        git(&["add", "a.md"]);
+        git(&["commit", "-q", "-m", "a"]);
+        std::fs::write(dir.path().join("t.md"), "y").unwrap();
+        std::fs::write(dir.path().join("other.md"), "z").unwrap();
+        git(&["config", "user.name", "t"]);
+        git(&["config", "user.email", "t@t"]);
+        commit_ticket_files(dir.path(), &[Path::new("t.md")], "Ticket t");
+        assert!(ensure_committed(dir.path(), "main", Path::new("t.md")).is_ok());
+        assert!(git(&["status", "--short"]).contains("other.md"));
+        // Not on the integration branch: left for the branch's own commit.
+        git(&["checkout", "-q", "-b", "bridle/w"]);
+        commit_ticket_files(dir.path(), &[Path::new("other.md")], "Ticket o");
+        assert!(git(&["status", "--short"]).contains("other.md"));
+    }
+
     const NEW_FRONT: &str =
         "created: 2026-09-30\nrepos: [p]\nchanges: []\nspecs: []\nblocked_by: []\nrelated: []\n";
 

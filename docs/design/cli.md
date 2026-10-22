@@ -121,7 +121,7 @@ bridle task ready   <id>                                 pending -> open for a r
 bridle queue                                     read-only: claimed tasks with their worker, then the tiers in rank order
 bridle queue set --tier T,T... [--tier T,T...]   replace the whole queue, one --tier per tier (PM, orchestrator or human only)
 bridle queue add-tier <task>...                  append one tier at the back (PM, orchestrator or human only)
-bridle ticket link <id> <KIND> <other> [--rm]   KIND: blocked-by|parent|related (edit the frontmatter; no commit, the daemon indexes it) or duplicates|supersedes (an edge on the daemon); replaces `task dep`
+bridle ticket link <id> <KIND> <other> [--rm]   KIND: blocked-by|parent|related (edit the frontmatter, and commit the file when on the integration branch; the daemon indexes it) or duplicates|supersedes (an edge on the daemon); replaces `task dep`
 bridle ticket comment <id> [TEXT | --text-file F] [--notify AGENT | --for-human]   add a note to the ticket's thread; `--for-human` records it as the human's words relayed by you (advisor, aide, orchestrator, product manager only; `ticket next --comments` counts it) (br-72t9, br-ggbx; same as `task comment`, found by ticket id)
 bridle ticket ask <id> TEXT [--to WHO]  /  bridle ticket answer <id> TEXT   a blocking question on the ticket's thread, and its answer (same as `task ask` / `task answer`)
 bridle ticket show <id>                          the ticket file, then its thread (`--json`: the rows that carry it)
@@ -334,7 +334,7 @@ bridle workflow spec coverage [--root DIR] [--tests DIR ...] [--require-all] [--
                                              and the unbound list as 'file:line: s-id title'; exits 1
                                              with --require-all if any unbound (default exit 0); local
                                              only, no daemon call
-bridle ticket new "<title>" --kind <kind> [--repos a,b] [--blocked-by ids] [--related ids] [--theme slug] [--body t | --body-file f] [--for-human [--priority P]]   mints (without a body, warns on stderr that the ticket cannot be readied until its ask is written under `## The ask`)
+bridle ticket new "<title>" --kind <kind> [--repos a,b] [--blocked-by ids] [--related ids] [--theme slug] [--body t | --body-file f] [--for-human [--priority P]]   mints and, when on the integration branch, commits the file (never pushes; br-gakc), so `ticket ready` works right after (without a body, warns on stderr that the ticket cannot be readied until its ask is written under `## The ask`)
                                              `docs/tickets/open/<slug>-<id>.md` (repo root found via git): a
                                              fresh 4-character ID unique across `open/` and `resolved/`,
                                              frontmatter id, title, kind (required, no default: the task kinds), created (UTC date), created_by (the calling principal, optional; omitted when no daemon answers), repos (default: the
@@ -375,7 +375,7 @@ bridle ticket resolve <id>                   stamps `resolved: <UTC date-time>` 
                                              the ticket from `open/` to `resolved/` (a plain move: committing
                                              is the caller's); errors on an unknown or ambiguous id; doesn't
                                              touch the task. Both are local file work, no daemon start-up
-bridle ticket set <id> <field> <value>       edits one frontmatter field of an open or resolved ticket: `title`,
+bridle ticket set <id> <field> <value>       (commits on the integration branch) edits one frontmatter field of an open or resolved ticket: `title`,
                                              `kind` (any time; independent of its tasks' kinds), `theme` (a slug), `parent` (one id, bare or `<prefix>-<id>`), `review` (version 2 only: a comma list of the ticket's stages that need the human's signature, as `ticket new --review`; it replaces the set, empty clears it; a stage the ticket does not list is refused naming the valid ones, and so is changing a stage already signed), or a list field (`repos`, `changes`, `specs`, `blocked_by`, `related`) given
                                              comma-separated (empty clears it); `blocked_by`, `related` and `parent` references are written project-qualified (`br-k7tm`; a bare id is expanded, ambiguous or unknown ones are refused listing candidates); a `<id>` argument may be bare or qualified, but one qualified with another project's prefix is refused; the old names (`needs`, `see`) map to the new; refuses `id`, `created`, `resolved`
                                              (and their old names `opened`, `closed`) and unknown fields. Local file work
