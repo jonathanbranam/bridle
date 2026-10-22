@@ -2,11 +2,14 @@
 id = "br-v54x"
 title = ".bridle/review-documents.txt (the daemon's review list) is neither committed nor ignored"
 kind = "chore"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-22T04:18:23.073Z"
-updated_at = "2026-10-22T04:40:12.327612Z"
+updated_at = "2026-10-22T04:40:55.518210Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "agent:v54x",
+]
 ticket = "v54x"
 +++
 
