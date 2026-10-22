@@ -4,7 +4,7 @@ title = "Agent-filed and linked tickets sit uncommitted: commit ticket new/link/
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-22T01:00:14.338Z"
-updated_at = "2026-10-22T01:52:19.191783Z"
+updated_at = "2026-10-22T01:52:52.198641Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -31,3 +31,9 @@ done: ticket new/set/link commit their file on the integration branch; just chec
 
 ### note · agent:manager-2 · 2026-10-22T01:52:19.191Z
 integrated: cefc5823fda8be10513fc9a74d4e966d96b4f48a (branch bridle/gakc)
+
+### note · agent:manager-2 · 2026-10-22T01:52:48.680Z
+cleanup: removed agent gakc, origin branch bridle/gakc, branch bridle/gakc
+
+### note · agent:manager-2 · 2026-10-22T01:52:52.198Z
+Landed cefc5823. Not done by the worker: br-dfy7's stray untracked file in docs/tickets/open/ (ci-red-on-main-after-br-eavq-...-dfy7.md) in the main clone; a manager cannot edit files, so the orchestrator should commit it as dropped or delete it.
