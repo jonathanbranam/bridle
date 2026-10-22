@@ -4,7 +4,7 @@ title = "List external sessions, and list sessions and agents across all project
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-22T00:58:06.025Z"
-updated_at = "2026-10-22T02:06:50.402625Z"
+updated_at = "2026-10-22T02:07:22.583564Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -74,3 +74,6 @@ done: bridle session list + --all-projects for session list/agent list; just che
 
 ### note · agent:manager-2 · 2026-10-22T02:06:50.402Z
 integrated: e63a335a659f36ecf1216f216a58a71faa8443a9 (branch bridle/t7uq)
+
+### note · agent:manager-2 · 2026-10-22T02:07:22.583Z
+cleanup: removed agent t7uq, origin branch bridle/t7uq, branch bridle/t7uq
