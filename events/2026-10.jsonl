@@ -3042,3 +3042,4 @@
 {"actor":"agent:manager-2","at":"2026-10-22T03:03:18.920916Z","from":"pending","task":"br-dq7t","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-22T03:18:12.852613Z","from":"open","task":"br-dq7t","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-22T03:18:14.398884Z","queue":"reprioritized"}
+{"actor":"agent:dq7t","at":"2026-10-22T03:35:40.191417Z","from":"claimed","task":"br-dq7t","to":"built"}
