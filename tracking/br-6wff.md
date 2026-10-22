@@ -2,11 +2,14 @@
 id = "br-6wff"
 title = "Scratch files in a project's clone are not ignored: .bridle/tmp, reports and review lists show as untracked"
 kind = "chore"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-22T01:00:17.935Z"
-updated_at = "2026-10-22T01:25:13.497225Z"
+updated_at = "2026-10-22T03:59:41.112946Z"
 created_by = "agent:pm-1"
-watchers = ["agent:pm-1"]
+watchers = [
+    "agent:pm-1",
+    "agent:w6ff",
+]
 ticket = "6wff"
 +++
 

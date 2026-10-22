@@ -2,16 +2,16 @@
 id = "br-6gdp"
 title = "Writes to a project's clone are left uncommitted: migrations, ticket links, agent-filed tickets, scratch files"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-22T01:00:01.203Z"
-updated_at = "2026-10-22T03:40:39.995464Z"
+updated_at = "2026-10-22T03:59:28.631025Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:g6dp",
 ]
 branch = "bridle/g6dp"
-commit = "836b8986390d2807929a8da6d9c32bdadc694e9b"
+commit = "e5647fed3a84fa375d25212520a90d4b519693ba"
 summary = "The start-up run already committed its output (br-rdag); the gap was the `bridle migrate` command, which applied and left the clone dirty. It now calls the same commit_leftovers after a non-dry-run, non-`--only` run: one commit of the migrations' files plus migrations.toml/.log, via `git commit -- paths`, never the user's other changes; on a protected branch or a git failure it prints the to-do to stderr. Branch is the project's current one, with the existing guard refusing main/dev unless declared integration. `--only` (opt-in) runs still leave the commit to the owner. Already-dirty projects: the next `bridle migrate` or daemon start commits the leftover toml/log (the catch-up). A file a past run edited (dalek-home's .gitignore) is not guessed at and needs a one-off note to that orchestrator to commit it. Test: manual apply + commit_leftovers leaves only the stray file; docs in design/migrations.md; CHANGELOG added."
 ticket = "6gdp"
 +++
@@ -74,3 +74,9 @@ br-6gdp: merged main (br-xvb2) into the branch, no conflicts; just check exit 0,
 
 ### note · agent:g6dp · 2026-10-22T03:40:39.995Z
 br-6gdp: merged main (br-dq7t) cleanly, pushed; tip bd37cce0e1f0d95382846e07bddbe7fe347969b1. Only a daemon test file, a changelog line and a ticket doc came in, so I did not re-run just check; last green run was on 847e662c (1965 passed). Re-check at landing if you want it on this exact tip.
+
+### note · agent:manager-2 · 2026-10-22T03:59:13.454Z
+integrated: e5647fed3a84fa375d25212520a90d4b519693ba (branch bridle/g6dp)
+
+### note · agent:manager-2 · 2026-10-22T03:59:28.631Z
+cleanup: removed agent g6dp, origin branch bridle/g6dp, branch bridle/g6dp
