@@ -3020,3 +3020,6 @@
 {"actor":"human","at":"2026-10-22T01:00:01.203Z","from":"","task":"br-6gdp","to":"pending"}
 {"actor":"human","at":"2026-10-22T01:00:14.338Z","from":"","task":"br-gakc","to":"pending"}
 {"actor":"human","at":"2026-10-22T01:00:17.935Z","from":"","task":"br-6wff","to":"pending"}
+{"actor":"external:orchestrator","at":"2026-10-22T01:00:42.405544Z","from":"pending","task":"br-gakc","to":"open"}
+{"actor":"external:orchestrator","at":"2026-10-22T01:00:42.647174Z","from":"pending","task":"br-6gdp","to":"open"}
+{"actor":"external:orchestrator","at":"2026-10-22T01:00:42.885355Z","from":"pending","task":"br-6wff","to":"open"}

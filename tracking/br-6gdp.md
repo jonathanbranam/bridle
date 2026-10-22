@@ -2,9 +2,9 @@
 id = "br-6gdp"
 title = "Writes to a project's clone are left uncommitted: migrations, ticket links, agent-filed tickets, scratch files"
 kind = "bug"
-state = "pending"
+state = "open"
 created_at = "2026-10-22T01:00:01.203Z"
-updated_at = "2026-10-22T01:00:09.796766Z"
+updated_at = "2026-10-22T01:00:42.755223Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "6gdp"
@@ -53,3 +53,6 @@ Model: Sonnet.
 
 ### note · external:orchestrator · 2026-10-22T01:00:01.204Z
 submitted by external:orchestrator
+
+### note · external:orchestrator · 2026-10-22T01:00:42.755Z
+orchestrator: committed and readied (bug/chore, rule ready-without-asking). Split from br-6gdp by pm-1.
