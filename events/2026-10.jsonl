@@ -3050,3 +3050,4 @@
 {"actor":"human","at":"2026-10-22T04:18:23.073Z","from":"","task":"br-v54x","to":"pending"}
 {"actor":"external:orchestrator","at":"2026-10-22T04:18:54.212090Z","from":"pending","task":"br-v54x","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-22T04:40:12.327612Z","from":"open","task":"br-v54x","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-22T04:40:13.996998Z","queue":"reprioritized"}
