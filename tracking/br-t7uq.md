@@ -4,10 +4,13 @@ title = "List external sessions, and list sessions and agents across all project
 kind = "feature"
 state = "pending"
 created_at = "2026-10-22T00:58:06.025Z"
-updated_at = "2026-10-22T00:58:06.025816Z"
+updated_at = "2026-10-22T00:58:25.631861Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+ticket = "t7uq"
 +++
+
+docs/tickets/open/list-external-sessions-and-list-sessions-and-agents-across-a-t7uq.md
 
 submitted by external:orchestrator
 
@@ -50,3 +53,6 @@ Model: Sonnet (CLI plus a fan-out over the registry; small).
 
 ### note · external:orchestrator · 2026-10-22T00:58:06.025Z
 submitted by external:orchestrator
+
+### note · external:orchestrator · 2026-10-22T00:58:25.631Z
+orchestrator: feature; waiting for the human's go before readying (asked 2026-10-21). Will ready and tell pm-1 when it comes.
