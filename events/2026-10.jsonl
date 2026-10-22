@@ -3023,3 +3023,8 @@
 {"actor":"external:orchestrator","at":"2026-10-22T01:00:42.405544Z","from":"pending","task":"br-gakc","to":"open"}
 {"actor":"external:orchestrator","at":"2026-10-22T01:00:42.647174Z","from":"pending","task":"br-6gdp","to":"open"}
 {"actor":"external:orchestrator","at":"2026-10-22T01:00:42.885355Z","from":"pending","task":"br-6wff","to":"open"}
+{"actor":"agent:pm-1","at":"2026-10-22T01:25:12.421555Z","from":"open","task":"br-t7uq","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-22T01:25:12.753895Z","from":"open","task":"br-gakc","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-22T01:25:12.849249Z","from":"open","task":"br-6gdp","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-22T01:25:13.497225Z","from":"open","task":"br-6wff","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-22T01:25:15.607604Z","queue":"reprioritized"}

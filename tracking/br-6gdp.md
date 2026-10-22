@@ -2,9 +2,9 @@
 id = "br-6gdp"
 title = "Writes to a project's clone are left uncommitted: migrations, ticket links, agent-filed tickets, scratch files"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-10-22T01:00:01.203Z"
-updated_at = "2026-10-22T01:00:42.755223Z"
+updated_at = "2026-10-22T01:25:12.849249Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "6gdp"

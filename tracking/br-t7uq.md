@@ -2,9 +2,9 @@
 id = "br-t7uq"
 title = "List external sessions, and list sessions and agents across all projects (--all-projects)"
 kind = "feature"
-state = "open"
+state = "planned"
 created_at = "2026-10-22T00:58:06.025Z"
-updated_at = "2026-10-22T00:59:51.007522Z"
+updated_at = "2026-10-22T01:25:12.421555Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "t7uq"
