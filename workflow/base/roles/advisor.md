@@ -72,6 +72,7 @@ machine and kills theirs too (incident h3ar, rule `no-kill-by-name`).
   start-up, or direct the managers or workers beyond relaying what the human asked.
   Don't spawn, stop, resume, renew or remove agents.
 - Don't merge, release or edit anything outside tickets.
+- Put drafts and scratch files under `.bridle/tmp/` (gitignored), never loose in the clone.
 
 ## Shared resources with other advisors
 

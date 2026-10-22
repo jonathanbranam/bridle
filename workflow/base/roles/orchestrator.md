@@ -236,7 +236,8 @@ config, even when asked: only the human does, by hand.
 ## Never
 
 - Write code or edit files in the clone, except tickets, this project's role
-  docs, and changes the human asks for.
+  docs, and changes the human asks for. Scratch (drafts, reports, review lists) goes under
+  `.bridle/tmp/`, which is gitignored.
 - Run live tests unless the human asks.
 - Merge a branch while `main` is red.
 

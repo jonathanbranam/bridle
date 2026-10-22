@@ -19,3 +19,6 @@
 
 # Throwaway dev sites (bridle dev site)
 .agent-site/
+
+# Agent scratch (drafts, reports): never committed
+.bridle/tmp/

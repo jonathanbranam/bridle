@@ -98,12 +98,31 @@ pub const MIGRATIONS: &[Migration] = &[
         manual_only: false,
         run: gitignore_agent_site,
     },
+    Migration {
+        id: "0008-gitignore-bridle-tmp",
+        description: "Add `.bridle/tmp/` (agent scratch) to .gitignore (ticket 6wff).",
+        // Automatic, like 0007: one line, appended only if absent.
+        manual_only: false,
+        run: gitignore_bridle_tmp,
+    },
 ];
 
 const AGENT_SITE_LINE: &str = ".agent-site/";
+const BRIDLE_TMP_LINE: &str = ".bridle/tmp/";
 
 /// Appends `.agent-site/` to `.gitignore` unless a line already says so, so a rerun finds nothing.
 fn gitignore_agent_site(ctx: &Ctx) -> anyhow::Result<Report> {
+    gitignore_line(ctx, AGENT_SITE_LINE)
+}
+
+/// Appends `.bridle/tmp/` (where agents put scratch) to `.gitignore`, the same way.
+fn gitignore_bridle_tmp(ctx: &Ctx) -> anyhow::Result<Report> {
+    gitignore_line(ctx, BRIDLE_TMP_LINE)
+}
+
+/// Appends the directory `line` (`name/`) to `.gitignore` unless a line already ignores it, with
+/// or without the trailing or leading slash.
+fn gitignore_line(ctx: &Ctx, line: &str) -> anyhow::Result<Report> {
     let project = project_of(ctx.repo);
     let path = ctx.repo.join(".gitignore");
     let text = match std::fs::read_to_string(&path) {
@@ -111,16 +130,18 @@ fn gitignore_agent_site(ctx: &Ctx) -> anyhow::Result<Report> {
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => String::new(),
         Err(e) => return Err(e).with_context(|| format!("reading {}", path.display())),
     };
+    let bare = line.trim_end_matches('/');
     let has = text.lines().any(|l| {
-        matches!(
-            l.trim(),
-            ".agent-site" | ".agent-site/" | "/.agent-site" | "/.agent-site/"
-        )
+        let l = l.trim();
+        l == bare
+            || l.strip_prefix('/') == Some(bare)
+            || l == line
+            || l.strip_prefix('/') == Some(line)
     });
     if has {
         return Ok(Report {
             files: vec![],
-            summary: ".gitignore already ignores .agent-site/".into(),
+            summary: format!(".gitignore already ignores {line}"),
         });
     }
     let files = vec![".gitignore".to_string()];
@@ -131,13 +152,13 @@ fn gitignore_agent_site(ctx: &Ctx) -> anyhow::Result<Report> {
         if !new.is_empty() && !new.ends_with('\n') {
             new.push('\n');
         }
-        new.push_str(AGENT_SITE_LINE);
+        new.push_str(line);
         new.push('\n');
         std::fs::write(&path, new).with_context(|| format!("writing {}", path.display()))?;
     }
     Ok(Report {
         files,
-        summary: format!("added {AGENT_SITE_LINE} to .gitignore"),
+        summary: format!("added {line} to .gitignore"),
     })
 }
 
@@ -1398,7 +1419,7 @@ mod tests {
         // Nothing to change: no refusal on main, with or without a declared integration.
         std::fs::remove_dir_all(p.path().join("docs/tickets")).unwrap();
         for m in MIGRATIONS.iter().filter(|m| !m.manual_only) {
-            if m.id.starts_with("0007") {
+            if m.id.starts_with("0007") || m.id.starts_with("0008") {
                 continue; // adds a line when .gitignore lacks it
             }
             let r = (m.run)(&ctx);
@@ -1532,6 +1553,19 @@ mod tests {
             "/target\n.agent-site/\n"
         );
         assert!(gitignore_agent_site(&ctx(false)).unwrap().files.is_empty());
+    }
+
+    #[test]
+    fn gitignore_bridle_tmp_appends_once() {
+        let d = tempfile::tempdir().unwrap();
+        let gi = d.path().join(".gitignore");
+        let ctx = Ctx {
+            repo: d.path(),
+            dry_run: false,
+        };
+        gitignore_bridle_tmp(&ctx).unwrap();
+        assert_eq!(std::fs::read_to_string(&gi).unwrap(), ".bridle/tmp/\n");
+        assert!(gitignore_bridle_tmp(&ctx).unwrap().files.is_empty());
     }
 
     fn head_files(p: &Path) -> String {
