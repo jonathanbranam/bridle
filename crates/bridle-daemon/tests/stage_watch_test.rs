@@ -208,8 +208,11 @@ async fn a_stage_writers_built_or_done_never_marks_a_prepared_v2_row() {
     };
     let err = c.done_task(&id, &done).await.expect_err("done refused");
     assert!(err.to_string().contains("stage branch"), "got {err}");
-    assert_eq!(
-        c.get_task(&id).await.expect("get").state.as_str(),
-        "pending"
+    // The prepared file makes the link sync ready the row (br-h5kz), so it is `pending` or
+    // `open` depending on whether the sync has run; what matters is that it never went built.
+    let state = c.get_task(&id).await.expect("get").state;
+    assert!(
+        matches!(state.as_str(), "pending" | "open"),
+        "row left waiting for its implementation, got {state}"
     );
 }
