@@ -3032,3 +3032,5 @@
 {"actor":"agent:manager-2","at":"2026-10-22T01:52:19.191783Z","from":"built","task":"br-gakc","to":"integrated"}
 {"actor":"agent:t7uq","at":"2026-10-22T02:06:37.849394Z","from":"claimed","task":"br-t7uq","to":"built"}
 {"actor":"agent:manager-2","at":"2026-10-22T02:06:50.402625Z","from":"built","task":"br-t7uq","to":"integrated"}
+{"actor":"human","at":"2026-10-22T02:19:53.880Z","from":"","task":"br-xvb2","to":"pending"}
+{"actor":"agent:manager-2","at":"2026-10-22T02:19:56.845795Z","from":"pending","task":"br-xvb2","to":"open"}
