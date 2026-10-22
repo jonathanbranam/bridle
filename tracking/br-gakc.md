@@ -2,16 +2,16 @@
 id = "br-gakc"
 title = "Agent-filed and linked tickets sit uncommitted: commit ticket new/link/set writes, or flag them to the orchestrator"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-22T01:00:14.338Z"
-updated_at = "2026-10-22T01:52:05.462962Z"
+updated_at = "2026-10-22T01:52:19.191783Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "agent:gakc",
 ]
 branch = "bridle/gakc"
-commit = "22e86647cd95da83a48d348f611e26f875c46bd0"
+commit = "cefc5823fda8be10513fc9a74d4e966d96b4f48a"
 summary = "ticket new/set/link (crates/bridle/src/ticket.rs commit_ticket_files) commit the file they write when the clone is on the integration branch; commit only, never push; on a worker branch nothing is committed (the worker's commit carries it). Unit test in a temp repo. cli.md and CHANGELOG updated. br-dfy7's stray untracked file lives in the main clone, outside my worktree: not handled, manager should commit-as-dropped or delete it."
 ticket = "gakc"
 +++
@@ -28,3 +28,6 @@ built: 22e86647cd95da83a48d348f611e26f875c46bd0 (branch bridle/gakc)
 
 ### note · agent:gakc · 2026-10-22T01:52:05.462Z
 done: ticket new/set/link commit their file on the integration branch; just check exit 0, 1963 passed; 22e86647. Not done: br-dfy7's stray file is in the main clone (outside my worktree); please commit it as dropped or delete it.
+
+### note · agent:manager-2 · 2026-10-22T01:52:19.191Z
+integrated: cefc5823fda8be10513fc9a74d4e966d96b4f48a (branch bridle/gakc)
