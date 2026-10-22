@@ -74,6 +74,9 @@ pub(super) fn print_agent(cli: &Cli, agent: &bridle_api::Agent) -> Result<(), Cl
 }
 
 pub(super) async fn agents(cli: &Cli, args: &AgentsArgs) -> Result<(), CliError> {
+    if args.all_projects {
+        return agents_all_projects(cli, args.all).await;
+    }
     let client = client_for_read(cli).await?;
     let mut list = client.list_agents().await?;
     if !args.all {
@@ -99,6 +102,101 @@ pub(super) async fn agents(cli: &Cli, args: &AgentsArgs) -> Result<(), CliError>
                 a.turns,
                 format_cost_dollars(a.cost_usd_total),
                 format_context_tokens(a.context_tokens),
+            );
+        }
+    }
+    Ok(())
+}
+
+async fn agents_all_projects(cli: &Cli, include_stopped: bool) -> Result<(), CliError> {
+    let answers = fanout::fan_out(discovery::list_registry(), move |c: Client| async move {
+        let mut list = c.list_agents().await.map_err(|e| e.to_string())?;
+        if !include_stopped {
+            list.retain(|a| a.state.is_running());
+        }
+        Ok(list)
+    })
+    .await;
+    if cli.json {
+        render::print_json(&answers)?;
+        return Ok(());
+    }
+    fanout::print_unreachable(&answers);
+    if answers.iter().all(|a| a.items.is_empty()) {
+        println!("no agents");
+        return Ok(());
+    }
+    println!(
+        "{:<16} {:<12} {:<14} {:<10} {:<9} {:<10} {:>5} {:>9} {:>9}",
+        "PROJECT", "ID", "NAME", "ROLE", "STATE", "MODEL", "TURNS", "COST", "CONTEXT"
+    );
+    for ans in &answers {
+        for a in &ans.items {
+            println!(
+                "{:<16} {:<12} {:<14} {:<10} {:<9} {:<10} {:>5} {:>9} {:>9}",
+                ans.project,
+                a.id,
+                a.name,
+                a.role,
+                a.state.to_string(),
+                a.model,
+                a.turns,
+                format_cost_dollars(a.cost_usd_total),
+                format_context_tokens(a.context_tokens),
+            );
+        }
+    }
+    Ok(())
+}
+
+/// `bridle session list [--all-projects]`: the same fields as the `session` lines of `bridle status`.
+pub(crate) async fn list_sessions(cli: &Cli, all_projects: bool) -> Result<(), CliError> {
+    let answers = if all_projects {
+        fanout::fan_out(discovery::list_registry(), async |c: Client| {
+            Ok(c.status().await.map_err(|e| e.to_string())?.sessions)
+        })
+        .await
+    } else {
+        let client = client_for_read(cli).await?;
+        let status = client.status().await?;
+        vec![fanout::ProjectAnswer {
+            project: status.daemon.project,
+            items: status.sessions,
+            error: None,
+        }]
+    };
+    if cli.json {
+        if all_projects {
+            render::print_json(&answers)?;
+        } else {
+            render::print_json(&answers[0].items)?;
+        }
+        return Ok(());
+    }
+    if all_projects {
+        fanout::print_unreachable(&answers);
+    }
+    if answers.iter().all(|a| a.items.is_empty()) {
+        println!("no sessions");
+        return Ok(());
+    }
+    let now = chrono::Utc::now();
+    let mins = |t: chrono::DateTime<chrono::Utc>| (now - t).num_minutes().max(0);
+    println!(
+        "{:<16} {:<28} {:<14} {:>9} {:>7} ACTIVE",
+        "PROJECT", "SESSION", "MACHINE", "CONTEXT", "UP"
+    );
+    for ans in &answers {
+        for s in &ans.items {
+            println!(
+                "{:<16} {:<28} {:<14} {:>9} {:>6}m {}",
+                s.project.as_deref().unwrap_or(&ans.project),
+                s.identity,
+                s.machine.as_deref().unwrap_or("?"),
+                format_context_tokens(s.tokens),
+                mins(s.started_at),
+                s.last_activity
+                    .map_or("never".into(), |t| format!("{}m ago", mins(t)))
             );
         }
     }

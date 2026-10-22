@@ -97,7 +97,7 @@ bridle agent spawn   <role> [--name N] [--prompt TEXT | --prompt-file FILE]
                [--worktree [--base REF] | --in-repo | --cwd PATH] [--model M]
                [--allow-tool TOOL ...] [--env KEY=VALUE ...] [--ignore-budget]
                [--component ID ...] [--ticket ID]   # --ticket: refused while the ticket is settling (br-85hs)
-bridle agent list  [--all]
+bridle agent list  [--all] [--all-projects]   --all-projects: every project in the local registry (not other machines), a PROJECT column; a daemon that does not answer is listed as `unreachable: <why>` (`--json`: `[{project, items, error}]`)
 bridle agent show    <agent>
 bridle send    [--project <other>] <agent|human|role:NAME|external:NAME> [TEXT | --text-file FILE] [--question] [--when now|idle] [--reply-to ID] [--task ID]
 bridle schedule add  [--to <principal>] (--at <time> | --cron "<expr>") [--tz <IANA>] (--message TEXT | --message-file FILE|-)
@@ -415,6 +415,7 @@ bridle orchestrator prime orchestrator                   fresh session's opening
                                              state, startup steps; local only, no daemon call
 bridle orchestrator prime advisor                        the advisor role file (workflow, then .bridle/roles/advisor.md); local
 bridle orchestrator prime aide                        the aide role file (workflow, then .bridle/roles/aide.md); local
+bridle session list [--all-projects]       the running external sessions (the `session` lines of `bridle status`): project, session, machine, context, uptime, last activity; --all-projects as for `agent list`; `--json` is the session array (one project) or `[{project, items, error}]`
 bridle session orchestrator [claude args]   start the orchestrator's claude session from any directory: lean
                                              settings, names orch-<project>[-<BRIDLE_SESSION_SUFFIX>], pane tag,
                                              pid/exit files; project per Project resolution (no default); refuses under a bridle

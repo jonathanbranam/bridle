@@ -152,6 +152,9 @@ pub async fn run(cli: &Cli, role: &SessionRole) -> Result<(), CliError> {
         note(cli).await;
         return Ok(());
     }
+    if let SessionRole::List { all_projects } = role {
+        return crate::commands::list_sessions(cli, *all_projects).await;
+    }
     if let SessionRole::Keep { identifier } = role {
         let client = crate::commands::client_for(cli).await?;
         client.session_keep(&session_identity(identifier)).await?;
@@ -253,7 +256,8 @@ pub async fn run(cli: &Cli, role: &SessionRole) -> Result<(), CliError> {
             );
             aide(cli, &project, &args).await?
         }
-        SessionRole::Note
+        SessionRole::List { .. }
+        | SessionRole::Note
         | SessionRole::Restart { .. }
         | SessionRole::Stop { .. }
         | SessionRole::Keep { .. } => {

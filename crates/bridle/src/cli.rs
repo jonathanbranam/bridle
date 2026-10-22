@@ -1372,6 +1372,9 @@ pub struct AgentsArgs {
     /// Include stopped/exited/crashed/lost agents too.
     #[arg(long)]
     pub all: bool,
+    /// List every project in the local registry, with a project column.
+    #[arg(long)]
+    pub all_projects: bool,
 }
 
 #[derive(Debug, Args)]
@@ -2709,6 +2712,13 @@ pub enum SessionRole {
     Aide {
         #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
         claude_args: Vec<String>,
+    },
+    /// List the running external sessions (orchestrator, advisors, aide, mail, statusline):
+    /// identifier, machine, context, uptime and last activity.
+    List {
+        /// List every project in the local registry, with a project column.
+        #[arg(long)]
+        all_projects: bool,
     },
     /// An advisor session's SessionStart hook: reads the hook JSON on stdin and tells the daemon
     /// the Claude session id. Never fails.
