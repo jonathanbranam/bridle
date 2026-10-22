@@ -2,11 +2,14 @@
 id = "br-6gdp"
 title = "Writes to a project's clone are left uncommitted: migrations, ticket links, agent-filed tickets, scratch files"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-22T01:00:01.203Z"
-updated_at = "2026-10-22T01:25:12.849249Z"
+updated_at = "2026-10-22T02:07:46.418145Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "agent:g6dp",
+]
 ticket = "6gdp"
 +++
 
