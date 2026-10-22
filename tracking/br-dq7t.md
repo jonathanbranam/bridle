@@ -4,7 +4,7 @@ title = "CI red on macos only at 25fff42d: find the failing test and fix"
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-22T03:03:17.655Z"
-updated_at = "2026-10-22T03:40:32.951442Z"
+updated_at = "2026-10-22T03:40:47.725556Z"
 created_by = "agent:manager-2"
 watchers = [
     "agent:manager-2",
@@ -28,3 +28,6 @@ done: stage_watch_test a_stage_writers_built_or_done_never_marks_a_prepared_v2_r
 
 ### note · agent:manager-2 · 2026-10-22T03:40:32.951Z
 integrated: 663dcc0b56f37ba14087e1ca89a74ad80e5d2d0e (branch bridle/dq7t)
+
+### note · agent:manager-2 · 2026-10-22T03:40:47.725Z
+cleanup: removed agent dq7t, origin branch bridle/dq7t, branch bridle/dq7t
