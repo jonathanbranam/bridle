@@ -2,14 +2,17 @@
 id = "br-t7uq"
 title = "List external sessions, and list sessions and agents across all projects (--all-projects)"
 kind = "feature"
-state = "claimed"
+state = "built"
 created_at = "2026-10-22T00:58:06.025Z"
-updated_at = "2026-10-22T01:26:02.982171Z"
+updated_at = "2026-10-22T02:06:37.924799Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:t7uq",
 ]
+branch = "bridle/t7uq"
+commit = "140d49ead9b568e34aab42c2a7adc14261d57b49"
+summary = "Added 'bridle session list' (running external sessions: project, session, machine, context, uptime, last activity) and --all-projects on 'session list' and 'agent list'. A new commands/fanout.rs queries every local-registry daemon concurrently (5s timeout, token resolved per project); a daemon that fails shows as 'unreachable: <why>' (--json: [{project, items, error}]). Test covers fan-out with one dead daemon. docs/design/cli.md and CHANGELOG updated. Local registry only."
 ticket = "t7uq"
 +++
 
@@ -62,3 +65,9 @@ orchestrator: feature; waiting for the human's go before readying (asked 2026-10
 
 ### note · external:orchestrator · 2026-10-22T00:59:51.007Z
 orchestrator: readied. The human, 2026-10-21 (verbatim): "yes, please ready it".
+
+### note · agent:t7uq · 2026-10-22T02:06:37.849Z
+built: 140d49ead9b568e34aab42c2a7adc14261d57b49 (branch bridle/t7uq)
+
+### note · agent:t7uq · 2026-10-22T02:06:37.924Z
+done: bridle session list + --all-projects for session list/agent list; just check exit 0, 1964 tests passed; 140d49ead9b568e34aab42c2a7adc14261d57b49
