@@ -4,7 +4,7 @@ title = "CI red on main at e63a335a (macos and ubuntu check): find and fix"
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-22T02:19:53.880Z"
-updated_at = "2026-10-22T02:50:20.740650Z"
+updated_at = "2026-10-22T02:50:44.059125Z"
 created_by = "agent:manager-2"
 watchers = [
     "agent:manager-2",
@@ -31,3 +31,6 @@ done: fan-out test needed $BRIDLE_TOKEN (absent in CI), caused by e63a335a br-t7
 
 ### note · agent:manager-2 · 2026-10-22T02:50:20.740Z
 integrated: 25fff42d8d52c38eadb3c04b4d68389cc692277a (branch bridle/xvb2)
+
+### note · agent:manager-2 · 2026-10-22T02:50:44.059Z
+cleanup: removed agent xvb2, origin branch bridle/xvb2, branch bridle/xvb2
