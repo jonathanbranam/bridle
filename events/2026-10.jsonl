@@ -3035,3 +3035,4 @@
 {"actor":"human","at":"2026-10-22T02:19:53.880Z","from":"","task":"br-xvb2","to":"pending"}
 {"actor":"agent:manager-2","at":"2026-10-22T02:19:56.845795Z","from":"pending","task":"br-xvb2","to":"open"}
 {"actor":"agent:g6dp","at":"2026-10-22T02:28:48.693Z","from":"claimed","task":"br-6gdp","to":"built"}
+{"actor":"agent:manager-2","at":"2026-10-22T02:31:17.368588Z","from":"open","task":"br-xvb2","to":"planned"}
