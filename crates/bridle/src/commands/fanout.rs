@@ -72,10 +72,10 @@ mod tests {
     use super::*;
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
-    fn info(project: &str, url: String) -> bridle_api::DaemonInfo {
+    fn info(project: &str, workspace: &str, url: String) -> bridle_api::DaemonInfo {
         bridle_api::DaemonInfo {
             project: project.into(),
-            workspace: "/nonexistent".into(),
+            workspace: workspace.into(),
             repo: String::new(),
             url,
             pid: 1,
@@ -106,8 +106,18 @@ mod tests {
         let dead = format!("http://{}", l.local_addr().unwrap());
         drop(l);
 
+        // The human token file is what a CLI outside an agent session resolves; without it
+        // (CI has no $BRIDLE_TOKEN) the live daemon would report a missing token too.
+        let ws = tempfile::tempdir().unwrap();
+        std::fs::create_dir_all(ws.path().join(".bridle/tokens")).unwrap();
+        std::fs::write(ws.path().join(".bridle/tokens/human"), "tok\n").unwrap();
+        let ws_path = ws.path().to_str().unwrap();
+
         let answers = fan_out(
-            vec![info("zeta", dead), info("alpha", live)],
+            vec![
+                info("zeta", "/nonexistent", dead),
+                info("alpha", ws_path, live),
+            ],
             |c| async move {
                 let h = c.health().await.map_err(|e| e.to_string())?;
                 Ok(vec![h.agent_count])
@@ -117,7 +127,7 @@ mod tests {
 
         assert_eq!(answers.len(), 2);
         assert_eq!(answers[0].project, "alpha");
-        assert_eq!(answers[0].items, vec![3]);
+        assert_eq!(answers[0].items, vec![3], "{:?}", answers[0].error);
         assert!(answers[0].error.is_none());
         assert_eq!(answers[1].project, "zeta");
         assert!(answers[1].items.is_empty());
