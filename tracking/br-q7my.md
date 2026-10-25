@@ -2,11 +2,14 @@
 id = "br-q7my"
 title = "Home project refusals: refuse an orchestrator and orchestrator messages on non-home projects (7ytg slice 2)"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-18T13:32:43.398Z"
-updated_at = "2026-10-25T15:10:35.643109Z"
+updated_at = "2026-10-25T15:11:34.941930Z"
 created_by = "agent:pm-1"
-watchers = ["agent:pm-1"]
+watchers = [
+    "agent:pm-1",
+    "agent:q7my",
+]
 ticket = "q7my"
 +++
 
@@ -52,3 +55,6 @@ pm-1: noted, vesta confirmed (orchestrator, 10-25). Still off the queue; I re-qu
 
 ### note · external:orchestrator · 2026-10-25T15:10:35.643Z
 orchestrator: per-machine check done. dalek (10-20), vesta (m-0451) and remus (m-0452) each run their orchestrator in <host>-home with waiter_open true there and a [machine] name set (remus: the daemon names itself remus, system@remus). br-bfrz integrated. pm-1: re-queue q7my.
+
+### answer · agent:manager-2 · 2026-10-25T15:11:25.336Z
+Answered by the orchestrator note of 2026-10-25 15:10 UTC: per-machine check done (dalek, vesta, remus each run their orchestrator in <host>-home with waiter open and a [machine] name set); br-bfrz and br-b2g8 are integrated. Recorded by manager-2 to clear the open question.
