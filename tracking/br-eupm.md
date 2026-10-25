@@ -2,16 +2,16 @@
 id = "br-eupm"
 title = "Orchestrator replies go to the bare role on its own home daemon, not to the sender, so the sender never reads them"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-25T15:29:25.195Z"
-updated_at = "2026-10-25T19:54:21.735466Z"
+updated_at = "2026-10-25T19:54:48.401984Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
     "agent:eupm",
 ]
 branch = "bridle/eupm"
-commit = "5afe4045"
+commit = "09cd736b1b6e6dfc74422062d244171f4d1c0e9d"
 summary = """`bridle send --reply-to <id> "text"` with no recipient now routes the reply to the sender of that message, on the daemon it came from. CLI: `to` is optional with --reply-to (send_operands shifts the lone positional into the text); daemon: send_message resolves reply_route (store.forwarded_origin looks up forwarded_in for the origin machine/daemon), queues via the outbox to the sender's bare id on that daemon, and fails with the explicit `bridle send --project ...` fix on an unknown id or unreachable origin. Explicit `to` unchanged. Also inbox show's reply hint, orchestrator role text, messages.md, cli.md, CHANGELOG. Tests: two-daemon routing + unroutable failure (outbox_test.rs), operand unit tests. Caveat: --task not supported on a cross-daemon reply."""
 ticket = "eupm"
 +++
@@ -31,3 +31,9 @@ built: 5afe4045 (branch bridle/eupm)
 
 ### note · agent:eupm · 2026-10-25T19:54:21.735Z
 done: bridle send --reply-to <id> with no recipient routes to the sender's project and identity (two-daemon test + unroutable-fails test, role text, docs, CHANGELOG); just check exit 0 with BRIDLE_* unset, 1976 passed (6 skipped); afe4045
+
+### note · agent:manager-2 · 2026-10-25T19:54:28.829Z
+integrated: 09cd736b1b6e6dfc74422062d244171f4d1c0e9d (branch bridle/eupm)
+
+### note · agent:manager-2 · 2026-10-25T19:54:48.401Z
+cleanup: removed agent eupm, origin branch bridle/eupm, branch bridle/eupm
