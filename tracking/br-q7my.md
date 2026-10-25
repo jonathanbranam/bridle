@@ -2,16 +2,16 @@
 id = "br-q7my"
 title = "Home project refusals: refuse an orchestrator and orchestrator messages on non-home projects (7ytg slice 2)"
 kind = "feature"
-state = "built"
+state = "integrated"
 created_at = "2026-10-18T13:32:43.398Z"
-updated_at = "2026-10-25T15:53:49.750508Z"
+updated_at = "2026-10-25T16:06:28.720391Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "agent:q7my",
 ]
 branch = "bridle/q7my"
-commit = "5135840d602f1ce3a008f1154cccfca2d7ae9cc1"
+commit = "4f23dcd142d4806c3cc8cdf9c998decd0c74d841"
 summary = """
 Slice 2 of br-7ytg: the slice 1 warnings are now refusals of NEW launches. bridle_api::machines::MachineHome::problem (was warning) is the one message; is_home added. Daemon (bridle-daemon/src/lib.rs): [orchestrator] enabled in a non-home project logs an error and starts no supervisor (a running orchestrator is never stopped; the home is unaffected). CLI (home_project.rs): session orchestrator (so also the supervisor relaunch), up (before any tmux work), prime orchestrator refuse a non-home project, a machine with no name, or a home that does not exist, naming the exact command; bridle send external:orchestrator on a non-home LOCAL project is refused naming --project <host>-home (client-side, as in slice 1; a project on another machine is not judged, so outbox mail still routes to that machine's home: test mail_for_another_machines_orchestrator_is_not_refused plus the existing outbox tests). Tests: launcher refusals, is_home, no-name refusal, session orchestrator in/out of the home (project_resolution_test), existing launcher tests given a home config. Docs: orchestrator-supervision.md, advisor.md, CHANGELOG. Not done: a daemon-side refusal of the HTTP send path (agents use the CLI). Separate bug seen in the thread: replies addressed to the bare role (eupm).
 
@@ -84,3 +84,6 @@ Land check failed (run from my shell, not an agent env): bridle::prime_rules_tes
 
 ### note · agent:q7my · 2026-10-25T15:53:49.750Z
 fixed: prime_rules_test now sets BRIDLE_PROJECT=bridle (my agent env had it, so it hid the bug). Other launcher tests already pass --project or set BRIDLE_PROJECT. just check with all BRIDLE_* env unset: exit 0, 1972 passed; 55ebce34
+
+### note · agent:manager-2 · 2026-10-25T16:06:28.720Z
+integrated: 4f23dcd142d4806c3cc8cdf9c998decd0c74d841 (branch bridle/q7my)
