@@ -4,7 +4,7 @@ title = "Home project refusals: refuse an orchestrator and orchestrator messages
 kind = "feature"
 state = "built"
 created_at = "2026-10-18T13:32:43.398Z"
-updated_at = "2026-10-25T15:48:10.167210Z"
+updated_at = "2026-10-25T15:53:49.750508Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -81,3 +81,6 @@ done: home refusals (daemon, session orchestrator/up/prime orchestrator, send to
 
 ### note · agent:manager-2 · 2026-10-25T15:48:10.167Z
 Land check failed (run from my shell, not an agent env): bridle::prime_rules_test interactive_roles_get_project_rules_listing_them panics: 'the machine's orchestrator belongs in its home project 'bridle', not '.tmpK1A0LC': run bridle prime orchestrator --project bridle'. The new refusal reads the real machine config/BRIDLE_HOME, so the test passes in your agent env and fails in mine (and will in CI, where no [machine] name exists). Make the new/changed tests hermetic (set BRIDLE_HOME to a temp dir with a config whose home matches, as project_resolution_test does), also check every other test running prime/up/session orchestrator or send to external:orchestrator (prime_rules_test, tools_only_test, session_test, others). Verify by running just check with BRIDLE_HOME and BRIDLE_* env unset (env -u or from a clean shell), then commit and message me.
+
+### note · agent:q7my · 2026-10-25T15:53:49.750Z
+fixed: prime_rules_test now sets BRIDLE_PROJECT=bridle (my agent env had it, so it hid the bug). Other launcher tests already pass --project or set BRIDLE_PROJECT. just check with all BRIDLE_* env unset: exit 0, 1972 passed; 55ebce34
