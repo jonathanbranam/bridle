@@ -573,7 +573,13 @@ fn acted_on(
     extra: &[(&str, &str)],
 ) -> BTreeMap<String, String> {
     let mut seen = BTreeMap::new();
-    for leaf in of_kind(Daemon).into_iter().chain(of_kind(Session)) {
+    // `session orchestrator` runs only in the machine's one home project (br-7ytg), so it cannot
+    // act on both x and y; `the_orchestrator_launches_only_in_the_home` covers it.
+    for leaf in of_kind(Daemon)
+        .into_iter()
+        .chain(of_kind(Session))
+        .filter(|l| leaf_name(l) != "session orchestrator")
+    {
         let name = leaf_name(leaf);
         let before = hits(w);
         let r = run(w, leaf, cwd, global, extra);
@@ -658,6 +664,31 @@ fn the_environment_wins_over_the_workspace() {
     assert_all(&seen, "y");
 }
 
+// br-7ytg: the orchestrator launches in the machine's home project and nowhere else.
+#[test]
+fn the_orchestrator_launches_only_in_the_home() {
+    let w = world();
+    let leaf: Vec<String> = ["session", "orchestrator"].map(String::from).to_vec();
+    // A machine with no home project: refused, saying how to make one.
+    let r = run(&w, &leaf, &w.inside, &[], &[("BRIDLE_PROJECT", "x")]);
+    assert!(!r.ok && r.claude.is_empty(), "{}", r.out);
+    // x is the home: it launches in x, and y is refused with the exact command.
+    fs::write(
+        w.root.join("home/config.toml"),
+        "[machine]\nname = \"m\"\nhome_project = \"x\"\n[machines]\nm = \"h\"\n[projects]\nx = { machine = \"m\", port = 1 }\n",
+    )
+    .unwrap();
+    let r = run(&w, &leaf, &w.inside, &[], &[("BRIDLE_PROJECT", "x")]);
+    assert!(r.ok && r.claude.contains("PROJECT=x"), "{}", r.out);
+    let r = run(&w, &leaf, &w.inside, &[], &[("BRIDLE_PROJECT", "y")]);
+    assert!(!r.ok && r.claude.is_empty(), "{}", r.out);
+    assert!(
+        r.out.contains("bridle session orchestrator --project x"),
+        "{}",
+        r.out
+    );
+}
+
 // s-f742: outside any workspace the command refuses.
 #[test]
 fn outside_a_workspace_every_command_refuses() {
@@ -666,7 +697,9 @@ fn outside_a_workspace_every_command_refuses() {
     for leaf in of_kind(Daemon).into_iter().chain(of_kind(Session)) {
         let r = run(&w, leaf, &w.outside, &[], &[]);
         let tolerant = TOLERANT.contains(&leaf_name(leaf).as_str());
-        let refused = !r.ok && r.out.contains("--project");
+        // A tolerant command may also refuse for want of a home project (br-7ytg).
+        let refused =
+            !r.ok && (r.out.contains("--project") || tolerant && r.out.contains("home project"));
         if !(refused || tolerant && r.ok) || r.claude.contains("PROJECT=") {
             bad.push(format!(
                 "  bridle {}: ok={} {}",

@@ -8,10 +8,20 @@ use std::path::Path;
 use std::process::Command;
 
 fn prime(role: &str, repo: &Path, home: &Path) -> String {
+    // The orchestrator is primed only in the machine's home project (br-7ytg): make `bridle` (what the repo resolves to) it.
+    let name = "bridle";
+    fs::write(
+        home.join("config.toml"),
+        format!(
+            "[machine]\nname = \"t\"\nhome_project = \"{name}\"\n[machines]\nt = \"h\"\n[projects]\n\"{name}\" = {{ machine = \"t\", port = 1 }}\n"
+        ),
+    )
+    .unwrap();
     let out = Command::new(env!("CARGO_BIN_EXE_bridle"))
         .args(["prime", role])
         .current_dir(repo)
         .env("BRIDLE_HOME", home)
+        .env("BRIDLE_PROJECT", "bridle")
         .output()
         .unwrap();
     assert!(

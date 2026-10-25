@@ -255,27 +255,28 @@ pub(super) async fn own_daemon_for_other_project(
     Ok(Some((client, project.to_string())))
 }
 
-/// Mail to the orchestrator belongs on the machine's home project (br-7ytg): the sender is told
-/// when it addresses another local project. Still delivered; nothing refuses yet.
-fn warn_if_orchestrator_mail_off_home(cli: &Cli, to: &str) {
+/// Mail to the orchestrator belongs on the machine's home project (br-7ytg): addressing another
+/// local project is refused, with the command to use instead.
+fn refuse_orchestrator_mail_off_home(cli: &Cli, to: &str) -> Result<(), CliError> {
     if to != "external:orchestrator" && to != "orchestrator" {
-        return;
+        return Ok(());
     }
     let Ok(project) = crate::project::resolve(cli) else {
-        return;
+        return Ok(());
     };
     let home = discovery::bridle_home();
     let remote = bridle_api::machines::MachineMap::load(&home)
         .ok()
         .is_some_and(|m| m.remote(&project).ok().flatten().is_some());
-    if let Some(w) = crate::home_project::send_warning(&home, &project, remote) {
-        eprintln!("{w}");
+    match crate::home_project::send_refusal(&home, &project, remote) {
+        Some(w) => Err(CliError::Usage(w)),
+        None => Ok(()),
     }
 }
 
 pub(super) async fn send(cli: &Cli, args: &SendArgs) -> Result<(), CliError> {
     let body = require_body(read_text(&args.text, &args.text_file, "text")?)?;
-    warn_if_orchestrator_mail_off_home(cli, &args.to);
+    refuse_orchestrator_mail_off_home(cli, &args.to)?;
     if let Some((own, project)) = own_daemon_for_other_project(cli).await? {
         if args.task.is_some() {
             return Err(CliError::from(anyhow::anyhow!(

@@ -136,6 +136,15 @@ fn run_script_as_agent(role: &str, home: &Path, flag: bool) -> (Output, bool) {
 
 fn run_script_env(role: &str, cwd: &Path, home: &Path, agent: Option<bool>) -> (Output, bool) {
     let bin = tempfile::tempdir().unwrap();
+    // The orchestrator launches only in the machine's home project (br-7ytg): `bridle` is it.
+    // (A tools-only home config refuses before the home is looked at.)
+    if !home.join("config.toml").exists() {
+        fs::write(
+            home.join("config.toml"),
+            "[machine]\nname = \"t\"\nhome_project = \"bridle\"\n[machines]\nt = \"h\"\n[projects]\nbridle = { machine = \"t\", port = 1 }\n",
+        )
+        .unwrap();
+    }
     let ran = bin.path().join("ran");
     let stub = bin.path().join("claude");
     fs::write(&stub, format!("#!/bin/sh\ntouch {}\n", ran.display())).unwrap();

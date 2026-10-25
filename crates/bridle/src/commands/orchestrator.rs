@@ -108,10 +108,10 @@ pub(super) async fn prime_orchestrator(cli: &Cli) -> Result<(), CliError> {
         Err(_) => None,
     };
     let project = crate::launchd::project_name(cli, &repo)?;
-    crate::home_project::warn_launcher(
+    crate::home_project::refuse_launcher(
         Some(&project),
         "bridle prime orchestrator --project {home}",
-    );
+    )?;
     print!(
         "{}",
         render_prime_orchestrator(

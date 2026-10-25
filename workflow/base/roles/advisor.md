@@ -96,7 +96,7 @@ bridle send external:orchestrator --project <host>-home "From advisor: ..."
 The orchestrator is different from the other roles: there is one per machine,
 and it runs in that machine's home project, `<host>-home` (`dalek-home`,
 `vesta-home`, `remus-home`; `workflow/base/roles/orchestrator.md`). Never use
-`--project bridle` for it: `bridle send` warns about any non-home project. It
+`--project bridle` for it: `bridle send` refuses any non-home project. It
 watches its home daemon only, so a message to `external:orchestrator` on your own
 project's daemon may never be read unless that project forwards to the home. Name
 the project it runs in, `--project <host>-home`, from any other project.

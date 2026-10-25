@@ -25,6 +25,21 @@ fn stub(dir: &Path, name: &str, body: &str) {
 fn session(args: &[&str], envs: &[(&str, &str)], claude_exit: i32) -> Run {
     let bin = tempfile::tempdir().unwrap();
     let home = tempfile::tempdir().unwrap();
+    // The orchestrator launches only in the machine's home project (br-7ytg): make the
+    // `--project` of the run (default `bridle`) that home.
+    let project = args
+        .iter()
+        .position(|a| *a == "--project")
+        .and_then(|i| args.get(i + 1))
+        .copied()
+        .unwrap_or("bridle");
+    fs::write(
+        home.path().join("config.toml"),
+        format!(
+            "[machine]\nname = \"t\"\nhome_project = \"{project}\"\n[machines]\nt = \"h\"\n[projects]\n\"{project}\" = {{ machine = \"t\", port = 1 }}\n"
+        ),
+    )
+    .unwrap();
     let rec = bin.path().join("claude.rec");
     let tmux_rec = bin.path().join("tmux.rec");
     stub(

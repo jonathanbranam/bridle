@@ -132,6 +132,11 @@ fn machine_home_with(bridle_home: &Path, env: impl Fn(&str) -> Option<String>) -
 }
 
 impl MachineHome {
+    /// Whether `project` is the machine's home: the only project that may run an orchestrator.
+    pub fn is_home(&self, project: &str) -> bool {
+        self.home.as_deref() == Some(project)
+    }
+
     /// Whether a project of that name runs here: listed in `[projects]` on this machine or in
     /// the local daemon registry.
     pub fn exists(&self, bridle_home: &Path) -> bool {
@@ -149,10 +154,11 @@ impl MachineHome {
                 .any(|d| d.project == home)
     }
 
-    /// Warn-only check for a command that launches or addresses the orchestrator in `project`
-    /// (None: it would pick one itself). `command` is what to run instead, with `{home}` for the
-    /// home project. Nothing refuses yet (br-7ytg slice 1).
-    pub fn warning(
+    /// What is wrong with launching or addressing the orchestrator in `project` (None: the
+    /// command would pick one itself), as a sentence the caller prefixes with `error:` (it
+    /// refuses, br-7ytg slice 2) or `warning:` (doctor). `command` is what to run instead, with
+    /// `{home}` for the home project.
+    pub fn problem(
         &self,
         bridle_home: &Path,
         project: Option<&str>,
@@ -160,22 +166,22 @@ impl MachineHome {
     ) -> Option<String> {
         let Some(home) = self.home.as_deref() else {
             return Some(
-                "warning: this machine has no name, so no home project: set `[machine] name` in \
+                "this machine has no name, so no home project: set `[machine] name` in \
                  ~/.bridle/config.toml (the home is `<name>-home`), or `[machine] home_project`"
                     .to_string(),
             );
         };
         if !self.exists(bridle_home) {
             return Some(format!(
-                "warning: the machine's home project '{home}' does not exist here: create it \
+                "the machine's home project '{home}' does not exist here: create it \
                  (a clone named {home}, `bridle init`, `bridle serve`) or set `[machine] \
                  home_project` in ~/.bridle/config.toml to an existing project"
             ));
         }
         match project {
             Some(p) if p != home => Some(format!(
-                "warning: the machine's orchestrator belongs in its home project '{home}', not \
-                 '{p}': run `{}`. This still works for now; a later release refuses.",
+                "the machine's orchestrator belongs in its home project '{home}', not '{p}': \
+                 run `{}`",
                 command.replace("{home}", home)
             )),
             _ => None,
@@ -373,13 +379,13 @@ mod tests {
         );
         let h = machine_home(d.path());
         let w = h
-            .warning(d.path(), Some("bridle"), "bridle up --project {home}")
+            .problem(d.path(), Some("bridle"), "bridle up --project {home}")
             .expect("warns");
         assert!(
             w.contains("'mbp-home'") && w.contains("bridle up --project mbp-home"),
             "{w}"
         );
-        assert_eq!(h.warning(d.path(), Some("mbp-home"), "x"), None);
+        assert_eq!(h.problem(d.path(), Some("mbp-home"), "x"), None);
     }
 
     #[test]
@@ -392,7 +398,7 @@ mod tests {
         let h = machine_home(d.path());
         assert_eq!(h.home.as_deref(), Some("dalek-home"));
         let w = h
-            .warning(d.path(), Some("bridle"), "bridle up --project {home}")
+            .problem(d.path(), Some("bridle"), "bridle up --project {home}")
             .expect("warns");
         assert!(
             w.contains("'dalek-home'") && w.contains("bridle up --project dalek-home"),
@@ -402,10 +408,27 @@ mod tests {
     }
 
     #[test]
+    fn only_the_home_may_run_an_orchestrator() {
+        let d = home_dir("[machine]\nname = \"mbp\"\n");
+        let h = machine_home(d.path());
+        assert!(h.is_home("mbp-home"));
+        assert!(!h.is_home("bridle"));
+        assert!(!MachineHome::default().is_home("mbp-home"));
+    }
+
+    #[test]
+    fn a_machine_without_a_name_has_no_home_to_launch_in() {
+        let h = MachineHome::default();
+        let d = tempfile::tempdir().unwrap();
+        let w = h.problem(d.path(), Some("mbp-home"), "x").expect("refuses");
+        assert!(w.contains("no home project"), "{w}");
+    }
+
+    #[test]
     fn a_missing_home_says_how_to_create_one() {
         let d = home_dir("[machine]\nname = \"mbp\"\n");
         let w = machine_home(d.path())
-            .warning(d.path(), None, "x")
+            .problem(d.path(), None, "x")
             .expect("warns");
         assert!(
             w.contains("does not exist") && w.contains("bridle init"),

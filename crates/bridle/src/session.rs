@@ -188,10 +188,10 @@ pub async fn run(cli: &Cli, role: &SessionRole) -> Result<(), CliError> {
     crate::tools_only::check_here()?;
     let project = crate::project::resolve(cli)?;
     if matches!(role, SessionRole::Orchestrator { .. }) {
-        crate::home_project::warn_launcher(
+        crate::home_project::refuse_launcher(
             Some(&project),
             "bridle session orchestrator --project {home}",
-        );
+        )?;
     }
     let suffix = std::env::var("BRIDLE_SESSION_SUFFIX").unwrap_or_default();
     let home = bridle_home();

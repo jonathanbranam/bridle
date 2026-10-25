@@ -1185,21 +1185,32 @@ async fn start_inner(
             }
         })
     });
-    let orchestrator_task = config.orchestrator.enabled.then(|| {
+    // Only the machine's home project may run an orchestrator (br-7ytg): elsewhere the config is
+    // ignored. Nothing already running is touched; this only stops a new supervisor.
+    let orchestrator_enabled = config.orchestrator.enabled && {
+        let mh = bridle_api::machines::machine_home(
+            &overrides
+                .bridle_home
+                .clone()
+                .unwrap_or_else(discovery::bridle_home),
+        );
+        let is_home = mh.is_home(&project);
+        if !is_home {
+            tracing::error!(
+                project = %project,
+                home = mh.home.as_deref().unwrap_or("none"),
+                "[orchestrator] is enabled but this project is not the machine's home project; \
+                 ignoring it, no orchestrator will be started here. Set `enabled = false` and run \
+                 `bridle up` (it starts the orchestrator in the home). See `bridle doctor`."
+            );
+        }
+        is_home
+    };
+    let orchestrator_task = orchestrator_enabled.then(|| {
         let home = overrides
             .bridle_home
             .clone()
             .unwrap_or_else(discovery::bridle_home);
-        let mh = bridle_api::machines::machine_home(&home);
-        if mh.home.as_deref() != Some(project.as_str()) {
-            tracing::warn!(
-                project = %project,
-                home = mh.home.as_deref().unwrap_or("none"),
-                "[orchestrator] is enabled but this project is not the machine's home project; \
-                 the orchestrator belongs in the home (still honoured for now; a later release \
-                 refuses). Run `bridle daemon doctor`."
-            );
-        }
         let launcher =
             orchestrator::launch_line(config.orchestrator.launcher.as_deref(), &project, &ws.repo);
         let sup = orchestrator::real(

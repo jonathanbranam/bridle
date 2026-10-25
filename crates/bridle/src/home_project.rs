@@ -4,21 +4,27 @@
 
 use std::path::Path;
 
+use crate::error::CliError;
 use bridle_api::discovery::bridle_home;
 use bridle_api::machines::{MachineHome, machine_home, non_home_orchestrators};
 
-/// Prints the home warning for a launcher given `project` (None: it picks its own), to stderr.
-/// `command` is what to run instead, `{home}` standing for the home project. Never refuses.
-pub fn warn_launcher(project: Option<&str>, command: &str) {
-    let home = bridle_home();
-    if let Some(w) = machine_home(&home).warning(&home, project, command) {
-        eprintln!("{w}");
+/// Refuses a launcher of the orchestrator in `project` (None: it picks its own) unless that is
+/// the machine's home. `command` is what to run instead, `{home}` standing for the home project.
+/// Only new launches are refused; a running orchestrator is never touched.
+pub fn refuse_launcher(project: Option<&str>, command: &str) -> Result<(), CliError> {
+    launcher_refusal(&bridle_home(), project, command)
+}
+
+fn launcher_refusal(home: &Path, project: Option<&str>, command: &str) -> Result<(), CliError> {
+    match machine_home(home).problem(home, project, command) {
+        Some(w) => Err(CliError::Usage(w)),
+        None => Ok(()),
     }
 }
 
-/// The warning a sender gets for mail to `external:orchestrator` in `project`, if any. Only a
+/// The refusal a sender gets for mail to `external:orchestrator` in `project`, if any. Only a
 /// local project is judged: another machine's home is that machine's to name.
-pub fn send_warning(home: &Path, project: &str, remote: bool) -> Option<String> {
+pub fn send_refusal(home: &Path, project: &str, remote: bool) -> Option<String> {
     if remote {
         return None;
     }
@@ -26,9 +32,8 @@ pub fn send_warning(home: &Path, project: &str, remote: bool) -> Option<String> 
     let h = mh.home.as_deref()?;
     (h != project).then(|| {
         format!(
-            "warning: '{project}' is not this machine's home project; the orchestrator's mail \
-             belongs on '{h}': send with `--project {h}`. It is still forwarded for now; a later \
-             release refuses."
+            "'{project}' is not this machine's home project; the orchestrator's mail \
+             belongs on '{h}': send with `--project {h}`"
         )
     })
 }
@@ -60,8 +65,8 @@ pub fn doctor_check(repo: &Path) -> crate::doctor::Check {
     let mut detail = format!("home {}", describe(&mh, waiter.as_deref()));
     let strays = non_home_orchestrators(mh.home.as_deref(), Some(repo));
     let mut problems = Vec::new();
-    if let Some(w) = mh.warning(&home, None, "") {
-        problems.push(w.trim_start_matches("warning: ").to_string());
+    if let Some(w) = mh.problem(&home, None, "") {
+        problems.push(w);
     }
     if !strays.is_empty() {
         problems.push(format!(
@@ -83,7 +88,7 @@ pub fn doctor_check(repo: &Path) -> crate::doctor::Check {
         "orchestrator home",
         detail,
         "move the orchestrator to the home and set `enabled = false` in the other projects' \
-         [orchestrator] (still only a warning; a later release refuses)",
+         [orchestrator] (such a daemon now refuses to start an orchestrator)",
     )
 }
 
@@ -99,10 +104,40 @@ mod tests {
             "[machine]\nname = \"mbp\"\n",
         )
         .expect("write");
-        let w = send_warning(dir.path(), "bridle", false).expect("warns");
+        let w = send_refusal(dir.path(), "bridle", false).expect("warns");
         assert!(w.contains("--project mbp-home"), "{w}");
-        assert_eq!(send_warning(dir.path(), "mbp-home", false), None);
-        assert_eq!(send_warning(dir.path(), "bridle", true), None);
+        assert_eq!(send_refusal(dir.path(), "mbp-home", false), None);
+        assert_eq!(send_refusal(dir.path(), "bridle", true), None);
+    }
+
+    fn machine_home_dir() -> tempfile::TempDir {
+        let dir = tempfile::tempdir().expect("tmp");
+        std::fs::write(
+            dir.path().join("config.toml"),
+            "[machine]\nname = \"mbp\"\n[machines]\nmbp = \"h\"\n[projects]\nmbp-home = { machine = \"mbp\", port = 1 }\n",
+        )
+        .expect("write");
+        dir
+    }
+
+    #[test]
+    fn a_launcher_refuses_a_non_home_project_naming_the_command() {
+        let dir = machine_home_dir();
+        let e = launcher_refusal(dir.path(), Some("bridle"), "bridle up --project {home}")
+            .expect_err("refuses");
+        let e = e.to_string();
+        assert!(e.contains("bridle up --project mbp-home"), "{e}");
+        assert!(launcher_refusal(dir.path(), Some("mbp-home"), "x").is_ok());
+        // `bridle up` picks the home itself.
+        assert!(launcher_refusal(dir.path(), None, "bridle up").is_ok());
+    }
+
+    #[test]
+    fn mail_for_another_machines_orchestrator_is_not_refused() {
+        let dir = machine_home_dir();
+        // A project that lives on another machine routes through the outbox to that home.
+        assert_eq!(send_refusal(dir.path(), "vesta-home", true), None);
+        assert_eq!(send_refusal(dir.path(), "bridle", true), None);
     }
 
     #[test]
