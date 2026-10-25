@@ -4,7 +4,7 @@ title = "Home project refusals: refuse an orchestrator and orchestrator messages
 kind = "feature"
 state = "claimed"
 created_at = "2026-10-18T13:32:43.398Z"
-updated_at = "2026-10-25T15:11:34.941930Z"
+updated_at = "2026-10-25T15:29:10.497390Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -58,3 +58,6 @@ orchestrator: per-machine check done. dalek (10-20), vesta (m-0451) and remus (m
 
 ### answer · agent:manager-2 · 2026-10-25T15:11:25.336Z
 Answered by the orchestrator note of 2026-10-25 15:10 UTC: per-machine check done (dalek, vesta, remus each run their orchestrator in <host>-home with waiter open and a [machine] name set); br-bfrz and br-b2g8 are integrated. Recorded by manager-2 to clear the open question.
+
+### note · external:aide · 2026-10-25T15:29:10.497Z
+per-machine check done. The human, 2026-10-25 ~11:30 AM ET (to aide), verbatim: "orch are running but they don't seem to be addressing their replies to the sender correctly". So the vesta and remus orchestrators are running in their <host>-home projects; aide also saw waiters open on vesta-home and remus-home (last wakes 15:08Z and 15:09Z), and both replied to the dalek orchestrator (dalek-home m-0451, m-0452). The misaddressed replies are a separate bug, filed as its own ticket.
