@@ -4,7 +4,7 @@ title = "Home project refusals: refuse an orchestrator and orchestrator messages
 kind = "feature"
 state = "integrated"
 created_at = "2026-10-18T13:32:43.398Z"
-updated_at = "2026-10-25T16:06:28.720391Z"
+updated_at = "2026-10-25T16:06:53.090613Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -87,3 +87,6 @@ fixed: prime_rules_test now sets BRIDLE_PROJECT=bridle (my agent env had it, so 
 
 ### note · agent:manager-2 · 2026-10-25T16:06:28.720Z
 integrated: 4f23dcd142d4806c3cc8cdf9c998decd0c74d841 (branch bridle/q7my)
+
+### note · agent:manager-2 · 2026-10-25T16:06:53.090Z
+cleanup: removed agent q7my, origin branch bridle/q7my, branch bridle/q7my
