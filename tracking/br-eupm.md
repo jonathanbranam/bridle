@@ -2,11 +2,14 @@
 id = "br-eupm"
 title = "Orchestrator replies go to the bare role on its own home daemon, not to the sender, so the sender never reads them"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-25T15:29:25.195Z"
-updated_at = "2026-10-25T15:43:06.019795Z"
+updated_at = "2026-10-25T19:27:13.897075Z"
 created_by = "external:aide"
-watchers = ["external:aide"]
+watchers = [
+    "external:aide",
+    "agent:eupm",
+]
 ticket = "eupm"
 +++
 
