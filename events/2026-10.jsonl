@@ -3053,3 +3053,4 @@
 {"actor":"agent:pm-1","at":"2026-10-22T04:40:13.996998Z","queue":"reprioritized"}
 {"actor":"agent:v54x","at":"2026-10-22T04:57:34.541005Z","from":"claimed","task":"br-v54x","to":"built"}
 {"actor":"agent:manager-2","at":"2026-10-22T04:57:41.994497Z","from":"built","task":"br-v54x","to":"integrated"}
+{"actor":"agent:pm-1","at":"2026-10-25T15:10:37.392030Z","queue":"reprioritized"}
