@@ -590,6 +590,16 @@ impl Store {
             .await
     }
 
+    /// Where a message that arrived through `/v1/forward` started: `(machine, daemon project)`.
+    pub async fn forwarded_origin(
+        &self,
+        message_id: &str,
+    ) -> Result<Option<(String, String)>, StoreError> {
+        let id = message_id.to_string();
+        self.with_conn(move |c| sync::forwarded_origin(c, &id))
+            .await
+    }
+
     pub async fn forwarded_record(
         &self,
         origin: &(String, String, String),
@@ -2584,6 +2594,30 @@ mod sync {
                 .map(str::to_string)
                 .collect()
         }))
+    }
+
+    pub(super) fn forwarded_origin(
+        conn: &Connection,
+        message_id: &str,
+    ) -> Result<Option<(String, String)>, StoreError> {
+        let mut stmt = conn.prepare(
+            "SELECT origin_machine, origin_daemon, message_ids FROM forwarded_in
+             WHERE message_ids LIKE '%' || ?1 || '%'",
+        )?;
+        let rows = stmt.query_map(params![message_id], |r| {
+            Ok((
+                r.get::<_, String>(0)?,
+                r.get::<_, String>(1)?,
+                r.get::<_, String>(2)?,
+            ))
+        })?;
+        for row in rows {
+            let (machine, daemon, ids) = row?;
+            if ids.split(',').any(|i| i == message_id) {
+                return Ok(Some((machine, daemon)));
+            }
+        }
+        Ok(None)
     }
 
     pub(super) fn forwarded_record(

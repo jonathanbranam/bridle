@@ -2101,13 +2101,29 @@ async fn forward_to_home(
         (*kind, body, when, reply_to.clone()),
     )
     .await?;
-    Ok(Some(Message {
+    Ok(Some(pending_forward(
+        oid,
+        from,
+        id.clone(),
+        (*kind, body, when, reply_to.clone()),
+    )))
+}
+
+/// The answer for a message sitting in the outbox for its home daemon.
+fn pending_forward(
+    oid: String,
+    from: String,
+    to: String,
+    msg: (MessageKind, &str, When, Option<String>),
+) -> Message {
+    let (kind, body, when, reply_to) = msg;
+    Message {
         id: oid.clone(),
         from,
-        to: id.clone(),
-        kind: *kind,
+        to,
+        kind,
         body: body.to_string(),
-        reply_to: reply_to.clone(),
+        reply_to,
         when,
         state: MessageState::Pending,
         created_at: Utc::now(),
@@ -2119,7 +2135,37 @@ async fn forward_to_home(
         answered_line: None,
         incident_task: None,
         recipient_note: Some(format!("forwarded to its home daemon, outbox {oid}")),
-    }))
+    }
+}
+
+/// Where a reply to message `id` goes (br-eupm): the principal that sent it, on the daemon it
+/// sent from. `(None, from)` is a sender on this daemon; `(Some(project), to)` is one on another
+/// daemon, reached through the outbox. Fails, with the command that does work, when the original
+/// is unknown or its daemon can't be forwarded to, rather than leaving a reply nobody reads.
+async fn reply_route(state: &AppState, id: &str) -> Result<(Option<String>, String), ApiError> {
+    let original = state.store.get_message(id).await?.ok_or_else(|| {
+        ApiError::not_found(format!(
+            "no message {id} to reply to: check the id with `bridle inbox --all --json`, or \
+             name the recipient: `bridle send <to> --reply-to {id} <text>`"
+        ))
+    })?;
+    let Some((machine, daemon)) = state.store.forwarded_origin(id).await? else {
+        return Ok((None, original.from));
+    };
+    // The sender's label carries its machine; on its own daemon the name is the whole id.
+    let to = original
+        .from
+        .strip_suffix(&format!("@{machine}"))
+        .unwrap_or(&original.from)
+        .to_string();
+    if let Err(why) = state.outbox.check_destination(&daemon) {
+        return Err(ApiError::bad_request(format!(
+            "can't route the reply to {to} on '{daemon}' (where message {id} came from): {why}; \
+             once that is fixed, or to send elsewhere, name the recipient: \
+             `bridle send --project {daemon} {to} --reply-to {id} <text>`"
+        )));
+    }
+    Ok((Some(daemon), to))
 }
 
 async fn send_message(
@@ -2128,8 +2174,29 @@ async fn send_message(
     Json(req): Json<SendRequest>,
 ) -> Result<Json<Vec<Message>>, ApiError> {
     require_body(&req)?;
-    let Some(to_raw) = req.to.as_deref() else {
-        return Err(ApiError::bad_request("`to` is required"));
+    let routed = match (req.to.as_deref(), req.reply_to.as_deref()) {
+        (None, Some(id)) => Some(reply_route(&state, id).await?),
+        _ => None,
+    };
+    if let Some((Some(project), to)) = &routed {
+        if req.task.is_some() {
+            return Err(ApiError::bad_request(
+                "--task isn't supported for a reply to another project's daemon yet",
+            ));
+        }
+        let from = format!("{}@{}", principal.id, state.outbox.machine_name());
+        let msg = (req.kind, req.body.as_str(), req.when, req.reply_to.clone());
+        let oid = enqueue_to_home(&state, project, &from, to, msg.clone()).await?;
+        return Ok(Json(vec![pending_forward(oid, from, to.clone(), msg)]));
+    }
+    let to_raw = match (&routed, req.to.as_deref()) {
+        (Some((_, to)), _) => to.as_str(),
+        (None, Some(to)) => to,
+        (None, None) => {
+            return Err(ApiError::bad_request(
+                "`to` is required (or `reply_to`, to answer a message's sender)",
+            ));
+        }
     };
     let targets = resolve_targets(&state, to_raw).await?;
     let named = to_raw.strip_prefix("external:").and_then(split_named);

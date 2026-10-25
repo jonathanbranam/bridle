@@ -100,6 +100,7 @@ bridle agent spawn   <role> [--name N] [--prompt TEXT | --prompt-file FILE]
 bridle agent list  [--all] [--all-projects]   --all-projects: every project in the local registry (not other machines), a PROJECT column; a daemon that does not answer is listed as `unreachable: <why>` (`--json`: `[{project, items, error}]`)
 bridle agent show    <agent>
 bridle send    [--project <other>] <agent|human|role:NAME|external:NAME> [TEXT | --text-file FILE] [--question] [--when now|idle] [--reply-to ID] [--task ID]
+bridle send    --reply-to ID [TEXT | --text-file FILE]   # no recipient: to the sender of ID, on its daemon
 bridle schedule add  [--to <principal>] (--at <time> | --cron "<expr>") [--tz <IANA>] (--message TEXT | --message-file FILE|-)
                      # the daemon sends the message to <principal> (default: me, an agent or external) at the time; --at is RFC 3339 or "YYYY-MM-DD HH:MM" in --tz (default [schedule] timezone, America/New_York);
                      # --cron is 5 fields in --tz (DST: a skipped local time is skipped that day, a repeated one fires once). Prints the id and the next fire time (schedule zone, and UTC). A past --at or a cron that never fires is refused
@@ -856,7 +857,7 @@ bridle ticket comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain com
   - `bridle inbox show <id> [--mark-read]` (show one message in full) fetches a single
     message to `me` by id (a question a delegate answered shows `Answered by:`; the list shows
     "answered by <who>: <first line>", visible with `--all`), prints the full header (from, kind, time, reply-to), the body,
-    and the reply command (formatted as `bridle send <from> --reply-to <id> "..."`). It
+    and the reply command (formatted as `bridle send --reply-to <id> "..."`). It
     leaves the human's message unread (reading isn't handling; an agent's or external
     principal's is marked read, via `id=` and `mark_read=true`); `--mark-read` calls
     `POST /v1/messages/{id}/read` after showing it. In JSON mode, returns the message object; plain text returns the

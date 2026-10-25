@@ -51,6 +51,11 @@ ticket needs the human, with `bridle ticket new "[at restart] <what>" -k chore -
   daemons you can reach with `--project`. `bridle message show <id>` says whether a send is
   `queued`, `arrived` or `delivered`, and `bridle status` has an `outbox` line when mail to
   another daemon is waiting.
+- **Always answer a message with `--reply-to`:** `bridle send --reply-to <m-id> "..."`, no
+  recipient. It goes to the principal that sent that message, on the daemon it sent from. Never
+  answer by sending to the bare role (`external:aide`): you run on `<host>-home`, where no aide
+  listens, and every project's aide has the same name, so the reply sits unread. If the reply
+  can't be routed the send fails and prints the command that works; use it.
 - **Splitting a ticket: use `--from`.** When you make a ticket from part of another (a second half,
   a follow-up in another worktree), run `bridle task new ... --from <parent-ticket>`. The new ticket
   inherits the parent's watchers, so whoever asked for the work hears about all of it, and the

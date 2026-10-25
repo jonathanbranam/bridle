@@ -274,10 +274,40 @@ fn refuse_orchestrator_mail_off_home(cli: &Cli, to: &str) -> Result<(), CliError
     }
 }
 
+/// With `--reply-to` the recipient may be left out, which shifts the one positional into the text
+/// slot: `send --reply-to m-1 "text"`. Returns `(to, text)`; `to` is `None` for a routed reply.
+pub(super) fn send_operands(
+    to: &Option<String>,
+    text: &Option<String>,
+    text_file: &Option<std::path::PathBuf>,
+    reply_to: &Option<String>,
+) -> Result<(Option<String>, Option<String>), CliError> {
+    match (to, text, text_file, reply_to) {
+        (Some(t), None, None, Some(_)) => Ok((None, Some(t.clone()))),
+        (None, _, _, Some(_)) => Ok((None, text.clone())),
+        (None, _, _, None) => Err(CliError::Usage(
+            "say who to send to (`bridle send <to> <text>`), or give `--reply-to <message id>` \
+             to answer the sender of that message"
+                .to_string(),
+        )),
+        (Some(_), ..) => Ok((to.clone(), text.clone())),
+    }
+}
+
 pub(super) async fn send(cli: &Cli, args: &SendArgs) -> Result<(), CliError> {
-    let body = require_body(read_text(&args.text, &args.text_file, "text")?)?;
-    refuse_orchestrator_mail_off_home(cli, &args.to)?;
-    if let Some((own, project)) = own_daemon_for_other_project(cli).await? {
+    let (to, text) = send_operands(&args.to, &args.text, &args.text_file, &args.reply_to)?;
+    let body = require_body(read_text(&text, &args.text_file, "text")?)?;
+    // No `to`: the daemon routes the reply (to the message's sender, on the project it came from),
+    // so none of the other-project handling below applies.
+    if let Some(to) = &to {
+        refuse_orchestrator_mail_off_home(cli, to)?;
+    }
+    let other = match &to {
+        Some(_) => own_daemon_for_other_project(cli).await?,
+        None => None,
+    };
+    if let Some((own, project)) = other {
+        let to = to.clone().unwrap_or_default();
         if args.task.is_some() {
             return Err(CliError::from(anyhow::anyhow!(
                 "--task isn't supported for another project's daemon yet"
@@ -286,7 +316,7 @@ pub(super) async fn send(cli: &Cli, args: &SendArgs) -> Result<(), CliError> {
         let queued = own
             .send_outbox(&bridle_api::types::OutboxSendRequest {
                 project,
-                to: args.to.clone(),
+                to,
                 body,
                 kind: if args.question {
                     MessageKind::Question
@@ -321,14 +351,18 @@ pub(super) async fn send(cli: &Cli, args: &SendArgs) -> Result<(), CliError> {
         }
         return Ok(());
     }
-    let client = match cli.project.as_deref().and_then(|p| {
-        discovery::direct_local_access(
-            &discovery::credentials_path(),
-            &discovery::list_registry(),
-            p,
-            &ProcessEnv,
-        )
-    }) {
+    let client = match cli
+        .project
+        .as_deref()
+        .filter(|_| to.is_some())
+        .and_then(|p| {
+            discovery::direct_local_access(
+                &discovery::credentials_path(),
+                &discovery::list_registry(),
+                p,
+                &ProcessEnv,
+            )
+        }) {
         // Not client_for: $BRIDLE_URL would send it to the own daemon.
         Some((url, token)) => {
             Client::new(url, Some(token)).with_advisor(std::env::var("BRIDLE_ADVISOR_NAME").ok())
@@ -336,7 +370,7 @@ pub(super) async fn send(cli: &Cli, args: &SendArgs) -> Result<(), CliError> {
         None => client_for(cli).await?,
     };
     let req = SendRequest {
-        to: Some(args.to.clone()),
+        to,
         body,
         kind: if args.question {
             MessageKind::Question
@@ -609,8 +643,8 @@ pub(super) async fn inbox_show(cli: &Cli, args: &InboxShowArgs) -> Result<(), Cl
         println!("{}", message.body);
         println!();
         println!(
-            "To reply: bridle send {} --reply-to {} \"<message>\"",
-            message.from, message.id
+            "To reply: bridle send --reply-to {} \"<message>\"",
+            message.id
         );
     }
 
@@ -1472,5 +1506,38 @@ mod peer_token_tests {
             &[info("peer:dalek", "dalek", true)],
             "peer:dalek"
         ));
+    }
+}
+
+#[cfg(test)]
+mod send_operand_tests {
+    use super::send_operands;
+
+    fn s(v: &str) -> Option<String> {
+        Some(v.to_string())
+    }
+
+    #[test]
+    fn a_reply_may_leave_out_the_recipient() {
+        // `send --reply-to m-1 "text"`: the one positional is the text.
+        assert_eq!(
+            send_operands(&s("text"), &None, &None, &s("m-1")).expect("ok"),
+            (None, s("text"))
+        );
+        // With a file for the text, nothing is positional.
+        let file = Some(std::path::PathBuf::from("f"));
+        assert_eq!(
+            send_operands(&None, &None, &file, &s("m-1")).expect("ok"),
+            (None, None)
+        );
+    }
+
+    #[test]
+    fn an_explicit_recipient_wins_and_a_bare_send_needs_one() {
+        assert_eq!(
+            send_operands(&s("w1"), &s("hi"), &None, &s("m-1")).expect("ok"),
+            (s("w1"), s("hi"))
+        );
+        assert!(send_operands(&None, &None, &None, &None).is_err());
     }
 }

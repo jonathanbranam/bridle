@@ -27,6 +27,18 @@ Delivery to an agent is always a stdin user message:
 Reply with: bridle send human --reply-to m-0042 "<answer>"      ← questions only
 ```
 
+**A reply is routed to the sender (br-eupm).** `bridle send --reply-to m-0042 "<answer>"` with
+no recipient goes to the principal that sent `m-0042`, on the daemon it sent from. The daemon
+looks the message up: a sender on this daemon is addressed by its `from`; a message that came
+through `/v1/forward` has its origin machine and daemon recorded (`forwarded_in`), so the reply
+is queued in the outbox for that daemon and addressed to the sender's bare id (`external:aide`,
+not `external:aide@vesta`). That matters because identities are shared (every project's aide is
+`external:aide`) and an aide listens only on its own project's daemon, so a bare-role send from
+another daemon is never read. An unknown id, or an origin daemon with no peer entry or token,
+fails at once (400/404) with the explicit `bridle send --project <daemon> <to> --reply-to <id>`
+that does work. An explicit recipient still wins. `POST /v1/messages` takes `reply_to` with no
+`to` for the same thing; `--task` is not supported on a reply to another daemon.
+
 **A delegate's reply closes the human's question.** A message whose `reply_to` names a message
 addressed to the human, sent by a principal in `[messages] answer_for_human` (default
 `["external:orchestrator"]`; no agent unless listed), marks that message `read` and records

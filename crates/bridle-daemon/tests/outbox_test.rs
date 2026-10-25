@@ -1046,3 +1046,102 @@ async fn a_project_qualified_mention_reaches_the_role_on_that_project() {
         "{own:?}"
     );
 }
+
+fn reply(body: &str, reply_to: &str) -> bridle_api::types::SendRequest {
+    bridle_api::types::SendRequest {
+        to: None,
+        body: body.to_string(),
+        kind: MessageKind::Note,
+        when: When::Now,
+        reply_to: Some(reply_to.to_string()),
+        task: None,
+    }
+}
+
+/// br-eupm: an aide on A writes to B's orchestrator; the orchestrator answers with `reply_to`
+/// and no recipient, and the answer lands in that aide's inbox on A, not on B.
+#[tokio::test]
+async fn a_reply_goes_back_to_the_sender_on_the_daemon_it_sent_from() {
+    let p = pair().await;
+    let a_project = point_b_at_a(&p).await;
+    let aide = p.a.external_client("aide").await;
+    let orch = p.b.external_client("orchestrator").await;
+    // A same-named principal on B: the bare-role reply the bug sent there must not be used.
+    let b_aide = p.b.external_client("aide").await;
+
+    aide.send_outbox(&out(&p.b_project, "external:orchestrator", "question"))
+        .await
+        .expect("queued");
+    let asked = wait_for_bodies(&p.b, "external:orchestrator", 1).await;
+    assert_eq!(asked[0].0, "external:aide@m1");
+    let original = orch
+        .list_messages(&MessageQuery {
+            to: Some("me".to_string()),
+            ..Default::default()
+        })
+        .await
+        .expect("inbox")
+        .remove(0);
+
+    let sent = orch
+        .send(&reply("answer", &original.id))
+        .await
+        .expect("routed");
+    assert_eq!(sent.len(), 1, "{sent:?}");
+    assert_eq!(sent[0].to, "external:aide");
+
+    let got = wait_for("the reply on A", || async {
+        let m = aide
+            .list_messages(&MessageQuery {
+                to: Some("me".to_string()),
+                ..Default::default()
+            })
+            .await
+            .ok()?;
+        (!m.is_empty()).then_some(m)
+    })
+    .await;
+    assert_eq!(got[0].body, "answer");
+    assert_eq!(got[0].from, "external:orchestrator@m2");
+    assert_eq!(got[0].reply_to.as_deref(), Some(original.id.as_str()));
+    assert!(
+        inbox_bodies(&p.b, "external:aide").await.is_empty(),
+        "nothing for B's own aide: {a_project}"
+    );
+    drop(b_aide);
+}
+
+#[tokio::test]
+async fn a_reply_that_cannot_be_routed_fails_with_the_fix() {
+    let p = pair().await;
+    // B knows nothing of A (no point_b_at_a): the sender's daemon can't be reached.
+    let aide = p.a.external_client("aide").await;
+    let orch = p.b.external_client("orchestrator").await;
+    aide.send_outbox(&out(&p.b_project, "external:orchestrator", "question"))
+        .await
+        .expect("queued");
+    wait_for_bodies(&p.b, "external:orchestrator", 1).await;
+    let original = orch
+        .list_messages(&MessageQuery {
+            to: Some("me".to_string()),
+            ..Default::default()
+        })
+        .await
+        .expect("inbox")
+        .remove(0);
+
+    let err = orch
+        .send(&reply("answer", &original.id))
+        .await
+        .expect_err("unroutable")
+        .to_string();
+    assert!(err.contains("can't route the reply"), "{err}");
+    assert!(err.contains("bridle send --project"), "{err}");
+
+    let err = orch
+        .send(&reply("answer", "m-nope"))
+        .await
+        .expect_err("unknown")
+        .to_string();
+    assert!(err.contains("no message m-nope to reply to"), "{err}");
+}

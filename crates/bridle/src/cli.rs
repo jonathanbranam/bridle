@@ -1397,8 +1397,9 @@ pub struct SendArgs {
     /// `<name>@<machine>`); `bridle recipients` lists them. Mail to another machine is queued
     /// in your own daemon and retried until it arrives (`bridle message show <id>`). With `--project` naming another daemon's project, the
     /// principal on that daemon (`advisor`, `external:advisor`, `human`, ...): your own daemon
-    /// queues the message and delivers it there.
-    pub to: String,
+    /// queues the message and delivers it there. Left out with `--reply-to`: the reply goes to
+    /// the principal that sent that message, on the daemon it sent from.
+    pub to: Option<String>,
     /// Message body.
     #[arg(value_name = "TEXT")]
     pub text: Option<String>,
@@ -1410,7 +1411,8 @@ pub struct SendArgs {
     pub question: bool,
     #[arg(long, value_enum, default_value = "now")]
     pub when: WhenArg,
-    /// This message replies to an earlier one.
+    /// This message replies to an earlier one (an id from your inbox). With no recipient it is
+    /// routed to that message's sender, on the project it came from.
     #[arg(long)]
     pub reply_to: Option<String>,
     /// About this task: the text is added as a note on its thread and the
@@ -3134,7 +3136,7 @@ mod tests {
             panic!("expected send")
         };
         assert!(matches!(args.when, WhenArg::Now));
-        assert_eq!(args.to, "w1");
+        assert_eq!(args.to.as_deref(), Some("w1"));
         assert_eq!(args.text.as_deref(), Some("hello"));
     }
 
@@ -3160,7 +3162,7 @@ mod tests {
         let Command::Send(args) = cli.command else {
             panic!("expected send")
         };
-        assert_eq!(args.to, "w1");
+        assert_eq!(args.to.as_deref(), Some("w1"));
         assert_eq!(args.text, None);
         assert_eq!(
             args.text_file.as_deref(),
