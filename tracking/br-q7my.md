@@ -2,14 +2,25 @@
 id = "br-q7my"
 title = "Home project refusals: refuse an orchestrator and orchestrator messages on non-home projects (7ytg slice 2)"
 kind = "feature"
-state = "claimed"
+state = "built"
 created_at = "2026-10-18T13:32:43.398Z"
-updated_at = "2026-10-25T15:29:10.497390Z"
+updated_at = "2026-10-25T15:42:19.529097Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "agent:q7my",
 ]
+branch = "bridle/q7my"
+commit = "5135840d602f1ce3a008f1154cccfca2d7ae9cc1"
+summary = """
+Slice 2 of br-7ytg: the slice 1 warnings are now refusals of NEW launches. bridle_api::machines::MachineHome::problem (was warning) is the one message; is_home added. Daemon (bridle-daemon/src/lib.rs): [orchestrator] enabled in a non-home project logs an error and starts no supervisor (a running orchestrator is never stopped; the home is unaffected). CLI (home_project.rs): session orchestrator (so also the supervisor relaunch), up (before any tmux work), prime orchestrator refuse a non-home project, a machine with no name, or a home that does not exist, naming the exact command; bridle send external:orchestrator on a non-home LOCAL project is refused naming --project <host>-home (client-side, as in slice 1; a project on another machine is not judged, so outbox mail still routes to that machine's home: test mail_for_another_machines_orchestrator_is_not_refused plus the existing outbox tests). Tests: launcher refusals, is_home, no-name refusal, session orchestrator in/out of the home (project_resolution_test), existing launcher tests given a home config. Docs: orchestrator-supervision.md, advisor.md, CHANGELOG. Not done: a daemon-side refusal of the HTTP send path (agents use the CLI). Separate bug seen in the thread: replies addressed to the bare role (eupm).
+
+HUMAN STEPS, per machine, in order (the per-machine check is already done: dalek, vesta, remus each run their orchestrator in <host>-home with a [machine] name set):
+For each of dalek, vesta, remus:
+1. Before the new build self-upgrades onto the machine, check `bridle daemon doctor` (check 'orchestrator home') in any project there: it must not list any project outside <host>-home with [orchestrator] enabled. If it does (e.g. a bridle project), edit that project's .bridle/config.toml to `enabled = false` under [orchestrator] and restart that project's daemon (`bridle project restart <project>` or its launchd/systemd unit). Nothing is stopped by the upgrade itself, but that daemon stops supervising an orchestrator it should not have had.
+2. Let the daemons self-upgrade (or `just install` + restart each daemon). The running orchestrator in <host>-home is untouched; no restart or /exit is needed there.
+3. Confirm: `bridle status --project <host>-home` shows the home line with the waiter on <host>-home, and `bridle up` reports 'already running' (it must not error).
+No other config edits, stops or /exit are needed: the home daemons already have [orchestrator] and [machine] name set. A machine whose [machine] name is missing would fail `bridle up` after the upgrade, so step 1 should also check `[machine] name` is set (all three are, per the check)."""
 ticket = "q7my"
 +++
 
@@ -61,3 +72,9 @@ Answered by the orchestrator note of 2026-10-25 15:10 UTC: per-machine check don
 
 ### note · external:aide · 2026-10-25T15:29:10.497Z
 per-machine check done. The human, 2026-10-25 ~11:30 AM ET (to aide), verbatim: "orch are running but they don't seem to be addressing their replies to the sender correctly". So the vesta and remus orchestrators are running in their <host>-home projects; aide also saw waiters open on vesta-home and remus-home (last wakes 15:08Z and 15:09Z), and both replied to the dalek orchestrator (dalek-home m-0451, m-0452). The misaddressed replies are a separate bug, filed as its own ticket.
+
+### note · agent:q7my · 2026-10-25T15:42:19.468Z
+built: 5135840d602f1ce3a008f1154cccfca2d7ae9cc1 (branch bridle/q7my)
+
+### note · agent:q7my · 2026-10-25T15:42:19.529Z
+done: home refusals (daemon, session orchestrator/up/prime orchestrator, send to external:orchestrator); just check exit 0, 1972 tests, run on 47a6f3af (merge of main on top added only a ticket doc, 5135840d). Human steps per machine are in the ticket summary: check doctor for non-home [orchestrator], self-upgrade, confirm; no stop/restart of the orchestrator needed. Separate bug: eupm.
