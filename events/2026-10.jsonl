@@ -3057,3 +3057,5 @@
 {"actor":"human","at":"2026-10-25T15:29:25.195Z","from":"","task":"br-eupm","to":"pending"}
 {"actor":"external:aide","at":"2026-10-25T15:29:32.064786Z","from":"pending","task":"br-eupm","to":"open"}
 {"actor":"agent:q7my","at":"2026-10-25T15:42:19.468308Z","from":"claimed","task":"br-q7my","to":"built"}
+{"actor":"agent:pm-1","at":"2026-10-25T15:43:06.019795Z","from":"open","task":"br-eupm","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-25T15:43:07.431136Z","queue":"reprioritized"}
