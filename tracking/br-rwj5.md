@@ -4,10 +4,13 @@ title = "status waiter_open false and last_wake_at null while external:aide wait
 kind = "bug"
 state = "pending"
 created_at = "2026-10-29T01:27:18.018Z"
-updated_at = "2026-10-29T01:27:18.019658Z"
+updated_at = "2026-10-29T01:27:29.232512Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+ticket = "rwj5"
 +++
+
+docs/tickets/open/status-waiter-open-false-and-last-wake-at-null-while-externa-rwj5.md
 
 submitted by external:orchestrator
 
