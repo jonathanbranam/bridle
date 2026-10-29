@@ -1145,3 +1145,39 @@ async fn a_reply_that_cannot_be_routed_fails_with_the_fix() {
         .to_string();
     assert!(err.contains("no message m-nope to reply to"), "{err}");
 }
+
+/// br-jpph: the sender is another machine's orchestrator (the case that was reported failing):
+/// a bare `reply_to` answers it on its own daemon, in the orchestrator's inbox there.
+#[tokio::test]
+async fn a_reply_to_another_machines_orchestrator_goes_back_to_it() {
+    let p = pair().await;
+    point_b_at_a(&p).await;
+    let orch_a = p.a.external_client("orchestrator").await;
+    let orch_b = p.b.external_client("orchestrator").await;
+
+    orch_a
+        .send_outbox(&out(&p.b_project, "external:orchestrator", "question"))
+        .await
+        .expect("queued");
+    let asked = wait_for_bodies(&p.b, "external:orchestrator", 1).await;
+    assert_eq!(asked[0].0, "external:orchestrator@m1");
+    let original = orch_b
+        .list_messages(&MessageQuery {
+            to: Some("me".to_string()),
+            ..Default::default()
+        })
+        .await
+        .expect("inbox")
+        .remove(0);
+
+    let sent = orch_b
+        .send(&reply("answer", &original.id))
+        .await
+        .expect("routed");
+    assert_eq!(sent[0].to, "external:orchestrator");
+    let got = wait_for_bodies(&p.a, "external:orchestrator", 1).await;
+    assert_eq!(
+        got[0],
+        ("external:orchestrator@m2".to_string(), "answer".to_string())
+    );
+}
