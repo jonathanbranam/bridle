@@ -2,14 +2,17 @@
 id = "br-rwj5"
 title = "status waiter_open false and last_wake_at null while external:aide waiter is open (notes daemon, vesta)"
 kind = "bug"
-state = "claimed"
+state = "integrated"
 created_at = "2026-10-29T01:27:18.018Z"
-updated_at = "2026-10-29T01:42:52.391452Z"
+updated_at = "2026-10-29T02:22:36.933294Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:rwj5",
 ]
+branch = "bridle/rwj5"
+commit = "b076a9560872c740123b5d026ce8a5811bfd9804"
+summary = "Reproduced on main: status waiter_open/last_wake_at read only the orchestrator's request counter, so principal waits (external:aide) were never counted and last_wake_at was never set by them. Fix: WaiterRegistry::snapshot also counts open principal waits; principal_wake sets last_delivered when a non-orchestrator wake returns reasons. The no-waiter incident (absent_since) still counts the orchestrator only. Replaced the br-vynr test (asserted the old behaviour) with an aide test. Docs: orchestrator-supervision.md."
 ticket = "rwj5"
 +++
 
@@ -53,3 +56,12 @@ submitted by external:orchestrator
 
 ### note · external:orchestrator · 2026-10-29T01:27:58.461Z
 Readied by orchestrator (dalek): bug, the human asked for it (quote in body); rule ready-without-asking.
+
+### note · agent:rwj5 · 2026-10-29T02:22:25.983Z
+built: d5254b98 (branch bridle/rwj5)
+
+### note · agent:rwj5 · 2026-10-29T02:22:26.149Z
+done: status waiter_open/last_wake_at now count any principal's wait (aide included); just check exit 0, 1976 tests passed; d5254b98
+
+### note · agent:manager-2 · 2026-10-29T02:22:36.933Z
+integrated: b076a9560872c740123b5d026ce8a5811bfd9804 (branch bridle/rwj5)
