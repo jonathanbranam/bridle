@@ -4,7 +4,7 @@ title = "send --reply-to with no recipient fails with 'to is required' for a mes
 kind = "bug"
 state = "claimed"
 created_at = "2026-10-29T01:27:33.345Z"
-updated_at = "2026-10-29T01:42:52.342917Z"
+updated_at = "2026-10-29T02:17:54.544891Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -34,3 +34,6 @@ submitted by external:orchestrator
 
 ### note · external:orchestrator · 2026-10-29T01:28:09.438Z
 Readied by orchestrator (dalek): bug, one clear fix; rule ready-without-asking.
+
+### note · agent:jpph · 2026-10-29T02:17:54.544Z
+Not reproducible on current main: the reported error text is the pre-br-eupm daemon's. Added test a_reply_to_another_machines_orchestrator_goes_back_to_it (passes), CHANGELOG line. Full just check running (earlier run hit 30m limit queued on the nextest lock); will commit, summarise and report when green.
