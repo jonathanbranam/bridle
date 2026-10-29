@@ -293,10 +293,15 @@ impl Waiters {
         self.state.lock().expect("waiters lock").last_delivered = Some(at);
     }
 
-    /// Whether a request is open now, and when wakes were last delivered.
+    /// Whether a request is open now (the orchestrator's or any other principal's), and when
+    /// wakes were last delivered. The waiter incident does not read this: it uses
+    /// [`Self::absent_since`], which counts the orchestrator's requests only.
     pub fn snapshot(&self) -> (bool, Option<DateTime<Utc>>) {
         let st = self.state.lock().expect("waiters lock");
-        (st.open > 0, st.last_delivered)
+        (
+            st.open > 0 || !st.principal_open.is_empty(),
+            st.last_delivered,
+        )
     }
 
     /// Since when nobody has been waiting, if that is longer than `grace`. `floor` is when

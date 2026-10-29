@@ -465,18 +465,24 @@ async fn a_waiter_open_during_a_restart_is_told_why_and_the_event_counts_it() {
     );
 }
 
-// br-vynr: the no-orchestrator-waiter incident reads `waiter_open`; another identity's wait
-// (an aide's, an advisor's) must not satisfy it.
+// br-rwj5: status shows any principal's open wait (an aide's too), and `last_wake_at` is set
+// once a wake is delivered. The no-waiter incident still counts the orchestrator's only
+// (br-vynr; `absent_since`).
 #[tokio::test]
-async fn another_identitys_wait_is_not_the_orchestrators_waiter() {
+async fn status_shows_an_aides_open_wait_and_its_delivery() {
     let (daemon, _tmp) = support::start_daemon(None).await;
-    let advisor = daemon.external_client("advisor").await;
+    let aide = daemon.external_client("aide").await;
     let waiting =
-        tokio::spawn(async move { advisor.principal_wake(&query("external:advisor", 60)).await });
+        tokio::spawn(async move { aide.principal_wake(&query("external:aide", 60)).await });
     tokio::time::sleep(Duration::from_millis(300)).await;
     let status = daemon.client.status().await.expect("status");
+    assert!(status.waiter_open, "{status:?}");
+    assert!(status.last_wake_at.is_none(), "{status:?}");
+    send(&daemon.client, "external:aide", "ping").await;
+    waiting.await.expect("join").expect("wake");
+    let status = daemon.client.status().await.expect("status");
     assert!(!status.waiter_open, "{status:?}");
-    waiting.abort();
+    assert!(status.last_wake_at.is_some(), "{status:?}");
 }
 
 #[tokio::test]

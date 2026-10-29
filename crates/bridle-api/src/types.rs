@@ -158,10 +158,10 @@ pub struct Status {
     /// The orchestrator relaunch is held (`bridle orchestrator hold`); `None` when not.
     #[serde(default)]
     pub orchestrator_hold: Option<OrchestratorHold>,
-    /// A `wait-for-wake` request is open now (the orchestrator is listening).
+    /// A wake request is open now (the orchestrator's or any other principal's).
     #[serde(default)]
     pub waiter_open: bool,
-    /// When the orchestrator's wake poll last answered with wakes; `None` since the daemon
+    /// When a wake poll (any principal's) last answered with wakes; `None` since the daemon
     /// started if none has.
     #[serde(default)]
     pub last_wake_at: Option<DateTime<Utc>>,

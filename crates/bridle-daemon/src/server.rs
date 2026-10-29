@@ -1102,6 +1102,9 @@ async fn principal_wake(
             ..Default::default()
         }],
     };
+    if !orchestrator && !reasons.is_empty() {
+        state.waiters.delivered(chrono::Utc::now());
+    }
     // Handed over, not read: remember them for the session's next call and say so in the log.
     if take && !orchestrator {
         let ids: Vec<String> = reasons

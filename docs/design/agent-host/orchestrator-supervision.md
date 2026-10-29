@@ -226,7 +226,8 @@ the `meta` table (`orchestrator_wake_cursor`, no schema change) and moves only w
 delivered, so a daemon restart re-derives what was queued. Idle and usage are states
 kept in memory (a restart resets their baselines). The wake loop runs whether or not `[orchestrator]`
 is enabled. The waiter incident is measured from the later of the last request's close and the
-session's launch. `bridle status` shows `waiter_open` and `last_wake_at` (when a poll last
+session's launch. `bridle status` shows `waiter_open` and `last_wake_at` (any principal's wait counts, an
+aide's too; the incident above still counts the orchestrator's only; last_wake_at is when a poll last
 answered with wakes; in memory, so a daemon restart clears it).
 
 **Wakes are also mail (3haz slice 5, br-rhba).** When a daemon raises a wake for the
