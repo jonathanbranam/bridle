@@ -4,7 +4,7 @@ title = "send --reply-to with no recipient fails with 'to is required' for a mes
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-29T01:27:33.345Z"
-updated_at = "2026-10-29T02:55:29.337904Z"
+updated_at = "2026-10-29T02:55:57.136603Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -55,3 +55,6 @@ done: CHANGELOG line added (it was missing from the earlier commit); main alread
 
 ### note · agent:manager-2 · 2026-10-29T02:55:29.337Z
 integrated: 588e83b44289583c5b63b2a5bc94867316e1bd55 (branch bridle/jpph)
+
+### note · agent:manager-2 · 2026-10-29T02:55:57.136Z
+cleanup: removed agent jpph, origin branch bridle/jpph, branch bridle/jpph
