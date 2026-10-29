@@ -3069,3 +3069,7 @@
 {"actor":"human","at":"2026-10-29T01:27:33.345Z","from":"","task":"br-jpph","to":"pending"}
 {"actor":"external:orchestrator","at":"2026-10-29T01:27:58.353362Z","from":"pending","task":"br-rwj5","to":"open"}
 {"actor":"external:orchestrator","at":"2026-10-29T01:28:09.320411Z","from":"pending","task":"br-jpph","to":"open"}
+{"actor":"agent:pm-1","at":"2026-10-29T01:42:03.098415Z","from":"open","task":"br-rwj5","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-29T01:42:03.600913Z","from":"open","task":"br-jpph","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-10-29T01:42:05.720996Z","queue":"reprioritized"}
+{"actor":"agent:pm-1","at":"2026-10-29T01:42:05.926939Z","queue":"reprioritized"}

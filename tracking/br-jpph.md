@@ -2,9 +2,9 @@
 id = "br-jpph"
 title = "send --reply-to with no recipient fails with 'to is required' for a message from another machine's orchestrator"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-10-29T01:27:33.345Z"
-updated_at = "2026-10-29T01:28:09.438185Z"
+updated_at = "2026-10-29T01:42:03.600913Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "jpph"
