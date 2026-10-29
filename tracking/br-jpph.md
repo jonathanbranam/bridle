@@ -4,12 +4,13 @@ title = "send --reply-to with no recipient fails with 'to is required' for a mes
 kind = "bug"
 state = "claimed"
 created_at = "2026-10-29T01:27:33.345Z"
-updated_at = "2026-10-29T02:17:54.544891Z"
+updated_at = "2026-10-29T02:46:33.510620Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:jpph",
 ]
+summary = "Not a code bug: the reported 'to is required' text is the pre-br-eupm daemon's; current main routes a bare --reply-to correctly. Added outbox_test a_reply_to_another_machines_orchestrator_goes_back_to_it (orchestrator on A -> orchestrator on B, B replies bare, lands in A's orchestrator inbox) and a CHANGELOG Internal line. No docs needed. Fix for the user: upgrade the daemon on the machine that failed."
 ticket = "jpph"
 +++
 
