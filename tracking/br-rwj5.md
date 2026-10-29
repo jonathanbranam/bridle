@@ -4,7 +4,7 @@ title = "status waiter_open false and last_wake_at null while external:aide wait
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-29T01:27:18.018Z"
-updated_at = "2026-10-29T02:22:36.933294Z"
+updated_at = "2026-10-29T02:23:03.062661Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -65,3 +65,6 @@ done: status waiter_open/last_wake_at now count any principal's wait (aide inclu
 
 ### note · agent:manager-2 · 2026-10-29T02:22:36.933Z
 integrated: b076a9560872c740123b5d026ce8a5811bfd9804 (branch bridle/rwj5)
+
+### note · agent:manager-2 · 2026-10-29T02:23:03.062Z
+cleanup: removed agent rwj5, origin branch bridle/rwj5, branch bridle/rwj5
