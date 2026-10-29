@@ -3065,3 +3065,4 @@
 {"actor":"agent:manager-2","at":"2026-10-25T16:07:02.620352Z","from":"open","task":"br-p9sq","to":"planned"}
 {"actor":"agent:eupm","at":"2026-10-25T19:54:19.955929Z","from":"claimed","task":"br-eupm","to":"built"}
 {"actor":"agent:manager-2","at":"2026-10-25T19:54:28.829212Z","from":"built","task":"br-eupm","to":"integrated"}
+{"actor":"human","at":"2026-10-29T01:27:18.018Z","from":"","task":"br-rwj5","to":"pending"}
