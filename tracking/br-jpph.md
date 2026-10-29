@@ -2,12 +2,15 @@
 id = "br-jpph"
 title = "send --reply-to with no recipient fails with 'to is required' for a message from another machine's orchestrator"
 kind = "bug"
-state = "pending"
+state = "open"
 created_at = "2026-10-29T01:27:33.345Z"
-updated_at = "2026-10-29T01:27:33.346434Z"
+updated_at = "2026-10-29T01:28:09.438185Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+ticket = "jpph"
 +++
+
+docs/tickets/open/send-reply-to-with-no-recipient-fails-with-to-is-required-fo-jpph.md
 
 submitted by external:orchestrator
 
@@ -25,3 +28,6 @@ Verify: a bare --reply-to to a message from orchestrator@<other machine> is deli
 
 ### note · external:orchestrator · 2026-10-29T01:27:33.346Z
 submitted by external:orchestrator
+
+### note · external:orchestrator · 2026-10-29T01:28:09.438Z
+Readied by orchestrator (dalek): bug, one clear fix; rule ready-without-asking.

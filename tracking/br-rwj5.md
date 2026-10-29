@@ -2,9 +2,9 @@
 id = "br-rwj5"
 title = "status waiter_open false and last_wake_at null while external:aide waiter is open (notes daemon, vesta)"
 kind = "bug"
-state = "pending"
+state = "open"
 created_at = "2026-10-29T01:27:18.018Z"
-updated_at = "2026-10-29T01:27:29.232512Z"
+updated_at = "2026-10-29T01:27:58.461835Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "rwj5"
@@ -47,3 +47,6 @@ Verify: on a non-home daemon with an aide waiter open, `bridle status --json` re
 
 ### note · external:orchestrator · 2026-10-29T01:27:18.019Z
 submitted by external:orchestrator
+
+### note · external:orchestrator · 2026-10-29T01:27:58.461Z
+Readied by orchestrator (dalek): bug, the human asked for it (quote in body); rule ready-without-asking.
