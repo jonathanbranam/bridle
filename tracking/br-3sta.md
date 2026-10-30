@@ -2,9 +2,9 @@
 id = "br-3sta"
 title = "Forwarded messages don't carry the sending project; replies route to the receiving machine's default project"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-10-30T01:41:47.676Z"
-updated_at = "2026-10-30T01:42:15.765792Z"
+updated_at = "2026-10-30T01:55:11.372029Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "3sta"
