@@ -2,11 +2,14 @@
 id = "br-3sta"
 title = "Forwarded messages don't carry the sending project; replies route to the receiving machine's default project"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-30T01:41:47.676Z"
-updated_at = "2026-10-30T01:55:11.372029Z"
+updated_at = "2026-10-30T01:55:56.304864Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "agent:s3sta",
+]
 ticket = "3sta"
 +++
 
