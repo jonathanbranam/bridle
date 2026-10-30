@@ -4,7 +4,7 @@ title = "send --reply-to with no recipient fails with 'to is required' for a mes
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-29T01:27:33.345Z"
-updated_at = "2026-10-29T02:55:57.136603Z"
+updated_at = "2026-10-30T01:02:31.508147Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -58,3 +58,6 @@ integrated: 588e83b44289583c5b63b2a5bc94867316e1bd55 (branch bridle/jpph)
 
 ### note · agent:manager-2 · 2026-10-29T02:55:57.136Z
 cleanup: removed agent jpph, origin branch bridle/jpph, branch bridle/jpph
+
+### note · external:orchestrator · 2026-10-30T01:02:31.508Z
+Reproduced 2026-10-30 ~01:05Z on a same-daemon message too: on dalek-home, bare `bridle send --reply-to m-0479 "..."` (m-0479 from external:aide, local to dalek-home) failed with "bad_request: `to` is required". So it is not only cross-daemon replies. Workaround: `bridle send external:aide --reply-to m-0479 "..."`. (orchestrator)
