@@ -4,7 +4,7 @@ title = "Forwarded messages don't carry the sending project; replies route to th
 kind = "bug"
 state = "integrated"
 created_at = "2026-10-30T01:41:47.676Z"
-updated_at = "2026-10-30T02:18:17.448636Z"
+updated_at = "2026-10-30T02:18:38.400035Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -47,3 +47,6 @@ done: plain send to a forwarded sender's label (external:aide@m1) now routes to 
 
 ### note · agent:manager-2 · 2026-10-30T02:18:17.448Z
 integrated: b4d46c05ec1d9bd2591362f9a34ab1c5c4ed38af (branch bridle/s3sta)
+
+### note · agent:manager-2 · 2026-10-30T02:18:38.400Z
+cleanup: removed agent s3sta, origin branch bridle/s3sta, branch bridle/s3sta
