@@ -2,12 +2,15 @@
 id = "br-3sta"
 title = "Forwarded messages don't carry the sending project; replies route to the receiving machine's default project"
 kind = "bug"
-state = "pending"
+state = "open"
 created_at = "2026-10-30T01:41:47.676Z"
-updated_at = "2026-10-30T01:41:47.677441Z"
+updated_at = "2026-10-30T01:42:15.765792Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+ticket = "3sta"
 +++
+
+docs/tickets/open/forwarded-messages-don-t-carry-the-sending-project-replies-r-3sta.md
 
 submitted by external:orchestrator
 
