@@ -39,6 +39,13 @@ fails at once (400/404) with the explicit `bridle send --project <daemon> <to> -
 that does work. An explicit recipient still wins. `POST /v1/messages` takes `reply_to` with no
 `to` for the same thing; `--task` is not supported on a reply to another daemon.
 
+**A plain send to a forwarded sender's label goes the same way (br-3sta).** The forward payload
+already carries the sending project (`origin_daemon`, recorded in `forwarded_in`). A send with no
+`--reply-to` to `external:<name>@<machine>`, the label a forwarded message showed its sender
+under, goes to the project that sender last forwarded from, not to the machine's default project.
+With no forwarded message from that label (or a project that can't be forwarded to) routing is
+unchanged, so a peer is never required to send anything new and no payload field was added.
+
 **A delegate's reply closes the human's question.** A message whose `reply_to` names a message
 addressed to the human, sent by a principal in `[messages] answer_for_human` (default
 `["external:orchestrator"]`; no agent unless listed), marks that message `read` and records

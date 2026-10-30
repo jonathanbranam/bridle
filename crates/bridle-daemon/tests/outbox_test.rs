@@ -1181,3 +1181,49 @@ async fn a_reply_to_another_machines_orchestrator_goes_back_to_it() {
         ("external:orchestrator@m2".to_string(), "answer".to_string())
     );
 }
+
+fn plain(to: &str, body: &str) -> bridle_api::types::SendRequest {
+    bridle_api::types::SendRequest {
+        to: Some(to.to_string()),
+        reply_to: None,
+        ..reply(body, "")
+    }
+}
+
+/// br-3sta: a plain send to the label a forwarded message showed (`external:aide@m1`), with no
+/// `reply_to`, goes back to the project it was written from.
+#[tokio::test]
+async fn a_plain_reply_to_a_forwarded_sender_goes_back_to_its_project() {
+    let p = pair().await;
+    point_b_at_a(&p).await;
+    let aide = p.a.external_client("aide").await;
+    let orch = p.b.external_client("orchestrator").await;
+
+    aide.send_outbox(&out(&p.b_project, "external:orchestrator", "question"))
+        .await
+        .expect("queued");
+    wait_for_bodies(&p.b, "external:orchestrator", 1).await;
+
+    let sent = orch
+        .send(&plain("external:aide@m1", "answer"))
+        .await
+        .expect("routed");
+    assert_eq!(sent[0].to, "external:aide");
+    let got = wait_for_bodies(&p.a, "external:aide", 1).await;
+    assert_eq!(got[0].1, "answer");
+}
+
+/// br-3sta: with no forwarded message from that label, routing is what it was: the plain send
+/// finds no such recipient on B rather than being sent anywhere.
+#[tokio::test]
+async fn a_plain_send_to_a_label_never_forwarded_from_keeps_default_routing() {
+    let p = pair().await;
+    point_b_at_a(&p).await;
+    let orch = p.b.external_client("orchestrator").await;
+    let err = orch
+        .send(&plain("external:aide@m1", "hello"))
+        .await
+        .expect_err("no such recipient")
+        .to_string();
+    assert!(err.contains("no such recipient"), "{err}");
+}

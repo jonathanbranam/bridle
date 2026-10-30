@@ -600,6 +600,15 @@ impl Store {
             .await
     }
 
+    /// The project a sender last forwarded from (br-3sta): `label` is the sender as the
+    /// receiving daemon shows it (`external:aide@m1`), so a plain send to that label can go back
+    /// to the project it wrote from instead of the machine's default one.
+    pub async fn forwarded_project_of(&self, label: &str) -> Result<Option<String>, StoreError> {
+        let label = label.to_string();
+        self.with_conn(move |c| sync::forwarded_project_of(c, &label))
+            .await
+    }
+
     pub async fn forwarded_record(
         &self,
         origin: &(String, String, String),
@@ -2615,6 +2624,39 @@ mod sync {
             let (machine, daemon, ids) = row?;
             if ids.split(',').any(|i| i == message_id) {
                 return Ok(Some((machine, daemon)));
+            }
+        }
+        Ok(None)
+    }
+
+    pub(super) fn forwarded_project_of(
+        conn: &Connection,
+        label: &str,
+    ) -> Result<Option<String>, StoreError> {
+        let Some((_, machine)) = label.rsplit_once('@') else {
+            return Ok(None);
+        };
+        let mut stmt = conn.prepare(
+            "SELECT origin_daemon, message_ids FROM forwarded_in
+             WHERE origin_machine = ?1 ORDER BY received_at DESC LIMIT 200",
+        )?;
+        let rows = stmt.query_map(params![machine], |r| {
+            Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?))
+        })?;
+        for row in rows {
+            let (daemon, ids) = row?;
+            let Some(first) = ids.split(',').find(|i| !i.is_empty()) else {
+                continue;
+            };
+            let from: Option<String> = conn
+                .query_row(
+                    "SELECT from_principal FROM messages WHERE id = ?1",
+                    params![first],
+                    |r| r.get(0),
+                )
+                .optional()?;
+            if from.as_deref() == Some(label) {
+                return Ok(Some(daemon));
             }
         }
         Ok(None)

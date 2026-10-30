@@ -2171,6 +2171,24 @@ async fn reply_route(state: &AppState, id: &str) -> Result<(Option<String>, Stri
     Ok((Some(daemon), to))
 }
 
+/// A plain send to `external:<name>@<machine>` (the label a forwarded message shows its sender
+/// under) goes back to the project that sender last forwarded from (br-3sta), not to wherever
+/// the label's visitor record points (the machine's default project). `None` when no forwarded
+/// message came from that label, or its project can't be forwarded to: today's routing applies.
+async fn plain_reply_route(
+    state: &AppState,
+    to: &str,
+) -> Result<Option<(Option<String>, String)>, ApiError> {
+    let Some(project) = state.store.forwarded_project_of(to).await? else {
+        return Ok(None);
+    };
+    if project == state.project || state.outbox.check_destination(&project).is_err() {
+        return Ok(None);
+    }
+    let name = to.rsplit_once('@').map_or(to, |(n, _)| n);
+    Ok(Some((Some(project), name.to_string())))
+}
+
 async fn send_message(
     State(state): State<AppState>,
     Extension(principal): Extension<Principal>,
@@ -2179,6 +2197,9 @@ async fn send_message(
     require_body(&req)?;
     let routed = match (req.to.as_deref(), req.reply_to.as_deref()) {
         (None, Some(id)) => Some(reply_route(&state, id).await?),
+        (Some(to), None) if to.starts_with("external:") && to.contains('@') => {
+            plain_reply_route(&state, to).await?
+        }
         _ => None,
     };
     if let Some((Some(project), to)) = &routed {

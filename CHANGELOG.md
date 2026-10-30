@@ -40,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Governor test `working_agent_is_notified_then_stopped_when_its_turn_ends` is `#[ignore]`d as flaky (ubuntu CI timeout waiting for Stopped), so main is green; the fix is br-remg (br-sftn).
 
 ### Fixed
+- A plain `bridle send external:<name>@<machine>` (no `--reply-to`) to the label a forwarded message showed its sender under now goes back to the project that sender wrote from, not the machine's default project; labels never forwarded from route as before (br-3sta).
 - `bridle status` `waiter_open` and `last_wake_at` now reflect any principal's wake wait (an aide's too), not only the orchestrator's; the no-waiter incident still counts the orchestrator's only (br-rwj5).
 - Flaky `a_stage_writers_built_or_done_never_marks_a_prepared_v2_row` (red on macOS CI): it asserted the row stayed `pending`, but a prepared v2 file makes the link sync ready it (br-h5kz), so it raced the sync; it now accepts `pending` or `open` and still fails on built/integrated (br-dq7t).
 - CI was red on main since the br-t7uq landing (e63a335a): the `--all-projects` fan-out test relied on `$BRIDLE_TOKEN`, set in agent sessions but not in CI, so the live daemon reported a missing token; the test now supplies a human token file (br-xvb2).
