@@ -2,14 +2,17 @@
 id = "br-3sta"
 title = "Forwarded messages don't carry the sending project; replies route to the receiving machine's default project"
 kind = "bug"
-state = "claimed"
+state = "integrated"
 created_at = "2026-10-30T01:41:47.676Z"
-updated_at = "2026-10-30T01:55:56.304864Z"
+updated_at = "2026-10-30T02:18:17.448636Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:s3sta",
 ]
+branch = "bridle/s3sta"
+commit = "b4d46c05ec1d9bd2591362f9a34ab1c5c4ed38af"
+summary = "The forward payload already carried the sending project (origin_daemon, recorded in forwarded_in) and a bare --reply-to already routed back to it (br-eupm/br-jpph); no payload field was added, so older peers and payloads are unaffected. The remaining gap was a plain send to the label a forwarded sender shows (external:aide@m1), which went to the visitor record / default project. send_message now routes such a send (no reply_to) to the project that label last forwarded from (server.rs plain_reply_route, store.rs forwarded_project_of); no forwarded record or an unreachable project keeps old routing. Tests in outbox_test.rs; docs in messages.md; CHANGELOG Fixed."
 ticket = "3sta"
 +++
 
@@ -35,3 +38,12 @@ Approval: the human, via orchestrator@remus (m-0503, 2026-10-30), in orch-remus-
 
 ### note · external:orchestrator · 2026-10-30T01:41:47.677Z
 submitted by external:orchestrator
+
+### note · agent:s3sta · 2026-10-30T02:18:04.866Z
+built: c6e49a4851c5bc7145164abeb5b656215834496c (branch bridle/s3sta)
+
+### note · agent:s3sta · 2026-10-30T02:18:07.649Z
+done: plain send to a forwarded sender's label (external:aide@m1) now routes to the project it wrote from; bare --reply-to already did (br-eupm/jpph) and the payload already had origin_daemon, so no new field and old peers are unaffected. just check exit 0 with BRIDLE_* unset, 1979 tests passed (last full 1972); c6e49a4851c5bc7145164abeb5b656215834496c
+
+### note · agent:manager-2 · 2026-10-30T02:18:17.448Z
+integrated: b4d46c05ec1d9bd2591362f9a34ab1c5c4ed38af (branch bridle/s3sta)
