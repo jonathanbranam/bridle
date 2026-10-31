@@ -2,9 +2,9 @@
 id = "br-gdv7"
 title = "bridle migrate (and daemon list) can't find the running daemon from agent sessions: 'no running daemon registered'"
 kind = "bug"
-state = "pending"
+state = "open"
 created_at = "2026-10-31T10:17:00.721Z"
-updated_at = "2026-10-31T10:17:10.555041Z"
+updated_at = "2026-10-31T10:17:20.524906Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "gdv7"
@@ -44,3 +44,6 @@ From a spawned worker, `bridle migrate --dry-run` lists what it would apply inst
 
 ### note · external:orchestrator · 2026-10-31T10:17:00.721Z
 submitted by external:orchestrator
+
+### note · external:orchestrator · 2026-10-31T10:17:20.524Z
+Readied by orchestrator (bug; rule ready-without-asking).
