@@ -2032,3 +2032,73 @@ fn bare_reply_to_an_old_daemon_fails_naming_both_versions_and_the_fix() {
         "working command: {err}"
     );
 }
+
+/// br-gdv7: an agent session sees no registry, only `$BRIDLE_URL`; `daemon list` and
+/// `migrate --dry-run` must still reach the daemon the way `status` does.
+#[test]
+fn daemon_list_and_migrate_find_the_daemon_by_bridle_url_without_a_registry() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let repo = tmp.path().join("ws/repo");
+    init_repo(&repo);
+    let workspace = tmp.path().join("ws");
+    let home = tmp.path().join("home");
+    let mut serve_cmd = Command::new(bridle_bin());
+    serve_cmd
+        .arg("serve")
+        .arg("--repo")
+        .arg(&repo)
+        .arg("--listen")
+        .arg("127.0.0.1:0")
+        .env("BRIDLE_CLAUDE_BIN", fake_claude_path())
+        .env("BRIDLE_HOME", &home)
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::inherit());
+    strip_bridle_env(&mut serve_cmd);
+    let mut guard = DaemonGuard(serve_cmd.spawn().expect("spawn bridle serve"));
+    let daemon_json = workspace.join(".bridle/daemon.json");
+    wait_for_daemon(&mut guard.0, &daemon_json);
+    let info: serde_json::Value =
+        serde_json::from_slice(&std::fs::read(&daemon_json).expect("daemon.json")).expect("json");
+    let url = info["url"].as_str().expect("url").to_string();
+    let project = info["project"].as_str().expect("project").to_string();
+    // This test's own throwaway daemon's token, as an agent session gets in $BRIDLE_TOKEN.
+    let token = std::fs::read_to_string(workspace.join(".bridle/tokens/human"))
+        .expect("human token")
+        .trim()
+        .to_string();
+
+    // A second repo outside the workspace and an empty, different BRIDLE_HOME: no registry, no walk.
+    let other = tmp.path().join("other");
+    init_repo(&other);
+    std::fs::create_dir_all(other.join(".bridle")).expect("mkdir .bridle");
+    let empty_home = tmp.path().join("empty-home");
+    let run = |args: &[&str]| {
+        let mut cmd = Command::new(bridle_bin());
+        cmd.args(args)
+            .current_dir(&other)
+            .env("BRIDLE_HOME", &empty_home);
+        strip_bridle_env(&mut cmd);
+        cmd.env("BRIDLE_URL", &url)
+            .env("BRIDLE_TOKEN", &token)
+            .env("BRIDLE_PROJECT", &project);
+        cmd.output().expect("run bridle")
+    };
+    let out = run(&["daemons", "--json"]);
+    assert!(
+        out.status.success(),
+        "{}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    let rows: serde_json::Value = serde_json::from_slice(&out.stdout).expect("rows");
+    assert_eq!(rows.as_array().map(Vec::len), Some(1), "rows: {rows}");
+    assert_eq!(rows[0]["url"], url.as_str());
+
+    // The repo is on a protected main, so the run may still refuse; only the lookup is under test.
+    let out = run(&["migrate", "--dry-run"]);
+    assert!(
+        !String::from_utf8_lossy(&out.stderr).contains("no running daemon registered"),
+        "{}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+}

@@ -70,6 +70,9 @@ Worktrees and the clone sit inside the workspace, so the walk works from
 anywhere in it. A daemon found by `--url` or `$BRIDLE_URL` has no local
 workspace, so the client needs `$BRIDLE_TOKEN` too.
 
+`bridle daemons` and `bridle migrate` read the registry too, but when it is empty or lacks the
+project (an agent session cannot see it) they fall back to this order (br-gdv7).
+
 Two environment variables are for development and deployment:
 `$BRIDLE_HOME` moves `~/.bridle` (the registry), and `$BRIDLE_CLAUDE_BIN`
 names the `claude` executable the daemon runs.

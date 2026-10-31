@@ -459,13 +459,13 @@ async fn migrate(cli: &Cli, args: &MigrateArgs) -> Result<(), CliError> {
                 }
             })
             .collect()
-    } else if let Some(name) = &cli.project {
-        let d = registry
-            .iter()
-            .find(|d| &d.project == name)
-            .ok_or_else(|| anyhow::anyhow!("no running daemon registered for project {name}"))?;
+    } else if let Some(d) = cli
+        .project
+        .as_ref()
+        .and_then(|name| registry.iter().find(|d| &d.project == name))
+    {
         vec![Target {
-            name: name.clone(),
+            name: d.project.clone(),
             repo: PathBuf::from(&d.repo),
             client: client_for(cli).await.ok(),
         }]

@@ -206,7 +206,15 @@ pub(super) struct DaemonRow {
 }
 
 pub(super) async fn daemons(cli: &Cli) -> Result<(), CliError> {
-    let list = discovery::list_registry();
+    let mut list = discovery::list_registry();
+    if list.is_empty() {
+        // No registry visible (an agent session): ask the daemon discovery finds, as `status` does.
+        if let Ok(client) = client_for_read(cli).await
+            && let Ok(st) = client.status().await
+        {
+            list.push(st.daemon);
+        }
+    }
     let timeout = std::time::Duration::from_secs(1);
     let counts = futures::future::join_all(list.iter().map(|d| {
         let client = Client::new_with_timeout(d.url.clone(), None, timeout);
