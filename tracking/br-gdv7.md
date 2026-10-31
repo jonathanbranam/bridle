@@ -2,11 +2,14 @@
 id = "br-gdv7"
 title = "bridle migrate (and daemon list) can't find the running daemon from agent sessions: 'no running daemon registered'"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-31T10:17:00.721Z"
-updated_at = "2026-10-31T10:32:05.520022Z"
+updated_at = "2026-10-31T10:32:50.206298Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "agent:wgdv7",
+]
 ticket = "gdv7"
 +++
 
