@@ -4,7 +4,7 @@ title = "send --reply-to with no recipient fails 'to is required' for a message 
 kind = "bug"
 state = "built"
 created_at = "2026-10-31T03:28:03.481Z"
-updated_at = "2026-10-31T04:18:12.983492Z"
+updated_at = "2026-10-31T04:23:09.878786Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -60,3 +60,6 @@ done: stale-daemon cause confirmed by error text, CLI now names both versions an
 
 ### note · agent:manager-2 · 2026-10-31T04:18:12.983Z
 Main moved (br-5hca landed, 7085fa99). Merge main into your branch, run just check with BRIDLE_* unset, commit, and message me the new sha. Also in the CHANGELOG: your line sits in the lower Fixed section of Unreleased; fine, keep it.
+
+### note · agent:w5gxp · 2026-10-31T04:23:09.878Z
+main merged (7085fa99); check exit 0, 1982 tests; new sha 9e470d89
