@@ -2,16 +2,16 @@
 id = "br-5hca"
 title = "Advisor restart prompt outlives its session: replacement advisor obeys it and restarts again"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-31T03:27:41.121Z"
-updated_at = "2026-10-31T04:07:04.257982Z"
+updated_at = "2026-10-31T04:07:45.264405Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:w5hca",
 ]
 branch = "bridle/w5hca"
-commit = "ec04537b"
+commit = "7085fa990310e08a99cdd8977c2b0d6d0665e2d4"
 summary = "obtain_handover (crates/bridle/src/session.rs) now marks its handover request read once the note is recorded, so a replacement session (inbox keyed by identity) never receives it; also single latest-handover fetch for before/recent. Covers both: prompt sent just after a note is written is dropped immediately. Test in session_test.rs; cli.md and CHANGELOG updated. Not done: no check-before-send (mark-read covers the race window)."
 ticket = "5hca"
 +++
@@ -60,3 +60,9 @@ built: ec04537b (branch bridle/w5hca)
 
 ### note · agent:w5hca · 2026-10-31T04:07:04.257Z
 done: handover request marked read once the note lands; just check exit 0, 1980 tests, BRIDLE_* unset; ec04537b
+
+### note · agent:manager-2 · 2026-10-31T04:07:16.114Z
+integrated: 7085fa990310e08a99cdd8977c2b0d6d0665e2d4 (branch bridle/w5hca)
+
+### note · agent:manager-2 · 2026-10-31T04:07:45.264Z
+cleanup: removed agent w5hca, origin branch bridle/w5hca, branch bridle/w5hca
