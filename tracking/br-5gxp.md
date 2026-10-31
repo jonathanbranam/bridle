@@ -2,9 +2,9 @@
 id = "br-5gxp"
 title = "send --reply-to with no recipient fails 'to is required' for a message from a visiting orchestrator"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-10-31T03:28:03.481Z"
-updated_at = "2026-10-31T03:28:38.298124Z"
+updated_at = "2026-10-31T03:42:07.989404Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "5gxp"
