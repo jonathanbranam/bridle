@@ -3085,3 +3085,5 @@
 {"actor":"agent:manager-2","at":"2026-10-30T02:18:17.448636Z","from":"built","task":"br-3sta","to":"integrated"}
 {"actor":"human","at":"2026-10-31T03:27:41.121Z","from":"","task":"br-5hca","to":"pending"}
 {"actor":"human","at":"2026-10-31T03:28:03.481Z","from":"","task":"br-5gxp","to":"pending"}
+{"actor":"external:orchestrator","at":"2026-10-31T03:28:37.921641Z","from":"pending","task":"br-5hca","to":"open"}
+{"actor":"external:orchestrator","at":"2026-10-31T03:28:38.182622Z","from":"pending","task":"br-5gxp","to":"open"}

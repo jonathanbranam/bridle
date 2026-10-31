@@ -2,12 +2,15 @@
 id = "br-5gxp"
 title = "send --reply-to with no recipient fails 'to is required' for a message from a visiting orchestrator"
 kind = "bug"
-state = "pending"
+state = "open"
 created_at = "2026-10-31T03:28:03.481Z"
-updated_at = "2026-10-31T03:28:03.482004Z"
+updated_at = "2026-10-31T03:28:38.298124Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+ticket = "5gxp"
 +++
+
+docs/tickets/open/send-reply-to-with-no-recipient-fails-to-is-required-for-a-m-5gxp.md
 
 submitted by external:orchestrator
 
@@ -39,3 +42,6 @@ A test: a message from a visiting principal, replied to with `--reply-to` and no
 
 ### note · external:orchestrator · 2026-10-31T03:28:03.482Z
 submitted by external:orchestrator
+
+### note · external:orchestrator · 2026-10-31T03:28:38.298Z
+Readied by orchestrator (bug; rule ready-without-asking).
