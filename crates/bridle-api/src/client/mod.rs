@@ -116,6 +116,10 @@ impl Client {
         }
     }
 
+    pub fn base_url(&self) -> &str {
+        &self.base_url
+    }
+
     /// Sends as the named advisor `name` (a label on the shared advisor token, not proof).
     pub fn with_advisor(mut self, name: Option<String>) -> Self {
         self.advisor = name.filter(|n| !n.is_empty());

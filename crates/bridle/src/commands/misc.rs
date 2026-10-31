@@ -294,6 +294,40 @@ pub(super) fn send_operands(
     }
 }
 
+/// What a daemon older than br-eupm answers to a send with `reply_to` and no `to`: it never
+/// routes the reply. Current daemons say "(or `reply_to`, ...)" after it, so an exact match
+/// means the daemon, not the request, is the problem (br-5gxp).
+const BARE_TO_REQUIRED: &str = "`to` is required";
+
+/// The error for a bare `--reply-to` the daemon could not route: names both versions and, when
+/// the original can be read, the command that does work.
+async fn stale_daemon_reply_error(client: &Client, reply_to: &str) -> CliError {
+    let daemon = match client.health().await {
+        Ok(h) => h.version,
+        Err(_) => "unknown".to_string(),
+    };
+    let query = MessageQuery {
+        id: Some(reply_to.to_string()),
+        to: Some("me".to_string()),
+        ..Default::default()
+    };
+    let command = match client.list_messages(&query).await {
+        Ok(msgs) => msgs
+            .iter()
+            .find(|m| m.id == reply_to)
+            .map(|m| format!("`bridle send {} --reply-to {reply_to} <text>`", m.from))
+            .unwrap_or_else(|| format!("`bridle send <sender> --reply-to {reply_to} <text>`")),
+        Err(_) => format!("`bridle send <sender> --reply-to {reply_to} <text>`"),
+    };
+    CliError::Other(anyhow::anyhow!(
+        "the daemon at {} (version {daemon}, this CLI is {}) does not route a reply with no \
+         recipient: it is an older build than this CLI, so restart it (`bridle daemon restart`). \
+         Meanwhile name the recipient: {command}",
+        client.base_url(),
+        env!("CARGO_PKG_VERSION"),
+    ))
+}
+
 pub(super) async fn send(cli: &Cli, args: &SendArgs) -> Result<(), CliError> {
     let (to, text) = send_operands(&args.to, &args.text, &args.text_file, &args.reply_to)?;
     let body = require_body(read_text(&text, &args.text_file, "text")?)?;
@@ -384,7 +418,18 @@ pub(super) async fn send(cli: &Cli, args: &SendArgs) -> Result<(), CliError> {
         reply_to: args.reply_to.clone(),
         task: args.task.clone(),
     };
-    let msgs = client.send(&req).await?;
+    let msgs = match client.send(&req).await {
+        Err(bridle_api::ClientError::Api { code, message, .. })
+            if req.to.is_none() && code == "bad_request" && message == BARE_TO_REQUIRED =>
+        {
+            return Err(stale_daemon_reply_error(
+                &client,
+                req.reply_to.as_deref().unwrap_or_default(),
+            )
+            .await);
+        }
+        other => other?,
+    };
     if cli.json {
         render::print_json(&msgs)?;
     } else {

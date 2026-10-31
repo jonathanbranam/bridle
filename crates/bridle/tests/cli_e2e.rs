@@ -1950,3 +1950,85 @@ fn version_2_claim_is_a_frontmatter_line_not_a_row_claim() {
     assert_eq!(row["state"], "pending", "{row}");
     assert!(row["claimed_by"].is_null(), "{row}");
 }
+
+/// br-5gxp: through the real CLI, a bare `--reply-to` reaches the referenced message's sender
+/// (here the human, as a local principal). The visitor and forwarded-sender routes are covered
+/// at the daemon in outbox_test.rs (they need two daemons).
+#[test]
+fn bare_reply_to_a_local_sender_is_routed_by_the_daemon() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let (_guard, repo, home) = start_daemon(tmp.path());
+    let (ok, out, err) = run_cli(&repo, &home, &["send", "human", "hello", "--json"]);
+    assert!(ok, "send failed: {err}");
+    let msgs: serde_json::Value = serde_json::from_str(&out).expect("json");
+    let id = msgs[0]["id"].as_str().expect("id").to_string();
+    let (ok, out, err) = run_cli(&repo, &home, &["send", "--reply-to", &id, "back", "--json"]);
+    assert!(ok, "bare reply failed: {out} {err}");
+    let reply: serde_json::Value = serde_json::from_str(&out).expect("json");
+    assert_eq!(reply[0]["to"], "human");
+    assert_eq!(reply[0]["reply_to"], id.as_str());
+}
+
+/// br-5gxp: a daemon older than br-eupm answers a bare reply with "`to` is required" and never
+/// routes it. The CLI says so, naming both versions and the command that works.
+#[test]
+fn bare_reply_to_an_old_daemon_fails_naming_both_versions_and_the_fix() {
+    use std::io::{Read, Write};
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("bind");
+    let url = format!("http://{}", listener.local_addr().expect("addr"));
+    let server = std::thread::spawn(move || {
+        // Answers until the CLI has gone quiet: it makes a handful of requests.
+        listener.set_nonblocking(false).expect("blocking");
+        for stream in listener.incoming() {
+            let mut stream = stream.expect("accept");
+            stream
+                .set_read_timeout(Some(Duration::from_secs(5)))
+                .expect("timeout");
+            let mut buf = [0u8; 8192];
+            let n = stream.read(&mut buf).unwrap_or(0);
+            let req = String::from_utf8_lossy(&buf[..n]).into_owned();
+            let line = req.lines().next().unwrap_or("").to_string();
+            let (status, body) = if line.starts_with("POST /v1/messages") {
+                (
+                    "400 Bad Request",
+                    r#"{"error":{"code":"bad_request","message":"`to` is required"}}"#,
+                )
+            } else if line.starts_with("GET /v1/health") {
+                ("200 OK", r#"{"ok":true,"version":"0.0.1","agent_count":0}"#)
+            } else if line == "STOP" {
+                break;
+            } else {
+                ("404 Not Found", "")
+            };
+            let _ = write!(
+                stream,
+                "HTTP/1.1 {status}\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}",
+                body.len()
+            );
+        }
+    });
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let mut cmd = Command::new(bridle_bin());
+    cmd.args(["send", "--reply-to", "m-0001", "back"])
+        .current_dir(tmp.path())
+        .env("BRIDLE_HOME", tmp.path().join("home"));
+    strip_bridle_env(&mut cmd);
+    cmd.env("BRIDLE_URL", &url).env("BRIDLE_TOKEN", "t");
+    let out = cmd.output().expect("run bridle");
+    // Unblock the server loop.
+    if let Ok(mut s) = std::net::TcpStream::connect(url.trim_start_matches("http://")) {
+        let _ = s.write_all(b"STOP\r\n\r\n");
+    }
+    server.join().expect("server");
+    let err = String::from_utf8_lossy(&out.stderr);
+    assert!(!out.status.success(), "expected failure: {err}");
+    assert!(err.contains("version 0.0.1"), "daemon version: {err}");
+    assert!(
+        err.contains(env!("CARGO_PKG_VERSION")),
+        "cli version: {err}"
+    );
+    assert!(
+        err.contains("bridle send <sender> --reply-to m-0001"),
+        "working command: {err}"
+    );
+}

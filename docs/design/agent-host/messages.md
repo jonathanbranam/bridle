@@ -39,6 +39,11 @@ fails at once (400/404) with the explicit `bridle send --project <daemon> <to> -
 that does work. An explicit recipient still wins. `POST /v1/messages` takes `reply_to` with no
 `to` for the same thing; `--task` is not supported on a reply to another daemon.
 
+A daemon older than br-eupm answers a bare reply with exactly "`to` is required" (current ones add "or
+`reply_to`"). The CLI treats that as a stale daemon, not a bad request: it fails naming the daemon's
+version, its own, and `bridle send <sender> --reply-to <id> <text>`, and says to restart the daemon
+(br-5gxp). The versions are the crate semver, so two builds of one release look alike.
+
 **A plain send to a forwarded sender's label goes the same way (br-3sta).** The forward payload
 already carries the sending project (`origin_daemon`, recorded in `forwarded_in`). A send with no
 `--reply-to` to `external:<name>@<machine>`, the label a forwarded message showed its sender

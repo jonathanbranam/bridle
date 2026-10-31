@@ -86,6 +86,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A bare `bridle send --reply-to <id>` that fails "`to` is required" is a daemon older than the CLI (the text predates br-eupm): the CLI now says so, naming both versions, telling you to restart the daemon, and printing the `bridle send <sender> --reply-to <id>` that works. Not reproducible on current code for a local sender, tested through the CLI (br-5gxp).
 - `session restart --handover` / `session stop` mark their handover request read once the note is recorded, so a replacement session (the inbox is keyed by identity) no longer receives its predecessor's request and restarts again (br-5hca).
 - `bridle migrate` now commits what its run wrote (the migrations' files plus `.bridle/migrations.toml` and `.log`, nothing else) on the project's current branch, as the start-up run does, instead of leaving the clone dirty; it prints a to-do where it can't, e.g. on a protected branch (br-6gdp).
 - A stage writer can no longer mark a version 2 ticket's row built or done: `ticket built` is refused while the ticket is unprepared, and `built`/`done` are refused for a `bridle/designer-*` branch even when all stages are signed, so only the implementation builds it (br-dkqf; br-2ae8 went built from its stage branches).
