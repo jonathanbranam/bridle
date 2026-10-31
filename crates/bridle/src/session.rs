@@ -725,20 +725,18 @@ async fn obtain_handover(
             .await
             .map(|h| h.map(|h| h.id))
     };
-    let before = newest().await?;
     // A note written just before the request (the session saw its context filling up) counts,
     // so the session isn't asked twice.
-    let recent = client
-        .latest_handover(Some(identity))
-        .await?
-        .is_some_and(|h| is_recent_note(h.created_at, chrono::Utc::now()));
+    let latest = client.latest_handover(Some(identity)).await?;
+    let before = latest.as_ref().map(|h| h.id.clone());
+    let recent = latest.is_some_and(|h| is_recent_note(h.created_at, chrono::Utc::now()));
     if recent {
         println!("{identity} wrote a handover note just now; using it");
         return Ok(());
     }
     let repo = std::env::current_dir().map_err(anyhow::Error::from)?;
     let body = handover_request(&repo, identity, reason, stopping);
-    client
+    let asked = client
         .send(&bridle_api::SendRequest {
             to: Some(format!("external:{identity}")),
             body,
@@ -760,6 +758,11 @@ async fn obtain_handover(
             .into());
         }
         tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+    }
+    // The inbox is keyed by identity, not session: an unread request would reach the replacement
+    // session and make it write another note and restart again. Its note is in, so drop it.
+    for m in asked {
+        let _ = client.mark_read(&m.id).await;
     }
     Ok(())
 }

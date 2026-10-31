@@ -40,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Governor test `working_agent_is_notified_then_stopped_when_its_turn_ends` is `#[ignore]`d as flaky (ubuntu CI timeout waiting for Stopped), so main is green; the fix is br-remg (br-sftn).
 
 ### Fixed
+- `session restart --handover` / `session stop` mark their handover request read once the note is recorded, so a replacement session (the inbox is keyed by identity) no longer receives its predecessor's request and restarts again (br-5hca).
 - A plain `bridle send external:<name>@<machine>` (no `--reply-to`) to the label a forwarded message showed its sender under now goes back to the project that sender wrote from, not the machine's default project; labels never forwarded from route as before (br-3sta).
 - `bridle status` `waiter_open` and `last_wake_at` now reflect any principal's wake wait (an aide's too), not only the orchestrator's; the no-waiter incident still counts the orchestrator's only (br-rwj5).
 - Flaky `a_stage_writers_built_or_done_never_marks_a_prepared_v2_row` (red on macOS CI): it asserted the row stayed `pending`, but a prepared v2 file makes the link sync ready it (br-h5kz), so it raced the sync; it now accepts `pending` or `open` and still fails on built/integrated (br-dq7t).
@@ -85,6 +86,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `session restart --handover` / `session stop` mark their handover request read once the note is recorded, so a replacement session (the inbox is keyed by identity) no longer receives its predecessor's request and restarts again (br-5hca).
 - `bridle migrate` now commits what its run wrote (the migrations' files plus `.bridle/migrations.toml` and `.log`, nothing else) on the project's current branch, as the start-up run does, instead of leaving the clone dirty; it prints a to-do where it can't, e.g. on a protected branch (br-6gdp).
 - A stage writer can no longer mark a version 2 ticket's row built or done: `ticket built` is refused while the ticket is unprepared, and `built`/`done` are refused for a `bridle/designer-*` branch even when all stages are signed, so only the implementation builds it (br-dkqf; br-2ae8 went built from its stage branches).
 - Agents now see the machine's `[machine] name` and home project: the supervisor passes `BRIDLE_MACHINE_NAME` and `BRIDLE_HOME_PROJECT` in their env and `machine_home` reads them when its home has no config, so the home-project warning no longer names `<hostname>-home` (br-bfrz).

@@ -815,6 +815,8 @@ fn handover_write_by_an_aide_restarts_its_own_session() {
     assert!(typed);
 }
 
+const MESSAGE_JSON: &str = r#"{"id":"m-9","from":"external:orchestrator","to":"external:aide","kind":"note","body":"b","reply_to":null,"when":"now","state":"pending","created_at":"2026-01-01T00:00:00Z","written_at":null,"delivered_at":null,"read_at":null}"#;
+
 /// A fake daemon for `session stop`: no note until a message is posted to the session, then one.
 /// Records each request line.
 fn stop_daemon(
@@ -853,8 +855,10 @@ fn stop_daemon(
                 r#"{"reason":"session stop","since":"2026-01-01T00:00:00Z"}"#.into()
             } else if line.starts_with("GET /v1/sessions") {
                 sessions.clone()
+            } else if line.starts_with("POST /v1/messages/m-9/read") {
+                MESSAGE_JSON.into()
             } else if line.starts_with("POST /v1/messages") {
-                "[]".into()
+                format!("[{MESSAGE_JSON}]")
             } else {
                 "{}".into()
             };
@@ -948,6 +952,17 @@ fn session_stop_waits_for_the_note_then_ends_the_session_and_its_waiter() {
         "{seen:?}"
     );
     assert!(at("POST /v1/orchestrator/hold").is_none(), "{seen:?}");
+}
+
+#[test]
+fn the_handover_request_is_marked_read_once_the_note_is_in() {
+    // The inbox is keyed by identity: an unread request would reach the replacement session.
+    let (_, seen, _) = stop_run("aide", "aide", false);
+    let at = |p: &str| seen.iter().position(|l| l.starts_with(p));
+    assert!(
+        at("POST /v1/messages ").unwrap() < at("POST /v1/messages/m-9/read").expect("read"),
+        "{seen:?}"
+    );
 }
 
 #[test]
