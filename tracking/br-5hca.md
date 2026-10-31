@@ -4,10 +4,13 @@ title = "Advisor restart prompt outlives its session: replacement advisor obeys 
 kind = "bug"
 state = "pending"
 created_at = "2026-10-31T03:27:41.121Z"
-updated_at = "2026-10-31T03:27:41.121985Z"
+updated_at = "2026-10-31T03:27:48.192539Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+ticket = "5hca"
 +++
+
+docs/tickets/open/advisor-restart-prompt-outlives-its-session-replacement-advi-5hca.md
 
 submitted by external:orchestrator
 
