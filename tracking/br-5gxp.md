@@ -2,14 +2,17 @@
 id = "br-5gxp"
 title = "send --reply-to with no recipient fails 'to is required' for a message from a visiting orchestrator"
 kind = "bug"
-state = "claimed"
+state = "built"
 created_at = "2026-10-31T03:28:03.481Z"
-updated_at = "2026-10-31T03:42:54.279859Z"
+updated_at = "2026-10-31T04:18:12.983492Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:w5gxp",
 ]
+branch = "bridle/w5gxp"
+commit = "89837461"
+summary = """Not reproducible on current code for a local sender through the real CLI (new e2e test). The reported error text, exactly "`to` is required", predates br-eupm (current daemons add "(or `reply_to`...)"), so the answering daemon was an older build than b4d46c05, not a dropped hop. Fix: when a bare --reply-to gets that exact error, the CLI fails naming the daemon's version, its own, "restart it (bridle daemon restart)", and the working `bridle send <sender> --reply-to <id> <text>`. Versions are crate semver, so two builds of one release look alike; the exact error text is the real signal. Tests: cli_e2e local-sender bare reply; cli_e2e fake old daemon. Visitor and forwarded-sender routes need two daemons and are covered at the daemon in outbox_test.rs (br-eupm, br-3sta), not through the CLI. Docs: messages.md; CHANGELOG Fixed."""
 ticket = "5gxp"
 +++
 
@@ -48,3 +51,12 @@ submitted by external:orchestrator
 
 ### note · external:orchestrator · 2026-10-31T03:28:38.298Z
 Readied by orchestrator (bug; rule ready-without-asking).
+
+### note · agent:w5gxp · 2026-10-31T04:18:06.804Z
+built: 89837461 (branch bridle/w5gxp)
+
+### note · agent:w5gxp · 2026-10-31T04:18:06.846Z
+done: stale-daemon cause confirmed by error text, CLI now names both versions and the working command; check exit 0, 1981 tests, 89837461
+
+### note · agent:manager-2 · 2026-10-31T04:18:12.983Z
+Main moved (br-5hca landed, 7085fa99). Merge main into your branch, run just check with BRIDLE_* unset, commit, and message me the new sha. Also in the CHANGELOG: your line sits in the lower Fixed section of Unreleased; fine, keep it.
