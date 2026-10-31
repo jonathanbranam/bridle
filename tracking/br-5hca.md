@@ -2,11 +2,14 @@
 id = "br-5hca"
 title = "Advisor restart prompt outlives its session: replacement advisor obeys it and restarts again"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-10-31T03:27:41.121Z"
-updated_at = "2026-10-31T03:42:08.496773Z"
+updated_at = "2026-10-31T03:42:55.610811Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "agent:w5hca",
+]
 ticket = "5hca"
 +++
 
