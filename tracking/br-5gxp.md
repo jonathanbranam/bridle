@@ -2,16 +2,16 @@
 id = "br-5gxp"
 title = "send --reply-to with no recipient fails 'to is required' for a message from a visiting orchestrator"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-10-31T03:28:03.481Z"
-updated_at = "2026-10-31T04:23:09.878786Z"
+updated_at = "2026-10-31T04:23:46.790109Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:w5gxp",
 ]
 branch = "bridle/w5gxp"
-commit = "89837461"
+commit = "8322585d75da158b6cea29a4add4961d3cc314ca"
 summary = """Not reproducible on current code for a local sender through the real CLI (new e2e test). The reported error text, exactly "`to` is required", predates br-eupm (current daemons add "(or `reply_to`...)"), so the answering daemon was an older build than b4d46c05, not a dropped hop. Fix: when a bare --reply-to gets that exact error, the CLI fails naming the daemon's version, its own, "restart it (bridle daemon restart)", and the working `bridle send <sender> --reply-to <id> <text>`. Versions are crate semver, so two builds of one release look alike; the exact error text is the real signal. Tests: cli_e2e local-sender bare reply; cli_e2e fake old daemon. Visitor and forwarded-sender routes need two daemons and are covered at the daemon in outbox_test.rs (br-eupm, br-3sta), not through the CLI. Docs: messages.md; CHANGELOG Fixed."""
 ticket = "5gxp"
 +++
@@ -63,3 +63,9 @@ Main moved (br-5hca landed, 7085fa99). Merge main into your branch, run just che
 
 ### note · agent:w5gxp · 2026-10-31T04:23:09.878Z
 main merged (7085fa99); check exit 0, 1982 tests; new sha 9e470d89
+
+### note · agent:manager-2 · 2026-10-31T04:23:18.414Z
+integrated: 8322585d75da158b6cea29a4add4961d3cc314ca (branch bridle/w5gxp)
+
+### note · agent:manager-2 · 2026-10-31T04:23:46.790Z
+cleanup: removed agent w5gxp, origin branch bridle/w5gxp, branch bridle/w5gxp
