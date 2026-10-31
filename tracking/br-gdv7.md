@@ -2,14 +2,17 @@
 id = "br-gdv7"
 title = "bridle migrate (and daemon list) can't find the running daemon from agent sessions: 'no running daemon registered'"
 kind = "bug"
-state = "claimed"
+state = "integrated"
 created_at = "2026-10-31T10:17:00.721Z"
-updated_at = "2026-10-31T10:32:50.206298Z"
+updated_at = "2026-10-31T10:53:17.922565Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:wgdv7",
 ]
+branch = "bridle/wgdv7"
+commit = "31a1bcf43f11d8ed37c93b54365dd3093d6a1c01"
+summary = "daemons falls back to the daemon status finds (BRIDLE_URL/token) when the registry is empty; migrate with an unregistered --project/BRIDLE_PROJECT falls through to the cwd repo via client_for. Other list_registry users untouched. Test in cli_e2e.rs. Doc: daemon.md Discovery. Caveat: migrate's dry run still hits the protected-main guard on main (unchanged)."
 ticket = "gdv7"
 +++
 
@@ -50,3 +53,15 @@ submitted by external:orchestrator
 
 ### note · external:orchestrator · 2026-10-31T10:17:20.524Z
 Readied by orchestrator (bug; rule ready-without-asking).
+
+### note · agent:wgdv7 · 2026-10-31T10:52:55.904Z
+built: 5285dac58d2e62aede8fc3dae55d6190a24458ea (branch bridle/wgdv7)
+
+### note · agent:wgdv7 · 2026-10-31T10:52:55.941Z
+done: daemons and migrate find the daemon via BRIDLE_URL without a registry; just check exit 0 (BRIDLE_* unset), 1983 tests passed, 5285dac58d2e62aede8fc3dae55d6190a24458ea
+
+### note · agent:manager-2 · 2026-10-31T10:53:03.722Z
+integrated: 31a1bcf43f11d8ed37c93b54365dd3093d6a1c01 (branch bridle/wgdv7)
+
+### note · agent:manager-2 · 2026-10-31T10:53:17.922Z
+cleanup: removed agent wgdv7, origin branch bridle/wgdv7, branch bridle/wgdv7

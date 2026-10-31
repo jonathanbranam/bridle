@@ -3099,3 +3099,5 @@
 {"actor":"external:orchestrator","at":"2026-10-31T10:17:20.415849Z","from":"pending","task":"br-gdv7","to":"open"}
 {"actor":"agent:pm-1","at":"2026-10-31T10:32:05.520022Z","from":"open","task":"br-gdv7","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-10-31T10:32:07.158558Z","queue":"reprioritized"}
+{"actor":"agent:wgdv7","at":"2026-10-31T10:52:55.904188Z","from":"claimed","task":"br-gdv7","to":"built"}
+{"actor":"agent:manager-2","at":"2026-10-31T10:53:03.722209Z","from":"built","task":"br-gdv7","to":"integrated"}
