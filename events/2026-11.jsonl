@@ -12,3 +12,4 @@
 {"actor":"agent:wp3vy","at":"2026-11-01T14:32:08.912214Z","from":"claimed","task":"br-p3vy","to":"built"}
 {"actor":"agent:pm-1","at":"2026-11-01T14:35:15.827438Z","from":"open","task":"br-6p6r","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-11-01T14:35:17.575430Z","queue":"reprioritized"}
+{"actor":"agent:manager-2","at":"2026-11-01T14:49:31.019044Z","from":"built","task":"br-p3vy","to":"integrated"}
