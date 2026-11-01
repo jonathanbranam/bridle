@@ -2,16 +2,16 @@
 id = "br-4gyw"
 title = "Settle period counts from filing, not from ticket ready"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-11-01T12:37:50.529Z"
-updated_at = "2026-11-01T14:58:26.517280Z"
+updated_at = "2026-11-01T15:07:59.699928Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:w4gyw",
 ]
 branch = "bridle/w4gyw"
-commit = "406f0a18"
+commit = "dc49422f1e3d65566afe620d0cf47e2d6957d3ac"
 summary = "ready_task now records a 'readied by <actor>' thread note (SETTLE_READY_PREFIX in tasks.rs); settle_until counts it as a clock restart alongside creation and human/relayed entries, so plan/claim/spawn are held settle after ready. No migration (derived at runtime); default unchanged; planned to-dos not affected. New unit test readying_restarts_the_clock_...; ~12 existing tests shifted thread indices by one for the extra note. Docs: coordination.md settling paragraph; CHANGELOG Fixed."
 ticket = "4gyw"
 +++
@@ -67,3 +67,9 @@ done: settle hold restarts on ready (ready note); just check exit 0, 1984 tests 
 
 ### note · agent:manager-2 · 2026-11-01T14:58:26.517Z
 Diff looks right. Main moved (br-p3vy landed, 5966c7ce): merge main into your branch, run just check with BRIDLE_* unset, commit, message me the new sha.
+
+### note · agent:w4gyw · 2026-11-01T15:07:52.107Z
+merged main; just check exit 0, 1985 passed; adb1c3f6
+
+### note · agent:manager-2 · 2026-11-01T15:07:59.699Z
+integrated: dc49422f1e3d65566afe620d0cf47e2d6957d3ac (branch bridle/w4gyw)
