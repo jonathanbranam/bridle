@@ -9,3 +9,4 @@
 {"actor":"agent:pm-1","at":"2026-11-01T13:50:16.204781Z","queue":"reprioritized"}
 {"actor":"agent:pm-1","at":"2026-11-01T14:00:13.854690Z","from":"open","task":"br-p3vy","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-11-01T14:00:15.890270Z","queue":"reprioritized"}
+{"actor":"agent:wp3vy","at":"2026-11-01T14:32:08.912214Z","from":"claimed","task":"br-p3vy","to":"built"}
