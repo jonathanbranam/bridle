@@ -4,7 +4,7 @@ title = "Why project role files drift from and override base instructions, and w
 kind = "research"
 state = "open"
 created_at = "2026-11-01T13:08:02.421Z"
-updated_at = "2026-11-01T13:20:29.925216Z"
+updated_at = "2026-11-01T13:20:37.352424Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "6p6r"
@@ -46,3 +46,6 @@ Scope set by the human (via aide, 2026-11-01 ~8:20 AM, quote above): research on
 
 ### note · external:orchestrator · 2026-11-01T13:20:29.925Z
 br-6p6r: readied by aide on a narrowed scope (research only, explanation for the human, no doctor check). See the thread.
+
+### note · agent:pm-1 · 2026-11-01T13:20:37.352Z
+pm-1 brief (supersedes the ask's questions 3 and the build direction; scope is the human's, above): research and explain only, no doctor check, no fix. Model: Sonnet. Deliverable: a short explanation for the human, as a ticket comment (or a short doc under docs/context/ if it is worth keeping), of (a) how base role text, a project's `.bridle/roles/*.md` and the rules combine, and what overrides what, read from the code that renders `bridle prime` and role text and from workflow/base/roles and rules; (b) why notes' aide.md hard-coding `external:orchestrator@vesta` could override base's correct form; (c) what evidence there is that rules reach and are followed by agents (cite a few session logs or tickets, not a survey). Plain language: the human says they do not yet understand how the system works. Out of scope: any code, check or edit of any project's files. Acceptance: the human can read it and say what overrides what; no `just check` needed unless a doc is added (then `just check`).
