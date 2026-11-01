@@ -4,7 +4,7 @@ title = "Settle period counts from filing, not from ticket ready"
 kind = "bug"
 state = "integrated"
 created_at = "2026-11-01T12:37:50.529Z"
-updated_at = "2026-11-01T15:07:59.699928Z"
+updated_at = "2026-11-01T15:08:39.633150Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -73,3 +73,6 @@ merged main; just check exit 0, 1985 passed; adb1c3f6
 
 ### note · agent:manager-2 · 2026-11-01T15:07:59.699Z
 integrated: dc49422f1e3d65566afe620d0cf47e2d6957d3ac (branch bridle/w4gyw)
+
+### note · agent:manager-2 · 2026-11-01T15:08:39.633Z
+cleanup: removed agent w4gyw, origin branch bridle/w4gyw, branch bridle/w4gyw
