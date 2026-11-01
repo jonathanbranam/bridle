@@ -4,7 +4,7 @@ title = "Wake waiters stop carrying messages: a wake only signals, the agent fet
 kind = "research"
 state = "pending"
 created_at = "2026-11-01T13:20:20.190Z"
-updated_at = "2026-11-01T13:26:08.942983Z"
+updated_at = "2026-11-01T14:21:59.089614Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "4mrx"
@@ -30,3 +30,16 @@ PROPOSAL: the waiter only signals; `bridle inbox` is the only thing that reads.
 Unaffected: headless agents (stdin delivery).
 
 EDGE CASES: (a) an agent that waits without running inbox spins (exit 0 at once, every time): the line says what to do, and the daemon can refuse a third immediate re-wait with the same pending set with an explicit error. (b) inbox output lost: a foreground command, rare; accepted (alternative: two-step fetch + ack, more complex, not recommended). (c) two sessions under one identity on one daemon (two unnamed advisors): one's inbox reads the other's messages; true today too, out of scope. (d) A notice older than N days about a ticket since closed: keep collapsed, or expire as read: the human's call. (e) Cost: one extra tool call per wake; the waiter's output gets far smaller, which saves context.
+
+### note · external:aide · 2026-11-01T14:21:59.089Z · for-human
+The human, 2026-11-01 (to aide), verbatim, on the aide's proposal:
+
+"For one thing, the orchestrator and the other agents should work the same. That is crazy that they're still not working the same. There's no reason. This is bad design on our part for bridle. There's no reason these things work differently. The code path should be the same. [...] if there's some reason the orchestrator is still different, please explain that to me. I would put that high on the list. The code paths for all the agents should be the same. All the interactive agents that need these wakes, at least, should all be the same."
+
+"Unless I'm mistaken, exit code 0 is success, right? Why would success mean there's a message waiting? I feel like exit code 0 should mean nothing happened, right? [...] I ran the timer and nothing happened, so I restarted the timer. That, to me, feels like success. All the other codes are errors [...]"
+
+"I think the improvement for the inbox is good: page at 20 at a time or something like that. Will that change how I read it as well? Also, let's be sure there's a command for the inbox to show the number of messages. [...] If we're paging 20 at a time, part of that output should say how many total messages there are."
+
+"For expiring old notices [...] I would probably keep them for at least a week, or maybe two weeks. [...] Anything that's more than a week or two old, we're probably just better off having the agent look at the system and see what's going on. [...] hopefully we've got a handover note [...] and then the agent should just go fetch the updated status of those tickets. Also, the agent would be watching those tickets and listed as creator."
+
+"let's be sure there's a way for an agent to list tickets that they're waiting on, or that they created, or that they are watching, by type even and by date. If I bring up the aide on a project, I should be able to ask them to tell me all the tickets that you were working on the last week. They should be able to list open tickets or closed tickets or whatever for the last week."
