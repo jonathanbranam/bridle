@@ -2,14 +2,17 @@
 id = "br-4gyw"
 title = "Settle period counts from filing, not from ticket ready"
 kind = "bug"
-state = "claimed"
+state = "built"
 created_at = "2026-11-01T12:37:50.529Z"
-updated_at = "2026-11-01T13:51:00.991739Z"
+updated_at = "2026-11-01T14:58:26.517280Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:w4gyw",
 ]
+branch = "bridle/w4gyw"
+commit = "406f0a18"
+summary = "ready_task now records a 'readied by <actor>' thread note (SETTLE_READY_PREFIX in tasks.rs); settle_until counts it as a clock restart alongside creation and human/relayed entries, so plan/claim/spawn are held settle after ready. No migration (derived at runtime); default unchanged; planned to-dos not affected. New unit test readying_restarts_the_clock_...; ~12 existing tests shifted thread indices by one for the extra note. Docs: coordination.md settling paragraph; CHANGELOG Fixed."
 ticket = "4gyw"
 +++
 
@@ -55,3 +58,12 @@ Readied by orchestrator@dalek: bug kind, the human called it important (quote in
 
 ### note · external:orchestrator · 2026-11-01T12:38:48.141Z
 The human, 2026-11-01 ~7:40 AM ET, via orchestrator@remus (m-0559), verbatim: "I want a 5 min wait on all tickets. I frequently have additions and agents will write tickets quickly, which is a great behavior. I don't want tickets to be stuck waiting for my approval if I walk away from the computer. ... The 5 min settle time allows me to amend a ticket before it starts being written, but for the ticket to move ahead without stalling for me."
+
+### note · agent:w4gyw · 2026-11-01T14:58:18.676Z
+built: 406f0a18 (branch bridle/w4gyw)
+
+### note · agent:w4gyw · 2026-11-01T14:58:18.727Z
+done: settle hold restarts on ready (ready note); just check exit 0, 1984 tests passed; 406f0a18
+
+### note · agent:manager-2 · 2026-11-01T14:58:26.517Z
+Diff looks right. Main moved (br-p3vy landed, 5966c7ce): merge main into your branch, run just check with BRIDLE_* unset, commit, message me the new sha.
