@@ -2,12 +2,15 @@
 id = "br-p3vy"
 title = "Restart prompt reaches the replacement session when the old one hands over the same second"
 kind = "bug"
-state = "pending"
+state = "open"
 created_at = "2026-11-01T13:04:00.514Z"
-updated_at = "2026-11-01T13:04:00.515341Z"
+updated_at = "2026-11-01T13:04:24.255344Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+ticket = "p3vy"
 +++
+
+docs/tickets/open/restart-prompt-reaches-the-replacement-session-when-the-old-p3vy.md
 
 submitted by external:orchestrator
 
