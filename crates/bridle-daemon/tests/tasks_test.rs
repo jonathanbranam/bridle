@@ -135,8 +135,8 @@ async fn drop_requires_a_reason() {
         .await
         .expect("drop with a reason");
     assert_eq!(dropped.state, TicketState::Dropped);
-    assert_eq!(dropped.thread.len(), 1);
-    assert!(dropped.thread[0].body.contains("budget cut"));
+    assert_eq!(dropped.thread.len(), 2);
+    assert!(dropped.thread[1].body.contains("budget cut"));
 }
 
 #[tokio::test]
@@ -194,9 +194,9 @@ async fn ask_blocks_a_task_and_answer_frees_it_again() {
         .ask_question(&task.id, "which endpoint?", None)
         .await
         .expect("ask question");
-    assert_eq!(asked.thread.len(), 1);
-    assert_eq!(asked.thread[0].kind, ThreadEntryKind::Question);
-    assert_eq!(asked.thread[0].body, "which endpoint?");
+    assert_eq!(asked.thread.len(), 2);
+    assert_eq!(asked.thread[1].kind, ThreadEntryKind::Question);
+    assert_eq!(asked.thread[1].body, "which endpoint?");
 
     let open = c.list_open_questions().await.expect("list open questions");
     assert_eq!(open.len(), 1);
@@ -214,9 +214,9 @@ async fn ask_blocks_a_task_and_answer_frees_it_again() {
         .answer_question(&task.id, "the v1 endpoint")
         .await
         .expect("answer question");
-    assert_eq!(answered.thread.len(), 2);
-    assert_eq!(answered.thread[1].kind, ThreadEntryKind::Answer);
-    assert_eq!(answered.thread[1].body, "the v1 endpoint");
+    assert_eq!(answered.thread.len(), 3);
+    assert_eq!(answered.thread[2].kind, ThreadEntryKind::Answer);
+    assert_eq!(answered.thread[2].body, "the v1 endpoint");
 
     assert!(
         c.list_open_questions()
@@ -253,21 +253,21 @@ async fn note_appears_in_the_task_thread_from_human_and_agent() {
         .note_task(&task.id, "starting on this now")
         .await
         .expect("note task");
-    assert_eq!(noted.thread.len(), 1);
-    assert_eq!(noted.thread[0].kind, ThreadEntryKind::Note);
-    assert_eq!(noted.thread[0].body, "starting on this now");
+    assert_eq!(noted.thread.len(), 2);
+    assert_eq!(noted.thread[1].kind, ThreadEntryKind::Note);
+    assert_eq!(noted.thread[1].body, "starting on this now");
 
     let external = daemon.external_client("w1").await;
     let noted = external
         .note_task(&task.id, "picking this up")
         .await
         .expect("note task as external principal");
-    assert_eq!(noted.thread.len(), 2);
-    assert_eq!(noted.thread[1].kind, ThreadEntryKind::Note);
-    assert_eq!(noted.thread[1].body, "picking this up");
+    assert_eq!(noted.thread.len(), 3);
+    assert_eq!(noted.thread[2].kind, ThreadEntryKind::Note);
+    assert_eq!(noted.thread[2].body, "picking this up");
 
     let fetched = c.get_task(&task.id).await.expect("get task");
-    assert_eq!(fetched.thread.len(), 2);
+    assert_eq!(fetched.thread.len(), 3);
 }
 
 /// `bridle claim`/`bridle release`'s HTTP surface, in its "not ready"
@@ -504,7 +504,7 @@ async fn human_todo_priority_change_and_rescind_are_audited() {
     req.priority = Some(TicketPriority::High);
     let task = c.new_open_task(&req).await.expect("new task");
     assert_eq!(task.priority, TicketPriority::High);
-    assert!(task.thread[0].body.contains("priority high"));
+    assert!(task.thread[1].body.contains("priority high"));
 
     let plain = c
         .new_open_task(&new_req("plain", TicketKind::Chore))
@@ -1057,8 +1057,8 @@ async fn send_with_task_notes_the_thread_and_notifies_briefly() {
     );
 
     let fetched = c.get_task(&task.id).await.expect("get task");
-    assert_eq!(fetched.thread.len(), 1);
-    assert_eq!(fetched.thread[0].body, long);
+    assert_eq!(fetched.thread.len(), 2);
+    assert_eq!(fetched.thread[1].body, long);
 
     let err = external
         .send(&SendRequest {

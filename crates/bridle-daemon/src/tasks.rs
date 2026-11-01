@@ -40,6 +40,10 @@ use chrono::{DateTime, Utc};
 /// from a plain note so nobody can forge a skip.
 const SETTLE_SKIP_PREFIX: &str = "settle skipped by ";
 
+/// Prefix of the thread note `ready_task` records; its time restarts the settle
+/// clock (br-4gyw), so a ticket filed long ago is held again once readied.
+const SETTLE_READY_PREFIX: &str = "readied by ";
+
 /// The human's principal id; their comments and edits restart the settle clock.
 const HUMAN: &str = "human";
 
@@ -491,7 +495,7 @@ impl TicketManager {
 
     /// When work on `task` (claim, plan, spawn) may start on the settle clock,
     /// if that's after `now`: `max(created_at, the human's latest thread
-    /// entry) + settle`, unless a skip note is in the thread. The human's
+    /// entry, or the ready note) + settle`, unless a skip note is in the thread. The human's
     /// entries include relays of their words (see [`is_relayed_human_word`]).
     /// Any state, pending included (br-85hs). Computed from the thread alone,
     /// so old tasks need no migration (ny9u).
@@ -509,7 +513,11 @@ impl TicketManager {
         let start = task
             .thread
             .iter()
-            .filter(|e| e.from == HUMAN || is_relayed_human_word(&e.body))
+            .filter(|e| {
+                e.from == HUMAN
+                    || is_relayed_human_word(&e.body)
+                    || e.body.starts_with(SETTLE_READY_PREFIX)
+            })
             .map(|e| e.at)
             .fold(task.created_at, DateTime::max);
         Some(start + self.settle).filter(|until| *until > now)
@@ -891,6 +899,13 @@ impl TicketManager {
             )));
         }
         self.transition(&mut task, TicketState::Open, actor).await?;
+        task.thread.push(ThreadEntry {
+            kind: ThreadEntryKind::Note,
+            from: actor.clone(),
+            body: format!("{SETTLE_READY_PREFIX}{actor}"),
+            at: task.updated_at,
+            for_human: false,
+        });
         self.state.enqueue_task(&task)?;
         Ok(self.put(task))
     }
@@ -2406,8 +2421,8 @@ mod tests {
             .await
             .expect("drop");
         assert_eq!(dropped.state, TicketState::Dropped);
-        assert_eq!(dropped.thread.len(), 1);
-        assert_eq!(dropped.thread[0].body, "dropped: budget cut");
+        assert_eq!(dropped.thread.len(), 2);
+        assert_eq!(dropped.thread[1].body, "dropped: budget cut");
 
         let err = tm
             .drop_task(&task.id, "again", &"human".to_string())
@@ -2653,7 +2668,7 @@ mod tests {
             .await
             .expect("done");
         assert_eq!(done.state, TicketState::Integrated);
-        assert_eq!(done.thread[0].body, "integrated: abc123");
+        assert_eq!(done.thread[1].body, "integrated: abc123");
         assert!(tm.is_ready(&tm.get_task(&blocked.id).expect("blocked")));
         let ready: Vec<String> = tm.ready_tasks().into_iter().map(|t| t.id).collect();
         assert_eq!(ready, vec![blocked.id.clone()]);
@@ -2690,7 +2705,7 @@ mod tests {
         assert_eq!(done.branch.as_deref(), Some("bridle/t"));
         assert_eq!(done.commit.as_deref(), Some("abc123"));
         assert_eq!(done.summary.as_deref(), Some("second"));
-        assert_eq!(done.thread[0].body, "integrated: abc123 (branch bridle/t)");
+        assert_eq!(done.thread[1].body, "integrated: abc123 (branch bridle/t)");
     }
 
     #[tokio::test]
@@ -3153,12 +3168,12 @@ mod tests {
             .await
             .expect("watch");
         assert!(t.thread.last().expect("entry").body.contains("watching"));
-        assert_eq!(t.thread.len(), 2);
+        assert_eq!(t.thread.len(), 3);
         let (t, _) = tm
             .set_watching(&anon.id, &"human".to_string(), false)
             .await
             .expect("noop");
-        assert!(t.thread.is_empty());
+        assert!(t.thread.len() == 1);
         tm.flush_now().await.expect("flush");
 
         // A restart keeps the list, including an emptied one (not mistaken for an old record).
@@ -3227,10 +3242,10 @@ mod tests {
             .ask_question(&task.id, &"agent:w1".to_string(), "which endpoint?")
             .await
             .expect("ask question");
-        assert_eq!(asked.thread.len(), 1);
-        assert_eq!(asked.thread[0].kind, ThreadEntryKind::Question);
-        assert_eq!(asked.thread[0].from, "agent:w1");
-        assert_eq!(asked.thread[0].body, "which endpoint?");
+        assert_eq!(asked.thread.len(), 2);
+        assert_eq!(asked.thread[1].kind, ThreadEntryKind::Question);
+        assert_eq!(asked.thread[1].from, "agent:w1");
+        assert_eq!(asked.thread[1].body, "which endpoint?");
         assert!(
             !tm.ready_tasks().iter().any(|t| t.id == task.id),
             "an open question excludes a task from ready"
@@ -3247,10 +3262,10 @@ mod tests {
             .answer_question(&task.id, &"human".to_string(), "the v1 endpoint")
             .await
             .expect("answer question");
-        assert_eq!(answered.thread.len(), 2);
-        assert_eq!(answered.thread[1].kind, ThreadEntryKind::Answer);
-        assert_eq!(answered.thread[1].from, "human");
-        assert_eq!(answered.thread[1].body, "the v1 endpoint");
+        assert_eq!(answered.thread.len(), 3);
+        assert_eq!(answered.thread[2].kind, ThreadEntryKind::Answer);
+        assert_eq!(answered.thread[2].from, "human");
+        assert_eq!(answered.thread[2].body, "the v1 endpoint");
         assert!(
             tm.ready_tasks().iter().any(|t| t.id == task.id),
             "answering the question re-enables readiness"
@@ -3302,10 +3317,10 @@ mod tests {
             .note_task(&task.id, &"agent:w1".to_string(), "fyi, started on this")
             .await
             .expect("note task");
-        assert_eq!(noted.thread.len(), 1);
-        assert_eq!(noted.thread[0].kind, ThreadEntryKind::Note);
-        assert_eq!(noted.thread[0].from, "agent:w1");
-        assert_eq!(noted.thread[0].body, "fyi, started on this");
+        assert_eq!(noted.thread.len(), 2);
+        assert_eq!(noted.thread[1].kind, ThreadEntryKind::Note);
+        assert_eq!(noted.thread[1].from, "agent:w1");
+        assert_eq!(noted.thread[1].body, "fyi, started on this");
         assert!(
             tm.ready_tasks().iter().any(|t| t.id == task.id),
             "a note doesn't block readiness like a question does"
@@ -3315,9 +3330,9 @@ mod tests {
             .note_task(&task.id, &"human".to_string(), "sounds good")
             .await
             .expect("note task from human");
-        assert_eq!(noted.thread.len(), 2);
-        assert_eq!(noted.thread[1].from, "human");
-        assert_eq!(noted.thread[1].body, "sounds good");
+        assert_eq!(noted.thread.len(), 3);
+        assert_eq!(noted.thread[2].from, "human");
+        assert_eq!(noted.thread[2].body, "sounds good");
     }
 
     #[tokio::test]
@@ -3377,8 +3392,8 @@ mod tests {
         .await
         .expect("reopen task manager");
         let rehydrated = tm2.get_task(&task.id).expect("rehydrated");
-        assert_eq!(rehydrated.thread.len(), 1);
-        assert_eq!(rehydrated.thread[0].kind, ThreadEntryKind::Question);
+        assert_eq!(rehydrated.thread.len(), 2);
+        assert_eq!(rehydrated.thread[1].kind, ThreadEntryKind::Question);
         assert!(
             !tm2.is_ready(&rehydrated),
             "the open question survives a restart and still blocks ready"
@@ -3999,7 +4014,7 @@ mod tests {
         assert_eq!(got_b.state, TicketState::Planned);
         assert_eq!(
             got_b.thread.len(),
-            2,
+            3,
             "b's question and its answer both survive"
         );
         assert!(
@@ -4143,6 +4158,31 @@ mod tests {
 
     fn ready(tm: &TicketManager, id: &str) -> bool {
         tm.is_ready(&tm.get_task(id).expect("task"))
+    }
+
+    #[tokio::test]
+    async fn readying_restarts_the_clock_and_a_later_comment_restarts_it_again() {
+        let (tm, tmp) = manager().await;
+        let _tmp = tmp;
+        let tm = tm.with_settle(std::time::Duration::from_secs(300));
+        let t = tm
+            .new_task("T", TicketKind::Chore, String::new(), vec![], None)
+            .await
+            .expect("new");
+        // Filed long ago: settled while pending.
+        shift_back(&tm, &t.id, 60);
+        assert!(tm.require_settled(&t.id).is_ok());
+        tm.ready_task(&t.id, &agent()).await.expect("ready");
+        let err = tm.require_settled(&t.id).expect_err("held after ready");
+        assert!(err.to_string().contains("settling until"), "{err}");
+        // Settled once the period has passed since ready.
+        shift_back(&tm, &t.id, 6);
+        assert!(tm.require_settled(&t.id).is_ok());
+        // A human comment after ready restarts it.
+        tm.note_task(&t.id, &"human".to_string(), "wait")
+            .await
+            .expect("human note");
+        assert!(tm.require_settled(&t.id).is_err());
     }
 
     #[tokio::test]

@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The settle hold now also restarts when a ticket is readied (pending -> open), not only at filing, so a ticket filed days ago is held for `[tasks] settle` after ready. `ready` records a "readied by" thread note that the runtime-derived `settle_until` counts; no migration (br-4gyw).
 - A restart/stop handover request queued just after its session recorded the note is now born read (the daemon checks for a note under 2 minutes old), so the replacement session no longer receives it whichever came first; the CLI also retries marking it read once and warns if that fails (br-p3vy).
 - `bridle migrate` and `bridle daemons` work from an agent session that cannot see the machine registry: `daemons` falls back to the daemon `status` finds (`$BRIDLE_URL` and token), and `migrate` with an unregistered `--project`/`$BRIDLE_PROJECT` migrates the cwd repo through that daemon instead of failing "no running daemon registered" (br-gdv7).
 - `session restart --handover` / `session stop` mark their handover request read once the note is recorded, so a replacement session (the inbox is keyed by identity) no longer receives its predecessor's request and restarts again (br-5hca).

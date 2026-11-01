@@ -27,12 +27,12 @@ presently a no-op, since tasks don't carry a role field yet.
 
 **Settling.** Every ticket settles before anyone starts work on it: `ready`, the queue's startable flag,
 `claim`, `plan` and spawning an agent for it (`bridle agent spawn --ticket <id>`: a designer, planner or worker),
-in any state (pending included), require `now >= max(created_at, the human's latest thread entry) + [tasks] settle`
+in any state (pending included), require `now >= max(created_at, the human's latest thread entry, the ready note) + [tasks] settle`
 (default 10m, `0` off), unless a settle-skip note is in the thread. The human's own plan and spawn are not
 held. A refusal, not a queue. The human's "latest thread entry" includes a relay of their words by an agent: a
 comment starting "From the human" or containing "human via " (rule human-via-agent); a plain text match, so a
 heuristic (br-85hs). Computed from existing data (no
-schema change), so old tasks are settled. A human comment, question/answer or title/body edit
+schema change), so old tasks are settled. Readying a ticket (pending -> open) records a "readied by" thread note that restarts the clock too (br-4gyw), so a ticket filed long ago is held again for the period after ready; a to-do or `--for-human` row created planned is never readied and not held by this. A human comment, question/answer or title/body edit
 restarts the clock (an edit records a human thread note). The PM can still plan a settling task;
 the human's own to-dos (`--for-human`, claimed at creation) are exempt. `bridle task skip-settle
 <id> --reason` records a note and event `task.settle_skipped`; allowed for the human, and for the
