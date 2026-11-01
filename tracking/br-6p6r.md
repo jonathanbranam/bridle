@@ -2,9 +2,9 @@
 id = "br-6p6r"
 title = "Why project role files drift from and override base instructions, and whether rules are applied and used well"
 kind = "research"
-state = "open"
+state = "planned"
 created_at = "2026-11-01T13:08:02.421Z"
-updated_at = "2026-11-01T13:20:37.352424Z"
+updated_at = "2026-11-01T14:35:15.827438Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "6p6r"
