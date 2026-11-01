@@ -4,7 +4,7 @@ title = "Wake waiters stop carrying messages: a wake only signals, the agent fet
 kind = "research"
 state = "pending"
 created_at = "2026-11-01T13:20:20.190Z"
-updated_at = "2026-11-01T14:21:59.089614Z"
+updated_at = "2026-11-01T14:22:31.629298Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "4mrx"
@@ -43,3 +43,19 @@ The human, 2026-11-01 (to aide), verbatim, on the aide's proposal:
 "For expiring old notices [...] I would probably keep them for at least a week, or maybe two weeks. [...] Anything that's more than a week or two old, we're probably just better off having the agent look at the system and see what's going on. [...] hopefully we've got a handover note [...] and then the agent should just go fetch the updated status of those tickets. Also, the agent would be watching those tickets and listed as creator."
 
 "let's be sure there's a way for an agent to list tickets that they're waiting on, or that they created, or that they are watching, by type even and by date. If I bring up the aide on a project, I should be able to ask them to tell me all the tickets that you were working on the last week. They should be able to list open tickets or closed tickets or whatever for the last week."
+
+### note · external:aide · 2026-11-01T14:22:31.524Z · for-human
+The human, 2026-11-01 (to aide), verbatim: "I don't care if the orchestrator unification is first or second, necessarily, but let's be sure that gets done either way."
+
+### note · external:aide · 2026-11-01T14:22:31.629Z
+CONSOLIDATED DESIGN (aide, 2026-11-01), for the human's sign-off. Nothing is built until they say go.
+
+1. One wake path for every interactive session (REQUIRED, order free). The orchestrator's separate Wakes queue (wake.rs: exits, stalls, CI failures, budget holds, incidents, usage crossings; marked read on hand-over; own cursor and forwarding) is replaced: each such fact becomes an ordinary stored message to external:orchestrator, and the separate queue, cursor and read-on-hand-over code are deleted. Forwarding to the home project uses the normal message forwarding.
+2. The waiter only signals. It prints one line with counts and changes no state: it never prints bodies and never marks anything read. Delete the hand-over/acknowledge machinery (take_unacked).
+3. Exit codes (the human's scheme): 0 = nothing happened, wait again. 4 = pending, run `bridle inbox` then wait again. 5 = replaced by a newer waiter, do nothing. 6 = daemon stopping/restarting, wait again. 1 = error (no daemon etc.). Exit 4 is level-triggered: anything unread makes a new wait return at once, so there's no race and nothing to reconcile. To stop a spin, the daemon refuses repeated immediate re-waits on an unchanged pending set with an explicit error.
+4. `bridle inbox` is the only reader. It marks read exactly what it printed. It pages ~20 at a time with "showing 20 of N; run again for more". Order: messages from people and agents first, then ticket notices collapsed per ticket. `bridle inbox --count` prints the total and counts by kind; the waiter line and each page header carry the same counts. The human's reads (web UI) are unchanged.
+5. Ticket notices (task_update) older than 14 days expire: marked read with reason expired, still visible in `bridle message list`. Messages from people or agents never expire.
+6. Ticket filters: `bridle ticket list --created-by <p> --watching <p> --state open|closed --since <dur>` (with --kind), so "every ticket you worked on last week" is one command. Depends on, or folds in, br-519b (creator field and watchers list).
+7. Role text, rules and docs: one short paragraph ("after exit 4 run inbox, then wait; after 0 or 6 wait; after 5 do nothing"). Fix the false "lost output loses nothing" lines (cli.md:131, role files) and the stale messages.md section.
+
+Proposed split for the build: (a) the signal-only waiter + inbox paging/count + exit codes + docs; (b) the orchestrator unification; (c) notice expiry; (d) ticket filters (with 519b). (b) is mandatory whichever order.
