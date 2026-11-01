@@ -2,11 +2,14 @@
 id = "br-p3vy"
 title = "Restart prompt reaches the replacement session when the old one hands over the same second"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-11-01T13:04:00.514Z"
-updated_at = "2026-11-01T14:00:13.854690Z"
+updated_at = "2026-11-01T14:01:04.146813Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "agent:wp3vy",
+]
 ticket = "p3vy"
 +++
 
