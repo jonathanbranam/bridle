@@ -4,12 +4,13 @@ title = "Why project role files drift from and override base instructions, and w
 kind = "research"
 state = "claimed"
 created_at = "2026-11-01T13:08:02.421Z"
-updated_at = "2026-11-01T15:28:11.612838Z"
+updated_at = "2026-11-01T15:29:00.729095Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:w6p6r",
 ]
+summary = "Research only: explained as a ticket comment. Role text is concatenated (base, then project .bridle/roles, then rules) with no override semantics; rules have explicit ids/overrides; spawned agents read project role files only for prototyper/document-reviewer/designer. Cited br-34bw, br-m7mp, fx7x, missing-tools incident."
 ticket = "6p6r"
 +++
 
@@ -55,3 +56,47 @@ pm-1 brief (supersedes the ask's questions 3 and the build direction; scope is t
 
 ### answer · external:orchestrator · 2026-11-01T15:17:51.387Z
 Human via aide, 2026-11-01 ~8:20 AM: "I would just do the research part first. This might not even be hard. This could be just a few messages between agents to explain to me what's going on and how this works. I'm not ready for a fix yet." Scope: research only, an explanation for the human; no doctor check.
+
+### note · agent:w6p6r · 2026-11-01T15:29:00.662Z
+Explanation for the human (research only; no code or project files changed). Written by w6p6r.
+
+## (a) What an agent reads, and what overrides what
+
+Short version: nothing overrides anything. Text is stacked, and the later text usually wins in practice. There is no merge step for role prose.
+
+There are two kinds of text, kept in two places, treated differently.
+
+1. Role text (prose, "you are the aide, do this"):
+   - Base: `workflow/base/roles/<role>.md`, shipped with bridle.
+   - Project: `.bridle/roles/<role>.md` in a project's repo, optional.
+2. Rules (short rules with ids and a `roles:` list, e.g. `workflow/base/rules/no-kill-by-name.md`):
+   - Layers: base, then packs, then the project's `.bridle/rules/`. Here overrides ARE explicit: a later layer that redefines a rule id must say `override: replace|append|disable` (disable needs a reason), or loading fails (`crates/bridle-daemon/src/rules.rs`: "redefines a rule already defined by an earlier layer without an `override` kind"). Rules cannot silently contradict each other by id.
+
+How each reaches an agent depends on how the agent starts:
+
+- Interactive roles (orchestrator, advisor, aide; also designer, document-reviewer, prototyper): the session runs `bridle prime <role>` (`crates/bridle/src/commands/orchestrator.rs`, `prime_role_file`, `prime_orchestrator`). It prints the base role file, a blank line, the project's `.bridle/roles/<role>.md` verbatim, then a `## Rules` section with the resolved rules for that role. Pure concatenation: base, project, rules.
+- Daemon-spawned agents (worker, manager, project-manager, ...): the daemon builds the system prompt in `stable_system_prompt` (`crates/bridle-daemon/src/config.rs` ~3343): fixed preamble, a sentence naming the integration branch, the base role file, then `## Workflow rules`. The project's `.bridle/roles/<role>.md` is read here ONLY for prototyper, document-reviewer and designer. For worker/manager/pm it is not read at all.
+
+So for the aide: the model sees base `aide.md` first and the project's `aide.md` right after it. Nothing marks the second as "replaces the first". If both say how to message the orchestrator, the model has two instructions; the project one is later and more specific, so it tends to win. That is the whole mechanism of "overriding".
+
+## (b) Why notes' aide.md could beat base
+
+Base `aide.md` (line ~56) says `bridle send external:orchestrator --project <host>-home ...`, because the one orchestrator lives in the machine's home project, not in each project. Notes' project file hard-coded `external:orchestrator@vesta`, an address form that is not a recipient on notes' own daemon. Project text is appended after base with no reconciliation, so the model followed the later, more specific, wrong line. Nothing checks project role text against base, and nothing checks that an address in role prose is a valid recipient.
+
+Why drift happens: a project author (or an agent writing for them) restates something base already says, in the project's terms; base later changes, or was never consulted. Restating is the problem; adding is fine. The same facts are also written by hand in several places (role files, rules, design docs); br-98xt (`role-and-rule-files-misstate-how-rules-reach-agents-orchestr-98xt`) is an earlier case of role text misstating how the system works.
+
+## (c) Do rules reach agents and get followed? A few cited cases (not a survey)
+
+- Did not reach, then fixed: br-34bw (`the-workflow-doesn-t-reach-agents-resolved-rules-hooks-and-o-34bw`, 2026-10-03). A review found spawned agents got a preamble plus one role file and NO resolved rules; workers never ran `bridle prime`; role files only restated rules in summary. Every claim checked true. Since then spawned prompts carry a `## Workflow rules` section, and br-m7mp (`interactive-roles-aide-advisor-orchestrator-get-their-resolv-m7mp`, 2026-10-09) gave interactive roles their rules, project rules included. Before those dates, rules were mostly decoration.
+- Reached but broken: rule no-kill-by-name. Its own "Why" records workers killing processes by name pattern and taking down the live orchestrator twice (2026-09-29, br-fx7x). A written rule was not enough; it is now also enforced by a deny list and the `bridle kill-guard` hook. Pattern: rules that matter get a hook; prose alone is the weakest layer.
+- Reached but skipped in practice: rule missing-tools. Its Why records meta-notes 2026-09-30: `pipenv` and `vader.vim` were missing, the worker substituted another runner, skipped tests, said so only in a done line, and the manager merged. The rule was written after the fact.
+- Reached and used: this task. My system prompt carried the rules (`ascii-in-editable-text`, `report-task-failures`, `talk-on-the-task`) and I am answering on the ticket thread as the last one says. But one run says nothing about how often agents follow rules; the code has no measure of rule citation or breach.
+
+## Bottom line
+
+- Rules: layered, with ids, explicit overrides, delivered via prime or the spawn prompt. A sound mechanism, only as good as its delivery (see br-34bw) and whether a hook backs it.
+- Role prose: base and project text are concatenated, with no override semantics and no consistency check. A project role file can contradict base and nothing notices.
+- Cheap safeguards, if the human later wants any (not done, per scope): project role files only add and never restate; render shared facts like the orchestrator address from one source; a doctor check for addresses that are not valid recipients.
+
+### note · agent:w6p6r · 2026-11-01T15:29:00.729Z
+done: explanation posted as a ticket comment (no code, no commit)
