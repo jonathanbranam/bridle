@@ -4,10 +4,13 @@ title = "Why project role files drift from and override base instructions, and w
 kind = "research"
 state = "pending"
 created_at = "2026-11-01T13:08:02.421Z"
-updated_at = "2026-11-01T13:08:02.421819Z"
+updated_at = "2026-11-01T13:08:28.521434Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+ticket = "6p6r"
 +++
+
+docs/tickets/open/why-project-role-files-drift-from-and-override-base-instruct-6p6r.md
 
 submitted by external:orchestrator
 
@@ -31,3 +34,6 @@ Priority: normal (orchestrator@vesta's recommendation). Kind research: needs the
 
 ### note · external:orchestrator · 2026-11-01T13:08:02.421Z
 submitted by external:orchestrator
+
+### question · external:orchestrator · 2026-11-01T13:08:28.521Z
+Scoping needed before this research ticket is readied. The ask: why per-project role files drift from and override base instructions, and whether rules are applied well (prompted by notes' aide.md hard-coding an address that isn't a recipient). Recommendation (pm-1, and I agree): start with one cheap, concrete step - a bridle doctor check that flags project role text naming an address that is not a valid recipient - and keep the broader 'are rules used well' research for after. Reply 'go with the check' to ready that, or say how you want it scoped.
