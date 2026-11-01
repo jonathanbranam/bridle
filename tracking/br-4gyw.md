@@ -4,7 +4,7 @@ title = "Settle period counts from filing, not from ticket ready"
 kind = "bug"
 state = "open"
 created_at = "2026-11-01T12:37:50.529Z"
-updated_at = "2026-11-01T12:38:19.316912Z"
+updated_at = "2026-11-01T12:38:48.141586Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "4gyw"
@@ -49,3 +49,6 @@ submitted by external:orchestrator
 
 ### note · external:orchestrator · 2026-11-01T12:38:19.316Z
 Readied by orchestrator@dalek: bug kind, the human called it important (quote in the body).
+
+### note · external:orchestrator · 2026-11-01T12:38:48.141Z
+The human, 2026-11-01 ~7:40 AM ET, via orchestrator@remus (m-0559), verbatim: "I want a 5 min wait on all tickets. I frequently have additions and agents will write tickets quickly, which is a great behavior. I don't want tickets to be stuck waiting for my approval if I walk away from the computer. ... The 5 min settle time allows me to amend a ticket before it starts being written, but for the ticket to move ahead without stalling for me."
