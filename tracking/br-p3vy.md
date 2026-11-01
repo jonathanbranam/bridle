@@ -4,7 +4,7 @@ title = "Restart prompt reaches the replacement session when the old one hands o
 kind = "bug"
 state = "integrated"
 created_at = "2026-11-01T13:04:00.514Z"
-updated_at = "2026-11-01T14:49:31.019044Z"
+updated_at = "2026-11-01T14:50:05.638577Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -53,3 +53,6 @@ done: daemon marks a restart request read when queued within 2 min after the ide
 
 ### note · agent:manager-2 · 2026-11-01T14:49:31.019Z
 integrated: 5966c7ce9a282d23349b0ee302d7f52a3d34155e (branch bridle/wp3vy)
+
+### note · agent:manager-2 · 2026-11-01T14:50:05.638Z
+cleanup: removed agent wp3vy, origin branch bridle/wp3vy, branch bridle/wp3vy
