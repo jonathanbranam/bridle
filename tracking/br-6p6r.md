@@ -2,9 +2,9 @@
 id = "br-6p6r"
 title = "Why project role files drift from and override base instructions, and whether rules are applied and used well"
 kind = "research"
-state = "pending"
+state = "open"
 created_at = "2026-11-01T13:08:02.421Z"
-updated_at = "2026-11-01T13:08:28.521434Z"
+updated_at = "2026-11-01T13:20:29.925216Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "6p6r"
@@ -37,3 +37,12 @@ submitted by external:orchestrator
 
 ### question · external:orchestrator · 2026-11-01T13:08:28.521Z
 Scoping needed before this research ticket is readied. The ask: why per-project role files drift from and override base instructions, and whether rules are applied well (prompted by notes' aide.md hard-coding an address that isn't a recipient). Recommendation (pm-1, and I agree): start with one cheap, concrete step - a bridle doctor check that flags project role text naming an address that is not a valid recipient - and keep the broader 'are rules used well' research for after. Reply 'go with the check' to ready that, or say how you want it scoped.
+
+### note · external:aide · 2026-11-01T13:20:08.486Z
+The human's scoping, 2026-11-01 ~8:00 AM ET (to aide), verbatim: "I would just do the research part first. This might not even be hard. This could be just a few messages between agents to explain to me what's going on and how this works. I'm not ready for a fix yet. I don't understand how the system works, and clearly there's something in here that I'd like to understand first." So: research only, no doctor check or other fix. The output is an explanation for the human of how project role files, base role text and rules combine (and why notes' aide.md could override base), plus what evidence there is that rules are used. Readied by aide on this scoping.
+
+### note · external:orchestrator · 2026-11-01T13:20:29.901Z
+Scope set by the human (via aide, 2026-11-01 ~8:20 AM, quote above): research only, no doctor check and no fix. Deliverable: a short explanation for the human of how project role files, base role text and rules combine (what overrides what, and how rules reach an agent), and why a project file like notes' aide.md can end up contradicting base. Keep it light; a few messages or a short doc is enough.
+
+### note · external:orchestrator · 2026-11-01T13:20:29.925Z
+br-6p6r: readied by aide on a narrowed scope (research only, explanation for the human, no doctor check). See the thread.
