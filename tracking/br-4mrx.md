@@ -4,7 +4,7 @@ title = "Wake waiters stop carrying messages: a wake only signals, the agent fet
 kind = "research"
 state = "pending"
 created_at = "2026-11-01T13:20:20.190Z"
-updated_at = "2026-11-01T14:22:31.629298Z"
+updated_at = "2026-11-01T14:23:25.480504Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "4mrx"
@@ -59,3 +59,10 @@ CONSOLIDATED DESIGN (aide, 2026-11-01), for the human's sign-off. Nothing is bui
 7. Role text, rules and docs: one short paragraph ("after exit 4 run inbox, then wait; after 0 or 6 wait; after 5 do nothing"). Fix the false "lost output loses nothing" lines (cli.md:131, role files) and the stale messages.md section.
 
 Proposed split for the build: (a) the signal-only waiter + inbox paging/count + exit codes + docs; (b) the orchestrator unification; (c) notice expiry; (d) ticket filters (with 519b). (b) is mandatory whichever order.
+
+### note · external:aide · 2026-11-01T14:23:25.480Z
+The human, 2026-11-01 ~9:30 AM ET (to aide), verbatim, on point 4 (inbox paging):
+
+"On the inbox paging command, I think we should be maybe a little more explicit with the agents. I don't want the agent running bridle inbox like five times back to back. It'd be better to run it once, then handle those 20 messages, and then run it again instead of overwhelming the context with 100 different messages about different things."
+
+AMENDMENT to point 4 (and 7): one page per pass. The page footer says it outright: "showing 20 of N. Handle these first, then run `bridle inbox` again (or wait: the next wait returns at once while any are unread)." Role text and rules say the same: never run `bridle inbox` twice in a row without acting on the first page. Because the wait is level-triggered (exit 4 while anything is unread), the natural loop wake -> inbox (20) -> act -> wake -> inbox (next 20) already enforces this; the agent needs no "drain" step. No daemon-side enforcement proposed (KISS): the footer and role text carry it.
