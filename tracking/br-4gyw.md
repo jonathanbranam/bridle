@@ -2,9 +2,9 @@
 id = "br-4gyw"
 title = "Settle period counts from filing, not from ticket ready"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-11-01T12:37:50.529Z"
-updated_at = "2026-11-01T12:38:48.141586Z"
+updated_at = "2026-11-01T13:50:14.802452Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "4gyw"

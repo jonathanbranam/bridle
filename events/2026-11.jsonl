@@ -5,3 +5,5 @@
 {"actor":"human","at":"2026-11-01T13:08:02.421Z","from":"","task":"br-6p6r","to":"pending"}
 {"actor":"external:aide","at":"2026-11-01T13:20:08.649288Z","from":"pending","task":"br-6p6r","to":"open"}
 {"actor":"human","at":"2026-11-01T13:20:20.190Z","from":"","task":"br-4mrx","to":"pending"}
+{"actor":"agent:pm-1","at":"2026-11-01T13:50:14.802452Z","from":"open","task":"br-4gyw","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-11-01T13:50:16.204781Z","queue":"reprioritized"}
