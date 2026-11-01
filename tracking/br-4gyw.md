@@ -2,9 +2,9 @@
 id = "br-4gyw"
 title = "Settle period counts from filing, not from ticket ready"
 kind = "bug"
-state = "pending"
+state = "open"
 created_at = "2026-11-01T12:37:50.529Z"
-updated_at = "2026-11-01T12:37:59.807520Z"
+updated_at = "2026-11-01T12:38:19.316912Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "4gyw"
@@ -46,3 +46,6 @@ A test: file a ticket, back-date its filing past `settle`, ready it, and check t
 
 ### note · external:orchestrator · 2026-11-01T12:37:50.530Z
 submitted by external:orchestrator
+
+### note · external:orchestrator · 2026-11-01T12:38:19.316Z
+Readied by orchestrator@dalek: bug kind, the human called it important (quote in the body).
