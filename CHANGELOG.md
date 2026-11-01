@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A restart/stop handover request queued just after its session recorded the note is now born read (the daemon checks for a note under 2 minutes old), so the replacement session no longer receives it whichever came first; the CLI also retries marking it read once and warns if that fails (br-p3vy).
 - `bridle migrate` and `bridle daemons` work from an agent session that cannot see the machine registry: `daemons` falls back to the daemon `status` finds (`$BRIDLE_URL` and token), and `migrate` with an unregistered `--project`/`$BRIDLE_PROJECT` migrates the cwd repo through that daemon instead of failing "no running daemon registered" (br-gdv7).
 - `session restart --handover` / `session stop` mark their handover request read once the note is recorded, so a replacement session (the inbox is keyed by identity) no longer receives its predecessor's request and restarts again (br-5hca).
 - A plain `bridle send external:<name>@<machine>` (no `--reply-to`) to the label a forwarded message showed its sender under now goes back to the project that sender wrote from, not the machine's default project; labels never forwarded from route as before (br-3sta).

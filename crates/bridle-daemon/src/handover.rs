@@ -8,6 +8,9 @@ use std::path::Path;
 const STANDARD: &str = include_str!("../../../workflow/base/handover/standard.md");
 
 /// The role a session identity plays: `advisor/notes` is an advisor.
+/// Text every restart/stop handover request carries (`store::close_handover_requests` matches it).
+pub const REQUEST_MARKER: &str = "Say nothing more once it is written";
+
 pub fn role_of(identity: &str) -> &str {
     identity.split('/').next().unwrap_or(identity)
 }

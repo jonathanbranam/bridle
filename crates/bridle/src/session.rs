@@ -761,8 +761,18 @@ async fn obtain_handover(
     }
     // The inbox is keyed by identity, not session: an unread request would reach the replacement
     // session and make it write another note and restart again. Its note is in, so drop it.
+    // Whichever came first (the note or this request), it is dropped here. A failure is said
+    // aloud and retried once: silently leaving it unread is how the replacement got it (br-p3vy).
     for m in asked {
-        let _ = client.mark_read(&m.id).await;
+        if client.mark_read(&m.id).await.is_err() {
+            tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+            if let Err(e) = client.mark_read(&m.id).await {
+                eprintln!(
+                    "warning: could not mark the handover request {} read ({e}); the replacement session may receive it",
+                    m.id
+                );
+            }
+        }
     }
     Ok(())
 }

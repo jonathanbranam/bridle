@@ -135,3 +135,33 @@ async fn each_identity_has_its_own_notes() {
     assert_eq!(list.len(), 2);
     // The request body carries no identity: the type has only `body`, so a client can't set one.
 }
+
+/// br-p3vy: the inbox is keyed by identity, so a restart request queued just after its session
+/// recorded the note (it never read the request) would reach the replacement session. Whichever
+/// came first, the request ends up read.
+#[tokio::test]
+async fn a_restart_request_queued_after_the_note_is_born_read() {
+    let (daemon, _tmp) = support::start_daemon(None).await;
+    let aide = daemon.external_client("aide").await;
+    aide.write_handover("note").await.expect("write");
+    let req = bridle_api::types::SendRequest {
+        to: Some("external:aide".to_string()),
+        body: "The human is restarting this session.\n\nSay nothing more once it is written."
+            .to_string(),
+        kind: bridle_api::types::MessageKind::Note,
+        when: bridle_api::types::When::Now,
+        reply_to: None,
+        task: None,
+    };
+    let sent = daemon.client.send(&req).await.expect("send");
+    let m = daemon
+        .client
+        .list_messages(&bridle_api::types::MessageQuery {
+            id: Some(sent[0].id.clone()),
+            ..Default::default()
+        })
+        .await
+        .expect("list");
+    let m = m.iter().find(|m| m.id == sent[0].id).expect("found");
+    assert_eq!(m.state, bridle_api::types::MessageState::Read, "{m:?}");
+}

@@ -2276,6 +2276,21 @@ async fn send_message(
             .await?;
         msgs.push(msg);
     }
+    // The note may have landed just before this request: the session never read it, and the
+    // identity's next session would be handed it (br-p3vy). Same rule as when the note lands.
+    if req.body.contains(crate::handover::REQUEST_MARKER) {
+        for m in &msgs {
+            if let Some(role) = m.to.strip_prefix("external:") {
+                let role = role.split('@').next().unwrap_or(role);
+                let recent = state.store.list_handovers().await?.into_iter().any(|h| {
+                    h.role == role && Utc::now() - h.created_at < chrono::Duration::seconds(120)
+                });
+                if recent {
+                    state.store.close_handover_requests(&m.to).await?;
+                }
+            }
+        }
+    }
     let note = match (not_running, fell_back) {
         (Some(name), _) => Some(format!("{name} isn't running; waiting in its inbox")),
         (None, Some(name)) => Some(format!("{name} isn't running; delivered to advisor")),
