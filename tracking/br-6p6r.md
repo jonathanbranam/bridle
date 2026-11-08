@@ -2,9 +2,9 @@
 id = "br-6p6r"
 title = "Why project role files drift from and override base instructions, and whether rules are applied and used well"
 kind = "research"
-state = "claimed"
+state = "planned"
 created_at = "2026-11-01T13:08:02.421Z"
-updated_at = "2026-11-01T15:29:00.729095Z"
+updated_at = "2026-11-08T13:54:42.306484Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -100,3 +100,6 @@ Why drift happens: a project author (or an agent writing for them) restates some
 
 ### note · agent:w6p6r · 2026-11-01T15:29:00.729Z
 done: explanation posted as a ticket comment (no code, no commit)
+
+### question · external:orchestrator · 2026-11-08T13:54:42.306Z
+Waiting on the human since 2026-11-01. w6p6r's explanation (the human's research-only scope) is the 2026-11-01 15:29 UTC comment above; it covers how role text and rules combine and why a project role file can contradict base. Short answer: rules have explicit overrides, role prose is just concatenated with no check. Question for the human: has it answered what you wanted to understand, and can this ticket be resolved? Recommendation: read that one comment; if it is enough, resolve with no follow-up. Any safeguard it lists (role files only add, one source for shared addresses, a doctor check) would be a separate ticket, only if you want one.
