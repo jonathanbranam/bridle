@@ -2,9 +2,9 @@
 id = "br-4fpk"
 title = "Rule set and write-time guard: no file paths that collide on a case-insensitive disk (mu-bgb6)"
 kind = "feature"
-state = "open"
+state = "planned"
 created_at = "2026-11-09T14:59:03.928Z"
-updated_at = "2026-11-09T14:59:51.345921Z"
+updated_at = "2026-11-09T15:14:03.857215Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "4fpk"
