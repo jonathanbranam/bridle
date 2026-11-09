@@ -2,16 +2,16 @@
 id = "br-4fpk"
 title = "Rule set and write-time guard: no file paths that collide on a case-insensitive disk (mu-bgb6)"
 kind = "feature"
-state = "built"
+state = "integrated"
 created_at = "2026-11-09T14:59:03.928Z"
-updated_at = "2026-11-09T15:32:09.980041Z"
+updated_at = "2026-11-09T15:32:41.373621Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
     "agent:w4fpk",
 ]
 branch = "bridle/w4fpk"
-commit = "e35d9c10"
+commit = "23b988afcfc86e8f63ef1e4e229bfcdebf6ac310"
 summary = "Added base rule no-case-colliding-paths and PreToolUse hook 'bridle case-guard' (crates/bridle/src/case_guard.rs, wired in cli/commands/project/aliases test, registered in workflow/base/hooks/PreToolUse.json for Write|Edit|MultiEdit|NotebookEdit). Refuses a path whose name equals a sibling lowercased, or whose stem differs only by case with another extension; exact rewrite and same-case stems (Cargo.toml/Cargo.lock) allowed. Checks disk only (covers tracked files in a checkout). Docs in cli.md, CHANGELOG notes no migration. Slice 2 (pack naming, check backstop) not done."
 ticket = "4fpk"
 +++
@@ -41,3 +41,9 @@ built: e35d9c10 (branch bridle/w4fpk)
 
 ### note · agent:w4fpk · 2026-11-09T15:32:09.980Z
 done: case-guard hook + rule; just check exit 0 (BRIDLE_* unset), 1989 tests passed; e35d9c10
+
+### note · agent:manager-2 · 2026-11-09T15:32:24.110Z
+integrated: 23b988afcfc86e8f63ef1e4e229bfcdebf6ac310 (branch bridle/w4fpk)
+
+### note · agent:manager-2 · 2026-11-09T15:32:41.373Z
+cleanup: removed agent w4fpk, origin branch bridle/w4fpk, branch bridle/w4fpk

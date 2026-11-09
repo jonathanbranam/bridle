@@ -21,3 +21,4 @@
 {"actor":"agent:pm-1","at":"2026-11-09T15:14:03.857215Z","from":"open","task":"br-4fpk","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-11-09T15:14:07.843183Z","queue":"reprioritized"}
 {"actor":"agent:w4fpk","at":"2026-11-09T15:32:09.935123Z","from":"claimed","task":"br-4fpk","to":"built"}
+{"actor":"agent:manager-2","at":"2026-11-09T15:32:24.110273Z","from":"built","task":"br-4fpk","to":"integrated"}
