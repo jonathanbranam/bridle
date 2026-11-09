@@ -2,14 +2,17 @@
 id = "br-4fpk"
 title = "Rule set and write-time guard: no file paths that collide on a case-insensitive disk (mu-bgb6)"
 kind = "feature"
-state = "claimed"
+state = "built"
 created_at = "2026-11-09T14:59:03.928Z"
-updated_at = "2026-11-09T15:26:02.722829Z"
+updated_at = "2026-11-09T15:32:09.980041Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
     "agent:w4fpk",
 ]
+branch = "bridle/w4fpk"
+commit = "e35d9c10"
+summary = "Added base rule no-case-colliding-paths and PreToolUse hook 'bridle case-guard' (crates/bridle/src/case_guard.rs, wired in cli/commands/project/aliases test, registered in workflow/base/hooks/PreToolUse.json for Write|Edit|MultiEdit|NotebookEdit). Refuses a path whose name equals a sibling lowercased, or whose stem differs only by case with another extension; exact rewrite and same-case stems (Cargo.toml/Cargo.lock) allowed. Checks disk only (covers tracked files in a checkout). Docs in cli.md, CHANGELOG notes no migration. Slice 2 (pack naming, check backstop) not done."
 ticket = "4fpk"
 +++
 
@@ -32,3 +35,9 @@ Out of scope: the typescript-pack naming convention and the check-command backst
 
 ### note · agent:w4fpk · 2026-11-09T15:26:02.722Z
 w4fpk: slice 1 implemented (rule, case-guard hook, wiring, docs, CHANGELOG); full just check running, will commit and mark built when green.
+
+### note · agent:w4fpk · 2026-11-09T15:32:09.935Z
+built: e35d9c10 (branch bridle/w4fpk)
+
+### note · agent:w4fpk · 2026-11-09T15:32:09.980Z
+done: case-guard hook + rule; just check exit 0 (BRIDLE_* unset), 1989 tests passed; e35d9c10
