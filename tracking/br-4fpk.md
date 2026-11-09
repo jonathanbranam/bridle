@@ -4,7 +4,7 @@ title = "Rule set and write-time guard: no file paths that collide on a case-ins
 kind = "feature"
 state = "claimed"
 created_at = "2026-11-09T14:59:03.928Z"
-updated_at = "2026-11-09T15:14:56.348767Z"
+updated_at = "2026-11-09T15:26:02.722829Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -29,3 +29,6 @@ SLICE 1 (this ticket), model Sonnet: a base rule plus a write-time guard.
 - Register the hook for the agent roles that write files, wherever kill-guard is registered.
 Tests: guard refuses Foo.md vs foo.md, refuses TimeLog.tsx vs timelog.ts, allows an exact rewrite and unrelated names. Docs: docs/design (hooks section) and CHANGELOG. Existing-project impact: the hook is in the bridle binary and base rules, so projects get it on upgrade; no project-file migration is needed (say so in the CHANGELOG). Acceptance: `just check`.
 Out of scope: the typescript-pack naming convention and the check-command backstop (slice 2), renaming any existing project's files.
+
+### note · agent:w4fpk · 2026-11-09T15:26:02.722Z
+w4fpk: slice 1 implemented (rule, case-guard hook, wiring, docs, CHANGELOG); full just check running, will commit and mark built when green.
