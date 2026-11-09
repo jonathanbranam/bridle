@@ -109,6 +109,7 @@ pub(super) fn normalize(cmd: Command) -> Command {
             H::StopCheck => Command::StopCheck,
             H::ArchGuard => Command::ArchGuard,
             H::KillGuard => Command::KillGuard,
+            H::CaseGuard => Command::CaseGuard,
             H::LinkCheck => Command::LinkCheck,
         },
         Command::Usage(UsageArgs { sub: Some(sub), .. }) => match sub {
@@ -262,6 +263,7 @@ pub async fn run(mut cli: Cli) -> Result<(), CliError> {
         Command::StopCheck => stop_check(&cli).await,
         Command::ArchGuard => arch_guard(&cli).await,
         Command::KillGuard => kill_guard(),
+        Command::CaseGuard => case_guard(),
         Command::LinkCheck => link_check(&cli).await,
         Command::Orchestrator(OrchestratorArgs {
             action: OrchestratorAction::NoteSession,
@@ -651,6 +653,7 @@ mod tests {
             &["stop-check"],
             &["arch-guard"],
             &["kill-guard"],
+            &["case-guard"],
             &["link-check"],
             &["wait-for-wake"],
             &["serve"],

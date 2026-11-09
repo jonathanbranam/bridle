@@ -3,6 +3,7 @@
 
 mod advisor;
 mod arch_guard;
+mod case_guard;
 mod cli;
 mod commands;
 mod dev_site;

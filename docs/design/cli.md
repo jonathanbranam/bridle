@@ -229,6 +229,7 @@ bridle mail uninstall                        remove that file, print the unload 
 bridle orchestrator wait-for-wake [--timeout SECS]                  the orchestrator's background watcher: waits for a wake condition, prints it and exits 0 (6 with the reason on stderr when the daemon is restarting or shutting down; `nothing` at the timeout, default and cap 6900 s); external:orchestrator only
 bridle hook arch-guard                      Claude Code PreToolUse hook: blocks design/architecture/ edits outside an arch-revision task
 bridle hook link-check                      Claude Code Stop hook (orchestrator, advisor, aide sessions): once per reply, asks the agent to link task/ticket IDs it named without a link
+bridle hook case-guard                      Claude Code PreToolUse hook (Write/Edit/NotebookEdit): refuses a path that collides case-insensitively with an existing sibling
 bridle hook kill-guard                      Claude Code PreToolUse hook (Bash): refuses kill-by-name (pgrep | xargs kill, kill $(pgrep), pkill in a compound command)
 bridle hook stop-check                      Claude Code Stop hook for the worker role; refuses to stop
                                              with an unreleased claim and no thread entry since claiming
@@ -1018,6 +1019,13 @@ bridle ticket comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain com
   `pkill *`/`killall *` are also in every role's `disallowed_tools` and the session settings' deny list; the
   hook covers what those prefix rules miss. `kill <pid>`, `kill $!` and `kill %1` are allowed.
   Rule `no-kill-by-name`; ticket 75h2.
+- **`case-guard`** is Claude Code's `PreToolUse` hook for `Write|Edit|MultiEdit|NotebookEdit` (same
+  `PreToolUse.json`, rendered by `sync`). It denies a write whose target, in the same directory as
+  an existing entry, has an equal lowercased name (`Foo.md` vs `foo.md`) or a stem that differs
+  only by case with another extension (`TimeLog.tsx` vs `timelog.ts`); the reason names both paths.
+  Rewriting the exact existing file, and same-case stems (`Cargo.toml`, `Cargo.lock`), are allowed.
+  It checks the disk only; files written other ways are for a check-command backstop (br-4fpk
+  slice 2). Rule `no-case-colliding-paths`.
 - **`link-check`** is Claude Code's `Stop` hook, installed with `bridle focus reply` in the
   orchestrator, advisor and aide session settings (`REPLY_HOOK` in `session.rs`, `timeout` 5 s;
   ticket 9dcz, rule `link-ids-for-the-human`). It reads `last_assistant_message` and blocks once

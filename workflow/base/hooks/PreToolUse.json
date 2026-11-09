@@ -4,6 +4,10 @@
     "hooks": [{ "type": "command", "command": "bridle arch-guard" }]
   },
   {
+    "matcher": "Write|Edit|MultiEdit|NotebookEdit",
+    "hooks": [{ "type": "command", "command": "bridle case-guard" }]
+  },
+  {
     "matcher": "Bash",
     "hooks": [{ "type": "command", "command": "bridle kill-guard" }]
   }

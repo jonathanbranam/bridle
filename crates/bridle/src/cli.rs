@@ -226,6 +226,10 @@ pub enum Command {
     /// `kill $(pgrep ...)`, `pkill` inside a compound command). Never fails.
     #[command(hide = true)]
     KillGuard,
+    /// Claude Code's PreToolUse hook for Write/Edit/NotebookEdit: refuses creating a path that
+    /// collides case-insensitively with an existing sibling. Never fails.
+    #[command(hide = true)]
+    CaseGuard,
     /// Claude Code's Stop hook for the interactive sessions: once per reply, asks the agent to
     /// link task and ticket IDs it named without a link. Never blocks twice; any error allows.
     #[command(hide = true)]
@@ -380,6 +384,8 @@ pub enum HookAction {
     ArchGuard,
     /// Claude Code's PreToolUse hook refusing kill-by-name in Bash.
     KillGuard,
+    /// Claude Code's PreToolUse hook refusing case-colliding file paths.
+    CaseGuard,
     /// Claude Code's Stop hook reminding once to link ticket IDs.
     LinkCheck,
 }

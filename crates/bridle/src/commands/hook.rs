@@ -167,6 +167,19 @@ pub(super) fn kill_guard() -> Result<(), CliError> {
     Ok(())
 }
 
+/// Claude Code's PreToolUse hook for Write/Edit/NotebookEdit: refuses a path that collides
+/// case-insensitively with an existing sibling (rule `no-case-colliding-paths`).
+pub(super) fn case_guard() -> Result<(), CliError> {
+    let input: serde_json::Value = std::io::read_to_string(std::io::stdin())
+        .ok()
+        .and_then(|s| serde_json::from_str(&s).ok())
+        .unwrap_or(serde_json::Value::Null);
+    if let Some(reason) = crate::case_guard::refusal(&input) {
+        println!("{}", crate::arch_guard::deny_json(&reason));
+    }
+    Ok(())
+}
+
 /// Claude Code's Stop hook for the orchestrator, advisor and aide sessions (ticket 9dcz): blocks
 /// once when the reply names task or ticket IDs without a link (rule `link-ids-for-the-human`).
 /// Allows (prints nothing) on the second pass, with no `public_url`, with nothing to flag, and on
