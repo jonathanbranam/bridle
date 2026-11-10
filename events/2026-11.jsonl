@@ -24,3 +24,5 @@
 {"actor":"agent:manager-2","at":"2026-11-09T15:32:24.110273Z","from":"built","task":"br-4fpk","to":"integrated"}
 {"actor":"human","at":"2026-11-10T17:12:10.601Z","from":"","task":"br-qy4y","to":"pending"}
 {"actor":"external:aide","at":"2026-11-10T17:12:10.928970Z","from":"pending","task":"br-qy4y","to":"open"}
+{"actor":"agent:pm-1","at":"2026-11-10T17:37:28.392223Z","from":"open","task":"br-qy4y","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-11-10T17:37:30.967182Z","queue":"reprioritized"}
