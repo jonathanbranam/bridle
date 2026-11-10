@@ -22,3 +22,5 @@
 {"actor":"agent:pm-1","at":"2026-11-09T15:14:07.843183Z","queue":"reprioritized"}
 {"actor":"agent:w4fpk","at":"2026-11-09T15:32:09.935123Z","from":"claimed","task":"br-4fpk","to":"built"}
 {"actor":"agent:manager-2","at":"2026-11-09T15:32:24.110273Z","from":"built","task":"br-4fpk","to":"integrated"}
+{"actor":"human","at":"2026-11-10T17:12:10.601Z","from":"","task":"br-qy4y","to":"pending"}
+{"actor":"external:aide","at":"2026-11-10T17:12:10.928970Z","from":"pending","task":"br-qy4y","to":"open"}
