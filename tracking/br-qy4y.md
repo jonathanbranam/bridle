@@ -2,11 +2,14 @@
 id = "br-qy4y"
 title = "Firewall prompts came back after the 11-09 self-upgrade despite the stable signing identity (7bs2 again)"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-11-10T17:12:10.601Z"
-updated_at = "2026-11-10T17:37:28.392223Z"
+updated_at = "2026-11-10T17:38:24.686514Z"
 created_by = "external:aide"
-watchers = ["external:aide"]
+watchers = [
+    "external:aide",
+    "agent:qy4y",
+]
 ticket = "qy4y"
 +++
 
