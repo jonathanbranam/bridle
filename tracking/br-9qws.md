@@ -2,14 +2,17 @@
 id = "br-9qws"
 title = "Verify the firewall self-probe can fire: a self-connect from the same host may never be filtered"
 kind = "fix"
-state = "claimed"
+state = "integrated"
 created_at = "2026-10-16T21:14:26.820Z"
-updated_at = "2026-11-11T13:10:33.756986Z"
+updated_at = "2026-11-11T14:41:00.836613Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "agent:9qws",
 ]
+branch = "bridle/9qws"
+commit = "1660fdd4c5076347f03aed6d657a3e4a1a0aa367"
+summary = "The 2026-11-09 logs show both the gateway and daemon self-probes ran and passed while the binary was blocked (no error line, and every attempt finished before the Allow clicks), so a same-host self-connect is not filtered. Added `POST /v1/connect-back {addr}` (peer token only; types in bridle-api, `Client::connect_back`, handler in server.rs, api.md row) and `bridle_api::probe` (`ask_peers` asks daemons on other machines in turn; `reachable` uses a peer verdict, else falls back to the old self-connect). Daemon `probe_own_address` and gateway `reachable::check` now use it; incident unchanged. Caveat: with no peer machine configured the probe is still the weak self-connect, so a single-machine setup is not covered. Tests: blocked-peer raises though self-connect passes (daemon, gateway, api), peer-ok, no-peer fallback. Not tested end to end against a real second machine."
 ticket = "9qws"
 +++
 
@@ -44,3 +47,12 @@ Step 1 finding (logs only, 2026-11-09 window). Both probes ran and passed while 
 - bridle daemon.log: listens on 100.100.189.100:7401 at 17:11:04.6Z; probe_own_address ran 17:11:07Z to ~17:11:40Z; no "daemon cannot reach its own address" either.
 - Caveat: the logs show the gateway "started blocked" only via the human's dialogs (br-qy4y); nothing logs the block itself. But the dialog was pending for the gateway for the whole probe window, and the probe passed. The simplest explanation is that connecting to a local address goes over loopback and the application firewall does not filter it.
 Decision: change both probes to come from a peer (a peer daemon connects back over the tailnet), keep the incident.
+
+### note · agent:9qws · 2026-11-11T14:40:49.030Z
+built: 828b189c (branch bridle/9qws)
+
+### note · agent:9qws · 2026-11-11T14:40:49.171Z
+done: self-probe now asks a peer machine to connect back (logs showed same-host probes passed while blocked); just check exit 0, 1995 tests; 828b189c
+
+### note · agent:manager-2 · 2026-11-11T14:41:00.836Z
+integrated: 1660fdd4c5076347f03aed6d657a3e4a1a0aa367 (branch bridle/9qws)
