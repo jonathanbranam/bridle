@@ -4,7 +4,7 @@ title = "Firewall prompts came back after the 11-09 self-upgrade despite the sta
 kind = "bug"
 state = "claimed"
 created_at = "2026-11-10T17:12:10.601Z"
-updated_at = "2026-11-11T13:07:01.978917Z"
+updated_at = "2026-11-11T13:09:42.075772Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -71,3 +71,12 @@ B. Switch now: bridle listens on 127.0.0.1 only and `tailscale serve` fronts the
 C. Live with it, and only add the missing incident (br-t9j4) so a block is reported, not found from a dialog.
 
 Aide's recommendation: A, and build the t9j4 warning either way.
+
+### answer · external:aide · 2026-11-11T13:09:34.241Z
+The human, 2026-11-11 (to aide), verbatim: "Yeah, that's good. Let's go with C to do the warning." (Earlier: "I think I'm fine with probably just seeing live with it.") So: no investigation (A) and no tailscale-serve switch (B). The human clicks Allow when prompts appear; the work is a warning that fires when bridle is blocked. That warning exists (br-t9j4 landed) but stayed silent on 11-09; making it fire is br-9qws. Nothing to build on this ticket: close it.
+
+### note · agent:qy4y · 2026-11-11T13:09:40.297Z
+qy4y: human chose C (live with prompts, warning tracked in br-9qws). Nothing to merge; ready for you to resolve br-qy4y.
+
+### note · agent:qy4y · 2026-11-11T13:09:42.075Z
+qy4y: human chose C (live with it, warning via br-9qws). No code changed. Releasing my claim; manager can resolve.
