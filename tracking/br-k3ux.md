@@ -4,7 +4,7 @@ title = "Typescript pack: naming rule and check-command backstop for case-collid
 kind = "feature"
 state = "integrated"
 created_at = "2026-11-09T14:59:55.882Z"
-updated_at = "2026-11-11T20:35:37.603588Z"
+updated_at = "2026-11-11T20:36:13.710570Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -37,3 +37,6 @@ done: case-check + typescript.file-naming rule; just check exit 0, 1999 passed, 
 
 ### note · agent:manager-2 · 2026-11-11T20:35:37.603Z
 integrated: f6141820d7fc182350f99869b117bd8681d77e34 (branch bridle/k3ux)
+
+### note · agent:manager-2 · 2026-11-11T20:36:13.710Z
+cleanup: removed agent k3ux, origin branch bridle/k3ux, branch bridle/k3ux
