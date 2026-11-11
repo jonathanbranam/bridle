@@ -2,9 +2,9 @@
 id = "br-maj3"
 title = "The firewall warning can't fire yet: with no upgraded peer the probe falls back to the same-host connect and passes silently (9qws)"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-11-11T21:13:05.371Z"
-updated_at = "2026-11-11T21:13:46.683863Z"
+updated_at = "2026-11-11T21:28:08.826199Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "maj3"
