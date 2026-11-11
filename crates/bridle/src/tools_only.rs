@@ -36,6 +36,29 @@ fn reason(repo: &Path) -> String {
     )
 }
 
+/// `reason` plus who owns the project (br-wphz): the owner from `owner.toml` on `bridle/state`,
+/// or a plain statement that it could not be read. `owner.toml` records no workspace path, so
+/// the message names the host only.
+fn reason_with_owner(repo: &Path, owner: Option<&Owner>) -> String {
+    let project = repo
+        .file_name()
+        .map(|n| n.to_string_lossy().into_owned())
+        .unwrap_or_default();
+    let who = match owner {
+        Some(o) => format!("{project} is served on {} (since {})", o.host, o.since),
+        None => format!(
+            "its owner could not be read ({STATE_BRANCH}:{OWNER_FILE} is missing or unreadable)"
+        ),
+    };
+    format!("{} {who}.", reason(repo))
+}
+
+/// The refusal text for a tools-only `repo`, looking the owner up (a bounded fetch).
+fn refusal(repo: &Path) -> String {
+    let main = main_checkout(repo).unwrap_or_else(|_| repo.to_path_buf());
+    reason_with_owner(repo, read_owner(&main).as_ref())
+}
+
 /// `bridle serve`'s guard.
 pub fn refuse_serve(repo: &Path) -> anyhow::Result<()> {
     refuse_serve_in(repo, &bridle_home())
@@ -43,7 +66,7 @@ pub fn refuse_serve(repo: &Path) -> anyhow::Result<()> {
 
 pub fn refuse_serve_in(repo: &Path, home: &Path) -> anyhow::Result<()> {
     if is_tools_only(repo, home)? {
-        bail!("refusing to serve: {}", reason(repo));
+        bail!("refusing to serve: {}", refusal(repo));
     }
     Ok(())
 }
@@ -115,7 +138,7 @@ pub fn run(action: &MachineAction) -> Result<(), CliError> {
         MachineAction::ToolsOnlyCheck(a) => {
             let repo = repo_of(a)?;
             if is_tools_only(&repo, &bridle_home()).map_err(anyhow::Error::from)? {
-                return Err(anyhow::anyhow!("{}", reason(&repo)).into());
+                return Err(anyhow::anyhow!("{}", refusal(&repo)).into());
             }
             Ok(())
         }
@@ -469,6 +492,20 @@ fn restore_hooks(dir: &Path, owner: bool) -> anyhow::Result<bool> {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn refusal_names_the_owner_or_says_it_is_unreadable() {
+        let repo = Path::new("/w/data-contracts");
+        let o = Owner {
+            host: "dalek".into(),
+            since: "2026-10-18".into(),
+            released: None,
+        };
+        let m = reason_with_owner(repo, Some(&o));
+        assert!(m.contains("data-contracts is served on dalek"), "{m}");
+        let m = reason_with_owner(repo, None);
+        assert!(m.contains("owner could not be read"), "{m}");
+    }
+
     use super::*;
 
     fn write(p: &Path, s: &str) {
