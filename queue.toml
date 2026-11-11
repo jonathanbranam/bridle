@@ -48,3 +48,6 @@ tasks = ["br-qy4y"]
 
 [[tier]]
 tasks = ["br-wphz"]
+
+[[tier]]
+tasks = ["br-k3ux"]
