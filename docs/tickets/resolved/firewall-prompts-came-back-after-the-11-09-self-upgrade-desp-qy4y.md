@@ -9,6 +9,7 @@ changes: []
 specs: []
 blocked_by: []
 related: []
+resolved: 2026-11-11T13:09:43Z
 ---
 
 Filed by aide. Related: br-7bs2 (resolved), br-p88z, br-t9j4 (open: the gateway checks its own tailnet listener), br-9qws (open: a self-connect may never be filtered).
