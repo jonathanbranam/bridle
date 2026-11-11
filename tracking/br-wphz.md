@@ -2,14 +2,16 @@
 id = "br-wphz"
 title = "A tools-only clone's refusal names the machine that owns the project"
 kind = "bug"
-state = "claimed"
+state = "built"
 created_at = "2026-11-11T13:02:07.653Z"
-updated_at = "2026-11-11T14:51:12.226448Z"
+updated_at = "2026-11-11T14:51:14.562783Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
     "agent:wphz",
 ]
+branch = "bridle/wphz"
+commit = "d8b1893e4588975941dfb5592a317725558a8678"
 summary = "A tools-only clone's refusal (bridle serve, machine tools-only-check) now names the owner from owner.toml on bridle/state via the existing read_owner (host and since), or says the owner could not be read. owner.toml has no workspace path, so none is shown. Hook text baked at install time is unchanged. One unit test covers both cases (formatter only)."
 ticket = "wphz"
 +++
@@ -29,3 +31,9 @@ pm-1 brief: model Haiku (Sonnet if the owner lookup is not already a function). 
 
 ### note · agent:wphz · 2026-11-11T14:39:45.023Z
 wphz: code, tests and CHANGELOG done on bridle/wphz (uncommitted); just check is queued behind the machine test lock (background run). Will commit, summarize, mark built and report once it exits 0. Note: owner.toml records no workspace path (Owner has host, since, released only), so the message names host and since only.
+
+### note · agent:wphz · 2026-11-11T14:51:14.479Z
+built: d8b1893e4588975941dfb5592a317725558a8678 (branch bridle/wphz)
+
+### note · agent:wphz · 2026-11-11T14:51:14.562Z
+done: tools-only refusal names owner host+since or says unreadable (no workspace path in owner.toml); just check exit 0, 1990 tests passed, ran on f6c5fec5 (pre-merge); tip d8b1893e is that plus a main merge
