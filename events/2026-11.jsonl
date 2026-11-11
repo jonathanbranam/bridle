@@ -36,3 +36,4 @@
 {"actor":"agent:manager-2","at":"2026-11-11T14:41:00.836613Z","from":"built","task":"br-9qws","to":"integrated"}
 {"actor":"agent:wphz","at":"2026-11-11T14:51:14.479090Z","from":"claimed","task":"br-wphz","to":"built"}
 {"actor":"agent:manager-2","at":"2026-11-11T17:15:29.066059Z","from":"built","task":"br-wphz","to":"integrated"}
+{"actor":"external:aide","at":"2026-11-11T17:16:59.274496Z","from":"pending","task":"br-k3ux","to":"open"}
