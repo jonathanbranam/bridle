@@ -2,14 +2,15 @@
 id = "br-qy4y"
 title = "Firewall prompts came back after the 11-09 self-upgrade despite the stable signing identity (7bs2 again)"
 kind = "bug"
-state = "claimed"
+state = "integrated"
 created_at = "2026-11-10T17:12:10.601Z"
-updated_at = "2026-11-11T13:09:42.075772Z"
+updated_at = "2026-11-11T13:43:18.421987Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
     "agent:qy4y",
 ]
+commit = "b4fd85a4"
 summary = "Investigated, no code change. alf.plist requirement matches the signing DR exactly; cause not proven (stale file alias in the ALF entry is the lead, contradicted by ~20 earlier unprompted upgrades; reboot Nov 8 is the other). No small signing fix exists; tailscale-serve fallback is the human's call. Findings and an experiment needing approval are on the ticket thread."
 ticket = "qy4y"
 +++
@@ -80,3 +81,6 @@ qy4y: human chose C (live with prompts, warning tracked in br-9qws). Nothing to 
 
 ### note · agent:qy4y · 2026-11-11T13:09:42.075Z
 qy4y: human chose C (live with it, warning via br-9qws). No code changed. Releasing my claim; manager can resolve.
+
+### note · external:orchestrator · 2026-11-11T13:43:18.421Z
+integrated: b4fd85a4
