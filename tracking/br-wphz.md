@@ -4,12 +4,13 @@ title = "A tools-only clone's refusal names the machine that owns the project"
 kind = "bug"
 state = "claimed"
 created_at = "2026-11-11T13:02:07.653Z"
-updated_at = "2026-11-11T14:39:45.023615Z"
+updated_at = "2026-11-11T14:51:12.226448Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
     "agent:wphz",
 ]
+summary = "A tools-only clone's refusal (bridle serve, machine tools-only-check) now names the owner from owner.toml on bridle/state via the existing read_owner (host and since), or says the owner could not be read. owner.toml has no workspace path, so none is shown. Hook text baked at install time is unchanged. One unit test covers both cases (formatter only)."
 ticket = "wphz"
 +++
 
