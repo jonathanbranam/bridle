@@ -2,9 +2,9 @@
 id = "br-mm4z"
 title = "Migration 0005-a-ticket-for-every-active-task aborts on dead task rows instead of skipping them"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-11-11T22:45:26.330Z"
-updated_at = "2026-11-11T22:46:26.902085Z"
+updated_at = "2026-11-11T23:01:58.569214Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "mm4z"
