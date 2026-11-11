@@ -2,9 +2,9 @@
 id = "br-mm4z"
 title = "Migration 0005-a-ticket-for-every-active-task aborts on dead task rows instead of skipping them"
 kind = "bug"
-state = "pending"
+state = "open"
 created_at = "2026-11-11T22:45:26.330Z"
-updated_at = "2026-11-11T22:45:43.395173Z"
+updated_at = "2026-11-11T22:46:26.902085Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "mm4z"
@@ -29,3 +29,9 @@ lists only the tasks it would really stub, so the dry run and the real run agree
 
 ### note · external:aide · 2026-11-11T22:45:26.332Z
 submitted by external:aide
+
+### note · external:orchestrator · 2026-11-11T22:46:26.253Z
+readied by external:orchestrator
+
+### note · external:orchestrator · 2026-11-11T22:46:26.902Z
+orchestrator: readied (kind bug, one clear fix; rule ready-without-asking). Related to dc-swuz (data-contracts adoption), whose step 1 runs migration 0005.

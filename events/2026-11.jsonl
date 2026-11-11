@@ -46,3 +46,4 @@
 {"actor":"agent:pm-1","at":"2026-11-11T21:28:08.826199Z","from":"open","task":"br-maj3","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-11-11T21:28:10.103905Z","queue":"reprioritized"}
 {"actor":"human","at":"2026-11-11T22:45:26.330Z","from":"","task":"br-mm4z","to":"pending"}
+{"actor":"external:orchestrator","at":"2026-11-11T22:46:26.253291Z","from":"pending","task":"br-mm4z","to":"open"}
