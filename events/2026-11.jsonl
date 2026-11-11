@@ -39,3 +39,4 @@
 {"actor":"external:aide","at":"2026-11-11T17:16:59.274496Z","from":"pending","task":"br-k3ux","to":"open"}
 {"actor":"agent:pm-1","at":"2026-11-11T17:43:08.719910Z","from":"open","task":"br-k3ux","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-11-11T17:43:10.425420Z","queue":"reprioritized"}
+{"actor":"agent:k3ux","at":"2026-11-11T20:35:04.969475Z","from":"claimed","task":"br-k3ux","to":"built"}
