@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Typescript pack: new rule `typescript.file-naming` (PascalCase.tsx components, kebab-case.ts the rest, no case-colliding paths) and `bridle case-check`, which scans `git ls-files` and exits 1 on any two tracked paths that collide case-insensitively; put it in the project's `commands.check`. It reuses the `case-guard` collision logic. Existing projects get the rule when they enable the typescript pack (br-k3ux, slice 2 of br-4fpk).
 - New base rule `no-case-colliding-paths` and a `bridle case-guard` PreToolUse hook (in the base `PreToolUse.json`, matcher `Write|Edit|MultiEdit|NotebookEdit`) that refuses writing a file whose path collides case-insensitively with an existing sibling (`Foo.md`/`foo.md`, `TimeLog.tsx`/`timelog.ts`), naming both paths. Projects get it on upgrade and `bridle workflow sync`; no project-file migration is needed (br-4fpk, slice 1).
 - `bridle send --reply-to <id> "text"` with no recipient routes the reply to the sender of that message, on the daemon it came from (an aide's question to the orchestrator is answered on the aide's own project); an unroutable reply fails with the exact command to use instead. `inbox show` suggests this form (br-eupm).
 - `.bridle/review-documents.txt` (the daemon's review list) is gitignored: in bridle's .gitignore, `bridle init`, and new migration `0009-gitignore-review-documents` (br-v54x).

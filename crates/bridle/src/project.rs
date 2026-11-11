@@ -148,6 +148,10 @@ mod tests {
         ("arch-guard", NoProject("reads the cwd's repo")),
         ("kill-guard", NoProject("reads only the hook's stdin")),
         (
+            "case-check",
+            NoProject("scans the current directory's git ls-files"),
+        ),
+        (
             "case-guard",
             NoProject("reads the hook's stdin and the disk"),
         ),

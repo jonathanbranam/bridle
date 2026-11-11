@@ -230,6 +230,9 @@ pub enum Command {
     /// collides case-insensitively with an existing sibling. Never fails.
     #[command(hide = true)]
     CaseGuard,
+    /// Fails (exit 1) when any two git-tracked paths collide case-insensitively
+    /// (`timelog.ts` and `TimeLog.tsx`). Run it from a project's check command.
+    CaseCheck,
     /// Claude Code's Stop hook for the interactive sessions: once per reply, asks the agent to
     /// link task and ticket IDs it named without a link. Never blocks twice; any error allows.
     #[command(hide = true)]

@@ -264,6 +264,7 @@ pub async fn run(mut cli: Cli) -> Result<(), CliError> {
         Command::ArchGuard => arch_guard(&cli).await,
         Command::KillGuard => kill_guard(),
         Command::CaseGuard => case_guard(),
+        Command::CaseCheck => case_check(),
         Command::LinkCheck => link_check(&cli).await,
         Command::Orchestrator(OrchestratorArgs {
             action: OrchestratorAction::NoteSession,
@@ -654,6 +655,7 @@ mod tests {
             &["arch-guard"],
             &["kill-guard"],
             &["case-guard"],
+            &["case-check"],
             &["link-check"],
             &["wait-for-wake"],
             &["serve"],

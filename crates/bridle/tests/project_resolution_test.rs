@@ -60,6 +60,11 @@ const CLASSES: &[(&str, Kind, &str)] = &[
     ("agent", Daemon, ""),
     ("docs", Skip, "static text"),
     (
+        "case-check",
+        Skip,
+        "scans git ls-files of the current directory; no project involved (case_check_test.rs)",
+    ),
+    (
         "link",
         Skip,
         "config lookup; only a ticket link needs --project, covered by link_test.rs",

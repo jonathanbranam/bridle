@@ -180,6 +180,34 @@ pub(super) fn case_guard() -> Result<(), CliError> {
     Ok(())
 }
 
+/// `bridle case-check`: scans `git ls-files` for case-insensitive collisions (rule
+/// `no-case-colliding-paths`); exit 1 naming each pair.
+pub(super) fn case_check() -> Result<(), CliError> {
+    let out = std::process::Command::new("git")
+        .args(["ls-files", "-z"])
+        .output()
+        .map_err(|e| CliError::Other(anyhow::anyhow!("git ls-files: {e}")))?;
+    if !out.status.success() {
+        return Err(CliError::Other(anyhow::anyhow!(
+            "git ls-files failed (not a git checkout?)"
+        )));
+    }
+    let paths: Vec<String> = String::from_utf8_lossy(&out.stdout)
+        .split('\0')
+        .filter(|p| !p.is_empty())
+        .map(String::from)
+        .collect();
+    let hits = crate::case_guard::tracked_collisions(&paths);
+    if hits.is_empty() {
+        return Ok(());
+    }
+    let list: Vec<String> = hits.iter().map(|(a, b)| format!("  {a} <-> {b}")).collect();
+    Err(CliError::Other(anyhow::anyhow!(
+        "case-colliding tracked paths (break macOS and Windows checkouts; rule no-case-colliding-paths):\n{}",
+        list.join("\n")
+    )))
+}
+
 /// Claude Code's Stop hook for the orchestrator, advisor and aide sessions (ticket 9dcz): blocks
 /// once when the reply names task or ticket IDs without a link (rule `link-ids-for-the-human`).
 /// Allows (prints nothing) on the second pass, with no `public_url`, with nothing to flag, and on
