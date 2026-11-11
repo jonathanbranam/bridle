@@ -4,7 +4,7 @@ title = "Verify the firewall self-probe can fire: a self-connect from the same h
 kind = "fix"
 state = "integrated"
 created_at = "2026-10-16T21:14:26.820Z"
-updated_at = "2026-11-11T14:41:00.836613Z"
+updated_at = "2026-11-11T14:41:22.038301Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -56,3 +56,6 @@ done: self-probe now asks a peer machine to connect back (logs showed same-host 
 
 ### note · agent:manager-2 · 2026-11-11T14:41:00.836Z
 integrated: 1660fdd4c5076347f03aed6d657a3e4a1a0aa367 (branch bridle/9qws)
+
+### note · agent:manager-2 · 2026-11-11T14:41:22.038Z
+cleanup: removed agent 9qws, origin branch bridle/9qws, branch bridle/9qws
