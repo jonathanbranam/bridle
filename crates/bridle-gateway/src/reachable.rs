@@ -28,25 +28,15 @@ pub fn unreachable_text(addr: SocketAddr) -> String {
     )
 }
 
-/// Connects to `addr` after each wait until one succeeds; `false` when none does.
-pub async fn reachable(addr: SocketAddr, waits: &[Duration]) -> bool {
-    for wait in waits {
-        tokio::time::sleep(*wait).await;
-        let connect = tokio::net::TcpStream::connect(addr);
-        if matches!(
-            tokio::time::timeout(Duration::from_secs(5), connect).await,
-            Ok(Ok(_))
-        ) {
-            return true;
-        }
-    }
-    false
-}
-
-/// Probes `addr`; if it never answers, logs an error and passes the incident text to `raise`.
+/// Probes `addr` (from a peer machine when one answers, ticket 9qws); if it never answers, logs an error and passes the incident text to `raise`.
 /// Returns whether it raised.
-pub async fn check(addr: SocketAddr, waits: &[Duration], raise: impl AsyncFnOnce(String)) -> bool {
-    if reachable(addr, waits).await {
+pub async fn check<F: Future<Output = Option<bool>>>(
+    addr: SocketAddr,
+    waits: &[Duration],
+    ask: impl Fn(SocketAddr) -> F,
+    raise: impl AsyncFnOnce(String),
+) -> bool {
+    if bridle_api::probe::reachable(addr, waits, ask).await {
         return false;
     }
     tracing::error!(%addr, "the gateway cannot reach its own address; firewall?");
@@ -78,6 +68,23 @@ mod tests {
     use std::sync::Mutex;
 
     #[tokio::test]
+    async fn raises_when_a_peer_is_blocked_though_the_self_connect_passes() {
+        let l = tokio::net::TcpListener::bind("127.0.0.1:0")
+            .await
+            .expect("bind");
+        let addr = l.local_addr().expect("addr");
+        let said = Mutex::new(Vec::new());
+        let raised = check(
+            addr,
+            &[Duration::ZERO],
+            |_| async { Some(false) },
+            async |t| said.lock().expect("lock").push(t),
+        )
+        .await;
+        assert!(raised && said.lock().expect("lock").len() == 1);
+    }
+
+    #[tokio::test]
     async fn raises_only_when_the_listener_is_unreachable() {
         let waits = [Duration::ZERO; 2];
         let l = tokio::net::TcpListener::bind("127.0.0.1:0")
@@ -85,11 +92,23 @@ mod tests {
             .expect("bind");
         let addr = l.local_addr().expect("addr");
         let said = Mutex::new(Vec::new());
-        let raised = check(addr, &waits, async |t| said.lock().expect("lock").push(t)).await;
+        let raised = check(
+            addr,
+            &waits,
+            |_| async { None },
+            async |t| said.lock().expect("lock").push(t),
+        )
+        .await;
         assert!(!raised && said.lock().expect("lock").is_empty());
         // A fake unreachable listener: the port is closed.
         drop(l);
-        let raised = check(addr, &waits, async |t| said.lock().expect("lock").push(t)).await;
+        let raised = check(
+            addr,
+            &waits,
+            |_| async { None },
+            async |t| said.lock().expect("lock").push(t),
+        )
+        .await;
         let got = said.lock().expect("lock").clone();
         assert!(raised && got.len() == 1);
         assert!(got[0].contains("firewall") && got[0].contains(&addr.to_string()));

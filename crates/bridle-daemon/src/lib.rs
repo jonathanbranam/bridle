@@ -707,7 +707,14 @@ async fn start_inner(
             manager: manager.clone(),
             emitter: emitter.clone(),
         };
-        tokio::spawn(async move { probe_own_address(addr, &incidents, &PROBE_WAITS).await });
+        tokio::spawn(async move {
+            let home = discovery::bridle_home();
+            probe_own_address(addr, &incidents, &PROBE_WAITS, |a| {
+                let home = home.clone();
+                async move { bridle_api::probe::ask_peers(&home, a).await }
+            })
+            .await
+        });
     }
     // A project drain's hold outlives a restart (yt5v); absent means no hold.
     if store.get_meta(PROJECT_HELD_KEY).await?.as_deref() == Some("1") {
@@ -1431,23 +1438,18 @@ const PROBE_WAITS: [Duration; 3] = [
     Duration::from_secs(10),
 ];
 
-/// Connects to the daemon's own tailnet address a few times after start; if it never answers,
-/// raises an incident naming the firewall (ticket 7bs2). The firewall blocks incoming
-/// connections silently, so this is the only way the daemon notices.
-async fn probe_own_address(
+/// Checks the daemon's own tailnet address a few times after start, from a peer machine when
+/// one answers (a same-host connect is not filtered by the firewall, ticket 9qws); if it never
+/// gets through, raises an incident naming the firewall (ticket 7bs2). The firewall blocks
+/// incoming connections silently, so this is the only way the daemon notices.
+async fn probe_own_address<F: Future<Output = Option<bool>>>(
     addr: SocketAddr,
     incidents: &impl orchestrator::Incidents,
     waits: &[Duration],
+    ask: impl Fn(SocketAddr) -> F,
 ) {
-    for wait in waits {
-        tokio::time::sleep(*wait).await;
-        let connect = tokio::net::TcpStream::connect(addr);
-        if matches!(
-            tokio::time::timeout(Duration::from_secs(5), connect).await,
-            Ok(Ok(_))
-        ) {
-            return;
-        }
+    if bridle_api::probe::reachable(addr, waits, ask).await {
+        return;
     }
     tracing::error!(%addr, "the daemon cannot reach its own address; firewall?");
     let text = unreachable_text(addr);
@@ -1833,15 +1835,25 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn own_address_probe_raises_when_a_peer_cannot_connect_though_self_can() {
+        let waits = [Duration::ZERO; 2];
+        let l = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let up = l.local_addr().unwrap();
+        let said = Said::default();
+        probe_own_address(up, &said, &waits, |_| async { Some(false) }).await;
+        assert_eq!(said.0.lock().unwrap().len(), 1);
+    }
+
+    #[tokio::test]
     async fn own_address_probe_raises_only_when_unreachable() {
         let waits = [Duration::ZERO; 2];
         let l = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
         let up = l.local_addr().unwrap();
         let said = Said::default();
-        probe_own_address(up, &said, &waits).await;
+        probe_own_address(up, &said, &waits, |_| async { None }).await;
         assert!(said.0.lock().unwrap().is_empty());
         drop(l);
-        probe_own_address(up, &said, &waits).await;
+        probe_own_address(up, &said, &waits, |_| async { None }).await;
         let got = said.0.lock().unwrap().clone();
         assert_eq!(got.len(), 1);
         assert!(got[0].contains("firewall") && got[0].contains(&up.to_string()));

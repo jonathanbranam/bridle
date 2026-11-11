@@ -13,22 +13,23 @@ use axum::{Extension, Json, Router};
 use bridle_api::types::{
     AddQueueTierRequest, Agent, AllocPortRequest, AnswerQuestionRequest, ApiErrorResponse,
     AskQuestionRequest, BudgetHoldRequest, BudgetOverrideRequest, BudgetStatus, Conflict,
-    DoneTicketRequest, DropTicketRequest, Edge, EdgeKind, EditTicketRequest, ErrorBody, Event,
-    EventQuery, ForwardAck, ForwardRequest, ForwardState, Handover, Health, HelloRequest,
-    HoldStatus, ImpactCheckRequest, ImpactReport, Interaction, InteractionsQuery,
-    InteractiveUsageRow, InterruptRequest, MaxWorkersRequest, MergeProbe, Message, MessageKind,
-    MessageQuery, MessageState, MigrationRecord, NewEdgeRequest, NewTicketRequest,
-    NoteTicketRequest, OpenQuestion, OutboxSendRequest, OverlapLevel, PeerTokenCreateRequest,
-    PortAllocation, PrincipalKind, ProbeOutcome, ProbeRequest, ProbeResult, Queue, Queued,
-    RateLimit, RateLimitPoint, RebuildResponse, RemoveEdgeQuery, RemoveQuery, RenewRequest,
-    ResolveConflictRequest, ResumeRequest, ScheduleOverrideStatus, SendRequest, SetImpactRequest,
-    SetKindRequest, SetPriorityRequest, SetQueueRequest, SetSummaryRequest, ShutdownResponse,
-    SkipSettleRequest, SpawnRequest, Status, StatusLineReport, StopRequest, SubmitTicketRequest,
-    Ticket, TicketQuery, TicketState, TokenCreateRequest, TokenCreated, TokenInfo, TranscriptLine,
-    TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery, UsageGroupBy, UsageGroups,
-    UsageGroupsQuery, UsageHistoryQuery, UsageInstance, UsageInstancesQuery, UsagePeriods,
-    UsagePeriodsQuery, UsageSeries, UsageSeriesQuery, UsageSessionTurn, UsageSessions,
-    UsageSessionsQuery, WakeResponse, When, WindowStatus, WriteHandoverRequest, event_kind,
+    ConnectBackRequest, ConnectBackResponse, DoneTicketRequest, DropTicketRequest, Edge, EdgeKind,
+    EditTicketRequest, ErrorBody, Event, EventQuery, ForwardAck, ForwardRequest, ForwardState,
+    Handover, Health, HelloRequest, HoldStatus, ImpactCheckRequest, ImpactReport, Interaction,
+    InteractionsQuery, InteractiveUsageRow, InterruptRequest, MaxWorkersRequest, MergeProbe,
+    Message, MessageKind, MessageQuery, MessageState, MigrationRecord, NewEdgeRequest,
+    NewTicketRequest, NoteTicketRequest, OpenQuestion, OutboxSendRequest, OverlapLevel,
+    PeerTokenCreateRequest, PortAllocation, PrincipalKind, ProbeOutcome, ProbeRequest, ProbeResult,
+    Queue, Queued, RateLimit, RateLimitPoint, RebuildResponse, RemoveEdgeQuery, RemoveQuery,
+    RenewRequest, ResolveConflictRequest, ResumeRequest, ScheduleOverrideStatus, SendRequest,
+    SetImpactRequest, SetKindRequest, SetPriorityRequest, SetQueueRequest, SetSummaryRequest,
+    ShutdownResponse, SkipSettleRequest, SpawnRequest, Status, StatusLineReport, StopRequest,
+    SubmitTicketRequest, Ticket, TicketQuery, TicketState, TokenCreateRequest, TokenCreated,
+    TokenInfo, TranscriptLine, TranscriptQuery, Usage, UsageBreakdown, UsageBreakdownQuery,
+    UsageGroupBy, UsageGroups, UsageGroupsQuery, UsageHistoryQuery, UsageInstance,
+    UsageInstancesQuery, UsagePeriods, UsagePeriodsQuery, UsageSeries, UsageSeriesQuery,
+    UsageSessionTurn, UsageSessions, UsageSessionsQuery, WakeResponse, When, WindowStatus,
+    WriteHandoverRequest, event_kind,
 };
 use bridle_api::types::{
     PeerWatchRequest, PrincipalId, RemoteWatchRequest, Schedule, ScheduleAddRequest,
@@ -321,6 +322,7 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/schedules", get(list_schedules).post(add_schedule))
         .route("/v1/schedules/{id}", axum::routing::delete(remove_schedule))
         .route("/v1/hello", post(hello))
+        .route("/v1/connect-back", post(connect_back))
         .route("/v1/watch", post(peer_watch))
         .route("/v1/watch/remote", post(remote_watch))
         .route("/v1/forward", post(forward))
@@ -589,6 +591,7 @@ async fn auth_middleware(
             if principal.kind == PrincipalKind::Peer
                 && !(req.uri().path().starts_with("/v1/forward")
                     || req.uri().path() == "/v1/hello"
+                    || req.uri().path() == "/v1/connect-back"
                     || req.uri().path() == "/v1/watch") =>
         {
             ApiError::forbidden("a peer token may only forward mail and register watches")
@@ -2648,6 +2651,28 @@ async fn hello(
     let outbox = state.outbox.clone();
     tokio::spawn(async move { outbox.peer_is_back(&req.daemon).await });
     Ok(Json(serde_json::json!({})))
+}
+
+/// `POST /v1/connect-back`: a peer on another machine asks whether this one can reach `addr`
+/// (its own tailnet address), which the peer's own firewall may be blocking. Only a peer token
+/// may call it.
+async fn connect_back(
+    Extension(principal): Extension<Principal>,
+    Json(req): Json<ConnectBackRequest>,
+) -> Result<Json<ConnectBackResponse>, ApiError> {
+    if principal.kind != PrincipalKind::Peer {
+        return Err(ApiError::forbidden("connect-back takes a peer token"));
+    }
+    let addr: std::net::SocketAddr = req
+        .addr
+        .parse()
+        .map_err(|_| ApiError::bad_request("addr must be ip:port"))?;
+    let connect = tokio::net::TcpStream::connect(addr);
+    let reachable = matches!(
+        tokio::time::timeout(std::time::Duration::from_secs(5), connect).await,
+        Ok(Ok(_))
+    );
+    Ok(Json(ConnectBackResponse { reachable }))
 }
 
 /// `POST /v1/forward`: a message from another daemon's outbox. Only a peer token may call it,

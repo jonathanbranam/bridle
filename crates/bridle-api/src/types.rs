@@ -1009,6 +1009,20 @@ pub struct HelloRequest {
     pub daemon: String,
 }
 
+/// `POST /v1/connect-back`: a peer asks this daemon to open a TCP connection to `addr` and say
+/// whether it got through. A same-host self-connect is not filtered by the macOS application
+/// firewall, so the firewall check has to come from another machine (ticket 9qws). Peer tokens only.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ConnectBackRequest {
+    pub addr: String,
+}
+
+/// The answer to [`ConnectBackRequest`].
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ConnectBackResponse {
+    pub reachable: bool,
+}
+
 /// `POST /v1/watch/remote`: the caller starts or stops watching a task that lives on another
 /// project's daemon. The caller's own daemon registers it there with its peer token (3haz Q3).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

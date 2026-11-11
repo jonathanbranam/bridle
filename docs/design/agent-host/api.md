@@ -54,6 +54,7 @@ JSON over HTTP, versioned under `/v1`. The contract is
 | `GET /v1/forward/{message_id}` | the state of a message this daemon accepted from a peer (`{state}`); peer token only |
 | `GET /v1/recipients` | what can be addressed here: `[{address, kind}]` (human, agents, external principals, visitors) |
 | `POST /v1/hello` | `{daemon}`: a peer says it is back; this daemon flushes its outbox queue for `daemon` at once. Peer token only (403 otherwise) |
+| `POST /v1/connect-back` | `{addr}`: a peer asks this daemon to connect to `addr` (its own tailnet address) and answers `{reachable}`. Backs the firewall self-probe, which a same-host connect cannot do (9qws). Peer token only (403 otherwise) |
 | `POST /v1/watch/remote` | `{project, task, watch}`: the caller (not a visitor) watches or unwatches a task on another project's daemon; this daemon calls that daemon's `/v1/watch` with its peer token. Answers the task |
 | `POST /v1/watch` | `{task, who, home, watch}`: a peer daemon watches a task here for its principal `who`, recorded as `remote:<who>@<home>`; updates are queued for `home`. Peer token only (403 otherwise); 404 for an unknown task |
 | `POST /v1/forward` | one message from another daemon's outbox (`{origin_machine, origin_daemon, origin_id, from, to, body, ...}`), peer token only (403 otherwise); answered `{message_ids}`, and a repeat of the same origin gets the same ids and delivers nothing. 404 for an unknown recipient |

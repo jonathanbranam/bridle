@@ -5,6 +5,7 @@ pub mod client;
 pub mod config_warn;
 pub mod discovery;
 pub mod machines;
+pub mod probe;
 pub mod types;
 
 pub use client::{Client, ClientError};

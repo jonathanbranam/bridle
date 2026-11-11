@@ -13,16 +13,17 @@ use thiserror::Error;
 use crate::types::{
     AddQueueTierRequest, Agent, AllocPortRequest, AnswerQuestionRequest, ApiErrorResponse,
     AskQuestionRequest, BudgetHoldRequest, BudgetOverrideRequest, BudgetStatus, BuiltTicketRequest,
-    Conflict, DoneTicketRequest, DropTicketRequest, Edge, EditTicketRequest, Event, EventQuery,
-    ForwardAck, ForwardRequest, ForwardState, Handover, HandoverDone, Health, HelloRequest,
-    HoldOrchestratorRequest, HoldRequest, HoldTicketRequest, ImpactCheckRequest, ImpactReport,
-    IncidentNotice, Interaction, InteractionsQuery, InterruptRequest, InterruptResponse,
-    LandRequest, LandResult, MaxWorkersRequest, Message, MessageQuery, NewEdgeRequest,
-    NewTicketRequest, NoteTicketRequest, OpenQuestion, OrchestratorHold, OrchestratorWakeQuery,
-    OutboxEntry, OutboxSendRequest, PeerTokenCreateRequest, PeerWatchRequest, PortAllocation,
-    PrincipalWakeQuery, PrincipalWakeResponse, ProbeRequest, ProbeResult, PushResult, Queue,
-    Queued, RateLimitPoint, Recipient, RemoteWatchRequest, RemoveEdgeQuery, RemoveQuery,
-    RenewRequest, ResolveConflictRequest, RestartHoldRequest, RestartHoldResponse, RestartRequest,
+    Conflict, ConnectBackRequest, ConnectBackResponse, DoneTicketRequest, DropTicketRequest, Edge,
+    EditTicketRequest, Event, EventQuery, ForwardAck, ForwardRequest, ForwardState, Handover,
+    HandoverDone, Health, HelloRequest, HoldOrchestratorRequest, HoldRequest, HoldTicketRequest,
+    ImpactCheckRequest, ImpactReport, IncidentNotice, Interaction, InteractionsQuery,
+    InterruptRequest, InterruptResponse, LandRequest, LandResult, MaxWorkersRequest, Message,
+    MessageQuery, NewEdgeRequest, NewTicketRequest, NoteTicketRequest, OpenQuestion,
+    OrchestratorHold, OrchestratorWakeQuery, OutboxEntry, OutboxSendRequest,
+    PeerTokenCreateRequest, PeerWatchRequest, PortAllocation, PrincipalWakeQuery,
+    PrincipalWakeResponse, ProbeRequest, ProbeResult, PushResult, Queue, Queued, RateLimitPoint,
+    Recipient, RemoteWatchRequest, RemoveEdgeQuery, RemoveQuery, RenewRequest,
+    ResolveConflictRequest, RestartHoldRequest, RestartHoldResponse, RestartRequest,
     RestartResponse, ResumeRequest, ReviewAddRequest, ReviewAddResponse, ReviewNowRequest,
     ReviewNowResponse, Schedule, ScheduleAddRequest, ScheduleListQuery, SendBackTicketRequest,
     SendRequest, SessionEnd, SessionInfo, SessionKeep, SessionRegister, SetImpactRequest,
@@ -415,6 +416,14 @@ impl Client {
         self.post_json::<serde_json::Value, _>(&["v1", "hello"], req)
             .await
             .map(|_| ())
+    }
+
+    /// `POST /v1/connect-back`: ask the daemon this client points at (a peer, peer token) to
+    /// connect to `addr` and report whether it got through.
+    pub async fn connect_back(&self, req: &ConnectBackRequest) -> Result<bool, ClientError> {
+        self.post_json::<ConnectBackResponse, _>(&["v1", "connect-back"], req)
+            .await
+            .map(|r| r.reachable)
     }
 
     pub async fn mark_read(&self, id: &str) -> Result<Message, ClientError> {

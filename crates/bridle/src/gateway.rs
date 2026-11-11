@@ -100,10 +100,15 @@ pub async fn run(cli: &Cli, args: &GatewayArgs) -> Result<(), CliError> {
     if cfg!(target_os = "macos")
         && let Some(addr) = listener.local_addr().ok().filter(|a| !a.ip().is_loopback())
     {
+        let probe_home = home.clone();
         tokio::spawn(async move {
             bridle_gateway::reachable::check(
                 addr,
                 &bridle_gateway::reachable::PROBE_WAITS,
+                move |a| {
+                    let home = probe_home.clone();
+                    async move { bridle_api::probe::ask_peers(&home, a).await }
+                },
                 bridle_gateway::reachable::tell_orchestrators,
             )
             .await;
