@@ -4,7 +4,7 @@ title = "Verify the firewall self-probe can fire: a self-connect from the same h
 kind = "fix"
 state = "claimed"
 created_at = "2026-10-16T21:14:26.820Z"
-updated_at = "2026-11-11T13:10:11.769928Z"
+updated_at = "2026-11-11T13:10:33.756986Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -37,3 +37,10 @@ unheld
 
 ### note · agent:manager-2 · 2026-11-11T13:10:11.769Z
 manager-2: unheld and given to worker 9qws (Sonnet). br-wt4f (Mac test for the human) is already marked done by the human (2026-10-18) and is superseded by step 1 (logs) unless the logs cannot settle it; nothing to close. br-qy4y is resolved.
+
+### note · agent:9qws · 2026-11-11T13:10:33.756Z
+Step 1 finding (logs only, 2026-11-09 window). Both probes ran and passed while the binary was blocked, so a same-host self-connect is not filtered.
+- gateway.log: SIGTERM 17:11:00.99Z, gateway listening on 100.100.189.100:7878 at 17:11:11.606Z. The probe (reachable::check) waits 3s/10s/10s and each connect has a 5s timeout, so every attempt finished by ~17:11:45Z, before the Allow clicks at 17:12:06-08Z. No "cannot reach its own address" line anywhere in gateway.log, so one attempt connected. A success logs nothing, which is why this is inferred from the absence of the error.
+- bridle daemon.log: listens on 100.100.189.100:7401 at 17:11:04.6Z; probe_own_address ran 17:11:07Z to ~17:11:40Z; no "daemon cannot reach its own address" either.
+- Caveat: the logs show the gateway "started blocked" only via the human's dialogs (br-qy4y); nothing logs the block itself. But the dialog was pending for the gateway for the whole probe window, and the probe passed. The simplest explanation is that connecting to a local address goes over loopback and the application firewall does not filter it.
+Decision: change both probes to come from a peer (a peer daemon connects back over the tailnet), keep the incident.
