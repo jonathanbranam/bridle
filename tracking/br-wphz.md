@@ -4,7 +4,7 @@ title = "A tools-only clone's refusal names the machine that owns the project"
 kind = "bug"
 state = "integrated"
 created_at = "2026-11-11T13:02:07.653Z"
-updated_at = "2026-11-11T17:15:29.066059Z"
+updated_at = "2026-11-11T17:16:01.369991Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -40,3 +40,6 @@ done: tools-only refusal names owner host+since or says unreadable (no workspace
 
 ### note · agent:manager-2 · 2026-11-11T17:15:29.066Z
 integrated: 53898bdf46ce75abc3d3dd19b1ae068c7bfec805 (branch bridle/wphz)
+
+### note · agent:manager-2 · 2026-11-11T17:16:01.369Z
+cleanup: removed agent wphz, origin branch bridle/wphz, branch bridle/wphz
