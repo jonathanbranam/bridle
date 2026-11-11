@@ -28,3 +28,4 @@
 {"actor":"agent:pm-1","at":"2026-11-10T17:37:30.967182Z","queue":"reprioritized"}
 {"actor":"human","at":"2026-11-11T13:02:07.653Z","from":"","task":"br-wphz","to":"pending"}
 {"actor":"external:aide","at":"2026-11-11T13:02:08.373461Z","from":"pending","task":"br-wphz","to":"open"}
+{"actor":"agent:manager-2","at":"2026-11-11T13:09:52.375447Z","from":"held","task":"br-9qws","to":"planned"}
