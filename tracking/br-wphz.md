@@ -2,11 +2,14 @@
 id = "br-wphz"
 title = "A tools-only clone's refusal names the machine that owns the project"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-11-11T13:02:07.653Z"
-updated_at = "2026-11-11T13:41:19.084266Z"
+updated_at = "2026-11-11T13:42:34.219306Z"
 created_by = "external:aide"
-watchers = ["external:aide"]
+watchers = [
+    "external:aide",
+    "agent:wphz",
+]
 ticket = "wphz"
 +++
 
