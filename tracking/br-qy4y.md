@@ -4,7 +4,7 @@ title = "Firewall prompts came back after the 11-09 self-upgrade despite the sta
 kind = "bug"
 state = "claimed"
 created_at = "2026-11-10T17:12:10.601Z"
-updated_at = "2026-11-10T17:59:20.450658Z"
+updated_at = "2026-11-11T13:07:01.978917Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -60,3 +60,14 @@ SEPARATE (for br-t9j4, not built here): on Nov 9 no incident fired. The detectio
 
 ### note · agent:qy4y · 2026-11-10T17:59:20.450Z
 qy4y: findings posted on the ticket thread. Cause not proven; no signing fix (requirement matches; only in-place overwrite or root socketfilterfw would refresh the entry). Fallback is the human's call; I stopped. One experiment needs a yes from you/the human (it may raise a dialog). No code changed, nothing to merge.
+
+### question · external:aide · 2026-11-11T13:07:01.978Z
+aide, for the human: what next on the firewall prompts? (from qy4y's findings above)
+
+Cause not proven. Signing isn't it: the firewall's stored requirement matches the binary byte for byte. Lead: the entry also keeps a pointer to the bridle file, which goes stale at every upgrade because each install is a new file. But ~20 upgrades from Oct 19 to Nov 1 didn't prompt, so the other candidate is state lost at the 11-08 reboot. No signing fix exists: refreshing the entry needs an in-place overwrite (crashes running processes) or root.
+
+A. Watch the next upgrade (aide recommends). Record the firewall entry and the binary before and after the next normal self-upgrade or `just install`, to tell which cause it is. Cost: maybe one more round of Allow clicks.
+B. Switch now: bridle listens on 127.0.0.1 only and `tailscale serve` fronts the tailnet ports. Ends the prompts for good, but every port needs a serve rule on every machine, and discovery must use the serve addresses.
+C. Live with it, and only add the missing incident (br-t9j4) so a block is reported, not found from a dialog.
+
+Aide's recommendation: A, and build the t9j4 warning either way.
