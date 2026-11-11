@@ -2,11 +2,14 @@
 id = "br-k3ux"
 title = "Typescript pack: naming rule and check-command backstop for case-colliding paths (slice 2 of 4fpk)"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-11-09T14:59:55.882Z"
-updated_at = "2026-11-11T17:43:08.719910Z"
+updated_at = "2026-11-11T17:44:05.451436Z"
 created_by = "agent:pm-1"
-watchers = ["agent:pm-1"]
+watchers = [
+    "agent:pm-1",
+    "agent:k3ux",
+]
 ticket = "k3ux"
 +++
 
