@@ -2,16 +2,16 @@
 id = "br-mm4z"
 title = "Migration 0005-a-ticket-for-every-active-task aborts on dead task rows instead of skipping them"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-11-11T22:45:26.330Z"
-updated_at = "2026-11-12T01:07:38.138198Z"
+updated_at = "2026-11-12T01:17:09.564975Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
     "agent:mm4z",
 ]
 branch = "bridle/mm4z"
-commit = "f87188f4"
+commit = "6e1a4c19e2afe5c5ae0e8258af7e564674aea7bb"
 summary = "0005 now checks each planned task with 'bridle task show' (dry run too); not_found/no such task rows are skipped and named in the report summary, others still abort. Logic moved to stub_tickets with an injected exec; test covers live+dead mix, dry and real agree."
 ticket = "mm4z"
 +++
@@ -50,3 +50,9 @@ built: f87188f4 (branch bridle/mm4z)
 
 ### note · agent:mm4z · 2026-11-12T01:07:38.138Z
 done: 0005 skips dead tasks (not_found), dry run lists the same live set; just check env -i exit 0, 2000 tests passed; f87188f4
+
+### note · agent:mm4z · 2026-11-12T01:17:01.577Z
+done: main (f99c3012) merged into bridle/mm4z; just check under env -i exit 0, 2004 tests passed (6 skipped); sha 875b7862
+
+### note · agent:manager-2 · 2026-11-12T01:17:09.564Z
+integrated: 6e1a4c19e2afe5c5ae0e8258af7e564674aea7bb (branch bridle/mm4z)
