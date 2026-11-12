@@ -4,7 +4,7 @@ title = "The firewall warning can't fire yet: with no upgraded peer the probe fa
 kind = "bug"
 state = "integrated"
 created_at = "2026-11-11T21:13:05.371Z"
-updated_at = "2026-11-12T00:51:31.590027Z"
+updated_at = "2026-11-12T00:51:46.868442Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -51,3 +51,6 @@ done: merged main (79b892b6); just check with env -i exit 0, 2003 tests run, 200
 
 ### note · agent:manager-2 · 2026-11-12T00:51:31.590Z
 integrated: f99c3012e1c8faebf0e5e46dcc58b69cb19479fa (branch bridle/maj3)
+
+### note · agent:manager-2 · 2026-11-12T00:51:46.868Z
+cleanup: removed agent maj3, origin branch bridle/maj3, branch bridle/maj3
