@@ -382,6 +382,35 @@ fn backfill_ticket_kind(ctx: &Ctx) -> anyhow::Result<Report> {
 }
 
 fn a_ticket_for_every_active_task(ctx: &Ctx) -> anyhow::Result<Report> {
+    let exe = std::env::current_exe().context("finding the bridle binary")?;
+    let exec = |args: &[&str]| -> anyhow::Result<(bool, String, String)> {
+        let out = std::process::Command::new(&exe)
+            .current_dir(ctx.repo)
+            .args(args)
+            .output()
+            .with_context(|| format!("running bridle {}", args.join(" ")))?;
+        Ok((
+            out.status.success(),
+            String::from_utf8_lossy(&out.stdout).trim().to_string(),
+            String::from_utf8_lossy(&out.stderr).trim().to_string(),
+        ))
+    };
+    stub_tickets(ctx, &exec)
+}
+
+/// What running a `bridle` subcommand gave: (succeeded, stdout, stderr).
+type Exec<'a> = &'a dyn Fn(&[&str]) -> anyhow::Result<(bool, String, String)>;
+
+/// Whether a failed command's stderr says the daemon has no such task.
+fn is_dead_task(stderr: &str) -> bool {
+    let e = stderr.to_lowercase();
+    e.contains("not_found") || e.contains("no such task") || e.contains("not found")
+}
+
+/// The body of 0005, with `exec` running a `bridle` subcommand (ok, stdout, stderr). Rows the
+/// daemon no longer has are skipped and named in the summary, in the dry run too, so the dry run
+/// lists what the real run would stub.
+fn stub_tickets(ctx: &Ctx, exec: Exec) -> anyhow::Result<Report> {
     let project = project_of(ctx.repo);
     let mut rows = state_rows(ctx.repo);
     rows.sort_by(|a, b| a.created_at.cmp(&b.created_at).then(a.id.cmp(&b.id)));
@@ -394,51 +423,58 @@ fn a_ticket_for_every_active_task(ctx: &Ctx) -> anyhow::Result<Report> {
         });
     }
     refuse_on_protected_branch(ctx.repo, &project)?;
-    if !ctx.dry_run {
-        let exe = std::env::current_exe().context("finding the bridle binary")?;
-        for (task, parent) in &plan {
+    let mut skipped: Vec<String> = vec![];
+    let mut done: Vec<(String, Option<String>)> = vec![];
+    for (task, parent) in plan {
+        let (ok, _, err) = exec(&["task", "show", &task])?;
+        if !ok {
+            if is_dead_task(&err) {
+                skipped.push(task);
+                continue;
+            }
+            bail!("bridle task show {task}: {err}");
+        }
+        if !ctx.dry_run {
             // `ticket new --from-task` writes the file and links the row to it through the
             // project's daemon, as it does by hand.
-            let out = std::process::Command::new(&exe)
-                .current_dir(ctx.repo)
-                .args(["ticket", "new", "--from-task", task])
-                .output()
-                .context("running bridle ticket new")?;
-            if !out.status.success() {
-                bail!(
-                    "bridle ticket new --from-task {task}: {}",
-                    String::from_utf8_lossy(&out.stderr).trim()
-                );
+            let (ok, out, err) = exec(&["ticket", "new", "--from-task", &task])?;
+            if !ok {
+                if is_dead_task(&err) {
+                    skipped.push(task);
+                    continue;
+                }
+                bail!("bridle ticket new --from-task {task}: {err}");
             }
-            if let Some(parent) = parent {
-                let rel = String::from_utf8_lossy(&out.stdout).trim().to_string();
-                let child = crate::ticket::id_of(Path::new(&rel))
-                    .ok_or_else(|| anyhow::anyhow!("no ticket id in {rel:?}"))?;
-                let out = std::process::Command::new(&exe)
-                    .current_dir(ctx.repo)
-                    .args(["ticket", "link", &child, "parent", parent])
-                    .output()
-                    .context("running bridle ticket link")?;
-                if !out.status.success() {
-                    bail!(
-                        "bridle ticket link {child} parent {parent}: {}",
-                        String::from_utf8_lossy(&out.stderr).trim()
-                    );
+            if let Some(parent) = &parent {
+                let child = crate::ticket::id_of(Path::new(&out))
+                    .ok_or_else(|| anyhow::anyhow!("no ticket id in {out:?}"))?;
+                let (ok, _, err) = exec(&["ticket", "link", &child, "parent", parent])?;
+                if !ok {
+                    bail!("bridle ticket link {child} parent {parent}: {err}");
                 }
             }
         }
+        done.push((task, parent));
     }
-    let children = plan.iter().filter(|(_, p)| p.is_some()).count();
+    let children = done.iter().filter(|(_, p)| p.is_some()).count();
+    let mut text = format!(
+        "{}, {}",
+        summary(done.len() - children, "stub tickets"),
+        summary(children, "child tickets")
+    );
+    if !skipped.is_empty() {
+        text.push_str(&format!(
+            "; skipped {} tasks the daemon does not have: {}",
+            skipped.len(),
+            skipped.join(", ")
+        ));
+    }
     Ok(Report {
-        files: plan
+        files: done
             .iter()
             .map(|(t, _)| format!("ticket for task {t}"))
             .collect(),
-        summary: format!(
-            "{}, {}",
-            summary(plan.len() - children, "stub tickets"),
-            summary(children, "child tickets")
-        ),
+        summary: text,
     })
 }
 
@@ -1494,6 +1530,72 @@ mod tests {
                 ("br-dddd".to_string(), None),
             ]
         );
+    }
+
+    #[test]
+    fn stub_tickets_skips_dead_tasks_and_dry_run_agrees() {
+        let d = tempfile::tempdir().unwrap();
+        let repo = d.path();
+        let git = |args: &[&str]| {
+            assert!(
+                std::process::Command::new("git")
+                    .arg("-C")
+                    .arg(repo)
+                    .args(args)
+                    .output()
+                    .unwrap()
+                    .status
+                    .success()
+            )
+        };
+        git(&["init", "-q", "-b", "work"]);
+        git(&["config", "user.email", "t@example.com"]);
+        git(&["config", "user.name", "t"]);
+        git(&["commit", "-q", "--allow-empty", "-m", "x"]);
+        git(&["checkout", "-q", "--orphan", "bridle/state"]);
+        std::fs::create_dir_all(repo.join("tracking")).unwrap();
+        for (id, at) in [("br-live", "1"), ("br-dead", "2"), ("br-also", "3")] {
+            std::fs::write(
+                repo.join(format!("tracking/{id}.md")),
+                format!("+++\nid = \"{id}\"\nstate = \"pending\"\ncreated_at = \"{at}\"\n+++\n"),
+            )
+            .unwrap();
+        }
+        git(&["add", "."]);
+        git(&["commit", "-q", "-m", "rows"]);
+        git(&["checkout", "-q", "work"]);
+        let calls = std::cell::RefCell::new(vec![]);
+        let exec = |args: &[&str]| -> anyhow::Result<(bool, String, String)> {
+            calls.borrow_mut().push(args.join(" "));
+            let dead = args.contains(&"br-dead");
+            Ok(match (args[0], dead) {
+                (_, true) => (
+                    false,
+                    String::new(),
+                    "error: not_found: no such task".into(),
+                ),
+                ("ticket", false) => (true, "docs/tickets/open/x-aaaa.md".into(), String::new()),
+                _ => (true, String::new(), String::new()),
+            })
+        };
+        let run = |dry_run| stub_tickets(&Ctx { repo, dry_run }, &exec).unwrap();
+        let dry = run(true);
+        assert_eq!(
+            dry.files,
+            vec!["ticket for task br-live", "ticket for task br-also"]
+        );
+        assert!(dry.summary.contains("skipped 1") && dry.summary.contains("br-dead"));
+        assert!(!calls.borrow().iter().any(|c| c.starts_with("ticket")));
+        let real = run(false);
+        assert_eq!(real.files, dry.files);
+        assert_eq!(real.summary, dry.summary);
+        let made: Vec<_> = calls
+            .borrow()
+            .iter()
+            .filter(|c| c.starts_with("ticket new"))
+            .cloned()
+            .collect();
+        assert_eq!(made.len(), 2, "{made:?}");
     }
 
     #[test]
