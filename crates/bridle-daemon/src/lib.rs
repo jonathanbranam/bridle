@@ -7,6 +7,7 @@ use std::time::Duration;
 
 use anyhow::Context;
 use bridle_api::discovery;
+use bridle_api::probe::Verdict;
 use bridle_api::types::{
     AgentState, DaemonInfo, ExitInfo, PrincipalKind, SpawnRequest, event_kind,
 };
@@ -1432,6 +1433,14 @@ fn unreachable_text(addr: SocketAddr) -> String {
     )
 }
 
+fn unverified_text(addr: SocketAddr) -> String {
+    format!(
+        "Reachability unverified: no peer answered when this daemon's address {addr} was probed; \
+         a same-host connect proves nothing on macOS, so a blocked application firewall would go \
+         unnoticed. Upgrade the other machines' bridle, or check their daemons."
+    )
+}
+
 const PROBE_WAITS: [Duration; 3] = [
     Duration::from_secs(3),
     Duration::from_secs(10),
@@ -1448,8 +1457,15 @@ async fn probe_own_address<F: Future<Output = Option<bool>>>(
     waits: &[Duration],
     ask: impl Fn(SocketAddr) -> F,
 ) {
-    if bridle_api::probe::reachable(addr, waits, ask).await {
-        return;
+    match bridle_api::probe::reachable(addr, waits, ask).await {
+        Verdict::Reachable => return,
+        Verdict::Unverified => {
+            // Lower grade than a block: recorded for the human, the orchestrator is not asked.
+            tracing::warn!(%addr, "the daemon's reachability is unverified: no peer answered");
+            incidents.record(&unverified_text(addr)).await;
+            return;
+        }
+        Verdict::Blocked => {}
     }
     tracing::error!(%addr, "the daemon cannot reach its own address; firewall?");
     let text = unreachable_text(addr);
@@ -1845,15 +1861,32 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn own_address_probe_raises_only_when_unreachable() {
+    async fn own_address_probe_is_quiet_when_a_peer_reaches_it() {
+        let said = Said::default();
+        let up: SocketAddr = "127.0.0.1:9".parse().unwrap();
+        probe_own_address(up, &said, &[Duration::ZERO], |_| async { Some(true) }).await;
+        assert!(said.0.lock().unwrap().is_empty());
+    }
+
+    #[tokio::test]
+    async fn own_address_probe_says_unverified_once_when_no_peer_answers() {
         let waits = [Duration::ZERO; 2];
         let l = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
         let up = l.local_addr().unwrap();
         let said = Said::default();
         probe_own_address(up, &said, &waits, |_| async { None }).await;
-        assert!(said.0.lock().unwrap().is_empty());
+        let got = said.0.lock().unwrap().clone();
+        assert_eq!(got.len(), 1);
+        assert!(got[0].contains("unverified") && !got[0].contains("cannot connect"));
+    }
+
+    #[tokio::test]
+    async fn own_address_probe_raises_when_unreachable_and_no_peer() {
+        let l = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let up = l.local_addr().unwrap();
         drop(l);
-        probe_own_address(up, &said, &waits, |_| async { None }).await;
+        let said = Said::default();
+        probe_own_address(up, &said, &[Duration::ZERO; 2], |_| async { None }).await;
         let got = said.0.lock().unwrap().clone();
         assert_eq!(got.len(), 1);
         assert!(got[0].contains("firewall") && got[0].contains(&up.to_string()));

@@ -44,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The firewall self-probe no longer passes silently when no peer answers (br-maj3, follow-up to br-9qws): every run logs each peer asked, why it was skipped, and the verdict at info; with no peer verdict a passing same-host connect now counts as "unverified" and records a lower-grade incident once per start (daemon and gateway), while a peer's "cannot connect" still raises the blocked incident. No wire change (a peer without connect-back is just skipped) and no migration.
 - A tools-only clone's refusal (`bridle serve`, `machine tools-only-check` and the commands that call it) now names the machine that owns the project (host and since, from `owner.toml` on `bridle/state`), or says the owner could not be read. `owner.toml` records no workspace path, so none is shown (br-wphz).
 - The settle hold now also restarts when a ticket is readied (pending -> open), not only at filing, so a ticket filed days ago is held for `[tasks] settle` after ready. `ready` records a "readied by" thread note that the runtime-derived `settle_until` counts; no migration (br-4gyw).
 - A restart/stop handover request queued just after its session recorded the note is now born read (the daemon checks for a note under 2 minutes old), so the replacement session no longer receives it whichever came first; the CLI also retries marking it read once and warns if that fails (br-p3vy).

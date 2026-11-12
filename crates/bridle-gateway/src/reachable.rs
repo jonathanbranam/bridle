@@ -8,6 +8,7 @@ use std::net::SocketAddr;
 use std::time::Duration;
 
 use bridle_api::client::Client;
+use bridle_api::probe::Verdict;
 
 use crate::actions::resolve;
 use crate::discovery::{PROBE_TIMEOUT, current_targets};
@@ -28,20 +29,36 @@ pub fn unreachable_text(addr: SocketAddr) -> String {
     )
 }
 
-/// Probes `addr` (from a peer machine when one answers, ticket 9qws); if it never answers, logs an error and passes the incident text to `raise`.
-/// Returns whether it raised.
+/// The text when no peer could say whether the gateway's address is reachable.
+pub fn unverified_text(addr: SocketAddr) -> String {
+    format!(
+        "Reachability unverified: no peer answered when the gateway's address {addr} was \
+         probed; a same-host connect proves nothing on macOS, so a blocked application firewall \
+         would go unnoticed. Upgrade the other machines' bridle, or check their daemons."
+    )
+}
+
+/// Probes `addr` (from a peer machine when one answers, ticket 9qws); if it is blocked, logs an error and passes the incident text to `raise`; if no
+/// peer could say, passes the (lower-grade) unverified text to `raise` once. Returns whether it raised.
 pub async fn check<F: Future<Output = Option<bool>>>(
     addr: SocketAddr,
     waits: &[Duration],
     ask: impl Fn(SocketAddr) -> F,
     raise: impl AsyncFnOnce(String),
 ) -> bool {
-    if bridle_api::probe::reachable(addr, waits, ask).await {
-        return false;
+    match bridle_api::probe::reachable(addr, waits, ask).await {
+        Verdict::Reachable => false,
+        Verdict::Unverified => {
+            tracing::warn!(%addr, "the gateway's reachability is unverified: no peer answered");
+            raise(unverified_text(addr)).await;
+            true
+        }
+        Verdict::Blocked => {
+            tracing::error!(%addr, "the gateway cannot reach its own address; firewall?");
+            raise(unreachable_text(addr)).await;
+            true
+        }
     }
-    tracing::error!(%addr, "the gateway cannot reach its own address; firewall?");
-    raise(unreachable_text(addr)).await;
-    true
 }
 
 /// Raises the incident on every project's daemon on this machine, with the human's token (the
@@ -85,7 +102,21 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn raises_only_when_the_listener_is_unreachable() {
+    async fn a_reachable_peer_raises_nothing() {
+        let said = Mutex::new(Vec::new());
+        let addr: SocketAddr = "127.0.0.1:9".parse().expect("addr");
+        let raised = check(
+            addr,
+            &[Duration::ZERO],
+            |_| async { Some(true) },
+            async |t| said.lock().expect("lock").push(t),
+        )
+        .await;
+        assert!(!raised && said.lock().expect("lock").is_empty());
+    }
+
+    #[tokio::test]
+    async fn no_peer_answer_raises_the_unverified_text_once_not_blocked() {
         let waits = [Duration::ZERO; 2];
         let l = tokio::net::TcpListener::bind("127.0.0.1:0")
             .await
@@ -99,12 +130,22 @@ mod tests {
             async |t| said.lock().expect("lock").push(t),
         )
         .await;
-        assert!(!raised && said.lock().expect("lock").is_empty());
-        // A fake unreachable listener: the port is closed.
+        let got = said.lock().expect("lock").clone();
+        assert!(raised && got.len() == 1);
+        assert!(got[0].contains("unverified") && !got[0].contains("cannot connect"));
+    }
+
+    #[tokio::test]
+    async fn a_closed_port_with_no_peer_is_blocked() {
+        let l = tokio::net::TcpListener::bind("127.0.0.1:0")
+            .await
+            .expect("bind");
+        let addr = l.local_addr().expect("addr");
         drop(l);
+        let said = Mutex::new(Vec::new());
         let raised = check(
             addr,
-            &waits,
+            &[Duration::ZERO; 2],
             |_| async { None },
             async |t| said.lock().expect("lock").push(t),
         )
