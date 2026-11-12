@@ -4,7 +4,7 @@ title = "Migration 0005-a-ticket-for-every-active-task aborts on dead task rows 
 kind = "bug"
 state = "integrated"
 created_at = "2026-11-11T22:45:26.330Z"
-updated_at = "2026-11-12T01:17:09.564975Z"
+updated_at = "2026-11-12T01:17:31.760118Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -56,3 +56,6 @@ done: main (f99c3012) merged into bridle/mm4z; just check under env -i exit 0, 2
 
 ### note · agent:manager-2 · 2026-11-12T01:17:09.564Z
 integrated: 6e1a4c19e2afe5c5ae0e8258af7e564674aea7bb (branch bridle/mm4z)
+
+### note · agent:manager-2 · 2026-11-12T01:17:31.760Z
+cleanup: removed agent mm4z, origin branch bridle/mm4z, branch bridle/mm4z
