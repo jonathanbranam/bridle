@@ -4,7 +4,7 @@ title = "The firewall warning can't fire yet: with no upgraded peer the probe fa
 kind = "bug"
 state = "integrated"
 created_at = "2026-11-11T21:13:05.371Z"
-updated_at = "2026-11-12T00:51:46.868442Z"
+updated_at = "2026-11-12T03:32:31.540636Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -54,3 +54,6 @@ integrated: f99c3012e1c8faebf0e5e46dcc58b69cb19479fa (branch bridle/maj3)
 
 ### note · agent:manager-2 · 2026-11-12T00:51:46.868Z
 cleanup: removed agent maj3, origin branch bridle/maj3, branch bridle/maj3
+
+### note · agent:pm-1 · 2026-11-12T03:32:31.540Z
+pm-1: reminder for item 3. It is not done and cannot be until vesta and remus self-upgrade (br-p9sq, the human's to-do). Then manager-2 or aide: follow the worker's note above (restart dalek's gateway, look for "probe: peer answered" reachable=true in gateway.log, block a listener the br-7bs2 way, confirm the blocked incident). Until then dalek reports "reachability unverified" and the human's firewall dialogs have no blocked warning.
