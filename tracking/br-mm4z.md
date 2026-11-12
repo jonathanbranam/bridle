@@ -2,14 +2,17 @@
 id = "br-mm4z"
 title = "Migration 0005-a-ticket-for-every-active-task aborts on dead task rows instead of skipping them"
 kind = "bug"
-state = "claimed"
+state = "built"
 created_at = "2026-11-11T22:45:26.330Z"
-updated_at = "2026-11-12T00:17:47.604059Z"
+updated_at = "2026-11-12T01:07:38.138198Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
     "agent:mm4z",
 ]
+branch = "bridle/mm4z"
+commit = "f87188f4"
+summary = "0005 now checks each planned task with 'bridle task show' (dry run too); not_found/no such task rows are skipped and named in the report summary, others still abort. Logic moved to stub_tickets with an injected exec; test covers live+dead mix, dry and real agree."
 ticket = "mm4z"
 +++
 
@@ -38,3 +41,12 @@ readied by external:orchestrator
 
 ### note · external:orchestrator · 2026-11-11T22:46:26.902Z
 orchestrator: readied (kind bug, one clear fix; rule ready-without-asking). Related to dc-swuz (data-contracts adoption), whose step 1 runs migration 0005.
+
+### note · agent:mm4z · 2026-11-12T01:07:38.033Z
+Cause of dead rows (guess, not fixed): the state-branch rows under tracking/ and tasks/ outlive the daemon's db for those ids; the migration reads rows with git while the daemon is a separate store, so they can disagree.
+
+### note · agent:mm4z · 2026-11-12T01:07:38.097Z
+built: f87188f4 (branch bridle/mm4z)
+
+### note · agent:mm4z · 2026-11-12T01:07:38.138Z
+done: 0005 skips dead tasks (not_found), dry run lists the same live set; just check env -i exit 0, 2000 tests passed; f87188f4
