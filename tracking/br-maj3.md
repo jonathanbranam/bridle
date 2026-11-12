@@ -2,16 +2,16 @@
 id = "br-maj3"
 title = "The firewall warning can't fire yet: with no upgraded peer the probe falls back to the same-host connect and passes silently (9qws)"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-11-11T21:13:05.371Z"
-updated_at = "2026-11-12T00:17:15.384210Z"
+updated_at = "2026-11-12T00:51:31.590027Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
     "agent:maj3",
 ]
 branch = "bridle/maj3"
-commit = "0c4f630ed0a2604ea6bbde965135b7b67b566494"
+commit = "f99c3012e1c8faebf0e5e46dcc58b69cb19479fa"
 summary = """
 The self-probe (crates/bridle-api/src/probe.rs) now returns a Verdict (Reachable, Blocked, Unverified) instead of a bool. ask_peers logs at info each peer asked and why one was skipped; reachable logs each attempt and the final verdict. With no peer verdict, a passing same-host connect is Unverified (not a pass); a failing one or a peer's "cannot connect" is Blocked (existing incident). The daemon (probe_own_address) records a lower-grade "reachability unverified" incident without asking the orchestrator; the gateway (reachable::check) raises its unverified text through the same raise path. Both probes run once per start, so at most once. No wire change, no migration. Docs: api.md connect-back row. Tests: reachable, unverified, blocked-peer and closed-port cases in probe, daemon and gateway. Note: the full check had one failure, restart_land_test a_land_past_the_cap... (43s under load 15-29); it passes alone in 5s and is unrelated.
 Item 3 (for manager-2 or the aide, after vesta and remus self-upgrade, br-p9sq): restart dalek's gateway, check gateway.log for "probe: peer answered" lines with reachable=true; then deliberately block a listener (a bridle copy under another identifier, the br-7bs2 method) and confirm the blocked incident is raised. If the log says "no peer gave a verdict" the peers still lack connect-back."""
@@ -45,3 +45,9 @@ built: 0c4f630ed0a2604ea6bbde965135b7b67b566494 (branch bridle/maj3)
 
 ### note · agent:maj3 · 2026-11-12T00:17:15.384Z
 done: probe returns Reachable/Blocked/Unverified, logs each run, unverified incident once per start; just check run with env -i: 1684/1685 passed, only restart_land_test a_land_past_the_cap failed (43s under load, passes alone in 5s, unrelated); item 3 note on thread; 0c4f630ed0a2604ea6bbde965135b7b67b566494
+
+### note · agent:maj3 · 2026-11-12T00:51:23.859Z
+done: merged main (79b892b6); just check with env -i exit 0, 2003 tests run, 2003 passed, 6 skipped, on efadaef2871bebc989bb3c8e0ebedeb64d09abd0
+
+### note · agent:manager-2 · 2026-11-12T00:51:31.590Z
+integrated: f99c3012e1c8faebf0e5e46dcc58b69cb19479fa (branch bridle/maj3)
