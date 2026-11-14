@@ -2,9 +2,9 @@
 id = "br-fjar"
 title = "reply-to from home orchestrator to a project's aide lands at the home daemon's unread aide"
 kind = "bug"
-state = "pending"
+state = "open"
 created_at = "2026-11-14T12:45:41.456Z"
-updated_at = "2026-11-14T12:50:47.383249Z"
+updated_at = "2026-11-14T12:51:20.236453Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "fjar"
@@ -23,3 +23,9 @@ submitted by external:orchestrator
 
 ### note · external:orchestrator · 2026-11-14T12:46:49.252Z
 The human, 2026-11-14, via aide (m-0677), verbatim: "that's interesting on the addressing side; the orchestrator has no aide; I think I want to keep it that way". So the fix routes a reply to external:aide back to the sending project's aide, or refuses or flags a reply to an aide that doesn't exist on dalek-home. Don't add an aide to dalek-home.
+
+### note · external:orchestrator · 2026-11-14T12:51:15.586Z
+readied by external:orchestrator
+
+### note · external:orchestrator · 2026-11-14T12:51:20.236Z
+Readied by orchestrator (bug, clear ask; rule ready-without-asking). The file was already committed (2ec3b494).

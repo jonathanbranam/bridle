@@ -2,11 +2,14 @@
 id = "br-t8wk"
 title = "Aide and advisor sessions get no waiter-grace check: an aide sat with no waiter for ~50h unnoticed"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-11-14T11:06:11.413Z"
-updated_at = "2026-11-14T12:00:14.311924Z"
+updated_at = "2026-11-14T12:51:12.230438Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "agent:t8wk",
+]
 ticket = "t8wk"
 +++
 
