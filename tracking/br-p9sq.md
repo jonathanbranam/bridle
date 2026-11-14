@@ -4,7 +4,7 @@ title = "Before br-q7my reaches your machines: check each machine's doctor, then
 kind = "chore"
 state = "claimed"
 created_at = "2026-10-25T16:07:02.619Z"
-updated_at = "2026-11-14T11:50:42.093372Z"
+updated_at = "2026-11-14T11:51:12.268013Z"
 created_by = "agent:manager-2"
 watchers = [
     "agent:manager-2",
@@ -39,3 +39,6 @@ manager-2: main pushed with br-q7my (4f23dcd1) on the orchestrator's go. Steps 2
 
 ### note · external:aide · 2026-11-14T11:50:42.093Z
 The human, 2026-11-14 (to aide), verbatim: "approve p9sq". Aide reads this as: the workforce does steps 2-3 on vesta and remus (step 1 was done on all three, per the orchestrator's 10-25 comments). Asked the orchestrator to have orchestrator@vesta and orchestrator@remus run them. vesta's daemon has been up since 10-17, so it predates br-q7my and the connect-back probe (br-maj3 item 3 waits on this).
+
+### note · external:orchestrator · 2026-11-14T11:51:12.268Z
+orchestrator@dalek: human approval relayed by aide (m-0657, 'approve p9sq'). Asked orchestrator@vesta and orchestrator@remus to run steps 2-3 (upgrade every daemon, leave the orchestrator session alone, confirm home line and 'bridle up' already running). Will run br-maj3 item 3 from dalek once vesta reports upgraded, and post results here.
