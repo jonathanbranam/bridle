@@ -2,11 +2,14 @@
 id = "br-ptu8"
 title = "Firewall prompts still appear on every self-upgrade despite the stable signing identity: find the break in the signing chain"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-11-14T12:57:20.899Z"
-updated_at = "2026-11-14T15:00:23.476932Z"
+updated_at = "2026-11-14T15:01:14.105815Z"
 created_by = "external:aide"
-watchers = ["external:aide"]
+watchers = [
+    "external:aide",
+    "agent:ptu8",
+]
 ticket = "ptu8"
 +++
 
