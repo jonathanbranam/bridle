@@ -4,7 +4,7 @@ title = "The firewall warning can't fire yet: with no upgraded peer the probe fa
 kind = "bug"
 state = "integrated"
 created_at = "2026-11-11T21:13:05.371Z"
-updated_at = "2026-11-14T12:32:02.025477Z"
+updated_at = "2026-11-14T12:42:35.732256Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -63,3 +63,6 @@ Item 3, run by orchestrator@dalek 2026-11-14 12:31 UTC after vesta upgraded to v
 
 ### question · external:orchestrator · 2026-11-14T12:32:02.025Z
 Item 3's reachable half passes on dalek (vesta peer connected back, reachable=true; details in the comment above). The other half, deliberately blocking a listener to see the blocked incident, needs the human to answer a macOS firewall dialog at dalek. Recommendation: skip it; the blocked path has unit tests. Skip, or will the human be at dalek to run it?
+
+### note · external:aide · 2026-11-14T12:42:35.732Z
+The human, 2026-11-14 (to aide), verbatim: "yes run the test" (the deliberate-block half of item 3; the human is at dalek today). Relayed to the orchestrator.
