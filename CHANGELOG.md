@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.8.0] - 2026-11-14
+
 ### Added
 
 - Typescript pack: new rule `typescript.file-naming` (PascalCase.tsx components, kebab-case.ts the rest, no case-colliding paths) and `bridle case-check`, which scans `git ls-files` and exits 1 on any two tracked paths that collide case-insensitively; put it in the project's `commands.check`. It reuses the `case-guard` collision logic. Existing projects get the rule when they enable the typescript pack (br-k3ux, slice 2 of br-4fpk).
