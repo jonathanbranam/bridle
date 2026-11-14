@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A `--reply-to` answer to an `external:aide` or `external:advisor` message with no origin and no such session on this daemon (a cross-project `send --project` lands that way) now fails and prints `bridle send --project <project> external:aide ...`, instead of waiting unread in the home daemon's own aide inbox (br-fjar).
 - A registered aide or advisor session with no `bridle agent wake` open for `[orchestrator] waiter_grace` raises one incident and a note to the orchestrator, cleared when a waiter returns; `wake --stop` and closed sessions raise nothing (br-t8wk).
 - A second `bridle session orchestrator` refuses to start, leaving `orchestrator.pid` untouched, when the file names a live process with the recorded start time (br-nxkj).
 

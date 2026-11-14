@@ -1146,6 +1146,37 @@ async fn a_reply_that_cannot_be_routed_fails_with_the_fix() {
     assert!(err.contains("no message m-nope to reply to"), "{err}");
 }
 
+/// br-fjar: a message sent straight to B with `send --project` carries no origin, so B's reply
+/// to it would land at B's own sessionless aide: refuse it and name the command that works.
+#[tokio::test]
+async fn a_reply_to_a_sessionless_aide_with_no_origin_fails_with_the_command() {
+    let p = pair().await;
+    let orch = p.b.external_client("orchestrator").await;
+    let aide = p.b.external_client("aide").await;
+    let mut req = reply("heads-up", "unused");
+    req.to = Some("external:orchestrator".to_string());
+    req.reply_to = None;
+    aide.send(&req).await.expect("sent");
+    let original = orch
+        .list_messages(&MessageQuery {
+            to: Some("me".to_string()),
+            ..Default::default()
+        })
+        .await
+        .expect("inbox")
+        .remove(0);
+    assert_eq!(original.from, "external:aide");
+    let err = orch
+        .send(&reply("ok", &original.id))
+        .await
+        .expect_err("no aide session here")
+        .to_string();
+    assert!(
+        err.contains("bridle send --project <project> external:aide"),
+        "{err}"
+    );
+}
+
 /// br-jpph: the sender is another machine's orchestrator (the case that was reported failing):
 /// a bare `reply_to` answers it on its own daemon, in the orchestrator's inbox there.
 #[tokio::test]

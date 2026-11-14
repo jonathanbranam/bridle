@@ -208,6 +208,12 @@ impl Sessions {
         entries.iter().any(|e| e.info.identity == identity)
     }
 
+    /// Whether a registered aide or advisor session has this identity (`aide`, `advisor`).
+    pub fn has_identity(&self, identity: &str) -> bool {
+        let entries = self.entries.lock().expect("sessions lock");
+        entries.iter().any(|e| e.info.identity == identity)
+    }
+
     pub fn list(&self) -> Vec<SessionInfo> {
         let entries = self.entries.lock().expect("sessions lock");
         entries.iter().map(|e| e.info.clone()).collect()

@@ -2156,6 +2156,19 @@ async fn reply_route(state: &AppState, id: &str) -> Result<(Option<String>, Stri
         ))
     })?;
     let Some((machine, daemon)) = state.store.forwarded_origin(id).await? else {
+        // A cross-project `send --project` lands as the bare role with no origin, so a reply to
+        // an aide or advisor nobody is running here is almost certainly misdirected (br-fjar).
+        if let Some(role) = original.from.strip_prefix("external:")
+            && matches!(role, "aide" | "advisor")
+            && !state.sessions.has_identity(role)
+        {
+            return Err(ApiError::bad_request(format!(
+                "message {id} is from {}, but no {role} session is running on this daemon \
+                 ('{}'); if it came from another project's {role}, answer it there: \
+                 `bridle send --project <project> external:{role} --reply-to {id} <text>`",
+                original.from, state.project
+            )));
+        }
         return Ok((None, original.from));
     };
     // The sender's label carries its machine; on its own daemon the name is the whole id.
