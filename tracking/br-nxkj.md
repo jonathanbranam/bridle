@@ -2,9 +2,9 @@
 id = "br-nxkj"
 title = "A second 'bridle session orchestrator' overwrites the live session's orchestrator.pid"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-11-14T11:06:11.459Z"
-updated_at = "2026-11-14T11:11:15.865505Z"
+updated_at = "2026-11-14T12:00:14.220431Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "nxkj"
