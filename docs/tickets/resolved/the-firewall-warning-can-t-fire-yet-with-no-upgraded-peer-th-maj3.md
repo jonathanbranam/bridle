@@ -9,6 +9,7 @@ changes: []
 specs: []
 blocked_by: []
 related: []
+resolved: 2026-11-14T12:46:25Z
 ---
 
 Filed by aide. Follow-up to br-9qws (landed 1660fdd4). Related: br-qy4y (the human chose to live with the firewall prompts if a warning fires), br-p9sq (vesta and remus self-upgrade).
