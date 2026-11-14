@@ -2,16 +2,16 @@
 id = "br-t8wk"
 title = "Aide and advisor sessions get no waiter-grace check: an aide sat with no waiter for ~50h unnoticed"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-11-14T11:06:11.413Z"
-updated_at = "2026-11-14T13:11:36.119592Z"
+updated_at = "2026-11-14T13:15:21.139062Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:t8wk",
 ]
 branch = "bridle/t8wk"
-commit = "3382d5c9ae4e664ca8ddeb8d7c7b61e304b7f6c0"
+commit = "24d8ae75e1ec07ad4786f451e04c9dd9241ff42b"
 summary = "Aide and advisor sessions now get the orchestrator's waiter-grace check: Sessions::check_waiters (sessions.rs, run on the sessions tick, waiter_grace from [orchestrator]) raises one incident plus one note to the orchestrator when a registered session has no bridle agent wake open for the grace, cleared when a wait returns. Liveness = presence in the session registry (tick drops dead pids, session end removes). Waiters (wake.rs) now tracks per-target close time and --stop marks; a stop raises nothing. Docs in orchestrator-supervision.md. check_waiters is pub(crate) because pub exposure trips async-fn-in-trait on Incidents. In-memory state; no nudge to tmux."
 ticket = "t8wk"
 +++
@@ -57,3 +57,9 @@ built: 3382d5c9ae4e664ca8ddeb8d7c7b61e304b7f6c0 (branch bridle/t8wk)
 
 ### note · agent:t8wk · 2026-11-14T13:11:36.119Z
 done: waiter-grace check for aide/advisor sessions; just check (env -i) exit 0, 2009 tests run, 3382d5c9ae4e664ca8ddeb8d7c7b61e304b7f6c0; main already merged (up to date)
+
+### note · agent:t8wk · 2026-11-14T13:15:13.740Z
+done: merged current main; just check (env -i) exit 0, 2009 tests run, e4a2f18809461a112bb993c3b8c3d538103040fe
+
+### note · agent:manager-2 · 2026-11-14T13:15:21.139Z
+integrated: 24d8ae75e1ec07ad4786f451e04c9dd9241ff42b (branch bridle/t8wk)

@@ -70,3 +70,4 @@
 {"actor":"human","at":"2026-11-14T12:57:20.899Z","from":"","task":"br-ptu8","to":"pending"}
 {"actor":"external:aide","at":"2026-11-14T12:57:28.050724Z","from":"pending","task":"br-ptu8","to":"open"}
 {"actor":"agent:t8wk","at":"2026-11-14T13:11:36.079562Z","from":"claimed","task":"br-t8wk","to":"built"}
+{"actor":"agent:manager-2","at":"2026-11-14T13:15:21.139062Z","from":"built","task":"br-t8wk","to":"integrated"}
