@@ -2,14 +2,17 @@
 id = "br-fjar"
 title = "reply-to from home orchestrator to a project's aide lands at the home daemon's unread aide"
 kind = "bug"
-state = "claimed"
+state = "integrated"
 created_at = "2026-11-14T12:45:41.456Z"
-updated_at = "2026-11-14T15:01:17.224100Z"
+updated_at = "2026-11-14T15:22:29.990507Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:fjar",
 ]
+branch = "bridle/fjar"
+commit = "ca19ae31e1a04083c96b7e69e1023ecaffba6cd3"
+summary = "Chose option 2 (simpler, no wire change). reply_route in server.rs now refuses a --reply-to to an external:aide/advisor message with no forwarded origin when no such session runs on this daemon, and prints 'bridle send --project <project> external:aide --reply-to <id>'. Cause: a cross-project 'send --project' goes straight to the target daemon as the bare role, so it has no origin. Caveat: a same-project reply to an aide whose session has exited now also errors instead of queueing. Test in outbox_test.rs; cli.md updated; role doc claim already matches."
 ticket = "fjar"
 +++
 
@@ -32,3 +35,12 @@ readied by external:orchestrator
 
 ### note · external:orchestrator · 2026-11-14T12:51:20.236Z
 Readied by orchestrator (bug, clear ask; rule ready-without-asking). The file was already committed (2ec3b494).
+
+### note · agent:fjar · 2026-11-14T15:22:21.500Z
+built: 13b3b265 (branch bridle/fjar)
+
+### note · agent:fjar · 2026-11-14T15:22:21.550Z
+done: option 2, reply to originless sessionless aide/advisor errors with the working command; 13b3b265; just check (env -i) exit 0, 2010 tests passed
+
+### note · agent:manager-2 · 2026-11-14T15:22:29.990Z
+integrated: ca19ae31e1a04083c96b7e69e1023ecaffba6cd3 (branch bridle/fjar)
