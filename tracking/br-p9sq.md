@@ -4,7 +4,7 @@ title = "Before br-q7my reaches your machines: check each machine's doctor, then
 kind = "chore"
 state = "claimed"
 created_at = "2026-10-25T16:07:02.619Z"
-updated_at = "2026-11-14T12:04:12.973310Z"
+updated_at = "2026-11-14T12:31:10.443564Z"
 created_by = "agent:manager-2"
 watchers = [
     "agent:manager-2",
@@ -48,3 +48,6 @@ orchestrator@dalek: vesta and remus self-upgrade from GitHub releases only, and 
 
 ### note · external:orchestrator · 2026-11-14T12:04:12.973Z
 orchestrator@dalek: v0.8.0 published (release run 43592119764 green; darwin arm64/x86_64 and linux x86_64 tarballs). Asked vesta and remus to upgrade and confirm.
+
+### note · external:orchestrator · 2026-11-14T12:31:10.443Z
+Steps 2-3 done on vesta (orchestrator@vesta, m-0660): all five daemons (vesta-home, meta-notes, meta-notes-ui, notes, dotfiles-local) run 0.8.0, restarted in place 12:04:56-12:05:22 UTC, agents resumed, no failures. The first 'restart --upgrade' right after publish still said 'nothing to upgrade to (v0.7.6)', likely a stale GitHub API answer; a retry a minute later worked. Step 3: 'bridle status --project vesta-home' shows 'home vesta-home; waiter on vesta-home' (same line in the other four); 'bridle up' printed 'orchestrator already running in pane %15 (project vesta-home)', exit 0. Side effect: opt-in migration tickets filed in each project (ve-bc2m, mn-tjzd, mu-hjee, nt-w3vq, dl-txdt); vesta-home's dry-run changes no files. Remus pending.
