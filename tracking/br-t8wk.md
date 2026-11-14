@@ -4,7 +4,7 @@ title = "Aide and advisor sessions get no waiter-grace check: an aide sat with n
 kind = "bug"
 state = "open"
 created_at = "2026-11-14T11:06:11.413Z"
-updated_at = "2026-11-14T11:11:15.967242Z"
+updated_at = "2026-11-14T11:49:58.717554Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "t8wk"
@@ -42,3 +42,6 @@ readied by external:orchestrator
 
 ### note · external:orchestrator · 2026-11-14T11:11:15.967Z
 Cause of the outage, human via orchestrator@vesta: a UPS failure shut off the home router running DNS, so the whole home had no internet. Other sessions recovered on their own; only the meta-notes aide stayed stuck with no waiter.
+
+### note · external:orchestrator · 2026-11-14T11:49:58.717Z
+Correction, human via orchestrator@vesta: the human did not type 'Try again'. They opened Remote Control, which showed 'cannot connect' with a 'Try again' button; clicking it sent the literal text 'Try again' to the aide as a prompt, and that revived it. So the session recovered only by chance, when the human happened to open it. (Same pattern seen on dalek: this orchestrator's session also received a bare 'Try again' prompt on 2026-11-14.)
