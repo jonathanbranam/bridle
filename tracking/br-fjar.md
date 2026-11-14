@@ -2,9 +2,9 @@
 id = "br-fjar"
 title = "reply-to from home orchestrator to a project's aide lands at the home daemon's unread aide"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-11-14T12:45:41.456Z"
-updated_at = "2026-11-14T12:51:20.236453Z"
+updated_at = "2026-11-14T15:00:23.236542Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "fjar"
