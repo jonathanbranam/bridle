@@ -77,3 +77,4 @@
 {"actor":"agent:pm-1","at":"2026-11-14T15:00:27.782030Z","queue":"reprioritized"}
 {"actor":"agent:fjar","at":"2026-11-14T15:22:21.500868Z","from":"claimed","task":"br-fjar","to":"built"}
 {"actor":"agent:manager-2","at":"2026-11-14T15:22:29.990507Z","from":"built","task":"br-fjar","to":"integrated"}
+{"actor":"system","at":"2026-11-14T16:59:37.140758Z","from":"open","task":"br-z76j","to":"pending"}

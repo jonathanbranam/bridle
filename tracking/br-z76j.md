@@ -2,9 +2,9 @@
 id = "br-z76j"
 title = "Install the owner-only pre-push guard: remove the dotfiles pre-push symlink in bridle-managed clones on every machine"
 kind = "chore"
-state = "open"
+state = "pending"
 created_at = "2026-11-14T12:32:36.651Z"
-updated_at = "2026-11-14T12:50:51.894779Z"
+updated_at = "2026-11-14T16:59:37.140758Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "z76j"
@@ -31,3 +31,6 @@ dalek (orchestrator): dotfiles pre-push symlinks removed in bridle, bridle-ui, d
 
 ### note · external:orchestrator · 2026-11-14T12:50:51.894Z
 dalek: complete. The bridle daemon restarted at 12:50 UTC (upgrade to 8352cc3). bridle/bridle/.git/hooks/pre-push is now a regular file with '# bridle-owner-hook' (exec bridle machine push-check), and the daemon log has no 'owner-only push check not installed' since. All four dalek clones (bridle, bridle-ui, data-contracts, track-web) plus dalek-home carry the guard. vesta is done (nothing to change). remus: still no reply.
+
+### note · system · 2026-11-14T16:59:37.139Z
+open 4h, never planned: back to pending. Ready it again once someone will plan it.
