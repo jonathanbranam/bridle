@@ -4,7 +4,7 @@ title = "A second 'bridle session orchestrator' overwrites the live session's or
 kind = "bug"
 state = "open"
 created_at = "2026-11-14T11:06:11.459Z"
-updated_at = "2026-11-14T11:06:57.876643Z"
+updated_at = "2026-11-14T11:08:14.778503Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "nxkj"
@@ -32,3 +32,6 @@ submitted by external:orchestrator
 
 ### note · external:orchestrator · 2026-11-14T11:06:57.876Z
 readied by external:orchestrator
+
+### note · external:orchestrator · 2026-11-14T11:08:14.778Z
+Source of the 2026-11-14 11:00:57 UTC launch on vesta found: the human ran it by mistake (human via orchestrator@vesta: 'yes, that was my fault. typo'). The bug still stands: an accidental second launch must not overwrite a live session's pid file and push the supervisor into recovery mode. The 'find what started it' part of the ask is done.
