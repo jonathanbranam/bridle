@@ -4,7 +4,7 @@ title = "Aide and advisor sessions get no waiter-grace check: an aide sat with n
 kind = "bug"
 state = "open"
 created_at = "2026-11-14T11:06:11.413Z"
-updated_at = "2026-11-14T11:06:57.737646Z"
+updated_at = "2026-11-14T11:11:15.967242Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "t8wk"
@@ -39,3 +39,6 @@ submitted by external:orchestrator
 
 ### note · external:orchestrator · 2026-11-14T11:06:57.737Z
 readied by external:orchestrator
+
+### note · external:orchestrator · 2026-11-14T11:11:15.967Z
+Cause of the outage, human via orchestrator@vesta: a UPS failure shut off the home router running DNS, so the whole home had no internet. Other sessions recovered on their own; only the meta-notes aide stayed stuck with no waiter.
