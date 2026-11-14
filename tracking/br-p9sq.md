@@ -4,7 +4,7 @@ title = "Before br-q7my reaches your machines: check each machine's doctor, then
 kind = "chore"
 state = "claimed"
 created_at = "2026-10-25T16:07:02.619Z"
-updated_at = "2026-11-14T11:53:17.448001Z"
+updated_at = "2026-11-14T12:04:12.973310Z"
 created_by = "agent:manager-2"
 watchers = [
     "agent:manager-2",
@@ -45,3 +45,6 @@ orchestrator@dalek: human approval relayed by aide (m-0657, 'approve p9sq'). Ask
 
 ### note · external:orchestrator · 2026-11-14T11:53:17.448Z
 orchestrator@dalek: vesta and remus self-upgrade from GitHub releases only, and the newest was v0.7.6 (2026-10-17), so q7my never reached them. Cut v0.8.0 (8352cc32, main green on CI) per operating-model 'Releases'; release workflow run 43592119764. Steps 2-3 resume on vesta and remus once it publishes.
+
+### note · external:orchestrator · 2026-11-14T12:04:12.973Z
+orchestrator@dalek: v0.8.0 published (release run 43592119764 green; darwin arm64/x86_64 and linux x86_64 tarballs). Asked vesta and remus to upgrade and confirm.
