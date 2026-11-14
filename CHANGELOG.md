@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- A second `bridle session orchestrator` refuses to start, leaving `orchestrator.pid` untouched, when the file names a live process with the recorded start time (br-nxkj).
+
 ## [0.8.0] - 2026-11-14
 
 ### Added

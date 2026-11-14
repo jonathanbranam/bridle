@@ -71,6 +71,7 @@ pub mod workflow_checkout;
 pub mod worktree;
 
 pub use governor::Governor;
+pub use orchestrator::live_recorded_pid;
 pub use release::{Asset as ReleaseAsset, Release, ReleaseSource};
 pub use supervisor::{AgentManager, DAEMON_SHUTDOWN_REASON, SupervisorError, ToTarget};
 pub use upgrade::UpgradeHooks;

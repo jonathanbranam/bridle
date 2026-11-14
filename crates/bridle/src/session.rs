@@ -310,7 +310,20 @@ async fn run_claude(env: &[(&str, &str)], args: &[String]) -> anyhow::Result<i32
 
 async fn orchestrator(home: &Path, project: &str, args: &[String]) -> anyhow::Result<i32> {
     std::fs::create_dir_all(home)?;
-    write_pid_file(&home.join("orchestrator.pid"))?;
+    let pid_file = home.join("orchestrator.pid");
+    // An accidental second launch (an up-arrow recall of the relaunch line) must not overwrite
+    // a live session's pid file: the supervisor would see a pid/poll disagreement.
+    if let Some(pid) = std::fs::read_to_string(&pid_file)
+        .ok()
+        .and_then(|t| bridle_daemon::live_recorded_pid(&t))
+    {
+        anyhow::bail!(
+            "bridle session: the orchestrator is already running (pid {pid}, per {}); \
+             not starting a second one",
+            pid_file.display()
+        );
+    }
+    write_pid_file(&pid_file)?;
     tag_pane("orchestrator");
     let env = [
         ("BRIDLE_AS", crate::token_pair::ORCHESTRATOR),

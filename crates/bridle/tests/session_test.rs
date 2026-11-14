@@ -134,6 +134,72 @@ fn orchestrator_command_line_matches_the_script() {
     );
 }
 
+/// Runs the orchestrator launcher with `pid_text` already in `orchestrator.pid`.
+fn with_pid_file(pid_text: &str) -> (Output, String) {
+    let bin = tempfile::tempdir().unwrap();
+    let home = tempfile::tempdir().unwrap();
+    fs::write(
+        home.path().join("config.toml"),
+        "[machine]\nname = \"t\"\nhome_project = \"bridle\"\n[machines]\nt = \"h\"\n[projects]\n\"bridle\" = { machine = \"t\", port = 1 }\n",
+    )
+    .unwrap();
+    fs::write(home.path().join("orchestrator.pid"), pid_text).unwrap();
+    stub(bin.path(), "claude", "exit 0");
+    stub(bin.path(), "tmux", "exit 0");
+    let out = Command::new(env!("CARGO_BIN_EXE_bridle"))
+        .args(["session", "--project", "bridle", "orchestrator"])
+        .current_dir(tempfile::tempdir().unwrap().keep())
+        .env(
+            "PATH",
+            format!(
+                "{}:{}",
+                bin.path().display(),
+                std::env::var("PATH").unwrap_or_default()
+            ),
+        )
+        .env("BRIDLE_HOME", home.path())
+        .env("BRIDLE_AGENT_ID", "a-test")
+        .env("BRIDLE_LAUNCHER_TEST", "1")
+        .env("TMUX_PANE", "%9")
+        .env_remove("BRIDLE_PROJECT")
+        .env_remove("BRIDLE_URL")
+        .env_remove("BRIDLE_TOKEN")
+        .output()
+        .unwrap();
+    let after = fs::read_to_string(home.path().join("orchestrator.pid")).unwrap();
+    (out, after)
+}
+
+#[test]
+fn a_live_recorded_orchestrator_is_not_overwritten() {
+    let me = std::process::id();
+    let start = bridle_daemon::containment::start_epoch(me as i32).unwrap();
+    let text = format!("{me} @{start} 1\n");
+    let (out, after) = with_pid_file(&text);
+    assert!(!out.status.success());
+    let err = String::from_utf8_lossy(&out.stderr);
+    assert!(err.contains(&format!("pid {me}")), "{err}");
+    assert_eq!(after, text);
+}
+
+#[test]
+fn a_dead_or_mismatched_recorded_orchestrator_is_overwritten() {
+    let me = std::process::id();
+    let start = bridle_daemon::containment::start_epoch(me as i32).unwrap();
+    for text in [
+        "2000000000 @1700000000 1\n".to_string(),
+        format!("{me} @{} 1\n", start - 100_000),
+    ] {
+        let (out, after) = with_pid_file(&text);
+        assert!(
+            out.status.success(),
+            "{}",
+            String::from_utf8_lossy(&out.stderr)
+        );
+        assert_ne!(after, text);
+    }
+}
+
 #[test]
 fn orchestrator_uses_project_suffix_and_passes_extra_args() {
     let r = session(

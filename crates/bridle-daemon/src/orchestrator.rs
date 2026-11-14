@@ -187,6 +187,23 @@ fn parse_pid_file(text: &str) -> Option<PidRecord> {
     })
 }
 
+/// The pid in an `orchestrator.pid` text when that process is alive with the recorded start
+/// time (the same test the supervisor uses), for the launcher's refusal to overwrite it.
+pub fn live_recorded_pid(text: &str) -> Option<i32> {
+    let rec = parse_pid_file(text)?;
+    let alive = match rec.start.strip_prefix('@') {
+        Some(epoch) => match (
+            epoch.parse::<i64>(),
+            crate::containment::start_epoch(rec.pid),
+        ) {
+            (Ok(want), Some(got)) => crate::containment::epochs_match(want, got),
+            _ => false,
+        },
+        None => crate::containment::is_bridle_session(rec.pid),
+    };
+    alive.then_some(rec.pid)
+}
+
 /// One session's context notes: the last reading and which thresholds have been announced.
 #[derive(Default)]
 struct ContextNotes {

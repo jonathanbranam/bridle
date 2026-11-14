@@ -422,7 +422,8 @@ bridle session list [--all-projects]       the running external sessions (the `s
 bridle session orchestrator [claude args]   start the orchestrator's claude session from any directory: lean
                                              settings, names orch-<project>[-<BRIDLE_SESSION_SUFFIX>], pane tag,
                                              pid/exit files; project per Project resolution (no default); refuses under a bridle
-                                             agent (unless BRIDLE_LAUNCHER_TEST=1) and in a tools-only clone
+                                             agent (unless BRIDLE_LAUNCHER_TEST=1) and in a tools-only clone, and when
+                                             `orchestrator.pid` names a live process with the recorded start (pid file untouched)
                                              (all `bridle session` roles also merge the workflow layers' hooks into
                                              --settings, e.g. base's prompt time stamp; workflow-layers.md; they also set
                                              autoMode.environment: `$defaults`, a derived workspace line, then `[auto_mode]
