@@ -1253,9 +1253,25 @@ async fn start_inner(
     // Cannot fail startup: it only reads files and emits events.
     let sessions_task = spawn_loop(shutdown_rx.clone(), orchestrator::TICK_INTERVAL, {
         let sessions = sessions.clone();
+        let waiters = waiters.clone();
+        let grace = config.orchestrator.waiter_grace;
+        let incidents = orchestrator::RealIncidents {
+            manager: manager.clone(),
+            emitter: emitter.clone(),
+        };
         move || {
             let sessions = sessions.clone();
-            async move { sessions.tick().await }
+            let waiters = waiters.clone();
+            let incidents = orchestrator::RealIncidents {
+                manager: incidents.manager.clone(),
+                emitter: incidents.emitter.clone(),
+            };
+            async move {
+                sessions.tick().await;
+                sessions
+                    .check_waiters(&waiters, grace, Utc::now(), &incidents)
+                    .await;
+            }
         }
     });
     let restart_at = std::sync::Arc::new(restart_at::RestartAt::new(

@@ -62,6 +62,8 @@ pub struct Sessions {
     store: Store,
     restarter: Option<std::sync::Arc<Restarter>>,
     entries: Mutex<Vec<Entry>>,
+    /// Pids of sessions whose missing waiter was reported, until it returns or they end.
+    waiter_noted: Mutex<std::collections::HashSet<i32>>,
 }
 
 /// A step a session just reached.
@@ -96,6 +98,7 @@ impl Sessions {
             store,
             restarter: None,
             entries: Mutex::new(entries),
+            waiter_noted: Default::default(),
         }
     }
 
@@ -208,6 +211,52 @@ impl Sessions {
     pub fn list(&self) -> Vec<SessionInfo> {
         let entries = self.entries.lock().expect("sessions lock");
         entries.iter().map(|e| e.info.clone()).collect()
+    }
+
+    /// The waiter-grace check for registered aide and advisor sessions (br-t8wk), as the
+    /// orchestrator has: a session is live while it is in the registry (its pid is checked every
+    /// tick, so a closed or dead one has left it), and then it should have a `bridle agent wake`
+    /// open. With none for `grace` (from its start or the last wait's close) one incident and one
+    /// note to the orchestrator are raised; a returning wait clears it. A `--stop` is on purpose
+    /// and raises nothing.
+    pub(crate) async fn check_waiters(
+        &self,
+        waiters: &crate::wake::Waiters,
+        grace: std::time::Duration,
+        now: DateTime<Utc>,
+        incidents: &impl crate::orchestrator::Incidents,
+    ) {
+        let mut raise = Vec::new();
+        {
+            let mut noted = self.waiter_noted.lock().expect("sessions lock");
+            let entries = self.entries.lock().expect("sessions lock");
+            noted.retain(|p| entries.iter().any(|e| e.info.pid == *p));
+            for e in entries.iter() {
+                let i = &e.info;
+                if !matches!(i.identity.as_str(), "aide" | "advisor")
+                    && !i.identity.starts_with("advisor/")
+                {
+                    continue;
+                }
+                let target = format!("external:{}", i.identity);
+                match waiters.principal_absent_since(&target, now, grace, i.started_at) {
+                    None => {
+                        noted.remove(&i.pid);
+                    }
+                    Some(since) if noted.insert(i.pid) => raise.push(format!(
+                        "The {} session (pid {}) has no wake command running (`bridle agent wake`) since {}.",
+                        i.identity,
+                        i.pid,
+                        since.format("%H:%M:%S UTC")
+                    )),
+                    Some(_) => {}
+                }
+            }
+        }
+        for text in raise {
+            incidents.record(&text).await;
+            incidents.ask_orchestrator(&text).await;
+        }
     }
 
     /// Ends sessions whose pid is gone, reads the others' context files and announces
@@ -827,5 +876,69 @@ mod tests {
 
     fn real_start() -> String {
         crate::containment::start_time(std::process::id() as i32).expect("own start time")
+    }
+
+    #[derive(Default)]
+    struct Said(Mutex<Vec<String>>, Mutex<Vec<String>>);
+    impl crate::orchestrator::Incidents for Said {
+        async fn record(&self, text: &str) {
+            self.0.lock().unwrap().push(text.into());
+        }
+        async fn ask_orchestrator(&self, text: &str) {
+            self.1.lock().unwrap().push(text.into());
+        }
+    }
+
+    #[tokio::test]
+    async fn a_live_aide_with_no_waiter_raises_once_and_clears_when_it_returns() {
+        let (s, _dir, _store) = fixture().await;
+        let t0 = Utc::now();
+        let grace = std::time::Duration::from_secs(60);
+        let at = |secs: i64| t0 + chrono::Duration::seconds(secs);
+        let waiters = crate::wake::Waiters::new(t0);
+        let said = Said::default();
+        let mut aide = reg(42, "t0", None);
+        aide.identity = "aide".into();
+        s.register(aide, t0);
+        // Inside the grace, and no session at all (advisor/alice isn't registered): nothing.
+        s.check_waiters(&waiters, grace, at(30), &said).await;
+        assert!(said.0.lock().unwrap().is_empty());
+        // Past it: one incident and one note, however many ticks follow.
+        for secs in [90, 120, 150] {
+            s.check_waiters(&waiters, grace, at(secs), &said).await;
+        }
+        assert_eq!(said.0.lock().unwrap().len(), 1);
+        assert_eq!(said.1.lock().unwrap().len(), 1);
+        // A waiter returns: cleared, so a later absence is reported again.
+        let (g, _rx) = waiters.principal_opened("external:aide", None);
+        s.check_waiters(&waiters, grace, at(160), &said).await;
+        drop(g);
+        s.check_waiters(
+            &waiters,
+            grace,
+            Utc::now() + chrono::Duration::seconds(300),
+            &said,
+        )
+        .await;
+        assert_eq!(said.0.lock().unwrap().len(), 2);
+    }
+
+    #[tokio::test]
+    async fn a_stopped_waiter_or_a_closed_session_raises_nothing() {
+        let (s, _dir, _store) = fixture().await;
+        let t0 = Utc::now();
+        let grace = std::time::Duration::from_secs(60);
+        let later = t0 + chrono::Duration::seconds(300);
+        let waiters = crate::wake::Waiters::new(t0);
+        let said = Said::default();
+        s.register(reg(42, "t0", None), t0);
+        waiters.end_principal_waits("external:advisor/alice", None);
+        s.check_waiters(&waiters, grace, later, &said).await;
+        assert!(said.0.lock().unwrap().is_empty());
+        // The same session without the stop would have raised; once closed it doesn't.
+        let fresh = crate::wake::Waiters::new(t0);
+        s.end(SessionEnd { pid: 42 }).await;
+        s.check_waiters(&fresh, grace, later, &said).await;
+        assert!(said.0.lock().unwrap().is_empty());
     }
 }

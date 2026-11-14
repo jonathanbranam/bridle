@@ -93,6 +93,9 @@ struct WaiterState {
     open: u32,
     /// `bridle agent wake` requests open now; not part of the orchestrator's presence check.
     principal_open: Vec<PrincipalWait>,
+    /// Per target: when its last `bridle agent wake` closed by itself (timeout, hang-up) and
+    /// when one was ended on purpose (`--stop`), which is not a fault. A new wait clears both.
+    principal_closed: HashMap<String, (DateTime<Utc>, bool)>,
     /// Messages a `bridle agent wake` printed but whose session hasn't run a wake or inbox
     /// since: (target, message id, session). In memory only: after a restart they are simply
     /// unread, and so offered again.
@@ -129,12 +132,12 @@ pub struct PrincipalGuard(Arc<Waiters>, u64);
 impl Drop for PrincipalGuard {
     fn drop(&mut self) {
         let id = self.1;
-        self.0
-            .state
-            .lock()
-            .expect("waiters lock")
-            .principal_open
-            .retain(|w| w.id != id);
+        let mut st = self.0.state.lock().expect("waiters lock");
+        // Absent when `--stop` or a newer wait already took it out: those record themselves.
+        if let Some(i) = st.principal_open.iter().position(|w| w.id == id) {
+            let w = st.principal_open.remove(i);
+            st.principal_closed.insert(w.target, (Utc::now(), false));
+        }
     }
 }
 
@@ -168,6 +171,7 @@ impl Waiters {
                 let _ = w.end.send(());
             }
         }
+        st.principal_closed.remove(target);
         st.next_wait_id += 1;
         let id = st.next_wait_id;
         let (end, rx) = tokio::sync::oneshot::channel();
@@ -192,6 +196,14 @@ impl Waiters {
             });
         st.principal_open = keep;
         let n = hit.len();
+        let now = Utc::now();
+        let mut targets: Vec<String> = hit.iter().map(|w| w.target.clone()).collect();
+        if session.is_none() {
+            targets.push(target.to_string());
+        }
+        for t in targets {
+            st.principal_closed.insert(t, (now, true));
+        }
         for w in hit {
             let _ = w.end.send(());
         }
@@ -302,6 +314,30 @@ impl Waiters {
             st.open > 0 || !st.principal_open.is_empty(),
             st.last_delivered,
         )
+    }
+
+    /// Like [`Self::absent_since`] for one `bridle agent wake` target (an aide or advisor
+    /// session): `None` while a wait is open, after a `--stop`, or inside the grace. `floor` is
+    /// the session's start.
+    pub fn principal_absent_since(
+        &self,
+        target: &str,
+        now: DateTime<Utc>,
+        grace: Duration,
+        floor: DateTime<Utc>,
+    ) -> Option<DateTime<Utc>> {
+        let st = self.state.lock().expect("waiters lock");
+        if st.principal_open.iter().any(|w| w.target == target) {
+            return None;
+        }
+        let since = match st.principal_closed.get(target) {
+            // A stop from before this session started was for an earlier one.
+            Some((at, true)) if *at >= floor => return None,
+            Some((at, _)) => (*at).max(floor),
+            None => self.started.max(floor),
+        };
+        (now - since > chrono::Duration::from_std(grace).unwrap_or(chrono::Duration::MAX))
+            .then_some(since)
     }
 
     /// Since when nobody has been waiting, if that is longer than `grace`. `floor` is when
@@ -1076,5 +1112,39 @@ mod tests {
         assert_eq!(w.absent_since(Utc::now(), grace, t0), None);
         let gone = Utc::now() + chrono::Duration::seconds(300);
         assert!(w.absent_since(gone, grace, t0).is_some());
+    }
+
+    #[test]
+    fn principal_waiter_grace() {
+        let t0 = Utc::now();
+        let grace = Duration::from_secs(120);
+        let w = Waiters::new(t0);
+        let aide = "external:aide";
+        let later = |s: i64| t0 + chrono::Duration::seconds(s);
+        assert_eq!(w.principal_absent_since(aide, later(60), grace, t0), None);
+        assert_eq!(
+            w.principal_absent_since(aide, later(200), grace, t0),
+            Some(t0)
+        );
+        // Open: present. Closed by itself: the grace starts then.
+        let (g, _rx) = w.principal_opened(aide, Some("1"));
+        assert_eq!(
+            w.principal_absent_since(aide, later(10_000), grace, t0),
+            None
+        );
+        drop(g);
+        let gone = Utc::now() + chrono::Duration::seconds(300);
+        assert!(w.principal_absent_since(aide, gone, grace, t0).is_some());
+        // Another target's wait doesn't count.
+        let (_g2, _rx2) = w.principal_opened("external:advisor", None);
+        assert!(w.principal_absent_since(aide, gone, grace, t0).is_some());
+        // `--stop` is on purpose, for this session; a later session starts afresh.
+        w.end_principal_waits(aide, None);
+        assert_eq!(w.principal_absent_since(aide, gone, grace, t0), None);
+        let launch = Utc::now() + chrono::Duration::seconds(1);
+        assert!(
+            w.principal_absent_since(aide, gone, grace, launch)
+                .is_some()
+        );
     }
 }

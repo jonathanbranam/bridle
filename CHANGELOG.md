@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A registered aide or advisor session with no `bridle agent wake` open for `[orchestrator] waiter_grace` raises one incident and a note to the orchestrator, cleared when a waiter returns; `wake --stop` and closed sessions raise nothing (br-t8wk).
 - A second `bridle session orchestrator` refuses to start, leaving `orchestrator.pid` untouched, when the file names a live process with the recorded start time (br-nxkj).
 
 ## [0.8.0] - 2026-11-14

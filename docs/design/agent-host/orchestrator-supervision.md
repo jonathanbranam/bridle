@@ -219,6 +219,18 @@ longer than `waiter_grace`, record an incident once ("orchestrator has no wake c
 close it when a request arrives. The session isn't restarted for this: it is still the human's
 conversation, and the incident tells the human.
 
+**Aide and advisor sessions get the same check** (br-t8wk; `Sessions::check_waiters`, run on the
+sessions tick with the same `waiter_grace`). A session is live while it is in the session registry
+(`bridle session aide|advisor`; the tick drops an entry whose process is gone, and `session end`
+removes it), so a never-started or closed session is never checked. For a live one the target is
+`external:<identity>` (`external:aide`, `external:advisor/<name>`): no `bridle agent wake` open for
+that target, `waiter_grace` after the last one closed (or after the session's start), is one
+incident plus one note to `external:orchestrator`; a returning wait clears it. A
+`bridle agent wake --stop` marks the target as stopped on purpose (until a later wait, or a session
+that started after it) and raises nothing. The state is in memory, so a daemon restart counts the
+grace from its own start. No nudge is typed into the session's pane (not yet: revisit if the
+incident proves too slow to act on).
+
 **Built as** (`wake.rs`): the conditions that are facts in the event log (exits, crashes and stalls,
 `message.sent` to the orchestrator or a question to the human, a failed `ci.completed`, a
 `budget.state` away from `normal`) are derived from events after the cursor, which is one row in
