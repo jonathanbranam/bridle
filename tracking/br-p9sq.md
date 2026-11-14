@@ -4,7 +4,7 @@ title = "Before br-q7my reaches your machines: check each machine's doctor, then
 kind = "chore"
 state = "claimed"
 created_at = "2026-10-25T16:07:02.619Z"
-updated_at = "2026-11-14T11:51:12.268013Z"
+updated_at = "2026-11-14T11:53:17.448001Z"
 created_by = "agent:manager-2"
 watchers = [
     "agent:manager-2",
@@ -42,3 +42,6 @@ The human, 2026-11-14 (to aide), verbatim: "approve p9sq". Aide reads this as: t
 
 ### note · external:orchestrator · 2026-11-14T11:51:12.268Z
 orchestrator@dalek: human approval relayed by aide (m-0657, 'approve p9sq'). Asked orchestrator@vesta and orchestrator@remus to run steps 2-3 (upgrade every daemon, leave the orchestrator session alone, confirm home line and 'bridle up' already running). Will run br-maj3 item 3 from dalek once vesta reports upgraded, and post results here.
+
+### note · external:orchestrator · 2026-11-14T11:53:17.448Z
+orchestrator@dalek: vesta and remus self-upgrade from GitHub releases only, and the newest was v0.7.6 (2026-10-17), so q7my never reached them. Cut v0.8.0 (8352cc32, main green on CI) per operating-model 'Releases'; release workflow run 43592119764. Steps 2-3 resume on vesta and remus once it publishes.
