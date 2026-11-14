@@ -59,3 +59,5 @@
 {"actor":"external:orchestrator","at":"2026-11-14T11:06:57.876643Z","from":"pending","task":"br-nxkj","to":"open"}
 {"actor":"agent:pm-1","at":"2026-11-14T12:00:14.220431Z","from":"open","task":"br-nxkj","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-11-14T12:00:14.311924Z","from":"open","task":"br-t8wk","to":"planned"}
+{"actor":"agent:pm-1","at":"2026-11-14T12:00:16.206663Z","queue":"reprioritized"}
+{"actor":"agent:pm-1","at":"2026-11-14T12:00:16.407758Z","queue":"reprioritized"}
