@@ -2,14 +2,16 @@
 id = "br-t8wk"
 title = "Aide and advisor sessions get no waiter-grace check: an aide sat with no waiter for ~50h unnoticed"
 kind = "bug"
-state = "claimed"
+state = "built"
 created_at = "2026-11-14T11:06:11.413Z"
-updated_at = "2026-11-14T13:11:34.456276Z"
+updated_at = "2026-11-14T13:11:36.119592Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:t8wk",
 ]
+branch = "bridle/t8wk"
+commit = "3382d5c9ae4e664ca8ddeb8d7c7b61e304b7f6c0"
 summary = "Aide and advisor sessions now get the orchestrator's waiter-grace check: Sessions::check_waiters (sessions.rs, run on the sessions tick, waiter_grace from [orchestrator]) raises one incident plus one note to the orchestrator when a registered session has no bridle agent wake open for the grace, cleared when a wait returns. Liveness = presence in the session registry (tick drops dead pids, session end removes). Waiters (wake.rs) now tracks per-target close time and --stop marks; a stop raises nothing. Docs in orchestrator-supervision.md. check_waiters is pub(crate) because pub exposure trips async-fn-in-trait on Incidents. In-memory state; no nudge to tmux."
 ticket = "t8wk"
 +++
@@ -49,3 +51,9 @@ Cause of the outage, human via orchestrator@vesta: a UPS failure shut off the ho
 
 ### note · external:orchestrator · 2026-11-14T11:49:58.717Z
 Correction, human via orchestrator@vesta: the human did not type 'Try again'. They opened Remote Control, which showed 'cannot connect' with a 'Try again' button; clicking it sent the literal text 'Try again' to the aide as a prompt, and that revived it. So the session recovered only by chance, when the human happened to open it. (Same pattern seen on dalek: this orchestrator's session also received a bare 'Try again' prompt on 2026-11-14.)
+
+### note · agent:t8wk · 2026-11-14T13:11:36.079Z
+built: 3382d5c9ae4e664ca8ddeb8d7c7b61e304b7f6c0 (branch bridle/t8wk)
+
+### note · agent:t8wk · 2026-11-14T13:11:36.119Z
+done: waiter-grace check for aide/advisor sessions; just check (env -i) exit 0, 2009 tests run, 3382d5c9ae4e664ca8ddeb8d7c7b61e304b7f6c0; main already merged (up to date)
