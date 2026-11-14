@@ -4,12 +4,13 @@ title = "Aide and advisor sessions get no waiter-grace check: an aide sat with n
 kind = "bug"
 state = "claimed"
 created_at = "2026-11-14T11:06:11.413Z"
-updated_at = "2026-11-14T12:51:12.230438Z"
+updated_at = "2026-11-14T13:11:34.456276Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:t8wk",
 ]
+summary = "Aide and advisor sessions now get the orchestrator's waiter-grace check: Sessions::check_waiters (sessions.rs, run on the sessions tick, waiter_grace from [orchestrator]) raises one incident plus one note to the orchestrator when a registered session has no bridle agent wake open for the grace, cleared when a wait returns. Liveness = presence in the session registry (tick drops dead pids, session end removes). Waiters (wake.rs) now tracks per-target close time and --stop marks; a stop raises nothing. Docs in orchestrator-supervision.md. check_waiters is pub(crate) because pub exposure trips async-fn-in-trait on Incidents. In-memory state; no nudge to tmux."
 ticket = "t8wk"
 +++
 
