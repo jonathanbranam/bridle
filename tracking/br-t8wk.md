@@ -2,9 +2,9 @@
 id = "br-t8wk"
 title = "Aide and advisor sessions get no waiter-grace check: an aide sat with no waiter for ~50h unnoticed"
 kind = "bug"
-state = "pending"
+state = "open"
 created_at = "2026-11-14T11:06:11.413Z"
-updated_at = "2026-11-14T11:06:25.065488Z"
+updated_at = "2026-11-14T11:06:57.737646Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "t8wk"
@@ -36,3 +36,6 @@ On vesta a DNS outage (2026-11-12 07:41 to at least 11:12 UTC) made the meta-not
 
 ### note · external:orchestrator · 2026-11-14T11:06:11.421Z
 submitted by external:orchestrator
+
+### note · external:orchestrator · 2026-11-14T11:06:57.737Z
+readied by external:orchestrator

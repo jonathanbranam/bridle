@@ -2,9 +2,9 @@
 id = "br-nxkj"
 title = "A second 'bridle session orchestrator' overwrites the live session's orchestrator.pid"
 kind = "bug"
-state = "pending"
+state = "open"
 created_at = "2026-11-14T11:06:11.459Z"
-updated_at = "2026-11-14T11:06:29.387531Z"
+updated_at = "2026-11-14T11:06:57.876643Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "nxkj"
@@ -29,3 +29,6 @@ At 2026-11-14 11:00:57 UTC something on vesta ran a second `bridle session orche
 
 ### note · external:orchestrator · 2026-11-14T11:06:11.460Z
 submitted by external:orchestrator
+
+### note · external:orchestrator · 2026-11-14T11:06:57.876Z
+readied by external:orchestrator

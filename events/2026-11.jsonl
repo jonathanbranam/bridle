@@ -55,3 +55,5 @@
 {"actor":"agent:manager-2","at":"2026-11-12T01:17:09.564975Z","from":"built","task":"br-mm4z","to":"integrated"}
 {"actor":"human","at":"2026-11-14T11:06:11.413Z","from":"","task":"br-t8wk","to":"pending"}
 {"actor":"human","at":"2026-11-14T11:06:11.459Z","from":"","task":"br-nxkj","to":"pending"}
+{"actor":"external:orchestrator","at":"2026-11-14T11:06:57.737646Z","from":"pending","task":"br-t8wk","to":"open"}
+{"actor":"external:orchestrator","at":"2026-11-14T11:06:57.876643Z","from":"pending","task":"br-nxkj","to":"open"}
