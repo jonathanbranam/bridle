@@ -2,14 +2,17 @@
 id = "br-nxkj"
 title = "A second 'bridle session orchestrator' overwrites the live session's orchestrator.pid"
 kind = "bug"
-state = "claimed"
+state = "built"
 created_at = "2026-11-14T11:06:11.459Z"
-updated_at = "2026-11-14T12:01:01.438137Z"
+updated_at = "2026-11-14T12:50:22.580632Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:nxkj",
 ]
+branch = "bridle/nxkj"
+commit = "e406d62e"
+summary = "orchestrator() in crates/bridle/src/session.rs now refuses (bail naming the pid, pid file untouched) when orchestrator.pid names a live process with the recorded start; stale/dead/mismatched files are overwritten. Reuses the daemon's parse_pid_file and liveness test via a new pub fn live_recorded_pid in orchestrator.rs (additive, re-exported from lib.rs; no behaviour change). Tests in session_test.rs; one line in cli.md; CHANGELOG Fixed."
 ticket = "nxkj"
 +++
 
@@ -41,3 +44,9 @@ Source of the 2026-11-14 11:00:57 UTC launch on vesta found: the human ran it by
 
 ### note · external:orchestrator · 2026-11-14T11:11:15.865Z
 More detail, human via orchestrator@vesta: the human pressed up-arrow then Enter in the orchestrator's tmux pane by accident. The recalled line was 'bridle session orchestrator --project vesta-home', which is in the shell history because the supervisor's relaunch types that line into the pane. So every relaunch leaves a live re-launch one keystroke away. Fix to consider: the launcher refuses to start, and leaves the pid file untouched, when the pid file names a live session.
+
+### note · agent:nxkj · 2026-11-14T12:50:22.543Z
+built: e406d62e (branch bridle/nxkj)
+
+### note · agent:nxkj · 2026-11-14T12:50:22.580Z
+done: second orchestrator launcher refuses on a live pid file; e406d62e, just check (env -i) exit 0, 2006 tests passed

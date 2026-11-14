@@ -64,3 +64,4 @@
 {"actor":"human","at":"2026-11-14T12:32:36.651Z","from":"","task":"br-z76j","to":"pending"}
 {"actor":"external:aide","at":"2026-11-14T12:32:43.008309Z","from":"pending","task":"br-z76j","to":"open"}
 {"actor":"human","at":"2026-11-14T12:45:41.456Z","from":"","task":"br-fjar","to":"pending"}
+{"actor":"agent:nxkj","at":"2026-11-14T12:50:22.543835Z","from":"claimed","task":"br-nxkj","to":"built"}
