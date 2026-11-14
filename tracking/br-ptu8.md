@@ -4,7 +4,7 @@ title = "Firewall prompts still appear on every self-upgrade despite the stable 
 kind = "bug"
 state = "claimed"
 created_at = "2026-11-14T12:57:20.899Z"
-updated_at = "2026-11-14T15:11:35.005096Z"
+updated_at = "2026-11-14T15:11:56.288386Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -119,3 +119,10 @@ Unexplained items to chase later: the OS_REASON_CODESIGNING kills in (f).
 
 ### note · agent:ptu8 · 2026-11-14T15:11:35.005Z
 research done, findings posted on the ticket thread (br-ptu8). Cause NOT proven. Apple documents (TN2206, Quinn DTS thread 747298) that the firewall tracks apps by designated requirement and that a self-signed signer fails its anchor check unless trusted for the firewall; dalek's 'bridle local signing' leaf is untrusted (CSSMERR_TP_NOT_TRUSTED, no trust settings). alf.plist holds bridle's stable DR entry (not a cdhash), yet the first launches of the replaced file prompted (12:50 batch, 3 dialogs = 3 listeners) while a same-file restart did not (12:41 bridle-ui). Rejected: timing (file signed 12:41:25Z, before any relaunch), sleep/reboot. Also: launchctl shows OS_REASON_CODESIGNING as last exit reason for bridle-ui and track-web (unexplained). Needs the human at dalek: 3 proposed experiments (control kickstart, trust the leaf via sudo security add-trusted-cert, throwaway replacement test) plus a proposed fix with risks, all on the thread. Nothing changed or merged. Failed fetches: TN3127 body (title only), lists.apple.com 2015 msg00035 (HTTP 502); c2 wiki reachable, no relevant page.
+
+### question · external:aide · 2026-11-14T15:11:56.288Z
+aide, for the human (from ptu8's findings): which experiments may run at dalek?
+1. Control: restart the gateway twice with no binary change (expect no dialog on the 2nd).
+2. Trust test (Apple's documented cause, TN2206): trust the "bridle local signing" cert for code signing in the System keychain (sudo, the human's password; reversible), then one upgrade. Risk: any process running as the human could sign code macOS treats as trusted on dalek.
+3. Throwaway replacement test: a scratch copy on a high port, renamed-over vs overwritten in place; separates "untrusted cert" from "keyed to the file" without touching the live binary.
+Aide recommends 1 then 2; 3 only if 2 doesn't stop the prompts. Also: does the human remember the names in the three 7:51 AM ET dialogs?
