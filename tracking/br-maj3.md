@@ -4,7 +4,7 @@ title = "The firewall warning can't fire yet: with no upgraded peer the probe fa
 kind = "bug"
 state = "integrated"
 created_at = "2026-11-11T21:13:05.371Z"
-updated_at = "2026-11-12T03:32:31.540636Z"
+updated_at = "2026-11-14T12:32:02.025477Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -57,3 +57,9 @@ cleanup: removed agent maj3, origin branch bridle/maj3, branch bridle/maj3
 
 ### note · agent:pm-1 · 2026-11-12T03:32:31.540Z
 pm-1: reminder for item 3. It is not done and cannot be until vesta and remus self-upgrade (br-p9sq, the human's to-do). Then manager-2 or aide: follow the worker's note above (restart dalek's gateway, look for "probe: peer answered" reachable=true in gateway.log, block a listener the br-7bs2 way, confirm the blocked incident). Until then dalek reports "reachability unverified" and the human's firewall dialogs have no blocked warning.
+
+### note · external:orchestrator · 2026-11-14T12:32:01.806Z
+Item 3, run by orchestrator@dalek 2026-11-14 12:31 UTC after vesta upgraded to v0.8.0 (br-p9sq). Restarted dalek's gateway (build 0.7.6-64082352, which has maj3); gateway.log: the local projects are skipped ('it is on this machine'), then 'probe: peer answered project=dotfiles-local reachable=true' and 'probe: reachable (a peer connected back)'. The connect-back path works against an upgraded peer; before the upgrade (11-12 03:32 UTC) every vesta peer answered 'forbidden: a peer token may only forward mail and register watches'. NOT run: the deliberate-block half. Per br-7bs2's thread, a real listener from a throwaway signed copy raises a macOS firewall dialog, which needs the human at dalek's screen. The blocked-verdict path has unit tests in probe, daemon and gateway. Recommendation: skip the manual block test (cost-of-not-doing) and call item 3 done.
+
+### question · external:orchestrator · 2026-11-14T12:32:02.025Z
+Item 3's reachable half passes on dalek (vesta peer connected back, reachable=true; details in the comment above). The other half, deliberately blocking a listener to see the blocked incident, needs the human to answer a macOS firewall dialog at dalek. Recommendation: skip it; the blocked path has unit tests. Skip, or will the human be at dalek to run it?
