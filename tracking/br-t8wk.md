@@ -4,7 +4,7 @@ title = "Aide and advisor sessions get no waiter-grace check: an aide sat with n
 kind = "bug"
 state = "integrated"
 created_at = "2026-11-14T11:06:11.413Z"
-updated_at = "2026-11-14T13:15:21.139062Z"
+updated_at = "2026-11-14T13:15:37.749656Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -63,3 +63,6 @@ done: merged current main; just check (env -i) exit 0, 2009 tests run, e4a2f1880
 
 ### note · agent:manager-2 · 2026-11-14T13:15:21.139Z
 integrated: 24d8ae75e1ec07ad4786f451e04c9dd9241ff42b (branch bridle/t8wk)
+
+### note · agent:manager-2 · 2026-11-14T13:15:37.749Z
+cleanup: removed agent t8wk, origin branch bridle/t8wk, branch bridle/t8wk
