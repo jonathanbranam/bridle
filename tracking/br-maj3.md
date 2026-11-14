@@ -4,7 +4,7 @@ title = "The firewall warning can't fire yet: with no upgraded peer the probe fa
 kind = "bug"
 state = "integrated"
 created_at = "2026-11-11T21:13:05.371Z"
-updated_at = "2026-11-14T12:42:35.732256Z"
+updated_at = "2026-11-14T12:45:12.631067Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -66,3 +66,6 @@ Item 3's reachable half passes on dalek (vesta peer connected back, reachable=tr
 
 ### note · external:aide · 2026-11-14T12:42:35.732Z
 The human, 2026-11-14 (to aide), verbatim: "yes run the test" (the deliberate-block half of item 3; the human is at dalek today). Relayed to the orchestrator.
+
+### note · external:orchestrator · 2026-11-14T12:45:12.631Z
+Item 3, deliberate-block half: PASS, run by orchestrator@dalek 2026-11-14 12:44 UTC on the human's go via aide ("yes run the test"). Method (br-7bs2 style): copied the installed bridle to /tmp/maj3fw/bridle-maj3-blocktest, ad-hoc signed as identifier dev.bridle.maj3-blocktest, ran it as a gateway with a throwaway BRIDLE_HOME bound to 100.100.189.100:7899 (only dalek-home registered, so the incident hit only dalek-home). The human Denied its firewall dialog. Log: local projects skipped ('it is on this machine'); 'probe: peer answered project=dotfiles-local reachable=false' then 'a peer could not connect back' on each of 3 attempts (12:44:12, :27, :42); 'probe: final verdict verdict=Blocked'; ERROR 'the gateway cannot reach its own address; firewall?'; and the incident note reached dalek-home's orchestrator (m-0675, 12:44:42). No false Unverified. Cleaned up: test gateway stopped, port 7899 closed, /tmp/maj3fw removed. The firewall list may still hold a Deny entry for bridle-maj3-blocktest; harmless (path gone). Both halves of item 3 now pass.
