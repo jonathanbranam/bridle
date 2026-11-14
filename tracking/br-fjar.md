@@ -4,10 +4,13 @@ title = "reply-to from home orchestrator to a project's aide lands at the home d
 kind = "bug"
 state = "pending"
 created_at = "2026-11-14T12:45:41.456Z"
-updated_at = "2026-11-14T12:46:49.252940Z"
+updated_at = "2026-11-14T12:50:47.383249Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+ticket = "fjar"
 +++
+
+docs/tickets/open/reply-to-from-home-orchestrator-to-a-project-s-aide-lands-at-fjar.md
 
 submitted by external:orchestrator
 

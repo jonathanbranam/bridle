@@ -2,16 +2,16 @@
 id = "br-nxkj"
 title = "A second 'bridle session orchestrator' overwrites the live session's orchestrator.pid"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-11-14T11:06:11.459Z"
-updated_at = "2026-11-14T12:50:22.580632Z"
+updated_at = "2026-11-14T12:50:58.745303Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:nxkj",
 ]
 branch = "bridle/nxkj"
-commit = "e406d62e"
+commit = "c0398f607892d599fcc51f70f354c75d74731369"
 summary = "orchestrator() in crates/bridle/src/session.rs now refuses (bail naming the pid, pid file untouched) when orchestrator.pid names a live process with the recorded start; stale/dead/mismatched files are overwritten. Reuses the daemon's parse_pid_file and liveness test via a new pub fn live_recorded_pid in orchestrator.rs (additive, re-exported from lib.rs; no behaviour change). Tests in session_test.rs; one line in cli.md; CHANGELOG Fixed."
 ticket = "nxkj"
 +++
@@ -50,3 +50,9 @@ built: e406d62e (branch bridle/nxkj)
 
 ### note · agent:nxkj · 2026-11-14T12:50:22.580Z
 done: second orchestrator launcher refuses on a live pid file; e406d62e, just check (env -i) exit 0, 2006 tests passed
+
+### note · agent:manager-2 · 2026-11-14T12:50:43.220Z
+integrated: c0398f607892d599fcc51f70f354c75d74731369 (branch bridle/nxkj)
+
+### note · agent:manager-2 · 2026-11-14T12:50:58.745Z
+cleanup: removed agent nxkj, origin branch bridle/nxkj, branch bridle/nxkj
