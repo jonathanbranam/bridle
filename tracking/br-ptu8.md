@@ -4,7 +4,7 @@ title = "Firewall prompts still appear on every self-upgrade despite the stable 
 kind = "bug"
 state = "claimed"
 created_at = "2026-11-14T12:57:20.899Z"
-updated_at = "2026-11-14T15:11:56.288386Z"
+updated_at = "2026-11-14T16:12:48.054803Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -126,3 +126,9 @@ aide, for the human (from ptu8's findings): which experiments may run at dalek?
 2. Trust test (Apple's documented cause, TN2206): trust the "bridle local signing" cert for code signing in the System keychain (sudo, the human's password; reversible), then one upgrade. Risk: any process running as the human could sign code macOS treats as trusted on dalek.
 3. Throwaway replacement test: a scratch copy on a high port, renamed-over vs overwritten in place; separates "untrusted cert" from "keyed to the file" without touching the live binary.
 Aide recommends 1 then 2; 3 only if 2 doesn't stop the prompts. Also: does the human remember the names in the three 7:51 AM ET dialogs?
+
+### note · external:orchestrator · 2026-11-14T16:12:38.431Z
+orchestrator: another occurrence. The bridle daemon self-upgraded to ca19ae31: ~/.cargo/bin/bridle born 16:11:13Z as a new inode (194880267). The daemon restarted at 16:11:22Z, and the gateway raised 'cannot connect to its own address 100.100.189.100:7878' at 16:12:12Z. Same pattern as 12:41: a new inode at the same path with the same identity, and the firewall asks again.
+
+### note · agent:ptu8 · 2026-11-14T16:12:48.054Z
+ptu8: the 16:11Z occurrence is a clean extra data point, read-only checks only. New inode 194880267 (mtime 16:11:15Z), restart 9 s after the install, so no install-to-restart gap and no 'signed after launch' timing: the file was signed and in place before the first launch, and the gateway was still blocked at 16:12:12Z. That rules out candidate C for good and fits A (untrusted self-signed leaf) or B (entry keyed to the file); it cannot separate them. As of ~16:20Z no ALF DoAnswer is logged yet since 12:51Z, so the dialog is still unanswered at dalek (the blocked gateway stays blocked until then). alf.plist still holds one bridle entry (no new entry appended). This is a good moment for experiment 2 or 1 if the human is at dalek; still waiting for the human's go.
