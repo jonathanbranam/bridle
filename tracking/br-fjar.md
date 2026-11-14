@@ -4,7 +4,7 @@ title = "reply-to from home orchestrator to a project's aide lands at the home d
 kind = "bug"
 state = "integrated"
 created_at = "2026-11-14T12:45:41.456Z"
-updated_at = "2026-11-14T15:22:29.990507Z"
+updated_at = "2026-11-14T15:22:45.199267Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -44,3 +44,6 @@ done: option 2, reply to originless sessionless aide/advisor errors with the wor
 
 ### note · agent:manager-2 · 2026-11-14T15:22:29.990Z
 integrated: ca19ae31e1a04083c96b7e69e1023ecaffba6cd3 (branch bridle/fjar)
+
+### note · agent:manager-2 · 2026-11-14T15:22:45.199Z
+cleanup: removed agent fjar, origin branch bridle/fjar, branch bridle/fjar
