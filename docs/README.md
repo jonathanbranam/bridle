@@ -16,6 +16,7 @@ docs/
   context/           facts the design works within: the projects, the host, prior research
   design/            the design, one topic per file
     agent-host/      the daemon, API and agent host: built (v1)
+  portable/          simplified write-ups for other tools to adopt (not docs of bridle)
   research/          bridle's own research reports (dated records)
   spikes/            finished spike briefs and findings (NN-*.md, dated records)
     open/            spikes not yet run, one ticket each
@@ -118,6 +119,7 @@ done
 | setting up mail on a machine (IAM user, AWS credentials, mail.key, bridges) | `docs/context/mail-on-a-machine.md` |
 | human web UI (gateway built; the UI is a separate project) | `docs/design/human-web-ui.md` |
 | throwaway dev site for verifying UI work (planned) | `docs/design/dev-site.md` |
+| a small ticket system for other tools (IDs, epics, roadmap, links; not bridle as built) | `docs/portable/tickets-lite.md` |
 
 ## Releases
 
