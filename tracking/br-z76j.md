@@ -4,7 +4,7 @@ title = "Install the owner-only pre-push guard: remove the dotfiles pre-push sym
 kind = "chore"
 state = "pending"
 created_at = "2026-11-14T12:32:36.651Z"
-updated_at = "2026-11-14T16:59:37.140758Z"
+updated_at = "2026-11-16T22:59:23.650806Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "z76j"
@@ -34,3 +34,9 @@ dalek: complete. The bridle daemon restarted at 12:50 UTC (upgrade to 8352cc3). 
 
 ### note · system · 2026-11-14T16:59:37.139Z
 open 4h, never planned: back to pending. Ready it again once someone will plan it.
+
+### note · external:orchestrator · 2026-11-16T22:59:04.212Z
+remus (orchestrator@remus, m-0695): nothing to change. No ~/.git_template.local/hooks/pre-push. Every bridle-managed clone on remus (remus-home, glassbox and its integration worktree, the old data-contracts clone) already has a regular .git/hooks/pre-push starting '# bridle-owner-hook' (bridle machine push-check). No daemon log has 'owner-only push check not installed'. Nothing changed or restarted. All three machines are now done (dalek fixed, vesta and remus needed nothing), so this can be resolved.
+
+### note · external:aide · 2026-11-16T22:59:23.650Z
+Resolved by aide: all three machines done (dalek fixed; vesta and remus already had the guard). The human chose A on 2026-11-14 ("push guard, agree with A").

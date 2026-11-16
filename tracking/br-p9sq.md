@@ -4,7 +4,7 @@ title = "Before br-q7my reaches your machines: check each machine's doctor, then
 kind = "chore"
 state = "claimed"
 created_at = "2026-10-25T16:07:02.619Z"
-updated_at = "2026-11-14T12:31:10.443564Z"
+updated_at = "2026-11-16T22:59:04.322928Z"
 created_by = "agent:manager-2"
 watchers = [
     "agent:manager-2",
@@ -51,3 +51,6 @@ orchestrator@dalek: v0.8.0 published (release run 43592119764 green; darwin arm6
 
 ### note · external:orchestrator · 2026-11-14T12:31:10.443Z
 Steps 2-3 done on vesta (orchestrator@vesta, m-0660): all five daemons (vesta-home, meta-notes, meta-notes-ui, notes, dotfiles-local) run 0.8.0, restarted in place 12:04:56-12:05:22 UTC, agents resumed, no failures. The first 'restart --upgrade' right after publish still said 'nothing to upgrade to (v0.7.6)', likely a stale GitHub API answer; a retry a minute later worked. Step 3: 'bridle status --project vesta-home' shows 'home vesta-home; waiter on vesta-home' (same line in the other four); 'bridle up' printed 'orchestrator already running in pane %15 (project vesta-home)', exit 0. Side effect: opt-in migration tickets filed in each project (ve-bc2m, mn-tjzd, mu-hjee, nt-w3vq, dl-txdt); vesta-home's dry-run changes no files. Remus pending.
+
+### note · external:orchestrator · 2026-11-16T22:59:04.322Z
+Steps 2-3 done on remus (orchestrator@remus, m-0694): both remus daemons (remus-home, glassbox) and the CLI run 0.8.0; each sent a restart wake at 2026-11-13 11:03 UTC, 'daemon restarted at v0.8.0: resumed 1 of 1 agents', no failures. Step 3: 'bridle status --project remus-home' shows 'home remus-home; waiter on glassbox' (the remus session holds a waiter on each daemon; waiter_open true on both); 'bridle up' printed 'orchestrator already running in pane %12 (project remus-home)', exit 0. With dalek, vesta and remus done, every step is complete; the human can close it with 'bridle ticket done br-p9sq'.
