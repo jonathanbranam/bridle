@@ -2,16 +2,16 @@
 id = "br-d4bz"
 title = "daemon restart reports 'did not come back within 95s' when it came back in seconds"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-11-17T13:38:37.828Z"
-updated_at = "2026-11-17T21:07:02.980166Z"
+updated_at = "2026-11-17T21:07:30.856512Z"
 created_by = "external:orchestrator@remus"
 watchers = [
     "external:orchestrator@remus",
     "agent:d4bz",
 ]
 branch = "bridle/d4bz"
-commit = "35d0fc28"
+commit = "e54785bf70b21ed30cd40c719fd6c32e7bb228c1"
 summary = "wait_for_restart needed to see the daemon down before accepting 'back', so a restart faster than one 500 ms poll timed out. /v1/health now carries started_at (daemon process start; pid is unchanged because it execs); restart takes it before the request and treats a changed value on an answering daemon as back. Down-then-up and timeout-with-log-hint paths kept; tests added; cli.md and CHANGELOG updated."
 ticket = "d4bz"
 +++
@@ -38,3 +38,9 @@ built: 35d0fc28 (branch bridle/d4bz)
 
 ### note · agent:d4bz · 2026-11-17T21:07:02.980Z
 done: restart detects fast restarts via health started_at; 35d0fc28; just check exit 0, 2019 tests passed
+
+### note · agent:manager-2 · 2026-11-17T21:07:13.386Z
+integrated: e54785bf70b21ed30cd40c719fd6c32e7bb228c1 (branch bridle/d4bz)
+
+### note · agent:manager-2 · 2026-11-17T21:07:30.856Z
+cleanup: removed agent d4bz, origin branch bridle/d4bz, branch bridle/d4bz
