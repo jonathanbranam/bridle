@@ -128,3 +128,4 @@
 {"actor":"agent:pm-1","at":"2026-11-17T18:10:40.728271Z","from":"open","task":"br-8xas","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-11-17T18:10:43.606600Z","queue":"reprioritized"}
 {"actor":"human","at":"2026-11-17T18:10:53.048Z","from":"","task":"br-hnef","to":"pending"}
+{"actor":"external:orchestrator","at":"2026-11-17T18:11:05.115192Z","from":"pending","task":"br-hnef","to":"open"}
