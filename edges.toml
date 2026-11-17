@@ -4629,3 +4629,9 @@ from = "br-rqrd"
 to = "br-rk4z"
 kind = "blocks"
 created_at = "2026-11-17T12:18:05.134Z"
+
+[[edge]]
+from = "br-hnef"
+to = "br-ggnp"
+kind = "related"
+created_at = "2026-11-17T18:11:34.823Z"
