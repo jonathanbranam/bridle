@@ -2,9 +2,9 @@
 id = "br-za3j"
 title = "Visitors can't comment on tasks they submitted ('a visitor may only comment on its own submissions')"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-11-17T13:22:52.504Z"
-updated_at = "2026-11-17T13:23:55.171928Z"
+updated_at = "2026-11-17T15:02:03.832892Z"
 created_by = "external:orchestrator@remus"
 watchers = ["external:orchestrator@remus"]
 ticket = "za3j"
