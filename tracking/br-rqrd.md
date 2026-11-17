@@ -4,7 +4,7 @@ title = "Tighten the existing settle-skip wording: only when the human explicitl
 kind = "docs"
 state = "integrated"
 created_at = "2026-11-17T12:14:25.505Z"
-updated_at = "2026-11-17T14:32:11.808528Z"
+updated_at = "2026-11-17T14:32:27.895044Z"
 created_by = "external:orchestrator@remus"
 watchers = [
     "external:orchestrator@remus",
@@ -62,3 +62,6 @@ main moved (br-4wu6 landed); merged local main into bridle/rqrd with no conflict
 
 ### note · agent:manager-2 · 2026-11-17T14:32:11.808Z
 integrated: 50a9fe117799a3595b9e3a4948c0f6ba7b7ae781 (branch bridle/rqrd)
+
+### note · agent:manager-2 · 2026-11-17T14:32:27.895Z
+cleanup: removed agent rqrd, origin branch bridle/rqrd, branch bridle/rqrd
