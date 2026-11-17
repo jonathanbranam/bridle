@@ -177,6 +177,10 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let d = dir.path();
         git(d, &["init", "-q", "-b", "main"]);
+        // resolve_and_commit runs git without the helper's `-c` identity; CI runners have no
+        // global identity, so the repo itself must carry one (br-hnef).
+        git(d, &["config", "user.name", "t"]);
+        git(d, &["config", "user.email", "t@t"]);
         std::fs::create_dir_all(d.join("docs/tickets/open")).unwrap();
         std::fs::write(
             d.join("docs/tickets/open/thing-ab12.md"),

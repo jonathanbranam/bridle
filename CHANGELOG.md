@@ -25,6 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A registered aide or advisor session with no `bridle agent wake` open for `[orchestrator] waiter_grace` raises one incident and a note to the orchestrator, cleared when a waiter returns; `wake --stop` and closed sessions raise nothing (br-t8wk).
 - A second `bridle session orchestrator` refuses to start, leaving `orchestrator.pid` untouched, when the file names a live process with the recorded start time (br-nxkj).
 
+### Internal
+
+- The `ticket_file` tests give their temp repo a git identity (`user.name`/`user.email` in the repo config), so the integrating test passes on CI runners with no global identity (br-hnef).
+
 ## [0.8.0] - 2026-11-14
 
 ### Added
