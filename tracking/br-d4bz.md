@@ -2,9 +2,9 @@
 id = "br-d4bz"
 title = "daemon restart reports 'did not come back within 95s' when it came back in seconds"
 kind = "bug"
-state = "pending"
+state = "open"
 created_at = "2026-11-17T13:38:37.828Z"
-updated_at = "2026-11-17T13:38:51.730137Z"
+updated_at = "2026-11-17T15:05:39.521304Z"
 created_by = "external:orchestrator@remus"
 watchers = ["external:orchestrator@remus"]
 ticket = "d4bz"
@@ -20,3 +20,9 @@ Seen twice on remus with the flume daemon (127.0.0.1:7412, also bound to its tai
 
 ### note · external:orchestrator@remus · 2026-11-17T13:38:37.829Z
 submitted by external:orchestrator@remus
+
+### note · external:orchestrator · 2026-11-17T15:05:39.220Z
+readied by external:orchestrator
+
+### note · external:orchestrator · 2026-11-17T15:05:39.521Z
+Readied by orchestrator (bug, self-evident ask; rule ready-without-asking).

@@ -115,3 +115,4 @@
 {"actor":"agent:pm-1","at":"2026-11-17T15:02:05.570606Z","queue":"reprioritized"}
 {"actor":"agent:pm-1","at":"2026-11-17T15:02:07.856276Z","queue":"reprioritized"}
 {"actor":"agent:manager-2","at":"2026-11-17T15:02:10.225501Z","from":"built","task":"br-88e4","to":"integrated"}
+{"actor":"external:orchestrator","at":"2026-11-17T15:05:39.220846Z","from":"pending","task":"br-d4bz","to":"open"}
