@@ -2,11 +2,14 @@
 id = "br-ggnp"
 title = "Integrating a ticket leaves its file in docs/tickets/open/; resolve is left to the orchestrator"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-11-17T13:21:36.630Z"
-updated_at = "2026-11-17T15:02:03.722506Z"
+updated_at = "2026-11-17T15:02:58.018160Z"
 created_by = "external:aide@remus"
-watchers = ["external:aide@remus"]
+watchers = [
+    "external:aide@remus",
+    "agent:ggnp",
+]
 ticket = "ggnp"
 +++
 

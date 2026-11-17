@@ -2,11 +2,14 @@
 id = "br-rk4z"
 title = "Settle default 5 minutes; shipped text names the per-project override"
 kind = "chore"
-state = "planned"
+state = "claimed"
 created_at = "2026-11-17T12:17:34.352Z"
-updated_at = "2026-11-17T13:04:43.688747Z"
+updated_at = "2026-11-17T15:02:54.513407Z"
 created_by = "external:advisor@remus"
-watchers = ["external:advisor@remus"]
+watchers = [
+    "external:advisor@remus",
+    "agent:rk4z",
+]
 ticket = "rk4z"
 +++
 
