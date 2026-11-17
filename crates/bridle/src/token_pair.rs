@@ -465,6 +465,98 @@ pub fn pair(
     runner: &dyn Runner,
     out: &mut dyn Write,
 ) -> Result<bool, String> {
+    let tracked = Tracked::new(runner);
+    let ok = pair_steps(opts, fleet, &tracked, out)?;
+    Ok(tracked.summary(out) && ok)
+}
+
+/// Wraps a runner for a long run (br-4wu6): says each step on stderr as it starts and ends
+/// (stdout holds the report), and once a machine fails to connect, answers its remaining steps
+/// at once instead of waiting out ssh's timeout for each.
+struct Tracked<'a> {
+    inner: &'a dyn Runner,
+    /// unreachable machine -> steps skipped so far
+    skipped: std::cell::RefCell<BTreeMap<String, usize>>,
+}
+
+impl<'a> Tracked<'a> {
+    fn new(inner: &'a dyn Runner) -> Self {
+        Tracked {
+            inner,
+            skipped: Default::default(),
+        }
+    }
+
+    /// Names the skipped machines; false when any was skipped (the exit is non-zero).
+    fn summary(&self, out: &mut dyn Write) -> bool {
+        let skipped = self.skipped.borrow();
+        for (m, n) in skipped.iter() {
+            writeln!(out, "machine {m} unreachable: skipped {n} steps").ok();
+        }
+        skipped.is_empty()
+    }
+}
+
+/// A failure that means the machine cannot be reached at all, not that a helper refused.
+fn is_unreachable(e: &str) -> bool {
+    [
+        "unreachable",
+        "no answer from",
+        "onnection refused",
+        "timed out",
+    ]
+    .iter()
+    .any(|k| e.contains(k))
+}
+
+impl Runner for Tracked<'_> {
+    fn run(&self, at: &Where, a: &[String], stdin: Option<&str>) -> Result<String, String> {
+        let machine = match at {
+            Where::Local => "local",
+            Where::Ssh(h) => h,
+        };
+        if let Where::Ssh(h) = at
+            && let Some(n) = self.skipped.borrow_mut().get_mut(h)
+        {
+            *n += 1;
+            return Err(format!("{h} unreachable: skipped"));
+        }
+        let val = |k: &str| {
+            a.iter()
+                .position(|x| x == k)
+                .and_then(|i| a.get(i + 1))
+                .map_or("-", String::as_str)
+        };
+        let step = a
+            .iter()
+            .position(|x| x == "token")
+            .and_then(|i| a.get(i + 1))
+            .map_or("?", String::as_str);
+        let label = format!("{} on {machine}: {step}", val("--project"));
+        eprintln!("{label} ...");
+        let r = self.inner.run(at, a, stdin);
+        match &r {
+            Ok(_) => eprintln!("{label} ok"),
+            Err(e) => {
+                eprintln!("{label} failed: {e}");
+                if let Where::Ssh(h) = at
+                    && is_unreachable(e)
+                {
+                    eprintln!("machine {h} unreachable: skipping its remaining steps");
+                    self.skipped.borrow_mut().insert(h.clone(), 0);
+                }
+            }
+        }
+        r
+    }
+}
+
+fn pair_steps(
+    opts: &Options,
+    fleet: &Fleet,
+    runner: &dyn Runner,
+    out: &mut dyn Write,
+) -> Result<bool, String> {
     let p = plan(opts, fleet, runner, out)?;
     let mut ok = p.ok;
     let up = &p.up;

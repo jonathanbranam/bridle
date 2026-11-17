@@ -14,6 +14,7 @@ const FAKE_SSH: &str = r#"#!/bin/sh
 dir=$(dirname "$0")
 echo "$@" >> "$dir/argv.log"
 if [ -f "$dir/down" ]; then echo "ssh: connect to host refused" >&2; exit 255; fi
+if [ -f "$dir/flaky" ]; then case "$*" in *pair-mint*) echo "ssh: connect to host timed out" >&2; exit 255 ;; esac; fi
 case "$*" in
   *pair-projects*) echo "notes 7402"; [ -f "$dir/two" ] && echo "zeta 7403 true"; [ -f "$dir/optout" ] && echo "quiet 7404 false"; exit 0 ;;
   *pair-peer-active*) [ -s "$dir/stored.log" ]; exit $? ;;
@@ -121,6 +122,47 @@ fn an_unreachable_machine_is_reported_and_the_exit_is_non_zero() {
     let stdout = String::from_utf8_lossy(&out.stdout);
     assert!(!out.status.success());
     assert!(stdout.contains("machine nuc: unreachable"), "{stdout}");
+}
+
+// br-4wu6: a step per line on stderr; after one failed connect the machine's other steps are
+// skipped, said once, and named in the summary.
+#[test]
+fn progress_lines_and_a_machine_that_stops_answering_is_skipped() {
+    let r = rig();
+    let out = pair(&r, &["--machines", "nuc", "--roles", "aide"]);
+    let stderr = String::from_utf8_lossy(&out.stderr);
+    assert!(out.status.success(), "{stderr}");
+    assert!(
+        stderr.contains("notes on nuc-host: pair-mint ..."),
+        "{stderr}"
+    );
+    assert!(
+        stderr.contains("notes on nuc-host: pair-mint ok"),
+        "{stderr}"
+    );
+
+    let r = rig();
+    std::fs::write(r.fake.path().join("flaky"), "").unwrap();
+    let out = pair(&r, &["--machines", "nuc", "--roles", "aide,mail,advisor"]);
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    let stderr = String::from_utf8_lossy(&out.stderr);
+    assert!(!out.status.success());
+    assert_eq!(
+        stderr
+            .matches("machine nuc-host unreachable: skipping its remaining steps")
+            .count(),
+        1,
+        "{stderr}"
+    );
+    assert!(
+        stdout.contains("machine nuc-host unreachable: skipped"),
+        "{stdout}"
+    );
+    // Only the first mint reached ssh; the other two were never tried.
+    assert_eq!(
+        read(r.fake.path(), "argv.log").matches("pair-mint").count(),
+        1
+    );
 }
 
 // s-9267
