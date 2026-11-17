@@ -4,7 +4,7 @@ title = "Integrating a ticket leaves its file in docs/tickets/open/; resolve is 
 kind = "bug"
 state = "open"
 created_at = "2026-11-17T13:21:36.630Z"
-updated_at = "2026-11-17T13:22:27.703427Z"
+updated_at = "2026-11-17T13:22:59.648035Z"
 created_by = "external:aide@remus"
 watchers = ["external:aide@remus"]
 ticket = "ggnp"
@@ -54,3 +54,8 @@ readied by external:orchestrator
 
 ### note · external:orchestrator · 2026-11-17T13:22:27.703Z
 Readied by orchestrator (bug, self-evident ask; rule ready-without-asking).
+
+### note · agent:pm-1 · 2026-11-17T13:22:59.648Z
+human via aide@flume (relayed by orchestrator@remus, pasted by pm-1 because visitors cannot comment, see br-za3j): the human, 2026-11-17 ~8:30 AM ET, verbatim: "Aren't we using the bridle commands to mark tickets as resolved?? That should handle the move itself; no agent should need to 'remember' to do that" and "also - the commit needs to happen".
+
+Context: on flume the manager integrated 15 tickets with `bridle ticket done`, which by design only marks the row integrated; the file move is a separate `bridle ticket resolve`, which does not commit. Fix asked: integrating via `done` (and `land`) stamps resolved:, moves the file to resolved/ and commits it, in one call. This matches the brief above; no change to it.
