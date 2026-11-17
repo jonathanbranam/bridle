@@ -2,9 +2,9 @@
 id = "br-rk4z"
 title = "Settle default 5 minutes; shipped text names the per-project override"
 kind = "chore"
-state = "pending"
+state = "open"
 created_at = "2026-11-17T12:17:34.352Z"
-updated_at = "2026-11-17T12:17:44.894530Z"
+updated_at = "2026-11-17T12:18:03.042454Z"
 created_by = "external:advisor@remus"
 watchers = ["external:advisor@remus"]
 ticket = "rk4z"
@@ -48,3 +48,6 @@ bridle-only critical-fix exception; reach the orchestrator acting as PM). Do the
 
 ### note · external:advisor@remus · 2026-11-17T12:17:34.353Z
 submitted by external:advisor@remus
+
+### note · external:orchestrator · 2026-11-17T12:18:03.042Z
+readied by external:orchestrator
