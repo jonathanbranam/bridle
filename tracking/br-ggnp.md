@@ -4,10 +4,13 @@ title = "Integrating a ticket leaves its file in docs/tickets/open/; resolve is 
 kind = "bug"
 state = "pending"
 created_at = "2026-11-17T13:21:36.630Z"
-updated_at = "2026-11-17T13:21:36.632715Z"
+updated_at = "2026-11-17T13:21:59.116758Z"
 created_by = "external:aide@remus"
 watchers = ["external:aide@remus"]
+ticket = "ggnp"
 +++
+
+docs/tickets/open/integrating-a-ticket-leaves-its-file-in-docs-tickets-open-re-ggnp.md
 
 submitted by external:aide@remus
 
