@@ -29,6 +29,8 @@ pub(super) async fn restart(cli: &Cli, args: &RestartArgs) -> Result<(), CliErro
         println!("{}", reply.message);
         return Ok(());
     }
+    // Taken before the request: the restart may finish before we could ask afterwards.
+    let before = client.health().await.ok().and_then(|h| h.started_at);
     let reply = client
         .restart(&bridle_api::types::RestartRequest { upgrade })
         .await?;
@@ -58,6 +60,7 @@ pub(super) async fn restart(cli: &Cli, args: &RestartArgs) -> Result<(), CliErro
         .filter(|p| p.exists());
     wait_for_restart(
         &client,
+        before,
         async || {
             if explicit {
                 return None;
@@ -75,6 +78,7 @@ pub(super) async fn restart(cli: &Cli, args: &RestartArgs) -> Result<(), CliErro
 /// for a fresh client (`None` keeps the current one), since the restart may move the port.
 pub(super) async fn wait_for_restart(
     first: &Client,
+    before: Option<chrono::DateTime<chrono::Utc>>,
     mut resolve: impl AsyncFnMut() -> Option<Client>,
     limit: std::time::Duration,
     poll: std::time::Duration,
@@ -83,14 +87,16 @@ pub(super) async fn wait_for_restart(
     let deadline = std::time::Instant::now() + limit;
     let mut client = first.clone();
     let mut down = false;
+    // A restart faster than one poll is never seen down, so also compare the process start time.
     loop {
-        match (client.health().await.is_ok(), down) {
-            (false, _) => down = true,
-            (true, true) => {
-                println!("the daemon is back");
-                return Ok(());
+        match client.health().await {
+            Err(_) => down = true,
+            Ok(h) => {
+                if down || (before.is_some() && h.started_at.is_some() && h.started_at != before) {
+                    println!("the daemon is back");
+                    return Ok(());
+                }
             }
-            (true, false) => {}
         }
         if down && let Some(fresh) = resolve().await {
             client = fresh;
@@ -370,6 +376,10 @@ mod restart_wait_tests {
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
     async fn health_server() -> String {
+        health_server_at("2026-01-01T00:00:00Z").await
+    }
+
+    async fn health_server_at(started: &'static str) -> String {
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
         let url = format!("http://{}", listener.local_addr().unwrap());
         tokio::spawn(async move {
@@ -377,7 +387,9 @@ mod restart_wait_tests {
                 let (mut sock, _) = listener.accept().await.unwrap();
                 let mut buf = [0u8; 2048];
                 let _ = sock.read(&mut buf).await;
-                let body = r#"{"ok":true,"version":"t","agent_count":0}"#;
+                let body = format!(
+                    r#"{{"ok":true,"version":"t","agent_count":0,"started_at":"{started}"}}"#
+                );
                 let resp = format!(
                     "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}",
                     body.len()
@@ -400,6 +412,7 @@ mod restart_wait_tests {
         let old = Client::new(dead_url(), None);
         wait_for_restart(
             &old,
+            None,
             async || Some(Client::new(new.clone(), None)),
             std::time::Duration::from_secs(5),
             std::time::Duration::from_millis(10),
@@ -410,11 +423,48 @@ mod restart_wait_tests {
     }
 
     #[tokio::test]
+    async fn a_restart_between_polls_is_seen_by_the_new_start_time() {
+        // Never down: the daemon already answers with a different start time.
+        let url = health_server_at("2026-01-01T00:00:05Z").await;
+        let c = Client::new(url, None);
+        let before = Some("2026-01-01T00:00:00Z".parse().unwrap());
+        wait_for_restart(
+            &c,
+            before,
+            async || None,
+            std::time::Duration::from_secs(5),
+            std::time::Duration::from_millis(10),
+            None,
+        )
+        .await
+        .unwrap();
+    }
+
+    #[tokio::test]
+    async fn an_unchanged_start_time_is_not_a_restart() {
+        let url = health_server_at("2026-01-01T00:00:00Z").await;
+        let c = Client::new(url, None);
+        let before = Some("2026-01-01T00:00:00Z".parse().unwrap());
+        let err = wait_for_restart(
+            &c,
+            before,
+            async || None,
+            std::time::Duration::from_millis(100),
+            std::time::Duration::from_millis(10),
+            None,
+        )
+        .await
+        .unwrap_err();
+        assert!(err.to_string().contains("did not come back"));
+    }
+
+    #[tokio::test]
     async fn timeout_names_the_log_only_when_given() {
         let old = Client::new(dead_url(), None);
         let run = async |log: Option<&std::path::Path>| {
             wait_for_restart(
                 &old,
+                None,
                 async || None,
                 std::time::Duration::from_millis(50),
                 std::time::Duration::from_millis(10),

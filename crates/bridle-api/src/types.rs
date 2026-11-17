@@ -38,6 +38,11 @@ pub struct Health {
     /// Non-terminal agents on this daemon, for `bridle daemon list` to show
     /// without probing every daemon's authenticated status endpoint.
     pub agent_count: u32,
+    /// When this daemon process started. Changes across a restart (the daemon execs itself, so
+    /// the pid does not), letting `daemon restart` see a restart it never saw down. Absent from
+    /// older daemons.
+    #[serde(default)]
+    pub started_at: Option<DateTime<Utc>>,
 }
 
 /// Reply to `POST /v1/shutdown`: the daemon's cap on stopping its agents

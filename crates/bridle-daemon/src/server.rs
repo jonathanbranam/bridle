@@ -1402,6 +1402,7 @@ async fn health(State(state): State<AppState>) -> Result<Json<Health>, ApiError>
         ok: true,
         version: state.version.clone(),
         agent_count,
+        started_at: Some(state.started_at),
     }))
 }
 
