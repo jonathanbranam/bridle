@@ -98,3 +98,4 @@
 {"actor":"agent:pm-1","at":"2026-11-17T13:04:43.688747Z","from":"open","task":"br-rk4z","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-11-17T13:04:45.146Z","queue":"reprioritized"}
 {"actor":"agent:pm-1","at":"2026-11-17T13:04:47.570039Z","queue":"reprioritized"}
+{"actor":"human","at":"2026-11-17T13:21:36.630Z","from":"","task":"br-ggnp","to":"pending"}
