@@ -3,7 +3,7 @@
 //! one `ci.completed` and tells the manager if it failed. Opt-in with
 //! `[ci] github = true`; off, `tick` does nothing (tickets c8qw, ysmu).
 
-use std::collections::HashSet;
+use std::collections::HashMap;
 use std::path::PathBuf;
 use std::process::Command;
 use std::sync::{Arc, Mutex};
@@ -136,10 +136,28 @@ impl Gh for RealGh {
     }
 }
 
+/// The result of a commit's finished runs.
+fn conclude(runs: &[Run]) -> &'static str {
+    if runs.iter().any(|r| {
+        matches!(
+            r.conclusion.as_str(),
+            "failure" | "timed_out" | "startup_failure"
+        )
+    }) {
+        "failure"
+    } else if runs.iter().any(|r| r.conclusion == "cancelled") {
+        "cancelled"
+    } else {
+        "success"
+    }
+}
+
 #[derive(Default)]
 struct State {
-    /// Commits already reported (or, on the first look, already history).
-    seen: HashSet<String>,
+    /// Commits already reported (or, on the first look, already history), with
+    /// the conclusion reported (`None` for history). A re-run keeps the run id
+    /// and replaces its result, so a changed conclusion is reported again.
+    seen: HashMap<String, Option<&'static str>>,
     /// The first successful look has happened.
     started: bool,
     /// A `gh` failure was already logged; cleared by the next success,
@@ -210,14 +228,21 @@ impl CiWatcher {
             // a new project); the rest is history.
             st.started = true;
             st.seen
-                .extend(commits.iter().skip(1).map(|(sha, _)| sha.clone()));
+                .extend(commits.iter().skip(1).map(|(sha, _)| (sha.clone(), None)));
         }
         // Oldest first, so events and wakes arrive in push order.
         for (sha, group) in commits.into_iter().rev() {
-            if st.seen.contains(&sha) || !group.iter().all(|r| r.status == "completed") {
+            if !group.iter().all(|r| r.status == "completed") {
                 continue;
             }
-            st.seen.insert(sha.clone());
+            let conclusion = conclude(&group);
+            match st.seen.get(&sha) {
+                // History from the first look stays unreported.
+                Some(None) => continue,
+                Some(Some(prev)) if *prev == conclusion => continue,
+                _ => {}
+            }
+            st.seen.insert(sha.clone(), Some(conclusion));
             self.finish(&sha, group).await;
         }
     }
@@ -258,13 +283,7 @@ impl CiWatcher {
                 )
             })
             .collect();
-        let conclusion = if !failed.is_empty() {
-            "failure"
-        } else if runs.iter().any(|r| r.conclusion == "cancelled") {
-            "cancelled"
-        } else {
-            "success"
-        };
+        let conclusion = conclude(&runs);
         let url = failed
             .first()
             .copied()
@@ -485,6 +504,27 @@ mod tests {
         );
         assert_eq!(ci_events(&f.store).await.len(), 1);
         assert!(human_messages(&f.store).await.is_empty());
+    }
+
+    #[tokio::test]
+    async fn rerun_that_passes_replaces_the_failure() {
+        // Same run id: attempt 1 failed, attempt 2 passed.
+        let f = fixture(
+            true,
+            script(vec![
+                Ok(vec![run("completed", "failure")]),
+                Ok(vec![run("completed", "success")]),
+                Ok(vec![run("completed", "success")]),
+            ]),
+        )
+        .await;
+        f.watcher.tick().await;
+        assert_eq!(f.watcher.last().unwrap().conclusion, "failure");
+        f.watcher.tick().await;
+        assert_eq!(f.watcher.last().unwrap().conclusion, "success");
+        // Unchanged afterwards: no further event.
+        f.watcher.tick().await;
+        assert_eq!(ci_events(&f.store).await.len(), 2);
     }
 
     #[tokio::test]
