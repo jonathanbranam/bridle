@@ -2,11 +2,14 @@
 id = "br-d4bz"
 title = "daemon restart reports 'did not come back within 95s' when it came back in seconds"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-11-17T13:38:37.828Z"
-updated_at = "2026-11-17T15:20:15.867194Z"
+updated_at = "2026-11-17T20:45:28.901715Z"
 created_by = "external:orchestrator@remus"
-watchers = ["external:orchestrator@remus"]
+watchers = [
+    "external:orchestrator@remus",
+    "agent:d4bz",
+]
 ticket = "d4bz"
 +++
 

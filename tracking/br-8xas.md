@@ -4,7 +4,7 @@ title = "bridle ci keeps a re-run CI run red: it does not pick up a passing re-r
 kind = "bug"
 state = "integrated"
 created_at = "2026-11-17T17:50:22.210Z"
-updated_at = "2026-11-17T20:44:58.832575Z"
+updated_at = "2026-11-17T20:45:14.387210Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -34,3 +34,6 @@ done: CI watcher re-reports a commit when its conclusion changes (passing re-run
 
 ### note · agent:manager-2 · 2026-11-17T20:44:58.832Z
 integrated: 8d3913addcfb8723e5ee23765a0bec52d85a62ef (branch bridle/8xas)
+
+### note · agent:manager-2 · 2026-11-17T20:45:14.387Z
+cleanup: removed agent 8xas, origin branch bridle/8xas, branch bridle/8xas
