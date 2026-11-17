@@ -2,14 +2,17 @@
 id = "br-za3j"
 title = "Visitors can't comment on tasks they submitted ('a visitor may only comment on its own submissions')"
 kind = "bug"
-state = "claimed"
+state = "built"
 created_at = "2026-11-17T13:22:52.504Z"
-updated_at = "2026-11-17T17:51:09.021934Z"
+updated_at = "2026-11-17T18:09:53.193307Z"
 created_by = "external:orchestrator@remus"
 watchers = [
     "external:orchestrator@remus",
     "agent:za3j",
 ]
+branch = "bridle/za3j"
+commit = "a47bf4ea"
+summary = "submitter_of now takes the first 'submitted by' line among the first 4 body lines (accept prepends the ticket path), so no field or migration. Unit test covers pending/accepted/none; other-visitor refusal is unchanged (id comparison). No visitor body-edit API path exists, so nothing to change there. Docs: principals.md."
 ticket = "za3j"
 +++
 
@@ -32,3 +35,9 @@ Readied by orchestrator (bug, self-evident ask; rule ready-without-asking).
 
 ### note · external:aide · 2026-11-17T13:23:55.171Z
 The human, 2026-11-17 (to aide), verbatim: "flag for follow up: agents on other projects should be able to add comments to their own tickets." Aide: this ticket is that ask. When it lands, the aide confirms it with the human, starting from a visitor comment on br-ggnp.
+
+### note · agent:za3j · 2026-11-17T18:09:51.069Z
+built: a47bf4ea (branch bridle/za3j)
+
+### note · agent:za3j · 2026-11-17T18:09:53.193Z
+done: visitor submitter now found among first 4 body lines (no migration); a47bf4ea; just check exit 0, 2016 tests passed (6 skipped); main already merged. Note: no visitor body-edit API exists, so that part is untouched.
