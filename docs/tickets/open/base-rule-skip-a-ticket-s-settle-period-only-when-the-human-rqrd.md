@@ -1,6 +1,6 @@
 ---
 id: br-rqrd
-title: "Base rule: skip a ticket's settle period only when the human explicitly says so"
+title: "Tighten the existing settle-skip wording: only when the human explicitly says so (no new rule)"
 kind: docs
 created: 2026-11-17
 created_by: agent:pm-1
