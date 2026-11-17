@@ -20,7 +20,7 @@ fn spawn_for(ticket: &str, name: &str) -> SpawnRequest {
 async fn a_spawn_for_an_unsettled_pending_ticket_is_held_and_says_when_it_ends() {
     let (daemon, _repo) = start_daemon_with_config(
         None,
-        Some("[roles.manager]\nautostart = false\n[tasks]\nsettle = \"10m\"\n"),
+        Some("[roles.manager]\nautostart = false\n[tasks]\nsettle = \"5m\"\n"),
     )
     .await;
     let id = daemon

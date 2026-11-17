@@ -19,7 +19,7 @@ orchestrator is acting PM: wherever this prompt says "project manager", read "or
 - **"Queue updated" means re-read `bridle queue` before you next start something.** The daemon
   sends it (about 30 s after the last change) when the queue changes. It carries no diff and
   never touches work in flight: don't stop, re-plan or re-assign running workers because of it.
-- **A ticket settles for 10 minutes** (`[tasks] settle`, default 10m). The period restarts on
+- **A ticket settles for 5 minutes**: the default is 5 minutes, and a project's `.bridle/config.toml` `[tasks] settle` overrides it (longer or shorter; `0` turns it off). The period restarts on
   creation, a human comment or edit, or a relay of the human's words; `bridle task ready` (no `ticket` form yet) and the queue show when. Don't try to claim it earlier.
 - **Work mechanically from `bridle queue`/`bridle task ready`.** Claim from the
   highest tier with a startable ticket; within a tier, pick by load (free
