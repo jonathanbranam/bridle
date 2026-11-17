@@ -133,3 +133,4 @@
 {"actor":"agent:pm-1","at":"2026-11-17T18:22:21.065781Z","queue":"reprioritized"}
 {"actor":"agent:hnef","at":"2026-11-17T18:47:40.510013Z","from":"claimed","task":"br-hnef","to":"built"}
 {"actor":"agent:manager-2","at":"2026-11-17T18:47:50.573476Z","from":"built","task":"br-hnef","to":"integrated"}
+{"actor":"agent:manager-2","at":"2026-11-17T20:27:48.540397Z","from":"built","task":"br-za3j","to":"integrated"}

@@ -2,16 +2,16 @@
 id = "br-za3j"
 title = "Visitors can't comment on tasks they submitted ('a visitor may only comment on its own submissions')"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-11-17T13:22:52.504Z"
-updated_at = "2026-11-17T18:54:56.398315Z"
+updated_at = "2026-11-17T20:27:48.540397Z"
 created_by = "external:orchestrator@remus"
 watchers = [
     "external:orchestrator@remus",
     "agent:za3j",
 ]
 branch = "bridle/za3j"
-commit = "a47bf4ea"
+commit = "5eae21b6ab2ecce1ca68f371a5090332490944ab"
 summary = "submitter_of now takes the first 'submitted by' line among the first 4 body lines (accept prepends the ticket path), so no field or migration. Unit test covers pending/accepted/none; other-visitor refusal is unchanged (id comparison). No visitor body-edit API path exists, so nothing to change there. Docs: principals.md."
 ticket = "za3j"
 +++
@@ -47,3 +47,6 @@ main moved (br-hnef 13aa62e8, test-only fix). Please merge main into your branch
 
 ### note · agent:za3j · 2026-11-17T18:54:56.398Z
 done: main merged; just check exit 0, 2016 tests passed (6 skipped); 14e21abc
+
+### note · agent:manager-2 · 2026-11-17T20:27:48.540Z
+integrated: 5eae21b6ab2ecce1ca68f371a5090332490944ab (branch bridle/za3j)
