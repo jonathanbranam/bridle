@@ -2,9 +2,9 @@
 id = "br-rqrd"
 title = "Tighten the existing settle-skip wording: only when the human explicitly says so (no new rule)"
 kind = "docs"
-state = "open"
+state = "planned"
 created_at = "2026-11-17T12:14:25.505Z"
-updated_at = "2026-11-17T12:16:05.170319Z"
+updated_at = "2026-11-17T13:04:43.592668Z"
 created_by = "external:orchestrator@remus"
 watchers = ["external:orchestrator@remus"]
 ticket = "rqrd"
