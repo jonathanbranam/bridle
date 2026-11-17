@@ -4917,8 +4917,8 @@ async fn answer_task(
 }
 
 /// The human may skip freely; the orchestrator and the PM only with a
-/// reason (required for everyone, and recorded): that the human asked, or an
-/// urgent downtime fix.
+/// reason (required for everyone, and recorded): that the human explicitly said
+/// to skip the settle period, or (in bridle's own project) an urgent, critical fix.
 async fn skip_settle(
     State(state): State<AppState>,
     Extension(principal): Extension<Principal>,

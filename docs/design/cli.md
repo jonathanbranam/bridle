@@ -483,7 +483,7 @@ bridle task impact show <task>                                         prints th
 bridle ticket summary <id> --text TEXT | --file FILE                    records how it was implemented; `-` reads stdin; replaces an earlier summary
 bridle task reopen <id>
 bridle task watch <id> · unwatch <id>                               add/remove yourself as a watcher (`task show` lists them; the creator and claimer are added automatically); with `--project <p>` for a task on another project's daemon it is registered there through your own daemon and the updates come back as messages
-bridle task skip-settle <id> --reason TEXT                            skip the settle period (recorded); human, or orchestrator/PM with a reason saying the human asked or an urgent downtime fix
+bridle task skip-settle <id> --reason TEXT                            skip the settle period (recorded); human, or orchestrator/PM with a reason saying the human explicitly said to skip the settle period (a deadline or "work it now" is not that), or in bridle's own project an urgent critical fix the agent determined
 bridle ticket comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain comment on the task's thread; tells the watchers and the claimant (not the author); no effect on readiness; `@role`/`@agent` in the text sends that recipient one message instead of the watcher notice (`\@name` escapes; an unknown name is reported to the author); `@project:role` or `@prefix:role` (also `@project:external:role`) goes to that project's role through the outbox; the same mentions in a document comment sent for review (`doc_watch`) tell the same way, once per newly sent comment (br-4cgx)
 ```
 

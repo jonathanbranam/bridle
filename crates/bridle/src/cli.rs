@@ -2218,8 +2218,9 @@ pub struct ImpactShowArgs {
 #[derive(Debug, Args)]
 pub struct RowSkipSettleArgs {
     pub task: String,
-    /// Why. The orchestrator and PM may skip only because the human asked or for an
-    /// urgent downtime fix, and the reason must say which.
+    /// Why. The orchestrator and PM may skip only when the human explicitly says to skip
+    /// the settle period (a deadline or 'work it now' is not that); in bridle's own
+    /// project, also for an urgent, critical fix the agent determines. The reason must say which.
     #[arg(long)]
     pub reason: String,
 }

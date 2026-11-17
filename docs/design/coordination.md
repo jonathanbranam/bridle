@@ -36,7 +36,7 @@ schema change), so old tasks are settled. Readying a ticket (pending -> open) re
 restarts the clock (an edit records a human thread note). The PM can still plan a settling task;
 the human's own to-dos (`--for-human`, claimed at creation) are exempt. `bridle task skip-settle
 <id> --reason` records a note and event `task.settle_skipped`; allowed for the human, and for the
-orchestrator or PM only with a reason saying the human asked or it's an urgent downtime fix. It is
+orchestrator or PM only with a reason saying the human explicitly said to skip the settle period (a deadline or "work it now" is not that), or, in bridle's own project, an urgent critical fix the agent determined. It is
 not an approval gate: the period just expires. A required human approval needs a gate, which is
 planned ([[docs/design/gates|gates]]). Refusals say `settling until <time>` (US Eastern). When a planned, otherwise-ready task
 finishes settling, a daemon tick (30 s) sends the running manager (else the orchestrator) the note
