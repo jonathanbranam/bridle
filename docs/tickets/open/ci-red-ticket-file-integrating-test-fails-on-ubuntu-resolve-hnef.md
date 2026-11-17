@@ -8,7 +8,7 @@ repos: [bridle]
 changes: []
 specs: []
 blocked_by: []
-related: []
+related: [br-ggnp]
 ---
 
 ## The ask
