@@ -4,12 +4,13 @@ title = "CI red: ticket_file integrating test fails on ubuntu (resolve commit ha
 kind = "fix"
 state = "claimed"
 created_at = "2026-11-17T18:10:53.048Z"
-updated_at = "2026-11-17T18:22:52.268431Z"
+updated_at = "2026-11-17T18:31:20.591962Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:hnef",
 ]
+summary = "The ticket_file test helper repo_with_open_ticket now sets user.name/user.email in the temp repo's config, so resolve_and_commit's commit (which runs git without the helper's -c identity) works on CI runners with no global git identity. Test-only change; no production code touched. The other test in the file (stale_open_files...) uses the same helper and is covered too. Reproduced with HOME=empty temp dir, GIT_CONFIG_GLOBAL and GIT_CONFIG_SYSTEM=/dev/null: both ticket_file tests pass. CHANGELOG Internal line added."
 ticket = "hnef"
 +++
 
