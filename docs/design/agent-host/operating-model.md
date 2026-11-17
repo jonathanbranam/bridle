@@ -291,7 +291,9 @@ the clone:
 5. `land` then does what `bridle ticket done <id> --commit <sha> --branch bridle/<agent>` does
    (still available by hand): the daemon
    refuses unless `<sha>` is reachable from the integration branch, marks the task
-   `integrated`, tells other workers `main moved`, then removes
+   `integrated`, resolves the ticket's file (stamps `resolved:`, moves it to
+   `docs/tickets/resolved/`, commits that locally as `Ticket <id>: resolved`; nobody
+   runs `ticket resolve` after a land; br-ggnp), tells other workers `main moved`, then removes
    every agent on that branch, its worktree and the now-landed branch (`-D`), and notes what it
    removed on the task. Unmerged work can't be lost. `bridle agent rm --delete-branch` still works for
    one agent, and treats a `Branch: bridle/<agent>` trailer on a commit

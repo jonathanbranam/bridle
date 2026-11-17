@@ -377,7 +377,12 @@ bridle ticket ready <id>                     marks the ticket's row ready (`pend
 bridle ticket resolve <id>                   stamps `resolved: <UTC date-time>` into the frontmatter and moves
                                              the ticket from `open/` to `resolved/` (a plain move: committing
                                              is the caller's); errors on an unknown or ambiguous id; doesn't
-                                             touch the task. Both are local file work, no daemon start-up
+                                             touch the task. Both are local file work, no daemon start-up.
+                                             Integrating (`ticket done`, `land`) does this itself: the daemon
+                                             resolves the file and commits it on the integration branch
+                                             (`Ticket <id>: resolved`, local only) and notes it on the thread;
+                                             no file or already resolved is a no-op (br-ggnp). `ticket check`
+                                             warns of an integrated ticket whose file is still in `open/`
 bridle ticket set <id> <field> <value>       (commits on the integration branch) edits one frontmatter field of an open or resolved ticket: `title`,
                                              `kind` (any time; independent of its tasks' kinds), `theme` (a slug), `parent` (one id, bare or `<prefix>-<id>`), `review` (version 2 only: a comma list of the ticket's stages that need the human's signature, as `ticket new --review`; it replaces the set, empty clears it; a stage the ticket does not list is refused naming the valid ones, and so is changing a stage already signed), or a list field (`repos`, `changes`, `specs`, `blocked_by`, `related`) given
                                              comma-separated (empty clears it); `blocked_by`, `related` and `parent` references are written project-qualified (`br-k7tm`; a bare id is expanded, ambiguous or unknown ones are refused listing candidates); a `<id>` argument may be bare or qualified, but one qualified with another project's prefix is refused; the old names (`needs`, `see`) map to the new; refuses `id`, `created`, `resolved`

@@ -19,6 +19,9 @@ use crate::cli::{
 use crate::commands::client_for;
 use crate::error::CliError;
 use crate::launchd::project_name;
+#[cfg(test)]
+use bridle_daemon::ticket_file::set_resolved;
+pub use bridle_daemon::ticket_file::{find_by_id, resolve};
 
 const ID_ALPHABET: &[u8] = b"abcdefghjkmnpqrstuvwxyz23456789";
 const ID_LEN: usize = 4;
@@ -114,34 +117,10 @@ fn discard_unfiled(
     )
 }
 
-/// Commits `paths` (relative to `repo`) with `msg` when `repo` is checked out on the project's
-/// integration branch, so a ticket file an agent writes is never left uncommitted (br-gakc) and
-/// `ticket ready` works right after `ticket new`. Commit only, never a push (rule
-/// `one-pusher-for-the-integration-branch`); elsewhere (a worker's branch) the worker's own
-/// commit carries the file. A failure warns: the file is written either way.
+/// Commits ticket files on the integration branch; a failure warns, the file is written either way.
 fn commit_ticket_files(repo: &Path, paths: &[&Path], msg: &str) {
-    let git = |args: &[&str]| {
-        Command::new("git")
-            .current_dir(repo)
-            .args(args)
-            .output()
-            .ok()
-            .filter(|o| o.status.success())
-    };
-    let Ok(config) = bridle_daemon::config::Config::load(repo) else {
-        return;
-    };
-    let on_integration = git(&["symbolic-ref", "--short", "HEAD"])
-        .is_some_and(|o| String::from_utf8_lossy(&o.stdout).trim() == config.branches.integration);
-    if !on_integration {
-        return;
-    }
-    let names: Vec<String> = paths.iter().map(|p| p.display().to_string()).collect();
-    let mut add = vec!["add", "--"];
-    add.extend(names.iter().map(String::as_str));
-    let mut commit = vec!["commit", "-q", "--no-verify", "-m", msg, "--"];
-    commit.extend(names.iter().map(String::as_str));
-    if git(&add).is_none() || git(&commit).is_none() {
+    if !bridle_daemon::ticket_file::commit_ticket_files(repo, paths, msg) {
+        let names: Vec<String> = paths.iter().map(|p| p.display().to_string()).collect();
         eprintln!(
             "warning: could not commit {}; commit it yourself",
             names.join(", ")
@@ -838,6 +817,22 @@ async fn check_cmd(cli: &Cli, repo: &Path, args: &TicketCheckArgs) -> Result<(),
     let root = tickets_root(repo);
     let projects = projects(cli, repo).await?;
     let report = check_in(&root, &repo.join("docs"), &projects);
+    let mut report = report;
+    // Integrated tickets whose file never left open/ (br-ggnp); skipped without a daemon.
+    if let Ok(client) = client_for(cli).await
+        && let Ok(tasks) = client.list_tasks().await
+    {
+        let integrated: Vec<String> = tasks
+            .iter()
+            .filter(|t| t.state == bridle_api::types::TicketState::Integrated)
+            .map(|t| t.id.clone())
+            .collect();
+        for id in bridle_daemon::ticket_file::stale_open_files(repo, &integrated) {
+            report.warnings.push(format!(
+                "{id} is integrated but its file is still in docs/tickets/open/ (run `bridle ticket resolve {id}` and commit)"
+            ));
+        }
+    }
     for w in &report.warnings {
         eprintln!("warning: {w}");
     }
@@ -939,63 +934,6 @@ pub fn create(
     let path = open.join(name);
     std::fs::write(&path, text).with_context(|| format!("writing {}", path.display()))?;
     Ok(path)
-}
-
-/// Move the open ticket `id` to `resolved/`, stamping `resolved:` first. Returns the new path.
-pub fn resolve(root: &Path, id: &str, resolved: &str) -> anyhow::Result<PathBuf> {
-    let found = find_by_id(&root.join("open"), id)?;
-    let dest = root
-        .join("resolved")
-        .join(found.file_name().expect("a file"));
-    if find_by_id(&root.join("resolved"), id).is_ok() {
-        bail!("ticket {id} is already in resolved/");
-    }
-    let text =
-        std::fs::read_to_string(&found).with_context(|| format!("reading {}", found.display()))?;
-    let stamped = set_resolved(&text, resolved)
-        .ok_or_else(|| anyhow!("{} has no frontmatter", found.display()))?;
-    std::fs::create_dir_all(root.join("resolved")).context("creating resolved/")?;
-    std::fs::write(&dest, stamped).with_context(|| format!("writing {}", dest.display()))?;
-    std::fs::remove_file(&found).with_context(|| format!("removing {}", found.display()))?;
-    // The stage folder (design.md, attachments) travels with the file.
-    let folder = crate::stages::folder_of(&found);
-    if folder.is_dir() {
-        let to = crate::stages::folder_of(&dest);
-        std::fs::rename(&folder, &to)
-            .with_context(|| format!("moving {} to {}", folder.display(), to.display()))?;
-    }
-    Ok(dest)
-}
-
-/// The one `*-<id>.md` file in `dir`; errors on none or several.
-pub fn find_by_id(dir: &Path, id: &str) -> anyhow::Result<PathBuf> {
-    // File names are bare, so a qualified `br-k7tm` finds `*-k7tm.md`.
-    let id = split_id(id).1;
-    let suffix = format!("-{id}.md");
-    let mut hits: Vec<PathBuf> = match std::fs::read_dir(dir) {
-        Ok(rd) => rd
-            .filter_map(Result::ok)
-            .map(|e| e.path())
-            .filter(|p| {
-                p.file_name()
-                    .is_some_and(|n| n.to_string_lossy().ends_with(&suffix))
-            })
-            .collect(),
-        Err(_) => Vec::new(),
-    };
-    hits.sort();
-    match hits.len() {
-        0 => bail!("no ticket with id {id} in {}", dir.display()),
-        1 => Ok(hits.remove(0)),
-        _ => bail!(
-            "ticket id {id} is ambiguous in {}: {}",
-            dir.display(),
-            hits.iter()
-                .map(|p| p.display().to_string())
-                .collect::<Vec<_>>()
-                .join(", ")
-        ),
-    }
 }
 
 /// The id a ticket file name ends with (`<slug>-<id>.md`).
@@ -1794,32 +1732,6 @@ fn yaml_scalar(s: &str) -> String {
     } else {
         s.to_string()
     }
-}
-
-/// `text` with `resolved: <ts>` as the last frontmatter line (replacing any existing one, in
-/// either name);
-/// `None` when there is no frontmatter block.
-fn set_resolved(text: &str, resolved: &str) -> Option<String> {
-    let mut lines: Vec<&str> = text.lines().collect();
-    if lines.first() != Some(&"---") {
-        return None;
-    }
-    let end = lines.iter().skip(1).position(|l| *l == "---")? + 1;
-    lines.retain({
-        let mut i = 0;
-        move |l| {
-            i += 1;
-            !(i > 1 && i <= end && (l.starts_with("resolved:") || l.starts_with("closed:")))
-        }
-    });
-    let end = lines.iter().skip(1).position(|l| *l == "---")? + 1;
-    let stamp = format!("resolved: {resolved}");
-    lines.insert(end, &stamp);
-    let mut out = lines.join("\n");
-    if text.ends_with('\n') {
-        out.push('\n');
-    }
-    Some(out)
 }
 
 #[cfg(test)]

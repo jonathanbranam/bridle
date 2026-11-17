@@ -59,6 +59,7 @@ pub mod store;
 mod supervisor;
 pub mod sync;
 mod tasks;
+pub mod ticket_file;
 mod ticket_links;
 mod token_watch;
 mod upgrade;

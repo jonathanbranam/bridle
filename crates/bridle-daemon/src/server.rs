@@ -3947,6 +3947,21 @@ async fn done_task(
     if task.kind == bridle_api::types::TicketKind::ArchRevision {
         open_reevaluate_tasks(&state, &task).await;
     }
+    // Integrating resolves the ticket's file in the same step (br-ggnp); never fatal.
+    let repo = state.workspace.repo.clone();
+    let tid = id.clone();
+    let moved =
+        tokio::task::spawn_blocking(move || crate::ticket_file::resolve_and_commit(&repo, &tid))
+            .await;
+    match moved {
+        Ok(Ok(Some(note))) => task = state.tasks.note_task(&id, &principal.id, &note).await?,
+        Ok(Ok(None)) => {}
+        Ok(Err(e)) => {
+            let note = format!("could not resolve the ticket file: {e:#}");
+            task = state.tasks.note_task(&id, &principal.id, &note).await?;
+        }
+        Err(e) => tracing::warn!("resolving the ticket file of {id}: {e}"),
+    }
     if let Some(branch) = branch {
         let report = clean_up_landed_branch(&state, &task, branch, &principal).await;
         task = state.tasks.note_task(&id, &principal.id, &report).await?;
