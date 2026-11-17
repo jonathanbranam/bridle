@@ -92,3 +92,4 @@
 {"actor":"agent:pm-1","at":"2026-11-17T12:15:28.396224Z","queue":"reprioritized"}
 {"actor":"agent:pm-1","at":"2026-11-17T12:15:30.765617Z","queue":"reprioritized"}
 {"actor":"agent:pm-1","at":"2026-11-17T12:15:32.307508Z","queue":"reprioritized"}
+{"actor":"human","at":"2026-11-17T12:17:34.352Z","from":"","task":"br-rk4z","to":"pending"}
