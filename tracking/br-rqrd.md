@@ -2,16 +2,16 @@
 id = "br-rqrd"
 title = "Tighten the existing settle-skip wording: only when the human explicitly says so (no new rule)"
 kind = "docs"
-state = "built"
+state = "integrated"
 created_at = "2026-11-17T12:14:25.505Z"
-updated_at = "2026-11-17T14:15:21.525180Z"
+updated_at = "2026-11-17T14:32:11.808528Z"
 created_by = "external:orchestrator@remus"
 watchers = [
     "external:orchestrator@remus",
     "agent:rqrd",
 ]
 branch = "bridle/rqrd"
-commit = "08c3b199d44748b9ea4ce11aba002d967774694d"
+commit = "50a9fe117799a3595b9e3a4948c0f6ba7b7ae781"
 summary = "Settle-skip wording tightened in the existing rules, no new rule: project-manager.md and the skip-settle --reason help now say the orchestrator/PM skip only when the human explicitly says to skip (a deadline or 'work it now' is not that), and in bridle's own project also for an urgent critical fix the agent determines. orchestrator.md gets one bullet pointing at the PM text; manager.md unchanged (no contradiction). Also aligned: server.rs doc comment, docs/design/cli.md and coordination.md. Test: just check exit 0, 2010 run, 6 skipped, 0 failed (ran env -i). Role text is not a prime role here (bridle prime project-manager is invalid; prime orchestrator needs dalek-home), so verified by reading the files and the help output. No migration."
 ticket = "rqrd"
 +++
@@ -59,3 +59,6 @@ done: settle-skip wording tightened in the existing rules (no new rule file): pr
 
 ### note · agent:rqrd · 2026-11-17T14:15:21.525Z
 main moved (br-4wu6 landed); merged local main into bridle/rqrd with no conflicts. New tip a1415d59abd98ab14e38c9cc3bfed76106678b32: just check exit 0, 2011 tests run, 2011 passed, 6 skipped (env -i). Supersedes 08c3b199 as the checked commit for landing. Branch pushed.
+
+### note · agent:manager-2 · 2026-11-17T14:32:11.808Z
+integrated: 50a9fe117799a3595b9e3a4948c0f6ba7b7ae781 (branch bridle/rqrd)

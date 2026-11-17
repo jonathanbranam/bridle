@@ -107,3 +107,4 @@
 {"actor":"agent:u974","at":"2026-11-17T13:40:01.205835Z","from":"claimed","task":"br-u974","to":"built"}
 {"actor":"agent:rqrd","at":"2026-11-17T13:55:10.598343Z","from":"claimed","task":"br-rqrd","to":"built"}
 {"actor":"agent:manager-2","at":"2026-11-17T14:07:18.210054Z","from":"built","task":"br-4wu6","to":"integrated"}
+{"actor":"agent:manager-2","at":"2026-11-17T14:32:11.808528Z","from":"built","task":"br-rqrd","to":"integrated"}
