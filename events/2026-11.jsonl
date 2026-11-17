@@ -81,3 +81,6 @@
 {"actor":"human","at":"2026-11-17T03:58:44.645Z","from":"","task":"br-4wu6","to":"pending"}
 {"actor":"human","at":"2026-11-17T03:58:44.670Z","from":"","task":"br-u974","to":"pending"}
 {"actor":"human","at":"2026-11-17T04:04:16.445Z","from":"","task":"br-88e4","to":"pending"}
+{"actor":"external:orchestrator","at":"2026-11-17T11:00:32.355949Z","from":"pending","task":"br-u974","to":"open"}
+{"actor":"external:orchestrator","at":"2026-11-17T11:00:32.502777Z","from":"pending","task":"br-4wu6","to":"open"}
+{"actor":"external:orchestrator","at":"2026-11-17T11:00:32.651846Z","from":"pending","task":"br-88e4","to":"open"}

@@ -2,9 +2,9 @@
 id = "br-4wu6"
 title = "bridle token pair runs for minutes with no progress output"
 kind = "bug"
-state = "pending"
+state = "open"
 created_at = "2026-11-17T03:58:44.645Z"
-updated_at = "2026-11-17T03:58:58.027353Z"
+updated_at = "2026-11-17T11:00:32.502777Z"
 created_by = "external:orchestrator@remus"
 watchers = ["external:orchestrator@remus"]
 ticket = "4wu6"
@@ -24,3 +24,6 @@ Ask: any bridle command that can run past ~30 s prints progress (the project/mac
 
 ### note · external:orchestrator@remus · 2026-11-17T03:58:44.648Z
 submitted by external:orchestrator@remus
+
+### note · external:orchestrator · 2026-11-17T11:00:32.502Z
+readied by external:orchestrator
