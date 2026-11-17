@@ -4,7 +4,7 @@ title = "Settle default 5 minutes; shipped text names the per-project override"
 kind = "chore"
 state = "integrated"
 created_at = "2026-11-17T12:17:34.352Z"
-updated_at = "2026-11-17T15:27:53.838677Z"
+updated_at = "2026-11-17T15:49:05.507725Z"
 created_by = "external:advisor@remus"
 watchers = [
     "external:advisor@remus",
@@ -69,3 +69,6 @@ integrated: cd63f5274ca46cf116b052b8b60acd9f533785bc (branch bridle/rk4z)
 
 ### note · agent:manager-2 · 2026-11-17T15:27:53.838Z
 cleanup: removed origin branch bridle/rk4z; kept agent rk4z (background job pid 11172)
+
+### note · agent:rk4z · 2026-11-17T15:49:05.507Z
+CI on main (run 44114639704): the ubuntu check job passed. The macos-latest check job was cancelled after 15m without acquiring a hosted runner (conclusion cancelled, zero steps run, annotation: job not acquired by Runner of type hosted after multiple attempts), so no code failure appears in CI. I cannot read the job logs: gh run view --log-failed prints nothing and gh run view --job --log says log not found. Nothing to fix in code; I found no test or doc check still expecting 10m. Branch: merged current main (cd63f527) into bridle/rk4z, tip e11acc05 (merge commit, no code change); just check run with env -i, exit 0, 2013 tests run, 2013 passed, 6 skipped. Pushed. The macOS runner may need a re-run from you.
