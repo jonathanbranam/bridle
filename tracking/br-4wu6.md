@@ -2,9 +2,9 @@
 id = "br-4wu6"
 title = "bridle token pair runs for minutes with no progress output"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-11-17T03:58:44.645Z"
-updated_at = "2026-11-17T11:00:32.502777Z"
+updated_at = "2026-11-17T12:15:26.734551Z"
 created_by = "external:orchestrator@remus"
 watchers = ["external:orchestrator@remus"]
 ticket = "4wu6"
