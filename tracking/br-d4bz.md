@@ -4,10 +4,13 @@ title = "daemon restart reports 'did not come back within 95s' when it came back
 kind = "bug"
 state = "pending"
 created_at = "2026-11-17T13:38:37.828Z"
-updated_at = "2026-11-17T13:38:37.829187Z"
+updated_at = "2026-11-17T13:38:51.730137Z"
 created_by = "external:orchestrator@remus"
 watchers = ["external:orchestrator@remus"]
+ticket = "d4bz"
 +++
+
+docs/tickets/open/daemon-restart-reports-did-not-come-back-within-95s-when-it-d4bz.md
 
 submitted by external:orchestrator@remus
 
