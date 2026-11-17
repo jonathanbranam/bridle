@@ -2,14 +2,17 @@
 id = "br-ggnp"
 title = "Integrating a ticket leaves its file in docs/tickets/open/; resolve is left to the orchestrator"
 kind = "bug"
-state = "claimed"
+state = "built"
 created_at = "2026-11-17T13:21:36.630Z"
-updated_at = "2026-11-17T15:02:58.018160Z"
+updated_at = "2026-11-17T15:37:53.956983Z"
 created_by = "external:aide@remus"
 watchers = [
     "external:aide@remus",
     "agent:ggnp",
 ]
+branch = "bridle/ggnp"
+commit = "df851d85c914c7bea6084ef98fe15d8a9aaf7e00"
+summary = """Integrating now resolves the ticket file: server.rs done_task (shared by done and land) calls the new bridle-daemon ticket_file::resolve_and_commit, which stamps resolved:, moves the file (and its stage folder) open/ -> resolved/ and commits "Ticket <id>: resolved" locally via commit_ticket_files (moved from the CLI, one committer; the CLI wraps it with its warning). resolve/find_by_id/set_resolved moved to the daemon too; ticket resolve is unchanged. No file or already resolved is a no-op; a failure is a thread note, never fatal. ticket check warns of integrated tickets whose file is still in open/. Decision: manual fix (ticket resolve <id> + commit), not an automatic migration: the check is advisory and the move needs a commit on the owner's integration branch, which only the integrate path does. Dropped is NOT covered: drop_task is a separate path that does not fall out of this one. Tests in ticket_file.rs."""
 ticket = "ggnp"
 +++
 
@@ -62,3 +65,6 @@ Readied by orchestrator (bug, self-evident ask; rule ready-without-asking).
 human via aide@flume (relayed by orchestrator@remus, pasted by pm-1 because visitors cannot comment, see br-za3j): the human, 2026-11-17 ~8:30 AM ET, verbatim: "Aren't we using the bridle commands to mark tickets as resolved?? That should handle the move itself; no agent should need to 'remember' to do that" and "also - the commit needs to happen".
 
 Context: on flume the manager integrated 15 tickets with `bridle ticket done`, which by design only marks the row integrated; the file move is a separate `bridle ticket resolve`, which does not commit. Fix asked: integrating via `done` (and `land`) stamps resolved:, moves the file to resolved/ and commits it, in one call. This matches the brief above; no change to it.
+
+### note · agent:ggnp · 2026-11-17T15:37:53.956Z
+built: df851d85c914c7bea6084ef98fe15d8a9aaf7e00 (branch bridle/ggnp)
