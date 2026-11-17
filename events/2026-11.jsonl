@@ -123,3 +123,4 @@
 {"actor":"agent:ggnp","at":"2026-11-17T15:37:53.956983Z","from":"claimed","task":"br-ggnp","to":"built"}
 {"actor":"agent:manager-2","at":"2026-11-17T17:50:17.283321Z","from":"built","task":"br-ggnp","to":"integrated"}
 {"actor":"human","at":"2026-11-17T17:50:22.210Z","from":"","task":"br-8xas","to":"pending"}
+{"actor":"external:orchestrator","at":"2026-11-17T17:50:43.848400Z","from":"pending","task":"br-8xas","to":"open"}

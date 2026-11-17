@@ -4,7 +4,7 @@ title = "Integrating a ticket leaves its file in docs/tickets/open/; resolve is 
 kind = "bug"
 state = "integrated"
 created_at = "2026-11-17T13:21:36.630Z"
-updated_at = "2026-11-17T17:50:17.283321Z"
+updated_at = "2026-11-17T17:50:54.777553Z"
 created_by = "external:aide@remus"
 watchers = [
     "external:aide@remus",
@@ -74,3 +74,6 @@ done: integrating (done/land) now resolves, moves and commits the ticket file; t
 
 ### note · agent:manager-2 · 2026-11-17T17:50:17.283Z
 integrated: 17a6255cc4a21931759941702e474a65d10a6dd4 (branch bridle/ggnp)
+
+### note · agent:manager-2 · 2026-11-17T17:50:54.777Z
+cleanup: removed agent ggnp, origin branch bridle/ggnp, branch bridle/ggnp
