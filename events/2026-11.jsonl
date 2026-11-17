@@ -86,3 +86,4 @@
 {"actor":"external:orchestrator","at":"2026-11-17T11:00:32.651846Z","from":"pending","task":"br-88e4","to":"open"}
 {"actor":"human","at":"2026-11-17T12:14:25.505Z","from":"","task":"br-rqrd","to":"pending"}
 {"actor":"external:orchestrator","at":"2026-11-17T12:14:52.837889Z","from":"pending","task":"br-rqrd","to":"open"}
+{"actor":"agent:pm-1","at":"2026-11-17T12:15:25.116416Z","from":"open","task":"br-u974","to":"planned"}
