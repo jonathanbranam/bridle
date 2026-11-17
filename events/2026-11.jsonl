@@ -104,3 +104,4 @@
 {"actor":"external:orchestrator","at":"2026-11-17T13:23:42.670110Z","from":"pending","task":"br-za3j","to":"open"}
 {"actor":"agent:4wu6","at":"2026-11-17T13:32:52.188389Z","from":"claimed","task":"br-4wu6","to":"built"}
 {"actor":"human","at":"2026-11-17T13:38:37.828Z","from":"","task":"br-d4bz","to":"pending"}
+{"actor":"agent:u974","at":"2026-11-17T13:40:01.205835Z","from":"claimed","task":"br-u974","to":"built"}
