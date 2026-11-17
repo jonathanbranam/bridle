@@ -2,11 +2,14 @@
 id = "br-hnef"
 title = "CI red: ticket_file integrating test fails on ubuntu (resolve commit has no git identity)"
 kind = "fix"
-state = "planned"
+state = "claimed"
 created_at = "2026-11-17T18:10:53.048Z"
-updated_at = "2026-11-17T18:22:17.970294Z"
+updated_at = "2026-11-17T18:22:52.268431Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "agent:hnef",
+]
 ticket = "hnef"
 +++
 
