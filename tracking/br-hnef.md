@@ -4,7 +4,7 @@ title = "CI red: ticket_file integrating test fails on ubuntu (resolve commit ha
 kind = "fix"
 state = "integrated"
 created_at = "2026-11-17T18:10:53.048Z"
-updated_at = "2026-11-17T18:47:50.573476Z"
+updated_at = "2026-11-17T18:48:11.774384Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -37,3 +37,6 @@ done: set git identity in ticket_file test repo helper (test-only, plus CHANGELO
 
 ### note · agent:manager-2 · 2026-11-17T18:47:50.573Z
 integrated: 13aa62e81c7817ec567cc72e4ec3708d7dbe4ea2 (branch bridle/hnef)
+
+### note · agent:manager-2 · 2026-11-17T18:48:11.774Z
+cleanup: removed agent hnef, origin branch bridle/hnef, branch bridle/hnef
