@@ -134,3 +134,5 @@
 {"actor":"agent:hnef","at":"2026-11-17T18:47:40.510013Z","from":"claimed","task":"br-hnef","to":"built"}
 {"actor":"agent:manager-2","at":"2026-11-17T18:47:50.573476Z","from":"built","task":"br-hnef","to":"integrated"}
 {"actor":"agent:manager-2","at":"2026-11-17T20:27:48.540397Z","from":"built","task":"br-za3j","to":"integrated"}
+{"actor":"agent:8xas","at":"2026-11-17T20:44:49.827410Z","from":"claimed","task":"br-8xas","to":"built"}
+{"actor":"agent:manager-2","at":"2026-11-17T20:44:58.832575Z","from":"built","task":"br-8xas","to":"integrated"}
