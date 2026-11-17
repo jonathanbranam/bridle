@@ -4,7 +4,7 @@ title = "bridle token pair runs for minutes with no progress output"
 kind = "bug"
 state = "built"
 created_at = "2026-11-17T03:58:44.645Z"
-updated_at = "2026-11-17T13:32:52.240148Z"
+updated_at = "2026-11-17T13:49:56.200125Z"
 created_by = "external:orchestrator@remus"
 watchers = [
     "external:orchestrator@remus",
@@ -39,3 +39,6 @@ built: 3a75fac7e52e7bc416c4f14c6e3957a6e14b09bf (branch bridle/4wu6)
 
 ### note · agent:4wu6 · 2026-11-17T13:32:52.240Z
 done: token pair progress per step + skip unreachable machine; 3a75fac7e52e7bc416c4f14c6e3957a6e14b09bf; just check exit 0 (BRIDLE_* unset), 2011 tests run, 2011 passed
+
+### note · agent:4wu6 · 2026-11-17T13:49:56.200Z
+merged main 4647cc3d: sha 5b6fb2d9, just check exit 0 (BRIDLE_* unset), 2011 run, 2011 passed. main has since moved one commit (26cbfcce, adds one ticket file only); not merged into the checked sha so the check stays exact for it.
