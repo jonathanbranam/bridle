@@ -846,7 +846,15 @@ fn check_peer(
             None,
         )
         .map(|_| ())
-        .map_err(|e| format!("daemon: {e}"))
+        .or_else(|e| {
+            // The daemon turned the listing away as human-only: the caller's own token was
+            // accepted, so this is no proof the peer token is missing (br-88e4).
+            if e.contains("human-only") {
+                Ok(())
+            } else {
+                Err(format!("daemon: {e}"))
+            }
+        })
 }
 
 /// One checked entry; `refused` holds the reason.
@@ -1004,6 +1012,8 @@ mod tests {
 
     #[derive(Default)]
     struct Sim {
+        /// the daemon turns the peer-token listing away as human-only (br-88e4)
+        human_only_peer: bool,
         /// machine -> projects
         projects: HashMap<String, Vec<(String, u16)>>,
         /// (daemon machine, project) -> valid tokens
@@ -1121,6 +1131,9 @@ mod tests {
                         .contains_key(&key)
                         .then(String::new)
                         .ok_or_else(|| "no peer entry".into())
+                }
+                "pair-peer-active" if self.human_only_peer => {
+                    Err("daemon: error: forbidden: this endpoint is human-only".into())
                 }
                 "pair-peer-active" => self
                     .peer
@@ -1691,6 +1704,41 @@ mod tests {
             c.iter()
                 .any(|x| x.starts_with("pair-m") || x == "pair-store")
         }));
+    }
+
+    // br-88e4: a human-only refusal proves the caller was accepted, so the peer token is not
+    // reported missing; a genuinely absent entry still is.
+    #[test]
+    fn a_human_only_refusal_on_the_peer_probe_is_not_a_missing_token() {
+        let mut s = sim();
+        let (ok, out) = run(&s, &Options::default());
+        assert!(ok, "{out}");
+        s.human_only_peer = true;
+        let dry = Options {
+            dry_run: true,
+            ..Default::default()
+        };
+        let (_, out) = run(&s, &dry);
+        assert!(out.contains("would mint 0"), "{out}");
+        assert!(!out.contains("peer: would mint"), "{out}");
+        // One role entry removed: that one is named, and a pair clears it.
+        let key = s
+            .creds
+            .borrow()
+            .keys()
+            .find(|k| k.1 == ORCHESTRATOR)
+            .cloned()
+            .unwrap();
+        s.creds.borrow_mut().remove(&key);
+        let (_, out) = run(&s, &dry);
+        assert!(
+            out.contains(&format!("would mint: {ORCHESTRATOR} -> ")),
+            "{out}"
+        );
+        let (ok, out) = run(&s, &Options::default());
+        assert!(ok, "{out}");
+        let (_, out) = run(&s, &dry);
+        assert!(!out.contains("would mint:"), "{out}");
     }
 
     fn peer_only() -> Options {

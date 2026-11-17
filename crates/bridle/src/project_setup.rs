@@ -208,6 +208,38 @@ fn service_status(has_unit: bool, up: bool) -> Status {
 
 /// `paired` and `report` are a dry-run `token pair` for this project: `Ok(false)` is a failure or
 /// an unreachable machine, and a "would mint" line is a token still to make.
+/// Names each token a dry-run `token pair` would mint: which principal, held on which machine,
+/// for which project (the report's headings give the holder machine).
+fn missing_tokens(report: &str) -> String {
+    let mut holder = String::new();
+    let mut found = Vec::new();
+    for line in report.lines() {
+        if let Some(rest) = line.strip_prefix("machine ") {
+            holder = rest.split(' ').next().unwrap_or_default().to_string();
+            continue;
+        }
+        let line = line.trim();
+        let (peer, label) = if let Some(l) = line.strip_prefix("would mint: ") {
+            (false, l)
+        } else if let Some(l) = line.strip_prefix("peer: would mint on the receiver for ") {
+            (true, l)
+        } else {
+            continue;
+        };
+        // The label is "<role or machine> -> <daemon>/<project>".
+        let Some((who, to)) = label.split_once(" -> ") else {
+            continue;
+        };
+        let who = if peer { "peer" } else { who };
+        found.push(format!("{who} token held on {holder} for {to}"));
+    }
+    if found.is_empty() {
+        "on some machine".into()
+    } else {
+        found.join("; ")
+    }
+}
+
 fn tokens_status(paired: Result<bool, String>, report: &str) -> Status {
     match paired {
         Err(e) => Status::Unknown(e),
@@ -215,7 +247,7 @@ fn tokens_status(paired: Result<bool, String>, report: &str) -> Status {
             Status::Unknown("a machine could not be read (see `bridle token pair`)".into())
         }
         Ok(true) if report.contains("would mint") => {
-            Status::Unmet("tokens missing on some machine".into())
+            Status::Unmet(format!("tokens missing: {}", missing_tokens(report)))
         }
         Ok(true) => Status::Done("every token present".into()),
     }
@@ -1181,6 +1213,16 @@ mod tests {
             tokens_status(Ok(true), "would mint: orchestrator -> d/p\n"),
             Status::Unmet(_)
         ));
+        let Status::Unmet(why) = tokens_status(
+            Ok(true),
+            "machine remus (role tokens): would mint 1, kept 3\n  would mint: orchestrator -> flume/flume\n",
+        ) else {
+            panic!("expected unmet");
+        };
+        assert!(
+            why.contains("orchestrator token held on remus for flume/flume"),
+            "{why}"
+        );
         assert!(matches!(tokens_status(Ok(false), ""), Status::Unknown(_)));
         assert!(matches!(
             tokens_status(Err("bad".into()), ""),

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- `bridle project setup --check` no longer reports tokens missing when the daemon turns the peer-token probe away as human-only (the caller was accepted); a genuinely missing token is named by principal, holding machine and project (br-88e4).
+
 ### Changed
 
 - The settle-skip wording (project-manager role, orchestrator role, `task skip-settle --reason` help, design docs): the orchestrator and PM skip a settle period only when the human explicitly says to skip it (a deadline or "work it now" is not that), and in bridle's own project also for an urgent, critical fix the agent determines. Existing rule edited, none added; no migration (br-rqrd).
