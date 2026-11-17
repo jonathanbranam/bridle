@@ -2,11 +2,14 @@
 id = "br-8xas"
 title = "bridle ci keeps a re-run CI run red: it does not pick up a passing re-run attempt"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-11-17T17:50:22.210Z"
-updated_at = "2026-11-17T18:10:40.728271Z"
+updated_at = "2026-11-17T20:28:22.978789Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "agent:8xas",
+]
 ticket = "8xas"
 +++
 

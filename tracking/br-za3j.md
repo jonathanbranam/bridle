@@ -4,7 +4,7 @@ title = "Visitors can't comment on tasks they submitted ('a visitor may only com
 kind = "bug"
 state = "integrated"
 created_at = "2026-11-17T13:22:52.504Z"
-updated_at = "2026-11-17T20:27:48.540397Z"
+updated_at = "2026-11-17T20:28:07.925658Z"
 created_by = "external:orchestrator@remus"
 watchers = [
     "external:orchestrator@remus",
@@ -50,3 +50,6 @@ done: main merged; just check exit 0, 2016 tests passed (6 skipped); 14e21abc
 
 ### note · agent:manager-2 · 2026-11-17T20:27:48.540Z
 integrated: 5eae21b6ab2ecce1ca68f371a5090332490944ab (branch bridle/za3j)
+
+### note · agent:manager-2 · 2026-11-17T20:28:07.925Z
+cleanup: removed agent za3j, origin branch bridle/za3j, branch bridle/za3j
