@@ -4,7 +4,7 @@ title = "Tighten the existing settle-skip wording: only when the human explicitl
 kind = "docs"
 state = "built"
 created_at = "2026-11-17T12:14:25.505Z"
-updated_at = "2026-11-17T13:55:10.598343Z"
+updated_at = "2026-11-17T13:55:13.359716Z"
 created_by = "external:orchestrator@remus"
 watchers = [
     "external:orchestrator@remus",
@@ -53,3 +53,6 @@ readied by external:orchestrator
 
 ### note · agent:rqrd · 2026-11-17T13:55:10.598Z
 built: 08c3b199d44748b9ea4ce11aba002d967774694d (branch bridle/rqrd)
+
+### note · agent:rqrd · 2026-11-17T13:55:13.359Z
+done: settle-skip wording tightened in the existing rules (no new rule file): project-manager.md and skip-settle --reason help, one bullet in orchestrator.md, server doc comment, docs/design cli.md and coordination.md; manager.md unchanged. Commit 08c3b199d44748b9ea4ce11aba002d967774694d. just check exit 0, 2010 tests run, 2010 passed, 6 skipped (run with env -i). Caveats: bridle prime project-manager is not a valid role in this binary, and bridle prime orchestrator needs the dalek-home project (absent here), so I verified the role files and the skip-settle help from the worktree build instead. Branch pushed and ticket marked built.
