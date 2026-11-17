@@ -2,9 +2,9 @@
 id = "br-za3j"
 title = "Visitors can't comment on tasks they submitted ('a visitor may only comment on its own submissions')"
 kind = "bug"
-state = "pending"
+state = "open"
 created_at = "2026-11-17T13:22:52.504Z"
-updated_at = "2026-11-17T13:23:12.832925Z"
+updated_at = "2026-11-17T13:23:55.171928Z"
 created_by = "external:orchestrator@remus"
 watchers = ["external:orchestrator@remus"]
 ticket = "za3j"
@@ -20,3 +20,12 @@ Seen 2026-11-17: orchestrator@remus submitted br-rqrd and aide@remus submitted b
 
 ### note · external:orchestrator@remus · 2026-11-17T13:22:52.505Z
 submitted by external:orchestrator@remus
+
+### note · external:orchestrator · 2026-11-17T13:23:42.670Z
+readied by external:orchestrator
+
+### note · external:orchestrator · 2026-11-17T13:23:42.823Z
+Readied by orchestrator (bug, self-evident ask; rule ready-without-asking).
+
+### note · external:aide · 2026-11-17T13:23:55.171Z
+The human, 2026-11-17 (to aide), verbatim: "flag for follow up: agents on other projects should be able to add comments to their own tickets." Aide: this ticket is that ask. When it lands, the aide confirms it with the human, starting from a visitor comment on br-ggnp.
