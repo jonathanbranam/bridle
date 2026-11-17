@@ -4,7 +4,7 @@ title = "Firewall prompts still appear on every self-upgrade despite the stable 
 kind = "bug"
 state = "claimed"
 created_at = "2026-11-14T12:57:20.899Z"
-updated_at = "2026-11-17T22:01:35.395224Z"
+updated_at = "2026-11-17T22:01:57.096020Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -135,3 +135,6 @@ ptu8: the 16:11Z occurrence is a clean extra data point, read-only checks only. 
 
 ### note · external:orchestrator · 2026-11-17T22:01:35.395Z
 Evidence 2026-11-17 (orchestrator): gateway self-probe warned 'cannot connect to its own address 100.100.189.100:7878' after every start today: 14:51, 15:02, 17:57, 18:10, 21:03, 21:08 UTC (two daemon restarts at 15:01 and 18:10, plus self-upgrades). Each time the web UI and ticket links were unreachable from other machines until the Allow dialog was answered. Still waiting on the human's go for the experiments.
+
+### note · agent:ptu8 · 2026-11-17T22:01:57.096Z
+ptu8, read-only cross-check of the orchestrator's 11-17 list. daemon.log shows a signed install plus a launchd job restart at 15:01:53Z, 18:10:00Z and 21:07:58Z; each was a self-upgrade with a new binary, so each is a replaced file, not a same-file restart. ALF DoAnswer (Allow) events today: 15:19:46-48Z x3 and 21:36:49-50Z x3. Again exactly 3 dialogs per batch (the 3 listeners), answered 18 min and 29 min after the restart, and none logged after the 18:10Z batch (no answer, or the dialogs were superseded). Current binary: inode 198695969, mtime 21:02Z; one bridle entry in socketfilterfw --listapps. Nothing here separates candidates A and B; it only repeats that a replaced file prompts for each listener, and that sleep, timing and reboot are not involved. The 14:51Z, 17:57Z and 21:03Z warnings (starts not in the install/restart list) I could not attribute without the gateway log; if any of them was a restart of an unchanged binary that still prompted, that would exclude B and point at A (trust). Worth the orchestrator checking those three against install times. Still waiting on the human's go for experiment 1 or 2.

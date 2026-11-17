@@ -138,3 +138,4 @@
 {"actor":"agent:manager-2","at":"2026-11-17T20:44:58.832575Z","from":"built","task":"br-8xas","to":"integrated"}
 {"actor":"agent:d4bz","at":"2026-11-17T21:07:02.930462Z","from":"claimed","task":"br-d4bz","to":"built"}
 {"actor":"agent:manager-2","at":"2026-11-17T21:07:13.386254Z","from":"built","task":"br-d4bz","to":"integrated"}
+{"actor":"human","at":"2026-11-17T22:01:49.708Z","from":"","task":"br-brjp","to":"pending"}
