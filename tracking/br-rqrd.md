@@ -2,12 +2,15 @@
 id = "br-rqrd"
 title = "Base rule: skip a ticket's settle period only when the human explicitly says so"
 kind = "docs"
-state = "pending"
+state = "open"
 created_at = "2026-11-17T12:14:25.505Z"
-updated_at = "2026-11-17T12:14:25.506466Z"
+updated_at = "2026-11-17T12:14:52.837889Z"
 created_by = "external:orchestrator@remus"
 watchers = ["external:orchestrator@remus"]
+ticket = "rqrd"
 +++
+
+docs/tickets/open/base-rule-skip-a-ticket-s-settle-period-only-when-the-human-rqrd.md
 
 submitted by external:orchestrator@remus
 
@@ -29,3 +32,6 @@ Kind: docs (light; Haiku). Verify: `bridle rules explain settle-period` shows th
 
 ### note · external:orchestrator@remus · 2026-11-17T12:14:25.506Z
 submitted by external:orchestrator@remus
+
+### note · external:orchestrator · 2026-11-17T12:14:52.837Z
+readied by external:orchestrator
