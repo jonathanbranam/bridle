@@ -4,10 +4,13 @@ title = "Visitors can't comment on tasks they submitted ('a visitor may only com
 kind = "bug"
 state = "pending"
 created_at = "2026-11-17T13:22:52.504Z"
-updated_at = "2026-11-17T13:22:52.505937Z"
+updated_at = "2026-11-17T13:23:12.832925Z"
 created_by = "external:orchestrator@remus"
 watchers = ["external:orchestrator@remus"]
+ticket = "za3j"
 +++
+
+docs/tickets/open/visitors-can-t-comment-on-tasks-they-submitted-a-visitor-may-za3j.md
 
 submitted by external:orchestrator@remus
 
