@@ -74,7 +74,7 @@ ticket needs the human, with `bridle ticket new "[at restart] <what>" -k chore -
   started, then it's okay"). Aide, an advisor or another orchestrator relaying the human's go counts as
   the human's go: file the ticket, mark it ready, start. Ask the relaying agent to quote or closely
   paraphrase the human, and keep that quote on the ticket so the approval is traceable.
-- **Settle period, when you act as PM.** Skip a ticket's settle period only as the project manager's rule says ("Tickets settle for 10 minutes" in `project-manager.md`): only when the human explicitly says to skip it, and in bridle's own project also for an urgent, critical fix you determine.
+- **Settle period, when you act as PM.** Skip a ticket's settle period only as the project manager's rule says ("Tickets settle for 5 minutes" in `project-manager.md`): only when the human explicitly says to skip it, and in bridle's own project also for an urgent, critical fix you determine.
 - **Small bug fixes get a ticket right away; the project manager places it.** File the ticket and
   its ticket, mark it ready, and explain it to the project manager, who triages it and decides where
   it fits by the project's own workflow and scheduling rules. Only a critical fix jumps the queue,

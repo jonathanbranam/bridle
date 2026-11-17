@@ -192,10 +192,10 @@ Also read from `.bridle/config.toml` (defaults in parentheses; each is documente
 - `[state] push` (`true`): push `bridle/state` to `origin` after flushes; set to `false` to opt-out; see [[storage#The state branch]].
 - `[machine] check_interval` (`"30s"`), `load_per_core` (2.5), `load_quiet_below` (`"10m"`), `load_note_gap` (`"30m"`): [[operating-model#Load watch|load watch]].
 - `[disk] check_interval` (`"1h"`), `min_free_gb` (20): [[operating-model#Disk monitor|disk monitor]].
-- `[tasks] settle` (`"10m"`; `0` turns it off): how long a ticket waits after creation, a human
+- `[tasks] settle` (`"5m"`; `0` turns it off): how long a ticket waits after creation, a human
   comment/edit or a relay of the human's words before any work on it starts: claiming, planning,
   or spawning an agent for it (`agent spawn --ticket`), in any state. A `worker` spawn with `--ticket` is also refused unless the ticket is `planned` or `claimed` (br-h6h8). An invalid value warns, falls back to
-  10m and is reported by `bridle daemon doctor`; it never stops the daemon starting (coordination.md, "Settling").
+  5m and is reported by `bridle daemon doctor`; it never stops the daemon starting (coordination.md, "Settling").
 - `[tasks] open_stale` (`"4h"`; `0` turns it off): a task left `open` (no activity on it) this long
   goes back to `pending` with a thread note saying why, and the orchestrator and whoever readied it
   are messaged; a task with an open question is left alone, and so is a prepared version 2 ticket

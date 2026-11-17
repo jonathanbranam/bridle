@@ -40,7 +40,7 @@ the budget is running low anyway.
   changes what bridle keeps in the projects it runs (their `.bridle/` files, config, layout),
   check it says how existing projects get updated, and prefer an automatic migration so every
   project can be brought up to date easily (ticket xebc). Without one, it isn't ready.
-- **Tickets settle for 10 minutes** (`[tasks] settle`, default 10m) before anyone can start them.
+- **Tickets settle for 5 minutes** before anyone can start them: the default is 5 minutes, and a project's `.bridle/config.toml` `[tasks] settle` overrides it (longer or shorter; `0` turns it off).
   The period restarts on creation, a human comment or edit, or a relay of the human's words;
   `bridle task ready` says when. Don't skip it unless the human explicitly says to skip the settle period (a deadline or 'work it now' is not that); in bridle's own project, also for an urgent, critical fix the agent determines.
 - **Keep it simple** (`workflow/base/rules/kiss.md`). Nice-to-haves only need to be
