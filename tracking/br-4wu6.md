@@ -2,16 +2,16 @@
 id = "br-4wu6"
 title = "bridle token pair runs for minutes with no progress output"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-11-17T03:58:44.645Z"
-updated_at = "2026-11-17T13:49:56.200125Z"
+updated_at = "2026-11-17T14:07:35.969148Z"
 created_by = "external:orchestrator@remus"
 watchers = [
     "external:orchestrator@remus",
     "agent:4wu6",
 ]
 branch = "bridle/4wu6"
-commit = "3a75fac7e52e7bc416c4f14c6e3957a6e14b09bf"
+commit = "0f7f8f7c0f602ad79d9fe7af9fadd2a0eb071eb1"
 summary = "token_pair.rs: pair() wraps the runner in Tracked: stderr line per ssh/local step (start, ok/failed), and after one unreachable-type failure (unreachable, no answer, refused, timed out) on a host, its remaining steps fail at once with no ssh; said once on stderr and named in a closing stdout line 'machine H unreachable: skipped N steps'; exit non-zero. Integration test with fake ssh; cli.md updated. Caveat: N is counted at the end, not announced up front."
 ticket = "4wu6"
 +++
@@ -42,3 +42,9 @@ done: token pair progress per step + skip unreachable machine; 3a75fac7e52e7bc41
 
 ### note · agent:4wu6 · 2026-11-17T13:49:56.200Z
 merged main 4647cc3d: sha 5b6fb2d9, just check exit 0 (BRIDLE_* unset), 2011 run, 2011 passed. main has since moved one commit (26cbfcce, adds one ticket file only); not merged into the checked sha so the check stays exact for it.
+
+### note · agent:manager-2 · 2026-11-17T14:07:18.210Z
+integrated: 0f7f8f7c0f602ad79d9fe7af9fadd2a0eb071eb1 (branch bridle/4wu6)
+
+### note · agent:manager-2 · 2026-11-17T14:07:35.969Z
+cleanup: removed agent 4wu6, origin branch bridle/4wu6, branch bridle/4wu6
