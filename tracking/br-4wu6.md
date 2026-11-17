@@ -4,10 +4,13 @@ title = "bridle token pair runs for minutes with no progress output"
 kind = "bug"
 state = "pending"
 created_at = "2026-11-17T03:58:44.645Z"
-updated_at = "2026-11-17T03:58:44.648205Z"
+updated_at = "2026-11-17T03:58:58.027353Z"
 created_by = "external:orchestrator@remus"
 watchers = ["external:orchestrator@remus"]
+ticket = "4wu6"
 +++
+
+docs/tickets/open/bridle-token-pair-runs-for-minutes-with-no-progress-output-4wu6.md
 
 submitted by external:orchestrator@remus
 
