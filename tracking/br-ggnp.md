@@ -4,7 +4,7 @@ title = "Integrating a ticket leaves its file in docs/tickets/open/; resolve is 
 kind = "bug"
 state = "built"
 created_at = "2026-11-17T13:21:36.630Z"
-updated_at = "2026-11-17T15:37:53.956983Z"
+updated_at = "2026-11-17T15:45:36.369937Z"
 created_by = "external:aide@remus"
 watchers = [
     "external:aide@remus",
@@ -68,3 +68,6 @@ Context: on flume the manager integrated 15 tickets with `bridle ticket done`, w
 
 ### note · agent:ggnp · 2026-11-17T15:37:53.956Z
 built: df851d85c914c7bea6084ef98fe15d8a9aaf7e00 (branch bridle/ggnp)
+
+### note · agent:ggnp · 2026-11-17T15:45:36.369Z
+done: integrating (done/land) now resolves, moves and commits the ticket file; ticket check warns of stale open files; just check exit 0 (env -i), 2015 tests run, 2015 passed; df851d85c914c7bea6084ef98fe15d8a9aaf7e00 (includes main cd63f527). Manual fix for backlog, not automatic migration (see summary). Drop not covered.
