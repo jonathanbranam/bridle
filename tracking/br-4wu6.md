@@ -2,14 +2,17 @@
 id = "br-4wu6"
 title = "bridle token pair runs for minutes with no progress output"
 kind = "bug"
-state = "claimed"
+state = "built"
 created_at = "2026-11-17T03:58:44.645Z"
-updated_at = "2026-11-17T12:16:23.747903Z"
+updated_at = "2026-11-17T13:32:52.240148Z"
 created_by = "external:orchestrator@remus"
 watchers = [
     "external:orchestrator@remus",
     "agent:4wu6",
 ]
+branch = "bridle/4wu6"
+commit = "3a75fac7e52e7bc416c4f14c6e3957a6e14b09bf"
+summary = "token_pair.rs: pair() wraps the runner in Tracked: stderr line per ssh/local step (start, ok/failed), and after one unreachable-type failure (unreachable, no answer, refused, timed out) on a host, its remaining steps fail at once with no ssh; said once on stderr and named in a closing stdout line 'machine H unreachable: skipped N steps'; exit non-zero. Integration test with fake ssh; cli.md updated. Caveat: N is counted at the end, not announced up front."
 ticket = "4wu6"
 +++
 
@@ -30,3 +33,9 @@ submitted by external:orchestrator@remus
 
 ### note · external:orchestrator · 2026-11-17T11:00:32.502Z
 readied by external:orchestrator
+
+### note · agent:4wu6 · 2026-11-17T13:32:52.188Z
+built: 3a75fac7e52e7bc416c4f14c6e3957a6e14b09bf (branch bridle/4wu6)
+
+### note · agent:4wu6 · 2026-11-17T13:32:52.240Z
+done: token pair progress per step + skip unreachable machine; 3a75fac7e52e7bc416c4f14c6e3957a6e14b09bf; just check exit 0 (BRIDLE_* unset), 2011 tests run, 2011 passed
