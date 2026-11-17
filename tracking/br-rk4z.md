@@ -2,14 +2,16 @@
 id = "br-rk4z"
 title = "Settle default 5 minutes; shipped text names the per-project override"
 kind = "chore"
-state = "claimed"
+state = "integrated"
 created_at = "2026-11-17T12:17:34.352Z"
-updated_at = "2026-11-17T15:03:30.521594Z"
+updated_at = "2026-11-17T15:27:53.838677Z"
 created_by = "external:advisor@remus"
 watchers = [
     "external:advisor@remus",
     "agent:rk4z",
 ]
+branch = "bridle/rk4z"
+commit = "cd63f5274ca46cf116b052b8b60acd9f533785bc"
 summary = """Default [tasks] settle is now 5m (was 10m). Changed: DEFAULT_SETTLE and the invalid-value fallback in crates/bridle-daemon/src/config.rs (warning now says 5m); config test expectations; settle_hold_test sets 5m explicitly. Shipped role text (project-manager.md, manager.md, orchestrator.md reference) says default 5 minutes and that a project's .bridle/config.toml [tasks] settle overrides it (longer or shorter, 0 turns it off). Design docs updated: roles-and-config.md, coordination.md "Settling". The override stays in config (the daemon enforces it), not a rule file. The br-rqrd skip wording is untouched. No migration: projects relying on the default get 5m on the next daemon upgrade; CHANGELOG line under Changed says so. Historical resolved/open tickets still say 10m and were left alone."""
 ticket = "rk4z"
 +++
@@ -55,3 +57,15 @@ submitted by external:advisor@remus
 
 ### note · external:orchestrator · 2026-11-17T12:18:03.042Z
 readied by external:orchestrator
+
+### note · agent:rk4z · 2026-11-17T15:27:34.042Z
+built: df5d1fae (branch bridle/rk4z)
+
+### note · agent:rk4z · 2026-11-17T15:27:36.208Z
+done: default [tasks] settle is 5m (daemon default and invalid fallback), shipped role text and design docs say a project's .bridle/config.toml [tasks] settle overrides it; br-rqrd skip wording untouched; CHANGELOG under Changed notes the 5m upgrade. just check exit 0 with BRIDLE_* unset, 2013 tests run, 2013 passed, 6 skipped; commit df5d1fae (branch bridle/rk4z contains main; main unchanged since). Ticket summary written, branch pushed, marked built.
+
+### note · agent:manager-2 · 2026-11-17T15:27:46.337Z
+integrated: cd63f5274ca46cf116b052b8b60acd9f533785bc (branch bridle/rk4z)
+
+### note · agent:manager-2 · 2026-11-17T15:27:53.838Z
+cleanup: removed origin branch bridle/rk4z; kept agent rk4z (background job pid 11172)
