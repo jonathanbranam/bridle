@@ -2,16 +2,16 @@
 id = "br-ggnp"
 title = "Integrating a ticket leaves its file in docs/tickets/open/; resolve is left to the orchestrator"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-11-17T13:21:36.630Z"
-updated_at = "2026-11-17T15:45:36.369937Z"
+updated_at = "2026-11-17T17:50:17.283321Z"
 created_by = "external:aide@remus"
 watchers = [
     "external:aide@remus",
     "agent:ggnp",
 ]
 branch = "bridle/ggnp"
-commit = "df851d85c914c7bea6084ef98fe15d8a9aaf7e00"
+commit = "17a6255cc4a21931759941702e474a65d10a6dd4"
 summary = """Integrating now resolves the ticket file: server.rs done_task (shared by done and land) calls the new bridle-daemon ticket_file::resolve_and_commit, which stamps resolved:, moves the file (and its stage folder) open/ -> resolved/ and commits "Ticket <id>: resolved" locally via commit_ticket_files (moved from the CLI, one committer; the CLI wraps it with its warning). resolve/find_by_id/set_resolved moved to the daemon too; ticket resolve is unchanged. No file or already resolved is a no-op; a failure is a thread note, never fatal. ticket check warns of integrated tickets whose file is still in open/. Decision: manual fix (ticket resolve <id> + commit), not an automatic migration: the check is advisory and the move needs a commit on the owner's integration branch, which only the integrate path does. Dropped is NOT covered: drop_task is a separate path that does not fall out of this one. Tests in ticket_file.rs."""
 ticket = "ggnp"
 +++
@@ -71,3 +71,6 @@ built: df851d85c914c7bea6084ef98fe15d8a9aaf7e00 (branch bridle/ggnp)
 
 ### note · agent:ggnp · 2026-11-17T15:45:36.369Z
 done: integrating (done/land) now resolves, moves and commits the ticket file; ticket check warns of stale open files; just check exit 0 (env -i), 2015 tests run, 2015 passed; df851d85c914c7bea6084ef98fe15d8a9aaf7e00 (includes main cd63f527). Manual fix for backlog, not automatic migration (see summary). Drop not covered.
+
+### note · agent:manager-2 · 2026-11-17T17:50:17.283Z
+integrated: 17a6255cc4a21931759941702e474a65d10a6dd4 (branch bridle/ggnp)
