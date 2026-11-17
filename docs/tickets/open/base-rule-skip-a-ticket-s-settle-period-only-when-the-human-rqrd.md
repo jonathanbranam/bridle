@@ -13,21 +13,27 @@ related: []
 
 ## The ask
 
-Add a base workflow rule that binds every project, and align the command help and the role text with it.
+Edit the EXISTING settle-period text in the workflow. Do not add a new rule.
 
-The human, 2026-11-17, via advisor/flume (relayed by orchestrator@remus), verbatim: "Don't skip the 5-minute cooldown. Plus, you built that in 3 minutes, so it was completely unnecessary at this point. Don't skip the cooldown unless explicitly told to skip the cooldown. Or, in the case of bridle, if there are urgent, critical fixes determined by the agent, it can skip the cooldown. Otherwise, don't skip it." The human asked for a standing base rule, not a note.
+The human, 2026-11-17, via advisor/flume (relayed by orchestrator@remus), verbatim: "This should already be. This is already a bridle rule. I'm still baffled here. You don't need to add a rule, really. This is already a rule and should already be a rule. We don't need to add a new rule. Don't add a new rule. If the rule that exists doesn't work, then let's modify the existing bridle rule and update bridle."
 
-Context: orchestrator@remus skipped settle on flume's fl-macf citing "You have one hour before I get to work"; it was built and landed in about 3 minutes, so the skip saved nothing.
+On the substance, earlier the same morning, verbatim: "Don't skip the 5-minute cooldown. Plus, you built that in 3 minutes, so it was completely unnecessary at this point. Don't skip the cooldown unless explicitly told to skip the cooldown. Or, in the case of bridle, if there are urgent, critical fixes determined by the agent, it can skip the cooldown. Otherwise, don't skip it."
 
-The rule (text for the worker to tighten, in the repo's rule format with a Why line carrying the quote above): do not skip a ticket's settle period unless the human explicitly says to skip it. A deadline, an urgent priority or "you have an hour" is not such an instruction. One exception, in bridle's own project only: an agent may skip it for an urgent, critical fix it has itself determined (a red main, a downtime fix).
+Where the text is today (workflow v0.8.0, found by the advisor; the worker confirms):
+- workflow/base/roles/project-manager.md: "Don't skip it unless the human asks or it's an urgent downtime fix."
+- workflow/base/roles/manager.md: "Don't try to claim it earlier."
+- workflow/base/roles/orchestrator.md: nothing on settle, though the orchestrator acts as PM where there is none.
+- `bridle ticket skip-settle --reason` help (crates/bridle/src/cli.rs, grep `skip-settle`): "because the human asked or for an urgent downtime fix".
 
-## Files (the worker confirms)
+Why it failed: orchestrator@remus read "unless the human asks" as satisfied by "Please ready and work the ticket. You have one hour before I get to work" and skipped settle on fl-macf (flume); the ticket landed in about 3 minutes, so the skip saved nothing.
 
-- New rule `workflow/base/rules/settle-period.md` (look at a sibling such as workflow/base/rules/kiss.md or the other rules for frontmatter and the "must/should" level; this should be `must`).
-- `bridle ticket skip-settle --help` text (crates/bridle/src/cli.rs, grep `skip-settle` and `--reason`): today it says the orchestrator and PM may skip "because the human asked or for an urgent downtime fix"; change to "the human explicitly said to skip it", plus the bridle-only critical-fix exception.
-- The orchestrator and project-manager role text under workflow/ that mentions skipping settle (grep `skip-settle`, `settle`). The PM role line "Don't skip it unless the human asks or it's an urgent downtime fix" must match.
-- Any doc that describes the settle skip (grep docs/design for skip-settle).
+## The change
+
+- project-manager.md line and the skip-settle help become: skip "unless the human explicitly says to skip the settle period (a deadline or 'work it now' is not that); in bridle's own project, also for an urgent, critical fix the agent determines".
+- Make it reach the orchestrator when it acts as PM: one line in orchestrator.md pointing at the PM text, or the same wording there.
+- manager.md needs no change unless its line contradicts.
+- Grep docs/design for other descriptions of the skip and align them.
 
 ## Acceptance
 
-`bridle rules explain settle-period` shows the base rule; the help and role texts agree with it and with each other; `just check` with BRIDLE_* env unset (rule and snapshot tests may need updating: if a test lists base rules, add the new one). No project-file change in projects: base rules reach them through the existing workflow sync, so no migration; say so in the CHANGELOG entry if one is made for rules. Model: Haiku (light, mechanical).
+The prime text for project-manager and orchestrator (`bridle prime project-manager`, `bridle prime orchestrator`) shows the new wording; the help agrees; no new file under workflow/base/rules/; `just check` with BRIDLE_* env unset (update any snapshot that quotes the old text). Workflow text reaches projects through the existing sync, so no migration. Model: Haiku (light, mechanical).
