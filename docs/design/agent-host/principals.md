@@ -195,12 +195,11 @@ token, like `task ready --project`; the outbox is for a project with no such tok
   **The orchestrator's mail follows its waiter (br-dg5g).** The machine's orchestrator holds one
   waiter, on whichever project it was kept (dalek: `bridle`), which need not be its recorded home
   (`<host>-home`). The daemon that holds the open `wait-for-wake` writes `<project> <unix time>`
-  to `$BRIDLE_HOME/orchestrator-waiter` (shared by the machine's daemons) when the wait opens and
-  when it closes; a note older than the longest wait plus 2 minutes is ignored. For
+  to `$BRIDLE_HOME/orchestrator-waiter` (shared by the machine's daemons) when the wait opens, and removes it when the wait closes (only if it names that project and no other wait is open there; br-u974: it used to be rewritten on close, so a waiter that exited kept attracting mail for up to two hours); a note older than the longest wait plus 2 minutes is ignored. For
   `external:orchestrator`, `forward_to_home` and the wake forwarder use that project instead of
   the recorded home: the waiter's own daemon keeps the mail and wakes local, another project's
   daemon forwards to it. No note, a stale one, or an unreachable project: the recorded home as
-  before. Rejected: pairing the home as "the project that supervises the orchestrator" (pair
+  before. Mail kept on a daemon when no note exists and no wait is open there logs a warning (nothing will read it until a waiter starts). Rejected: pairing the home as "the project that supervises the orchestrator" (pair
   cannot see which project that is, and it would go wrong again whenever the orchestrator
   moves); a relay from `<host>-home` to the waiter (a second hop and a second queue to get
   stuck, and the home still has to learn where the waiter is).

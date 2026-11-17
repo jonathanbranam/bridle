@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Orchestrator mail no longer keeps going to a daemon whose waiter exited: closing the wait clears the shared waiter note (it was rewritten, so it lingered up to 2 hours), routing falls back to the home, and mail kept where no waiter is open anywhere logs a warning (br-u974).
 - `bridle token pair` says each ssh step on stderr as it starts and ends, and skips a machine's remaining steps after one failed connect (said once, named in a closing line, non-zero exit), instead of waiting out ssh's timeout per step (br-4wu6).
 - A `--reply-to` answer to an `external:aide` or `external:advisor` message with no origin and no such session on this daemon (a cross-project `send --project` lands that way) now fails and prints `bridle send --project <project> external:aide ...`, instead of waiting unread in the home daemon's own aide inbox (br-fjar).
 - A registered aide or advisor session with no `bridle agent wake` open for `[orchestrator] waiter_grace` raises one incident and a note to the orchestrator, cleared when a waiter returns; `wake --stop` and closed sessions raise nothing (br-t8wk).

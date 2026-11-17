@@ -58,6 +58,21 @@ pub fn note_orchestrator_waiter(home: &std::path::Path, project: &str) {
     }
 }
 
+/// Forgets the note when it names `project`: the waiter there has gone, so routing must fall
+/// back to the home rather than trust the note until its TTL (br-u974). A note naming another
+/// project is that daemon's and stays.
+pub fn clear_orchestrator_waiter(home: &std::path::Path, project: &str) {
+    if orchestrator_waiter(home).as_deref() == Some(project) {
+        let _ = std::fs::remove_file(home.join(WAITER_FILE));
+    }
+}
+
+/// True when mail for the orchestrator kept on `project`'s daemon will sit unseen: no waiter is
+/// noted anywhere on the machine and none is open here.
+pub fn orchestrator_mail_unwatched(home: &std::path::Path, open_here: u32) -> bool {
+    open_here == 0 && orchestrator_waiter(home).is_none()
+}
+
 /// The project whose daemon holds the orchestrator's waiter, if one was noted recently.
 pub fn orchestrator_waiter(home: &std::path::Path) -> Option<String> {
     let text = std::fs::read_to_string(home.join(WAITER_FILE)).ok()?;
@@ -711,6 +726,20 @@ impl Wakes {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn a_closed_waiter_is_forgotten_and_unwatched_mail_is_flagged() {
+        let dir = tempfile::tempdir().expect("tmp");
+        note_orchestrator_waiter(dir.path(), "flume");
+        assert!(!orchestrator_mail_unwatched(dir.path(), 0));
+        // Another project's close leaves the note alone.
+        clear_orchestrator_waiter(dir.path(), "remus-home");
+        assert_eq!(orchestrator_waiter(dir.path()).as_deref(), Some("flume"));
+        clear_orchestrator_waiter(dir.path(), "flume");
+        assert_eq!(orchestrator_waiter(dir.path()), None);
+        assert!(orchestrator_mail_unwatched(dir.path(), 0));
+        assert!(!orchestrator_mail_unwatched(dir.path(), 1));
+    }
+
     #[test]
     fn the_waiter_note_names_its_project_until_it_goes_stale() {
         let dir = tempfile::tempdir().expect("tmp");

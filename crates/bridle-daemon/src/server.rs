@@ -1016,7 +1016,11 @@ async fn orchestrator_wakes(
             detail: serde_json::Value::Null,
         }],
     };
-    crate::wake::note_orchestrator_waiter(state.outbox.bridle_home(), &state.project);
+    // Closing clears the note (unless another wait is still open here) so mail stops going to a
+    // daemon whose waiter exited; the grace-period re-wait notes it again (br-u974).
+    if state.waiters.open_count() <= 1 {
+        crate::wake::clear_orchestrator_waiter(state.outbox.bridle_home(), &state.project);
+    }
     if !wakes.is_empty() {
         state.waiters.delivered(chrono::Utc::now());
     }
@@ -2075,7 +2079,19 @@ async fn forward_to_home(
         match crate::wake::orchestrator_waiter(state.outbox.bridle_home()) {
             Some(w) if w == state.project => return Ok(None),
             Some(w) if state.outbox.check_destination(&w).is_ok() => recorded = Some(w),
-            _ => {}
+            Some(_) => {}
+            None if crate::wake::orchestrator_mail_unwatched(
+                state.outbox.bridle_home(),
+                state.waiters.open_count(),
+            ) =>
+            {
+                tracing::warn!(
+                    project = %state.project,
+                    "mail for external:orchestrator but no waiter is open anywhere on this \
+                     machine: it will sit unread until one starts"
+                );
+            }
+            None => {}
         }
     }
     let Some(home) = recorded else {
