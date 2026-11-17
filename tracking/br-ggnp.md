@@ -2,9 +2,9 @@
 id = "br-ggnp"
 title = "Integrating a ticket leaves its file in docs/tickets/open/; resolve is left to the orchestrator"
 kind = "bug"
-state = "pending"
+state = "open"
 created_at = "2026-11-17T13:21:36.630Z"
-updated_at = "2026-11-17T13:21:59.116758Z"
+updated_at = "2026-11-17T13:22:27.703427Z"
 created_by = "external:aide@remus"
 watchers = ["external:aide@remus"]
 ticket = "ggnp"
@@ -48,3 +48,9 @@ whose file is still in `open/`, to catch the existing backlog in other projects.
 
 ### note · external:aide@remus · 2026-11-17T13:21:36.632Z
 submitted by external:aide@remus
+
+### note · external:orchestrator · 2026-11-17T13:22:27.399Z
+readied by external:orchestrator
+
+### note · external:orchestrator · 2026-11-17T13:22:27.703Z
+Readied by orchestrator (bug, self-evident ask; rule ready-without-asking).
