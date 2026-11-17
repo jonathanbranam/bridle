@@ -713,7 +713,7 @@ fn require_incident_owner(
     Ok(())
 }
 
-/// First body line of a submitted task: `submitted by <principal>`.
+/// Marker line of a submitted task (line 1, or after the ticket path once accepted): `submitted by <principal>`.
 const SUBMITTED_BY: &str = "submitted by ";
 
 fn is_visitor(principal: &Principal) -> bool {
@@ -721,10 +721,13 @@ fn is_visitor(principal: &Principal) -> bool {
 }
 
 fn submitter_of(task: &Ticket) -> Option<&str> {
+    // Accepting a task into a ticket prepends the ticket file path (and a blank line), so the
+    // marker is no longer line 1. The submitter's own text always follows the marker, so the
+    // first marker among the leading lines is the real one. No migration needed.
     task.body
         .lines()
-        .next()
-        .and_then(|l| l.strip_prefix(SUBMITTED_BY))
+        .take(4)
+        .find_map(|l| l.strip_prefix(SUBMITTED_BY))
 }
 
 /// A visitor (`external:<name>@<machine>`) may only submit and comment on its own submission.
@@ -6215,6 +6218,26 @@ mod tests {
     //! end-to-end `?claimed_by=` filter is exercised at the `TicketManager`
     //! level instead (`tasks.rs`, `claim_blocks_ready_and_release_unblocks_it`).
     use super::*;
+
+    fn task_with_body(body: &str) -> Ticket {
+        serde_json::from_value(serde_json::json!({
+            "id": "t1", "title": "t", "kind": "feature", "state": "open",
+            "body": body, "thread": [],
+            "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-01-01T00:00:00Z",
+        }))
+        .expect("task")
+    }
+
+    #[test]
+    fn submitter_found_pending_and_after_accept() {
+        let pending = task_with_body("submitted by external:a@remus\n\nthe ask");
+        assert_eq!(submitter_of(&pending), Some("external:a@remus"));
+        let accepted = task_with_body(
+            "docs/tickets/open/x-abcd.md\n\nsubmitted by external:a@remus\n\nthe ask",
+        );
+        assert_eq!(submitter_of(&accepted), Some("external:a@remus"));
+        assert_eq!(submitter_of(&task_with_body("no marker")), None);
+    }
 
     #[test]
     fn upgrade_stop_says_when_from_to_and_downtime() {

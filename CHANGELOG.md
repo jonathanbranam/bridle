@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A visitor can comment on its own submission after triage accepts it into a ticket: the submitter is read from the first `submitted by` line among the leading body lines, not line 1 (br-za3j).
 - Integrating a ticket (`ticket done`, `land`) now resolves its file itself: stamps `resolved:`, moves it from `docs/tickets/open/` to `resolved/` and commits it on the integration branch (local only); `ticket check` warns of integrated tickets whose file is still in `open/` (br-ggnp).
 - `bridle project setup --check` no longer reports tokens missing when the daemon turns the peer-token probe away as human-only (the caller was accepted); a genuinely missing token is named by principal, holding machine and project (br-88e4).
 

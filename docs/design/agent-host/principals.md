@@ -154,7 +154,7 @@ are from `human@<machine>`, `--to me` is its own inbox, and a reply to one of it
 `BRIDLE_AS` so a session never handles a token.
 
 A visitor may also **submit** (`POST /v1/tasks/submit`, `bridle ticket submit`, ticket 93xm): an `open` task whose body starts
-`submitted by <principal>`, with a first thread note saying so. It may comment on its own submissions only; planning,
+`submitted by <principal>`, with a first thread note saying so. It may comment on its own submissions only (also after triage accepts it into a ticket, which puts the file path before the marker: the submitter is the first `submitted by` line among the first four); planning,
 claiming, dropping and editing a task are refused for any visitor.
 
 ## Mail between daemons (3haz, slice 1)
