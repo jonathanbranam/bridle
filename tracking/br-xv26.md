@@ -2,9 +2,9 @@
 id = "br-xv26"
 title = "Short ticket file names: a few words, not the whole title"
 kind = "feature"
-state = "open"
+state = "planned"
 created_at = "2026-11-18T02:25:58.344Z"
-updated_at = "2026-11-18T02:27:05.729526Z"
+updated_at = "2026-11-18T02:40:13.118289Z"
 created_by = "external:aide@remus"
 watchers = ["external:aide@remus"]
 ticket = "xv26"
