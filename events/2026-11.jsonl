@@ -143,3 +143,4 @@
 {"actor":"external:orchestrator","at":"2026-11-18T02:26:35.439873Z","from":"pending","task":"br-xv26","to":"open"}
 {"actor":"agent:pm-1","at":"2026-11-18T02:40:13.118289Z","from":"open","task":"br-xv26","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-11-18T02:40:15.066037Z","queue":"reprioritized"}
+{"actor":"agent:xv26","at":"2026-11-18T03:01:26.341658Z","from":"claimed","task":"br-xv26","to":"built"}

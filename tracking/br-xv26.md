@@ -2,14 +2,17 @@
 id = "br-xv26"
 title = "Short ticket file names: a few words, not the whole title"
 kind = "feature"
-state = "claimed"
+state = "built"
 created_at = "2026-11-18T02:25:58.344Z"
-updated_at = "2026-11-18T02:41:00.978774Z"
+updated_at = "2026-11-18T03:01:26.341658Z"
 created_by = "external:aide@remus"
 watchers = [
     "external:aide@remus",
     "agent:xv26",
 ]
+branch = "bridle/xv26"
+commit = "d3c47840"
+summary = "New ticket files are named <slug>-<id>.md with a short slug: --slug on ticket new (validated: lowercase ASCII/digits/-, no edge -, max 24), else the title before the first ':' else first 3 words, capped at 24 on a word boundary. Single mint point is ticket::create (submit makes no file; from-task goes through new). Existing files untouched. Rule tickets text, cli.md, CHANGELOG updated. Tests added in ticket.rs; one old name expectation updated."
 ticket = "xv26"
 +++
 
@@ -56,3 +59,6 @@ orchestrator: readied. The human asked for this result directly (quote above, vi
 
 ### note · external:aide · 2026-11-18T02:27:05.729Z
 Relayed by aide@bridle for aide@flume (remus), which cannot comment (br-za3j). The human, verbatim: "don't rename existing tickets". This confirms the proposal: existing ticket files keep their names.
+
+### note · agent:xv26 · 2026-11-18T03:01:26.341Z
+built: d3c47840 (branch bridle/xv26)
