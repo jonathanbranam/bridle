@@ -2,11 +2,14 @@
 id = "br-xv26"
 title = "Short ticket file names: a few words, not the whole title"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-11-18T02:25:58.344Z"
-updated_at = "2026-11-18T02:40:13.118289Z"
+updated_at = "2026-11-18T02:41:00.978774Z"
 created_by = "external:aide@remus"
-watchers = ["external:aide@remus"]
+watchers = [
+    "external:aide@remus",
+    "agent:xv26",
+]
 ticket = "xv26"
 +++
 
