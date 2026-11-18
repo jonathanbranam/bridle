@@ -686,6 +686,10 @@ pub struct TicketNewArgs {
     /// The ticket's theme: a slug (lowercase letters, digits, hyphens).
     #[arg(long)]
     pub theme: Option<String>,
+    /// A short name for the file, `<slug>-<id>.md`: lowercase letters, digits, hyphens, at most 24
+    /// characters. Default: the title before its first `:`, else its first 3 words.
+    #[arg(long)]
+    pub slug: Option<String>,
     /// The ticket's kind, and its task's: there is no default.
     #[arg(short = 'k', long, value_enum, required_unless_present = "from_task")]
     pub kind: Option<TicketKindArg>,

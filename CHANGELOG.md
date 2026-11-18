@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- New ticket files get short names: `bridle ticket new --slug <words>` (lowercase ASCII, digits, `-`, at most 24 characters), else the title before its first `:` or its first 3 words, capped at 24 characters. Existing files are untouched: no rename, no migration. Rule `tickets` updated (br-xv26).
 - The default `[tasks] settle` is now 5 minutes (was 10), and the shipped role text and design docs say a project's `.bridle/config.toml` `[tasks] settle` overrides it. Projects relying on the default get 5m on the next daemon upgrade; a project that sets `settle` keeps its value (br-rk4z).
 - The settle-skip wording (project-manager role, orchestrator role, `task skip-settle --reason` help, design docs): the orchestrator and PM skip a settle period only when the human explicitly says to skip it (a deadline or "work it now" is not that), and in bridle's own project also for an urgent, critical fix the agent determines. Existing rule edited, none added; no migration (br-rqrd).
 

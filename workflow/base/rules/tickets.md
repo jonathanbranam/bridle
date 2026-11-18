@@ -4,7 +4,9 @@ severity: should
 roles: [orchestrator, advisor, project-manager, manager, worker, reviewer, designer]
 ---
 Tickets live in `docs/tickets/open/` and `docs/tickets/resolved/`, one file each,
-`<descriptive-tail>-<id>.md`. Use the `bridle` binary for everything mechanical:
+`<short-slug>-<id>.md`: a few words, at most 24 characters. Pass a short `--slug` to
+`ticket new` (`flume-clone`, not the title); without one it takes the title before its first `:`,
+else its first 3 words. Existing file names keep their names. Use the `bridle` binary for everything mechanical:
 
 - `bridle ticket new "<title>" --kind <kind>` mints one (fresh ID, frontmatter, and its tracking row, `pending`, with the same ID; `--body`/`--body-file` write the ask). Kinds: `feature`, `fix` (the change that fixes a `bug` report), `docs`, `chore`, `arch-revision` (the change kinds), `bug` (a report), `epic` (a large initiative split into child tickets with `parent`), `question`, `research`, `explore`, `incident`, `re-evaluate`. There is no `idea` kind: whether a ticket is scheduled is its state. Once the ticket is committed on main with its ask, `bridle ticket ready <id>` marks it ready (who may ready what: rule `ready-without-asking`; it refuses an empty ask or an uncommitted ticket). `bridle ticket resolve <id>`
   stamps `resolved:` and moves it to `resolved/`; `bridle ticket set <id> <field> <value>` edits

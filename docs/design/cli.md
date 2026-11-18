@@ -337,7 +337,7 @@ bridle workflow spec coverage [--root DIR] [--tests DIR ...] [--require-all] [--
                                              and the unbound list as 'file:line: s-id title'; exits 1
                                              with --require-all if any unbound (default exit 0); local
                                              only, no daemon call
-bridle ticket new "<title>" --kind <kind> [--repos a,b] [--blocked-by ids] [--related ids] [--theme slug] [--body t | --body-file f] [--for-human [--priority P]]   mints and, when on the integration branch, commits the file (never pushes; br-gakc), so `ticket ready` works right after (without a body, warns on stderr that the ticket cannot be readied until its ask is written under `## The ask`)
+bridle ticket new "<title>" --kind <kind> [--repos a,b] [--blocked-by ids] [--related ids] [--theme slug] [--slug words] [--body t | --body-file f] [--for-human [--priority P]]   mints and, when on the integration branch, commits the file (never pushes; br-gakc), so `ticket ready` works right after (without a body, warns on stderr that the ticket cannot be readied until its ask is written under `## The ask`)
                                              `docs/tickets/open/<slug>-<id>.md` (repo root found via git): a
                                              fresh 4-character ID unique across `open/` and `resolved/`,
                                              frontmatter id, title, kind (required, no default: the task kinds), created (UTC date), created_by (the calling principal, optional; omitted when no daemon answers), repos (default: the

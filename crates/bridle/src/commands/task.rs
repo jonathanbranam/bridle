@@ -185,6 +185,7 @@ pub(super) async fn task_new(cli: &Cli, args: &RowNewArgs) -> Result<(), CliErro
             blocked_by: Vec::new(),
             related: Vec::new(),
             theme: None,
+            slug: None,
             kind: Some(args.kind),
             body: args.body.clone(),
             body_file: args.body_file.clone(),

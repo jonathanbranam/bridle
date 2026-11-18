@@ -25,7 +25,8 @@ pub use bridle_daemon::ticket_file::{find_by_id, resolve};
 
 const ID_ALPHABET: &[u8] = b"abcdefghjkmnpqrstuvwxyz23456789";
 const ID_LEN: usize = 4;
-const MAX_SLUG: usize = 60;
+/// A ticket file's slug is a few words, so the name stays short (br-xv26).
+const MAX_SLUG: usize = 24;
 
 /// First line of a task body made from a ticket before the `ticket` field (vk3y); still read
 /// from a daemon that hasn't migrated it yet.
@@ -185,6 +186,7 @@ pub(crate) async fn new(cli: &Cli, repo: &Path, args: &TicketNewArgs) -> Result<
     let fields = Fields {
         title: &title,
         id: id.as_deref(),
+        slug: args.slug.as_deref(),
         ask: &ask,
         kind,
         repos: &repos,
@@ -197,6 +199,9 @@ pub(crate) async fn new(cli: &Cli, repo: &Path, args: &TicketNewArgs) -> Result<
     };
     if let Some(t) = fields.theme {
         check_theme(t)?;
+    }
+    if let Some(sl) = fields.slug {
+        check_slug(sl)?;
     }
     let today = chrono::Utc::now().date_naive().to_string();
     let path = create(&root, &fields, &today, &task_id_tails(cli).await)?;
@@ -851,6 +856,8 @@ async fn check_cmd(cli: &Cli, repo: &Path, args: &TicketCheckArgs) -> Result<(),
 pub struct Fields<'a> {
     /// Use this id instead of minting one (see `reusable_id`).
     pub id: Option<&'a str>,
+    /// The file name's short slug (`--slug`, already checked); derived from the title when `None`.
+    pub slug: Option<&'a str>,
     pub title: &'a str,
     /// Text of "The ask" (may be empty).
     pub ask: &'a str,
@@ -890,7 +897,7 @@ pub fn create(
             mint_id(&taken)
         }
     };
-    let slug = slugify(f.title);
+    let slug = f.slug.map_or_else(|| slugify(f.title), str::to_string);
     let name = if slug.is_empty() {
         format!("ticket-{id}.md")
     } else {
@@ -1702,19 +1709,42 @@ fn mint_id(taken: &HashSet<String>) -> String {
     unreachable!("the id space is finite but far larger than any repo's tickets")
 }
 
+/// The short slug for a title: the text before the first `:` when it has one, else the first
+/// three words; capped at `MAX_SLUG` on a word boundary.
 fn slugify(title: &str) -> String {
-    let mut slug = String::new();
-    for c in title.chars() {
-        if c.is_ascii_alphanumeric() {
-            slug.push(c.to_ascii_lowercase());
-        } else if !slug.is_empty() && !slug.ends_with('-') {
-            slug.push('-');
-        }
+    let words_of = |t: &str| -> Vec<String> {
+        t.split(|c: char| !c.is_ascii_alphanumeric())
+            .filter(|w| !w.is_empty())
+            .map(|w| w.to_ascii_lowercase())
+            .collect()
+    };
+    let mut words = match title.split_once(':').map(|(h, _)| words_of(h)) {
+        Some(w) if !w.is_empty() => w,
+        _ => words_of(title).into_iter().take(3).collect(),
+    };
+    while words.len() > 1 && words.join("-").len() > MAX_SLUG {
+        words.pop();
     }
-    if slug.len() > MAX_SLUG {
-        slug.truncate(MAX_SLUG);
+    let mut slug = words.join("-");
+    slug.truncate(MAX_SLUG);
+    slug
+}
+
+/// An explicit `--slug`: lowercase letters, digits and hyphens, no leading or trailing hyphen,
+/// at most `MAX_SLUG` characters.
+fn check_slug(s: &str) -> anyhow::Result<()> {
+    let ok = !s.is_empty()
+        && s.len() <= MAX_SLUG
+        && !s.starts_with('-')
+        && !s.ends_with('-')
+        && s.bytes()
+            .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-');
+    if !ok {
+        bail!(
+            "slug {s:?} is not valid: lowercase ASCII letters, digits and hyphens, no leading or trailing hyphen, at most {MAX_SLUG} characters"
+        );
     }
-    slug.trim_end_matches('-').to_string()
+    Ok(())
 }
 
 fn list(items: &[String]) -> String {
@@ -1741,6 +1771,7 @@ mod tests {
     fn fields<'a>(title: &'a str, repos: &'a [String]) -> Fields<'a> {
         Fields {
             id: None,
+            slug: None,
             title,
             ask: "",
             kind: TicketKind::Feature,
@@ -1846,7 +1877,7 @@ mod tests {
         assert_eq!(p.parent().unwrap(), dir.path().join("open"));
         assert_eq!(
             p.file_name().unwrap().to_string_lossy(),
-            format!("fix-the-thing-now-{id}.md")
+            format!("fix-the-{id}.md")
         );
         let text = std::fs::read_to_string(&p).unwrap();
         assert_eq!(
@@ -1935,6 +1966,59 @@ mod tests {
         let p = create(root, &f, "2026-10-03", &HashSet::from(["k7tm".to_string()])).unwrap();
         assert_eq!(id_of(&p).as_deref(), Some("k7tm"));
         assert_eq!(reusable_id(root, "br-k7tm"), None);
+    }
+
+    #[test]
+    fn slug_is_short_and_derived_from_the_title() {
+        assert_eq!(
+            slugify("flume clone: set up a whole workspace"),
+            "flume-clone"
+        );
+        assert_eq!(slugify("Set up a whole workspace from tasks"), "set-up-a");
+        assert_eq!(
+            slugify("Internationalization: and so on"),
+            "internationalization"
+        );
+        // Capped at 24 on a word boundary.
+        assert_eq!(slugify("alpha bravo: x"), "alpha-bravo");
+        assert_eq!(slugify("abcdefghijkl mnopqrstuvwx yz: x"), "abcdefghijkl");
+        assert_eq!(slugify("a".repeat(40).as_str()).len(), MAX_SLUG);
+        assert_eq!(slugify("!!!"), "");
+    }
+
+    #[test]
+    fn explicit_slug_is_validated_and_names_the_file() {
+        assert!(check_slug("flume-clone").is_ok());
+        for bad in ["Flume", "-a", "a-", "a_b", "", &"a".repeat(25)] {
+            assert!(check_slug(bad).is_err(), "{bad}");
+        }
+        let d = tempfile::tempdir().unwrap();
+        let repos = vec!["p".to_string()];
+        let f = Fields {
+            slug: Some("short"),
+            id: Some("k7tm"),
+            ..fields("A very long title indeed here", &repos)
+        };
+        let p = create(d.path(), &f, "2026-11-17", &HashSet::new()).unwrap();
+        assert_eq!(p.file_name().unwrap(), "short-k7tm.md");
+    }
+
+    #[test]
+    fn creating_leaves_an_existing_file_name_alone() {
+        let d = tempfile::tempdir().unwrap();
+        let open = d.path().join("open");
+        std::fs::create_dir_all(&open).unwrap();
+        let old = open.join("a-very-long-old-title-set-up-everything-abcd.md");
+        std::fs::write(&old, "old").unwrap();
+        let repos = vec!["p".to_string()];
+        create(
+            d.path(),
+            &fields("A very long title", &repos),
+            "2026-11-17",
+            &HashSet::new(),
+        )
+        .unwrap();
+        assert_eq!(std::fs::read_to_string(&old).unwrap(), "old");
     }
 
     #[test]
