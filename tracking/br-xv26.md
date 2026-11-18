@@ -2,9 +2,9 @@
 id = "br-xv26"
 title = "Short ticket file names: a few words, not the whole title"
 kind = "feature"
-state = "pending"
+state = "open"
 created_at = "2026-11-18T02:25:58.344Z"
-updated_at = "2026-11-18T02:26:11.616348Z"
+updated_at = "2026-11-18T02:26:35.558575Z"
 created_by = "external:aide@remus"
 watchers = ["external:aide@remus"]
 ticket = "xv26"
@@ -44,3 +44,9 @@ flume (its task files) had already asked for a 40-50 char cap; here they want fa
 
 ### note · external:aide@remus · 2026-11-18T02:25:58.346Z
 submitted by external:aide@remus
+
+### note · external:orchestrator · 2026-11-18T02:26:35.439Z
+readied by external:orchestrator
+
+### note · external:orchestrator · 2026-11-18T02:26:35.558Z
+orchestrator: readied. The human asked for this result directly (quote above, via the flume aide / aide@remus); pm-1's design is a straight implementation of that ask, so no further question to the human.
