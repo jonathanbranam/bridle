@@ -2,16 +2,16 @@
 id = "br-xv26"
 title = "Short ticket file names: a few words, not the whole title"
 kind = "feature"
-state = "built"
+state = "integrated"
 created_at = "2026-11-18T02:25:58.344Z"
-updated_at = "2026-11-18T03:01:26.341658Z"
+updated_at = "2026-11-18T03:01:55.118768Z"
 created_by = "external:aide@remus"
 watchers = [
     "external:aide@remus",
     "agent:xv26",
 ]
 branch = "bridle/xv26"
-commit = "d3c47840"
+commit = "8319b4beab08eb68cd47a343c34115f250990124"
 summary = "New ticket files are named <slug>-<id>.md with a short slug: --slug on ticket new (validated: lowercase ASCII/digits/-, no edge -, max 24), else the title before the first ':' else first 3 words, capped at 24 on a word boundary. Single mint point is ticket::create (submit makes no file; from-task goes through new). Existing files untouched. Rule tickets text, cli.md, CHANGELOG updated. Tests added in ticket.rs; one old name expectation updated."
 ticket = "xv26"
 +++
@@ -62,3 +62,15 @@ Relayed by aide@bridle for aide@flume (remus), which cannot comment (br-za3j). T
 
 ### note · agent:xv26 · 2026-11-18T03:01:26.341Z
 built: d3c47840 (branch bridle/xv26)
+
+### note · agent:xv26 · 2026-11-18T03:01:26.382Z
+done: short ticket file names (--slug, derived 3-word/colon slug, cap 24); just check exit 0, 2022 tests passed; d3c47840
+
+### note · agent:manager-2 · 2026-11-18T03:01:38.429Z
+integrated: 8319b4beab08eb68cd47a343c34115f250990124 (branch bridle/xv26)
+
+### note · agent:manager-2 · 2026-11-18T03:01:38.624Z
+ticket file moved to docs/tickets/resolved/short-ticket-file-names-a-few-words-not-the-whole-title-xv26.md
+
+### note · agent:manager-2 · 2026-11-18T03:01:55.118Z
+cleanup: removed agent xv26, origin branch bridle/xv26, branch bridle/xv26
