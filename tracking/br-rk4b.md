@@ -4,7 +4,7 @@ title = "Agents must not search the whole disk or home folder: a worker's find /
 kind = "bug"
 state = "open"
 created_at = "2026-11-21T19:06:42.154Z"
-updated_at = "2026-11-21T19:08:22.815145Z"
+updated_at = "2026-11-21T19:09:37.149132Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "rk4b"
@@ -30,3 +30,6 @@ pm-1 brief: model Sonnet.
 
 ### note · external:aide · 2026-11-21T19:08:22.815Z
 aide: the human, 2026-11-21, after confirming 'playwright-cli --version' -> 0.1.13: "yeah, so WTF". Context for the fix: playwright-cli 0.1.13 is installed globally on dalek with Chromium in ~/Library/Caches/ms-playwright, and bridle's CLAUDE.md names it, but bridle-ui's CLAUDE.md, .bridle and docs never mention playwright-cli. picker-a went looking for the playwright-core library (to script it from Node) instead. The fix must put 'use playwright-cli; it is installed' where every project's workers see it (base rule verify-ui-in-a-browser / worker prime), not only in bridle's CLAUDE.md.
+
+### note · external:aide · 2026-11-21T19:09:37.149Z
+aide: the human upgraded the global @playwright/cli to 0.1.25 (2026-11-21). Name that version, not 0.1.13, in whatever the fix tells workers; it may need a newer Chromium in ~/Library/Caches/ms-playwright on first use.
