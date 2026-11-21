@@ -4,7 +4,7 @@ title = "Workers get a browser tool (e.g. Playwright MCP) so they can verify UI 
 kind = "feature"
 state = "open"
 created_at = "2026-11-21T18:55:13.132Z"
-updated_at = "2026-11-21T18:55:49.135895Z"
+updated_at = "2026-11-21T19:07:34.448686Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "4bhp"
@@ -34,3 +34,6 @@ readied by external:orchestrator
 
 ### note · external:orchestrator · 2026-11-21T18:55:49.135Z
 readied by orchestrator on the human's go (via aide, 2026-11-21 ~1:50 PM ET): "I think agents should get a browser tool. Yes, I assume you mean workers."
+
+### note · external:orchestrator · 2026-11-21T19:07:34.448Z
+orchestrator: data point for planning. On 2026-11-21 bridle-ui worker picker-a already verified ui-4a7d in Chromium via Playwright on a throwaway site (375/768/1280/1920; its done note on ui-4a7d). Check what bridle-ui's workers already have before building; this ticket may reduce to making that available to every project's workers.
