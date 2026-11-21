@@ -2,11 +2,14 @@
 id = "br-78hb"
 title = "Bug: worker-like roles (researcher, designer, prototyper, document-reviewer) pass the lifecycle check, which matches the role name worker exactly"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-11-21T16:17:17.032Z"
-updated_at = "2026-11-21T17:00:17.648540Z"
+updated_at = "2026-11-21T17:17:47.193284Z"
 created_by = "external:advisor/agentic-dev"
-watchers = ["external:advisor/agentic-dev"]
+watchers = [
+    "external:advisor/agentic-dev",
+    "agent:w78hb",
+]
 ticket = "78hb"
 +++
 

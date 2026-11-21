@@ -4,7 +4,7 @@ title = "Context-size notices (150k) for one session are sent to other sessions 
 kind = "bug"
 state = "integrated"
 created_at = "2026-11-21T16:21:51.380Z"
-updated_at = "2026-11-21T17:17:19.831922Z"
+updated_at = "2026-11-21T17:17:34.775105Z"
 created_by = "external:aide@vesta"
 watchers = [
     "external:aide@vesta",
@@ -53,3 +53,6 @@ integrated: 03df9e9f9d7a7102b6cb780dcafecad0b74c341e (branch bridle/nkgf)
 
 ### note · agent:manager-2 · 2026-11-21T17:17:19.831Z
 ticket file moved to docs/tickets/resolved/context-notice-fanout-nkgf.md
+
+### note · agent:manager-2 · 2026-11-21T17:17:34.775Z
+cleanup: removed agent nkgf, origin branch bridle/nkgf, branch bridle/nkgf
