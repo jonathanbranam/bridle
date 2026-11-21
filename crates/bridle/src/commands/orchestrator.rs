@@ -24,6 +24,15 @@ The human will mostly reach you through Remote Control.";
 /// one-command-orchestrator-handover-d4mz.md, step 2), read from the current
 /// directory — run this from the repo root. Purely local: no daemon call.
 pub(super) async fn prime(cli: &Cli, args: &PrimeArgs) -> Result<(), CliError> {
+    if args.startup_only {
+        let role = match args.role {
+            PrimeRoleArg::Aide => "aide",
+            _ => {
+                return Err(anyhow::anyhow!("--startup-only is for the aide role only").into());
+            }
+        };
+        return prime_startup_only(role);
+    }
     match args.role {
         PrimeRoleArg::Orchestrator => prime_orchestrator(cli).await,
         PrimeRoleArg::Advisor => prime_advisor(),
@@ -153,6 +162,80 @@ fn prime_role_file(role: &str) -> Result<(), CliError> {
         print!("\n{rules}\n");
     }
     Ok(())
+}
+
+/// `bridle prime <role> --startup-only`: just the `[startup.<role>]` command's section. The aide
+/// session's SessionStart hook runs it, so Claude Code puts the output in context with no agent
+/// step to skip or shorten.
+fn prime_startup_only(role: &str) -> Result<(), CliError> {
+    let repo = std::env::current_dir().context("current directory")?;
+    let config =
+        bridle_daemon::config::Config::load(&repo).context("loading .bridle/config.toml")?;
+    if let Some(sc) = config.startup.get(role) {
+        print!("{}", startup_section(sc, &repo));
+    }
+    Ok(())
+}
+
+/// Output beyond this is cut, with the limit stated in the text (never silently).
+const STARTUP_OUTPUT_CAP: usize = 256 * 1024;
+
+/// Run the role's `[startup.<role>]` command (`sh -c`, in the project's workspace, stdout and
+/// stderr merged) and render it as a section. A failure, a timeout or empty output is a visible
+/// line, never nothing (br-r8td).
+fn startup_section(sc: &bridle_daemon::config::StartupCommand, dir: &Path) -> String {
+    use std::io::Read;
+    let head = format!("## Startup command: `{}`\n\n", sc.command);
+    let spawned = std::process::Command::new("sh")
+        .arg("-c")
+        .arg(format!("{{ {}\n}} 2>&1", sc.command))
+        .current_dir(dir)
+        .stdin(std::process::Stdio::null())
+        .stdout(std::process::Stdio::piped())
+        .spawn();
+    let mut child = match spawned {
+        Ok(c) => c,
+        Err(e) => return format!("{head}startup command failed: could not start: {e}\n"),
+    };
+    let mut pipe = child.stdout.take().expect("stdout was piped");
+    let reader = std::thread::spawn(move || {
+        let mut buf = Vec::new();
+        let _ = pipe.read_to_end(&mut buf);
+        buf
+    });
+    let started = std::time::Instant::now();
+    let status = loop {
+        match child.try_wait() {
+            Ok(Some(s)) => break Ok(s),
+            Ok(None) if started.elapsed() >= sc.timeout => {
+                let _ = child.kill();
+                let _ = child.wait();
+                break Err(format!("timed out after {}s", sc.timeout.as_secs()));
+            }
+            Ok(None) => std::thread::sleep(std::time::Duration::from_millis(20)),
+            Err(e) => break Err(format!("wait failed: {e}")),
+        }
+    };
+    let raw = reader.join().unwrap_or_default();
+    let mut out = String::from_utf8_lossy(&raw).into_owned();
+    if out.len() > STARTUP_OUTPUT_CAP {
+        let mut cut = STARTUP_OUTPUT_CAP;
+        while !out.is_char_boundary(cut) {
+            cut -= 1;
+        }
+        out.truncate(cut);
+        out.push_str(&format!(
+            "\n[startup command output cut at {STARTUP_OUTPUT_CAP} bytes]\n"
+        ));
+    }
+    match status {
+        Err(why) => format!("{head}startup command failed: {why}\n{out}"),
+        Ok(s) if !s.success() => format!("{head}startup command failed: {s}\n{out}"),
+        Ok(_) if out.trim().is_empty() => {
+            format!("{head}startup command produced no output\n")
+        }
+        Ok(_) => format!("{head}{}\n", out.trim_end()),
+    }
 }
 
 /// The aide role's file from the resolved workflow, then the project's own

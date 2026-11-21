@@ -394,6 +394,23 @@ successful warm build, if `deps` holds over 100,000 entries, the daemon deletes 
 time, once). `warm_target` also skips the clone, logs a warning and continues cold when the
 source is over that threshold, so a bloated source cannot hold a spawn.
 
+## Startup command (per role)
+
+`[startup.<role>] command = "<shell command>"`, optional `timeout_secs` (default 30); unset = off,
+so no existing project changes (br-r8td). Only the `aide` role is wired. `bridle prime aide
+--startup-only` runs it with `sh -c` in the project's workspace, stdout and stderr merged, and
+prints its full output under a `## Startup command` heading (plain `bridle prime aide` does not
+include it). A non-zero exit, a timeout or no output becomes a visible line ("startup command
+failed: ..." / "produced no output"), never nothing. Output over 256 KiB is cut with the limit
+stated in the text. The command is arbitrary code from the project's own config, same trust as
+the rest of it, run as the user who starts the aide session.
+
+Delivery: when the project sets `[startup.aide]`, `bridle session aide` adds a SessionStart hook
+(`bridle prime aide --startup-only`, timeout = `timeout_secs` + 10) to the session's `--settings`.
+Claude Code adds a SessionStart hook's stdout to the session's context, so the agent runs nothing
+and cannot pipe or shorten it; it re-runs on resume and `/clear`. Not a PreToolUse hook. Without
+the setting the settings are unchanged. Other roles do not read the key yet.
+
 ## Worktree setup command
 
 `[worktrees] setup = "<shell command>"` (optional, unset = nothing runs): after `git worktree

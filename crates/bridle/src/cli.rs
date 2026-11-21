@@ -996,6 +996,10 @@ pub struct PrimeArgs {
     /// task gets the exploring agent's paragraph).
     #[arg(long, value_name = "ID")]
     pub task: Option<String>,
+    /// Print only the role's `[startup.<role>]` command output (the aide session's SessionStart
+    /// hook runs this); nothing when the role has none.
+    #[arg(long)]
+    pub startup_only: bool,
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]

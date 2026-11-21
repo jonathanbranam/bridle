@@ -1637,6 +1637,9 @@ pub struct Config {
     pub setup: Option<String>,
     /// `[worktrees] setup_timeout_secs` (default 600).
     pub setup_timeout: Duration,
+    /// `[startup.<role>]`: a command whose output `bridle prime <role>` appends to that
+    /// role's startup text (br-r8td). Empty (off) by default.
+    pub startup: BTreeMap<String, StartupCommand>,
     /// `[worktrees] copy`: repo-relative files copied into each new worktree before setup.
     pub copy: Vec<String>,
     /// `[worktrees] layout`/`root`: where new worker worktrees live.
@@ -1723,6 +1726,7 @@ impl Default for Config {
             warm_target: true,
             setup: None,
             setup_timeout: Duration::from_secs(10 * 60),
+            startup: BTreeMap::new(),
             copy: Vec::new(),
             worktree_layout: WorktreeLayout::Default,
             worktree_pairs: BTreeMap::new(),
@@ -2256,6 +2260,19 @@ impl Config {
             config.commands = config.commands.merge(raw_commands);
         }
 
+        for (role, c) in raw.startup {
+            if c.command.trim().is_empty() {
+                continue;
+            }
+            config.startup.insert(
+                role,
+                StartupCommand {
+                    command: c.command,
+                    timeout: Duration::from_secs(c.timeout_secs.unwrap_or(30)),
+                },
+            );
+        }
+
         if let Some(w) = raw.worktrees {
             if let Some(v) = w.warm_target {
                 config.warm_target = v;
@@ -2638,6 +2655,8 @@ struct RawConfig {
     #[serde(default)]
     worktrees: Option<RawWorktrees>,
     #[serde(default)]
+    startup: BTreeMap<String, RawStartup>,
+    #[serde(default)]
     branches: Option<RawBranches>,
     #[serde(default)]
     ci: Option<RawCi>,
@@ -2875,6 +2894,20 @@ struct RawCommands {
     check: Option<String>,
     #[serde(default)]
     check_worker: Option<String>,
+}
+
+/// A role's startup-context command (`[startup.<role>]`, br-r8td).
+#[derive(Debug, Clone, PartialEq)]
+pub struct StartupCommand {
+    pub command: String,
+    pub timeout: Duration,
+}
+
+#[derive(Debug, Deserialize)]
+struct RawStartup {
+    command: String,
+    #[serde(default)]
+    timeout_secs: Option<u64>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -3521,6 +3554,19 @@ pub fn render_system_prompt(
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn startup_command_parses_per_role_and_defaults_off() {
+        assert!(Config::parse("").expect("parse").startup.is_empty());
+        let cfg = Config::parse(
+            "[startup.aide]\ncommand = \"meta-notes prime\"\n[startup.x]\ncommand = \" \"\ntimeout_secs = 5\n",
+        )
+        .expect("parse");
+        assert_eq!(cfg.startup.len(), 1, "blank command is off");
+        let a = &cfg.startup["aide"];
+        assert_eq!(a.command, "meta-notes prime");
+        assert_eq!(a.timeout, Duration::from_secs(30));
+    }
+
     #[test]
     fn auto_mode_environment_orders_and_limits_project_lines() {
         let repo = Path::new("/w/proj");

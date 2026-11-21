@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- `[startup.<role>] command = "..."` in `.bridle/config.toml`: the aide session's SessionStart hook runs it in the project workspace (timeout, default 30s) and Claude Code puts its full output in context, so e.g. the notes aide gets `meta-notes prime` with no agent step to skip. Failure, timeout or empty output shows a visible line; output over 256 KiB is cut with the limit stated. Default off (br-r8td).
+
 ### Changed
 
 - Workers can already drive `playwright-cli` (the base worker allows plain `Bash`, verified with a real `bridle dev site up`, open and screenshot from a worker session), so no role or MCP change: a test now pins it and dev-site.md says so and where screenshots go (br-4bhp).

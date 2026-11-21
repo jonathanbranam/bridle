@@ -106,6 +106,31 @@ fn with_layer_hooks(
     v.to_string()
 }
 
+/// The aide's `[startup.aide]` command (br-r8td): a SessionStart hook runs it, and Claude Code adds
+/// a SessionStart hook's stdout to the session's context, so the agent has no step to skip.
+/// Unchanged settings when the project sets none.
+fn with_startup_hook(settings: &str, repo: &std::path::Path) -> String {
+    let Ok(config) = bridle_daemon::config::Config::load(repo) else {
+        return settings.to_string();
+    };
+    let Some(sc) = config.startup.get("aide") else {
+        return settings.to_string();
+    };
+    let Ok(mut v) = serde_json::from_str::<serde_json::Value>(settings) else {
+        return settings.to_string();
+    };
+    let entry = serde_json::json!({"hooks": [{
+        "type": "command",
+        "command": "bridle prime aide --startup-only",
+        "timeout": sc.timeout.as_secs() + 10,
+    }]});
+    match v["hooks"]["SessionStart"].as_array_mut() {
+        Some(own) => own.push(entry),
+        None => v["hooks"]["SessionStart"] = serde_json::Value::Array(vec![entry]),
+    }
+    v.to_string()
+}
+
 /// Adds `autoMode.environment` (br-fc9a) for the project in `repo`, so the human's classifier
 /// context follows the workspace instead of the global file. Not written anywhere.
 fn with_auto_mode(settings: &str, home: &std::path::Path, repo: &std::path::Path) -> String {
@@ -247,7 +272,7 @@ pub async fn run(cli: &Cli, role: &SessionRole) -> Result<(), CliError> {
             }
             let args = claude_args(
                 &with_auto_mode(
-                    &with_layer_hooks(&advisor_settings(), &layer_hooks),
+                    &with_startup_hook(&with_layer_hooks(&advisor_settings(), &layer_hooks), &repo),
                     &home,
                     &repo,
                 ),
@@ -1060,6 +1085,32 @@ fn process_start(pid: i32) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_aide_gets_a_session_start_hook_only_when_a_startup_command_is_set() {
+        let d = tempfile::tempdir().unwrap();
+        let base = advisor_settings();
+        assert_eq!(
+            with_startup_hook(&base, d.path()),
+            base,
+            "no config: unchanged"
+        );
+        std::fs::create_dir_all(d.path().join(".bridle")).unwrap();
+        std::fs::write(
+            d.path().join(".bridle/config.toml"),
+            "[startup.aide]\ncommand = \"x\"\ntimeout_secs = 5\n",
+        )
+        .unwrap();
+        let v: serde_json::Value =
+            serde_json::from_str(&with_startup_hook(&base, d.path())).unwrap();
+        let hooks = v["hooks"]["SessionStart"].as_array().unwrap();
+        assert_eq!(hooks.len(), 2, "next to the session-note hook");
+        assert_eq!(
+            hooks[1]["hooks"][0]["command"],
+            "bridle prime aide --startup-only"
+        );
+        assert_eq!(hooks[1]["hooks"][0]["timeout"], 15);
+    }
 
     #[test]
     fn a_note_under_120_seconds_old_counts_as_the_answer() {
