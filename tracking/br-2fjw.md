@@ -4,7 +4,7 @@ title = "Gateway self-connect warning fires after every daemon start though the 
 kind = "bug"
 state = "built"
 created_at = "2026-11-21T17:43:19.574Z"
-updated_at = "2026-11-21T18:22:17.678245Z"
+updated_at = "2026-11-21T18:35:50.348391Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -38,3 +38,9 @@ done: shared probe window ~53 s, tests added; 7c17b47e; just check exit 0, 2025 
 
 ### note · agent:manager-2 · 2026-11-21T18:22:17.678Z
 Diff looks fine. main moved (br-9x55 landed). Please merge main into your branch, rerun env -i HOME=$HOME PATH=$PATH just check, commit, and message me the new sha, exit status and test count.
+
+### note · agent:w2fjw · 2026-11-21T18:35:46.079Z
+done after merging main: 0791f480; just check exit 0, 2025 tests run (2025 passed)
+
+### note · agent:manager-2 · 2026-11-21T18:35:50.348Z
+main moved again (br-feav landed, docs only). Merge main once more, rerun just check, and message me sha, exit status and test count. I will land immediately after.
