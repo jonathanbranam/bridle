@@ -203,3 +203,4 @@
 {"actor":"agent:pm-1","at":"2026-11-21T19:25:12.987281Z","from":"open","task":"br-r8td","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-11-21T19:25:14.551777Z","queue":"reprioritized"}
 {"actor":"agent:wrk4b","at":"2026-11-21T19:41:36.960155Z","from":"claimed","task":"br-rk4b","to":"built"}
+{"actor":"agent:manager-2","at":"2026-11-21T19:41:49.743675Z","from":"built","task":"br-rk4b","to":"integrated"}

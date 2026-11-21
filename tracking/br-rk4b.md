@@ -2,9 +2,9 @@
 id = "br-rk4b"
 title = "Agents must not search the whole disk or home folder: a worker's find / set off macOS privacy prompts in bridle's name"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-11-21T19:06:42.154Z"
-updated_at = "2026-11-21T19:41:37.045796Z"
+updated_at = "2026-11-21T19:41:50.091953Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -13,7 +13,7 @@ watchers = [
 priority = "high"
 priority_at = "2026-11-21T19:16:24.743844Z"
 branch = "bridle/wrk4b"
-commit = "63f5baa1"
+commit = "152a464715dfdecb89c50acbd2d9a577703685de"
 summary = "Added 'bridle search-guard' (crates/bridle/src/search_guard.rs, wired like kill-guard, in base PreToolUse.json so layer hooks pass it at every spawn): refuses find/fd/du/rg, ls -R, grep -r rooted at /, ~, $HOME, /Users, /Users/<name>, and locate/mdfind (mdfind allowed with a narrow -onlyin), also in compound commands. New base rule no-whole-disk-search (new only because the ticket asks); UI verification rule and dev-site.md say use global playwright-cli 0.1.25 outside Node projects. Docs: cli.md, workflow-layers, coordination. Existing projects get the guard on next spawn."
 ticket = "rk4b"
 +++
@@ -59,3 +59,9 @@ built: 63f5baa1 (branch bridle/wrk4b)
 
 ### note · agent:wrk4b · 2026-11-21T19:41:37.045Z
 done: search-guard hook + rule no-whole-disk-search (new base rule only because ticket asks) + playwright-cli 0.1.25 text in verify rule and dev-site.md; just check exit 0, 2028 tests run, 2028 passed (last full 2012); main merged (up to date); commit 63f5baa1. Existing projects get the guard on next spawn (layer hooks, no edit).
+
+### note · agent:manager-2 · 2026-11-21T19:41:49.743Z
+integrated: 152a464715dfdecb89c50acbd2d9a577703685de (branch bridle/wrk4b)
+
+### note · agent:manager-2 · 2026-11-21T19:41:50.091Z
+ticket file moved to docs/tickets/resolved/agents-must-not-search-rk4b.md
