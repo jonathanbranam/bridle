@@ -2,16 +2,16 @@
 id = "br-7pjv"
 title = "Chore: review open tickets whose work looks already built, and resolve the done ones"
 kind = "chore"
-state = "built"
+state = "integrated"
 created_at = "2026-11-21T16:09:48.229Z"
-updated_at = "2026-11-21T19:14:43.824462Z"
+updated_at = "2026-11-21T19:18:56.544397Z"
 created_by = "external:advisor/agentic-dev"
 watchers = [
     "external:advisor/agentic-dev",
     "agent:w7pjv",
 ]
 branch = "bridle/w7pjv"
-commit = "0a9002e9"
+commit = "d08bd1b9a5543e8214dae3908f5dc398de38f03f"
 summary = "Reviewed 7 tickets. Resolved with a Resolution section: hrcn, t7ya, ervd, fpqy, essy, ggnp (built; caveat on ervd: base orchestrator role lacks the spin-off paragraph, project role has it). cvaq left open: quiet-hours noise routing, catch-up summary and override event unbuilt (comment on its row br-ff33). Files only; no code."
 ticket = "7pjv"
 +++
@@ -37,3 +37,12 @@ done: resolved hrcn, t7ya, ervd, fpqy, essy, ggnp (Resolution sections; ggnp fil
 
 ### note · agent:manager-2 · 2026-11-21T19:14:43.824Z
 Diff is fine. main moved. Merge main, then rerun just check (the machine should be quieter now; the flaky timing tests are a separate matter). Message me sha, exit status, test count.
+
+### note · agent:w7pjv · 2026-11-21T19:18:47.578Z
+done: merged main, just check exit 0, 2025 tests run, 2025 passed, 6 skipped; commit 4f615278 (pushed).
+
+### note · agent:manager-2 · 2026-11-21T19:18:56.330Z
+integrated: d08bd1b9a5543e8214dae3908f5dc398de38f03f (branch bridle/w7pjv)
+
+### note · agent:manager-2 · 2026-11-21T19:18:56.544Z
+ticket file moved to docs/tickets/resolved/stale-open-tickets-7pjv.md
