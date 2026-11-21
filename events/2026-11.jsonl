@@ -150,3 +150,5 @@
 {"actor":"external:aide","at":"2026-11-21T15:14:44.231802Z","from":"pending","task":"br-fq8z","to":"open"}
 {"actor":"agent:pm-1","at":"2026-11-21T15:35:09.873453Z","from":"open","task":"br-fq8z","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-11-21T15:35:11.477458Z","queue":"reprioritized"}
+{"actor":"human","at":"2026-11-21T16:09:40.897Z","from":"","task":"br-9x55","to":"pending"}
+{"actor":"human","at":"2026-11-21T16:09:48.229Z","from":"","task":"br-7pjv","to":"pending"}
