@@ -2,11 +2,14 @@
 id = "br-z8ru"
 title = "UI work ships without visual inspection: strict workflow and controls for UI tickets"
 kind = "re-evaluate"
-state = "planned"
+state = "claimed"
 created_at = "2026-11-21T17:36:25.104Z"
-updated_at = "2026-11-21T17:50:11.887407Z"
+updated_at = "2026-11-21T17:51:06.166308Z"
 created_by = "external:aide@vesta"
-watchers = ["external:aide@vesta"]
+watchers = [
+    "external:aide@vesta",
+    "agent:wz8ru",
+]
 ticket = "z8ru"
 +++
 
