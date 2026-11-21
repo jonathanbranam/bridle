@@ -195,3 +195,4 @@
 {"actor":"external:orchestrator","at":"2026-11-21T19:01:02.456163Z","from":"pending","task":"br-r8td","to":"open"}
 {"actor":"human","at":"2026-11-21T19:06:42.154Z","from":"","task":"br-rk4b","to":"pending"}
 {"actor":"external:aide","at":"2026-11-21T19:07:00.114650Z","from":"pending","task":"br-rk4b","to":"open"}
+{"actor":"agent:w7pjv","at":"2026-11-21T19:14:37.358543Z","from":"claimed","task":"br-7pjv","to":"built"}
