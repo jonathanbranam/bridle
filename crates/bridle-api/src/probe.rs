@@ -16,6 +16,17 @@ use crate::types::ConnectBackRequest;
 
 const ATTEMPT_TIMEOUT: Duration = Duration::from_secs(10);
 
+/// Waits before each attempt after a start (about 53 s in all, ticket 2fjw). The tailnet path
+/// and the peer's view of a restarted listener can take longer than the old ~23 s to settle,
+/// and only the last attempt decides a block, so a false alarm woke the orchestrator.
+pub const PROBE_WAITS: [Duration; 5] = [
+    Duration::from_secs(3),
+    Duration::from_secs(10),
+    Duration::from_secs(10),
+    Duration::from_secs(15),
+    Duration::from_secs(15),
+];
+
 /// Connects to `addr` from this host.
 pub async fn self_connect(addr: SocketAddr) -> bool {
     matches!(
@@ -161,6 +172,36 @@ mod tests {
         drop(l);
         let v = reachable(addr, &[Duration::ZERO], |_| async { None }).await;
         assert_eq!(v, Verdict::Blocked);
+    }
+
+    #[tokio::test]
+    async fn a_transient_peer_false_that_clears_is_reachable() {
+        let (_l, addr) = open_listener().await;
+        let n = std::sync::atomic::AtomicUsize::new(0);
+        let v = reachable(addr, &[Duration::ZERO; 3], |_| {
+            let i = n.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+            async move { Some(i >= 1) }
+        })
+        .await;
+        assert_eq!(v, Verdict::Reachable);
+    }
+
+    #[tokio::test]
+    async fn a_listener_that_binds_late_is_not_blocked() {
+        let (l, addr) = open_listener().await;
+        drop(l);
+        let rebind = tokio::spawn(async move {
+            tokio::time::sleep(Duration::from_millis(300)).await;
+            tokio::net::TcpListener::bind(addr).await.expect("rebind")
+        });
+        let v = reachable(
+            addr,
+            &[Duration::ZERO, Duration::from_millis(600)],
+            |_| async { None },
+        )
+        .await;
+        assert_eq!(v, Verdict::Unverified);
+        drop(rebind.await.expect("join"));
     }
 
     #[tokio::test]

@@ -7,7 +7,7 @@ use std::time::Duration;
 
 use anyhow::Context;
 use bridle_api::discovery;
-use bridle_api::probe::Verdict;
+use bridle_api::probe::{PROBE_WAITS, Verdict};
 use bridle_api::types::{
     AgentState, DaemonInfo, ExitInfo, PrincipalKind, SpawnRequest, event_kind,
 };
@@ -1458,12 +1458,6 @@ fn unverified_text(addr: SocketAddr) -> String {
          unnoticed. Upgrade the other machines' bridle, or check their daemons."
     )
 }
-
-const PROBE_WAITS: [Duration; 3] = [
-    Duration::from_secs(3),
-    Duration::from_secs(10),
-    Duration::from_secs(10),
-];
 
 /// Checks the daemon's own tailnet address a few times after start, from a peer machine when
 /// one answers (a same-host connect is not filtered by the firewall, ticket 9qws); if it never

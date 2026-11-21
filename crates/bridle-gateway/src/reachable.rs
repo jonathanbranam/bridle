@@ -13,11 +13,7 @@ use bridle_api::probe::Verdict;
 use crate::actions::resolve;
 use crate::discovery::{PROBE_TIMEOUT, current_targets};
 
-pub const PROBE_WAITS: [Duration; 3] = [
-    Duration::from_secs(3),
-    Duration::from_secs(10),
-    Duration::from_secs(10),
-];
+pub use bridle_api::probe::PROBE_WAITS;
 
 /// The incident text when the gateway cannot reach its own non-loopback address.
 pub fn unreachable_text(addr: SocketAddr) -> String {
