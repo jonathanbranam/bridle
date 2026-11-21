@@ -4,7 +4,7 @@ title = "Bug: worker-like roles (researcher, designer, prototyper, document-revi
 kind = "bug"
 state = "built"
 created_at = "2026-11-21T16:17:17.032Z"
-updated_at = "2026-11-21T17:37:48.324271Z"
+updated_at = "2026-11-21T17:42:14.339858Z"
 created_by = "external:advisor/agentic-dev"
 watchers = [
     "external:advisor/agentic-dev",
@@ -41,3 +41,6 @@ done: lifecycle endpoints + ready gate refuse every workdir=worktree role (unkno
 
 ### note · agent:manager-2 · 2026-11-21T17:37:48.324Z
 Diff looks good. main moved (br-nkgf landed). Please merge main into your branch, rerun env -i HOME=$HOME PATH=$PATH just check, commit, and message me the new sha, exit status and test count.
+
+### note · agent:w78hb · 2026-11-21T17:42:14.339Z
+done: merged main; just check exit 0, 2023 tests passed; c731809f2b32a4fd77ff8f2028401244489a339a (merge commit, pushed)
