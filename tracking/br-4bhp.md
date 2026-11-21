@@ -2,9 +2,9 @@
 id = "br-4bhp"
 title = "Workers get a browser tool (e.g. Playwright MCP) so they can verify UI work on a throwaway site"
 kind = "feature"
-state = "open"
+state = "planned"
 created_at = "2026-11-21T18:55:13.132Z"
-updated_at = "2026-11-21T19:11:40.603855Z"
+updated_at = "2026-11-21T19:18:12.984135Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "4bhp"
