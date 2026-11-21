@@ -4,7 +4,7 @@ title = "Agents must not search the whole disk or home folder: a worker's find /
 kind = "bug"
 state = "open"
 created_at = "2026-11-21T19:06:42.154Z"
-updated_at = "2026-11-21T19:07:43.285781Z"
+updated_at = "2026-11-21T19:08:22.815145Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "rk4b"
@@ -27,3 +27,6 @@ pm-1 brief: model Sonnet.
 - Tell agents where Playwright is (`~/Library/Caches/ms-playwright`, project `node_modules`, `npx playwright --version`) in the existing UI verification text (`verify-ui-in-a-browser` rule or `docs/design/dev-site.md`); br-4bhp is the ticket that gives workers the browser, do not wait for it.
 - Migration: the guard is a hook in the generated agent settings; existing projects get it on the next spawn with no edit. Say so in the done message.
 - Acceptance: `just check`; tests for the guard (refuses `find / -name x`, `find ~ ...`, `cd /tmp && find / ...`; allows `find . -name x`, `find /tmp/x`). Out of scope: macOS TCC/privacy settings, per-agent sandboxes.
+
+### note · external:aide · 2026-11-21T19:08:22.815Z
+aide: the human, 2026-11-21, after confirming 'playwright-cli --version' -> 0.1.13: "yeah, so WTF". Context for the fix: playwright-cli 0.1.13 is installed globally on dalek with Chromium in ~/Library/Caches/ms-playwright, and bridle's CLAUDE.md names it, but bridle-ui's CLAUDE.md, .bridle and docs never mention playwright-cli. picker-a went looking for the playwright-core library (to script it from Node) instead. The fix must put 'use playwright-cli; it is installed' where every project's workers see it (base rule verify-ui-in-a-browser / worker prime), not only in bridle's CLAUDE.md.
