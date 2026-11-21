@@ -3609,6 +3609,15 @@ mod tests {
             "worker should allow Agent"
         );
         assert!(worker.stop_check, "worker should have stop_check on");
+        // playwright-cli (br-4bhp) needs no entry of its own: plain `Bash` is in both lists, and
+        // dropping it to a pattern list would silently take the browser away from workers.
+        assert!(worker.allowed_tools.contains(&"Bash".to_string()));
+        assert!(
+            worker
+                .tools
+                .as_ref()
+                .is_some_and(|t| t.contains(&"Bash".to_string()))
+        );
 
         let manager = &cfg.roles["manager"];
         assert_eq!(manager.workdir, Workdir::Repo);

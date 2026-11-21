@@ -112,7 +112,10 @@ the fixture is shipped with the same bridle binary as the gateway, so it can't b
 - **Tool: `playwright-cli`** (global, 0.1.25, installed here; outside a Node project use it, with no install and no hunting for `playwright-core` or a whole-disk `find`, rule `no-whole-disk-search`; a Node project may have its own `npx playwright`; track-web's CLAUDE.md uses it): `open <url>`, log
   in with the printed login, click, `snapshot` to read the page, `screenshot --filename=` to
   `/tmp/<task-id>-verify/`, never the repo. A project with another browser tool names it in
-  its CLAUDE.md. If the tool is missing, rule `missing-tools` applies: ask, don't skip.
+  its CLAUDE.md. No role change is needed: the base worker allows plain `Bash`, which covers
+  `playwright-cli` (br-4bhp; a project that narrows its worker to `Bash(...)` patterns must add
+  `Bash(playwright-cli *)`). Attach a screenshot to the ticket by naming its path in the done
+  message or a ticket comment; there is no attachment store. If the tool is missing, rule `missing-tools` applies: ask, don't skip.
 - **Who:** the worker verifies before reporting done, and says in the done message what it
   clicked and what it saw (one line per acceptance item). The merger (manager) then brings up
   its own throwaway site from the branch and clicks through the acceptance items itself before

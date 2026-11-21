@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+
+- Workers can already drive `playwright-cli` (the base worker allows plain `Bash`, verified with a real `bridle dev site up`, open and screenshot from a worker session), so no role or MCP change: a test now pins it and dev-site.md says so and where screenshots go (br-4bhp).
+
 ### Fixed
 
 - Agents can no longer search the whole disk or home folder: a new `bridle search-guard` PreToolUse hook refuses `find /`, `find ~`, `mdfind`, `locate` and `du`/`ls -R`/`grep -r`/`rg` rooted at `/`, `~` or `/Users/<name>` (also in compound commands), because macOS blamed the walk on bridle and raised privacy prompts; new base rule `no-whole-disk-search`; the UI verification text now says to use the global `playwright-cli` 0.1.25 (br-rk4b).
