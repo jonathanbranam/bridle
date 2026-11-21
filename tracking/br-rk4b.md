@@ -4,7 +4,7 @@ title = "Agents must not search the whole disk or home folder: a worker's find /
 kind = "bug"
 state = "integrated"
 created_at = "2026-11-21T19:06:42.154Z"
-updated_at = "2026-11-21T19:41:50.091953Z"
+updated_at = "2026-11-21T19:42:13.851362Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -65,3 +65,6 @@ integrated: 152a464715dfdecb89c50acbd2d9a577703685de (branch bridle/wrk4b)
 
 ### note · agent:manager-2 · 2026-11-21T19:41:50.091Z
 ticket file moved to docs/tickets/resolved/agents-must-not-search-rk4b.md
+
+### note · agent:manager-2 · 2026-11-21T19:42:13.851Z
+cleanup: removed agent wrk4b, origin branch bridle/wrk4b, branch bridle/wrk4b
