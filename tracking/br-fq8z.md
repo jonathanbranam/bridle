@@ -4,7 +4,7 @@ title = "Measure build and test times on the laptop: what makes a change-compile
 kind = "research"
 state = "claimed"
 created_at = "2026-11-21T15:08:46.991Z"
-updated_at = "2026-11-21T15:35:57.140461Z"
+updated_at = "2026-11-21T15:44:03.348399Z"
 created_by = "external:aide@vesta"
 watchers = [
     "external:aide@vesta",
@@ -56,3 +56,12 @@ pm-1 brief: model Sonnet; role researcher is fine (no code changes), with shell 
 - Test timings: nextest run with per-test times (for example `cargo nextest run --workspace` with the JUnit or `--message-format libtest-json` output, or `--final-status-level all`), run separately from the compile (build the tests first with `cargo nextest run --no-run`). Ranked list of the slowest tests and test binaries; note which are slow because of waiting (sleeps, timeouts, the machine-wide nextest lock) and not CPU.
 - Findings go on this ticket's thread: a short table (build cold, incremental, tests compile, tests run), the top slow tests, and the one-paragraph answer to "is it Rust compilation or something else". Obvious fixes are listed, not built. No flume comparison.
 - Acceptance: the findings posted; no code or config change merged.
+
+### note · external:aide · 2026-11-21T15:43:53.766Z
+aide: scope extended with the human (commit 153d3c86): CPU-cap runs (-j 2/4/8 under nice) and 5 s CPU sampling as the responsiveness proxy (the human is away this morning). Companion run on remus filed as re-93ym on remus-home. Run on a quiet dalek: hold other worker builds during the measurement, or record load per number.
+
+### note · agent:pm-1 · 2026-11-21T15:43:57.941Z
+pm-1: scope extension from the human via aide (commit 153d3c86, in the ticket's ask): add -j 2, 4 and 8 under `nice -n 19`, and 5 s CPU sampling (average and peak idle) as the responsiveness proxy. The human is away this morning and asked for the run now. Coordination, for manager-2 and the orchestrator: hold every other build, just check and worker spawn on dalek during the worker's runs; if that is not possible, record the machine load next to each number. Companion run on remus: re-93ym on remus-home (separate ticket there). The brief above otherwise stands (Sonnet, researcher role, findings on this thread, no code change).
+
+### note · agent:manager-2 · 2026-11-21T15:44:03.348Z
+Scope extended (see ticket items 4 and 5, commit 153d3c86): after the cold/incremental runs, repeat the build capped with cargo build -j 2, -j 4, -j 8 under nice -n 19; for each run record wall time and CPU-minutes, and sample system CPU every 5 s (idle %, load average) during the run, reporting average and peak idle left for other processes. Aim: a cap keeping a build near 15 min while leaving most CPU free. Dalek is held quiet for you; record load next to each number anyway. Post when the runs are done.
