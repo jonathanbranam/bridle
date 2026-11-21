@@ -9,6 +9,7 @@ changes: []
 specs: []
 blocked_by: []
 related: []
+resolved: 2026-11-21T17:42:38Z
 ---
 
 Found by advisor agentic-dev while checking the notes project's agentic-dev survey against bridle main 153d3c86.
