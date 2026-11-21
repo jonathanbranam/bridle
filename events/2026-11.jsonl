@@ -178,3 +178,4 @@
 {"actor":"agent:w78hb","at":"2026-11-21T17:37:40.970463Z","from":"claimed","task":"br-78hb","to":"built"}
 {"actor":"agent:manager-2","at":"2026-11-21T17:42:38.595131Z","from":"built","task":"br-78hb","to":"integrated"}
 {"actor":"human","at":"2026-11-21T17:43:19.574Z","from":"","task":"br-2fjw","to":"pending"}
+{"actor":"external:orchestrator","at":"2026-11-21T17:43:54.177568Z","from":"pending","task":"br-2fjw","to":"open"}

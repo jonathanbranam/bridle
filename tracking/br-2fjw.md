@@ -2,12 +2,15 @@
 id = "br-2fjw"
 title = "Gateway self-connect warning fires after every daemon start though the gateway is reachable"
 kind = "bug"
-state = "pending"
+state = "open"
 created_at = "2026-11-21T17:43:19.574Z"
-updated_at = "2026-11-21T17:43:19.574970Z"
+updated_at = "2026-11-21T17:43:54.177568Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
+ticket = "2fjw"
 +++
+
+docs/tickets/open/gateway-self-probe-2fjw.md
 
 submitted by external:orchestrator
 
@@ -17,3 +20,6 @@ Observed on dalek 2026-11-21: after both daemon starts (17:41 and 17:42 UTC) the
 
 ### note · external:orchestrator · 2026-11-21T17:43:19.574Z
 submitted by external:orchestrator
+
+### note · external:orchestrator · 2026-11-21T17:43:54.177Z
+readied by external:orchestrator
