@@ -1,6 +1,6 @@
 # Coordination and communication
 
-> **Status (checked 2026-10-03):** Built and in use: edges (from ticket frontmatter, `bridle ticket link`; only `blocks` affects readiness), the settle period, task questions and answers, notes, human to-dos, incidents, messages to agents, roles and `human`, waking the manager, `main moved` notices, `bridle wait`, the Stop hook, the role's resolved rules in each agent's system prompt · Built, not wired in: the `arch-guard` PreToolUse hook (live only where `bridle sync` installed it) · Planned: cross-project edges, acting on `parent` and the provenance edges, `handoff`/`conflict` message kinds and send-to-task from `bridle send`, layer hooks passed at spawn, `bridle prime` output as a worker's first message
+> **Status (checked 2026-11-21):** Built and in use: edges (from ticket frontmatter, `bridle ticket link`; only `blocks` affects readiness), the settle period, task questions and answers, notes, human to-dos, incidents, messages to agents, roles and `human`, waking the manager, `main moved` notices, `bridle wait`, the Stop hook, the role's resolved rules in each agent's system prompt · Built and in use: layer hooks passed at every spawn, resume and renew (`arch-guard`, `case-guard`, `kill-guard`) · Planned: cross-project edges, acting on `parent` and the provenance edges, `handoff`/`conflict` message kinds and send-to-task from `bridle send`, `bridle orchestrator prime` output as a worker's first message
 
 ## Edges
 
@@ -146,11 +146,11 @@ stdin and stdout directly:
 |---|---|---|
 | **stdin user message** | a message to the agent. If the agent is working, it is folded into the running turn at the next tool boundary; if idle, it starts a turn. Acked by `--replay-user-messages` | built |
 | **stdout stream** | status, turn boundaries, tool use, usage, and liveness for leases | built |
-| **the first user message** | task-specific context at spawn (today: the spawn prompt; later: `bridle prime` output) | built (prompt only) |
+| **the first user message** | task-specific context at spawn (today: the spawn prompt; later: `bridle orchestrator prime` output) | built (prompt only) |
 | **`--append-system-prompt-file`** | role-scoped rules and guides, identical for every agent in a role so the prompt cache holds | built (bridle preamble + role prompt + the role's resolved rules; no guides) |
 | **Stop hook** → `bridle stop-check` | refuses to let a worker stop with an unreleased claim and no handoff note, a finished tree whose HEAD hasn't passed `commands.check_worker` (the hook runs it), or a finished tree with no task summary and `done:` report | built |
 | **`bridle wait` as background Bash** | an agent is re-invoked when a task reaches a state or a message arrives. For bridle-hosted agents a stdin message does the same | built |
-| **PreToolUse hooks** | enforce locked rules mechanically, e.g. `bridle arch-guard` on edits under `design/architecture/` | built, but live only where `bridle sync` installed it; passing layer hooks at spawn is planned. `git push` is denied by the role's `disallowed_tools`, not a hook, and `bridle accept` doesn't exist |
+| **PreToolUse hooks** | enforce locked rules mechanically, e.g. `bridle arch-guard` on edits under `design/architecture/` | built and live for every spawned agent: the daemon passes the layer hooks at spawn (`Config::layer_hooks`), no `sync` needed. `git push` is denied by the role's `disallowed_tools`, not a hook, and `bridle accept` doesn't exist |
 
 Hooks cost about 0.9 s each ([spike 01](docs/spikes/01-stream-json-findings.md),
 S11), so they're kept for enforcement, not delivery. An agent bridle doesn't

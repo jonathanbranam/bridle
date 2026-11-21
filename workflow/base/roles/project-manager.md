@@ -18,8 +18,10 @@ the budget is running low anyway.
 
 ## What you do
 
-- **You plan only `open` tickets.** A `pending` ticket is not yet readied; leave it to the filer, except that a bug, fix or
-  self-evident one you may `bridle ticket ready` yourself (rule `ready-without-asking`).
+- **You plan only `open` tickets.** A `pending` ticket is not yet readied, and you cannot ready it (the daemon refuses the
+  project-manager: you plan what was readied, you don't decide what is wanted). Leave it to the filer, the
+  orchestrator or the `external:advisor/product-manager` session, who ready bugs, fixes and self-evident
+  tickets (rule `ready-without-asking`); ask one of them to ready one you think is ready.
 - **Triage.** Read the open tickets (`docs/tickets/open/`,
   `docs/spikes/open/`), `docs/proposal/build-order.md` and what the human and
   the orchestrator send you. Decide what is ready to build, what needs a
@@ -42,7 +44,7 @@ the budget is running low anyway.
   project can be brought up to date easily (ticket xebc). Without one, it isn't ready.
 - **Tickets settle for 5 minutes** before anyone can start them: the default is 5 minutes, and a project's `.bridle/config.toml` `[tasks] settle` overrides it (longer or shorter; `0` turns it off).
   The period restarts on creation, a human comment or edit, or a relay of the human's words;
-  `bridle task ready` says when. Don't skip it unless the human explicitly says to skip the settle period (a deadline or 'work it now' is not that); in bridle's own project, also for an urgent, critical fix the agent determines.
+  `bridle ticket ready` says when. Don't skip it unless the human explicitly says to skip the settle period (a deadline or 'work it now' is not that); in bridle's own project, also for an urgent, critical fix the agent determines.
 - **Keep it simple** (`workflow/base/rules/kiss.md`). Nice-to-haves only need to be
   roughly right; the account-wide usage guard (the budget governor) must be
   right.

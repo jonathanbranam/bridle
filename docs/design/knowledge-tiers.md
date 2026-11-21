@@ -1,6 +1,6 @@
 # Project knowledge: the tiers
 
-> **Status (checked 2026-10-03):** Built, not wired in: the parsers and local commands for every tier (`bridle goals`, `arch`, `spec`, `explore`, `trace`); no project has a `design/` tree yet, and no role or rule points agents at one · Planned: the approval column as a mechanism (no gates exist; see [[docs/design/gates|gates]])
+> **Status (checked 2026-11-21):** Built, not wired in: the parsers and local commands for every tier (`bridle workflow goals`, `arch`, `spec`, `explore`, `trace`); only the specs tier is in use (bridle, bridle-ui and meta-notes have `design/specs/`; the stage rules `stage-specs` and `stage-apply` tell agents to write specs); no project has `design/goals`, `design/architecture` or `design/explore` · Planned: the approval column as a mechanism (no gates exist; see [[docs/design/gates|gates]])
 
 Each project keeps its knowledge in four tiers of artifact, ordered from long
 lifetime to short. They sit under a configurable root, `design/` by default:

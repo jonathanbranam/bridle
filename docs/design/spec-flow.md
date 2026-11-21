@@ -1,6 +1,6 @@
 # The spec flow, start to finish
 
-> **Status (checked 2026-10-03):** Built, not wired in: every command on this page (`bridle spec`, `goals`, `arch`, `explore`), `spec coverage`, `spec export --task`, `goals propose` and `arch propose` (these two call the daemon), and the pytest and vitest adapters; bridle uses them for its own specs (`design/specs/`, checked in `just check`); no other onboarded project does yet (track-web, bridle-ui and data-contracts have no `design/specs/`) · Planned: `explore adopt`, converting active OpenSpec changes to tasks
+> **Status (checked 2026-11-21):** Built, not wired in: every command on this page (`bridle workflow spec`, `goals`, `arch`, `explore`), `spec coverage`, `spec export --task`, `goals propose` and `arch propose` (these two call the daemon), and the pytest and vitest adapters; bridle uses them for its own specs (`design/specs/`, checked in `just check`); bridle-ui and meta-notes keep `design/specs/` too (track-web and data-contracts do not), and the stage rules (`workflow/base/rules/stage-specs.md`, `stage-apply.md`) tell stage agents to write and merge specs; no project has `design/goals`, `design/architecture` or `design/explore` · Planned: `explore adopt`, converting active OpenSpec changes to tasks
 
 One page for a project adopting bridle's spec tooling. Every command here is
 built, local, and makes no daemon call, except `goals propose` and `arch propose`. Details live in
@@ -13,15 +13,15 @@ reference for flags.
 
 Starting from OpenSpec (`openspec/specs/<capability>/spec.md`):
 
-1. **Check where you are.** `bridle spec check --root openspec/specs`. Fix any
+1. **Check where you are.** `bridle workflow spec check --root openspec/specs`. Fix any
    errors; a requirement without an id is only a warning at this point.
-2. **Import.** `bridle spec import openspec --dry-run`, then without
+2. **Import.** `bridle workflow spec import openspec --dry-run`, then without
    `--dry-run`. It moves each spec to `design/specs/<capability>.md` and assigns
    ids, with `design/specs/.ids` as the ledger. It changes nothing if any source
    has an error. Commit the moves and the ledger.
-3. **Assign ids** to anything added later: `bridle spec id`. Idempotent;
+3. **Assign ids** to anything added later: `bridle workflow spec id`. Idempotent;
    `--dry-run` shows what would change. Ids are never reused.
-4. **Enforce.** `bridle spec check --require-ids` now passes, and stays in your
+4. **Enforce.** `bridle workflow spec check --require-ids` now passes, and stays in your
    check from here on.
 
 Starting from nothing: write specs in `design/specs/`, then steps 3 and 4.
@@ -36,15 +36,15 @@ check: specs-check
     # ... the project's other checks
 
 specs-check:
-    bridle spec check --require-ids
-    bridle explore check
-    bridle arch list > /dev/null
-    bridle goals list > /dev/null
+    bridle workflow spec check --require-ids
+    bridle workflow explore check
+    bridle workflow arch list > /dev/null
+    bridle workflow goals list > /dev/null
 ```
 
 `arch list` and `goals list` exit non-zero on parse errors, so discarding their
 output makes them checks. As a pre-commit hook it is the same line:
-`bridle spec check --require-ids`. In CI, run the same recipe; nothing needs
+`bridle workflow spec check --require-ids`. In CI, run the same recipe; nothing needs
 the daemon.
 
 ## Feeding tests: `spec export`
@@ -52,13 +52,13 @@ the daemon.
 Nothing generated is committed. Adapters ask bridle for the scenarios at test
 collection time:
 
-- `bridle spec export --format json` prints `{"version": 1, "specs": [...]}`
+- `bridle workflow spec export --format json` prints `{"version": 1, "specs": [...]}`
   with every scenario (executable or not), each with its id, tags, steps and
   examples. An adapter (a pytest or vitest plugin) reads it and registers
   scenarios directly, reporting results by scenario id (`s-b310`). The full
   shape is in [[docs/design/specs-to-tests|specs to tests]]; fields may be
   added, and a rename or removal bumps `version`.
-- `bridle spec export --format gherkin --out .bridle/cache/features/` writes one
+- `bridle workflow spec export --format gherkin --out .bridle/cache/features/` writes one
   `.feature` per capability for runners that need files. Gitignore
   `.bridle/cache/`.
 
@@ -77,10 +77,10 @@ vendored by the project); until data-contracts adopts it,
 
 - **Goals**: any `*.md` under `design/goals/`; each goal is a `##` heading with
   a `{#g-..}` id and a `firmness · priority · stance` line.
-  `bridle goals list [--priority P] [--stance S] [--json]`.
+  `bridle workflow goals list [--priority P] [--stance S] [--json]`.
 - **Architecture**: any `*.md` under `design/architecture/`; each element is a
   `##` heading with a hand-written `{#a-.. [invariant]}` id.
-  `bridle arch list [--invariants] [--json]`. Duplicate or missing ids are errors.
+  `bridle workflow arch list [--invariants] [--json]`. Duplicate or missing ids are errors.
 
 Both take `--root DIR` when the project keeps them elsewhere.
 
@@ -88,23 +88,23 @@ Both take `--root DIR` when the project keeps them elsewhere.
 
 For work that deliberately diverges from the design:
 
-1. `bridle explore new <task-id>` scaffolds `design/explore/<id>/findings.md`
+1. `bridle workflow explore new <task-id>` scaffolds `design/explore/<id>/findings.md`
    with `status: open`; fill in `diverges-from` with the `g-`/`a-`/`r-`/`s-` ids.
 2. Work on the exploration branch. Only the findings doc merges to main.
-3. `bridle explore conclude <id>` or `bridle explore abandon <id>` sets the status.
-4. `bridle explore check` validates every findings doc's frontmatter.
+3. `bridle workflow explore conclude <id>` or `bridle workflow explore abandon <id>` sets the status.
+4. `bridle workflow explore check` validates every findings doc's frontmatter.
 
 ## Also built
 
-- `bridle spec coverage [--tests DIR] [--require-all]`: executable scenarios
+- `bridle workflow spec coverage [--tests DIR] [--require-all]`: executable scenarios
   whose id appears in no test source.
-- `bridle spec export --task ID` / `--scenario ID`: the export narrowed to a
+- `bridle workflow spec export --task ID` / `--scenario ID`: the export narrowed to a
   task's declared impact or one scenario (what `bridle test --task` was to do).
-- `bridle goals propose` and `bridle arch propose`: create a task proposing the
+- `bridle workflow goals propose` and `bridle workflow arch propose`: create a task proposing the
   change (daemon call). The human gates they lead to are planned.
 - The pytest and vitest adapters, in the `python` and `typescript` packs.
 
 ## Not yet (planned)
 
 - Converting active OpenSpec changes to tasks (archived changes stay in git).
-- `bridle explore adopt`: needs the arch-revision flow and its human gates.
+- `bridle workflow explore adopt`: needs the arch-revision flow and its human gates.

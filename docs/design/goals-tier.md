@@ -1,6 +1,6 @@
 # Goals: direction, not scope
 
-> **Status (checked 2026-10-03):** Built, not wired in: the goal parser (`bridle-spec` `goals`), `bridle goals list`, `bridle goals propose`; no role or rule tells agents to use them and no project has a `design/goals/` tree yet · Planned: the locked base rules below (not in `workflow/base/rules/`), `serves:` validation, human gating of goal changes
+> **Status (checked 2026-10-03):** Built, not wired in: the goal parser (`bridle-spec` `goals`), `bridle workflow goals list`, `bridle workflow goals propose`; no role or rule tells agents to use them and no project has a `design/goals/` tree yet · Planned: the locked base rules below (not in `workflow/base/rules/`), `serves:` validation, human gating of goal changes
 
 Goals are the long-term direction. They are **not a backlog**: most of them are
 not being built now, and some are deliberately left out of the current design
@@ -39,7 +39,7 @@ Base rules for goals (locked; planned, not yet in `workflow/base/rules/`):
 - **Plans cite the goals they serve** (`serves: g-03`), so the manager can see
   which goals have work behind them.
 - **Changing a goal's firmness, priority or stance is the human's call.** An
-  agent can propose a change with `bridle goals propose`.
+  agent can propose a change with `bridle workflow goals propose`.
 
 ## Built
 
@@ -48,7 +48,7 @@ Base rules for goals (locked; planned, not yet in `workflow/base/rules/`):
   spec parser. Goal ids are written by hand. A bad firmness, priority or stance
   is an error; an `unaddressed` goal without a `**Why unaddressed:**` line is a
   warning. Headings inside code fences are ignored.
-- `bridle goals list` (see `cli.md`) lists them, locally.
-- `bridle goals propose <goal-id> --change KEY=VALUE --why TEXT` (repeatable `--change`)
+- `bridle workflow goals list` (see `cli.md`) lists them, locally.
+- `bridle workflow goals propose <goal-id> --change KEY=VALUE --why TEXT` (repeatable `--change`)
   creates a task proposing a change to the goal's firmness, priority, or stance (daemon).
 - Not built: `serves:` link validation, gating changes to goals, hooks.

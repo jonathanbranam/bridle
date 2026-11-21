@@ -245,7 +245,7 @@ pub enum Command {
     /// Focus hours (ticket cvaq): the human's `[[focus]]` periods in `~/.bridle/config.toml`.
     Focus(FocusArgs),
     /// Wait for something the orchestrator should act on, print it and exit 0 (`nothing` after
-    /// 5 minutes of quiet). Run it in the background; run it again after each exit
+    /// 6900 s (115 min) of quiet). Run it in the background; run it again after each exit
     /// (orchestrator-supervision.md, section 5). `external:orchestrator` only.
     #[command(hide = true)]
     WaitForWake(WaitForWakeArgs),
@@ -2795,8 +2795,8 @@ pub enum ProjectsAction {
     /// Before `stop`: hold new claims and spawns for this project only, tell every principal to
     /// finish, and wait (no timeout) until the stable-project check passes. Messages the
     /// orchestrator at the start and on each change, and names a drain that stops moving to it
-    /// and to the human through aide. `--undo` lifts the hold. The hold lives in the daemon, so
-    /// a restart loses it; a running drain takes it again.
+    /// and to the human through aide. `--undo` lifts the hold. The hold is kept in the daemon's
+    /// meta (`project.held`), so a restart restores it; a running drain asserts it again.
     Drain(ProjectDrainArgs),
     /// Bring a project that has a clone to fully set up on this machine, in one command: checks
     /// each step against the real state, prints the checklist, then does the unmet ones in order

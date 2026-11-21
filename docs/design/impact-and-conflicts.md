@@ -1,6 +1,6 @@
 # Impact and conflicts
 
-> **Status (checked 2026-10-03):** Built and in use: the merge probe inside `bridle task land` (refuses a conflicting branch) · Built, not wired in: `bridle task impact set|show|check`, `bridle task conflict list|resolve`, `bridle probe`, and the `spec changed under you` line on the `main moved` notice. No role or rule tells agents to declare impact or run `impact check`, and no task has a declared impact yet, so none of it fires · Planned: checking declared against actual impact, escalation (step 3), the handoff for the blocked claimant
+> **Status (checked 2026-10-03):** Built and in use: the merge probe inside `bridle ticket land` (refuses a conflicting branch) · Built, not wired in: `bridle ticket impact set|show|check`, `bridle task conflict list|resolve`, `bridle probe`, and the `spec changed under you` line on the `main moved` notice. No role or rule tells agents to declare impact or run `impact check`, and no task has a declared impact yet, so none of it fires · Planned: checking declared against actual impact, escalation (step 3), the handoff for the blocked claimant
 
 ## The impact registry
 

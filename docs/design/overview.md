@@ -1,6 +1,6 @@
 # Architecture in one picture
 
-> **Status (checked 2026-10-03):** Built and in use: the daemon and agent host, tasks, edges, claims, the queue, the state branch (`bridle/state`), `bridle daemon rebuild`, workflow rule resolution (base, packs, project) delivered in each spawned agent's system prompt · Built, not wired in: the `design/` tiers' commands (`bridle spec|goals|arch|explore|trace`); no project has a `design/` tree yet · Planned: the MCP server; a separate `bridle-workflow` repo (bridle keeps `workflow/` in-repo, decision r2uq)
+> **Status (checked 2026-11-21):** Built and in use: the daemon and agent host, tasks, edges, claims, the queue, the state branch (`bridle/state`), `bridle daemon rebuild`, workflow rule resolution (base, packs, project) delivered in each spawned agent's system prompt · Built and in use for specs only, otherwise not wired in: the `design/` tiers' commands (`bridle workflow spec|goals|arch|explore|trace`); only the specs tier is in use (bridle, bridle-ui, meta-notes; stage rules tell agents to write specs), no project has `design/goals`, `design/architecture` or `design/explore` · Planned: the MCP server; a separate `bridle-workflow` repo (bridle keeps `workflow/` in-repo, decision r2uq)
 
 ```
                          ┌──────────────────────────────────────────┐
@@ -40,7 +40,7 @@
   gateway; an MCP server is planned ([[docs/design/agent-host/api|API]]).
 - **The daemon is built** (v1: the agent host), and so are tasks, the state
   branch and workflow rule resolution. The `design/` tiers have local commands
-  but no project uses them yet ([[docs/proposal/build-order|build order]]).
+  but only the specs tier is in use ([[docs/proposal/build-order|build order]]).
 
 Three kinds of state, each in the place its lifetime demands:
 

@@ -10,8 +10,8 @@ and in the project's own `.bridle/rules/`. A project overrides a rule by id with
 `override: replace|append|disable` and a reason, and may lock one.
 
 ```
-bridle rules explain <id>     # which layer won, and why
-bridle rules diff             # what the project changed
+bridle workflow rules explain <id>     # which layer won, and why
+bridle workflow rules diff             # what the project changed
 ```
 
 ## How they reach an agent
@@ -20,9 +20,9 @@ bridle rules diff             # what the project changed
   role's rules and puts them in the system prompt at every spawn, resume and renew. A
   rule changed in the workflow shows up at the agent's next one of those.
 - **Interactive roles** (orchestrator, advisor, aide, prototyper, designer, document-reviewer):
-  `bridle prime <role>` prints the role prompt followed by its resolved rules;
+  `bridle orchestrator prime <role>` prints the role prompt followed by its resolved rules;
   `bridle session <role>` runs it as the opening prompt.
-- **Not wired in:** `bridle prime worker|planner` (facts, guide pointers, component
+- **Not wired in:** `bridle orchestrator prime worker|planner` (facts, guide pointers, component
   rules) isn't run by spawned workers, so those don't reach them yet.
 
 Role names in `roles:` are the tags the roles use: `orchestrator`, `advisor`, `aide`,

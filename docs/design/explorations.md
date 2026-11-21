@@ -1,6 +1,6 @@
 # Explorations: deliberately divergent, and known to be
 
-> **Status (checked 2026-10-03):** Built and in use: the locked base rule `explorations`, which every spawned agent gets in its system prompt · Built, not wired in: the exploring agent's paragraph (`bridle prime worker --task <id>`; workers don't run prime, so an explore worker isn't told), `bridle explore check|new|conclude|abandon`; no project has a `design/explore/` tree yet · Planned: the path-scoped copy of the rule, `explore adopt`, the gate exemptions, keeping exploration code off main (not enforced)
+> **Status (checked 2026-10-03):** Built and in use: the locked base rule `explorations`, which every spawned agent gets in its system prompt · Built, not wired in: the exploring agent's paragraph (`bridle orchestrator prime worker --task <id>`; workers don't run prime, so an explore worker isn't told), `bridle workflow explore check|new|conclude|abandon`; no project has a `design/explore/` tree yet · Planned: the path-scoped copy of the rule, `explore adopt`, the gate exemptions, keeping exploration code off main (not enforced)
 
 A spike or exploration is a task of kind `explore`. It is **meant** to
 contradict the accepted goals, architecture or specs, because its purpose is to
@@ -8,7 +8,7 @@ try something different. The recurring failure is that other agents come across
 its artifacts, are surprised, and report the divergence as a defect. The design
 deals with this up front:
 
-- **The exploring agent is told at prime.** `bridle prime` for an `explore` task
+- **The exploring agent is told at prime.** `bridle orchestrator prime` for an `explore` task
   says (built in prime; nothing runs prime for a spawned worker yet): you are exploring an alternative; contradicting the architecture, goals
   and specs is intended; don't bring the code back into line and don't flag the
   divergence.
@@ -42,16 +42,16 @@ deals with this up front:
 
 - **The locked base rule** `explorations` (`workflow/base/rules/explorations.md`, tagged
   for every role) carries the text above, so it is in every spawned agent's system prompt and
-  `bridle prime` prints it to every role. The
+  `bridle orchestrator prime` prints it to every role. The
   path-scoped copy on `design/explore/**` is not built: rules have no path scoping yet.
-- **The exploring agent's paragraph**: `bridle prime worker --task <id>` looks the task up
+- **The exploring agent's paragraph**: `bridle orchestrator prime worker --task <id>` looks the task up
   and, when its kind is `explore`, opens with the exploring paragraph. Without `--task`
   (prime is otherwise local) it is absent.
 - **Frontmatter checking**: `bridle-spec`'s `explore` module requires all four keys,
   `exploratory: true`, a status in the set, and `diverges-from` ids that look like `g-`/`a-`/`r-`/`s-`
-  ids. `bridle explore check [paths...]` (default `design/explore`, local) prints diagnostics and
+  ids. `bridle workflow explore check [paths...]` (default `design/explore`, local) prints diagnostics and
   exits 1 on any error.
-- **`bridle explore new|conclude|abandon <id>`**: `new` scaffolds `design/explore/<id>/findings.md`
+- **`bridle workflow explore new|conclude|abandon <id>`**: `new` scaffolds `design/explore/<id>/findings.md`
   with status `open` (refusing to overwrite); `conclude` and `abandon` rewrite only the `status:`
   line, byte for byte otherwise.
 - Not built: `explore adopt` (needs the arch-revision flow), and the gate exemptions.

@@ -1,6 +1,6 @@
 # Specs: keep the model, replace the lifecycle
 
-> **Status (checked 2026-10-03):** Built, not wired in: `bridle spec check|id|import openspec` (local, `bridle-spec` parser, `.ids` ledger); bridle uses them for its own specs (`design/specs/`, checked in `just check`); no other onboarded project does yet (track-web, bridle-ui and data-contracts have no `design/specs/`), and no role or rule tells agents to edit specs in place · Planned: the human plan gate for `protected` requirements (the marker is parsed; no gate exists), converting active OpenSpec changes to tasks
+> **Status (checked 2026-11-21):** Built, not wired in: `bridle workflow spec check|id|import openspec` (local, `bridle-spec` parser, `.ids` ledger); bridle uses them for its own specs (`design/specs/`, checked in `just check`); bridle-ui and meta-notes keep `design/specs/` too (track-web and data-contracts do not), and the stage rules (`workflow/base/rules/stage-specs.md`, `stage-apply.md`) tell stage agents to write and merge specs; no rule tells other agents to edit specs in place. No project has `design/goals`, `design/architecture` or `design/explore` · Planned: the human plan gate for `protected` requirements (the marker is parsed; no gate exists), converting active OpenSpec changes to tasks
 
 See [[docs/design/spec-flow|the spec flow]] for the whole path from adoption to CI.
 
@@ -12,7 +12,7 @@ this part works.
 
 ## What changes
 
-1. **Stable ids** on requirements and scenarios, assigned by `bridle spec id`
+1. **Stable ids** on requirements and scenarios, assigned by `bridle workflow spec id`
    and never reused:
 
    ```markdown
@@ -37,7 +37,7 @@ this part works.
 
 ## Migration from OpenSpec
 
-`bridle spec import openspec [--from openspec/specs] [--to design/specs] [--dry-run]`
+`bridle workflow spec import openspec [--from openspec/specs] [--to design/specs] [--dry-run]`
 (built, local, no daemon call) handles it once per repo: it moves
 `<from>/<capability>/spec.md` to `<to>/<capability>.md` (`git mv` for tracked
 files, a plain rename otherwise) and then assigns ids as `spec id` does, with
@@ -51,7 +51,7 @@ grammar is unchanged, so data-contracts' scenarios carry over as is.
 
 ## Checking
 
-`bridle spec check [paths...]` (built, local, no daemon call) parses spec files
+`bridle workflow spec check [paths...]` (built, local, no daemon call) parses spec files
 with the `bridle-spec` parser and prints each diagnostic as `file:line:col:
 message`, then a one-line summary; it exits 1 on any error. With no paths it
 checks `design/specs` (or `--root DIR`, e.g. `openspec/specs` before migration).
@@ -61,7 +61,7 @@ diagnostics with their severity.
 
 ## Assigning ids
 
-`bridle spec id [paths...]` (built, local, no daemon call; same path defaults as
+`bridle workflow spec id [paths...]` (built, local, no daemon call; same path defaults as
 `spec check`: `design/specs` or `--root DIR`) writes an id into each requirement
 and scenario heading that has none. It edits by line, so the rest of each file
 stays byte-for-byte identical (line endings included); a heading with an

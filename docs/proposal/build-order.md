@@ -1,11 +1,11 @@
 # Build order
 
-> **Status (checked 2026-10-03):** Built and in use: v1, P0, P1's messaging and stop-check,
-> landing, the budget governor, the TUI, meta-notes on bridle specs, track-web's trial · Built, not wired
-> in: packs and project rules until each daemon runs 9561950 or later, `sync`, layer hooks,
+> **Status (checked 2026-11-21):** Built and in use: v1, P0, P1's messaging and stop-check,
+> landing, the budget governor, the TUI, the gateway (all 11 tasks, `--detach`/`install`) and the `bridle-ui` project, meta-notes on bridle specs, track-web's trial · Built, not wired
+> in: packs and project rules until each daemon runs 9561950 or later, `sync`,
 > `bridle wait`, impact and conflicts, traceability, ports, paired worktrees, the vitest
-> adapter, the prototyper role, the gateway · Planned: component nesting, the harness and
-> file-db migrations, the P8 web UI itself, take/give, permission prompts, MCP.
+> adapter, the prototyper role · Planned: component nesting, the harness and
+> file-db migrations, take/give, permission prompts, MCP.
 
 Each phase is usable on its own. Bridle's own development is the first test
 project. Every phase sits on the daemon and API that v1 built.
@@ -31,7 +31,7 @@ is restarted on a binary built from it.
 | **P5** | worktree layouts (incl. paired), port registry, merge-tree probes, integration branch, the integrator | harness + track-web in parallel | per-agent worktrees, the integration branch, `task land` (the integrator) and its merge probe: **built and in use**. Paired worktrees and the port registry (`bridle port`, no allocation yet in any project): **built, not wired in** |
 | **P6** | TS test adapter; migrate track-web, harness, meta-notes, file-db | everything on bridle | vitest adapter (`workflow/packs/typescript/adapters/vitest-bridle/`): **built, not wired in** (track-web hasn't imported specs). meta-notes on bridle (integration `main`): **built and in use**. track-web: a trial on `bridle-adopt` since 2026-09-29, in use. harness, file-db: **planned** |
 | **P7** | prototyper role (workflow/base/roles/); strong guidance: prototype prompt is the whole brief; prototypes differ significantly | agents can focus on constraints without rethinking from existing design | role and its prompt (br-a4ea, `cacab9c`): **built, not wired in** (never spawned in any project; no role says when to use it) |
-| **P8** | web UI for the human: to-dos and decisions to run through and check off; TUI preserved | the human can manage their workflow from the web | the gateway API (`bridle gateway`, 8 of 10 tasks): **built, not wired in** (not configured or running). The UI (the `bridle-ui` repo, br-1665): **planned**, being started |
+| **P8** | web UI for the human: to-dos and decisions to run through and check off; TUI preserved | the human can manage their workflow from the web | the gateway API (`bridle gateway`, all 11 tasks, with `--detach`, `install`, `restart`): **built**. The UI (the `bridle-ui` project under bridle, br-1665): **built and in use** (see [[docs/design/human-web-ui|human web UI]]) |
 
 Don't start at P5. Research 09 §7 still applies.
 

@@ -117,7 +117,7 @@ fn orchestrator_command_line_matches_the_script() {
     );
     assert_eq!(
         l[7],
-        "Run `bridle prime orchestrator` and follow what it prints."
+        "Run `bridle orchestrator prime orchestrator` and follow what it prints."
     );
     assert_eq!(l[8], "AS=orchestrator PROJECT=bridle ADVISOR=");
     assert!(
@@ -215,7 +215,7 @@ fn orchestrator_uses_project_suffix_and_passes_extra_args() {
             "orch-meta-notes-nuc",
             "--resume",
             "x",
-            "Run `bridle prime orchestrator` and follow what it prints."
+            "Run `bridle orchestrator prime orchestrator` and follow what it prints."
         ]
     );
     assert!(l[10].contains("PROJECT=meta-notes"));
@@ -237,7 +237,7 @@ fn advisor_unnamed_signs_and_tags_its_pane() {
         &l[3..7],
         ["--name", "advisor-p", "--remote-control", "advisor-p"]
     );
-    assert!(l[7].starts_with("Run `bridle prime advisor`"));
+    assert!(l[7].starts_with("Run `bridle orchestrator prime advisor`"));
     assert_eq!(l[8], "AS=advisor PROJECT=p ADVISOR=");
     assert!(r.tmux.contains("@bridle advisor\n"), "{}", r.tmux);
 }
@@ -247,7 +247,10 @@ fn aide_signs_as_aide_and_tags_its_pane() {
     let r = session(&["--project", "p", "aide"], &[], 0);
     let l = lines(&r);
     assert_eq!(&l[3..7], ["--name", "aide-p", "--remote-control", "aide-p"]);
-    assert_eq!(l[7], "Run `bridle prime aide` and follow what it prints.");
+    assert_eq!(
+        l[7],
+        "Run `bridle orchestrator prime aide` and follow what it prints."
+    );
     assert_eq!(l[8], "AS=aide PROJECT=p ADVISOR=");
     assert!(r.tmux.contains("@bridle aide\n"), "{}", r.tmux);
 }

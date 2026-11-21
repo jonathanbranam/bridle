@@ -1,13 +1,13 @@
 # The human web UI: the bridle gateway
 
-> **Status (checked 2026-10-03):** Built and in use: `bridle gateway` (`crates/bridle-gateway`), build tasks 1–8 below: config and serve, discovery and fan-out, listing, local actions, retract handling, login, `/api/v1` with ts-rs types (`crates/bridle-gateway/bindings/`), serving `~/.bridle/ui/` with the version check; `bridle-ui` is its own project under bridle (`/Volumes/Data/work/bridle-ui-workspace`) · task 9 (multi-machine: listing and actions on remote projects with `[human.<machine>]` tokens), task 10 (service install)
+> **Status (checked 2026-11-21):** Built and in use: `bridle gateway` (`crates/bridle-gateway`), build tasks 1–11 below: config and serve, discovery and fan-out, listing, local actions, retract handling, login, `/api/v1` with ts-rs types (`crates/bridle-gateway/bindings/`), serving `~/.bridle/ui/` with the version check; `bridle-ui` is its own project under bridle (`/Volumes/Data/work/bridle-ui-workspace`) (task 9, multi-machine listing and actions on remote projects with `[human.<machine>]` tokens; task 10, `bridle gateway install`; task 11, `--detach`, `restart`, `status`, `stop` and `[gateway] enabled`)
 
 Ticket: [[docs/tickets/open/a-web-ui-for-the-human-my-to-dos-and-decisions-to-run-throug-essy|essy]]
 ("Option F" and "Gateway v1: the human's answers", decided by the human, 2026-10-02). This
 replaces the earlier option C (a Rust-rendered page, `bridle ui`).
 
 The shape: a **`bridle gateway`** process in bridle's workspace serves one versioned API; a
-separate **TypeScript UI** (`bridle-ui`, a later project) is a client of it. The browser never
+separate **TypeScript UI** (`bridle-ui`, its own project) is a client of it. The browser never
 holds a bridle token and never talks to a daemon.
 
 ## 1. The gateway
@@ -91,7 +91,11 @@ on dalek and on every client machine alike.
   default `127.0.0.1:7878`) and `enabled` (new; default `true`). With `enabled = false`,
   `bridle gateway` (foreground or `--detach`) prints that and exits 0 without starting, so
   a machine that shouldn't run one can say so and a launcher can stay installed. Both keys
-  have defaults, so existing configs keep working unchanged.
+  have defaults, so existing configs keep working unchanged. The section's other keys (all
+  in `crates/bridle-gateway/src/config.rs`): `username` and `password_hash` (directly in
+  `[gateway]`, both or neither), `ui_dir` (default `<bridle home>/ui`), `ui_version_mismatch`
+  (`warn` or `refuse`), `public_url` (read by `bridle link`) and `allow_any_interface`. A bind on
+  an unspecified address (`0.0.0.0`) is a hard error unless `allow_any_interface = true`.
 - `bridle gateway install` stays for those who want launchd or systemd to start it at login.
   Its unit runs the foreground command; that is unchanged.
 
@@ -324,8 +328,7 @@ shape; an unreachable machine is a 503 naming it. A remote write is followed by 
 
 ## 5. Build tasks, in order
 
-Each is one branch and one worker. None touches the daemon. Tasks 1–10 are built; 11 is
-planned.
+Each is one branch and one worker. None touches the daemon. All eleven are built.
 
 1. **Skeleton, config, serve**: `bridle gateway` subcommand, a `crates/bridle-gateway` library
    (axum), the optional gateway config section, bind address, `GET /api/v1/health`. Tests: the
@@ -348,7 +351,7 @@ planned.
 9. **Multi-machine** (built, br-7172): per-machine human tokens for remote daemons, remote
    actions. Tests: a remote fake daemon with its own token.
 10. **Service install** (built): `bridle gateway install` writes the launchd plist / systemd user unit (`dev.bridle.gateway`, `bridle-gateway.service`), restart on failure only, log `~/.bridle/gateway.log`; loading it is the operator's step.
-11. **Detach and self-restart** (bek3): `bridle gateway --detach`, `[gateway] enabled`, the gateway
+11. **Detach and self-restart** (built, bek3): `bridle gateway --detach`, `[gateway] enabled`, the gateway
     re-executing itself when its binary changes. Tests: detach starts, logs and answers health; a
     second start is refused; a changed binary is re-executed (with a fake).
 

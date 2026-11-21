@@ -1,6 +1,6 @@
 # Roles and the task lifecycle
 
-> **Status (checked 2026-10-03):** Built and in use: the human, orchestrator, manager, worker, project-manager and integrator (`bridle task land`) roles; task states `pending`, `open`, `planned`, `claimed`, `dropped`, `integrated`, `reopened` with `ready` derived; claim leases; the queue (`bridle queue`, `queue set|add-tier`, `bridle ready`); task kinds, including `re-evaluate` tasks opened when an `arch-revision` is done · Planned: the reviewer role (no role file or config), `in_review` and `accepted` states, `needs-input`, per-kind gates, roles and models from `workflow.toml`, `bridle review`
+> **Status (checked 2026-11-21):** Built and in use: the human, orchestrator, manager, worker, project-manager and integrator (`bridle ticket land`) roles, and the advisor, aide, designer, document-reviewer and prototyper roles (`workflow/base/roles/`); task states `pending`, `open`, `planned`, `held`, `claimed`, `built`, `dropped`, `integrated`, `reopened` with `ready` derived; claim leases; the queue (`bridle queue`, `queue set|add-tier`, `bridle ready`); task kinds · Built, not wired in: the `re-evaluate` flow (`reevaluate.rs` opens a task when an `arch-revision` lands, but it never fires: no project has the goals and architecture tiers it watches) · Planned: the reviewer role (no role file or config), `in_review` and `accepted` states, `needs-input`, per-kind gates, roles and models from `workflow.toml`, `bridle review`
 
 ## Roles
 
@@ -13,6 +13,8 @@ Split by what each role may decide (research 09 §4):
 | **Manager** | Opus/Fable-class, long-lived, hosted by bridle | decomposition, plans, ordering, conflict arbitration, what to ask the human | implement bulk code; accept |
 | **Worker** | Sonnet-class, per task | how to implement a planned task; negotiating conflicts with peers | change design silently; accept; talk to the human directly |
 | **Reviewer** (planned) | strong model, never the task's implementer | whether a diff matches its plan and specs | fix what it reviews |
+| **Advisor**, **Aide** | the human's own sessions (`bridle session advisor|aide`), not hosted agents; `external:advisor/<name>`, `external:aide` | advice and answers about the project (advisor); questions about the running system (aide) | act as the human or land work |
+| **Designer**, **Prototyper**, **Document-reviewer** | hosted, per task or document, not workers | a design (designer); a prototype (prototyper); one review round of a document with the human (document-reviewer) | implement a ticket (designer, prototyper); edit past the human's comments (document-reviewer) |
 | **Integrator** | *not an agent* — bridle itself (`bridle land`, [[docs/design/agent-host/roles-and-config|roles and config]]) | conflict probes, the merge gate, `main moved` notices | resolve a semantic conflict |
 
 - **The orchestrator is the human's interface**, running anywhere (laptop,
@@ -52,13 +54,14 @@ pattern".
  needs-input    derived: a question addressed to the human
 ```
 
-Built states: `pending`, `open`, `planned`, `claimed`, `dropped`, `integrated`, `reopened`
-(`TaskState`, `bridle-api/src/types.rs`); `ready` and `blocked` are derived.
+Built states: `pending`, `open`, `planned`, `held` (`ticket hold`: paused, back by `unhold`), `claimed`,
+`built` (finished on a branch, waiting to land; left by `done`, `send-back` or `drop`), `dropped`, `integrated`, `reopened`
+(`TicketState`, `bridle-api/src/types.rs`); `ready` and `blocked` are derived.
 `in_review`, `accepted` and `needs-input` are planned.
 
 - **ready** is computed: planned, no open blockers, no unanswered questions.
   A blocker counts as open unless it's `dropped` or `integrated` (`accepted`
-  doesn't exist yet; see coordination.md, Edges). `bridle task plan <id>` makes the `open ->
+  doesn't exist yet; see coordination.md, Edges). `bridle ticket plan <id>` makes the `open ->
   planned` transition (`TicketManager::plan_task`); `open` and `reopened` are the states it
   accepts, so a task already planned, claimed, dropped or integrated is a
   conflict.
@@ -103,9 +106,9 @@ Built states: `pending`, `open`, `planned`, `claimed`, `dropped`, `integrated`, 
   and edge state, so `bridle daemon rebuild` restores who's working what
   (storage.md, "claims").
 - **Kinds** are to change the gates (planned) and the prime (today only `explore`, via
-  `bridle prime worker --task`, which no spawned worker runs): `feature`, `bug`, `chore`,
+  `bridle orchestrator prime worker --task`, which no spawned worker runs): `feature`, `bug`, `fix`, `epic`, `docs`, `chore`, `incident`,
   `question`, `research`, `explore` ([[docs/design/explorations|explorations]]), `arch-revision` ([[docs/design/architecture-tier|architecture]]) and
-  `re-evaluate` ([[docs/design/traceability|traceability]]).
+  `re-evaluate` ([[docs/design/traceability|traceability]]; built, never fires today).
 - **The project manager** (`project-manager`) is a project-defined role, not a built-in: it
   triages `open` tasks (`plan`) and owns the queue. Bridle's own `.bridle/config.toml`
   defines it with `autostart = true`. While none runs, the daemon tells the manager when a task
@@ -132,5 +135,5 @@ bridle review                           # planned: human's batch: diffs, scenari
 
 The manager does not have to stay alive for this. The edge, the wait and the
 plan are all in the store, so a new manager session can read them back
-(`bridle queue`, `bridle task list`; there is no `bridle prime manager`) and
+(`bridle queue`, `bridle ticket list`; there is no `bridle orchestrator prime manager`) and
 pick up where the last one stopped.

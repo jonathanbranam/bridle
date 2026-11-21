@@ -10,7 +10,7 @@ A role says what an agent may decide. Bridle is mechanism; the roles hold the ju
 | Manager | bridle, long-lived | decomposition, plans, ordering, what to ask the human | write bulk code; accept work |
 | Project manager | bridle, if the project defines it | plans `open` tasks and owns the queue | |
 | Worker | bridle, one per task | how to implement a planned task | change design silently; accept; talk to the human directly |
-| Integrator | not an agent: `bridle task land` | merge gate, conflict probes | resolve a semantic conflict |
+| Integrator | not an agent: `bridle ticket land` | merge gate, conflict probes | resolve a semantic conflict |
 
 Other roles exist as prompts (`prototyper`, `designer`, `document-reviewer`). A **reviewer** role is
 planned (no role file or config yet).

@@ -21,7 +21,7 @@ coordinate through tasks, messages and a queue. Run `bridle docs` for the topic 
 ## Who is who
 
 The human decides priorities and accepts work. A manager plans and assigns, workers
-implement one task each, and bridle itself integrates (`bridle task land`). Roles:
+implement one task each, and bridle itself integrates (`bridle ticket land`). Roles:
 `bridle docs roles`.
 
 ## Where state lives

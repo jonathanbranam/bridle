@@ -1,6 +1,6 @@
 # Project migrations
 
-> **Status (checked 2026-10-03):** Built, not wired in: `bridle migrate` with `.bridle/migrations.toml`/`.log` and the `project.migrated` event (`crates/bridle/src/migrate.rs`); never automatic, by design. Migrations: see "Shipped migrations"
+> **Status (checked 2026-11-21):** Built and in use: `bridle migrate` with `.bridle/migrations.toml`/`.log` and the `project.migrated` event (`crates/bridle/src/migrate.rs`); `bridle serve` applies pending migrations at start-up unless `[migrations] auto = false` (`crates/bridle/src/serve.rs`). Migrations: see "Shipped migrations"
 
 Some bridle changes alter what a project keeps in its own repo for bridle: ticket frontmatter,
 `.bridle/config.toml`, the docs layout. `bridle migrate` brings a project up to date with the

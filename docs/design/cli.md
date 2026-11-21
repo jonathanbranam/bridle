@@ -1,6 +1,6 @@
 # The CLI
 
-> **Status (checked 2026-10-03):** Built and in use: the commands under "Built", except the next ones · Built, not wired in: `workflow sync` and the `arch-guard` hook it installs (run by hand only; bridle's own repo never runs it, so its `.claude/settings.json` has no hooks), `orchestrator prime worker|planner` (no role, hook or skill runs it; the daemon puts the same resolved rules, without facts, guides or components, into every spawned agent's system prompt), `task ready --role` (accepted, ignored) · Planned: the "Planned" block at the end
+> **Status (checked 2026-11-21):** Built and in use: the commands under "Built", except the next ones · Built, not wired in: `workflow sync` (run by hand only; the layer hooks it would install reach agents at spawn anyway), `orchestrator prime worker|planner` (no role, hook or skill runs it; the daemon puts the same resolved rules, without facts, guides or components, into every spawned agent's system prompt), `task ready --role` (accepted, ignored) · Planned: the "Planned" block at the end
 
 Most commands are thin clients of the daemon's API
 ([[docs/design/agent-host/api|API]]); the local ones (`ticket`, `workflow rules|sync|spec|goals|arch|explore|trace`,
@@ -18,7 +18,8 @@ the hidden `hook` (statusline, stop-check, arch-guard). `message` (send, inbox, 
 message group; singular only, listing is `<group> list` (no `agents`/`messages`/`daemons`, br-163f).
 `status`, `send`, `inbox`, `queue`, `events`, `wait`, `tui`, `token`, `port` and `probe` stay at the
 top level. Every old top-level name (`bridle claim`, `bridle stop-daemon`, `bridle agents`,
-`bridle daemons`, `bridle messages`, ...) is a hidden alias that dispatches to the same code
+`bridle daemons`, `bridle messages`, `bridle prime`, `bridle spec|goals|arch|explore|trace|rules|sync`,
+`bridle task impact`, `bridle cost audit`, ...) is a hidden alias that dispatches to the same code
 (`normalize` in `commands/mod.rs`). For the `daemon`, `agent` and `message` groups the old name
 also prints `warning: bridle X is deprecated; use bridle Y` on stderr (`deprecated_spelling`); the
 hook commands and `serve` (spelled by hook settings, launchd/systemd units and scripts) stay
@@ -297,7 +298,7 @@ bridle machine tools-only-install [--repo P] install pre-commit and pre-push hoo
                                              hooks and restores those, keeping both if a different hook appeared (hw6c, ged2)
 bridle machine push-check                    hidden: the pre-push hook's helper. Reads git's ref lines on stdin; for a push of the
                                              integration branch, exits 1 unless this machine is the owner in
-                                             `owner.toml` (8z7j). `serve` and `bridle sync` install the hook (marked,
+                                             `owner.toml` (8z7j). `serve` and `bridle workflow sync` install the hook (marked,
                                              idempotent; shares the pre-push script with tools-only; never written
                                              through a symlink or over a hook that isn't bridle's)
 bridle workflow spec check [paths...] [--root DIR] [--require-ids]   validates spec files (dirs are searched for
@@ -468,23 +469,23 @@ bridle task plan   <id>                                                 open or 
 bridle task priority <id> critical|urgent|high|normal|low  change the priority; who and when go in the thread and a `task.priority` event
 bridle task kind <id> <kind>             change the kind, only while `pending` or `open` (refused planned, claimed, dropped, integrated, reopened); who and when go in the thread and a `task.kind` event
 bridle task edit   <id> [--title TEXT] [--body TEXT | --body-file FILE] [--component ID ... | --no-component] [--size S|M|L|none]
-bridle task list   [--claimed-by WHO] [--component ID] [-k KIND]             WHO: me|human|<agent name>|<principal id>; unclaimed tasks have no claimant to match
+bridle ticket list   [--claimed-by WHO] [--component ID] [-k KIND]             WHO: me|human|<agent name>|<principal id>; unclaimed tasks have no claimant to match
 bridle task search <words...>                                      search for tasks by words in title/body/summary (case-insensitive substring match, all words must match); includes done and dropped tasks
 bridle task drop   <id> --reason TEXT
                                                                         incidents are `-k incident` tasks (`task list -k incident` lists them); plan/done/drop/reopen of one is orchestrator/human only, and `plan` sends the notice to every agent; see agent-host/incidents.md
 bridle task done   <id> [--commit SHA] [--branch NAME] [--resolution TEXT]  -> integrated; `--commit` is required unless the human claimed the task (a to-do) or the task is an incident (`--resolution` goes in its thread and the "resolved" note); records the sha (and branch) on the task and in the thread; with --branch removes the branch's agents, worktree and branch, but keeps an agent that still holds other work (uncommitted changes, another unmerged branch, another claimed task, a background job) and says why in the thread; warns if no summary
-bridle task impact set  <task> [--modify ID].. [--add-under ID].. [--remove ID].. [--files GLOB..]  declares the task's impact, replacing any earlier one; only a pending/open/planned/claimed task; ids checked by shape (r-/s-/g-/a- + hex) only
-bridle task impact check [--specs DIR]                                overlaps between in-flight tasks' declared impact, plus merge probes of claimed tasks' branches (`--json`: `{overlaps:[{level,tasks,kind,key}]}`); exit 1 if any is a conflict; see impact-and-conflicts.md
+bridle ticket impact set  <task> [--modify ID].. [--add-under ID].. [--remove ID].. [--files GLOB..]  declares the task's impact, replacing any earlier one; only a pending/open/planned/claimed task; ids checked by shape (r-/s-/g-/a- + hex) only
+bridle ticket impact check [--specs DIR]                                overlaps between in-flight tasks' declared impact, plus merge probes of claimed tasks' branches (`--json`: `{overlaps:[{level,tasks,kind,key}]}`); exit 1 if any is a conflict; see impact-and-conflicts.md
 bridle push                                                                                 push the integration branch to origin (human, orchestrator, managers); on failure record a `push.failed` event, message the orchestrator and the human, exit 1
 bridle push-branch [BRANCH]                                                                  workers: push your own `bridle/<name>` branch to origin from your worktree; never forces; refuses options, refspecs, other branches and the integration branch
-bridle task land <task> [--branch B] [--check-cmd CMD] [--checked-commit SHA]              the integrator (`--branch` defaults to the ticket's built or claimed branch, else its last recorded one): squash the branch into one commit (`<task id>: <title>`, the summary as body, `Task:`/`Branch:` trailers) in the integration worktree, run `[integration] check` after `[worktrees] setup` in that worktree (skipped, with a note, only when the integration branch is an ancestor of the branch tip and the tip is `--checked-commit`, the commit the worker reported a green check on; otherwise it runs and the note says why), refuse (br-ubjd) a branch whose diff adds no line under `## Unreleased` in CHANGELOG.md, under one of `### Added`/`### Changed`/`### Fixed`/`### Internal` (exempt: question/research/explore/incident tickets and changes confined to `docs/tickets/`; deferred, YAGNI: a merge driver for CHANGELOG conflicts), fail if the nextest test count is outside the sane band around the last full run (`<workspace>/last-full-test-count`), fast-forward the integration branch (guarded), mark the task done; any failure lands nothing (exit 1); never pushes
+bridle ticket land <task> [--branch B] [--check-cmd CMD] [--checked-commit SHA]              the integrator (`--branch` defaults to the ticket's built or claimed branch, else its last recorded one): squash the branch into one commit (`<task id>: <title>`, the summary as body, `Task:`/`Branch:` trailers) in the integration worktree, run `[integration] check` after `[worktrees] setup` in that worktree (skipped, with a note, only when the integration branch is an ancestor of the branch tip and the tip is `--checked-commit`, the commit the worker reported a green check on; otherwise it runs and the note says why), refuse (br-ubjd) a branch whose diff adds no line under `## Unreleased` in CHANGELOG.md, under one of `### Added`/`### Changed`/`### Fixed`/`### Internal` (exempt: question/research/explore/incident tickets and changes confined to `docs/tickets/`; deferred, YAGNI: a merge driver for CHANGELOG conflicts), fail if the nextest test count is outside the sane band around the last full run (`<workspace>/last-full-test-count`), fast-forward the integration branch (guarded), mark the task done; any failure lands nothing (exit 1); never pushes
 bridle probe <task-or-agent> | --branch B                       `git merge-tree` of the branch into the integration branch, no working-tree change (`--json`: `{branch,against,outcome,paths}`); exit 1 on a conflict; needs git 2.38
 bridle port alloc [--pid N] [--label L]                         allocate a free port from `[ports] range` (not reserved, allocated or listening); prints it (`--json`: the allocation); recorded against you and your claimed task
 bridle port release <port>                                      free a port
 bridle port list                                                allocated ports (`--json`: array of `{port,agent,task,pid,label,allocated_at}`)
 bridle task conflict list                                            conflicts opened by `impact check`, open first (`--json`: array of `{id,tasks,kind,key,state,resolution,opened_at,resolved_at}`)
 bridle task conflict resolve <C12> --compatible <reason> | --order A,B | --merge-into <task>   record the outcome (exactly one flag); `--order` adds an `A blocks B` edge; A, B and the task must be the conflict's two tasks; a resolved conflict can't be resolved again
-bridle task impact show <task>                                         prints the declared impact (`--json`: the impact object)
+bridle ticket impact show <task>                                         prints the declared impact (`--json`: the impact object)
 bridle ticket summary <id> --text TEXT | --file FILE                    records how it was implemented; `-` reads stdin; replaces an earlier summary
 bridle task reopen <id>
 bridle task watch <id> · unwatch <id>                               add/remove yourself as a watcher (`task show` lists them; the creator and claimer are added automatically); with `--project <p>` for a task on another project's daemon it is registered there through your own daemon and the updates come back as messages
@@ -663,7 +664,7 @@ bridle ticket comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain com
   without a cross-daemon token. A daemon that doesn't answer in time (dead,
   slow, unreachable) shows `?` (`null` under `--json`) instead of blocking on
   it.
-- **`cost audit`** is local and static: no daemon call, just `.bridle/config.toml` and
+- **`usage cost audit`** is local and static: no daemon call, just `.bridle/config.toml` and
   `.bridle/cost-baseline.json` read from the current directory. It measures each role's
   rendered system-prompt file (the part meant to be identical across agents of a role,
   `stable_system_prompt`) from a fresh render, and reports it next to the committed
@@ -672,7 +673,7 @@ bridle ticket comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain com
   today; see `bridle_daemon::cost_audit`. Without `--check` it only reports; with it,
   exit 1 if any role grew more than
   `bridle_daemon::cost_audit::GROWTH_THRESHOLD_PERCENT` over baseline.
-- **`rules explain`/`rules diff`** are local and static, like `cost audit`: no daemon
+- **`workflow rules explain`/`diff`** are local and static, like `cost audit`: no daemon
   call, just `.bridle/config.toml` and the layer directories it points at, read from
   the current directory ([[docs/design/workflow-layers|workflow layers]],
   `bridle_daemon::rules`). The same resolution (L1-L3, no components) goes into every
@@ -726,8 +727,8 @@ bridle ticket comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain com
   yourself, and bridle's own repo doesn't. Its output reaches a spawned agent only through what
   is committed, since agents load only the checked-in `.claude/settings.json`
   (`--setting-sources project`) and `.claude/skills/`, `.claude/agents/` are gitignored. So in
-  bridle's repo neither the hooks nor the skills reach agents (passing layer hooks at spawn is
-  34bw step 3, not built). `hooks/<event>.json`, and the "later layer wins wholesale" convention
+  bridle's repo the skills don't reach agents (the layer hooks do reach spawned agents without it: the daemon
+  passes them at spawn, 34bw). `hooks/<event>.json`, and the "later layer wins wholesale" convention
   it and `agents/<role>.md` use, are this command's own convention; `workflow/base/hooks/PreToolUse.json`
   (arch-guard) is the one hook file, and nothing uses `agents/`. Skill sources may reference
   `{{commands.check}}`, substituted with `.bridle/config.toml`'s `[commands] check`
@@ -944,8 +945,9 @@ bridle ticket comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain com
   note on stderr and goes away in a later release.
 - **`wait-for-wake`** is `GET /v1/orchestrator/wake` ([[orchestrator-supervision]] section 5),
   replacing `scripts/orchestrator-watch.sh`. It prints each wake as `<reason>: <text>` and its
-  detail as JSON (`--json`: the list of wakes), exits 0, and prints `nothing` when the daemon's
-  25 minutes pass quietly. The orchestrator runs it in the background and starts it again on
+  detail as JSON (`--json`: the list of wakes), exits 0, and prints `nothing` when the wait
+  ends quietly: the CLI asks for 6900 s (115 min, the cap) unless `--timeout` is lower; the daemon's own
+  default of 25 minutes applies only to a caller that sends none. The orchestrator runs it in the background and starts it again on
   every exit. Any other principal gets a 403.
 - **`bridle session advisor`** registers the session with the daemon and ends it at exit
   (best effort; see orchestrator-supervision.md, section 6). `bridle status` shows a

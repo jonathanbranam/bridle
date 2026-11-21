@@ -50,17 +50,18 @@ fn advisor_settings() -> String {
     format!(r#"{{"hooks":{{{ADVISOR_NOTE},{FOCUS_GATE},{REPLY_HOOK}}},{LEAN}}}"#)
 }
 
-// The opening prompts only point at `bridle prime`: a long prompt in argv is matched by any
+// The opening prompts only point at `bridle orchestrator prime`: a long prompt in argv is matched by any
 // `pkill -f <pattern>` a worker runs (fx7x).
-const ORCHESTRATOR_PROMPT: &str = "Run `bridle prime orchestrator` and follow what it prints.";
+const ORCHESTRATOR_PROMPT: &str =
+    "Run `bridle orchestrator prime orchestrator` and follow what it prints.";
 
-const AIDE_PROMPT: &str = "Run `bridle prime aide` and follow what it prints.";
+const AIDE_PROMPT: &str = "Run `bridle orchestrator prime aide` and follow what it prints.";
 
 fn advisor_prompt(name: Option<&str>) -> String {
-    let base = "Run `bridle prime advisor` and follow what it prints. Say hello to the human in one line, then wait.";
+    let base = "Run `bridle orchestrator prime advisor` and follow what it prints. Say hello to the human in one line, then wait.";
     match name {
         Some(n) => format!(
-            "You are advisor {n}: first read your unread inbox messages (bridle inbox --json) starting \"For advisor {n}:\" and start from that brief. Then run `bridle prime advisor` and follow what it prints. Say hello to the human in one line, then wait."
+            "You are advisor {n}: first read your unread inbox messages (bridle inbox --json) starting \"For advisor {n}:\" and start from that brief. Then run `bridle orchestrator prime advisor` and follow what it prints. Say hello to the human in one line, then wait."
         ),
         None => base.to_string(),
     }
@@ -1248,7 +1249,7 @@ mod tests {
     #[test]
     fn advisor_prompt_without_name_is_unchanged() {
         let prompt = advisor_prompt(None);
-        let expected = "Run `bridle prime advisor` and follow what it prints. Say hello to the human in one line, then wait.";
+        let expected = "Run `bridle orchestrator prime advisor` and follow what it prints. Say hello to the human in one line, then wait.";
         assert_eq!(prompt, expected);
     }
 }

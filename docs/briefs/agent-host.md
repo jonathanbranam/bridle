@@ -2,7 +2,7 @@
 
 > **Status (checked 2026-10-03):** Built and in use: the daemon, spawning, messages, containment,
 > the budget governor, renewal, roles, the Stop hook, status and the TUI · Built, not wired in:
-> `bridle sync`, the `arch-guard` hook, the port registry, paired worktrees; workflow rules reach
+> `bridle workflow sync`, the `arch-guard` hook, the port registry, paired worktrees; workflow rules reach
 > spawned agents only from 9561950 on, once the daemon runs it · Planned: cgroups, cross-daemon
 > budget, orchestrator pane supervision. "Built" below means in the code; it doesn't mean in use.
 
@@ -104,7 +104,7 @@ mostly `bridle` and `git` commands, read-only tools); the PM is set in bridle's 
 Code's own messaging, scheduling and remote-trigger tools are denied by default; memory is off;
 agents load only project settings. Roles come from `.bridle/config.toml` and the role prompt files. The shared workflow
 layers' rules reach a spawned agent only from 9561950 (2026-10-03) on, appended to its system
-prompt; before that, only the role prompt's own prose did. `bridle sync` renders the layers into
+prompt; before that, only the role prompt's own prose did. `bridle workflow sync` renders the layers into
 `CLAUDE.md`, skills and hooks, but nothing runs it and its skills are gitignored: **built, not
 wired in** ([[the-workflow-doesn-t-reach-agents-resolved-rules-hooks-and-o-34bw|34bw]]). Enforcement is by role in
 a few places: workers may not use agent lifecycle endpoints, only the PM or human edits the queue,
@@ -116,7 +116,7 @@ a claimed task with no thread note, no summary or `done:` report, or (when the p
 `commands.check_worker`) no recorded passing check for its HEAD. **`bridle arch-guard`** denies
 edits under `design/architecture/` unless the worker claimed an `arch-revision` task. Both fail
 open on their own errors. `stop-check`: **built and in use** (passed at spawn). `arch-guard`:
-**built, not wired in**: only `bridle sync` writes it into `.claude/settings.json`, which nothing
+**built, not wired in**: only `bridle workflow sync` writes it into `.claude/settings.json`, which nothing
 runs (34bw step 3 passes layer hooks at spawn; approved, not built). Landing's own refusal of
 architecture edits is wired, but no project has `design/architecture/` yet.
 

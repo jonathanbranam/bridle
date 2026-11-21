@@ -418,7 +418,7 @@ git can't diff, it builds. **The restart's commit** (message to agents, `restart
 built commit (`upgrade.built`), not the integration head, which can have moved during the build.
 
 **Automatic upgrade.** With `[daemon] self_upgrade = true` (commit mode, for bridle's own repo only; on in bridle's own
-`.bridle/config.toml`; the default is `"release"`, see below) the CI watcher's tick (every minute; no loop of its own) looks for a newer
+`.bridle/config.toml`; the default is `"release"`, see below) the CI watcher's tick (every minute; commit mode has no loop of its own, release mode does, br-66qq, below) looks for a newer
 green commit exactly as above, whatever the agents are doing (the build needs no quiet point), and,
 if there is one and no restart or upgrade is under way, starts the same background upgrade: build,
 then drain, then restart. A turn is never cut off and nothing gives up waiting. A commit whose

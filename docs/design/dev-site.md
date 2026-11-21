@@ -1,13 +1,14 @@
 # The throwaway dev site
 
-> **Status (checked 2026-10-12):** Sections 1 and 2 (bridle half) are built: `bridle dev site
-> up | down | list` (`crates/bridle/src/dev_site.rs`, fixtures in `crates/bridle/fixtures/dev-site/`).
+> **Status (checked 2026-11-21):** Built and in use: sections 1 and 2 (bridle half) and sections
+> 3 and 4: `bridle dev site
+> up | down | list` (`crates/bridle/src/dev_site.rs`, fixtures in `crates/bridle/fixtures/dev-site/`),
+> the rule `workflow/base/rules/verify-ui-in-a-browser.md` and `.agent-site/` in `.gitignore`
+> (tgxy and dgef, the bridle-ui half, are resolved).
 > Differences from the text below: the gateway's port is probed (it cannot report a `:0` port),
 > not bound; the gateway finds the daemons through the site's own registry, so no `[projects]`
 > entries are written; no usage figure is seeded (there is no way without an agent); no
-> `[dev_site] ui_dir` key yet (`--ui`, default `../bridle-ui`). The UI step is untested until
-> the bridle-ui half (dgef) lands. Sections 3 and 4 (rule, role text, gitignore migration) are
-> planned (tgxy). Ticket
+> `[dev_site] ui_dir` key yet (`--ui`, default `../bridle-ui`). Ticket
 > [[docs/tickets/open/agents-can-run-a-throwaway-bridle-site-on-a-free-port-log-in-vwqt|vwqt]] holds
 > the human's ask; the build tickets are listed in section 6. Modelled on track-web's
 > `docs/dev-second-instance.md` (read only; track-web keeps its own recipe).
@@ -91,7 +92,7 @@ what it started.
 `site.json`'s fixture manifest (project names, ticket and task ids, counts, the login).
 
 **bridle-ui** owns the dev-server side, as its own ticket (text in section 6, ticket
-[[docs/tickets/open/bridle-ui-dev-server-takes-a-port-and-api-target-and-checks-dgef|dgef]]):
+[[docs/tickets/resolved/bridle-ui-dev-server-takes-a-port-and-api-target-and-checks-dgef|dgef]]):
 
 - `vite.config.ts` reads `VITE_DEV_PORT` (with `strictPort: true`) and `VITE_API_TARGET`,
   defaulting to today's values, and proxies `/api` there. Without the second variable a client
@@ -158,7 +159,7 @@ Two layers, one contract.
 
 | Project | Gets | How |
 |---|---|---|
-| Every bridle project | the rule and role text | `bridle workflow update` then `bridle sync`: no project file changes, as with any rule |
+| Every bridle project | the rule and role text | `bridle workflow update` then `bridle workflow sync`: no project file changes, as with any rule |
 | Every project | `.agent-site/` in `.gitignore` | migration `0007-gitignore-agent-site` (`crates/bridle/src/migrate.rs`), idempotent, appends the line if absent |
 | bridle itself | `bridle dev site` and fixtures | ships in the binary |
 | bridle-ui | the dev-server config and `check:site` | its ticket (section 6); its CLAUDE.md "Verification" names `bridle dev site up --ui .` |
@@ -177,14 +178,14 @@ needs only that the migration is safe to run either way, and follows whichever x
 
 ## 6. Build tickets
 
-1. [[docs/tickets/open/a-bridle-dev-site-command-starts-a-throwaway-daemon-gateway-vdu8|vdu8]]
+1. [[docs/tickets/resolved/a-bridle-dev-site-command-starts-a-throwaway-daemon-gateway-vdu8|vdu8]]
    (repos: bridle): section 1 and the bridle half of 2. Verify: `bridle dev site up` twice at
    once gives two sites on different ports; `down` of one leaves the other; the gateway answers
    `/api/v1/projects` with the fixtures after login; `~/.bridle` unchanged; a pid-reuse test for
    `down`.
-2. [[docs/tickets/open/bridle-ui-dev-server-takes-a-port-and-api-target-and-checks-dgef|dgef]]
+2. [[docs/tickets/resolved/bridle-ui-dev-server-takes-a-port-and-api-target-and-checks-dgef|dgef]]
    (repos: bridle-ui): the bridle-ui half of section 2.
-3. [[docs/tickets/open/a-rule-and-role-text-make-agents-verify-ui-work-in-a-browser-tgxy|tgxy]]
+3. [[docs/tickets/resolved/a-rule-and-role-text-make-agents-verify-ui-work-in-a-browser-tgxy|tgxy]]
    (repos: bridle): section 3's rule and role text, the gitignore migration of section 4, and a
    CLAUDE.md "Verification" note for bridle. Verify: `bridle workflow update` in a scratch
    project renders the rule; `bridle migrate --dry-run` reports the gitignore line.

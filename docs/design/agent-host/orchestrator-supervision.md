@@ -1,6 +1,6 @@
 # Orchestrator supervision
 
-> **Status (checked 2026-10-03):** Built and in use: slices 1a, 1b, 2 and 3 (liveness, relaunch and backoff, wake conditions and `wait-for-wake`, context and uptime notes, forced restart, `handover done`, the handover note as a record), advisor session registration, `session.context` steps with warnings, `session keep` and the forced restart at the hard limit · Built: `bridle orchestrator hold` / `release` (br-9966) · Planned: wakes for advisors, automatic crash restart for advisors (tabled), percentage thresholds, filing supervisor incidents as `incident` tasks (it still sends a `system` note plus an `orchestrator.incident` event)
+> **Status (checked 2026-11-21):** Built and in use: slices 1a, 1b, 2 and 3 (liveness, relaunch and backoff, wake conditions and `wait-for-wake`, context and uptime notes, forced restart, `handover done`, the handover note as a record), advisor session registration, `session.context` steps with warnings, `session keep` and the forced restart at the hard limit · Built: `bridle orchestrator hold` / `release` (br-9966) · Built: wakes for advisors (`bridle agent wake external:advisor/<name>`, `principal_wake.rs`; the doorbell is an unread message, see "Aide and advisor sessions get the same check"), `bridle session stop|list|keep` · Planned: automatic crash restart for advisors (tabled), percentage thresholds, filing supervisor incidents as `incident` tasks (it still sends a `system` note plus an `orchestrator.incident` event)
 
 Design for ticket [[the-orchestrator-stays-running-fx7x|fx7x]]; signals verified in
 [[docs/spikes/07-orchestrator-supervision-findings|spike 07]]. **Slice 1a built** (br-a424): liveness, relaunch and crash-loop backoff (sections 1 to 4, the
@@ -97,7 +97,7 @@ home project: `<host>-home`, or `[machine] home_project` in `~/.bridle/config.to
 enabled` outside it, and where the waiter is. Slice 2 turned the slice 1 warnings into refusals of
 NEW launches: a non-home daemon with `[orchestrator]` enabled logs an error at start and starts no
 supervisor; `bridle session orchestrator` (so also the supervisor's relaunch), `bridle up` and
-`bridle prime orchestrator` refuse a project that is not the home, and refuse on a machine with no
+`bridle orchestrator prime orchestrator` refuse a project that is not the home, and refuse on a machine with no
 home or whose home does not exist, each naming the exact command to run instead;
 `bridle send external:orchestrator` to a non-home local project is refused with the
 `--project <host>-home` command. A running orchestrator is never stopped or killed, and the
@@ -156,7 +156,7 @@ cause was not reproduced), then `tmux send-keys -t <pane_id> -l 'cd <repo> && br
 pane's shell finds `bridle` on its PATH, as the advisor relaunch does), then a separate
 `tmux send-keys -t <pane_id> Enter` (spike #7; the two calls are the tested form). The launcher
 does `cd`, writes the pid file and starts `claude` with a one-line prompt telling it to run
-`bridle prime orchestrator`. Not the prime's text itself: a long prompt in argv matches any
+`bridle orchestrator prime orchestrator`. Not the prime's text itself: a long prompt in argv matches any
 worker's `pkill -f <pattern>`, which is how two sessions died (fx7x). A fresh session, not `--resume`: a handover is how state crosses a restart.
 
 A launch is *confirmed* when the pid file changes to a live pid within 60 s. A launch that isn't
@@ -302,8 +302,8 @@ reads each live session's `$BRIDLE_HOME/context/<id>` file and emits `session.co
 (`identity`, `session`, `tokens`, `threshold`, `step`) once per step reached (below), re-armed by
 a lower reading. Tokens per session show in `bridle status`
 with project, machine, uptime and last activity (the context file's mtime) and in
-`GET /v1/sessions`. `bridle session aide` registers the same way (identity `aide`). No
-wakes for advisors yet.
+`GET /v1/sessions`. `bridle session aide` registers the same way (identity `aide`). Advisors
+wake with `bridle agent wake external:advisor/<name>` (`principal_wake.rs`).
 
 **Scheduled restart (ticket cbbn).** `[[restart]]` entries in the machine `~/.bridle/config.toml`
 (`project`, `session` as `bridle session restart` takes it, `at = "HH:MM"` host-local, `days`
@@ -419,7 +419,7 @@ built-in standard text is used. Rejected: a second override scheme in config (fi
 
 Today `docs/context/orchestrator-state.md` is a file the orchestrator commits and pushes, which
 fails whenever pushing does. Most of it restates what bridle already holds (`agents`, the queue,
-tasks, CI), and that is printed live by `bridle prime orchestrator`. What is left is a note.
+tasks, CI), and that is printed live by `bridle orchestrator prime orchestrator`. What is left is a note.
 
 - A table `handovers(seq INTEGER PK AUTOINCREMENT, id UNIQUE, role, project, body, created_at,
   created_by)` in the store (`storage.md` gets it; a new schema version). `id` is `h-0007` from
@@ -435,7 +435,7 @@ tasks, CI), and that is printed live by `bridle prime orchestrator`. What is lef
 - `bridle handover write` also sends the restart marker (6) for the writer's own session; a note
   written early uses `--no-restart`. Interactive sessions restart through `session restart`'s code;
   workers only record.
-- `bridle prime orchestrator` prints the note under a heading, its age, then the live views.
+- `bridle orchestrator prime orchestrator` prints the note under a heading, its age, then the live views.
 - Also on the state branch, unlike messages and incidents: each note is written as
   `handovers/<id>.md` (TOML frontmatter with id, role, project, created_at, created_by; then the
   body) by the same batched flush, so it is pushed with it (we2r). Files are history, never

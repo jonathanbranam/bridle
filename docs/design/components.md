@@ -1,6 +1,6 @@
 # Components: scoped work contexts
 
-> **Status (checked 2026-10-03):** Built, not wired in: `[components.<id>]` config with validation, `LayerKind::Component` chains, `components` on tasks and spawns (`bridle task new|list --component`, `bridle agent spawn --component`, `BRIDLE_COMPONENTS`), `bridle prime worker|planner --component`, `bridle rules explain|diff --component`. Nothing delivers component rules to a spawned agent: its system prompt carries L1–L3 only (`config.rs` `role_rules_text`), and workers don't run `bridle prime`. No project declares components yet · Planned: everything under "Deferred"
+> **Status (checked 2026-10-03):** Built, not wired in: `[components.<id>]` config with validation, `LayerKind::Component` chains, `components` on tasks and spawns (`bridle task new|list --component`, `bridle agent spawn --component`, `BRIDLE_COMPONENTS`), `bridle orchestrator prime worker|planner --component`, `bridle workflow rules explain|diff --component`. Nothing delivers component rules to a spawned agent: its system prompt carries L1–L3 only (`config.rs` `role_rules_text`), and workers don't run `bridle orchestrator prime`. No project declares components yet · Planned: everything under "Deferred"
 
 Design for the L4 layer of [[docs/design/workflow-layers|workflow layers]], from
 [[components-as-scoped-work-contexts-y3sd|y3sd]] (the human's ask and settled
@@ -67,14 +67,14 @@ the human is, so cwd says nothing about which client is meant. The scope is name
 - **A spawn takes the same list** (`bridle agent spawn … --component <id>`), defaulting to
   the claimed task's. A planning or proposal agent has no task, so this is how it
   gets scoped. The daemon records the list on the agent and passes it to the
-  process as `BRIDLE_COMPONENTS` (comma-separated), which `bridle prime` reads.
+  process as `BRIDLE_COMPONENTS` (comma-separated), which `bridle orchestrator prime` reads.
   This is a wire change: `Task`, `NewTaskRequest` and the spawn request in
   `bridle-api/src/types.rs`, and the state-branch task format
   ([[docs/design/storage|storage]]).
 
 ## What an agent is handed (gaps 1 and 4)
 
-`bridle prime worker|planner` is the designed delivery mechanism. It is built, but no
+`bridle orchestrator prime worker|planner` is the designed delivery mechanism. It is built, but no
 spawned agent runs it, and the spawn-time system prompt (which is how L1–L3 rules reach
 agents today) leaves components out, so this delivery is not wired in yet. Given the named
 components, prime prints:
@@ -94,7 +94,7 @@ components, prime prints:
 `CLAUDE.md` loads by cwd, and its suggested target,
 `.bridle/components/<n>/CLAUDE.md`, isn't under any component's code path, so
 nothing would ever load it. Prime doesn't need it, so nothing gets rendered for
-components and `bridle sync` stays as it is. The one case prime doesn't cover is a
+components and `bridle workflow sync` stays as it is. The one case prime doesn't cover is a
 human running plain `claude` inside `client-watch/` with no bridle session. That's
 the only place a cwd-based render helps, and the candidate is
 `.claude/rules/<id>.md` with `paths:` frontmatter, which spike 06 didn't test.
@@ -122,7 +122,7 @@ What it took:
   redefinition of the first. Siblings are independent; prime prints each chain's
   result under its own heading. If two chains disagree on the same id, both are
   shown labeled. Prime doesn't pick a winner between siblings.
-- `bridle rules explain <id> --component <id>` (and `diff`) take the same flag; with
+- `bridle workflow rules explain <id> --component <id>` (and `diff`) take the same flag; with
   none they show L1–L3 as today.
 
 ## Roadmap, planning and tickets (gap 3, hv8e's slice)
@@ -138,7 +138,7 @@ format and no per-component ticket tree.**
   wants one; most stay repo-level (as they are now, mostly). track-web is the
   exception, since it has several products under one repo: a per-component roadmap
   is possible there and costs one file.
-- **Tickets are bridle tasks, filtered by component.** `bridle task list
+- **Tickets are bridle tasks, filtered by component.** `bridle ticket list
   --component <id>` matches tasks naming that component or any descendant. The
   component field is the whole linkage: a component doesn't own a ticket list, and
   tasks needn't match roadmap items 1:1 (a task's body can link the roadmap line it
@@ -171,7 +171,7 @@ a spawned agent receives its components' rules:
 > builder, and tests that a two-deep chain resolves (replace, append, disable, locked)
 > and that sibling chains are resolved separately; (3) an optional `components` list
 > on tasks and spawns (wire types, store, state branch, `bridle task new/list
-> --component`, `bridle agent spawn --component`, `BRIDLE_COMPONENTS`); (4) `bridle prime`
+> --component`, `bridle agent spawn --component`, `BRIDLE_COMPONENTS`); (4) `bridle orchestrator prime`
 > for worker and planner roles printing L1–L3, the named chains, docs pointers and the
 > other-components line; (5) `rules explain/diff --component`. Update
 > workflow-layers, cli.md and rules.rs's header comment. Out of scope: rendering

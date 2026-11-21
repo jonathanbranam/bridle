@@ -1,6 +1,6 @@
 # Usage limits and token efficiency
 
-> **Status (checked 2026-10-03):** Built and in use: the turns ledger, `bridle usage [--by role|model|agent --since]`, context size and context renewal, the budget governor (thresholds, schedule, overrides, `max-workers`, hold/release, wind-down, resume, `get_usage` probes), `[models]` step-down, `--strict-mcp-config` · Built, not wired in: `bridle cost audit [--check]` (nothing runs it: not in `just check` or CI) · Planned: the ledger's task, kind, project and workflow-revision columns and what needs them (`usage task|trend|compare`, `--by project|kind`), `paused:limit`, a prime size budget, the bridle MCP server, cross-daemon `budget hold`
+> **Status (checked 2026-10-03):** Built and in use: the turns ledger, `bridle usage [--by role|model|agent --since]`, context size and context renewal, the budget governor (thresholds, schedule, overrides, `max-workers`, hold/release, wind-down, resume, `get_usage` probes), `[models]` step-down, `--strict-mcp-config` · Built, not wired in: `bridle usage cost audit [--check]` (nothing runs it: not in `just check` or CI) · Planned: the ledger's task, kind, project and workflow-revision columns and what needs them (`usage task|trend|compare`, `--by project|kind`), `paused:limit`, a prime size budget, the bridle MCP server, cross-daemon `budget hold`
 
 ## The constraint
 
@@ -635,10 +635,10 @@ Rules the design follows, and that the build is reviewed against:
    project up to a short identity sentence (name, cwd, branch) appended last;
    that keeps the long, role-scoped part of the prefix cached across agents.
    That part ends with the role's resolved workflow rules (base, packs, project; the same
-   list as the rules section of `bridle prime`, no components), under `## Workflow rules`;
+   list as the rules section of `bridle orchestrator prime`, no components), under `## Workflow rules`;
    rules that can't be resolved are left out with a warning rather than failing a spawn.
    The task-specific content goes in the first user message.
-3. **Prime is role-scoped and has a size budget** (planned). `bridle prime` is to have a token
+3. **Prime is role-scoped and has a size budget** (planned). `bridle orchestrator prime` is to have a token
    budget per role, e.g. a worker's prime ≤ 3k tokens. Guides are pointed to,
    not included, unless the task's components need them.
 4. **Injections are silent by default.** Hooks print nothing when there's
@@ -670,16 +670,16 @@ bridle usage --by role|model|agent --since 30d   # built: role/model/agent, no p
 bridle usage task tw-7fa2         # what one task cost, per agent and phase
 bridle usage trend --per kind     # tokens per task kind over time
 bridle usage compare --workflow <rev-a> <rev-b>   # did a workflow change cost more?
-bridle cost audit [--check]       # static: size of everything bridle injects
+bridle usage cost audit [--check]       # static: size of everything bridle injects
 ```
 
 `--by project` and `--by kind`, and everything below this line, need the
 ledger's task, project and workflow-revision columns, which don't exist yet
-("What bridle records today" above). `bridle cost audit` (built) and
+("What bridle records today" above). `bridle usage cost audit` (built) and
 `bridle usage compare` (planned) answer *"are new systems increasing the token
 budget?"* directly:
 
-- **`bridle cost audit`** counts the tokens bridle adds to each role's context
+- **`bridle usage cost audit`** counts the tokens bridle adds to each role's context
   with no work done: prime, the rendered system-prompt file, skill
   descriptions, MCP tool schemas and hook boilerplate. Built: only the
   rendered system-prompt file exists in bridle today, so that's all it

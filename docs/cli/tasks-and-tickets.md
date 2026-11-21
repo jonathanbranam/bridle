@@ -4,20 +4,26 @@
 
 ## Tasks
 
-A task has a kind (`feature`, `bug`, `chore`, `question`, `research`, `explore`,
-`arch-revision`, `re-evaluate`), a body, a thread of comments and a state.
+A task has a kind (`feature`, `bug`, `fix`, `epic`, `docs`, `chore`, `question`, `research`,
+`explore`, `incident`, `arch-revision`, `re-evaluate`), a body, a thread of comments and a state.
 
 ```
-pending -> open -> planned -> (ready) -> claimed -> integrated
-                      any state -> dropped (reason required)      integrated -> reopened
+pending -> open -> planned -> (ready) -> claimed -> built -> integrated
+                      |  ^                    \-> back to planned (send-back)
+                      v  |
+                      held      any state -> dropped (reason required)      integrated -> reopened
 ```
 
-- `pending`: just filed. `bridle ticket ready <id>` (`task ready <id>` for a row with no ticket; orchestrator, advisor, aide or PdM; see rule
+- `pending`: just filed. `bridle ticket ready <id>` (`task ready <id>` for a row with no ticket; orchestrator, advisor, aide or the product-manager advisor session, not the project-manager agent; see rule
   `ready-without-asking`) makes it `open`.
 - `open`: the project manager triages it; `bridle task plan <id>` makes it `planned`.
 - `ready` is derived: planned, with no open blockers and no unanswered question.
 - `claimed`: a worker holds it under a lease renewed by the agent's activity; a lapsed
   lease returns it to ready.
+- `held`: a person paused a `planned` ticket (`bridle ticket hold <id>`, reason required): not
+  claimable or startable until `bridle ticket unhold`.
+- `built`: finished on a branch (`bridle ticket built`), waiting to land; `send-back` returns it
+  to `planned`, landing (`done`) makes it `integrated`.
 - `integrated`: merged to the integration branch, tests green. Planned, not built:
   `in_review`, `accepted`, `needs-input`.
 
@@ -29,7 +35,7 @@ bridle task comment <id> --text-file F      # on the thread; no effect on readin
 bridle task ask|answer ...                  # a question that blocks a task
 bridle ticket link <id> blocked-by <other>  # real dependencies only, never ordering
 bridle task summary <id> --file F           # how it was done
-bridle task land <task>                     # integrator: squash-merge the branch
+bridle ticket land <task>                     # integrator: squash-merge the branch
 ```
 
 ## Tickets

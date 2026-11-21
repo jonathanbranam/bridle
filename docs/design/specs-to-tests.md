@@ -1,20 +1,20 @@
 # Specs to tests: making Gherkin disappear
 
-> **Status (checked 2026-10-03):** Built, not wired in: the Rust parser, `bridle spec export --format gherkin|json [--task|--scenario]`, `bridle spec coverage`, the pytest adapter (`workflow/packs/python/adapters/bridle_specs.py`) and the vitest one (`workflow/packs/typescript/adapters/vitest-bridle/`), both vendored by hand; bridle uses them for its own specs (`design/specs/`, checked in `just check`); no other onboarded project does yet (track-web, bridle-ui and data-contracts have no `design/specs/`) · Planned: `bridle test --task` as its own command (`spec export --task` covers the selection)
+> **Status (checked 2026-11-21):** Built, not wired in: the Rust parser, `bridle workflow spec export --format gherkin|json [--task|--scenario]`, `bridle workflow spec coverage`, the pytest adapter (`workflow/packs/python/adapters/bridle_specs.py`) and the vitest one (`workflow/packs/typescript/adapters/vitest-bridle/`), both vendored by hand; bridle uses them for its own specs (`design/specs/`, checked in `just check`); bridle-ui and meta-notes keep `design/specs/` too (track-web and data-contracts do not), and the stage rules (`workflow/base/rules/stage-specs.md`, `stage-apply.md`) tell stage agents to write and merge specs; no project has `design/goals`, `design/architecture` or `design/explore` · Planned: `bridle test --task` as its own command (`spec export --task` covers the selection)
 
 The current pipeline commits a generated `.feature` beside every `spec.md`, so
 it needs a staleness check (`check-specs.py`), strict input validation, output
 re-parsing through `gherkin-official`, and `uv run`. Most of the brittleness
 comes from the committed generated file.
 
-- **Parse in Rust, in the binary.** One parser, used by `bridle spec check`,
+- **Parse in Rust, in the binary.** One parser, used by `bridle workflow spec check`,
   the impact registry, id assignment and export. Target: all six repos' specs
   in well under a second.
 - **Nothing generated is committed.** Test runners get scenarios at collection
   time:
-  - `bridle spec export --format gherkin --out .bridle/cache/features/`
+  - `bridle workflow spec export --format gherkin --out .bridle/cache/features/`
     (gitignored) for runners that need files;
-  - `bridle spec export --format json` for adapters that register scenarios
+  - `bridle workflow spec export --format json` for adapters that register scenarios
     directly.
   `export` is built (local, no daemon). It refuses to run, printing the
   diagnostics, when any spec has errors. Defaults: paths and `--root` as for
@@ -34,7 +34,7 @@ comes from the committed generated file.
     `text`, `line`, `scenarios`; per scenario: `id`, `title`, `line`,
     `executable`, `tags` (no `@`), `description`, `steps` (`keyword`
     `Given|When|Then|And|But`, `text`, `line`), `examples` (`header`, `rows`, or
-    null). `id` is null until `bridle spec id` assigns it. Fields may be added;
+    null). `id` is null until `bridle workflow spec id` assigns it. Fields may be added;
     a rename or removal bumps `version`.
 - **Adapters live in stack packs.** `python` ships a small pytest plugin that
   gets scenarios from bridle and binds them to pytest-bdd steps. The python one
@@ -48,9 +48,9 @@ comes from the committed generated file.
   otters and file-db's TS side.
 - **Scenario ids in test results.** Results report by `s-b310`, which lets
   `bridle test --task tw-7fa2` run only the scenarios in that task's impact
-  (built as `bridle spec export --task ID` / `--scenario ID`, which narrow the
+  (built as `bridle workflow spec export --task ID` / `--scenario ID`, which narrow the
   export to those scenarios; the adapters pass their selection through it),
-  and `bridle spec coverage` list executable scenarios with no bound test
+  and `bridle workflow spec coverage` list executable scenarios with no bound test
   (research 11's "147 scenarios with zero links to code").
 - **Validation stays strict but gets cheaper.** Rejecting near-misses is the
   valuable part of today's tool, and that moves into the Rust parser. Re-parsing
@@ -67,5 +67,5 @@ covers, the unit test is decided in the same change that adds the scenario:
   a pure function with many inputs.
 - A unit test that only repeats the scenario's happy path is deleted in that
   change, and the commit message says so.
-- Coverage (`bridle spec coverage`) only checks that a scenario id is mentioned in
+- Coverage (`bridle workflow spec coverage`) only checks that a scenario id is mentioned in
   a test, so it does not tell you whether a unit test is still needed.

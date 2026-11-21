@@ -1,6 +1,6 @@
 # Traceability: from goals down to tests
 
-> **Status (checked 2026-10-03):** Built, not wired in: link syntax and text hashes (`bridle-spec` `trace`), `bridle trace down|up|orphans|suspect|confirm`, and `re-evaluate` tasks opened when an `arch-revision` task is done (`reevaluate.rs`); no project has a `design/` tree yet, so none of it has anything to trace · Planned: `bridle trace coverage`, an `arch-revision`'s impact as its whole downstream set
+> **Status (checked 2026-10-03):** Built, not wired in: link syntax and text hashes (`bridle-spec` `trace`), `bridle workflow trace down|up|orphans|suspect|confirm`, and `re-evaluate` tasks opened when an `arch-revision` task is done (`reevaluate.rs`); no project has a `design/` tree yet, so none of it has anything to trace · Planned: `bridle workflow trace coverage`, an `arch-revision`'s impact as its whole downstream set
 
 Each tier links upward to the one above it:
 
@@ -24,11 +24,11 @@ link was last confirmed**. That is what makes change tracing mechanical (the
 
 - When an upstream element's text changes on merge, every link pointing at it
   with an old hash becomes **suspect**.
-- `bridle trace suspect` lists suspect links. When an `arch-revision` is
+- `bridle workflow trace suspect` lists suspect links. When an `arch-revision` is
   accepted, bridle opens one `re-evaluate` task per affected capability, listing
   its suspect requirements.
 - For each requirement, the worker on that task either **confirms** it
-  (`bridle trace confirm r-7fa2`, which rewrites the hash and records that it is
+  (`bridle workflow trace confirm r-7fa2`, which rewrites the hash and records that it is
   still valid) or **edits** it, which may in turn make its scenarios suspect.
 - An `arch-revision` task's impact ([[docs/design/impact-and-conflicts#The impact registry|impact registry]]) is to be the whole downstream set (planned), so the
   conflict check warns every in-flight task on an affected spec before the
@@ -37,10 +37,10 @@ link was last confirmed**. That is what makes change tracing mechanical (the
 Queries:
 
 ```
-bridle trace down a-12cd     # everything that depends on this element
-bridle trace up s-b310       # why this scenario exists, up to goals
-bridle trace orphans         # requirements tracing to nothing (warning, configurable)
-bridle trace coverage g-03   # how much of this goal has design, specs, tests
+bridle workflow trace down a-12cd     # everything that depends on this element
+bridle workflow trace up s-b310       # why this scenario exists, up to goals
+bridle workflow trace orphans         # requirements tracing to nothing (warning, configurable)
+bridle workflow trace coverage g-03   # how much of this goal has design, specs, tests
 ```
 
 ## Built
@@ -51,7 +51,7 @@ bridle trace coverage g-03   # how much of this goal has design, specs, tests
   heading title (no `{#id ...}` block), a newline, and the body up to the next heading, with
   whitespace runs collapsed to one space. Goals, architecture elements (alternatives included) and
   requirements (prose before the first scenario) all hash this way.
-- **Queries**: `bridle trace down|up|orphans|suspect|confirm` (local, see `docs/design/cli.md`).
+- **Queries**: `bridle workflow trace down|up|orphans|suspect|confirm` (local, see `docs/design/cli.md`).
   Not built yet: `coverage`.
 - **Re-evaluate tasks**: when a task of kind `arch-revision` is marked done, the daemon
   (`bridle-daemon/src/reevaluate.rs`, called from `done_task`) computes the suspect links over

@@ -23,19 +23,19 @@ merging the branch updates the spec.
 ## The flow, end to end
 
 1. **Write** `design/specs/<capability>.md`. Format: [[docs/design/specs|specs]]. **Built.**
-2. **Check**: `bridle spec check [--require-ids]` prints `file:line:col: message` and exits 1
+2. **Check**: `bridle workflow spec check [--require-ids]` prints `file:line:col: message` and exits 1
    on an error. Local, no daemon. Put it in the project's check recipe. **Built.**
-3. **Ids**: `bridle spec id` writes an id into each heading that lacks one, touching only
+3. **Ids**: `bridle workflow spec id` writes an id into each heading that lacks one, touching only
    those lines. Ids are never reused (a committed ledger, `design/specs/.ids`). `--dry-run`
    previews. **Built.**
-4. **Tests**: `bridle spec export --format json` (or `gherkin`, one `.feature` per
+4. **Tests**: `bridle workflow spec export --format json` (or `gherkin`, one `.feature` per
    capability) hands scenarios to a test runner at collection time; nothing generated is
    committed. Two adapters read the json: a **pytest** plugin
    (`workflow/packs/python/adapters/bridle_specs.py`, pytest-bdd) and a **vitest** one
    (`workflow/packs/typescript/adapters/vitest-bridle/`). Test names carry the scenario id.
    Export can narrow to `--scenario ID` or `--task ID`. **Built**; both adapters are new
    and only tested against bridle's own fixtures, not a real project.
-5. **Coverage**: `bridle spec coverage [--require-all]` lists executable scenarios whose id
+5. **Coverage**: `bridle workflow spec coverage [--require-all]` lists executable scenarios whose id
    appears in no test file (a text search under `tests/` or `test/`). It checks that a test
    *mentions* the id, not that it passes or asserts the right thing. **Built.**
 6. **Tasks**: `bridle impact set <task> --modify s-.. --files 'glob'` declares which spec
@@ -47,18 +47,18 @@ merging the branch updates the spec.
    impact was touched get "spec changed under you". **Built** (declared impact is trusted;
    it isn't checked against what the task actually changed, and ids aren't checked to exist).
 7. **Traceability**: requirements can link up to architecture and goals
-   (`traces=a-12cd@3f9e`, a short hash of the upstream text). `bridle trace down|up|orphans`
+   (`traces=a-12cd@3f9e`, a short hash of the upstream text). `bridle workflow trace down|up|orphans`
    walk the links; `trace suspect` lists links whose upstream text changed since; `trace confirm`
    accepts them. Landing an architecture-revision task opens a "re-evaluate" task per spec file
    with suspect requirements. **Built.** `trace coverage` is **planned**. Goals, architecture
-   and `bridle explore` findings docs sit beside specs (`bridle goals|arch|explore`); you can
+   and `bridle workflow explore` findings docs sit beside specs (`bridle workflow goals|arch|explore`); you can
    ignore them for a first migration.
 8. **Protected requirements**: `{#r-7fa2 protected}` is parsed and exported. Nothing yet sends
    a task touching one to a human plan gate. **Partly built** (marker only).
 
 ## Migrating a project from OpenSpec (e.g. meta-notes)
 
-`bridle spec check --root openspec/specs`, then `bridle spec import openspec [--dry-run]`.
+`bridle workflow spec check --root openspec/specs`, then `bridle workflow spec import openspec [--dry-run]`.
 It `git mv`s each `openspec/specs/<cap>/spec.md` to `design/specs/<cap>.md`, assigns ids
 and writes the ledger. It changes nothing if any spec has an error. Scenario wording and the
 `*Verification*` markers carry over unchanged. **Built.**

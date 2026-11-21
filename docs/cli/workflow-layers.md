@@ -42,8 +42,8 @@ bridle workflow update [--to <tag>]
 ```
 
 Components (L4) resolve for `rules explain|diff --component`, but their rules don't reach
-spawned agents yet. Rule proposals (`bridle rules propose`) and layer hooks at spawn are
-planned.
+spawned agents yet. Rule proposals (`bridle workflow rules propose`) are planned. Layer hooks are passed at
+spawn (built).
 
 ## More
 

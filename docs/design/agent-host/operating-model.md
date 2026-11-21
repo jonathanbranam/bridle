@@ -171,7 +171,7 @@ resolved rules from the base, pack and project layers (`Config::role_rules_text`
 `supervisor.rs` on spawn, resume and renew; [[roles-and-config]]). Role prompts cite rules by
 id (`kiss`, `yagni`), not by bridle's own paths. Component (L4) rules, facts and guides are not
 included. The orchestrator and advisor sessions are not daemon-spawned: their opening prompt is
-`bridle prime orchestrator|advisor`, which carries no resolved rules. `bridle sync`'s CLAUDE.md
+`bridle orchestrator prime orchestrator|advisor`, which carries no resolved rules. `bridle workflow sync`'s CLAUDE.md
 block, which points at the rule files, only exists where someone ran `sync`; bridle's own
 CLAUDE.md has none.
 
@@ -259,7 +259,7 @@ the clone:
    never lags the clone. A rejected push is a `push.failed` event (project, branch, git's first
    stderr line) and a message to the orchestrator and the human, and the command exits 1, so it never
    depends on the pusher's own report (8umh). Only the owner's clone can push it (8z7j): a `pre-push` hook that
-   `serve` and `bridle sync` install in each clone runs `bridle machine push-check`, which compares
+   `serve` and `bridle workflow sync` install in each clone runs `bridle machine push-check`, which compares
    this machine with `owner.toml` on `bridle/state` (a fresh fetch of origin's, else the local
    branch; no readable owner refuses) and refuses with the owner's name and `bridle project
    take-over`. Other branches and tags pass; `--no-verify` and `core.hooksPath` edits are denied
