@@ -9,6 +9,7 @@ changes: []
 specs: []
 blocked_by: []
 related: []
+resolved: 2026-11-21T18:42:34Z
 ---
 
 ## The ask
@@ -36,3 +37,7 @@ The human, 2026-11-17 ~8:25 AM ET (via the flume aide, submitted by aide@remus),
 ## Acceptance
 
 Tests: land of a ticket with an open file leaves the file in `resolved/` in one commit on the integration branch with `resolved:` stamped; idempotent re-run; a file-less row lands cleanly; the new check flags a stale open file. `just check` with BRIDLE_* env unset. Model: Sonnet.
+
+## Resolution
+
+Built: integrating resolves the ticket file and commits it on the integration branch (crates/bridle-daemon/src/ticket_file.rs: `resolve_and_commit`, idempotent; `stale_open_files` feeds the `ticket check` warning; tests in the same file). Docs: docs/design/cli.md (`ticket resolve`) and docs/design/agent-host/operating-model.md. Landed by manager-2.

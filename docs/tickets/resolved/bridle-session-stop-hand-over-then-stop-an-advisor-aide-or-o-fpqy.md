@@ -9,6 +9,7 @@ changes: []
 specs: []
 blocked_by: []
 related: []
+resolved: 2026-11-21T18:42:33Z
 ---
 
 ## The ask
@@ -29,3 +30,7 @@ The ask: `bridle session stop <role>[/<name>]` (for example, `advisor/tj7q`, `ai
 - The orchestrator: the same, then `bridle orchestrator hold` so the supervisor doesn't relaunch it (human only, as the hold is today), and `release` starts it with its handover.
 - Messages that arrive while it is stopped wait in its inbox, as they do now.
 - Update docs/design/cli.md and the role texts that describe handovers.
+
+## Resolution
+
+Built: `bridle session stop <role>[/<name>]` (crates/bridle/src/session.rs, tests in crates/bridle/tests/session_test.rs): asks for a handover, waits, ends the session, holds the orchestrator. Docs: docs/design/cli.md (session stop) and docs/design/agent-host/orchestrator-supervision.md.

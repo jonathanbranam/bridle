@@ -8,6 +8,7 @@ specs: []
 blocked_by: [session-names-per-machine-sfb3]
 related: []
 kind: feature
+resolved: 2026-11-21T18:42:33Z
 ---
 
 ## The ask
@@ -76,3 +77,7 @@ So:
   others leave it alone, and don't mark it read.
 - If shared-inbox addressing gets messy, a later step is a real per-name recipient (e.g.
   `external:advisor:fred`); not now.
+
+## Resolution
+
+Built: `bridle advisor start <name>` (crates/bridle/src/cli.rs, session.rs) starts the advisor in a tmux pane (`[tmux] advisor_pane = "split"|"window"`), sets BRIDLE_ADVISOR_NAME, and a named advisor reads its "For advisor <name>:" messages at startup (workflow/base/roles/advisor.md). The orchestrator handoff is in the project role (.bridle/roles/orchestrator.md): the brief is sent as a message once the advisor is up, per the human 2026-10-10, which supersedes the ticket brief-first order. Design: docs/design/cli.md, docs/design/agent-host/roles-and-config.md. Caveat: the base orchestrator role (workflow/base/roles/orchestrator.md) has no spin-off paragraph; not filed, since the project role carries it.

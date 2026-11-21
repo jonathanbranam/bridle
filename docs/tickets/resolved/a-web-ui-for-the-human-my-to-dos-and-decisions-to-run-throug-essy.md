@@ -8,6 +8,7 @@ changes: []
 specs: []
 blocked_by: [a-prototyper-role-in-the-base-workflow-build-only-from-the-p-6yb4, br-6yb4]
 related: [a-human-surface-beyond-the-cli-k4wq, answering-hitl-questions-from-mobile-u6wk, the-humans-to-do-list-and-restart-checklist-ex9q, tui-panels-and-seeing-the-work-y496]
+resolved: 2026-11-21T18:42:33Z
 ---
 
 ## The ask
@@ -217,3 +218,7 @@ Decided:
    decision. Checked: dalek's bridle daemon already listens on its Tailscale address and the NUC's
    daemons answer over Tailscale (k7mw built). A project on a random port, e.g. track-web, needs a
    `[projects]` entry with a fixed port to be reachable from another machine.
+
+## Resolution
+
+Built: `bridle gateway` (crates/bridle-gateway) serving the human to-dos and decisions with login, retraction handling, multi-machine listing and actions; the UI is the separate bridle-ui project; the TUI stays; the prototyper role exists (workflow/base/roles/prototyper.md). Design: docs/design/human-web-ui.md (Status line: built and in use).

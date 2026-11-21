@@ -10,6 +10,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-kx5u, br-ehg7, br-kt25]
+resolved: 2026-11-21T18:42:33Z
 ---
 
 ## The ask
@@ -54,3 +55,7 @@ The human, 2026-10-12 ~10:36 AM ET (to advisor product-manager, dictated, in the
 - The pre-push hook today guards the integration branch only; the worker's deny rule would narrow
   from all pushes to "own branch, no force".
 - Not part of project moves (kx5u): moves in the MVP and V1 still land all work first.
+
+## Resolution
+
+Built: `bridle push-branch` (crates/bridle/src/push_branch.rs) pushes only `bridle/$BRIDLE_AGENT_NAME`, never forces; the landing cleanup deletes the remote `bridle/*` branch safely (br-pm2r, crates/bridle-daemon/src/worktree.rs). Design: docs/design/agent-host/operating-model.md ("Workers push their own branch"), docs/design/cli.md.

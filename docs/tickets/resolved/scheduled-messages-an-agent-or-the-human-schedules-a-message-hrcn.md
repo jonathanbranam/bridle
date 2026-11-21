@@ -8,6 +8,7 @@ changes: []
 specs: []
 blocked_by: []
 related: [br-fx7x, br-cvaq, br-phyy, br-cy2v, br-jttf]
+resolved: 2026-11-21T18:42:33Z
 ---
 
 ## The ask
@@ -88,3 +89,7 @@ incident of 2026-10-03 in `docs/context/incidents.md`):
 The human asked for a kind meaning "a design for a new feature" if none fits. For now this is a
 `feature` ticket with no task, which under k7tm means "not ready to build". Whether to add a
 separate kind (e.g. `design`) is noted in [[tickets-and-tasks-why-both-k7tm|k7tm]].
+
+## Resolution
+
+Built as `bridle schedule add|list|rm` (crates/bridle-daemon/src/schedule.rs, firing in the daemon; cron and one-time `--at`, `--tz` default America/New_York with DST handling, a firing missed while the daemon was down is sent late and flagged, events `schedule.fired` / `schedule.missed_fired`). Quiet hours deliberately do not hold a schedule back (daemon.md, "Not done"). Docs: docs/design/cli.md (`bridle schedule`), docs/design/agent-host/daemon.md, docs/design/agent-host/api.md.
