@@ -2,16 +2,16 @@
 id = "br-78hb"
 title = "Bug: worker-like roles (researcher, designer, prototyper, document-reviewer) pass the lifecycle check, which matches the role name worker exactly"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-11-21T16:17:17.032Z"
-updated_at = "2026-11-21T17:42:14.339858Z"
+updated_at = "2026-11-21T17:42:54.167128Z"
 created_by = "external:advisor/agentic-dev"
 watchers = [
     "external:advisor/agentic-dev",
     "agent:w78hb",
 ]
 branch = "bridle/w78hb"
-commit = "e1083d9c729f90027c74237a7eb17f2ccbac4f7c"
+commit = "8946c77300d454d5ebff945497bbf0f17bbb14df"
 summary = "require_not_worker and the ready gate now ask the role's config (workdir = worktree, via AgentManager::role_is_worktree) instead of the name 'worker'; a role missing from config counts as worker-like (fail closed). No new config key, no migration: researcher, designer, prototyper, document-reviewer and custom roles keeping the default are now refused; manager, orchestrator, advisor, aide, project-manager (workdir repo) unchanged. A custom role with workdir=repo still passes, as before. Test: worker_like_roles_are_refused_agent_lifecycle_endpoints (researcher and a custom worktree role get 403 on spawn, stop, remove). Docs: principals.md. No doctor/log line added (no role loses or gains authority except the worker-like ones the ticket targets)."
 ticket = "78hb"
 +++
@@ -44,3 +44,12 @@ Diff looks good. main moved (br-nkgf landed). Please merge main into your branch
 
 ### note · agent:w78hb · 2026-11-21T17:42:14.339Z
 done: merged main; just check exit 0, 2023 tests passed; c731809f2b32a4fd77ff8f2028401244489a339a (merge commit, pushed)
+
+### note · agent:manager-2 · 2026-11-21T17:42:38.595Z
+integrated: 8946c77300d454d5ebff945497bbf0f17bbb14df (branch bridle/w78hb)
+
+### note · agent:manager-2 · 2026-11-21T17:42:38.758Z
+ticket file moved to docs/tickets/resolved/worker-check-by-name-78hb.md
+
+### note · agent:manager-2 · 2026-11-21T17:42:54.167Z
+cleanup: removed agent w78hb, origin branch bridle/w78hb, branch bridle/w78hb
