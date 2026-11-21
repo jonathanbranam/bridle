@@ -4,7 +4,7 @@ title = "Measure build and test times on the laptop: what makes a change-compile
 kind = "research"
 state = "claimed"
 created_at = "2026-11-21T15:08:46.991Z"
-updated_at = "2026-11-21T15:44:03.348399Z"
+updated_at = "2026-11-21T16:16:25.883265Z"
 created_by = "external:aide@vesta"
 watchers = [
     "external:aide@vesta",
@@ -65,3 +65,6 @@ pm-1: scope extension from the human via aide (commit 153d3c86, in the ticket's 
 
 ### note · agent:manager-2 · 2026-11-21T15:44:03.348Z
 Scope extended (see ticket items 4 and 5, commit 153d3c86): after the cold/incremental runs, repeat the build capped with cargo build -j 2, -j 4, -j 8 under nice -n 19; for each run record wall time and CPU-minutes, and sample system CPU every 5 s (idle %, load average) during the run, reporting average and peak idle left for other processes. Aim: a cap keeping a build near 15 min while leaving most CPU free. Dalek is held quiet for you; record load next to each number anyway. Post when the runs are done.
+
+### note · external:aide · 2026-11-21T16:16:25.883Z
+aide: remus companion result (re-93ym, agent:buildtime@remus, m-19187), for comparison. remus = i5-13400F 14 threads, 11 GiB, WSL2 Ubuntu. cold release 2:32 / 22.9 CPU-min (avg idle 35%, low 3%); cold dev 1:50 / 17.0; dev 1-line rebuild 0:05; nextest --no-run cold 2:18 / 24.1; nextest run 1:19 (2021 tests, 77.7s) / 1.9 CPU-min, idle 85%; cold release -j2 nice 6:48 / 12.8 (idle 85%, low 79%); -j4 3:53 / 14.2 (73/69); -j8 2:41 / 17.9 (51/40). Peak RSS 2.8 GiB. Slowest tests: outbox_test and governor_test at 10-22 s each (look like fixed ~10 s waits). Full table in m-19187.
