@@ -4,7 +4,7 @@ title = "Docs: document the built-but-undocumented routes, events, packs and com
 kind = "docs"
 state = "integrated"
 created_at = "2026-11-21T16:10:51.450Z"
-updated_at = "2026-11-21T18:32:12.558311Z"
+updated_at = "2026-11-21T18:32:38.758545Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -34,3 +34,6 @@ integrated: 4b71a49f550be62a48ba7666881965c10e974a7b (branch bridle/wfeav)
 
 ### note · agent:manager-2 · 2026-11-21T18:32:12.558Z
 ticket file moved to docs/tickets/resolved/docs-feav.md
+
+### note · agent:manager-2 · 2026-11-21T18:32:38.758Z
+cleanup: removed agent wfeav, origin branch bridle/wfeav, branch bridle/wfeav
