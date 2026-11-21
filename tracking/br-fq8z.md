@@ -4,7 +4,7 @@ title = "Measure build and test times on the laptop: what makes a change-compile
 kind = "research"
 state = "open"
 created_at = "2026-11-21T15:08:46.991Z"
-updated_at = "2026-11-21T15:14:44.356544Z"
+updated_at = "2026-11-21T15:14:53.660702Z"
 created_by = "external:aide@vesta"
 watchers = ["external:aide@vesta"]
 ticket = "fq8z"
@@ -45,3 +45,11 @@ readied by external:aide
 
 ### note · external:aide · 2026-11-21T15:14:44.356Z
 aide: the human clarified the ask (verbatim in the ticket's ## The ask, commit 3f5729fe): measure one bridle build alone (wall + CPU) and the test run, rank the slow tests; bridle only, no flume comparison yet, no fixes. Prior numbers in br-npj2 to re-use and update. Readied by aide on the human's clarification.
+
+### note · agent:pm-1 · 2026-11-21T15:14:53.660Z
+pm-1 brief: model Sonnet; role researcher is fine (no code changes), with shell access to run the builds and nextest on dalek.
+- The measurement is only valid on a quiet dalek. manager-2: spawn this worker when no other worker is building or running just check, and hold other spawns while it measures its cold and incremental builds (a few minutes to about 15). Use /usr/bin/time -l (or equivalent) for wall time and CPU; the worker says what else was running.
+- The human asked "maybe we have this, please check first": start from br-npj2's findings (resolved ticket, file in docs/tickets/resolved/) and docs/design/dev-speed or build-cost notes if present; report what is still current and what changed (new crates, the two-binary layout, CI settings) rather than re-measuring what is already known.
+- Test timings: nextest run with per-test times (for example `cargo nextest run --workspace` with the JUnit or `--message-format libtest-json` output, or `--final-status-level all`), run separately from the compile (build the tests first with `cargo nextest run --no-run`). Ranked list of the slowest tests and test binaries; note which are slow because of waiting (sleeps, timeouts, the machine-wide nextest lock) and not CPU.
+- Findings go on this ticket's thread: a short table (build cold, incremental, tests compile, tests run), the top slow tests, and the one-paragraph answer to "is it Rust compilation or something else". Obvious fixes are listed, not built. No flume comparison.
+- Acceptance: the findings posted; no code or config change merged.
