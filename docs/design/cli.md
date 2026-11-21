@@ -242,6 +242,7 @@ bridle hook arch-guard                      Claude Code PreToolUse hook: blocks 
 bridle hook link-check                      Claude Code Stop hook (orchestrator, advisor, aide sessions): once per reply, asks the agent to link task/ticket IDs it named without a link
 bridle case-check                          exit 1 naming each pair of git-tracked paths that collide case-insensitively (typescript pack check-command backstop)
 bridle hook case-guard                      Claude Code PreToolUse hook (Write/Edit/NotebookEdit): refuses a path that collides case-insensitively with an existing sibling
+bridle hook search-guard                    Claude Code PreToolUse hook (Bash): refuses whole-disk and home-folder searches (find / or ~, mdfind, locate, du/ls -R/grep -r/rg rooted there)
 bridle hook kill-guard                      Claude Code PreToolUse hook (Bash): refuses kill-by-name (pgrep | xargs kill, kill $(pgrep), pkill in a compound command)
 bridle hook stop-check                      Claude Code Stop hook for the worker role; refuses to stop
                                              with an unreleased claim and no thread entry since claiming
@@ -1038,6 +1039,12 @@ bridle ticket comment <id> [TEXT | --text-file FILE] [--notify AGENT]  plain com
   `pkill *`/`killall *` are also in every role's `disallowed_tools` and the session settings' deny list; the
   hook covers what those prefix rules miss. `kill <pid>`, `kill $!` and `kill %1` are allowed.
   Rule `no-kill-by-name`; ticket 75h2.
+- **`search-guard`** is Claude Code's `PreToolUse` hook for `Bash` (same `PreToolUse.json`). It
+  denies, in any command of a compound line, `find`/`fd`/`du`/`rg` (and `ls -R`, `grep -r`) whose
+  path is `/`, `~`, `$HOME`, `/Users` or `/Users/<name>`, and `locate` and `mdfind` (unless
+  `-onlyin` a narrower path). Narrower paths (workspace, /tmp, /Volumes/Data, worktrees,
+  `~/Library/Caches/ms-playwright`) pass. The reason says where to look. Rule
+  `no-whole-disk-search`; ticket rk4b. Existing projects get it on the next spawn (layer hooks).
 - **`case-guard`** is Claude Code's `PreToolUse` hook for `Write|Edit|MultiEdit|NotebookEdit` (same
   `PreToolUse.json`, rendered by `sync`). It denies a write whose target, in the same directory as
   an existing entry, has an equal lowercased name (`Foo.md` vs `foo.md`) or a stem that differs

@@ -36,6 +36,7 @@ mod project_sync;
 mod push_branch;
 mod render;
 mod review;
+mod search_guard;
 mod serve;
 mod session;
 mod sign;

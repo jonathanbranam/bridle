@@ -10,5 +10,9 @@
   {
     "matcher": "Bash",
     "hooks": [{ "type": "command", "command": "bridle kill-guard" }]
+  },
+  {
+    "matcher": "Bash",
+    "hooks": [{ "type": "command", "command": "bridle search-guard" }]
   }
 ]

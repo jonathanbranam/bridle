@@ -109,7 +109,7 @@ the fixture is shipped with the same bridle binary as the gateway, so it can't b
 
 ## 3. How agents verify in a browser
 
-- **Tool: `playwright-cli`** (installed here; track-web's CLAUDE.md uses it): `open <url>`, log
+- **Tool: `playwright-cli`** (global, 0.1.25, installed here; outside a Node project use it, with no install and no hunting for `playwright-core` or a whole-disk `find`, rule `no-whole-disk-search`; a Node project may have its own `npx playwright`; track-web's CLAUDE.md uses it): `open <url>`, log
   in with the printed login, click, `snapshot` to read the page, `screenshot --filename=` to
   `/tmp/<task-id>-verify/`, never the repo. A project with another browser tool names it in
   its CLAUDE.md. If the tool is missing, rule `missing-tools` applies: ask, don't skip.

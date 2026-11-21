@@ -147,6 +147,7 @@ mod tests {
         ("stop-check", Daemon),
         ("arch-guard", NoProject("reads the cwd's repo")),
         ("kill-guard", NoProject("reads only the hook's stdin")),
+        ("search-guard", NoProject("reads only the hook's stdin")),
         (
             "case-check",
             NoProject("scans the current directory's git ls-files"),

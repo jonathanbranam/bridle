@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Agents can no longer search the whole disk or home folder: a new `bridle search-guard` PreToolUse hook refuses `find /`, `find ~`, `mdfind`, `locate` and `du`/`ls -R`/`grep -r`/`rg` rooted at `/`, `~` or `/Users/<name>` (also in compound commands), because macOS blamed the walk on bridle and raised privacy prompts; new base rule `no-whole-disk-search`; the UI verification text now says to use the global `playwright-cli` 0.1.25 (br-rk4b).
 - The "cannot connect to its own address" incident (gateway and daemon) no longer fires after a start while the address is reachable: the shared probe window is about 53 s (was 23 s) because only the last attempt decides a block; tests cover a transient peer false and a late-binding listener, a closed port still raises (br-2fjw).
 - Agent lifecycle endpoints and the ready gate refuse every worker-like role (`workdir = "worktree"`: researcher, designer, prototyper, document-reviewer, custom roles), not only one named `worker`; a role missing from config is refused too (br-78hb).
 - A session's 150k+ context notice now reaches the human once: the session is told not to announce it (the aide's note to the human is the one channel, ending "Relay once"), and the advisor role text matches (br-nkgf).

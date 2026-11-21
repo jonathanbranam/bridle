@@ -13,6 +13,9 @@ done message what you did and saw. Stop what you started, by pid. For a bridle p
 - **The merger (manager)** does it again before merging: bring up your own throwaway site from
   the branch and click through the acceptance items yourself, as you run the check yourself
   rather than take the worker's word. A done message without the worker's line is sent back.
+- **The browser tool**: outside a Node project use the global `playwright-cli` (0.1.25, installed;
+  no install, no hunting for the `playwright-core` library, no whole-disk `find`, rule
+  `no-whole-disk-search`). A Node project may have its own `npx playwright`.
 - If the browser tool is missing, rule `missing-tools` applies: ask, don't skip.
 
 Why: the human, 2026-10-05: "While building a UI, the agents need to be able to do this
