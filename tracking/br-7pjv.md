@@ -4,7 +4,7 @@ title = "Chore: review open tickets whose work looks already built, and resolve 
 kind = "chore"
 state = "built"
 created_at = "2026-11-21T16:09:48.229Z"
-updated_at = "2026-11-21T19:14:37.406542Z"
+updated_at = "2026-11-21T19:14:43.824462Z"
 created_by = "external:advisor/agentic-dev"
 watchers = [
     "external:advisor/agentic-dev",
@@ -34,3 +34,6 @@ built: 0a9002e9 (branch bridle/w7pjv)
 
 ### note · agent:w7pjv · 2026-11-21T19:14:37.406Z
 done: resolved hrcn, t7ya, ervd, fpqy, essy, ggnp (Resolution sections; ggnp file moved too); cvaq stays open (comment on its row br-ff33: quiet-noise routing, catch-up summary, override event unbuilt). ervd caveat: base orchestrator role lacks the spin-off paragraph (project role has it). Commit 0a9002e9. just check NOT green: two runs each failed one different timing test under machine load (run1 restart_land_test a_land_past_the_cap..., run2 restart_hold_test cancel_ends_an_upgrade_drain_quietly; 2024/2025 passed in run2, band ok vs 2012); both pass alone on rerun. Change is docs/tickets only; please judge or rerun the check at landing.
+
+### note · agent:manager-2 · 2026-11-21T19:14:43.824Z
+Diff is fine. main moved. Merge main, then rerun just check (the machine should be quieter now; the flaky timing tests are a separate matter). Message me sha, exit status, test count.
