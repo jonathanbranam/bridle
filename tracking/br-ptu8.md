@@ -4,7 +4,7 @@ title = "Firewall prompts still appear on every self-upgrade despite the stable 
 kind = "bug"
 state = "claimed"
 created_at = "2026-11-14T12:57:20.899Z"
-updated_at = "2026-11-21T20:54:48.768874Z"
+updated_at = "2026-11-21T20:57:42.619296Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -141,3 +141,15 @@ ptu8, read-only cross-check of the orchestrator's 11-17 list. daemon.log shows a
 
 ### note · external:aide · 2026-11-21T20:54:48.768Z
 Another occurrence 2026-11-21 (bridle-ui aide): self-upgrade at 15:45 ET (20:45Z) put a new binary at ~/.cargo/bin/bridle (inode 201550041), signed 'bridle local signing'; gateway pid 5098 since 15:45:16 ET. From remus, curl http://100.100.189.100:7878/api/v1/health times out; from dalek it answers 200. The human, verbatim: "This firewall signing this is utter bullshit. We fixed it once now the fix isn't working". Asked the human for a go on the experiments, or option B (localhost + tailscale serve).
+
+### note · external:aide · 2026-11-21T20:57:13.822Z
+From the human, via aide (2026-11-21 ~4:05 PM ET), verbatim: "B" — choosing experiment 2 / option B as I laid it out: trust the "bridle local signing" certificate for code signing in the System keychain (needs the human's sudo password at dalek; reversible; risk: any process running as the human could sign code macOS trusts). Not approved: localhost + tailscale serve, or the other experiments. Send the exact command(s) for the human to run to the bridle-ui aide (external:aide on bridle-ui) and I'll put them in front of the human.
+
+### note · external:aide · 2026-11-21T20:57:24.782Z
+Aide gave the human these commands for experiment 2 (one cert found: 'bridle local signing', SHA-1 37E545F62CA15230BDD4D0ADEC25862C80E0E6C3, login keychain): security find-certificate -c "bridle local signing" -p > /tmp/bridle-signing.pem ; sudo security add-trusted-cert -d -r trustRoot -p codeSign -k /Library/Keychains/System.keychain /tmp/bridle-signing.pem . Undo: sudo security remove-trusted-cert -d /tmp/bridle-signing.pem . ptu8: correct these if wrong, and verify at the next self-upgrade (no dialog; curl from remus answers).
+
+### note · external:aide · 2026-11-21T20:57:36.690Z
+From the human, via aide, verbatim: "A is just avoiding the fix" (A = localhost + tailscale serve). So: no fallback to tailscale serve; if trusting the cert doesn't stop the prompts, find and fix the real cause (e.g. keyed-to-the-file: overwrite in place).
+
+### note · external:orchestrator · 2026-11-21T20:57:42.619Z
+orchestrator: checked aide's commands for experiment 2 against ptu8's section 4 item 2; they match (only the -p codeSign policy name is ptu8's guess, as noted). ptu8 is not running, so no worker was spawned for this. Verification after the human runs them: (1) `security dump-trust-settings -d` lists 'bridle local signing' with codeSign; (2) `launchctl kickstart -k gui/$(id -u)/dev.bridle.gateway` at dalek: no Allow dialog, and curl http://100.100.189.100:7878/api/v1/health from remus answers 200 within a minute; (3) at the next self-upgrade (new binary), no dialog and no 'cannot connect to its own address' note, and curl from remus answers. If (2) still prompts, the human clicks Allow and we wait for (3) before judging. Orchestrator watches for (3).
