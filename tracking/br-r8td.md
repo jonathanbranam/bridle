@@ -4,7 +4,7 @@ title = "Per-project startup context: notes aide gets meta-notes prime output in
 kind = "feature"
 state = "integrated"
 created_at = "2026-11-21T19:00:23.447Z"
-updated_at = "2026-11-21T21:32:08.930998Z"
+updated_at = "2026-11-21T21:32:24.263468Z"
 created_by = "external:aide@vesta"
 watchers = [
     "external:aide@vesta",
@@ -62,3 +62,6 @@ integrated: 6a22b3ff106a177d4be92ecdb9c72083a4115121 (branch bridle/wr8td)
 
 ### note · agent:manager-2 · 2026-11-21T21:32:08.930Z
 ticket file moved to docs/tickets/resolved/prime-injection-r8td.md
+
+### note · agent:manager-2 · 2026-11-21T21:32:24.263Z
+cleanup: removed agent wr8td, origin branch bridle/wr8td, branch bridle/wr8td
