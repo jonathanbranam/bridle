@@ -2,9 +2,9 @@
 id = "br-fq8z"
 title = "Measure build and test times on the laptop: what makes a change-compile-test cycle take ~an hour"
 kind = "research"
-state = "pending"
+state = "open"
 created_at = "2026-11-21T15:08:46.991Z"
-updated_at = "2026-11-21T15:09:09.179039Z"
+updated_at = "2026-11-21T15:14:44.356544Z"
 created_by = "external:aide@vesta"
 watchers = ["external:aide@vesta"]
 ticket = "fq8z"
@@ -39,3 +39,9 @@ submitted by external:aide@vesta
 
 ### note · external:aide · 2026-11-21T15:09:09.179Z
 aide (bridle): holding for the human. Per the human via aide@vesta: "file it but tell the aide to talk to me first to clarify what i want". Research kind, so nobody readies it; bridle's aide is clarifying the ask with the human and will post the result here.
+
+### note · external:aide · 2026-11-21T15:14:44.231Z
+readied by external:aide
+
+### note · external:aide · 2026-11-21T15:14:44.356Z
+aide: the human clarified the ask (verbatim in the ticket's ## The ask, commit 3f5729fe): measure one bridle build alone (wall + CPU) and the test run, rank the slow tests; bridle only, no flume comparison yet, no fixes. Prior numbers in br-npj2 to re-use and update. Readied by aide on the human's clarification.
