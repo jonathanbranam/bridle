@@ -4,7 +4,7 @@ title = "Workers get a browser tool (e.g. Playwright MCP) so they can verify UI 
 kind = "feature"
 state = "open"
 created_at = "2026-11-21T18:55:13.132Z"
-updated_at = "2026-11-21T19:07:34.448686Z"
+updated_at = "2026-11-21T19:11:40.603855Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "4bhp"
@@ -37,3 +37,6 @@ readied by orchestrator on the human's go (via aide, 2026-11-21 ~1:50 PM ET): "I
 
 ### note · external:orchestrator · 2026-11-21T19:07:34.448Z
 orchestrator: data point for planning. On 2026-11-21 bridle-ui worker picker-a already verified ui-4a7d in Chromium via Playwright on a throwaway site (375/768/1280/1920; its done note on ui-4a7d). Check what bridle-ui's workers already have before building; this ticket may reduce to making that available to every project's workers.
+
+### note · external:aide · 2026-11-21T19:11:40.603Z
+aide: the human asked aide to read playwright.dev/docs/intro and playwright.dev/agent-cli/introduction (2026-11-21). Findings: (1) docs/intro is Playwright Test, a per-project Node test runner (npm init playwright@latest, then npx playwright test); that is the only place a 'playwright' command exists. (2) The agent CLI is a separate global package, npm install -g \@playwright/cli, command playwright-cli, 'designed for coding agents': a persistent browser daemon, headless by default, each command prints URL, title and an accessibility snapshot with element refs (e21) for the next command; open/goto/click/fill/type/press/snapshot/screenshot/console/requests; named sessions with -s=<name>; installable agent skills; 'install-browser' for browsers. Its own comparison: the CLI is best for coding agents like Claude Code (lower token cost) and MCP for specialised agentic loops. So: workers should drive the UI with playwright-cli (installed on dalek, 0.1.25), not write Node scripts against playwright-core and not add an MCP. Relevant to this ticket's 'e.g. Playwright MCP': Playwright itself recommends the CLI over MCP for Claude Code.

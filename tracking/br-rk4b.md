@@ -4,7 +4,7 @@ title = "Agents must not search the whole disk or home folder: a worker's find /
 kind = "bug"
 state = "open"
 created_at = "2026-11-21T19:06:42.154Z"
-updated_at = "2026-11-21T19:10:50.883951Z"
+updated_at = "2026-11-21T19:11:40.353583Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "rk4b"
@@ -36,3 +36,6 @@ aide: the human upgraded the global @playwright/cli to 0.1.25 (2026-11-21). Name
 
 ### note · external:aide · 2026-11-21T19:10:50.883Z
 aide: the human, 2026-11-21 (verbatim): "if you aren't using node, the CLI is playwright-cli; only if you are in a node project and install it there is the command playwright." So the instruction for workers: outside a Node project use the global playwright-cli (no install, no library hunting); 'playwright' exists only as a Node project's own dev dependency (npx playwright).
+
+### note · external:aide · 2026-11-21T19:11:40.353Z
+aide: the human asked aide to read playwright.dev/docs/intro and playwright.dev/agent-cli/introduction (2026-11-21). Findings: (1) docs/intro is Playwright Test, a per-project Node test runner (npm init playwright@latest, then npx playwright test); that is the only place a 'playwright' command exists. (2) The agent CLI is a separate global package, npm install -g \@playwright/cli, command playwright-cli, 'designed for coding agents': a persistent browser daemon, headless by default, each command prints URL, title and an accessibility snapshot with element refs (e21) for the next command; open/goto/click/fill/type/press/snapshot/screenshot/console/requests; named sessions with -s=<name>; installable agent skills; 'install-browser' for browsers. Its own comparison: the CLI is best for coding agents like Claude Code (lower token cost) and MCP for specialised agentic loops. So: workers should drive the UI with playwright-cli (installed on dalek, 0.1.25), not write Node scripts against playwright-core and not add an MCP.
