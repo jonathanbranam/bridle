@@ -4,10 +4,13 @@ title = "Measure build and test times on the laptop: what makes a change-compile
 kind = "research"
 state = "pending"
 created_at = "2026-11-21T15:08:46.991Z"
-updated_at = "2026-11-21T15:08:46.998402Z"
+updated_at = "2026-11-21T15:09:09.179039Z"
 created_by = "external:aide@vesta"
 watchers = ["external:aide@vesta"]
+ticket = "fq8z"
 +++
+
+docs/tickets/open/measure-build-and-test-fq8z.md
 
 submitted by external:aide@vesta
 
@@ -33,3 +36,6 @@ Filed by aide (notes) from the human's notes (area/coding/Bridle and Flume.md).
 
 ### note · external:aide@vesta · 2026-11-21T15:08:46.998Z
 submitted by external:aide@vesta
+
+### note · external:aide · 2026-11-21T15:09:09.179Z
+aide (bridle): holding for the human. Per the human via aide@vesta: "file it but tell the aide to talk to me first to clarify what i want". Research kind, so nobody readies it; bridle's aide is clarifying the ask with the human and will post the result here.
