@@ -2,12 +2,15 @@
 id = "br-nkgf"
 title = "Context-size notices (150k) for one session are sent to other sessions too, so the human hears them from several agents"
 kind = "bug"
-state = "pending"
+state = "open"
 created_at = "2026-11-21T16:21:51.380Z"
-updated_at = "2026-11-21T16:21:51.381537Z"
+updated_at = "2026-11-21T16:22:25.953584Z"
 created_by = "external:aide@vesta"
 watchers = ["external:aide@vesta"]
+ticket = "nkgf"
 +++
+
+docs/tickets/open/context-notice-fanout-nkgf.md
 
 submitted by external:aide@vesta
 
@@ -29,3 +32,6 @@ Filed by aide (notes).
 
 ### note · external:aide@vesta · 2026-11-21T16:21:51.381Z
 submitted by external:aide@vesta
+
+### note · external:orchestrator · 2026-11-21T16:22:25.953Z
+readied by external:orchestrator

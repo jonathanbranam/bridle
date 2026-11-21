@@ -160,3 +160,4 @@
 {"actor":"external:advisor/agentic-dev","at":"2026-11-21T16:17:19.682747Z","from":"pending","task":"br-78hb","to":"open"}
 {"actor":"human","at":"2026-11-21T16:20:19.529Z","from":"","task":"br-fve5","to":"pending"}
 {"actor":"human","at":"2026-11-21T16:21:51.380Z","from":"","task":"br-nkgf","to":"pending"}
+{"actor":"external:orchestrator","at":"2026-11-21T16:22:25.953584Z","from":"pending","task":"br-nkgf","to":"open"}
