@@ -2,11 +2,14 @@
 id = "br-rk4b"
 title = "Agents must not search the whole disk or home folder: a worker's find / set off macOS privacy prompts in bridle's name"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-11-21T19:06:42.154Z"
-updated_at = "2026-11-21T19:18:12.285950Z"
+updated_at = "2026-11-21T19:19:27.227490Z"
 created_by = "external:aide"
-watchers = ["external:aide"]
+watchers = [
+    "external:aide",
+    "agent:wrk4b",
+]
 priority = "high"
 priority_at = "2026-11-21T19:16:24.743844Z"
 ticket = "rk4b"

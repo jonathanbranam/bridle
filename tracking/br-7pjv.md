@@ -4,7 +4,7 @@ title = "Chore: review open tickets whose work looks already built, and resolve 
 kind = "chore"
 state = "integrated"
 created_at = "2026-11-21T16:09:48.229Z"
-updated_at = "2026-11-21T19:18:56.544397Z"
+updated_at = "2026-11-21T19:19:15.871376Z"
 created_by = "external:advisor/agentic-dev"
 watchers = [
     "external:advisor/agentic-dev",
@@ -46,3 +46,6 @@ integrated: d08bd1b9a5543e8214dae3908f5dc398de38f03f (branch bridle/w7pjv)
 
 ### note · agent:manager-2 · 2026-11-21T19:18:56.544Z
 ticket file moved to docs/tickets/resolved/stale-open-tickets-7pjv.md
+
+### note · agent:manager-2 · 2026-11-21T19:19:15.871Z
+cleanup: removed agent w7pjv, origin branch bridle/w7pjv, branch bridle/w7pjv
