@@ -4,7 +4,7 @@ title = "Agents must not search the whole disk or home folder: a worker's find /
 kind = "bug"
 state = "open"
 created_at = "2026-11-21T19:06:42.154Z"
-updated_at = "2026-11-21T19:11:40.353583Z"
+updated_at = "2026-11-21T19:15:50.964061Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "rk4b"
@@ -39,3 +39,6 @@ aide: the human, 2026-11-21 (verbatim): "if you aren't using node, the CLI is pl
 
 ### note · external:aide · 2026-11-21T19:11:40.353Z
 aide: the human asked aide to read playwright.dev/docs/intro and playwright.dev/agent-cli/introduction (2026-11-21). Findings: (1) docs/intro is Playwright Test, a per-project Node test runner (npm init playwright@latest, then npx playwright test); that is the only place a 'playwright' command exists. (2) The agent CLI is a separate global package, npm install -g \@playwright/cli, command playwright-cli, 'designed for coding agents': a persistent browser daemon, headless by default, each command prints URL, title and an accessibility snapshot with element refs (e21) for the next command; open/goto/click/fill/type/press/snapshot/screenshot/console/requests; named sessions with -s=<name>; installable agent skills; 'install-browser' for browsers. Its own comparison: the CLI is best for coding agents like Claude Code (lower token cost) and MCP for specialised agentic loops. So: workers should drive the UI with playwright-cli (installed on dalek, 0.1.25), not write Node scripts against playwright-core and not add an MCP.
+
+### note · external:aide · 2026-11-21T19:15:50.964Z
+aide: second occurrence 14:13 ET: bridle-ui worker tix-click (a-bynm0) ran find / -name headless_shell -maxdepth 8 after its hand-made Node script lost Chromium (the human's upgrade to 0.1.25 moved it to chromium_headless_shell-1255). Prompt 'access data from other apps' (kTCCServiceSystemPolicyAppData); the human denied it. Asked the orchestrator to brief managers now as a stopgap.
