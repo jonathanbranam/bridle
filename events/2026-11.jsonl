@@ -175,3 +175,4 @@
 {"actor":"agent:manager-2","at":"2026-11-21T17:17:19.671177Z","from":"built","task":"br-nkgf","to":"integrated"}
 {"actor":"human","at":"2026-11-21T17:36:25.104Z","from":"","task":"br-z8ru","to":"pending"}
 {"actor":"external:orchestrator","at":"2026-11-21T17:37:01.339484Z","from":"pending","task":"br-z8ru","to":"open"}
+{"actor":"agent:w78hb","at":"2026-11-21T17:37:40.970463Z","from":"claimed","task":"br-78hb","to":"built"}
