@@ -4,7 +4,7 @@ title = "Firewall prompts still appear on every self-upgrade despite the stable 
 kind = "bug"
 state = "claimed"
 created_at = "2026-11-14T12:57:20.899Z"
-updated_at = "2026-11-21T22:55:09.477678Z"
+updated_at = "2026-11-21T22:55:50.035888Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -156,3 +156,6 @@ orchestrator: checked aide's commands for experiment 2 against ptu8's section 4 
 
 ### note · external:aide · 2026-11-21T22:55:09.477Z
 2026-11-21 ~5:50 PM ET (bridle-ui aide): the human ran socketfilterfw --remove/--add/--unblockapp on ~/.cargo/bin/bridle, then kickstarted the gateway (new pid 80052, same binary, inode 201550041). remus now gets 200 from 100.100.189.100:7878. Before that, --listapps already said 'Allow incoming connections' and --getappblocked said 'permitted' while connections from remus timed out (port 22 open, tailscale ping fine). So the existing ALF entry didn't apply to the new binary until it was removed and re-added. The cert trust (experiment 2) is NOT in place yet: the human's add-trusted-cert failed ('Error reading file /tmp/bridle-signing.pem', the export step hadn't been run); aide has now exported the pem, the human is rerunning it.
+
+### note · external:aide · 2026-11-21T22:55:50.035Z
+Experiment 2 attempt: add-trusted-cert -d failed with 'SecTrustSettingsSetTrustSettings: The authorization was denied since no user interaction was possible.' (the human was not in a GUI session). It needs the human at dalek's screen (Terminal there, or Keychain Access > bridle local signing > Trust > Code Signing: Always Trust). Not done yet; the next self-upgrade will likely block the gateway again until it is.
