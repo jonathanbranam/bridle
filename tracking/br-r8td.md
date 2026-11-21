@@ -2,17 +2,17 @@
 id = "br-r8td"
 title = "Per-project startup context: notes aide gets meta-notes prime output injected, no agent choice"
 kind = "feature"
-state = "built"
+state = "integrated"
 created_at = "2026-11-21T19:00:23.447Z"
-updated_at = "2026-11-21T21:26:38.257877Z"
+updated_at = "2026-11-21T21:32:08.930998Z"
 created_by = "external:aide@vesta"
 watchers = [
     "external:aide@vesta",
     "agent:wr8td",
 ]
 branch = "bridle/wr8td"
-commit = "db946a22f01c3185b066d2b11c01485f79adb7ea"
-summary = "Added [startup.<role>] command/timeout_secs (config.rs, default off). prime_role_file (orchestrator.rs) runs it via sh -c in the project dir, merged stdout/stderr, appends full output under '## Startup command'; failure/timeout/empty show a visible line; output >256 KiB cut with stated limit. Orchestrator prime not covered. Docs: roles-and-config.md. Delivery: the aide's fixed opening prompt tells it to run 'bridle orchestrator prime aide'; output is that Bash tool result in context (an agent could still pipe it through head; no hook by design). Tests: tests/prime_startup_test.rs + config unit test."
+commit = "6a22b3ff106a177d4be92ecdb9c72083a4115121"
+summary = "Startup command (config [startup.aide], default off) is delivered by a SessionStart hook that 'bridle session aide' adds to --settings when the project sets it: 'bridle prime aide --startup-only' prints the full command output (failure/timeout/empty lines, 256 KiB cap with stated limit). Claude Code puts SessionStart hook stdout into context, so no agent step. Plain prime no longer includes it. Only aide wired. Docs: roles-and-config.md. Tests: prime_startup_test.rs, session.rs unit test, config unit test. Not verified with a live claude (costs tokens)."
 ticket = "r8td"
 +++
 
@@ -53,3 +53,12 @@ done: [startup.<role>] command appended to bridle prime output; check exit 0, 20
 
 ### note · agent:manager-2 · 2026-11-21T21:26:38.257Z
 Review: code and tests are good, but the delivery does not meet the ask. The human wants NO agent agency (the incident was the aide piping 'meta-notes prime' through head). Your doc admits the agent still runs 'bridle prime aide' itself and could pipe it through head, so the same failure remains. Please make the startup output reach the model without an agent step: e.g. in crates/bridle/src/session.rs (advisor_settings builds the session's hooks JSON) add a SessionStart hook whose stdout Claude Code puts into the context (check docs/spikes or the claude hooks docs for SessionStart additionalContext/stdout behaviour; no web search needed if the repo notes it, else tell me), or pass it via the session's system-prompt append, whichever is smallest and works for the aide session. It must print the startup command output in full, with the same failure/empty/cap lines. Keep [startup.<role>] config as is. Update the delivery paragraph in roles-and-config.md and the tests, and state in the done message exactly how the text reaches the model's context (what you verified). Not a PreToolUse hook. Merge main, rerun just check, message me sha/exit/test count.
+
+### note · agent:wr8td · 2026-11-21T21:31:59.723Z
+done v2: SessionStart hook delivery; check exit 0, 2033 tests; 3aedb1e9db2787a005ff4d34c9feba868db8d0fe
+
+### note · agent:manager-2 · 2026-11-21T21:32:08.718Z
+integrated: 6a22b3ff106a177d4be92ecdb9c72083a4115121 (branch bridle/wr8td)
+
+### note · agent:manager-2 · 2026-11-21T21:32:08.930Z
+ticket file moved to docs/tickets/resolved/prime-injection-r8td.md
