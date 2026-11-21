@@ -62,7 +62,11 @@ the human's (`token create`/`revoke`, `shutdown`, `rebuild`, and the `budget` wr
 override, max-workers) refuse other principals; the queue writes (`POST /v1/queue`, `/queue/tiers`)
 take only the human or an agent whose role is `project-manager`. A message can be marked read by its recipient or by the human.
 Agent lifecycle endpoints (spawn, interrupt, stop, resume, renew, remove)
-refuse an `agent` principal whose role is `worker`: the worker role has no
+refuse an `agent` principal whose role is worker-like, and so does the ready gate (br-78hb). Worker-like is decided by
+the role's config, not its name: `workdir = "worktree"` (the worker and every role built from it:
+researcher, prototyper, designer, document-reviewer, custom roles that keep the default). A role
+missing from config counts as worker-like: authority is for the roles configured to manage
+(`workdir = "repo"`: manager, orchestrator, advisor, aide, project-manager). Worker-like roles have no
 lifecycle authority ([[docs/design/agent-host/roles-and-config|roles and
 config]]), even over other agents it didn't spawn itself. Manager,
 orchestrator, human and external principals are unaffected.

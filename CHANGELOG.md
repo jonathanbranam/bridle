@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Agent lifecycle endpoints and the ready gate refuse every worker-like role (`workdir = "worktree"`: researcher, designer, prototyper, document-reviewer, custom roles), not only one named `worker`; a role missing from config is refused too (br-78hb).
 - A session's 150k+ context notice now reaches the human once: the session is told not to announce it (the aide's note to the human is the one channel, ending "Relay once"), and the advisor role text matches (br-nkgf).
 - `bridle daemon restart` no longer reports "did not come back within 95s" for a daemon that restarted between two polls: `/v1/health` now carries `started_at`, and a changed value counts as back (br-d4bz).
 - `bridle ci` and the land gate pick up a passing re-run: the CI watcher keeps each commit's reported conclusion and reports again when it changes (a re-run keeps the run id), instead of keeping the first attempt's failure (br-8xas).

@@ -883,6 +883,17 @@ impl AgentManager {
         self.0.config.roles.keys().cloned().collect()
     }
 
+    /// Whether `role` implements tickets in a worktree (`workdir = "worktree"`: the worker and
+    /// every role built from it, such as the researcher). A role missing from config counts as
+    /// one, so an unknown role fails closed (br-78hb).
+    pub fn role_is_worktree(&self, role: &str) -> bool {
+        self.0
+            .config
+            .roles
+            .get(role)
+            .is_none_or(|r| r.workdir == crate::config::Workdir::Worktree)
+    }
+
     pub fn components_match(&self, named: &[String], filter: &str) -> bool {
         self.0.config.components_match(named, filter)
     }

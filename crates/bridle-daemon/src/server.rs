@@ -826,18 +826,23 @@ async fn require_pm_or_human(state: &AppState, principal: &Principal) -> Result<
     }
 }
 
-/// Worker-role agents get no agent lifecycle authority
+/// Worker-like agents get no agent lifecycle authority
 /// (docs/design/agent-host/roles-and-config.md): they can run arbitrary
 /// Bash but must not spawn/interrupt/stop/resume/renew/remove agents via
-/// the API. Manager, orchestrator, human and other non-worker principals
-/// pass through unchanged.
+/// the API. Worker-like means the role runs in a worktree (`workdir = "worktree"`), not that
+/// it is named `worker`; a role missing from config counts too (fail closed: authority is
+/// for the roles that are configured to manage). Manager, orchestrator, human and other
+/// non-worktree principals pass through unchanged.
 async fn require_not_worker(state: &AppState, principal: &Principal) -> Result<(), ApiError> {
     if principal.kind != PrincipalKind::Agent {
         return Ok(());
     }
     let name = principal.id.strip_prefix("agent:").unwrap_or(&principal.id);
     let role = state.store.get_agent(name).await?.map(|a| a.role);
-    if role.as_deref() == Some("worker") {
+    if role
+        .as_deref()
+        .is_some_and(|r| state.manager.role_is_worktree(r))
+    {
         Err(ApiError::forbidden(
             "worker agents cannot use agent lifecycle endpoints",
         ))
@@ -3442,7 +3447,8 @@ async fn edit_task(
     Ok(Json(task))
 }
 
-/// `pending` -> `open`. Not for visitors, and not for workers or the PM: the PM plans what has
+/// `pending` -> `open`. Not for visitors, and not for worker-like roles (same test as
+/// [`require_not_worker`]) or the PM: the PM plans what has
 /// been readied, it doesn't decide what's wanted.
 async fn ready_task(
     State(state): State<AppState>,
@@ -3454,7 +3460,10 @@ async fn ready_task(
     if principal.kind == PrincipalKind::Agent {
         let name = principal.id.strip_prefix("agent:").unwrap_or(&principal.id);
         let role = state.store.get_agent(name).await?.map(|a| a.role);
-        if matches!(role.as_deref(), Some("worker" | "project-manager")) {
+        if role
+            .as_deref()
+            .is_some_and(|r| r == "project-manager" || state.manager.role_is_worktree(r))
+        {
             return Err(ApiError::forbidden(
                 "only the human, the orchestrator, an advisor or a manager may ready a task",
             ));

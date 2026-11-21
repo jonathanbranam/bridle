@@ -626,6 +626,64 @@ async fn worker_principal_is_refused_agent_lifecycle_endpoints() {
     ));
 }
 
+/// br-78hb: the lifecycle check goes by what the role is (a worktree role), not by the name
+/// `worker`: the built-in researcher and a custom role built from the worker are refused too.
+#[tokio::test]
+async fn worker_like_roles_are_refused_agent_lifecycle_endpoints() {
+    let cfg = "[roles.scout]\nworkdir = \"worktree\"\n";
+    let (daemon, _tmp) = support::start_daemon_with_config(None, Some(cfg)).await;
+    let spawn = |role: &str, name: &str| SpawnRequest {
+        ticket: None,
+        components: Vec::new(),
+        role: role.to_string(),
+        name: Some(name.to_string()),
+        prompt: None,
+        workdir: Some(Workdir::Repo),
+        model: None,
+        extra_allowed_tools: Vec::new(),
+        extra_env: Vec::new(),
+        ignore_budget: false,
+    };
+    let victim = daemon
+        .client
+        .spawn(&spawn("worker", "victim"))
+        .await
+        .expect("victim");
+    wait_for_state(&daemon.client, &victim.id, AgentState::Idle).await;
+    for (role, name) in [("researcher", "res"), ("scout", "sct")] {
+        let actor = daemon
+            .client
+            .spawn(&spawn(role, name))
+            .await
+            .expect("actor");
+        wait_for_state(&daemon.client, &actor.id, AgentState::Idle).await;
+        let c = daemon.agent_client(&actor.id);
+        let forbidden = |e: bridle_api::ClientError| {
+            matches!(e, bridle_api::ClientError::Api { status: 403, .. })
+        };
+        assert!(
+            forbidden(c.spawn(&spawn("worker", "v2")).await.unwrap_err()),
+            "{role} spawn"
+        );
+        assert!(
+            forbidden(
+                c.stop(&victim.id, &StopRequest { now: false })
+                    .await
+                    .unwrap_err()
+            ),
+            "{role} stop"
+        );
+        assert!(
+            forbidden(
+                c.remove(&victim.id, &RemoveQuery::default())
+                    .await
+                    .unwrap_err()
+            ),
+            "{role} remove"
+        );
+    }
+}
+
 /// The other side of v4nk: manager and orchestrator principals keep full
 /// lifecycle authority, matching roles-and-config.md.
 #[tokio::test]
