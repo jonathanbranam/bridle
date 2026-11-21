@@ -4,10 +4,13 @@ title = "UI work ships without visual inspection: strict workflow and controls f
 kind = "re-evaluate"
 state = "pending"
 created_at = "2026-11-21T17:36:25.104Z"
-updated_at = "2026-11-21T17:36:25.105531Z"
+updated_at = "2026-11-21T17:36:41.468772Z"
 created_by = "external:aide@vesta"
 watchers = ["external:aide@vesta"]
+ticket = "z8ru"
 +++
+
+docs/tickets/open/ui-visual-check-z8ru.md
 
 submitted by external:aide@vesta
 
