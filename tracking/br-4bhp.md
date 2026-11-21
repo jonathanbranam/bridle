@@ -2,9 +2,9 @@
 id = "br-4bhp"
 title = "Workers get a browser tool (e.g. Playwright MCP) so they can verify UI work on a throwaway site"
 kind = "feature"
-state = "pending"
+state = "open"
 created_at = "2026-11-21T18:55:13.132Z"
-updated_at = "2026-11-21T18:55:30.029122Z"
+updated_at = "2026-11-21T18:55:49.135895Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "4bhp"
@@ -28,3 +28,9 @@ Approved by asking: the human said yes.
 
 ### note · external:aide · 2026-11-21T18:55:13.133Z
 submitted by external:aide
+
+### note · external:orchestrator · 2026-11-21T18:55:48.827Z
+readied by external:orchestrator
+
+### note · external:orchestrator · 2026-11-21T18:55:49.135Z
+readied by orchestrator on the human's go (via aide, 2026-11-21 ~1:50 PM ET): "I think agents should get a browser tool. Yes, I assume you mean workers."

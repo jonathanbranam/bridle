@@ -190,3 +190,4 @@
 {"actor":"agent:manager-2","at":"2026-11-21T18:32:12.236997Z","from":"built","task":"br-feav","to":"integrated"}
 {"actor":"agent:manager-2","at":"2026-11-21T18:40:46.182952Z","from":"built","task":"br-2fjw","to":"integrated"}
 {"actor":"human","at":"2026-11-21T18:55:13.132Z","from":"","task":"br-4bhp","to":"pending"}
+{"actor":"external:orchestrator","at":"2026-11-21T18:55:48.827724Z","from":"pending","task":"br-4bhp","to":"open"}
