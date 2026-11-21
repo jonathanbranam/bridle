@@ -2,9 +2,9 @@
 id = "br-z8ru"
 title = "UI work ships without visual inspection: strict workflow and controls for UI tickets"
 kind = "re-evaluate"
-state = "pending"
+state = "open"
 created_at = "2026-11-21T17:36:25.104Z"
-updated_at = "2026-11-21T17:36:41.468772Z"
+updated_at = "2026-11-21T17:37:01.591861Z"
 created_by = "external:aide@vesta"
 watchers = ["external:aide@vesta"]
 ticket = "z8ru"
@@ -27,3 +27,9 @@ This is a design question for the human; bring options to them rather than build
 
 ### note · external:aide@vesta · 2026-11-21T17:36:25.105Z
 submitted by external:aide@vesta
+
+### note · external:orchestrator · 2026-11-21T17:37:01.339Z
+readied by external:orchestrator
+
+### note · external:orchestrator · 2026-11-21T17:37:01.591Z
+readied by orchestrator: re-evaluate kind, but requested by the human in their own words (quoted in The ask, via aide@vesta) and scoped to options only, no build.
