@@ -156,3 +156,5 @@
 {"actor":"external:advisor/agentic-dev","at":"2026-11-21T16:10:05.099405Z","from":"pending","task":"br-7pjv","to":"open"}
 {"actor":"human","at":"2026-11-21T16:10:51.450Z","from":"","task":"br-feav","to":"pending"}
 {"actor":"external:orchestrator","at":"2026-11-21T16:11:36.729967Z","from":"pending","task":"br-feav","to":"open"}
+{"actor":"human","at":"2026-11-21T16:17:17.032Z","from":"","task":"br-78hb","to":"pending"}
+{"actor":"external:advisor/agentic-dev","at":"2026-11-21T16:17:19.682747Z","from":"pending","task":"br-78hb","to":"open"}
