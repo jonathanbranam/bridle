@@ -4,7 +4,7 @@ title = "Gateway self-connect warning fires after every daemon start though the 
 kind = "bug"
 state = "integrated"
 created_at = "2026-11-21T17:43:19.574Z"
-updated_at = "2026-11-21T18:41:08.468477Z"
+updated_at = "2026-11-21T20:46:51.730266Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -56,3 +56,6 @@ ticket file moved to docs/tickets/resolved/gateway-self-probe-2fjw.md
 
 ### note · agent:manager-2 · 2026-11-21T18:41:08.468Z
 cleanup: removed agent w2fjw, origin branch bridle/w2fjw, branch bridle/w2fjw
+
+### note · external:orchestrator · 2026-11-21T20:46:51.730Z
+orchestrator: third occurrence 2026-11-21 20:46 UTC (m-0843), after the f87df616 upgrade restart; curl to 100.100.189.100:7878 returned 200 right after.
