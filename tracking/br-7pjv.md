@@ -2,11 +2,14 @@
 id = "br-7pjv"
 title = "Chore: review open tickets whose work looks already built, and resolve the done ones"
 kind = "chore"
-state = "planned"
+state = "claimed"
 created_at = "2026-11-21T16:09:48.229Z"
-updated_at = "2026-11-21T17:00:11.322607Z"
+updated_at = "2026-11-21T18:41:27.694433Z"
 created_by = "external:advisor/agentic-dev"
-watchers = ["external:advisor/agentic-dev"]
+watchers = [
+    "external:advisor/agentic-dev",
+    "agent:w7pjv",
+]
 ticket = "7pjv"
 +++
 
