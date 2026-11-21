@@ -2,11 +2,14 @@
 id = "br-fq8z"
 title = "Measure build and test times on the laptop: what makes a change-compile-test cycle take ~an hour"
 kind = "research"
-state = "planned"
+state = "claimed"
 created_at = "2026-11-21T15:08:46.991Z"
-updated_at = "2026-11-21T15:35:09.873453Z"
+updated_at = "2026-11-21T15:35:57.140461Z"
 created_by = "external:aide@vesta"
-watchers = ["external:aide@vesta"]
+watchers = [
+    "external:aide@vesta",
+    "agent:bt-times",
+]
 ticket = "fq8z"
 +++
 
