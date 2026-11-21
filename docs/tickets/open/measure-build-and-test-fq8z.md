@@ -19,6 +19,11 @@ Clarified by the human with bridle's aide, 2026-11-21 (verbatim below). Research
 2. **Tests**: how long the test suite takes to run (separately from compiling the tests), and which tests or test binaries are particularly slow (a ranked list from nextest's per-test times).
 3. **The answer the human wants**: what takes the most time and CPU in bridle's change-compile-test cycle, and whether it is Rust compilation itself or something else.
 
+4. **CPU cap (added 2026-11-21 with the human)**: the same build again capped with `cargo build -j 2`, `-j 4` and `-j 8`, run under `nice -n 19`, each with wall time and CPU-minutes. The aim is to find a cap that keeps a build within roughly 15 minutes while leaving most of dalek's CPU free. The human is away, so nobody checks responsiveness by hand: during each run, sample system CPU use (idle %, load average, e.g. every 5 s) as the proxy, and report the average and peak idle CPU left for other processes.
+5. **Quiet machine**: run with nothing else building on dalek (hold other worker builds for the run, or record the load next to each number as br-npj2 did). A matching run on remus is filed on remus-home (same method, same table) so the two can be compared.
+
+The human, 2026-11-21, after seeing br-npj2's numbers (verbatim): "ok, that wall clock time is not so bad. it's the CPU hit that is the problem; I can live with a ~15min CI/CD time IFF that is not destroying the CPU for all other processes on the computer." Then, approving the cap runs and the remus run: "yes, that sounds like a great approach for both; please coordinate and run the test on remus and dalek; I won't be around this morning for checking responsiveness, so we'll have to use the sampled CPU as a proxy."
+
 Not in scope now: comparing with flume (bridle first; a direct comparison is not valid yet), runtime performance, and fixes (list any obvious ones, don't build them).
 
 ### The human, 2026-11-21, to bridle's aide (verbatim)
