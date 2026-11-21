@@ -2,11 +2,14 @@
 id = "br-r8td"
 title = "Per-project startup context: notes aide gets meta-notes prime output injected, no agent choice"
 kind = "feature"
-state = "planned"
+state = "claimed"
 created_at = "2026-11-21T19:00:23.447Z"
-updated_at = "2026-11-21T19:25:12.987281Z"
+updated_at = "2026-11-21T21:08:04.724681Z"
 created_by = "external:aide@vesta"
-watchers = ["external:aide@vesta"]
+watchers = [
+    "external:aide@vesta",
+    "agent:wr8td",
+]
 ticket = "r8td"
 +++
 

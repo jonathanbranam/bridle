@@ -4,7 +4,7 @@ title = "Workers get a browser tool (e.g. Playwright MCP) so they can verify UI 
 kind = "feature"
 state = "integrated"
 created_at = "2026-11-21T18:55:13.132Z"
-updated_at = "2026-11-21T21:07:39.168117Z"
+updated_at = "2026-11-21T21:07:54.733613Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -61,3 +61,6 @@ integrated: 42358a5b0a4ff59605e4f40d402467166d19f49e (branch bridle/w4bhp)
 
 ### note · agent:manager-2 · 2026-11-21T21:07:39.168Z
 ticket file moved to docs/tickets/resolved/worker-browser-4bhp.md
+
+### note · agent:manager-2 · 2026-11-21T21:07:54.733Z
+cleanup: removed agent w4bhp, origin branch bridle/w4bhp, branch bridle/w4bhp
