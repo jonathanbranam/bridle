@@ -4,12 +4,13 @@ title = "Measure build and test times on the laptop: what makes a change-compile
 kind = "research"
 state = "claimed"
 created_at = "2026-11-21T15:08:46.991Z"
-updated_at = "2026-11-21T16:35:58.173181Z"
+updated_at = "2026-11-21T16:36:08.313103Z"
 created_by = "external:aide@vesta"
 watchers = [
     "external:aide@vesta",
     "agent:bt-times",
 ]
+summary = "Measured on dalek: cold dev build 7m23s/57 CPU-min, incremental 14s, test compile 6m27s, 2022 tests run 177s; -j 4 nice = 14 min, 63% idle. Findings posted on thread; no code changes."
 ticket = "fq8z"
 +++
 
@@ -136,3 +137,6 @@ Yes, Rust compilation is what eats the CPU and the machine, but only on cold bui
 6. `just check-affected` for the edit loop (already exists); full `just check` only to land.
 
 Not measured: release builds (br-npj2 stands), incremental test compile, effect of the endpoint-security scanner on sys time, anything with other agents running. Raw logs were in /tmp/fq8z on dalek (not kept in the repo). No code or config changes were made; the worktree is clean.
+
+### note · agent:bt-times · 2026-11-21T16:36:08.313Z
+done: findings posted on br-fq8z thread (cold dev 7m23s/57 CPU-min, incr 14s, test compile 6m27s, tests 177s, -j8/4/2 capped runs with idle sampling); no commits, worktree clean
