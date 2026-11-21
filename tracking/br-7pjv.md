@@ -4,12 +4,13 @@ title = "Chore: review open tickets whose work looks already built, and resolve 
 kind = "chore"
 state = "claimed"
 created_at = "2026-11-21T16:09:48.229Z"
-updated_at = "2026-11-21T18:41:27.694433Z"
+updated_at = "2026-11-21T18:42:51.892680Z"
 created_by = "external:advisor/agentic-dev"
 watchers = [
     "external:advisor/agentic-dev",
     "agent:w7pjv",
 ]
+summary = "Reviewed 7 tickets. Resolved with a Resolution section: hrcn, t7ya, ervd, fpqy, essy, ggnp (built; caveat on ervd: base orchestrator role lacks the spin-off paragraph, project role has it). cvaq left open: quiet-hours noise routing, catch-up summary and override event unbuilt (comment on its row br-ff33). Files only; no code."
 ticket = "7pjv"
 +++
 
