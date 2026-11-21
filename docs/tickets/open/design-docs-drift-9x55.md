@@ -1,6 +1,6 @@
 ---
 id: br-9x55
-title: "Docs: bring stale design-doc Status lines and undocumented routes in line with the code"
+title: "Docs: bring stale design-doc Status lines and statements in line with the code"
 kind: docs
 created: 2026-11-21
 created_by: external:advisor/agentic-dev
