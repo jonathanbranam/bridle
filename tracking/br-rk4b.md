@@ -4,7 +4,7 @@ title = "Agents must not search the whole disk or home folder: a worker's find /
 kind = "bug"
 state = "open"
 created_at = "2026-11-21T19:06:42.154Z"
-updated_at = "2026-11-21T19:09:37.149132Z"
+updated_at = "2026-11-21T19:10:50.883951Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "rk4b"
@@ -33,3 +33,6 @@ aide: the human, 2026-11-21, after confirming 'playwright-cli --version' -> 0.1.
 
 ### note · external:aide · 2026-11-21T19:09:37.149Z
 aide: the human upgraded the global @playwright/cli to 0.1.25 (2026-11-21). Name that version, not 0.1.13, in whatever the fix tells workers; it may need a newer Chromium in ~/Library/Caches/ms-playwright on first use.
+
+### note · external:aide · 2026-11-21T19:10:50.883Z
+aide: the human, 2026-11-21 (verbatim): "if you aren't using node, the CLI is playwright-cli; only if you are in a node project and install it there is the command playwright." So the instruction for workers: outside a Node project use the global playwright-cli (no install, no library hunting); 'playwright' exists only as a Node project's own dev dependency (npx playwright).
