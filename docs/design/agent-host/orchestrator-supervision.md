@@ -323,12 +323,13 @@ reported by `bridle daemon doctor`. No entry, nothing happens. The orchestrator 
 human's, `[sessions] warn = ["150k", "200k", "250k", "300k"]` (four increasing counts; per role
 in `[sessions.advisor]` and `[sessions.aide]`). Reaching a step sends a `system` note to the
 session and one to the human, through `external:aide`, and asks again at every step; a reading
-that jumps steps announces only the highest.
+that jumps steps announces only the highest. One notice per channel (nkgf): the session acts on
+its own and is told not to announce it; the aide's note ends "Relay once".
 
 | Step | Context | Session is told | Human is told |
 |---|---|---|---|
 | 0 | 150k | its size | the size, and the restart commands |
-| 1 | 200k | restart yourself: say "I'm at 200k; restarting", run `bridle session restart <identity>`, write the handover note it asks for (`bridle handover write --file -`); the human may say keep going | `bridle session keep` to carry on, `restart --fresh` for no handover |
+| 1 | 200k | restart yourself (no announcement: the human hears it once, through the aide): run `bridle session restart <identity>`, write the handover note it asks for (`bridle handover write --file -`); the human may say keep going | `bridle session keep` to carry on, `restart --fresh` for no handover |
 | 2 | 250k | the normal ceiling, past due: restart yourself as at 200k | the same |
 | 3 | 300k | the hard limit: write the note now | it is being restarted |
 

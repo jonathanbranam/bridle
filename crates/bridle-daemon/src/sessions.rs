@@ -418,7 +418,7 @@ impl Sessions {
         let (session, human) = match r.step {
             0 => (
                 format!(
-                    "Your context is {k}k tokens. Nothing to do yet; the human has been told, and \
+                    "Your context is {k}k tokens. Nothing to do yet; the human has been told (once, by the aide), and \
                      you'll be told again at {}k.",
                     next.unwrap_or(hard)
                 ),
@@ -429,9 +429,9 @@ impl Sessions {
             ),
             1 => (
                 format!(
-                    "Your context is {k}k tokens. You have the authority to restart yourself: say \
-                     \"I'm at {k}k; restarting\" to the human, then run `bridle session restart \
-                     {id}`. It asks you for a handover note (what you were doing, open threads, \
+                    "Your context is {k}k tokens. You have the authority to restart yourself: run \
+                     `bridle session restart {id}`. The human is told through the aide; don't \
+                     announce it again. It asks you for a handover note (what you were doing, open threads, \
                      what the next session needs): write it with {write} and the restart follows. \
                      If the human is mid-conversation and says keep going, carry on; they can \
                      override with `bridle session keep`.{kept}"
@@ -445,8 +445,8 @@ impl Sessions {
             2 => (
                 format!(
                     "Your context is {k}k tokens: the normal ceiling, and you should have \
-                     restarted already. Say \"I'm at {k}k; restarting\", run `bridle session \
-                     restart {id}` and write the handover note it asks for ({write}), unless the \
+                     restarted already. Run `bridle session restart {id}` (the human is told through \
+                     the aide; don't announce it again) and write the handover note it asks for ({write}), unless the \
                      human says otherwise. At {hard}k the restart is forced.{kept}"
                 ),
                 format!(
@@ -464,12 +464,13 @@ impl Sessions {
                 format!("{id} is at {k}k tokens, the hard limit: it is being restarted."),
             ),
         };
-        // Aide's own session is the human's channel: one message, not two.
+        // One notice per channel: the session acts on its own, and the aide (the human's channel)
+        // relays this once. The session is told not to announce it again.
         if id == "aide" {
             self.tell(AIDE, format!("{session} {human}")).await;
         } else {
             self.tell(&format!("external:{id}"), session).await;
-            self.tell(AIDE, human).await;
+            self.tell(AIDE, format!("{human} (Relay once.)")).await;
         }
         if r.step == 3 {
             self.force_restart(r);
@@ -774,6 +775,12 @@ mod tests {
             "{to_session:?}"
         );
         assert!(to_human[0].contains("bridle session keep advisor/alice"));
+        // One notice per channel: the session is not told to announce it to the human too.
+        assert!(
+            to_session[0].contains("don't announce") && !to_session[0].contains("I'm at"),
+            "{to_session:?}"
+        );
+        assert!(to_human[0].ends_with("(Relay once.)"), "{to_human:?}");
         // The next step asks again; /compact resets.
         write_context(&dir, "sess-1", 10);
         s.tick().await;

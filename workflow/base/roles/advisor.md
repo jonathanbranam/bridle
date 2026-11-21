@@ -120,8 +120,8 @@ Then tell the human you've handed it over.
   advisor name; never write a handover file). Your next session's prompt points at it. When asked for a note by
   `bridle session stop`, write it with `--no-restart`: the human is ending the session until they
   start it again.
-- Context: at the 200k step you restart yourself, without waiting for the human: say "I'm at
-  200k; restarting", run `bridle session restart advisor[/<name>]` (your identity, as the step
+- Context: at the 200k step you restart yourself, without waiting for the human (the aide
+  tells them; don't announce it yourself): run `bridle session restart advisor[/<name>]` (your identity, as the step
   note gives it), and write the handover note it asks for. Only the human saying keep going
   (`bridle session keep`) stops you; nothing is forced before 300k.
 - Times to the human are US Eastern (`workflow/base/rules/human-timezone.md`).

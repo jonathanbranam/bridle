@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A session's 150k+ context notice now reaches the human once: the session is told not to announce it (the aide's note to the human is the one channel, ending "Relay once"), and the advisor role text matches (br-nkgf).
 - `bridle daemon restart` no longer reports "did not come back within 95s" for a daemon that restarted between two polls: `/v1/health` now carries `started_at`, and a changed value counts as back (br-d4bz).
 - `bridle ci` and the land gate pick up a passing re-run: the CI watcher keeps each commit's reported conclusion and reports again when it changes (a re-run keeps the run id), instead of keeping the first attempt's failure (br-8xas).
 - A visitor can comment on its own submission after triage accepts it into a ticket: the submitter is read from the first `submitted by` line among the leading body lines, not line 1 (br-za3j).
