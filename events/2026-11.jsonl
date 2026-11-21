@@ -193,3 +193,5 @@
 {"actor":"external:orchestrator","at":"2026-11-21T18:55:48.827724Z","from":"pending","task":"br-4bhp","to":"open"}
 {"actor":"human","at":"2026-11-21T19:00:23.447Z","from":"","task":"br-r8td","to":"pending"}
 {"actor":"external:orchestrator","at":"2026-11-21T19:01:02.456163Z","from":"pending","task":"br-r8td","to":"open"}
+{"actor":"human","at":"2026-11-21T19:06:42.154Z","from":"","task":"br-rk4b","to":"pending"}
+{"actor":"external:aide","at":"2026-11-21T19:07:00.114650Z","from":"pending","task":"br-rk4b","to":"open"}
