@@ -7,8 +7,8 @@
 ```
 L0  core        built into the binary: task states, edge types, command semantics
 L1  base        workflow/base/                  shared by every project
-L2  packs       workflow/packs/<name>/           opt-in: typescript, python, vim,
-                                                web-ui, game, monorepo, …
+L2  packs       workflow/packs/<name>/           opt-in: mobile, python, typescript,
+                                                vim, web (see "The packs" below)
 L3  project     <repo>/.bridle/                 this project's overrides + additions
 L4  component   <repo>/.bridle/components/<n>/  scoped by task/spawn; nests (client → game)
 ```
@@ -21,6 +21,16 @@ shows it. Tasks and spawns carry the component list (`--component`, `BRIDLE_COMP
 only L1–L3 and workers don't run prime, so component rules don't reach agents yet; see
 [[docs/design/components|components]].
 
+### The packs
+
+The packs that exist in `workflow/packs/` (rules only; each `workflow.toml` is just `layer = ...`):
+
+- `mobile` (5 rules): mobile-friendly web pages: viewport meta, input font size, safe-area insets, text selection, `touch-action`.
+- `python` (5 rules, `adapters/`, a README): the project's check command, package manager, pytest style, ruff and a test floor.
+- `typescript` (6 rules, `adapters/`): the check command, dev servers, file naming, package manager, `tsc` and vitest style.
+- `vim` (4 rules): the check command, no `after/ftplugin`, Vader tests (and their temp dir).
+- `web` (6 rules): web UI basics: ARIA labels, form labels, input autocomplete, input clear button, page title, semantic HTML.
+
 Later layers win. A project lists its packs in `.bridle/config.toml`, and
 points `workflow` at wherever `base/` and `packs/` live — a directory inside
 the project's own repo (bridle's own choice, decision r2uq: a separate repo
@@ -29,7 +39,7 @@ was "too much hassle"), a path to a sibling checkout, or a git url:
 ```toml
 project  = "track-web"
 prefix   = "tw"
-packs    = ["typescript", "web-ui", "monorepo"]
+packs    = ["typescript", "web"]
 workflow = "workflow"                    # path or git url
 
 [components.client-watch]

@@ -47,6 +47,15 @@ fails until its author chooses), and no source file may hard-code a project name
 `tests/session_test.rs` covers the behaviour: `bridle session` run from another project's
 folder targets that project, and outside any workspace it refuses.
 
+## Dev recipes
+
+Beside the commands, the `justfile` has the recipes the checks use (CLAUDE.md lists the main ones):
+
+- `just test` and the other nextest recipes run under `scripts/test-lock.sh`, a machine-wide lock so only one full test run happens per machine at a time (the others queue); `BRIDLE_TEST_NOLOCK=1` skips it.
+- `just specs-check` runs `bridle workflow spec check --require-ids` and `spec coverage --tests crates --require-all` on bridle's own specs (part of `just check`).
+- `just gateway-types` regenerates the gateway's ts-rs TypeScript bindings (`crates/bridle-gateway/bindings/`) for `bridle-ui`; the test `committed_types_are_current` fails when they are stale.
+- `just deny` runs `cargo deny check` (dependency licence and advisory policy; not part of `just check`).
+
 ## Built
 
 ```
@@ -138,6 +147,7 @@ bridle agent logs    <agent> [--follow] [--raw] [--since LINE]
 bridle events  [--follow] [--since SEQ] [--agent A] [--kind PREFIX] [--message ID] [--to P]
 bridle usage   [--by role|model|agent] [--since DURATION]   # DURATION: <n>s|m|h|d, e.g. 30d
 bridle usage --by name|session [--since DURATION]           # role -> name (-> session) tree, hosted + external, share-of-week estimates (GET /v1/usage/groups)
+bridle usage --agent NAME|ID [--bucket hour|day] [--since DURATION]   # one agent instance's usage over time, removed agents too (GET /v1/usage/agents/{id}/series; usage-and-budget.md)
 bridle usage --week                                         # the current week from the reset: days, five-hour windows, peaks, hits (GET /v1/usage/periods)
 bridle usage --history WINDOW [--since DURATION]            # the window's rate-limit readings over time (five_hour, seven_day)
 bridle usage cost audit [--check]                 static: size of what bridle injects into agent context (usage-and-budget.md)

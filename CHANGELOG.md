@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Internal
 
+- Docs: api.md gains the ready, stage-land, push, restart/hold, review, sessions/keep and usage/history routes and the missing event kinds; cli.md gains `usage --agent` and the dev recipes (test lock, specs-check, gateway-types, deny); human-web-ui.md names the items, projects, session and ticket-action routes; workflow-layers.md lists the packs that exist (br-feav).
 - Docs match the code (br-9x55, items 1-11 and 19-26): current command names (`bridle ticket impact`, `workflow ...`, `orchestrator prime`, `usage cost audit`) with the old ones noted as aliases; stale Status lines for migrations, layer hooks, dev site, web UI, advisor wakes, specs adoption, roles and states, skills, the handover API; project-manager role text no longer says it may ready tickets; the `project drain` and `wait-for-wake` help comments and the session opening prompts corrected.
 - The `ticket_file` tests give their temp repo a git identity (`user.name`/`user.email` in the repo config), so the integrating test passes on CI runners with no global identity (br-hnef).
 
