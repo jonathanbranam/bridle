@@ -2,9 +2,9 @@
 id = "br-2fjw"
 title = "Gateway self-connect warning fires after every daemon start though the gateway is reachable"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-11-21T17:43:19.574Z"
-updated_at = "2026-11-21T17:43:54.177568Z"
+updated_at = "2026-11-21T17:55:11.643972Z"
 created_by = "external:orchestrator"
 watchers = ["external:orchestrator"]
 ticket = "2fjw"
