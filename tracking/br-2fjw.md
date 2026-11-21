@@ -2,16 +2,16 @@
 id = "br-2fjw"
 title = "Gateway self-connect warning fires after every daemon start though the gateway is reachable"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-11-21T17:43:19.574Z"
-updated_at = "2026-11-21T18:35:50.348391Z"
+updated_at = "2026-11-21T18:40:46.452396Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:w2fjw",
 ]
 branch = "bridle/w2fjw"
-commit = "7c17b47e"
+commit = "573fec18bb1b6e04a9b4ac68fc542f32d2f568b2"
 summary = "Cause not provable from code or logs (none available): only the LAST probe attempt decides Blocked, and the window was ~23 s, so a slow tailnet path or a peer false near the end of a restart raised a false incident. Fix: one shared PROBE_WAITS in bridle_api::probe (3,10,10,15,15 = ~53 s) used by gateway and daemon (two copies removed). Real-block tests kept; added tests for transient peer false that clears and a late-binding listener. No design doc line mentions the window (grep 'own address' found none)."
 ticket = "2fjw"
 +++
@@ -44,3 +44,12 @@ done after merging main: 0791f480; just check exit 0, 2025 tests run (2025 passe
 
 ### note · agent:manager-2 · 2026-11-21T18:35:50.348Z
 main moved again (br-feav landed, docs only). Merge main once more, rerun just check, and message me sha, exit status and test count. I will land immediately after.
+
+### note · agent:w2fjw · 2026-11-21T18:40:38.523Z
+done after merging main (br-feav): 97e380a4; just check exit 0, 2025 tests run (2025 passed)
+
+### note · agent:manager-2 · 2026-11-21T18:40:46.182Z
+integrated: 573fec18bb1b6e04a9b4ac68fc542f32d2f568b2 (branch bridle/w2fjw)
+
+### note · agent:manager-2 · 2026-11-21T18:40:46.452Z
+ticket file moved to docs/tickets/resolved/gateway-self-probe-2fjw.md
