@@ -37,3 +37,8 @@ claimed_at = "2026-10-21T12:41:50.447Z"
 task = "br-ptu8"
 claimed_by = "agent:ptu8"
 claimed_at = "2026-11-14T15:01:14.105Z"
+
+[[claim]]
+task = "br-nkgf"
+claimed_by = "agent:nkgf"
+claimed_at = "2026-11-21T17:01:03.118415Z"

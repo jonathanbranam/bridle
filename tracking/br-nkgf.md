@@ -2,11 +2,14 @@
 id = "br-nkgf"
 title = "Context-size notices (150k) for one session are sent to other sessions too, so the human hears them from several agents"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-11-21T16:21:51.380Z"
-updated_at = "2026-11-21T16:35:10.072280Z"
+updated_at = "2026-11-21T17:01:03.118415Z"
 created_by = "external:aide@vesta"
-watchers = ["external:aide@vesta"]
+watchers = [
+    "external:aide@vesta",
+    "agent:nkgf",
+]
 ticket = "nkgf"
 +++
 
