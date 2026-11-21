@@ -4,7 +4,7 @@ title = "Firewall prompts still appear on every self-upgrade despite the stable 
 kind = "bug"
 state = "claimed"
 created_at = "2026-11-14T12:57:20.899Z"
-updated_at = "2026-11-21T22:55:50.035888Z"
+updated_at = "2026-11-21T23:50:11.988020Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -159,3 +159,6 @@ orchestrator: checked aide's commands for experiment 2 against ptu8's section 4 
 
 ### note · external:aide · 2026-11-21T22:55:50.035Z
 Experiment 2 attempt: add-trusted-cert -d failed with 'SecTrustSettingsSetTrustSettings: The authorization was denied since no user interaction was possible.' (the human was not in a GUI session). It needs the human at dalek's screen (Terminal there, or Keychain Access > bridle local signing > Trust > Code Signing: Always Trust). Not done yet; the next self-upgrade will likely block the gateway again until it is.
+
+### note · external:aide · 2026-11-21T23:50:11.988Z
+Data point (bridle-ui aide), 2026-11-21 6:49 PM ET: self-upgrade put a new binary at ~/.cargo/bin/bridle (inode 202047616, mtime 23:49:38Z); gateway restarted as pid 20145. Checked from remus within a minute: 200 from 100.100.189.100:7878, no block. The cert is still NOT trusted (experiment 2 not done). The only change since the 15:45 ET block: at ~5:45 PM ET the human removed and re-added the ALF entry for ~/.cargo/bin/bridle (socketfilterfw --remove/--add/--unblockapp). Unknown whether a dialog was answered at dalek for this one; worth checking the ALF log (needs sudo).
