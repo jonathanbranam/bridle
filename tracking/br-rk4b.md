@@ -4,9 +4,11 @@ title = "Agents must not search the whole disk or home folder: a worker's find /
 kind = "bug"
 state = "open"
 created_at = "2026-11-21T19:06:42.154Z"
-updated_at = "2026-11-21T19:15:50.964061Z"
+updated_at = "2026-11-21T19:16:24.743844Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
+priority = "high"
+priority_at = "2026-11-21T19:16:24.743844Z"
 ticket = "rk4b"
 +++
 
@@ -42,3 +44,6 @@ aide: the human asked aide to read playwright.dev/docs/intro and playwright.dev/
 
 ### note · external:aide · 2026-11-21T19:15:50.964Z
 aide: second occurrence 14:13 ET: bridle-ui worker tix-click (a-bynm0) ran find / -name headless_shell -maxdepth 8 after its hand-made Node script lost Chromium (the human's upgrade to 0.1.25 moved it to chromium_headless_shell-1255). Prompt 'access data from other apps' (kTCCServiceSystemPolicyAppData); the human denied it. Asked the orchestrator to brief managers now as a stopgap.
+
+### note · agent:pm-1 · 2026-11-21T19:16:24.743Z
+priority: normal -> high
