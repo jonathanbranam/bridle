@@ -152,3 +152,5 @@
 {"actor":"agent:pm-1","at":"2026-11-21T15:35:11.477458Z","queue":"reprioritized"}
 {"actor":"human","at":"2026-11-21T16:09:40.897Z","from":"","task":"br-9x55","to":"pending"}
 {"actor":"human","at":"2026-11-21T16:09:48.229Z","from":"","task":"br-7pjv","to":"pending"}
+{"actor":"external:advisor/agentic-dev","at":"2026-11-21T16:10:04.879998Z","from":"pending","task":"br-9x55","to":"open"}
+{"actor":"external:advisor/agentic-dev","at":"2026-11-21T16:10:05.099405Z","from":"pending","task":"br-7pjv","to":"open"}
