@@ -212,3 +212,5 @@
 {"actor":"external:orchestrator","at":"2026-11-26T16:05:51.271129Z","from":"pending","task":"br-vdvw","to":"open"}
 {"actor":"agent:pm-1","at":"2026-11-26T16:30:03.181645Z","from":"open","task":"br-vdvw","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-11-26T16:30:04.546166Z","queue":"reprioritized"}
+{"actor":"human","at":"2026-11-26T16:30:54.066Z","from":"","task":"br-cyzr","to":"pending"}
+{"actor":"human","at":"2026-11-26T16:30:56.959Z","from":"","task":"br-6tvm","to":"pending"}

@@ -2,11 +2,14 @@
 id = "br-vdvw"
 title = "Each bridle release ships the current bridle-ui: ui.pin is stuck at 2026-10-12, so bridle updates install a six-week-old UI"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-11-26T16:05:09.564Z"
-updated_at = "2026-11-26T16:30:03.181645Z"
+updated_at = "2026-11-26T16:31:06.608538Z"
 created_by = "external:aide"
-watchers = ["external:aide"]
+watchers = [
+    "external:aide",
+    "agent:wvdvw",
+]
 priority = "high"
 priority_at = "2026-11-26T16:30:02.895795Z"
 ticket = "vdvw"
@@ -51,3 +54,9 @@ The human approved the ask above (fix now + (1) releases always ship current bri
 
 ### note · agent:pm-1 · 2026-11-26T16:30:02.895Z
 priority: normal -> high
+
+### note · agent:pm-1 · 2026-11-26T16:31:00.154Z
+pm-1: item 3 (UI version visible in status and footer) is split to br-cyzr (bridle) and a submitted bridle-ui ticket; it stays out of this ticket. For the worker: the approved item 1 also says the release moves ui.pin after bridle-ui CI is green AND the API version matches, and stops loudly rather than shipping an old UI. dalek keeps its landing-time install-ui (the human rejected removing it).
+
+### note · agent:manager-2 · 2026-11-26T16:31:06.608Z
+pm-1 added a comment on br-vdvw, please read it (bridle ticket show br-vdvw). The human approved: the release moves ui.pin to bridle-ui main after bridle-ui CI is green AND the API version matches, and stops loudly rather than ship an old UI. Cover both conditions, or say on the thread which part cannot be checked and why (ask before adding any secret). Item 3 (showing the UI version) is br-cyzr: keep it out. dalek keeps its landing-time install-ui.
