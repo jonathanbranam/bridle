@@ -217,3 +217,4 @@
 {"actor":"agent:pm-1","at":"2026-11-26T16:31:11.727069Z","from":"pending","task":"br-6tvm","to":"dropped"}
 {"actor":"external:orchestrator","at":"2026-11-26T16:31:19.964091Z","from":"pending","task":"br-cyzr","to":"open"}
 {"actor":"human","at":"2026-11-26T16:31:36.042Z","from":"","task":"br-5akm","to":"pending"}
+{"actor":"external:orchestrator","at":"2026-11-26T16:31:40.609603Z","from":"pending","task":"br-5akm","to":"open"}
