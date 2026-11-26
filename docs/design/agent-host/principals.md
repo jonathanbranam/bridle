@@ -165,6 +165,23 @@ A visitor may also **submit** (`POST /v1/tasks/submit`, `bridle ticket submit`, 
 `submitted by <principal>`, with a first thread note saying so. It may comment on its own submissions only (also after triage accepts it into a ticket, which puts the file path before the marker: the submitter is the first `submitted by` line among the first four); planning,
 claiming, dropping and editing a task are refused for any visitor.
 
+**Submitting to another project** (br-vrrc). A caller that has no way to the target's daemon
+itself (an agent: `$BRIDLE_TOKEN` is its own daemon's and is never sent elsewhere) runs `bridle
+ticket submit --project <p>`, and the CLI hands it to its **own** daemon (`POST
+/v1/submit/remote`), which files it on `<p>`'s with its peer token (`POST
+/v1/forward/submit/ticket`, peer token only). The caller never holds a token for `<p>`. Who may
+is who may send mail across projects: any authenticated principal but a peer, and the sending
+daemon needs a peer token for `<p>`. The task on `<p>` starts `submitted by <principal>@<sender's
+project>` and its creator is `remote:<principal>@<sender's project>`, a remote watcher, so its
+updates and a drop's reason come back to the submitter through `<p>`'s outbox; `<p>` therefore
+refuses a submission from a project it has no peer token for (`bridle token pair` makes both
+directions). The call is **not queued** (the caller needs the task id): an unknown or unreachable
+`<p>` is an error and nothing is filed on the sender's daemon; if the answer is lost to a timeout
+the error says the task may or may not exist, so check before retrying. A `<p>` older than this
+answers that its daemon doesn't have the command. Chosen over carrying it in `/v1/forward`, for the
+reason given for watching below. No migration. Callers who can reach `<p>` directly (the human,
+a session with a credential for it) still do. Other ticket commands are not forwarded.
+
 ## Mail between daemons (3haz, slice 1)
 
 A message to a principal on another daemon (`bridle send --project <other> ...`, any machine, the
@@ -181,7 +198,8 @@ token, like `task ready --project`; the outbox is for a project with no such tok
   It is printed once and pasted into the sender's `credentials.toml` under `[peer]`, keyed by the
   receiving project: `[peer]` / `beta = "..."`. One token per sending machine per receiving
   daemon, so the daemons of one machine share theirs. A peer token may call `/v1/forward` and
-  nothing else but `/v1/hello` and `/v1/watch` (403); nothing else may call `/v1/forward`.
+  nothing else but `/v1/hello`, `/v1/watch` and `/v1/forward/submit/ticket` (403); nothing else
+  may call `/v1/forward`.
 - **The sender's label.** The forwarding daemon states who the sender was, qualified with its
   machine (`agent:w1@nuc`, `external:advisor/research@nuc`), and the receiver stores that as
   `from`. It is believed because the token is a peer's: a visitor's or other external token's

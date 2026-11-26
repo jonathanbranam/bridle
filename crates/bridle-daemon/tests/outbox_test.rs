@@ -6,9 +6,10 @@ mod support;
 use bridle_api::Client;
 use bridle_api::discovery::store_credential;
 use bridle_api::types::{
-    ForwardRequest, HelloRequest, MessageKind, MessageQuery, NewTicketRequest, OutboxSendRequest,
-    PeerTokenCreateRequest, PeerWatchRequest, RemoteWatchRequest, TicketKind, TokenCreateRequest,
-    When,
+    AgentState, DropTicketRequest, ForwardRequest, HelloRequest, MessageKind, MessageQuery,
+    NewTicketRequest, OutboxSendRequest, PeerTokenCreateRequest, PeerWatchRequest,
+    RemoteSubmitRequest, RemoteWatchRequest, SpawnRequest, SubmitTicketRequest, TicketKind,
+    TokenCreateRequest, When, Workdir,
 };
 use support::{ClientExt, TestDaemon, machine_home_dir, start_daemon_named, wait_for};
 
@@ -1257,4 +1258,149 @@ async fn a_plain_send_to_a_label_never_forwarded_from_keeps_default_routing() {
         .expect_err("no such recipient")
         .to_string();
     assert!(err.contains("no such recipient"), "{err}");
+}
+
+fn remote_submit(project: &str, title: &str) -> RemoteSubmitRequest {
+    RemoteSubmitRequest {
+        project: project.to_string(),
+        ticket: SubmitTicketRequest {
+            title: title.to_string(),
+            kind: TicketKind::Bug,
+            body: "details".to_string(),
+        },
+    }
+}
+
+impl Pair {
+    /// Gives B what it needs to send replies to A (`alpha`, on `m1`).
+    async fn point_b_at_a(&self) {
+        let token = self
+            .a
+            .client
+            .create_peer_token(&PeerTokenCreateRequest {
+                machine: "m2".to_string(),
+                replace: false,
+            })
+            .await
+            .expect("peer token")
+            .token;
+        let home = machine_home_dir(self._tmp_b.path());
+        std::fs::create_dir_all(&home).expect("home");
+        let port = self.a.running.url.rsplit(':').next().expect("port");
+        std::fs::write(
+            home.join("config.toml"),
+            format!(
+                "[machine]\nname = \"m2\"\n[machines]\nm1 = \"127.0.0.1\"\nm2 = \"127.0.0.1\"\n\
+                 [projects]\nalpha = {{ machine = \"m1\", port = {port} }}\n"
+            ),
+        )
+        .expect("config");
+        store_credential(&home.join("credentials.toml"), "peer", "alpha", &token)
+            .expect("credentials");
+    }
+}
+
+#[tokio::test]
+async fn an_agents_submission_is_forwarded_and_the_drop_reason_comes_home() {
+    let p = pair().await;
+    p.point_b_at_a().await;
+    let w1 =
+        p.a.client
+            .spawn(&SpawnRequest {
+                ticket: None,
+                components: Vec::new(),
+                role: "worker".to_string(),
+                name: Some("w1".to_string()),
+                prompt: None,
+                workdir: Some(Workdir::Repo),
+                model: None,
+                extra_allowed_tools: Vec::new(),
+                extra_env: Vec::new(),
+                ignore_budget: false,
+            })
+            .await
+            .expect("spawn");
+    wait_for("w1 idle", || async {
+        let a = p.a.client.get_agent(&w1.id).await.expect("agent");
+        (a.state == AgentState::Idle).then_some(())
+    })
+    .await;
+
+    let task =
+        p.a.agent_client(&w1.id)
+            .remote_submit(&remote_submit(&p.b_project, "from w1"))
+            .await
+            .expect("submit");
+    let on_b = p.b.client.get_task(&task.id).await.expect("task on b");
+    assert!(
+        on_b.body.starts_with("submitted by agent:w1@alpha\n"),
+        "{}",
+        on_b.body
+    );
+    assert_eq!(on_b.created_by, "remote:agent:w1@alpha");
+    assert!(p.a.client.list_tasks().await.expect("tasks").is_empty());
+
+    p.b.client
+        .drop_task(
+            &task.id,
+            &DropTicketRequest {
+                reason: "duplicate of abcd".to_string(),
+            },
+        )
+        .await
+        .expect("drop");
+    wait_for("the drop reason on A", || async {
+        inbox_bodies(&p.a, "w1")
+            .await
+            .iter()
+            .any(|(_, body)| body.contains("duplicate of abcd"))
+            .then_some(())
+    })
+    .await;
+}
+
+#[tokio::test]
+async fn a_submission_is_refused_when_it_cannot_arrive_or_be_answered() {
+    let p = pair().await;
+    let sender = p.a.external_client("advisor").await;
+    let err = |r: Result<bridle_api::types::Ticket, bridle_api::client::ClientError>| {
+        r.expect_err("refused").to_string()
+    };
+
+    // B has no way back to A.
+    let got = err(sender
+        .remote_submit(&remote_submit(&p.b_project, "t"))
+        .await);
+    assert!(got.contains("can't send a reply back to 'alpha'"), "{got}");
+
+    let got = err(sender.remote_submit(&remote_submit("gamma", "t")).await);
+    assert!(got.contains("could not submit to 'gamma'"), "{got}");
+    let got = err(sender.remote_submit(&remote_submit("alpha", "t")).await);
+    assert!(got.contains("own project"), "{got}");
+
+    // The target is unreachable: a port nothing listens on.
+    let home = machine_home_dir(p._tmp_a.path());
+    let config = std::fs::read_to_string(home.join("config.toml")).expect("config");
+    let port = p.b.running.url.rsplit(':').next().expect("port");
+    std::fs::write(
+        home.join("config.toml"),
+        config.replace(&format!("port = {port}"), "port = 1"),
+    )
+    .expect("config");
+    let got = err(sender
+        .remote_submit(&remote_submit(&p.b_project, "t"))
+        .await);
+    assert!(got.contains("could not reach the daemon"), "{got}");
+    assert!(got.contains("nothing was filed"), "{got}");
+
+    // A peer token can't use one daemon to submit on another.
+    assert!(
+        p.peer_client()
+            .remote_submit(&remote_submit("alpha", "t"))
+            .await
+            .is_err()
+    );
+    for d in [&p.a, &p.b] {
+        assert!(d.client.list_tasks().await.expect("tasks").is_empty());
+    }
 }

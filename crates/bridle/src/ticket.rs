@@ -8,7 +8,9 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use anyhow::{Context, anyhow, bail};
-use bridle_api::{EditTicketRequest, NewTicketRequest, SubmitTicketRequest, TicketKind};
+use bridle_api::{
+    EditTicketRequest, NewTicketRequest, RemoteSubmitRequest, SubmitTicketRequest, TicketKind,
+};
 use clap::ValueEnum;
 
 use crate::cli::{
@@ -555,14 +557,21 @@ async fn submit(cli: &Cli, args: &TicketSubmitArgs) -> Result<(), CliError> {
     } else {
         String::new()
     };
-    let client = client_for(cli).await?;
-    let task = client
-        .submit_task(&SubmitTicketRequest {
-            title: args.title.clone(),
-            kind: kind_of(args.kind),
-            body,
-        })
-        .await?;
+    let ticket = SubmitTicketRequest {
+        title: args.title.clone(),
+        kind: kind_of(args.kind),
+        body,
+    };
+    let task = match client_for(cli).await {
+        Ok(client) => client.submit_task(&ticket).await?,
+        Err(no_direct) => match crate::commands::own_daemon_to_forward_submit(cli).await? {
+            Some((own, project)) => {
+                own.remote_submit(&RemoteSubmitRequest { project, ticket })
+                    .await?
+            }
+            None => return Err(no_direct),
+        },
+    };
     println!("{}", task.id);
     Ok(())
 }

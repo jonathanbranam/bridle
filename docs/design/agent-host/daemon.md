@@ -77,7 +77,9 @@ and sends nothing. `$BRIDLE_PROJECT` alone never moves a command off `$BRIDLE_UR
 CLI's (`commands/target.rs`), for every command that connects through it, reads and writes alike
 (`ticket submit`, `ticket`, `task`, `agent`, `status`, `daemon stop|restart`, `token`, ...).
 `send` and `task watch` still prefer the sender's own daemon
-([[principals#Mail between daemons (3haz, slice 1)|mail between daemons]]).
+([[principals#Mail between daemons (3haz, slice 1)|mail between daemons]]). `ticket submit`
+falls back to it: when this direct route fails and `$BRIDLE_URL`/`$BRIDLE_TOKEN` point at another
+project's daemon, that daemon forwards the submission (br-vrrc, [[principals]]).
 
 Worktrees and the clone sit inside the workspace, so the walk works from
 anywhere in it. A daemon found by `--url` or `$BRIDLE_URL` has no local

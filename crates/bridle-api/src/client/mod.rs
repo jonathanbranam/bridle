@@ -19,10 +19,10 @@ use crate::types::{
     ImpactCheckRequest, ImpactReport, IncidentNotice, Interaction, InteractionsQuery,
     InterruptRequest, InterruptResponse, LandRequest, LandResult, MaxWorkersRequest, Message,
     MessageQuery, NewEdgeRequest, NewTicketRequest, NoteTicketRequest, OpenQuestion,
-    OrchestratorHold, OrchestratorWakeQuery, OutboxEntry, OutboxSendRequest,
+    OrchestratorHold, OrchestratorWakeQuery, OutboxEntry, OutboxSendRequest, PeerSubmitRequest,
     PeerTokenCreateRequest, PeerWatchRequest, PortAllocation, PrincipalWakeQuery,
     PrincipalWakeResponse, ProbeRequest, ProbeResult, PushResult, Queue, Queued, RateLimitPoint,
-    Recipient, RemoteWatchRequest, RemoveEdgeQuery, RemoveQuery, RenewRequest,
+    Recipient, RemoteSubmitRequest, RemoteWatchRequest, RemoveEdgeQuery, RemoveQuery, RenewRequest,
     ResolveConflictRequest, RestartHoldRequest, RestartHoldResponse, RestartRequest,
     RestartResponse, ResumeRequest, ReviewAddRequest, ReviewAddResponse, ReviewNowRequest,
     ReviewNowResponse, Schedule, ScheduleAddRequest, ScheduleListQuery, SendBackTicketRequest,
@@ -404,6 +404,17 @@ impl Client {
     /// through this daemon's peer token.
     pub async fn remote_watch(&self, req: &RemoteWatchRequest) -> Result<Ticket, ClientError> {
         self.post_json(&["v1", "watch", "remote"], req).await
+    }
+
+    /// `POST /v1/submit/remote`: submit to another project's triage through this daemon.
+    pub async fn remote_submit(&self, req: &RemoteSubmitRequest) -> Result<Ticket, ClientError> {
+        self.post_json(&["v1", "submit", "remote"], req).await
+    }
+
+    /// `POST /v1/forward/submit/ticket`: file a peer's principal's submission here (peer token).
+    pub async fn peer_submit(&self, req: &PeerSubmitRequest) -> Result<Ticket, ClientError> {
+        self.post_json(&["v1", "forward", "submit", "ticket"], req)
+            .await
     }
 
     /// `POST /v1/watch`: register a peer's principal as a watcher here (peer token).

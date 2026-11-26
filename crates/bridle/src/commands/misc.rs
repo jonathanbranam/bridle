@@ -258,6 +258,24 @@ pub(super) async fn own_daemon_for_other_project(
     Ok(Some((client, project.to_string())))
 }
 
+/// For `ticket submit --project <other>` when the caller can't go there itself: an agent, whose
+/// `$BRIDLE_TOKEN` is its own daemon's and is never sent elsewhere (br-5akm), hands it to that
+/// daemon to forward. `None` when there is no such daemon to hand it to. Only asked after the
+/// direct route has failed, so a caller with a way there keeps using it.
+pub(crate) async fn own_daemon_to_forward_submit(
+    cli: &Cli,
+) -> Result<Option<(Client, String)>, CliError> {
+    if !cli.project_flag
+        || cli.url.is_some()
+        || cli.token.is_some()
+        || ProcessEnv.var("BRIDLE_URL").is_none()
+        || ProcessEnv.var("BRIDLE_TOKEN").is_none()
+    {
+        return Ok(None);
+    }
+    own_daemon_for_other_project(cli).await
+}
+
 /// Mail to the orchestrator belongs on the machine's home project (br-7ytg): addressing another
 /// local project is refused, with the command to use instead.
 fn refuse_orchestrator_mail_off_home(cli: &Cli, to: &str) -> Result<(), CliError> {

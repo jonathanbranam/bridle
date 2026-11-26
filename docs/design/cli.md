@@ -416,7 +416,11 @@ bridle ticket submit -k <kind> <title> [--body S | --body-file F|-]
                                               `submitted by <principal>`; the project manager (else the orchestrator)
                                               gets one inbox message. Dropping it with a reason tells the submitter.
                                               With `$BRIDLE_URL` set, a typed `--project` for another project goes to
-                                              that project's daemon or fails; it never files on the URL's.
+                                              that project's daemon, else (an agent, which has no token for it) is
+                                              forwarded by the caller's own daemon with its peer token; the task there
+                                              records `submitted by <principal>@<own project>` and a drop's reason
+                                              comes back. Unreachable, unpaired or older target: an error, nothing
+                                              filed anywhere, not queued. It never files on the URL's.
 bridle workflow goals list [--root DIR] [--priority P] [--stance S]   lists goals (docs/design/goals-tier.md) from
                                              `*.md` under --root (default `design/goals`): id, firmness,
                                              priority, stance, title per line; the stance is defaulted from

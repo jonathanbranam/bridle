@@ -2760,6 +2760,27 @@ pub struct SubmitTicketRequest {
     pub body: String,
 }
 
+/// `POST /v1/submit/remote`: the caller submits to another project's triage; its own daemon
+/// forwards it with a peer token, so the caller never holds one for the other daemon.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RemoteSubmitRequest {
+    pub project: String,
+    #[serde(flatten)]
+    pub ticket: SubmitTicketRequest,
+}
+
+/// `POST /v1/forward/submit/ticket`: a peer daemon submits on behalf of one of its principals.
+/// Peer tokens only.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PeerSubmitRequest {
+    /// The submitter as its own daemon knows it (`agent:w1`).
+    pub who: PrincipalId,
+    /// The submitter's home: the calling daemon's project, where the drop reason goes.
+    pub home: String,
+    #[serde(flatten)]
+    pub ticket: SubmitTicketRequest,
+}
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct EditTicketRequest {
     #[serde(default, skip_serializing_if = "Option::is_none")]

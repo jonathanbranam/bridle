@@ -2177,20 +2177,53 @@ fn a_typed_project_beats_an_inherited_bridle_url() {
     assert!(titles(&beta).contains("by-human"));
     assert!(!titles(&alpha).contains("by-human"));
 
-    // Inside Claude Code with no credential for beta: refused, alpha's token is not used.
+    // Inside Claude Code with no credential for beta: alpha forwards (br-vrrc). With no peer
+    // tokens it can't, and says so; nothing is filed anywhere.
     let claude = [("CLAUDECODE", "1")];
-    let (ok, err) = submit(&home, &claude, "beta", "no-credential");
+    let (ok, err) = submit(&home, &claude, "beta", "no-peer");
     assert!(!ok);
-    assert!(err.contains("$BRIDLE_TOKEN is that daemon's"), "{err}");
-
-    // An agent's home has no registry: refused, saying why.
-    let (ok, err) = submit(&empty_home, &claude, "beta", "no-registry");
-    assert!(!ok);
-    assert!(err.contains("is project 'alpha'"), "{err}");
+    assert!(err.contains("could not submit to 'beta'"), "{err}");
+    assert!(err.contains("no peer token"), "{err}");
     for repo in [&alpha, &beta] {
-        let all = titles(repo);
-        assert!(!all.contains("no-credential") && !all.contains("no-registry"));
+        assert!(!titles(repo).contains("no-peer"));
     }
+
+    // Paired both ways, from an agent's home with no registry or credential of its own: filed
+    // on beta, labelled with the real submitter.
+    for (repo, project) in [(&alpha, "alpha"), (&beta, "beta")] {
+        let (ok, out, err) = run_cli(
+            repo,
+            &home,
+            &["token", "create", "--peer", "local", "--print"],
+        );
+        assert!(ok, "peer token failed: {err}");
+        let peer = out
+            .split_whitespace()
+            .find(|w| w.len() == 64)
+            .expect("peer secret");
+        bridle_api::discovery::store_credential(
+            &home.join("credentials.toml"),
+            "peer",
+            project,
+            peer,
+        )
+        .expect("store peer token");
+    }
+    let (ok, err) = submit(&empty_home, &claude, "beta", "forwarded");
+    assert!(ok, "forwarded submit failed: {err}");
+    assert!(!titles(&alpha).contains("forwarded"));
+    let listed = titles(&beta);
+    assert!(listed.contains("forwarded"), "{listed}");
+    assert!(
+        listed.contains("submitted by external:agent@alpha"),
+        "{listed}"
+    );
+
+    // A project nobody knows: refused, saying so.
+    let (ok, err) = submit(&empty_home, &claude, "gamma", "nowhere");
+    assert!(!ok);
+    assert!(err.contains("no daemon known for project 'gamma'"), "{err}");
+    assert!(!titles(&alpha).contains("nowhere"));
 
     // Naming the URL's own project still works with only the URL and token.
     let (ok, err) = submit(&empty_home, &claude, "alpha", "own-project");

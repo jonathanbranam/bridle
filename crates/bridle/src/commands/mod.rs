@@ -60,6 +60,7 @@ pub(crate) use agent::list_sessions;
 use agent::*;
 use daemon::*;
 use hook::*;
+pub(crate) use misc::own_daemon_to_forward_submit;
 pub use misc::read_text;
 use misc::*;
 use orchestrator::*;

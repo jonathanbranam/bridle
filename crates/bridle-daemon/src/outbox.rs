@@ -19,7 +19,7 @@ use bridle_api::discovery;
 use bridle_api::machines::MachineMap;
 use bridle_api::types::{
     ForwardAck, ForwardRequest, HelloRequest, MessageKind, MessageState, OutboxEntry,
-    PeerWatchRequest, Ticket, When,
+    PeerSubmitRequest, PeerWatchRequest, Ticket, When,
 };
 
 use crate::store::{OutboxRow, Store};
@@ -226,6 +226,26 @@ impl Outbox {
         match tokio::time::timeout(ATTEMPT_TIMEOUT, Client::new(url, token).peer_watch(req)).await {
             Ok(r) => r,
             Err(_) => Err(other(format!("'{project}' did not answer in time"))),
+        }
+    }
+
+    /// Files a submission on `project`'s daemon with our peer token. Not queued, like
+    /// [`Self::peer_watch`]: the caller needs the task id or the refusal.
+    pub async fn peer_submit(
+        &self,
+        project: &str,
+        req: &PeerSubmitRequest,
+    ) -> Result<Ticket, ClientError> {
+        let other = ClientError::Unreachable;
+        self.check_destination(project).map_err(other)?;
+        let url = self.resolve(project).map_err(other)?;
+        let token = self.peer_token(project).map_err(other)?;
+        match tokio::time::timeout(ATTEMPT_TIMEOUT, Client::new(url, token).peer_submit(req)).await
+        {
+            Ok(r) => r,
+            Err(_) => Err(other(format!(
+                "'{project}' did not answer in time; it may or may not have filed the task"
+            ))),
         }
     }
 

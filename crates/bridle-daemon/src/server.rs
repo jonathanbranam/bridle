@@ -32,8 +32,8 @@ use bridle_api::types::{
     WriteHandoverRequest, event_kind,
 };
 use bridle_api::types::{
-    PeerWatchRequest, PrincipalId, RemoteWatchRequest, Schedule, ScheduleAddRequest,
-    ScheduleListQuery, ThreadEntryKind,
+    PeerSubmitRequest, PeerWatchRequest, PrincipalId, RemoteSubmitRequest, RemoteWatchRequest,
+    Schedule, ScheduleAddRequest, ScheduleListQuery, ThreadEntryKind,
 };
 use chrono::{DateTime, Utc};
 use futures::Stream;
@@ -325,6 +325,8 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/connect-back", post(connect_back))
         .route("/v1/watch", post(peer_watch))
         .route("/v1/watch/remote", post(remote_watch))
+        .route("/v1/submit/remote", post(remote_submit))
+        .route("/v1/forward/submit/ticket", post(peer_submit))
         .route("/v1/forward", post(forward))
         .route("/v1/forward/{message_id}", get(forward_state))
         .route("/v1/outbox/{id}", get(outbox_entry))
@@ -3365,24 +3367,34 @@ async fn submit_task(
     Extension(principal): Extension<Principal>,
     Json(req): Json<SubmitTicketRequest>,
 ) -> Result<Json<Ticket>, ApiError> {
-    let body = format!("{SUBMITTED_BY}{}\n\n{}", principal.id, req.body);
+    file_submission(&state, &principal.id, &principal.id, req)
+        .await
+        .map(Json)
+}
+
+/// `submitter` is who is told of a drop; `creator` is the task's first watcher (the submitter,
+/// or its `remote:` form when it lives on another daemon).
+async fn file_submission(
+    state: &AppState,
+    submitter: &str,
+    creator: &str,
+    req: SubmitTicketRequest,
+) -> Result<Ticket, ApiError> {
+    let id = submitter.to_string();
+    let body = format!("{SUBMITTED_BY}{id}\n\n{}", req.body);
     let task = state
         .tasks
-        .new_task_by(&req.title, req.kind, body, Vec::new(), None, &principal.id)
+        .new_task_by(&req.title, req.kind, body, Vec::new(), None, creator)
         .await?;
     let task = state
         .tasks
-        .note_task(
-            &task.id,
-            &principal.id,
-            &format!("{SUBMITTED_BY}{}", principal.id),
-        )
+        .note_task(&task.id, &id, &format!("{SUBMITTED_BY}{id}"))
         .await?;
     let _ = state
         .emitter
         .emit(
             event_kind::TASK_CREATED,
-            principal.id.clone(),
+            id.clone(),
             None,
             serde_json::json!({
                 "task": task.id, "kind": task.kind, "state": task.state,
@@ -3392,9 +3404,75 @@ async fn submit_task(
         .await;
     state
         .manager
-        .note_submission(&task.id, &task.title, &principal.id)
+        .note_submission(&task.id, &task.title, &id)
         .await;
-    Ok(Json(task))
+    Ok(task)
+}
+
+/// `POST /v1/submit/remote`: the caller submits a task to another project's triage. Who may is
+/// the same as for mail to another daemon (`send_outbox`).
+async fn remote_submit(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Json(req): Json<RemoteSubmitRequest>,
+) -> Result<Json<Ticket>, ApiError> {
+    if principal.kind == PrincipalKind::Peer {
+        return Err(ApiError::forbidden("a peer token may not ask to submit"));
+    }
+    if req.project == state.outbox.project() {
+        return Err(ApiError::bad_request(
+            "that is this daemon's own project: submit without --project",
+        ));
+    }
+    let peer_req = PeerSubmitRequest {
+        who: principal.id,
+        home: state.outbox.project().to_string(),
+        ticket: req.ticket,
+    };
+    match state.outbox.peer_submit(&req.project, &peer_req).await {
+        Ok(task) => Ok(Json(task)),
+        Err(bridle_api::client::ClientError::Api {
+            status,
+            code: _,
+            message,
+        }) => Err(ApiError::new(
+            StatusCode::from_u16(status).unwrap_or(StatusCode::BAD_GATEWAY),
+            "remote_error",
+            format!("'{}' did not take the submission: {message}", req.project),
+        )),
+        Err(e) => Err(ApiError::new(
+            StatusCode::BAD_GATEWAY,
+            "unreachable",
+            format!(
+                "could not submit to '{}' (nothing was filed here, and it is not queued): {e}",
+                req.project
+            ),
+        )),
+    }
+}
+
+/// `POST /v1/forward/submit/ticket`: a peer daemon files a task here for one of its principals,
+/// labelled `<who>@<home>`. Peer tokens only: that is also why `who` is believed. The creator is
+/// recorded as `remote:<who>@<home>`, so the task's updates and a drop's reason go back.
+async fn peer_submit(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Json(req): Json<PeerSubmitRequest>,
+) -> Result<Json<Ticket>, ApiError> {
+    if principal.kind != PrincipalKind::Peer {
+        return Err(ApiError::forbidden("this takes a peer token"));
+    }
+    if let Err(why) = state.outbox.check_destination(&req.home) {
+        return Err(ApiError::bad_request(format!(
+            "can't send a reply back to '{}': {why}",
+            req.home
+        )));
+    }
+    let submitter = format!("{}@{}", req.who, req.home);
+    let creator = format!("{REMOTE_WATCHER}{submitter}");
+    file_submission(&state, &submitter, &creator, req.ticket)
+        .await
+        .map(Json)
 }
 
 async fn get_task(
@@ -3529,16 +3607,19 @@ async fn drop_task(
     if let Some(submitter) = submitter_of(&task)
         && submitter != principal.id
     {
-        state
-            .manager
-            .note_to_submitter(
-                submitter,
-                format!(
-                    "Your submission {} ({}) was declined by {}: {}",
-                    task.id, task.title, principal.id, req.reason
-                ),
-            )
-            .await;
+        let note = format!(
+            "Your submission {} ({}) was declined by {}: {}",
+            task.id, task.title, principal.id, req.reason
+        );
+        // A forwarded submission's submitter lives on another daemon: the outbox takes it home.
+        let remote = format!("{REMOTE_WATCHER}{submitter}");
+        if task.created_by == remote {
+            if let Err(e) = send_to_remote_watcher(&state, &principal.id, &remote, &note).await {
+                tracing::warn!(task = %task.id, "drop reason not queued: {}", e.message);
+            }
+        } else {
+            state.manager.note_to_submitter(submitter, note).await;
+        }
     }
     if was_human_todo && principal.id != "human" {
         state
