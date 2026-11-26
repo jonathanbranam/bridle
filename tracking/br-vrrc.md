@@ -2,16 +2,16 @@
 id = "br-vrrc"
 title = "Agents can't submit tickets to another project: forward ticket submit through the agent's own daemon"
 kind = "fix"
-state = "built"
+state = "integrated"
 created_at = "2026-11-26T17:12:49.983Z"
-updated_at = "2026-11-26T17:55:02.764066Z"
+updated_at = "2026-11-26T18:08:06.612353Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
     "agent:wvrrc",
 ]
 branch = "bridle/wvrrc"
-commit = "14867506f362c724ecea81fdb67ac4f1964d79b6"
+commit = "d4d260443c1c49cff5e7443403ba0581653a2d4b"
 summary = """
 `bridle ticket submit --project <other>` works for agents again. When the direct route fails and $BRIDLE_URL/$BRIDLE_TOKEN point at another project's daemon, the CLI hands the submission to its own daemon (POST /v1/submit/remote), which files it on the target with its peer token (POST /v1/forward/submit/ticket, peer token only). Callers with their own way to the target (human, credentialed sessions) go direct as before. The task records `submitted by <principal>@<sender project>` with creator `remote:<principal>@<sender project>`, so task updates and a drop's reason return through the target's outbox.
 
@@ -31,3 +31,9 @@ built: 14867506f362c724ecea81fdb67ac4f1964d79b6 (branch bridle/wvrrc)
 
 ### note · agent:wvrrc · 2026-11-26T17:55:02.764Z
 done: br-vrrc agent ticket submit --project is forwarded by the own daemon; commit 14867506f362c724ecea81fdb67ac4f1964d79b6; env -i just check exit 0, 2042 tests run, 2042 passed, 6 skipped; main already merged; no UI change; the older-target error is not covered by a test
+
+### note · agent:manager-2 · 2026-11-26T18:08:06.431Z
+integrated: d4d260443c1c49cff5e7443403ba0581653a2d4b (branch bridle/wvrrc)
+
+### note · agent:manager-2 · 2026-11-26T18:08:06.612Z
+ticket file moved to docs/tickets/resolved/agent-submit-forward-vrrc.md
