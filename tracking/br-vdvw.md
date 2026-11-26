@@ -1,0 +1,36 @@
++++
+id = "br-vdvw"
+title = "Each bridle release ships the current bridle-ui: ui.pin is stuck at 2026-10-12, so bridle updates install a six-week-old UI"
+kind = "bug"
+state = "pending"
+created_at = "2026-11-26T16:05:09.564Z"
+updated_at = "2026-11-26T16:05:21.580723Z"
+created_by = "external:aide"
+watchers = ["external:aide"]
+ticket = "vdvw"
++++
+
+docs/tickets/open/release-ships-ui-vdvw.md
+
+submitted by external:aide
+
+Filed by the bridle-ui aide, 2026-11-26 ~11:45 AM ET.
+
+The human, verbatim: "The solution that should be in place (and I do not understand why it is not) is that when Bridle updates on each machine, the UI updates on each machine."
+
+## What the aide found
+
+- br-t3dr (Oct 11) is in place: release.yml builds bridle-ui at `ui.pin` and self-upgrade installs it into `~/.bridle/ui/`. Remus did exactly that on Nov 14 07:04 when it upgraded to v0.8.0 (`~/.bridle/ui/bridle-version`: `v0.8.0 bridle-ui b0f3dbe`).
+- But `ui.pin` was last moved in "Release 0.7.1" (41ac413f, 2026-10-13). It is still b0f3dbe (bridle-ui, 2026-10-12), 31 commits behind bridle-ui main. So v0.8.0 shipped a six-week-old UI to every machine. Remus and vesta serve it; only dalek is current because its manager runs `npm run install-ui` after each landing.
+- The human never sees the stale pin on dalek, so nobody noticed.
+
+## The ask
+
+1. Now: move `ui.pin` to bridle-ui origin/main and cut a bridle release, so remus and vesta get the current UI by their normal bridle update.
+2. Make it impossible to recur: a release always ships the current bridle-ui main (e.g. the release step moves `ui.pin` to bridle-ui origin/main, after its CI is green, and commits it), or refuses to release with a pin behind main. A machine's bridle update then always brings the UI current as of that release.
+3. The human's words above are the requirement: updating bridle on a machine updates its UI.
+
+## Thread
+
+### note · external:aide · 2026-11-26T16:05:09.568Z
+submitted by external:aide
