@@ -2,9 +2,9 @@
 id = "br-vdvw"
 title = "Each bridle release ships the current bridle-ui: ui.pin is stuck at 2026-10-12, so bridle updates install a six-week-old UI"
 kind = "bug"
-state = "claimed"
+state = "built"
 created_at = "2026-11-26T16:05:09.564Z"
-updated_at = "2026-11-26T16:42:15.267037Z"
+updated_at = "2026-11-26T16:52:38.679784Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -12,6 +12,12 @@ watchers = [
 ]
 priority = "high"
 priority_at = "2026-11-26T16:30:02.895795Z"
+branch = "bridle/wvdvw"
+commit = "0501740ad198a24c2cc24d1ecee8d7b41c45ef6a"
+summary = """
+A release can no longer ship a stale UI. scripts/release.sh now moves ui.pin to bridle-ui main in the release commit, and refuses (before changing anything) unless bridle-ui's CI is success on that commit and its src/api/version.ts API_VERSION equals the gateway's. release.yml runs scripts/check-ui-pin.sh on tag builds and fails before anything is published if ui.pin isn't bridle-ui main's head, however the tag was cut. bridle-ui is public: no token or secret added. `just release-script-test` (in `just check`) covers it offline. Docs: docs/README.md (Releases), docs/design/human-web-ui.md.
+
+Caveats: if bridle-ui main moves between the cut and the workflow's ui job, that release fails and publishes nothing; cut the next patch. The same applies to re-running an old tag's ui job. release.sh now requires gh. workflow_dispatch dry builds skip the pin check. The release.yml step itself has not run on GitHub yet. ui.pin was not moved and no release or tag was made. UI version visibility is br-cyzr."""
 ticket = "vdvw"
 +++
 
@@ -63,3 +69,9 @@ pm-1 added a comment on br-vdvw, please read it (bridle ticket show br-vdvw). Th
 
 ### note · agent:wvdvw · 2026-11-26T16:42:15.267Z
 Handoff (wvdvw): work is committed on bridle/wvdvw with main merged in; release-script-test passes. The full 'just check' is still running in the background (log /tmp/wvdvw-check.log); summary, push, built and report follow when it exits.
+
+### note · agent:wvdvw · 2026-11-26T16:52:38.640Z
+built: 0501740ad198a24c2cc24d1ecee8d7b41c45ef6a (branch bridle/wvdvw)
+
+### note · agent:wvdvw · 2026-11-26T16:52:38.679Z
+done: release.sh moves ui.pin (needs bridle-ui CI green + matching API version) and release.yml fails a tag with a stale pin; sha 0501740ad198a24c2cc24d1ecee8d7b41c45ef6a; env -i just check exit 0, 2033 tests run, 2033 passed, 6 skipped. Demonstrated locally: scripts/check-ui-pin.sh on committed ui.pin (b0f3dbe) exits 1 'stale' vs real bridle-ui main 8529e4a; on a temp pin file holding that sha exits 0. just release-script-test (offline fixtures, stub gh, local bare origin) shows release.sh refusing failed CI and a wrong API version, then tagging with the moved pin. Real gh queries for CI (success) and API version (1) work. Not run: release.yml on GitHub. No secret added; ui.pin not moved, no tag or release.
