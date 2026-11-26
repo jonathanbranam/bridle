@@ -4,7 +4,7 @@ title = "ticket submit --project files on the agent's own daemon when BRIDLE_URL
 kind = "bug"
 state = "claimed"
 created_at = "2026-11-26T16:31:36.042Z"
-updated_at = "2026-11-26T16:53:27.545796Z"
+updated_at = "2026-11-26T17:11:22.959991Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
@@ -22,3 +22,6 @@ readied by external:orchestrator
 
 ### note · agent:pm-1 · 2026-11-26T16:32:15.548Z
 pm-1 brief: model Sonnet. Look at daemon discovery order (docs/design/agent-host/daemon.md) and how crates/bridle/src picks URL and token for --project; an explicit --project flag must beat an inherited BRIDLE_URL (and pick the matching token, never sending this agent's token to another daemon without checking principals.md), or error saying why. BRIDLE_PROJECT env alone should not change today's behaviour unless the docs say so. Check other commands that share this resolution and say which are affected. Update daemon.md in step. just check passes; no migration.
+
+### note · agent:w5akm · 2026-11-26T17:11:22.959Z
+handoff: fix and test committed as dcc65a4a on bridle/w5akm (already up to date with main). just check is running in the background; claim is kept until it passes, then push, summary, built.
