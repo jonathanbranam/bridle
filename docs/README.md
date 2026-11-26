@@ -129,9 +129,13 @@ GitHub release for the tag (creating it if missing):
 - `bridle-<tag>-<target>.tar.gz` for `x86_64-unknown-linux-gnu` (built on ubuntu-22.04),
   `aarch64-apple-darwin` and `x86_64-apple-darwin`; each holds the `bridle` binary and `ui/`, the built bridle-ui (t3dr).
   A `ui` job builds the bridle-ui commit in `ui.pin` first (Node, only in this workflow) and fails
-  the release if its `api-version` differs from the gateway's `API_VERSION`. Bump `ui.pin` before
-  tagging.
+  the release if its `api-version` differs from the gateway's `API_VERSION`. On a tag it first
+  fails if `ui.pin` isn't bridle-ui main's head (`scripts/check-ui-pin.sh`, runnable locally).
 - `SHA256SUMS`, the `sha256sum` of every tarball.
+
+Cut a release with `scripts/release.sh`: it moves `ui.pin` to bridle-ui main, refusing unless
+bridle-ui's CI is green there and its `API_VERSION` matches the gateway's. If bridle-ui main moves between the cut and the workflow's check,
+the workflow fails and publishes nothing; cut the next patch.
 
 Running the workflow by hand (`workflow_dispatch`) builds the tarballs and uploads them as
 workflow artifacts without publishing. `scripts/package-release.sh` does the packaging.

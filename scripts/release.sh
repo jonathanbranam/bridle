@@ -2,15 +2,16 @@
 # Cut a bridle release: scripts/release.sh [patch|minor|major|X.Y.Z] [-y] [-n]
 #
 # Does what a release has always been by hand: bump [workspace.package] version in Cargo.toml,
-# refresh Cargo.lock, put a dated heading under "## Unreleased" in CHANGELOG.md, commit only those
-# three files (the tree often holds others' uncommitted ticket edits), tag vX.Y.Z and push main and
-# the tag. The tag push starts .github/workflows/release.yml, which builds and publishes.
+# refresh Cargo.lock, put a dated heading under "## Unreleased" in CHANGELOG.md, move ui.pin to
+# bridle-ui main (refusing unless its CI is green and its API version is the gateway's), commit only
+# those four files (the tree often holds others' uncommitted ticket edits), tag vX.Y.Z and push main
+# and the tag. The tag push starts .github/workflows/release.yml, which builds and publishes.
 #
 # Run it from your own terminal on the owner's clone: the pre-push hook refuses elsewhere, and
 # agents can't commit here. -y skips the confirmation; -n (dry run) checks and prints the plan only.
 set -euo pipefail
 
-usage() { sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
+usage() { sed -n '2,11p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
 
 bump=patch yes=0 dry=0
 for a in "$@"; do
@@ -31,8 +32,8 @@ cd "$(git rev-parse --show-toplevel)"
 
 branch=$(git symbolic-ref --short HEAD)
 [ "$branch" = main ] || die "on $branch, not main"
-git diff --quiet HEAD -- Cargo.toml Cargo.lock CHANGELOG.md \
-  || die "Cargo.toml, Cargo.lock or CHANGELOG.md has uncommitted changes"
+git diff --quiet HEAD -- Cargo.toml Cargo.lock CHANGELOG.md ui.pin \
+  || die "Cargo.toml, Cargo.lock, CHANGELOG.md or ui.pin has uncommitted changes"
 git fetch -q origin main --tags
 [ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ] \
   || die "main is not origin/main (pull or push first)"
@@ -62,8 +63,26 @@ if command -v gh >/dev/null; then
     || ci="unknown (gh failed)"
 fi
 
+# The release ships the UI at ui.pin, so it moves to bridle-ui main every time (vdvw); a main that
+# isn't known to be green stops the release rather than shipping an older UI.
+ui=$(scripts/check-ui-pin.sh --latest) || die "cannot find bridle-ui main"
+command -v gh >/dev/null || die "gh is needed to check bridle-ui's CI"
+ui_ci=$(gh run list -R jonathanbranam/bridle-ui --branch main --commit "$ui" --json conclusion,status \
+  -q 'if length == 0 then "no run" elif any(.[]; .status != "completed") then "running"
+      elif all(.[]; .conclusion == "success") then "success" else "failed" end') \
+  || die "cannot read bridle-ui's CI"
+[ "$ui_ci" = success ] || die "bridle-ui main $ui: CI is '$ui_ci', not success"
+# release.yml checks the built UI too, but only after the tag is pushed.
+api_want=$(sed -n 's/^pub const API_VERSION: u32 = \([0-9]*\);.*/\1/p' crates/bridle-gateway/src/lib.rs)
+api_got=$(gh api "repos/jonathanbranam/bridle-ui/contents/src/api/version.ts?ref=$ui" \
+  -H 'Accept: application/vnd.github.raw' | sed -n 's/^export const API_VERSION = \([0-9]*\);.*/\1/p') \
+  || die "cannot read bridle-ui's API version"
+[ -n "$api_want" ] && [ "$api_got" = "$api_want" ] \
+  || die "bridle-ui main $ui: API version '$api_got' != gateway API_VERSION '$api_want'"
+
 echo "release $cur -> $new ($tag) from $(git log -1 --format='%h %s')"
 echo "  $entries changelog entries; CI on this commit: $ci"
+echo "  ui.pin: $(cut -c1-7 ui.pin) -> ${ui:0:7} (bridle-ui main, CI green, API version $api_got)"
 case "$ci" in
   success) ;;
   failed) die "CI failed on this commit" ;;
@@ -83,10 +102,11 @@ awk -v h="## [$new] - $(date +%Y-%m-%d)" '{print} /^## Unreleased/ && !done {pri
   CHANGELOG.md >"$tmp"
 cat "$tmp" >CHANGELOG.md
 rm -f "$tmp"
+echo "$ui" >ui.pin
 # Rewrites the workspace members' versions in Cargo.lock; no build, no network.
 cargo metadata --format-version 1 --offline >/dev/null
 
-git commit -q -m "Release $new" -- Cargo.toml Cargo.lock CHANGELOG.md
+git commit -q -m "Release $new" -- Cargo.toml Cargo.lock CHANGELOG.md ui.pin
 git tag -a "$tag" -m "Release $new"
 git push -q origin main "$tag"
 echo "pushed $tag: release.yml builds it; daemons on release mode pick it up from there"

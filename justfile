@@ -3,7 +3,7 @@ default:
     @just --list
 
 # Format, lint, test: what CI runs.
-check: fmt-check lint specs-check bench-test install-script-test test record-pass
+check: fmt-check lint specs-check bench-test install-script-test release-script-test test record-pass
 
 # Records the working tree's id in the git dir once the check is green, so a
 # worker's `bridle stop-check` hook accepts the commit of that tree without
@@ -38,6 +38,10 @@ bench-test:
 # install-release.sh against a local fixture release: installs, and rejects a bad checksum.
 install-script-test:
     scripts/test-install-release.sh
+
+# release.sh moves ui.pin, and check-ui-pin.sh (release.yml's backstop) rejects a stale one.
+release-script-test:
+    scripts/test-release-ui-pin.sh
 
 lint:
     cargo clippy --workspace --all-targets -- -D warnings

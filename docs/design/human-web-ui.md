@@ -142,8 +142,10 @@ actions as writes and refuses the rest, so a stolen session can answer and check
   fails the release if the built `api-version` differs from the gateway's `API_VERSION`, and
   packages the result as `ui/` (with `ui/bridle-version`: tag and bridle-ui sha) in every
   `bridle-<tag>-<target>.tar.gz`. `install-release.sh` and a `self_upgrade = "release"` daemon put
-  it in `~/.bridle/ui/`. Bumping `ui.pin` is part of cutting a release; the dev machine keeps its
-  own bridle-ui clone. In development
+  it in `~/.bridle/ui/`. Nobody bumps `ui.pin` by hand (vdvw): `scripts/release.sh` moves it to
+  bridle-ui main (only if bridle-ui's CI is green there and its API version matches), and `release.yml` refuses a tag whose pin
+  isn't bridle-ui main's head, so an update on any release machine brings the current UI. The dev
+  machine keeps its own bridle-ui clone. In development
   the UI's dev server proxies API calls to the gateway.
 
 **Documents (br-5paw, ticket x8jt; a narrow piece of v8kn, built).** For the UI's document view

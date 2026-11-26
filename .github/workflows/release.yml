@@ -13,6 +13,10 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
+      # The backstop however the tag was cut (vdvw): no release ships a stale UI.
+      - name: Refuse a stale ui.pin
+        if: github.ref_type == 'tag'
+        run: scripts/check-ui-pin.sh
       - name: Read the pin
         id: pin
         run: echo "sha=$(tr -d '[:space:]' < ui.pin)" >> "$GITHUB_OUTPUT"
