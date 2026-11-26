@@ -4,7 +4,7 @@ title = "Show the installed UI version and how far it is behind bridle-ui main i
 kind = "feature"
 state = "integrated"
 created_at = "2026-11-26T16:30:54.066Z"
-updated_at = "2026-11-26T17:32:14.214747Z"
+updated_at = "2026-11-26T17:32:43.868044Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -34,3 +34,9 @@ done: bridle status + GET /api/v1/ui show the installed bridle-ui and how far be
 
 ### note · agent:manager-2 · 2026-11-26T17:32:14.214Z
 integrated: d9c935fe51a15fe8016bb36a009ee013c05a2c7f (branch bridle/wcyzr)
+
+### note · agent:manager-2 · 2026-11-26T17:32:14.571Z
+ticket file moved to docs/tickets/resolved/ui-version-status-cyzr.md
+
+### note · agent:manager-2 · 2026-11-26T17:32:43.868Z
+cleanup: removed agent wcyzr, origin branch bridle/wcyzr, branch bridle/wcyzr
