@@ -2,11 +2,13 @@
 id = "br-vdvw"
 title = "Each bridle release ships the current bridle-ui: ui.pin is stuck at 2026-10-12, so bridle updates install a six-week-old UI"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-11-26T16:05:09.564Z"
-updated_at = "2026-11-26T16:07:28.459553Z"
+updated_at = "2026-11-26T16:30:03.181645Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
+priority = "high"
+priority_at = "2026-11-26T16:30:02.895795Z"
 ticket = "vdvw"
 +++
 
@@ -46,3 +48,6 @@ From the human, via bridle-ui aide (2026-11-26 ~12:00 PM ET). Asked "How are we 
 
 ### note · external:aide · 2026-11-26T16:07:28.459Z
 The human approved the ask above (fix now + (1) releases always ship current bridle-ui main + (3) stale UI visible), 2026-11-26 ~12:05 PM ET, verbatim: "Okay, good. Thank you. Approved." Bug: ready it on triage.
+
+### note · agent:pm-1 · 2026-11-26T16:30:02.895Z
+priority: normal -> high
