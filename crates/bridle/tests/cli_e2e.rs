@@ -2102,3 +2102,107 @@ fn daemon_list_and_migrate_find_the_daemon_by_bridle_url_without_a_registry() {
         String::from_utf8_lossy(&out.stderr)
     );
 }
+
+/// br-5akm: a typed `--project` beats an inherited `$BRIDLE_URL`; the URL's daemon is never
+/// filed on by default, and its token never goes to the other one.
+#[test]
+fn a_typed_project_beats_an_inherited_bridle_url() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let home = tmp.path().join("home");
+    let empty_home = tmp.path().join("agent-home");
+    let start = |name: &str| {
+        let repo = tmp.path().join(name).join(name);
+        init_repo(&repo);
+        let mut cmd = Command::new(bridle_bin());
+        cmd.args(["serve", "--listen", "127.0.0.1:0", "--repo"])
+            .arg(&repo)
+            .env("BRIDLE_CLAUDE_BIN", fake_claude_path())
+            .env("BRIDLE_HOME", &home)
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::inherit());
+        strip_bridle_env(&mut cmd);
+        let mut guard = DaemonGuard(cmd.spawn().expect("spawn bridle serve"));
+        let daemon_json = tmp.path().join(name).join(".bridle/daemon.json");
+        wait_for_daemon(&mut guard.0, &daemon_json);
+        let info: serde_json::Value =
+            serde_json::from_str(&std::fs::read_to_string(&daemon_json).expect("daemon.json"))
+                .expect("daemon.json parses");
+        let url = info["url"].as_str().expect("url").to_string();
+        (repo, url, guard)
+    };
+    let (alpha, alpha_url, _a) = start("alpha");
+    let (beta, _, _b) = start("beta");
+
+    let (ok, out, err) = run_cli(&alpha, &home, &["token", "create", "agent", "--print"]);
+    assert!(ok, "token create failed: {err}");
+    let token = out
+        .split_whitespace()
+        .find(|w| w.len() == 64)
+        .expect("token secret")
+        .to_string();
+
+    // An agent's environment on alpha, outside any workspace.
+    let run = |home: &Path, extra: &[(&str, &str)], args: &[&str]| {
+        let mut cmd = Command::new(bridle_bin());
+        cmd.args(args).current_dir(tmp.path());
+        strip_bridle_env(&mut cmd);
+        cmd.env_remove("BRIDLE_AS")
+            .env("BRIDLE_HOME", home)
+            .env("BRIDLE_URL", &alpha_url)
+            .env("BRIDLE_TOKEN", &token)
+            .envs(extra.iter().copied());
+        let out = cmd.output().expect("run bridle");
+        (
+            out.status.success(),
+            String::from_utf8_lossy(&out.stderr).into_owned(),
+        )
+    };
+    let submit = |home: &Path, extra: &[(&str, &str)], project: &str, title: &str| {
+        run(
+            home,
+            extra,
+            &["ticket", "submit", "--project", project, "-k", "bug", title],
+        )
+    };
+    let titles = |repo: &Path| {
+        let (ok, out, err) = run_cli(repo, &home, &["task", "list", "--json"]);
+        assert!(ok, "task list failed: {err}");
+        out
+    };
+
+    // The human: beta's own token file, even with BRIDLE_PROJECT naming alpha.
+    let (ok, err) = submit(&home, &[("BRIDLE_PROJECT", "alpha")], "beta", "by-human");
+    assert!(ok, "submit to beta failed: {err}");
+    assert!(titles(&beta).contains("by-human"));
+    assert!(!titles(&alpha).contains("by-human"));
+
+    // Inside Claude Code with no credential for beta: refused, alpha's token is not used.
+    let claude = [("CLAUDECODE", "1")];
+    let (ok, err) = submit(&home, &claude, "beta", "no-credential");
+    assert!(!ok);
+    assert!(err.contains("$BRIDLE_TOKEN is that daemon's"), "{err}");
+
+    // An agent's home has no registry: refused, saying why.
+    let (ok, err) = submit(&empty_home, &claude, "beta", "no-registry");
+    assert!(!ok);
+    assert!(err.contains("is project 'alpha'"), "{err}");
+    for repo in [&alpha, &beta] {
+        let all = titles(repo);
+        assert!(!all.contains("no-credential") && !all.contains("no-registry"));
+    }
+
+    // Naming the URL's own project still works with only the URL and token.
+    let (ok, err) = submit(&empty_home, &claude, "alpha", "own-project");
+    assert!(ok, "submit to own project failed: {err}");
+    assert!(titles(&alpha).contains("own-project"));
+
+    // $BRIDLE_PROJECT alone does not move a command off $BRIDLE_URL.
+    let (ok, err) = run(
+        &home,
+        &[("BRIDLE_PROJECT", "beta")],
+        &["ticket", "submit", "-k", "bug", "env-only"],
+    );
+    assert!(ok, "env-only submit failed: {err}");
+    assert!(titles(&alpha).contains("env-only"));
+}

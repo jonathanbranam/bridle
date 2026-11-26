@@ -21,6 +21,11 @@ pub struct Cli {
     #[arg(long, global = true, env = "BRIDLE_PROJECT")]
     pub project: Option<String>,
 
+    /// Whether `--project` was typed, not just inherited from `$BRIDLE_PROJECT`: only a typed one
+    /// beats `$BRIDLE_URL` (br-5akm). Set by `main`.
+    #[arg(skip)]
+    pub project_flag: bool,
+
     /// Bearer token; see docs/design/agent-host/principals.md for how the CLI picks one when this is unset.
     #[arg(long, global = true)]
     pub token: Option<String>,

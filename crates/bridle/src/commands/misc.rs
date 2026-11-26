@@ -885,16 +885,8 @@ pub(super) async fn tui(cli: &Cli) -> Result<(), CliError> {
 }
 
 /// The project a `token create`/`revoke` acted on: `--project`, or the cwd's daemon.
-pub(super) fn token_project(cli: &Cli) -> Result<Option<String>, CliError> {
-    let cwd = std::env::current_dir().context("current directory")?;
-    let endpoint = discovery::resolve_endpoint(
-        cli.url.as_deref(),
-        cli.project.as_deref(),
-        &cwd,
-        &ProcessEnv,
-    )
-    .map_err(|e| CliError::Unreachable(e.to_string()))?;
-    Ok(endpoint.project)
+pub(super) async fn token_project(cli: &Cli) -> Result<Option<String>, CliError> {
+    Ok(super::target::resolve(cli).await?.endpoint.project)
 }
 
 /// `bridle token pair` and its helpers (token_pair.rs). None of them print a token except
@@ -1190,7 +1182,7 @@ pub(super) async fn token(cli: &Cli, args: &TokenArgs) -> Result<(), CliError> {
             let project = if machine.is_some() {
                 None
             } else {
-                token_project(cli)?
+                token_project(cli).await?
             };
             let stored_in = match project {
                 Some(project) => {
@@ -1247,7 +1239,7 @@ pub(super) async fn token(cli: &Cli, args: &TokenArgs) -> Result<(), CliError> {
         TokenAction::Revoke { name } => {
             client.revoke_token(name).await?;
             println!("revoked {name}");
-            if let Some(project) = token_project(cli)? {
+            if let Some(project) = token_project(cli).await? {
                 let path = discovery::credentials_path();
                 if discovery::remove_credential(&path, name, &project)
                     .map_err(|e| CliError::Other(e.into()))?

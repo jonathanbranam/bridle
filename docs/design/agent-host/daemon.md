@@ -66,6 +66,19 @@ migrations, naming both and the folder (br-eas4).
    ([[docs/design/agent-host/operating-model#Several projects at once|several projects]]);
 4. `.bridle/daemon.json`, found by walking up from the cwd.
 
+**A typed `--project` beats `$BRIDLE_URL`** (br-5akm). An agent inherits `$BRIDLE_URL`, so when
+`--project` is on the command line (not just `$BRIDLE_PROJECT`) and there is no `--url`, the URL is
+kept only if it is that project's daemon: the registry or machine config gives the same URL, or the
+daemon at the URL answers `status` with that project. Otherwise the command goes to the named
+project's daemon (registry or machine config), with that project's token
+([[principals#How the CLI picks a token|never `$BRIDLE_TOKEN`]]). If that daemon can't be found
+(an agent session has its own `$BRIDLE_HOME`, so usually no registry), the command fails, says why
+and sends nothing. `$BRIDLE_PROJECT` alone never moves a command off `$BRIDLE_URL`. This is the
+CLI's (`commands/target.rs`), for every command that connects through it, reads and writes alike
+(`ticket submit`, `ticket`, `task`, `agent`, `status`, `daemon stop|restart`, `token`, ...).
+`send` and `task watch` still prefer the sender's own daemon
+([[principals#Mail between daemons (3haz, slice 1)|mail between daemons]]).
+
 Worktrees and the clone sit inside the workspace, so the walk works from
 anywhere in it. A daemon found by `--url` or `$BRIDLE_URL` has no local
 workspace, so the client needs `$BRIDLE_TOKEN` too.

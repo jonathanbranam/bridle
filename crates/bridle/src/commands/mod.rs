@@ -52,6 +52,7 @@ mod misc;
 mod orchestrator;
 mod report;
 mod schedule;
+mod target;
 mod task;
 mod usage;
 mod workflow;
@@ -364,37 +365,10 @@ pub async fn run(mut cli: Cli) -> Result<(), CliError> {
     }
 }
 
-/// Resolve the daemon endpoint and a token, per docs/design/agent-host/daemon.md and
-/// principals.md. `resolve_endpoint` failing to find any daemon at all is exactly the
-/// "daemon unreachable" case (exit 3). `allow_anonymous_read` mirrors the daemon's own
-/// tolerance for token-less GET/HEAD requests (server.rs's `auth_middleware`): pass it
-/// for a read-only command so a caller running inside Claude Code with no
-/// `$BRIDLE_TOKEN` gets a working request instead of a client-side error ahead of one
-/// that would have succeeded anyway.
-async fn resolve_endpoint_and_token(
-    cli: &Cli,
-    allow_anonymous_read: bool,
-) -> Result<(String, Option<String>), CliError> {
-    let cwd = std::env::current_dir().context("current directory")?;
-    let env = ProcessEnv;
-    let endpoint =
-        discovery::resolve_endpoint(cli.url.as_deref(), cli.project.as_deref(), &cwd, &env)
-            .map_err(|e| CliError::Unreachable(e.to_string()))?;
-    let token = discovery::resolve_token(
-        cli.token.as_deref(),
-        endpoint.workspace.as_deref(),
-        endpoint.project.as_deref(),
-        endpoint.machine.as_deref(),
-        &env,
-        allow_anonymous_read,
-    )?;
-    Ok((endpoint.url, token))
-}
-
 /// A client for a command that only ever writes (or both reads and writes):
 /// keeps today's client-side error when `$CLAUDECODE` is set with no token.
 pub async fn client_for(cli: &Cli) -> Result<Client, CliError> {
-    let (url, token) = resolve_endpoint_and_token(cli, false).await?;
+    let (url, token) = target::resolve_endpoint_and_token(cli, false).await?;
     Ok(Client::new(url, token).with_advisor(std::env::var("BRIDLE_ADVISOR_NAME").ok()))
 }
 
@@ -402,7 +376,7 @@ pub async fn client_for(cli: &Cli) -> Result<Client, CliError> {
 /// is set and no token was given, matching the daemon's tolerance for
 /// token-less GET/HEAD requests.
 pub(crate) async fn client_for_read(cli: &Cli) -> Result<Client, CliError> {
-    let (url, token) = resolve_endpoint_and_token(cli, true).await?;
+    let (url, token) = target::resolve_endpoint_and_token(cli, true).await?;
     Ok(Client::new(url, token).with_advisor(std::env::var("BRIDLE_ADVISOR_NAME").ok()))
 }
 

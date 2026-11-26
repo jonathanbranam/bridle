@@ -31,7 +31,8 @@ Every command that acts on a project picks it the same way (br-3397): `--project
 `$BRIDLE_PROJECT`, then the project of the workspace containing the cwd (`.bridle/daemon.json`
 walking up, else a registered daemon whose workspace holds the cwd). There is no default project:
 with none of the three, a command refuses and names `--project`. Commands that reach a daemon get
-this from `discovery::resolve_endpoint` (after `--url` and `$BRIDLE_URL`); the rest (`session`,
+this from `discovery::resolve_endpoint` (after `--url` and `$BRIDLE_URL`, except that a typed
+`--project` beats `$BRIDLE_URL`: [[docs/design/agent-host/daemon]], "Discovery"); the rest (`session`,
 `advisor`, `prime`, `ticket`, `launchd`, `systemd`) call `project::resolve` (`crates/bridle/src/project.rs`).
 A command that acts on no project (or only on the cwd's repo) says so.
 
@@ -414,6 +415,8 @@ bridle ticket submit -k <kind> <title> [--body S | --body-file F|-]
                                               visitors included; no ticket file) and prints its id. The body starts
                                               `submitted by <principal>`; the project manager (else the orchestrator)
                                               gets one inbox message. Dropping it with a reason tells the submitter.
+                                              With `$BRIDLE_URL` set, a typed `--project` for another project goes to
+                                              that project's daemon or fails; it never files on the URL's.
 bridle workflow goals list [--root DIR] [--priority P] [--stance S]   lists goals (docs/design/goals-tier.md) from
                                              `*.md` under --root (default `design/goals`): id, firmness,
                                              priority, stance, title per line; the stance is defaulted from

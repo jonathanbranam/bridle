@@ -91,6 +91,10 @@ An agent's token is also kept in `.bridle/agents/<id>/token` (0600), so
    daemon) in `~/.bridle/credentials.toml`. A missing entry, or no known project (the
    daemon was found by URL), is an error naming the file, principal and project; it
    never falls through to the rules below.
+   One exception to `$BRIDLE_TOKEN` (br-5akm): when a typed `--project` takes the command away
+   from `$BRIDLE_URL`'s daemon ([[daemon]], "Discovery"), `$BRIDLE_TOKEN` is that daemon's token
+   and is not sent to the other one. The rest of the order applies (`--token`, `$BRIDLE_AS`, the
+   human token only outside Claude Code, an anonymous read); a write with none of them fails.
 2. Otherwise, **only if `$CLAUDECODE` is unset**, the human token file.
 3. Otherwise, for a read-only command (`status`, `agents`, `show`, `logs`,
    `events`, `usage`, `inbox`, `task show`/`list`, `token list`, `budget`

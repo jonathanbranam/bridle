@@ -61,13 +61,16 @@ mod vendor;
 
 use std::process::ExitCode;
 
-use clap::Parser;
+use clap::parser::ValueSource;
+use clap::{CommandFactory, FromArgMatches};
 
 use cli::Cli;
 
 #[tokio::main]
 async fn main() -> ExitCode {
-    let cli = Cli::parse();
+    let matches = Cli::command().get_matches();
+    let mut cli = Cli::from_arg_matches(&matches).unwrap_or_else(|e| e.exit());
+    cli.project_flag = matches.value_source("project") == Some(ValueSource::CommandLine);
     match commands::run(cli).await {
         Ok(()) => ExitCode::SUCCESS,
         Err(e) => {
