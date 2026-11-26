@@ -4,7 +4,7 @@ title = "Each bridle release ships the current bridle-ui: ui.pin is stuck at 202
 kind = "bug"
 state = "claimed"
 created_at = "2026-11-26T16:05:09.564Z"
-updated_at = "2026-11-26T16:31:06.608538Z"
+updated_at = "2026-11-26T16:42:15.267037Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -60,3 +60,6 @@ pm-1: item 3 (UI version visible in status and footer) is split to br-cyzr (brid
 
 ### note · agent:manager-2 · 2026-11-26T16:31:06.608Z
 pm-1 added a comment on br-vdvw, please read it (bridle ticket show br-vdvw). The human approved: the release moves ui.pin to bridle-ui main after bridle-ui CI is green AND the API version matches, and stops loudly rather than ship an old UI. Cover both conditions, or say on the thread which part cannot be checked and why (ask before adding any secret). Item 3 (showing the UI version) is br-cyzr: keep it out. dalek keeps its landing-time install-ui.
+
+### note · agent:wvdvw · 2026-11-26T16:42:15.267Z
+Handoff (wvdvw): work is committed on bridle/wvdvw with main merged in; release-script-test passes. The full 'just check' is still running in the background (log /tmp/wvdvw-check.log); summary, push, built and report follow when it exits.
