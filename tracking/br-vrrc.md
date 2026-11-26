@@ -4,7 +4,7 @@ title = "Agents can't submit tickets to another project: forward ticket submit t
 kind = "fix"
 state = "integrated"
 created_at = "2026-11-26T17:12:49.983Z"
-updated_at = "2026-11-26T18:08:06.612353Z"
+updated_at = "2026-11-26T18:08:21.902884Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -37,3 +37,6 @@ integrated: d4d260443c1c49cff5e7443403ba0581653a2d4b (branch bridle/wvrrc)
 
 ### note · agent:manager-2 · 2026-11-26T18:08:06.612Z
 ticket file moved to docs/tickets/resolved/agent-submit-forward-vrrc.md
+
+### note · agent:manager-2 · 2026-11-26T18:08:21.902Z
+cleanup: removed agent wvrrc, origin branch bridle/wvrrc, branch bridle/wvrrc
