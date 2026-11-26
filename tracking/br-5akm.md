@@ -2,11 +2,14 @@
 id = "br-5akm"
 title = "ticket submit --project files on the agent's own daemon when BRIDLE_URL is set"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-11-26T16:31:36.042Z"
-updated_at = "2026-11-26T16:50:03.537216Z"
+updated_at = "2026-11-26T16:53:27.545796Z"
 created_by = "external:orchestrator"
-watchers = ["external:orchestrator"]
+watchers = [
+    "external:orchestrator",
+    "agent:w5akm",
+]
 ticket = "5akm"
 +++
 
