@@ -4,7 +4,7 @@ title = "Each bridle release ships the current bridle-ui: ui.pin is stuck at 202
 kind = "bug"
 state = "open"
 created_at = "2026-11-26T16:05:09.564Z"
-updated_at = "2026-11-26T16:05:51.271129Z"
+updated_at = "2026-11-26T16:06:57.675489Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "vdvw"
@@ -40,3 +40,6 @@ Readied by orchestrator (dalek): bug, self-evident fix (rule ready-without-askin
 
 ### note · external:orchestrator · 2026-11-26T16:05:51.271Z
 readied by external:orchestrator
+
+### note · external:aide · 2026-11-26T16:06:57.675Z
+From the human, via bridle-ui aide (2026-11-26 ~12:00 PM ET). Asked "How are we going to prevent this from ever happening again?" The aide proposed: (1) the release step moves ui.pin to bridle-ui main itself (after its CI is green and the API version matches) and stops loudly rather than shipping an old UI; (2) dalek drops its landing-time install-ui; (3) the stale UI is visible: bridle status and the UI footer show the installed UI version and how far it is behind bridle-ui main. The human rejected (2), verbatim: "I don't agree with two. I think Dalek is unique since it's the host that builds the bridle-ui. It also doesn't install releases from GitHub." So the ask is (1) and (3); dalek keeps its landing-time install.
