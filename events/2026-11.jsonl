@@ -209,3 +209,4 @@
 {"actor":"agent:wr8td","at":"2026-11-21T21:26:25.914467Z","from":"claimed","task":"br-r8td","to":"built"}
 {"actor":"agent:manager-2","at":"2026-11-21T21:32:08.718084Z","from":"built","task":"br-r8td","to":"integrated"}
 {"actor":"human","at":"2026-11-26T16:05:09.564Z","from":"","task":"br-vdvw","to":"pending"}
+{"actor":"external:orchestrator","at":"2026-11-26T16:05:51.271129Z","from":"pending","task":"br-vdvw","to":"open"}

@@ -2,9 +2,9 @@
 id = "br-vdvw"
 title = "Each bridle release ships the current bridle-ui: ui.pin is stuck at 2026-10-12, so bridle updates install a six-week-old UI"
 kind = "bug"
-state = "pending"
+state = "open"
 created_at = "2026-11-26T16:05:09.564Z"
-updated_at = "2026-11-26T16:05:21.580723Z"
+updated_at = "2026-11-26T16:05:51.271129Z"
 created_by = "external:aide"
 watchers = ["external:aide"]
 ticket = "vdvw"
@@ -34,3 +34,9 @@ The human, verbatim: "The solution that should be in place (and I do not underst
 
 ### note · external:aide · 2026-11-26T16:05:09.568Z
 submitted by external:aide
+
+### note · external:orchestrator · 2026-11-26T16:05:40.130Z
+Readied by orchestrator (dalek): bug, self-evident fix (rule ready-without-asking). Item 1 (bump ui.pin + cut a release now) is a release decision; taken to the human.
+
+### note · external:orchestrator · 2026-11-26T16:05:51.271Z
+readied by external:orchestrator
