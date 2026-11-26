@@ -49,6 +49,9 @@ pub(super) async fn status(cli: &Cli) -> Result<(), CliError> {
             status.claude_version.as_deref().unwrap_or("-")
         );
         println!("unread     {}", status.unread_human_messages);
+        if let Some(ui) = &status.ui {
+            println!("ui         {}", bridle_api::ui_version::describe(ui));
+        }
         println!("home       {}", crate::home_project::status_line());
         if let Some(line) = crate::focus::status_line(&discovery::bridle_home(), chrono::Utc::now())
         {

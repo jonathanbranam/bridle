@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `bridle status` (and `--json`, field `ui`) shows the installed bridle-ui from `bridle-version`: release tag, bridle-ui commit and commits behind this machine's bridle-ui clone main, or says none is installed, it was installed another way, or the file is unreadable; no network call. The gateway serves the same at `GET /api/v1/ui` for the UI footer (br-cyzr).
 - `[startup.<role>] command = "..."` in `.bridle/config.toml`: the aide session's SessionStart hook runs it in the project workspace (timeout, default 30s) and Claude Code puts its full output in context, so e.g. the notes aide gets `meta-notes prime` with no agent step to skip. Failure, timeout or empty output shows a visible line; output over 256 KiB is cut with the limit stated. Default off (br-r8td).
 
 ### Changed

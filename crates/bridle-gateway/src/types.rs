@@ -22,7 +22,7 @@ use crate::system::{AgentList, SystemView, UsageHistory, UsageInstances, UsageSe
 use crate::tasks::{
     ClaimAgent, ThreadItem, TicketDetail, TicketList, TicketListByTasks, TicketSummary,
 };
-use crate::ui::UiHealth;
+use crate::ui::{UiHealth, UiVersionView};
 
 /// Writes every API type (and what it depends on) into `dir`.
 pub fn export_all(dir: &Path) -> Result<(), ts_rs::ExportError> {
@@ -39,6 +39,7 @@ pub fn export_all(dir: &Path) -> Result<(), ts_rs::ExportError> {
     Credentials::export_all(&config)?;
     SessionInfo::export_all(&config)?;
     UiHealth::export_all(&config)?;
+    UiVersionView::export_all(&config)?;
     ActionRequest::export_all(&config)?;
     ActionResult::export_all(&config)?;
     InteractionReport::export_all(&config)?;

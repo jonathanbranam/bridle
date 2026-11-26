@@ -9,7 +9,7 @@ JSON over HTTP, versioned under `/v1`. The contract is
 | Method + path | Does |
 |---|---|
 | `GET /v1/health` | liveness + version + non-terminal agent count (no auth) |
-| `GET /v1/status` | daemon, workspace, repo, principal, agent counts by state, unread human messages, latest rate limits, Claude Code version, the last CI result for the integration branch (`ci`, when `[ci] github` is on) |
+| `GET /v1/status` | daemon, workspace, repo, principal, agent counts by state, unread human messages, latest rate limits, Claude Code version, the last CI result for the integration branch (`ci`, when `[ci] github` is on), the installed bridle-ui (`ui: {source, release?, commit?, behind?, note?}`; [[human-web-ui]]) |
 | `GET /v1/agents` · `POST /v1/agents` | list all · spawn (`{name?, role, prompt?, workdir?, model?, extra_allowed_tools?, extra_env?, components?, ignore_budget?}`, where `workdir` is `{"kind":"worktree","base"?}`, `{"kind":"repo"}` or `{"kind":"path","path"}`) |
 | `GET /v1/ports` · `POST /v1/ports` · `POST /v1/ports/{port}/release` | list allocations · allocate (`{pid?, label?}`; 409 when the range is exhausted) · free one (404 if not allocated) |
 | `GET /v1/agents/{id}` | one agent: state, current turn's start, turns, cost, held and unacked message counts |

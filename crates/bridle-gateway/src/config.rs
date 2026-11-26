@@ -189,6 +189,7 @@ impl GatewayConfig {
         let ui = UiConfig {
             dir: section.ui_dir.unwrap_or_else(|| home.join("ui")),
             on_mismatch,
+            home: home.to_path_buf(),
         };
         let mut interactions = InteractionsConfig::default();
         if let Some(i) = file.interactions {

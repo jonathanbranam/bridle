@@ -7,6 +7,7 @@ pub mod discovery;
 pub mod machines;
 pub mod probe;
 pub mod types;
+pub mod ui_version;
 
 pub use client::{Client, ClientError};
 pub use types::*;

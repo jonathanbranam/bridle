@@ -145,7 +145,14 @@ actions as writes and refuses the rest, so a stolen session can answer and check
   it in `~/.bridle/ui/`. Nobody bumps `ui.pin` by hand (vdvw): `scripts/release.sh` moves it to
   bridle-ui main (only if bridle-ui's CI is green there and its API version matches), and `release.yml` refuses a tag whose pin
   isn't bridle-ui main's head, so an update on any release machine brings the current UI. The dev
-  machine keeps its own bridle-ui clone. In development
+  machine keeps its own bridle-ui clone. **The installed version is visible** (cyzr):
+  `GET /api/v1/ui` (behind the session) returns `UiVersionView {source, release, commit, behind,
+  note, summary}` for the folder the gateway serves, for the UI's footer; `bridle status` shows
+  the same (`Status.ui`). `source` is `release` (has `bridle-version`), `other` (a build without
+  it, as `npm run install-ui` writes), `missing` or `unreadable`. `behind` counts commits on
+  `main` of this machine's bridle-ui clone (the `bridle-ui` entry in `~/.bridle/daemons/`) that
+  the installed commit lacks; with no such entry, or a commit the clone doesn't have, it is null
+  and `note` says why. No network call, so a machine without a clone never knows. In development
   the UI's dev server proxies API calls to the gateway.
 
 **Documents (br-5paw, ticket x8jt; a narrow piece of v8kn, built).** For the UI's document view

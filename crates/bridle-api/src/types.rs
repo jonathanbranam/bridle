@@ -203,6 +203,40 @@ pub struct Status {
     /// when nothing is queued.
     #[serde(default)]
     pub outbox: Vec<OutboxPeer>,
+    /// The bridle-ui installed on the daemon's machine (cyzr). `None` from older daemons.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ui: Option<UiVersion>,
+}
+
+/// How the UI folder got there, as far as its `bridle-version` file says.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum UiSource {
+    /// A release's UI: `bridle-version` names the tag and the bridle-ui commit.
+    Release,
+    /// A UI with no `bridle-version`, e.g. from bridle-ui's `npm run install-ui`.
+    Other,
+    Missing,
+    /// `bridle-version` can't be read or parsed; `note` says why.
+    Unreadable,
+}
+
+/// [`Status::ui`], built by [`crate::ui_version::read`].
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct UiVersion {
+    pub source: UiSource,
+    /// The bridle release tag the UI came with.
+    #[serde(default)]
+    pub release: Option<String>,
+    /// The bridle-ui commit.
+    #[serde(default)]
+    pub commit: Option<String>,
+    /// Commits behind this machine's bridle-ui clone's main; `None` when unknown.
+    #[serde(default)]
+    pub behind: Option<u32>,
+    /// Why the version is unreadable, or why `behind` is unknown.
+    #[serde(default)]
+    pub note: Option<String>,
 }
 
 /// One destination daemon's queue in [`Status::outbox`].

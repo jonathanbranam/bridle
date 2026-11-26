@@ -7,9 +7,11 @@
 use std::path::{Component, Path, PathBuf};
 
 use axum::{
+    Json,
     http::{StatusCode, Uri, header},
     response::{IntoResponse, Response},
 };
+use bridle_api::types::UiSource;
 use serde::Serialize;
 use ts_rs::TS;
 
@@ -26,13 +28,17 @@ pub enum OnMismatch {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UiConfig {
     pub dir: PathBuf,
+    /// The bridle home, whose daemon registry names the bridle-ui clone.
+    pub home: PathBuf,
     pub on_mismatch: OnMismatch,
 }
 
 impl UiConfig {
     pub fn new(dir: PathBuf) -> Self {
+        let home = dir.parent().unwrap_or(&dir).to_path_buf();
         Self {
             dir,
+            home,
             on_mismatch: OnMismatch::Warn,
         }
     }
@@ -54,6 +60,42 @@ pub struct UiHealth {
     pub status: UiStatus,
     pub expected_api_version: u32,
     pub api_version: Option<u32>,
+}
+
+/// The installed UI build as `GET /api/v1/ui` reports it, for the UI's footer (cyzr). The same
+/// value as `bridle status`.
+#[derive(Debug, Clone, Serialize, TS, PartialEq, Eq)]
+pub struct UiVersionView {
+    /// `release`, `other` (no `bridle-version`), `missing` or `unreadable`.
+    pub source: String,
+    pub release: Option<String>,
+    pub commit: Option<String>,
+    pub behind: Option<u32>,
+    pub note: Option<String>,
+    /// The line `bridle status` prints.
+    pub summary: String,
+}
+
+pub async fn version(config: UiConfig) -> Result<Json<UiVersionView>, StatusCode> {
+    let v = tokio::task::spawn_blocking(move || {
+        bridle_api::ui_version::read(&config.dir, &config.home)
+    })
+    .await
+    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let source = match v.source {
+        UiSource::Release => "release",
+        UiSource::Other => "other",
+        UiSource::Missing => "missing",
+        UiSource::Unreadable => "unreadable",
+    };
+    Ok(Json(UiVersionView {
+        source: source.to_string(),
+        summary: bridle_api::ui_version::describe(&v),
+        release: v.release,
+        commit: v.commit,
+        behind: v.behind,
+        note: v.note,
+    }))
 }
 
 pub fn check(config: &UiConfig) -> UiHealth {

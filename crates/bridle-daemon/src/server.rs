@@ -1461,7 +1461,14 @@ async fn status(
         Vec::new()
     };
     let visitor_home = state.store.visitor_home(&principal.id.to_string()).await?;
+    let home = state.bridle_home.clone();
+    let ui = tokio::task::spawn_blocking(move || {
+        bridle_api::ui_version::read(&bridle_api::ui_version::ui_dir(&home), &home)
+    })
+    .await
+    .ok();
     Ok(Json(Status {
+        ui,
         daemon: bridle_api::types::DaemonInfo {
             project: state.project.clone(),
             workspace: state.workspace.workspace.to_string_lossy().into_owned(),

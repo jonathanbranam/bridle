@@ -110,6 +110,13 @@ pub fn router(
             "/projects/{project}/tickets/{id}/{action}",
             post(actions::act_route),
         )
+        .route(
+            "/ui",
+            get({
+                let ui = ui.clone();
+                move || ui::version(ui.clone())
+            }),
+        )
         .fallback(|| async { axum::http::StatusCode::NOT_FOUND })
         .layer(middleware::from_fn_with_state(
             auth.clone(),
@@ -463,6 +470,30 @@ mod tests {
             username: "jo".into(),
             password_hash: auth::hash_password("right").expect("hash"),
         }
+    }
+
+    #[tokio::test]
+    async fn the_ui_version_needs_a_session_and_names_the_installed_build() {
+        let home = tempfile::tempdir().expect("tempdir");
+        let dir = home.path().join("ui");
+        std::fs::create_dir(&dir).expect("mkdir");
+        std::fs::write(dir.join("bridle-version"), "v1 bridle-ui abcdef0").expect("write");
+        let base = start_ui(Some(login()), UiConfig::new(dir)).await;
+        let url = format!("{base}/ui");
+        assert_eq!(reqwest::get(&url).await.expect("get").status(), 401);
+        let cookie = cookie_pair(&post_login(&base, "jo", "right").await);
+        let body: Value = reqwest::Client::new()
+            .get(&url)
+            .header(reqwest::header::COOKIE, cookie)
+            .send()
+            .await
+            .expect("get")
+            .json()
+            .await
+            .expect("json");
+        assert_eq!(body["source"], "release");
+        assert_eq!(body["commit"], "abcdef0");
+        assert!(body["behind"].is_null());
     }
 
     async fn post_login(base: &str, user: &str, password: &str) -> reqwest::Response {
