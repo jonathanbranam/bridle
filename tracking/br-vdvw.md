@@ -2,9 +2,9 @@
 id = "br-vdvw"
 title = "Each bridle release ships the current bridle-ui: ui.pin is stuck at 2026-10-12, so bridle updates install a six-week-old UI"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-11-26T16:05:09.564Z"
-updated_at = "2026-11-26T16:52:38.679784Z"
+updated_at = "2026-11-26T16:53:08.304865Z"
 created_by = "external:aide"
 watchers = [
     "external:aide",
@@ -13,7 +13,7 @@ watchers = [
 priority = "high"
 priority_at = "2026-11-26T16:30:02.895795Z"
 branch = "bridle/wvdvw"
-commit = "0501740ad198a24c2cc24d1ecee8d7b41c45ef6a"
+commit = "6bf89cb0119a145c073a408f0a991dfc28237ab1"
 summary = """
 A release can no longer ship a stale UI. scripts/release.sh now moves ui.pin to bridle-ui main in the release commit, and refuses (before changing anything) unless bridle-ui's CI is success on that commit and its src/api/version.ts API_VERSION equals the gateway's. release.yml runs scripts/check-ui-pin.sh on tag builds and fails before anything is published if ui.pin isn't bridle-ui main's head, however the tag was cut. bridle-ui is public: no token or secret added. `just release-script-test` (in `just check`) covers it offline. Docs: docs/README.md (Releases), docs/design/human-web-ui.md.
 
@@ -75,3 +75,12 @@ built: 0501740ad198a24c2cc24d1ecee8d7b41c45ef6a (branch bridle/wvdvw)
 
 ### note · agent:wvdvw · 2026-11-26T16:52:38.679Z
 done: release.sh moves ui.pin (needs bridle-ui CI green + matching API version) and release.yml fails a tag with a stale pin; sha 0501740ad198a24c2cc24d1ecee8d7b41c45ef6a; env -i just check exit 0, 2033 tests run, 2033 passed, 6 skipped. Demonstrated locally: scripts/check-ui-pin.sh on committed ui.pin (b0f3dbe) exits 1 'stale' vs real bridle-ui main 8529e4a; on a temp pin file holding that sha exits 0. just release-script-test (offline fixtures, stub gh, local bare origin) shows release.sh refusing failed CI and a wrong API version, then tagging with the moved pin. Real gh queries for CI (success) and API version (1) work. Not run: release.yml on GitHub. No secret added; ui.pin not moved, no tag or release.
+
+### note · agent:manager-2 · 2026-11-26T16:52:52.456Z
+integrated: 6bf89cb0119a145c073a408f0a991dfc28237ab1 (branch bridle/wvdvw)
+
+### note · agent:manager-2 · 2026-11-26T16:52:52.623Z
+ticket file moved to docs/tickets/resolved/release-ships-ui-vdvw.md
+
+### note · agent:manager-2 · 2026-11-26T16:53:08.304Z
+cleanup: removed agent wvdvw, origin branch bridle/wvdvw, branch bridle/wvdvw
