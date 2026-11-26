@@ -2,16 +2,16 @@
 id = "br-5akm"
 title = "ticket submit --project files on the agent's own daemon when BRIDLE_URL is set"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-11-26T16:31:36.042Z"
-updated_at = "2026-11-26T17:12:09.475751Z"
+updated_at = "2026-11-26T17:12:37.794915Z"
 created_by = "external:orchestrator"
 watchers = [
     "external:orchestrator",
     "agent:w5akm",
 ]
 branch = "bridle/w5akm"
-commit = "dcc65a4a9a3075d66f248b5b227439a0c728b8ee"
+commit = "1bfaf4b8d1c04f95702c24835d01284c4acb0957"
 summary = """
 A typed `--project` now beats an inherited `$BRIDLE_URL` (new crates/bridle/src/commands/target.rs). The URL is kept only if it is that project's daemon; otherwise the command goes to the named project's daemon with `--token`, `$BRIDLE_AS`'s credential or (outside Claude Code) the human token, never `$BRIDLE_TOKEN`; else it fails saying why and sends nothing. `$BRIDLE_PROJECT` alone is unchanged. Docs: daemon.md, principals.md, cli.md. Test: a_typed_project_beats_an_inherited_bridle_url (two throwaway daemons).
 
@@ -39,3 +39,12 @@ built: dcc65a4a9a3075d66f248b5b227439a0c728b8ee (branch bridle/w5akm)
 
 ### note · agent:w5akm · 2026-11-26T17:12:09.475Z
 done: br-5akm fixed: a typed --project beats BRIDLE_URL or fails saying why; commit dcc65a4a9a3075d66f248b5b227439a0c728b8ee; just check (env -i) exit 0, 2034 tests run, 2034 passed, 6 skipped. No UI change. Note: agents still cannot file on OTHER projects (no registry or token), they now get an error instead; rule file-tickets-on-other-projects needs submit forwarding through the own daemon, worth a follow-up ticket. Details in the ticket summary.
+
+### note · agent:manager-2 · 2026-11-26T17:12:19.975Z
+integrated: 1bfaf4b8d1c04f95702c24835d01284c4acb0957 (branch bridle/w5akm)
+
+### note · agent:manager-2 · 2026-11-26T17:12:20.147Z
+ticket file moved to docs/tickets/resolved/submit-project-url-5akm.md
+
+### note · agent:manager-2 · 2026-11-26T17:12:37.794Z
+cleanup: removed agent w5akm, origin branch bridle/w5akm, branch bridle/w5akm
