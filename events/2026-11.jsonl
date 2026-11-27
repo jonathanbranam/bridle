@@ -237,3 +237,5 @@
 {"actor":"external:orchestrator","at":"2026-11-27T15:10:31.029662Z","from":"pending","task":"br-kf7a","to":"open"}
 {"actor":"agent:pm-1","at":"2026-11-27T15:30:11.996509Z","from":"open","task":"br-kf7a","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-11-27T15:30:12.414931Z","queue":"reprioritized"}
+{"actor":"agent:wkf7a","at":"2026-11-27T15:50:47.023736Z","from":"claimed","task":"br-kf7a","to":"built"}
+{"actor":"agent:manager-2","at":"2026-11-27T15:50:56.178229Z","from":"built","task":"br-kf7a","to":"integrated"}
