@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Several daemons on one machine can fetch the same release workflow at once: each clone goes to its own scratch dir and is renamed into place, and a daemon that finds the checkout already placed by another succeeds (br-ysmy).
 - Several daemons on one machine can self-upgrade over the same binary at once: staged files have unique names, the install is serialized by a lock beside the binary, and a daemon that finds the release already installed succeeds and still keeps the old binary for rollback; `upgrade_failed` messages name the project (br-kf7a).
 
 ## [0.8.1] - 2026-11-27

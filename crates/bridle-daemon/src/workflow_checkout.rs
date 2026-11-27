@@ -77,33 +77,51 @@ fn clone_command(url: &str, tag: &str, dest: &Path) -> Command {
 }
 
 /// Shallow-clones `tag` of `url` into `<home>/workflow/<tag>` unless it's already there, then
-/// drops all but the newest [`KEEP`] checkouts. The clone lands in a scratch directory first so a
-/// failed or interrupted fetch never leaves a half checkout under a tag's name.
+/// drops all but the newest [`KEEP`] checkouts. The clone lands in a per-call scratch directory
+/// first, then is renamed into place, so a failed or interrupted fetch never leaves a half checkout
+/// under a tag's name. Several daemons on one machine may run this at once (ticket br-ysmy): each
+/// has its own scratch dir, and if another one's rename won, the target is already complete and
+/// that is success.
 pub fn ensure(home: &Path, url: &str, tag: &str) -> Result<(), String> {
     let dest = root(home).join(tag);
     if !dest.join("workflow/base").is_dir() {
         std::fs::create_dir_all(root(home)).map_err(|e| format!("creating workflow dir: {e}"))?;
-        let scratch = root(home).join(format!(".fetching-{tag}"));
-        let _ = std::fs::remove_dir_all(&scratch);
-        let _ = std::fs::remove_dir_all(&dest);
-        let out = clone_command(url, tag, &scratch)
+        let scratch = tempfile::Builder::new()
+            .prefix(&format!(".fetching-{tag}-"))
+            .tempdir_in(root(home))
+            .map_err(|e| format!("making a scratch dir: {e}"))?;
+        let clone = scratch.path().join("clone");
+        let out = clone_command(url, tag, &clone)
             .output()
             .map_err(|e| format!("running git: {e}"))?;
-        let result = if !out.status.success() {
-            Err(format!(
+        if !out.status.success() {
+            return Err(format!(
                 "fetching workflow {tag} from {url}: {}",
                 String::from_utf8_lossy(&out.stderr).trim()
-            ))
-        } else if !scratch.join("workflow/base").is_dir() {
-            Err(format!("{url} at {tag} has no workflow/base"))
-        } else {
-            let _ = std::fs::remove_dir_all(scratch.join(".git"));
-            std::fs::rename(&scratch, &dest).map_err(|e| format!("placing {tag}: {e}"))
-        };
-        if result.is_err() {
-            let _ = std::fs::remove_dir_all(&scratch);
+            ));
         }
-        result?;
+        if !clone.join("workflow/base").is_dir() {
+            return Err(format!("{url} at {tag} has no workflow/base"));
+        }
+        let _ = std::fs::remove_dir_all(clone.join(".git"));
+        // A rename onto a non-empty dir fails: either another daemon placed its checkout first, or
+        // an incomplete dir sits under the tag name (an interrupted earlier run). The latter is
+        // moved aside into our own scratch dir, so it is never half-deleted, then the rename is
+        // retried once.
+        let mut placed = std::fs::rename(&clone, &dest);
+        if placed.is_err() && !dest.join("workflow/base").is_dir() {
+            std::fs::rename(&dest, scratch.path().join("stale"))
+                .map_err(|e| format!("moving aside the incomplete {tag}: {e}"))?;
+            placed = std::fs::rename(&clone, &dest);
+        }
+        placed.or_else(|e| {
+            if dest.join("workflow/base").is_dir() {
+                Ok(())
+            } else {
+                Err(format!("placing {tag}: {e}"))
+            }
+        })?;
+        // `scratch` drops here and removes what is left of its own temp dir.
     }
     prune(home);
     Ok(())
@@ -226,6 +244,53 @@ mod tests {
         }
         let left: Vec<_> = checkouts(home.path()).into_iter().map(|c| c.1).collect();
         assert_eq!(left, ["v0.10.0", "v0.2.0"]);
+    }
+
+    /// An incomplete dir under the tag name (an interrupted earlier run) is moved aside and
+    /// replaced, not left to fail every later fetch (br-ysmy review).
+    #[test]
+    fn an_incomplete_dir_under_the_tag_is_replaced() {
+        let (_o, url) = origin(&["v0.1.0"]);
+        let home = tempfile::tempdir().expect("home");
+        let stale = root(home.path()).join("v0.1.0");
+        std::fs::create_dir_all(&stale).expect("mkdir");
+        std::fs::write(stale.join("stray"), "x").expect("write");
+        ensure(home.path(), &url, "v0.1.0").expect("ensure");
+        assert_eq!(
+            read(managed_root(home.path(), "0.1.0").expect("root")),
+            "v0.1.0"
+        );
+        assert!(!stale.join("stray").exists());
+    }
+
+    /// Daemons on one machine share `<home>/workflow` and fetch the same tag at once (br-ysmy):
+    /// every call succeeds, the checkout is whole, and no scratch dir is left behind.
+    #[test]
+    fn concurrent_ensure_of_one_tag_all_succeed() {
+        let (_o, url) = origin(&["v0.1.0"]);
+        let home = tempfile::tempdir().expect("home");
+        let results: Vec<_> = std::thread::scope(|s| {
+            let handles: Vec<_> = (0..6)
+                .map(|_| s.spawn(|| ensure(home.path(), &url, "v0.1.0")))
+                .collect();
+            handles
+                .into_iter()
+                .map(|h| h.join().expect("thread"))
+                .collect()
+        });
+        for r in &results {
+            assert!(r.is_ok(), "{r:?}");
+        }
+        assert_eq!(
+            read(managed_root(home.path(), "0.1.0").expect("root")),
+            "v0.1.0"
+        );
+        let left: Vec<_> = std::fs::read_dir(root(home.path()))
+            .expect("workflow dir")
+            .flatten()
+            .map(|e| e.file_name().to_string_lossy().into_owned())
+            .collect();
+        assert_eq!(left, ["v0.1.0"], "no scratch dir left");
     }
 
     #[test]
