@@ -8,16 +8,7 @@ tasks = ["br-6p6r"]
 tasks = ["br-ptu8"]
 
 [[tier]]
-tasks = ["br-vdvw"]
-
-[[tier]]
-tasks = ["br-5akm"]
+tasks = ["br-kf7a"]
 
 [[tier]]
 tasks = ["br-z8ru"]
-
-[[tier]]
-tasks = ["br-cyzr"]
-
-[[tier]]
-tasks = ["br-vrrc"]
