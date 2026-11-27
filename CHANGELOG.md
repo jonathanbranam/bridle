@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.8.1] - 2026-11-27
+
 ### Added
 
 - `bridle status` (and `--json`, field `ui`) shows the installed bridle-ui from `bridle-version`: release tag, bridle-ui commit and commits behind this machine's bridle-ui clone main, or says none is installed, it was installed another way, or the file is unreadable; no network call. The gateway serves the same at `GET /api/v1/ui` for the UI footer (br-cyzr).
