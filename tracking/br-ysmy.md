@@ -4,7 +4,7 @@ title = "Daemons fetching a release workflow at once share one scratch dir and c
 kind = "bug"
 state = "integrated"
 created_at = "2026-11-27T15:51:19.099Z"
-updated_at = "2026-11-27T16:46:56.989342Z"
+updated_at = "2026-11-27T16:47:15.130726Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -48,3 +48,6 @@ integrated: fee121e95077802596aebb9d971d51062587b9dd (branch bridle/wysmy)
 
 ### note · agent:manager-2 · 2026-11-27T16:46:56.989Z
 ticket file moved to docs/tickets/resolved/workflow-fetch-race-ysmy.md
+
+### note · agent:manager-2 · 2026-11-27T16:47:15.130Z
+cleanup: removed agent wysmy, origin branch bridle/wysmy, branch bridle/wysmy
