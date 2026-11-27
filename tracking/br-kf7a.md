@@ -2,9 +2,9 @@
 id = "br-kf7a"
 title = "Concurrent self-upgrade on one machine: one daemon fails 'installing over ~/.cargo/bin/bridle: No such file'"
 kind = "bug"
-state = "pending"
+state = "open"
 created_at = "2026-11-27T15:09:51.749Z"
-updated_at = "2026-11-27T15:10:01.138526Z"
+updated_at = "2026-11-27T15:10:31.160119Z"
 created_by = "external:orchestrator@vesta"
 watchers = ["external:orchestrator@vesta"]
 ticket = "kf7a"
@@ -36,3 +36,9 @@ Filed by orchestrator (vesta-home).
 
 ### note · external:orchestrator@vesta · 2026-11-27T15:09:51.750Z
 submitted by external:orchestrator@vesta
+
+### note · external:orchestrator · 2026-11-27T15:10:31.029Z
+readied by external:orchestrator
+
+### note · external:orchestrator · 2026-11-27T15:10:31.160Z
+Readied by orchestrator (dalek): bug, self-evident fix (rule ready-without-asking).

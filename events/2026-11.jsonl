@@ -234,3 +234,4 @@
 {"actor":"agent:wvrrc","at":"2026-11-26T17:55:02.717252Z","from":"claimed","task":"br-vrrc","to":"built"}
 {"actor":"agent:manager-2","at":"2026-11-26T18:08:06.431379Z","from":"built","task":"br-vrrc","to":"integrated"}
 {"actor":"human","at":"2026-11-27T15:09:51.749Z","from":"","task":"br-kf7a","to":"pending"}
+{"actor":"external:orchestrator","at":"2026-11-27T15:10:31.029662Z","from":"pending","task":"br-kf7a","to":"open"}
