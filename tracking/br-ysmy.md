@@ -2,11 +2,14 @@
 id = "br-ysmy"
 title = "Daemons fetching a release workflow at once share one scratch dir and can fail"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-11-27T15:51:19.099Z"
-updated_at = "2026-11-27T16:05:12.327500Z"
+updated_at = "2026-11-27T16:05:53.121904Z"
 created_by = "agent:pm-1"
-watchers = ["agent:pm-1"]
+watchers = [
+    "agent:pm-1",
+    "agent:wysmy",
+]
 priority = "low"
 priority_at = "2026-11-27T15:51:20.262964Z"
 ticket = "ysmy"
