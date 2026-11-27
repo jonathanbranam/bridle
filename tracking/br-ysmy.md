@@ -2,9 +2,9 @@
 id = "br-ysmy"
 title = "Daemons fetching a release workflow at once share one scratch dir and can fail"
 kind = "bug"
-state = "open"
+state = "planned"
 created_at = "2026-11-27T15:51:19.099Z"
-updated_at = "2026-11-27T15:51:40.962546Z"
+updated_at = "2026-11-27T16:05:12.327500Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 priority = "low"
