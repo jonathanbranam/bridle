@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- Several daemons on one machine can self-upgrade over the same binary at once: staged files have unique names, the install is serialized by a lock beside the binary, and a daemon that finds the release already installed succeeds and still keeps the old binary for rollback; `upgrade_failed` messages name the project (br-kf7a).
+
 ## [0.8.1] - 2026-11-27
 
 ### Added

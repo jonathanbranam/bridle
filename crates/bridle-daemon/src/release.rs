@@ -207,20 +207,75 @@ fn unpack(tarball: &[u8], dir: &Path) -> Result<PathBuf, String> {
     }
 }
 
-/// Puts `new_bin` at `exe`: written beside it, then renamed over it, so the path never holds a
-/// partial binary. The running binary is kept first for rollback (`rollback.rs`). On macOS the
-/// copy is signed `-i bridle` first (`signing::install`), as the commit path does, so the
-/// firewall's Allow survives the upgrade (ticket tvrp).
-pub fn install(ws: &Workspace, new_bin: &Path, exe: &Path) -> Result<(), String> {
+/// A hidden file beside the install path, shared by every daemon that installs over it.
+fn beside(exe: &Path, suffix: &str) -> PathBuf {
+    let mut name = std::ffi::OsString::from(".");
+    name.push(exe.file_name().unwrap_or_default());
+    name.push(".");
+    name.push(suffix);
+    exe.with_file_name(name)
+}
+
+/// Held while installing over `exe`: every project daemon on the machine sees a release at about
+/// the same time (br-kf7a). Released when the file is dropped, also if the process dies.
+fn lock_install(exe: &Path) -> Result<std::fs::File, String> {
+    let path = beside(exe, "lock");
+    let take = || -> std::io::Result<std::fs::File> {
+        let file = std::fs::File::options()
+            .create(true)
+            .truncate(false)
+            .write(true)
+            .open(&path)?;
+        file.lock()?;
+        Ok(file)
+    };
+    take().map_err(|e| format!("locking {}: {e}", path.display()))
+}
+
+/// What the install record says when `tag` is what's at `exe`. The digest makes a record go
+/// stale when anything else (a build, `just install`, a rollback) replaces the binary.
+fn install_record(tag: &str, exe: &Path) -> Option<String> {
+    let bytes = std::fs::read(exe).ok()?;
+    Some(format!("{tag} {}", hex::encode(Sha256::digest(bytes))))
+}
+
+/// Puts release `tag`'s `new_bin` at `exe`: written beside it, then renamed over it, so the path
+/// never holds a partial binary. The running binary is kept first for rollback (`rollback.rs`).
+/// On macOS the copy is signed `-i bridle` first (`signing::install`), as the commit path does,
+/// so the firewall's Allow survives the upgrade (ticket tvrp). The caller holds
+/// [`lock_install`].
+fn install(ws: &Workspace, tag: &str, new_bin: &Path, exe: &Path) -> Result<(), String> {
     // Not under test: a stand-in "binary" can't be codesigned on a Mac that has the identity.
-    install_signed(cfg!(target_os = "macos") && !cfg!(test), ws, new_bin, exe)
+    let sign = cfg!(target_os = "macos") && !cfg!(test);
+    install_signed(sign, ws, tag, new_bin, exe)
 }
 
 /// [`install`] with the platform choice made by the caller, so tests can take either branch.
 /// A failed sign leaves `exe` as it was (the rename comes last) and the stash for rollback.
-fn install_signed(sign: bool, ws: &Workspace, new_bin: &Path, exe: &Path) -> Result<(), String> {
-    use std::os::unix::fs::PermissionsExt;
-    crate::rollback::stash_previous(ws, exe)
+fn install_signed(
+    sign: bool,
+    ws: &Workspace,
+    tag: &str,
+    new_bin: &Path,
+    exe: &Path,
+) -> Result<(), String> {
+    let keep = |from: &Path| {
+        crate::rollback::stash_previous(ws, from)
+            .map_err(|e| format!("keeping the previous binary: {e:#}"))
+    };
+    let (record, previous) = (beside(exe, "installed"), beside(exe, "prev"));
+    // Another daemon installed this release already: `exe` is the new binary, so the one to roll
+    // back to is the copy that daemon set aside.
+    if let Some(now) = install_record(tag, exe)
+        && std::fs::read_to_string(&record).is_ok_and(|was| was == now)
+    {
+        tracing::info!(%tag, "self-upgrade: the release is already installed");
+        return keep(&previous);
+    }
+    keep(exe)?;
+    // Gone before `previous` changes, so a failure part way leaves no record that vouches for it.
+    let _ = std::fs::remove_file(&record);
+    crate::signing::install_with(None, exe, &previous)
         .map_err(|e| format!("keeping the previous binary: {e:#}"))?;
     if sign {
         let signed = crate::signing::install(new_bin, exe)
@@ -231,23 +286,15 @@ fn install_signed(sign: bool, ws: &Workspace, new_bin: &Path, exe: &Path) -> Res
                  signature and the firewall may ask again (run `just sign-setup`)"
             );
         }
-        return Ok(());
+    } else {
+        crate::signing::install_with(None, new_bin, exe)
+            .map_err(|e| format!("installing over {}: {e:#}", exe.display()))?;
     }
-    let mut name = exe
-        .file_name()
-        .ok_or("the install path has no name")?
-        .to_os_string();
-    name.push(".new");
-    let staged = exe.with_file_name(name);
-    let put = || -> std::io::Result<()> {
-        std::fs::copy(new_bin, &staged)?;
-        std::fs::set_permissions(&staged, std::fs::Permissions::from_mode(0o755))?;
-        std::fs::rename(&staged, exe)
-    };
-    put().map_err(|e| {
-        let _ = std::fs::remove_file(&staged);
-        format!("installing over {}: {e}", exe.display())
-    })
+    let written = install_record(tag, exe).map(|r| std::fs::write(&record, r));
+    if !matches!(written, Some(Ok(()))) {
+        tracing::warn!("self-upgrade: could not record the install beside the binary");
+    }
+    Ok(())
 }
 
 /// Replaces `ui_dir` with the tarball's `ui/` (t3dr): copied to `<ui_dir>.tmp`, then renamed in,
@@ -300,7 +347,8 @@ fn install_ui(unpacked: &Path, ui_dir: &Path) -> Result<(), String> {
 
 /// Downloads, verifies and installs `release` for `target` over `exe`, and the tarball's `ui/`
 /// (if it has one) over `ui_dir`. Nothing is touched until the checksum has passed. A UI that
-/// fails to install doesn't undo the binary: it is logged and the old UI stays.
+/// fails to install doesn't undo the binary: it is logged and the old UI stays. Daemons sharing
+/// `exe` take turns, and one that finds the release already installed succeeds.
 pub fn fetch_and_install(
     src: &dyn ReleaseSource,
     ws: &Workspace,
@@ -316,14 +364,18 @@ pub fn fetch_and_install(
     verify(&bytes, &tarball.name, &sums_text)?;
     let dir = ws.state_dir().join("upgrade-release");
     let _ = std::fs::remove_dir_all(&dir);
-    let result = unpack(&bytes, &dir).and_then(|bin| install(ws, &bin, exe));
+    // The lock also covers the UI, whose folder (and `.tmp`/`.old` names) daemons share too.
+    let result = unpack(&bytes, &dir).and_then(|bin| {
+        let lock = lock_install(exe)?;
+        install(ws, &release.tag, &bin, exe).map(|()| lock)
+    });
     if result.is_ok()
         && let Err(e) = install_ui(&dir, ui_dir)
     {
         tracing::warn!(error = %e, "self-upgrade: the UI was not updated");
     }
     let _ = std::fs::remove_dir_all(&dir);
-    result
+    result.map(drop)
 }
 
 /// Bridle's own GitHub repo: where a release daemon looks for releases and the workflow unless
@@ -504,7 +556,8 @@ mod tests {
         let exe = tmp.path().join("bridle");
         std::fs::write(&exe, "old binary").expect("write");
         // The signing path fails here (no such source), as a codesign failure would.
-        let err = install_signed(true, &ws, &tmp.path().join("missing"), &exe).expect_err("fails");
+        let err =
+            install_signed(true, &ws, "v1", &tmp.path().join("missing"), &exe).expect_err("fails");
         assert!(err.contains("signing the release binary"), "{err}");
         assert_eq!(std::fs::read_to_string(&exe).expect("read"), "old binary");
         let prev = std::fs::read_to_string(ws.state_dir().join("bridle.prev")).expect("prev");
@@ -520,7 +573,53 @@ mod tests {
         std::fs::write(&exe, "old").expect("write");
         let new = tmp.path().join("new");
         std::fs::write(&new, "new").expect("write");
-        install_signed(false, &ws, &new, &exe).expect("install");
+        install_signed(false, &ws, "v1", &new, &exe).expect("install");
+        assert_eq!(std::fs::read_to_string(&exe).expect("read"), "new");
+    }
+
+    /// Several daemons, each with its own workspace, one install path (br-kf7a).
+    #[test]
+    fn concurrent_installs_all_succeed_and_each_keeps_the_old_binary() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let exe = tmp.path().join("bridle");
+        std::fs::write(&exe, "old binary").expect("write");
+        let new = "new binary ".repeat(100_000);
+        std::thread::scope(|s| {
+            for i in 0..8 {
+                let (root, exe, new) = (tmp.path().join(i.to_string()), &exe, &new);
+                s.spawn(move || {
+                    let ws = ws(&root);
+                    std::fs::create_dir_all(ws.state_dir()).expect("state dir");
+                    let (stub, release) = setup_with(tarball(new), None);
+                    let ui = root.join("ui");
+                    fetch_and_install(&stub, &ws, &release, "aarch64-apple-darwin", exe, &ui)
+                        .expect("install");
+                    let prev = ws.state_dir().join("bridle.prev");
+                    assert_eq!(std::fs::read_to_string(prev).expect("prev"), "old binary");
+                });
+            }
+        });
+        assert_eq!(&std::fs::read_to_string(&exe).expect("read"), &new);
+    }
+
+    #[test]
+    fn a_later_daemon_stashes_the_old_binary_not_the_installed_one() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let exe = tmp.path().join("bridle");
+        let new = tmp.path().join("new");
+        std::fs::write(&exe, "old").expect("write");
+        std::fs::write(&new, "new").expect("write");
+        let daemon = |name: &str, tag: &str| {
+            let ws = ws(&tmp.path().join(name));
+            std::fs::create_dir_all(ws.state_dir()).expect("state dir");
+            install_signed(false, &ws, tag, &new, &exe).expect("install");
+            std::fs::read_to_string(ws.state_dir().join("bridle.prev")).expect("prev")
+        };
+        assert_eq!(daemon("a", "v1"), "old");
+        assert_eq!(daemon("b", "v1"), "old");
+        // Replaced by something else since: the record is stale, so what's there is stashed.
+        std::fs::write(&exe, "built by hand").expect("write");
+        assert_eq!(daemon("c", "v1"), "built by hand");
         assert_eq!(std::fs::read_to_string(&exe).expect("read"), "new");
     }
 

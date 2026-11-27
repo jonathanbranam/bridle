@@ -5812,8 +5812,8 @@ async fn fetch_release_workflow(state: &AppState, release: &crate::release::Rele
             state,
             "upgrade_failed",
             format!(
-                "workflow: no checkout for {}, agents keep the previous tag's: {e}",
-                release.tag
+                "workflow ({}): no checkout for {}, agents keep the previous tag's: {e}",
+                state.project, release.tag
             ),
             serde_json::json!({"commit": release.tag, "stage": "workflow_checkout"}),
         )
@@ -5962,10 +5962,12 @@ async fn restart_after_install(
         serde_json::json!({"commit": sha, "error": text}),
     )
     .await;
+    // Every project's daemon reports to the same readers: say which one failed.
+    let said = format!("upgrade ({}): {text}", state.project);
     upgrade_wake(
         state,
         "upgrade_failed",
-        format!("upgrade: {text}"),
+        said.clone(),
         serde_json::json!({"commit": sha, "stage": "failed", "error": text}),
     )
     .await;
@@ -5978,7 +5980,7 @@ async fn restart_after_install(
             "system".to_string(),
             ToTarget::Human,
             MessageKind::Note,
-            format!("upgrade: {text}"),
+            said,
             When::Idle,
             None,
         )

@@ -473,15 +473,21 @@ minutes (`release::POLL_EVERY`, counted even when the ask fails, so rate limits 
 newer than the running version (plain `X.Y.Z` compare, a prerelease or odd tag is never newer)
 starts a background upgrade: download `bridle-<tag>-<target>.tar.gz` and `SHA256SUMS` (names from
 the release workflow, `scripts/package-release.sh`), check the SHA256, unpack, keep the running
-binary as `bridle.prev`, write the new one beside the install path and rename it over (on macOS
+binary as `bridle.prev`, write the new one beside the install path (a temp dir unique to the
+process) and rename it over (on macOS
 through `signing::install`: signed `-i bridle` with the local identity, ad hoc with a logged warning
 to run `just sign-setup` when there is none; a failed sign leaves the installed binary alone; ticket tvrp), and, if the
 tarball has a `ui/` folder (tags from before t3dr don't; then `~/.bridle/ui/` is left alone), copy
 it to `ui.tmp` beside `~/.bridle/ui/` and rename it in (the old folder steps aside to `ui.old`
-first). A UI that fails to install is logged and doesn't undo the binary. No other upgrade mode
+first). Every daemon on the machine may do this at once over one binary, so the stash, install
+and UI steps run under a lock on `.bridle.lock` beside the install path (br-kf7a). The installer
+also sets the old binary aside as `.bridle.prev` there and records the tag and the new binary's
+SHA256 in `.bridle.installed`; a daemon that finds the record matching installs nothing, keeps
+`.bridle.prev` (not the new binary) as its `bridle.prev`, and goes on to the restart.
+A UI that fails to install is logged and doesn't undo the binary. No other upgrade mode
 touches `~/.bridle/ui/`. Then the
 usual pre-flight (`serve --check`), refuse-spawns wait, restart with rollback armed. A failed
-download, checksum or unpack changes nothing and wakes `upgrade_failed` (the orchestrator; nothing
+download, checksum or unpack changes nothing and wakes `upgrade_failed` (the text names the project; to the orchestrator; nothing
 goes to the human's inbox). That tag isn't retried until the daemon restarts. The recorded built
 value is the tag, which the restart's commit reports. Bridle's own daemon keeps `true`.
 

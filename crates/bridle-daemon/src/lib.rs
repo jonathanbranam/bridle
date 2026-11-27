@@ -841,7 +841,7 @@ async fn start_inner(
         wakes
             .push(bridle_api::types::WakeReason {
                 reason: "upgrade_failed".to_string(),
-                text: format!("workflow: {text}"),
+                text: format!("workflow ({project}): {text}"),
                 detail: serde_json::json!({"stage": "workflow_checkout"}),
             })
             .await;
@@ -859,7 +859,7 @@ async fn start_inner(
         wakes
             .push(bridle_api::types::WakeReason {
                 reason: "upgrade_failed".to_string(),
-                text: format!("upgrade: {text}"),
+                text: format!("upgrade ({project}): {text}"),
                 detail: serde_json::json!({"stage": "rolled_back"}),
             })
             .await;

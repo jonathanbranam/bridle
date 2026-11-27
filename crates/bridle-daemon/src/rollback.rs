@@ -77,9 +77,9 @@ pub fn clear(ws: &Workspace) {
 /// Puts the kept binary back over `exe` and removes the marker, leaving a notice for the
 /// restored daemon to report. The caller then execs `exe`.
 pub fn restore(ws: &Workspace, exe: &Path, reason: &str) -> anyhow::Result<()> {
-    let tmp = exe.with_extension("rollback");
-    std::fs::copy(prev_path(ws), &tmp).context("reading the previous binary")?;
-    std::fs::rename(&tmp, exe).with_context(|| format!("restoring {}", exe.display()))?;
+    // A staged name of its own: another daemon may be installing over `exe` (br-kf7a).
+    crate::signing::install_with(None, &prev_path(ws), exe)
+        .with_context(|| format!("restoring {}", exe.display()))?;
     let _ = std::fs::write(notice_path(ws), reason);
     clear(ws);
     Ok(())

@@ -5,6 +5,7 @@
 //! The identity is optional: with none in the keychain (CI, other machines) the ad-hoc
 //! signature stays.
 
+use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
 use std::process::{Command, Stdio};
 
@@ -89,8 +90,9 @@ pub fn install(src: &Path, dest: &Path) -> Result<bool> {
     Ok(id.is_some())
 }
 
-/// [`install`] with the identity chosen (`"-"` is ad hoc; `None` copies without signing).
-fn install_with(identity: Option<&str>, src: &Path, dest: &Path) -> Result<()> {
+/// [`install`] with the identity chosen (`"-"` is ad hoc; `None` copies without signing). The
+/// temp dir is unique, so processes installing to one `dest` at once don't collide (br-kf7a).
+pub(crate) fn install_with(identity: Option<&str>, src: &Path, dest: &Path) -> Result<()> {
     let parent = dest
         .parent()
         .context("the install path has no parent directory")?;
@@ -100,6 +102,8 @@ fn install_with(identity: Option<&str>, src: &Path, dest: &Path) -> Result<()> {
         .with_context(|| format!("making a temp dir in {}", parent.display()))?;
     let copy = work.path().join(IDENTIFIER);
     std::fs::copy(src, &copy).with_context(|| format!("copying {}", src.display()))?;
+    std::fs::set_permissions(&copy, std::fs::Permissions::from_mode(0o755))
+        .with_context(|| format!("making {} executable", copy.display()))?;
     if let Some(name) = identity {
         let out = Command::new("codesign")
             .args(["--force", "-i", IDENTIFIER, "-s", name])
