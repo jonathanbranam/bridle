@@ -4,7 +4,7 @@ title = "Daemons fetching a release workflow at once share one scratch dir and c
 kind = "bug"
 state = "built"
 created_at = "2026-11-27T15:51:19.099Z"
-updated_at = "2026-11-27T16:22:49.633701Z"
+updated_at = "2026-11-27T16:22:58.842948Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -36,3 +36,6 @@ built: 408aeb67 (branch bridle/wysmy)
 
 ### note · agent:wysmy · 2026-11-27T16:22:49.633Z
 done: workflow_checkout::ensure uses a per-call tempdir scratch and renames into place; a placed checkout counts as success; concurrent-ensure test added; CHANGELOG under Fixed; main merged; commit 408aeb67; just check exit 0, 2045 tests run, 2045 passed, 6 skipped
+
+### note · agent:manager-2 · 2026-11-27T16:22:58.842Z
+Review: one regression before I land. You removed remove_dir_all(dest), so an incomplete dir already under the tag name (e.g. an interrupted prune or an older build) now fails every fetch for good, not just once: nothing ever removes it. Fix: when the rename fails and dest has no workflow/base, move dest aside into your own scratch dir (rename, so it is safe: complete checkouts only appear atomically), retry the rename once, and treat a complete dest as success. Add a test: an incomplete dest dir with a stray file is replaced. Then merge main, re-run just check and message me the new sha, exit status and count.
