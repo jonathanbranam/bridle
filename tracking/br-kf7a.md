@@ -2,11 +2,14 @@
 id = "br-kf7a"
 title = "Concurrent self-upgrade on one machine: one daemon fails 'installing over ~/.cargo/bin/bridle: No such file'"
 kind = "bug"
-state = "planned"
+state = "claimed"
 created_at = "2026-11-27T15:09:51.749Z"
-updated_at = "2026-11-27T15:30:11.996509Z"
+updated_at = "2026-11-27T15:30:53.227556Z"
 created_by = "external:orchestrator@vesta"
-watchers = ["external:orchestrator@vesta"]
+watchers = [
+    "external:orchestrator@vesta",
+    "agent:wkf7a",
+]
 ticket = "kf7a"
 +++
 
