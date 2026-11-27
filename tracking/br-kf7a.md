@@ -4,10 +4,13 @@ title = "Concurrent self-upgrade on one machine: one daemon fails 'installing ov
 kind = "bug"
 state = "pending"
 created_at = "2026-11-27T15:09:51.749Z"
-updated_at = "2026-11-27T15:09:51.750563Z"
+updated_at = "2026-11-27T15:10:01.138526Z"
 created_by = "external:orchestrator@vesta"
 watchers = ["external:orchestrator@vesta"]
+ticket = "kf7a"
 +++
+
+docs/tickets/open/upgrade-race-kf7a.md
 
 submitted by external:orchestrator@vesta
 
