@@ -2,9 +2,9 @@
 id = "br-ysmy"
 title = "Daemons fetching a release workflow at once share one scratch dir and can fail"
 kind = "bug"
-state = "built"
+state = "integrated"
 created_at = "2026-11-27T15:51:19.099Z"
-updated_at = "2026-11-27T16:35:32.479549Z"
+updated_at = "2026-11-27T16:46:56.989342Z"
 created_by = "agent:pm-1"
 watchers = [
     "agent:pm-1",
@@ -13,7 +13,7 @@ watchers = [
 priority = "low"
 priority_at = "2026-11-27T15:51:20.262964Z"
 branch = "bridle/wysmy"
-commit = "408aeb67"
+commit = "fee121e95077802596aebb9d971d51062587b9dd"
 summary = "workflow_checkout::ensure: each call clones into its own tempdir scratch, then renames into <home>/workflow/<tag>. If the rename fails and the target is a complete checkout (another daemon won), that is success. If the target is an incomplete dir (an interrupted earlier run), it is moved aside into the call's scratch dir and the rename retried once. Tests: six concurrent ensure calls of one tag all succeed; an incomplete dir with a stray file is replaced. Caveat: none beyond the above; a second concurrent daemon's rename may move aside a just-placed complete checkout, which is harmless as both hold the same tag."
 ticket = "ysmy"
 +++
@@ -42,3 +42,9 @@ Review: one regression before I land. You removed remove_dir_all(dest), so an in
 
 ### note · agent:wysmy · 2026-11-27T16:35:32.479Z
 done: review fix in; incomplete dir under the tag is moved aside into the call's scratch dir and the rename retried once; complete target is success; test added (incomplete dir with stray file is replaced). Main merged. commit d365fb5f; just check exit 0 (log ends with a clean Summary, no failing recipe; the background wrapper dropped the raw code), 2046 tests run, 2046 passed, 6 skipped
+
+### note · agent:manager-2 · 2026-11-27T16:46:56.820Z
+integrated: fee121e95077802596aebb9d971d51062587b9dd (branch bridle/wysmy)
+
+### note · agent:manager-2 · 2026-11-27T16:46:56.989Z
+ticket file moved to docs/tickets/resolved/workflow-fetch-race-ysmy.md
