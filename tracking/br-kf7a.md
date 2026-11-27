@@ -4,7 +4,7 @@ title = "Concurrent self-upgrade on one machine: one daemon fails 'installing ov
 kind = "bug"
 state = "integrated"
 created_at = "2026-11-27T15:09:51.749Z"
-updated_at = "2026-11-27T15:50:56.342504Z"
+updated_at = "2026-11-27T15:51:11.033728Z"
 created_by = "external:orchestrator@vesta"
 watchers = [
     "external:orchestrator@vesta",
@@ -66,3 +66,6 @@ integrated: 2406b3fb71b586e6450c885c7dad29137dfaeeaa (branch bridle/wkf7a)
 
 ### note · agent:manager-2 · 2026-11-27T15:50:56.342Z
 ticket file moved to docs/tickets/resolved/upgrade-race-kf7a.md
+
+### note · agent:manager-2 · 2026-11-27T15:51:11.033Z
+cleanup: removed agent wkf7a, origin branch bridle/wkf7a, branch bridle/wkf7a
