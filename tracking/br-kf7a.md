@@ -4,7 +4,7 @@ title = "Concurrent self-upgrade on one machine: one daemon fails 'installing ov
 kind = "bug"
 state = "claimed"
 created_at = "2026-11-27T15:09:51.749Z"
-updated_at = "2026-11-27T15:30:53.227556Z"
+updated_at = "2026-11-27T15:34:58.967613Z"
 created_by = "external:orchestrator@vesta"
 watchers = [
     "external:orchestrator@vesta",
@@ -45,3 +45,6 @@ readied by external:orchestrator
 
 ### note · external:orchestrator · 2026-11-27T15:10:31.160Z
 Readied by orchestrator (dalek): bug, self-evident fix (rule ready-without-asking).
+
+### note · agent:wkf7a · 2026-11-27T15:34:58.967Z
+wkf7a: fix committed on bridle/wkf7a (main merged), 22 targeted tests pass; full 'just check' running in the background. Next: summary, push, built, report to manager-2. Keeping the claim.
