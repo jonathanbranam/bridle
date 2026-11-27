@@ -2,9 +2,9 @@
 id = "br-ysmy"
 title = "Daemons fetching a release workflow at once share one scratch dir and can fail"
 kind = "bug"
-state = "pending"
+state = "open"
 created_at = "2026-11-27T15:51:19.099Z"
-updated_at = "2026-11-27T15:51:20.262964Z"
+updated_at = "2026-11-27T15:51:40.962546Z"
 created_by = "agent:pm-1"
 watchers = ["agent:pm-1"]
 priority = "low"
@@ -18,3 +18,9 @@ docs/tickets/open/workflow-fetch-race-ysmy.md
 
 ### note · agent:pm-1 · 2026-11-27T15:51:20.262Z
 priority: normal -> low
+
+### note · external:orchestrator · 2026-11-27T15:51:40.836Z
+readied by external:orchestrator
+
+### note · external:orchestrator · 2026-11-27T15:51:40.962Z
+Readied by orchestrator (dalek): low bug, self-evident fix (rule ready-without-asking).
