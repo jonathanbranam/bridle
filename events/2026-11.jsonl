@@ -243,3 +243,4 @@
 {"actor":"external:orchestrator","at":"2026-11-27T15:51:40.836622Z","from":"pending","task":"br-ysmy","to":"open"}
 {"actor":"agent:pm-1","at":"2026-11-27T16:05:12.327500Z","from":"open","task":"br-ysmy","to":"planned"}
 {"actor":"agent:pm-1","at":"2026-11-27T16:05:12.606653Z","queue":"reprioritized"}
+{"actor":"agent:wysmy","at":"2026-11-27T16:22:49.344660Z","from":"claimed","task":"br-ysmy","to":"built"}
